@@ -60,7 +60,16 @@ function nextMasteryState(
   // Demotion: 2 unhinted, non-scaffolded wrongs in a row.
   if (recent.length >= 2) {
     const [a, b] = [recent[recent.length - 2], recent[recent.length - 1]];
-    if (a && b && !a.correct && !b.correct && !a.scaffolded && !b.scaffolded) {
+    if (
+      a &&
+      b &&
+      !a.correct &&
+      !b.correct &&
+      !a.hinted &&
+      !b.hinted &&
+      !a.scaffolded &&
+      !b.scaffolded
+    ) {
       return "learning";
     }
   }

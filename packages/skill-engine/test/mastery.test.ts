@@ -82,6 +82,16 @@ describe("applyOutcome", () => {
     expect(s.state).toBe("practicing");
   });
 
+  test("hinted wrongs do NOT trigger demotion", () => {
+    let s = initialSkillState("p1", "add_within_5");
+    s = applyOutcome(s, outcome({ correct: true, difficulty: 0.2 }));
+    s = applyOutcome(s, outcome({ correct: true, difficulty: 0.2 }));
+    expect(s.state).toBe("practicing");
+    s = applyOutcome(s, outcome({ correct: false, hinted: true, difficulty: 0.3 }));
+    s = applyOutcome(s, outcome({ correct: false, hinted: true, difficulty: 0.3 }));
+    expect(s.state).toBe("practicing");
+  });
+
   test("recentWindow is bounded to the last 8 attempts", () => {
     let s = initialSkillState("p1", "counting_1_5");
     for (let i = 0; i < 12; i++) {

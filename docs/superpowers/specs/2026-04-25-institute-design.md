@@ -113,6 +113,8 @@ export function Scene({ round, onAnswer, onComplete }: SceneProps) { ... }
 export function evaluate(round, currentStep, answerText): { correct: boolean; normalized: number; partial?: boolean } { ... }
 ```
 
+**Schema validation:** `paramSchema` is implemented with [Zod](https://zod.dev) — runtime-checked, TypeScript-typed, shared between client and backend. The strings in the example above are illustrative; the real schema is a Zod object.
+
 ### Round lifecycle
 
 1. Engine selects an eligible template for the kid's current zone + due skills.
@@ -182,7 +184,7 @@ Transitions:
 - `learning → practicing`: 1 correct on the easiest band of the skill.
 - `practicing → mastered`: 4 of last 5 correct, no hints used, at the skill's full difficulty band.
 - `mastered → review`: schedule next review per SM-2 (interval doubles on success, resets on failure).
-- Any state → `learning`: 2 wrongs in a row at currently-targeted difficulty.
+- Any state → `learning`: 2 unhinted wrongs in a row at currently-targeted difficulty. Voice tap-fallback attempts count as scaffolded and do **not** trigger demotion (the tap grid is a recovery aid, not a graded attempt).
 
 ### Today's eligible pool
 
@@ -301,9 +303,12 @@ Tables (sketch):
 
 ### Sync protocol
 
-- Append-only events from the device, idempotent on the server (event id is a client-generated UUID).
-- On reconnect: send all unsynced events in order, then GET any server-side config updates (skill curve tweaks, new template versions).
-- Conflict resolution is unnecessary because device is canonical for that profile — the server is a downstream consumer.
+Two distinct flows:
+
+- **State (device-authoritative):** mastery, SRS, sessions, events, inventory, gem balance. Append-only events flow device → server, idempotent via client-generated UUID. The device is the source of truth; the server is a downstream consumer for analytics + parent dashboard.
+- **Config (server-authoritative):** parent-dashboard toggles (voice mode, pause new content), skill-curve tweaks, template versions, prompt updates. Flow server → device on session start and on reconnect.
+
+No bidirectional state. No conflict resolution needed because state and config never overlap.
 
 ## Parent dashboard (V1 minimum)
 

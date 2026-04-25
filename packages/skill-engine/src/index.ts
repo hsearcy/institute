@@ -5,3 +5,5 @@ export type { MasteryState, AttemptOutcome, SkillState } from "./types.ts";
 export { applyOutcome, initialSkillState } from "./mastery.ts";
 export { scheduleNextReview, MAX_INTERVAL_DAYS } from "./srs.ts";
 export type { SrsUpdate } from "./srs.ts";
+export { eligiblePool, DEFAULT_POOL_SIZE } from "./pool.ts";
+export type { EligiblePoolOptions } from "./pool.ts";

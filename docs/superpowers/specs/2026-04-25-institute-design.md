@@ -391,7 +391,7 @@ institute/
 └── docs/superpowers/specs/   # this doc + future specs
 ```
 
-A monorepo (npm workspaces or pnpm). Rails lives alongside but is a sibling, not a workspace.
+A monorepo using **Bun workspaces** (`bun install`, `bun run`, etc.). Rails lives alongside but is a sibling, not a workspace.
 
 ## Testing strategy
 

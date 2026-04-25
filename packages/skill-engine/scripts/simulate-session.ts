@@ -53,7 +53,7 @@ function simulate() {
         };
         states = states.map((s) => {
           if (s.skillId !== skillId) return s;
-          const advanced = applyOutcome(s, outcome);
+          const advanced = applyOutcome(s, outcome, skill.difficultyBand);
           // If state just became mastered, schedule its first review.
           if (s.state !== "mastered" && advanced.state === "mastered") {
             const sched = scheduleNextReview(advanced, outcome, now);

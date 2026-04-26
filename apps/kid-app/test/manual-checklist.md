@@ -50,3 +50,28 @@ If anything fails, look at:
 - Mode-state transitions in App.tsx
 - The `key={mode.runId}` on MiniGameMount (forces remount per run)
 - Pan-gesture disablement in `onPan` (prevents orbit-during-round bugs)
+
+---
+
+## M5 manual on-device checks
+
+After M5 ships, with the backend running locally:
+
+### Setup
+1. From repo root: `( cd apps/backend && RBENV_VERSION=3.4.7 ANTHROPIC_API_KEY=... bin/rails server -b 0.0.0.0 -p 3000 )`
+2. In another terminal: `EXPO_PUBLIC_TUTOR_BASE_URL=http://<dev-machine-lan-ip>:3000 pnpm --filter @institute/kid-app start --tunnel`
+3. (Optional) Set `EXPO_PUBLIC_TUTOR_SECRET=...` and same `TUTOR_SHARED_SECRET=...` on the backend env to test auth.
+
+### Checks
+- [ ] **First-ever Spell Cast tap:** loading delay ~2-4s (LLM call), then a goblin appears with a sequence Claude picked. The intro line should be playful and short.
+- [ ] **Different sequence per round:** play 3 rounds back-to-back. The goblin's sequence varies (skip_count_2 vs skip_count_5 vs sequence_next, etc.).
+- [ ] **Mastery influence:** finish 3 quick perfect rounds on the same skill. The next round should bias toward a stretch skill or a harder difficulty.
+- [ ] **Backend offline (kill the rails server):** tap the portal — should fall back to FIXTURES (`[2,4,6,8,10]`) within ~1s, no crash.
+- [ ] **Bad bearer token (when secret set):** spoof the wrong secret — kid-app should fall back to FIXTURES. Backend log shows 401.
+- [ ] **Persistence:** complete a round; quit Expo Go; relaunch; play again. The recentHistory POST'd to the backend should include the prior round's outcomes.
+- [ ] **Backend logs show `Tutor::Picker invalid response`** never (or rarely) — that's the LLM violating the schema and indicates a prompt fix is needed.
+
+If anything fails:
+- Check `apps/backend/log/development.log` for the LLM raw response.
+- Confirm `EXPO_PUBLIC_TUTOR_BASE_URL` is reachable from the device (browser-test the URL on the tablet first).
+- Confirm the on-device SQLite has rows: `sqlite3 ~/.expo/devices/<id>/institute.db "SELECT * FROM skill_state"` (or equivalent inspection).

@@ -22,6 +22,16 @@ config.resolver.disableHierarchicalLookup = true;
 // Allow Metro to bundle GLB / glTF model files as assets.
 config.resolver.assetExts = [...config.resolver.assetExts, "glb", "gltf"];
 
+// Force the "default" transform profile instead of Expo SDK 55's
+// hermes-stable. The Hermes profile leaves `import.meta` untransformed
+// (Hermes natively supports it as a module-context expression); but Metro
+// emits the web bundle as a non-module script, so `import.meta` errors at
+// runtime. The default profile transpiles it.
+config.transformer = {
+  ...config.transformer,
+  unstable_transformProfile: "default",
+};
+
 // On web builds, redirect the React-Native-only react-three packages to the
 // web variants. The /native subpath uses expo-gl, which has no working web
 // implementation — leaving it in produces a mounted-but-dead <canvas>.

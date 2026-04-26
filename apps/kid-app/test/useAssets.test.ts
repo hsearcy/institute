@@ -1,4 +1,4 @@
-import { test, expect, describe } from "bun:test";
+import { test, expect, describe } from "vitest";
 import { reduce, initial, type AssetEvent } from "../src/world/hooks/useAssets.ts";
 
 describe("useAssets reducer", () => {

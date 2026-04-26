@@ -1,4 +1,4 @@
-import { test, expect, describe } from "bun:test";
+import { test, expect, describe } from "vitest";
 import { applyOutcome, initialSkillState } from "../src/mastery.ts";
 import type { AttemptOutcome } from "../src/types.ts";
 

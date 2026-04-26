@@ -1,4 +1,4 @@
-import { test, expect, describe } from "bun:test";
+import { test, expect, describe } from "vitest";
 import { PROFILE_ID, PORTAL_DEFS, SHOW_FPS } from "../src/config.ts";
 
 describe("config", () => {

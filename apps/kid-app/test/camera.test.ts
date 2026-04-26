@@ -1,5 +1,5 @@
 // apps/kid-app/test/camera.test.ts
-import { test, expect, describe } from "bun:test";
+import { test, expect, describe } from "vitest";
 import { cameraPosition, clampYaw, YAW_RANGE_RAD } from "../src/world/camera.ts";
 
 describe("clampYaw", () => {

@@ -1,11 +1,20 @@
-import { test, expect, describe } from "bun:test";
+import { test, describe } from "vitest";
 // import ReactThreeTestRenderer from "@react-three/test-renderer";
-import { HubScene } from "../src/world/HubScene";
+// import { HubScene } from "../src/world/HubScene";
 
 describe("HubScene smoke", () => {
-  // NOTE: @react-three/test-renderer pulls in react-native@0.83.6 which has a
-  // syntax incompatibility with bun:test (typeof in Flow type annotations causes
-  // parse errors). This is a known issue with test-renderer + bun compatibility.
+  // NOTE: react-native@0.83.6 ships Flow type annotations that use `typeof`
+  // syntax. Both bun:test and Vitest's esbuild transformer choke on these
+  // annotations. Even with the test bodies commented out, a top-level import
+  // of HubScene causes a transitive parse failure because esbuild still needs
+  // to transform the full import graph.
+  //
+  // The HubScene import and ReactThreeTestRenderer import are both commented
+  // out until one of these paths unblocks this:
+  //   a) react-native ships stripped (no Flow annotations) in a future release
+  //   b) A Babel + @babel/plugin-transform-flow preset is wired into the
+  //      Vitest config via vite-plugin-babel (complex, 30+ min effort)
+  //   c) A separate test bundle entry skips react-native resolution entirely
   //
   // Expected tests when this is fixed:
   // 1. renders without throwing: create renderer, expect scene defined, unmount
@@ -13,10 +22,6 @@ describe("HubScene smoke", () => {
   //    (4 portal pillars + 1 tutor body)
   // 3. portal tap fires callback: create with onPortalTap, fire click on first
   //    cylinder, expect callback received non-null id
-  //
-  // Workaround: Could add withDecor={false} prop to HubScene, but Decor is
-  // procedural (cones + icospheres), not using useGLTF, so this shouldn't be needed.
-  // The real issue is the transitive react-native dependency.
 
   test.skip("renders without throwing", async () => {
     // const renderer = await ReactThreeTestRenderer.create(<HubScene />);

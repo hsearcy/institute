@@ -1,5 +1,5 @@
 // apps/kid-app/test/useFps.test.ts
-import { test, expect, describe } from "bun:test";
+import { test, expect, describe } from "vitest";
 import { computeFps, FPS_WINDOW } from "../src/world/hooks/useFps.ts";
 
 describe("computeFps", () => {

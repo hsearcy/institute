@@ -28,28 +28,39 @@ export type RequestNextRoundOpts = {
 const DEFAULT_TIMEOUT = 10_000;
 
 export async function requestNextRound(opts: RequestNextRoundOpts): Promise<TutorResponse> {
-  if (!opts.baseUrl) return opts.fallback();
+  if (!opts.baseUrl) {
+    console.log("[tutor] no base URL → fixtures");
+    return opts.fallback();
+  }
 
+  const url = `${opts.baseUrl}/tutor/next_round`;
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (opts.bearerToken) headers["Authorization"] = `Bearer ${opts.bearerToken}`;
 
+  console.log("[tutor] POST", url);
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? DEFAULT_TIMEOUT);
-    const res = await fetch(`${opts.baseUrl}/tutor/next_round`, {
+    const res = await fetch(url, {
       method: "POST",
       headers,
       body: JSON.stringify(opts.payload),
       signal: ctrl.signal,
     });
     clearTimeout(t);
-    if (!res.ok) return opts.fallback();
-    const json = (await res.json()) as TutorResponse;
-    if (!json || typeof json !== "object" || !json.pluginId || !json.skillId || json.params === undefined) {
+    if (!res.ok) {
+      console.warn(`[tutor] non-2xx ${res.status} from backend → fixtures`);
       return opts.fallback();
     }
+    const json = (await res.json()) as TutorResponse;
+    if (!json || typeof json !== "object" || !json.pluginId || !json.skillId || json.params === undefined) {
+      console.warn("[tutor] malformed response → fixtures", json);
+      return opts.fallback();
+    }
+    console.log(`[tutor] got round: skill=${json.skillId} plugin=${json.pluginId}`);
     return json;
-  } catch {
+  } catch (e) {
+    console.warn("[tutor] fetch failed → fixtures:", (e as Error)?.message ?? e);
     return opts.fallback();
   }
 }

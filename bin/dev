@@ -25,15 +25,11 @@ set -a; source "$BACKEND/.env"; set +a
 [[ -n "${ANTHROPIC_API_KEY:-}" ]] || { echo "ANTHROPIC_API_KEY is empty in $BACKEND/.env"; exit 1; }
 command -v tailscale >/dev/null || { echo "tailscale not found on PATH"; exit 1; }
 
-# Resolve this machine's Tailscale address. Prefer MagicDNS (stable, readable)
-# but fall back to the v4 IP if MagicDNS isn't enabled / parsable.
-TS_NAME="$(tailscale status --self --json 2>/dev/null | jq -r '.Self.DNSName // empty' | sed 's/\.$//')"
-TS_IP="$(tailscale ip -4 2>/dev/null | head -n1 || true)"
-if [[ -n "$TS_NAME" ]]; then
-  TUTOR_HOST="$TS_NAME"
-elif [[ -n "$TS_IP" ]]; then
-  TUTOR_HOST="$TS_IP"
-else
+# Resolve this machine's Tailscale v4 IP. We prefer the IP over the MagicDNS
+# hostname because Android Expo Go doesn't always resolve `.ts.net` names
+# through Tailscale's DNS — the IP is unconditional.
+TUTOR_HOST="$(tailscale ip -4 2>/dev/null | head -n1 || true)"
+if [[ -z "$TUTOR_HOST" ]]; then
   echo "tailscale appears not to be running or authenticated"
   exit 1
 fi

@@ -25,3 +25,14 @@ export const PORTAL_DEFS: ReadonlyArray<PortalDef> = [
   { id: "cookie-share", label: "Cookie Share", position: [ 1.2, 0, -7] },
   { id: "door-code",    label: "Door Code",    position: [ 3.5, 0, -6] },
 ];
+
+/** Tutor backend base URL. Empty means "always use fixtures." */
+export const TUTOR_BASE_URL: string =
+  (process.env.EXPO_PUBLIC_TUTOR_BASE_URL ?? "").trim();
+
+/** Bearer token sent to tutor backend. Empty disables the header. */
+export const TUTOR_SECRET: string =
+  (process.env.EXPO_PUBLIC_TUTOR_SECRET ?? "").trim();
+
+/** Hardcoded for M5 — multi-profile picker is later. */
+export const PROFILE = { id: PROFILE_ID, name: "Sam", age: 6 } as const;

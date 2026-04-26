@@ -57,6 +57,12 @@ importers:
       '@expo/metro':
         specifier: 55.1.0
         version: 55.1.0
+      '@institute/minigame-spell-cast':
+        specifier: workspace:*
+        version: link:../../packages/minigames/spell-cast
+      '@institute/plugin-engine':
+        specifier: workspace:*
+        version: link:../../packages/plugin-engine
       '@institute/skill-engine':
         specifier: workspace:*
         version: link:../../packages/skill-engine

@@ -18,11 +18,11 @@ describe("getAvailablePlugins", () => {
       manifest: {
         id: "spell-cast",
         title: "Spell Cast",
-        supportedSkills: ["skip_count_2", "skip_count_5", "skip_count_10", "sequence_next"],
+        supportedSkills: ["skip_count_2", "skip_count_5", "skip_count_10", "sequence_next"] as ["skip_count_2", ...string[]],
         paramSchema: mockParamSchema,
       },
       Scene: () => null,
-      evaluate: () => ({ score: 0 }),
+      evaluate: () => ({ correct: true, expected: 0, isLastStep: true }),
     };
 
     register(mockPlugin);

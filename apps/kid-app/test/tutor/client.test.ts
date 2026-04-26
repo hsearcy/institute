@@ -32,7 +32,8 @@ describe("requestNextRound", () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify(VALID_RESPONSE), { status: 200 }));
     (globalThis as { fetch: unknown }).fetch = fetchMock;
     await requestNextRound({ ...baseRequest, bearerToken: "supersecret", fallback: () => ({ pluginId: "spell-cast", skillId: "x", params: {} }) });
-    const init = (fetchMock.mock.calls[0]![1] ?? {}) as { headers?: Record<string, string> };
+    const calls = fetchMock.mock.calls as unknown as Array<[unknown, { headers?: Record<string, string> }]>;
+    const init = calls[0]?.[1] ?? { headers: {} };
     expect(init.headers!["Authorization"]).toBe("Bearer supersecret");
   });
 

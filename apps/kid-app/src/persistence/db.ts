@@ -64,10 +64,18 @@ export function migrate(db: Db): void {
   }
 }
 
-/** Lazy production adapter using expo-sqlite. Tests construct their own Db. */
+/**
+ * Production adapter using expo-sqlite.
+ *
+ * `openDatabaseSync` (not Async) is used because expo-sqlite 55 throws a
+ * native NullPointerException on Android when the sync `execSync` /
+ * `runSync` / `getFirstSync` / `getAllSync` family is called against a
+ * connection opened via `openDatabaseAsync`. Sync methods need a
+ * sync-opened handle.
+ */
 export async function openExpoDb(name = "institute.db"): Promise<Db> {
   const sqlite = await import("expo-sqlite");
-  const conn = await sqlite.openDatabaseAsync(name);
+  const conn = sqlite.openDatabaseSync(name);
   type BindParams = Parameters<typeof conn.runSync>[1];
   return {
     exec(sql) {

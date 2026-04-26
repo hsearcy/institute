@@ -79,4 +79,6 @@ echo "[dev] phone should be on the same tailnet; QR/URL will use $TUTOR_HOST"
 echo
 
 # No --tunnel: the phone reaches Metro at $TUTOR_HOST:8081 over Tailscale.
-env "${EXPO_VARS[@]}" pnpm --filter @institute/kid-app exec expo start --host=lan
+# `--clear` busts the Metro transform cache so source edits to deep modules
+# (db.ts, persistence repos, etc.) reliably ship a fresh bundle to the phone.
+env "${EXPO_VARS[@]}" pnpm --filter @institute/kid-app exec expo start --host=lan --clear

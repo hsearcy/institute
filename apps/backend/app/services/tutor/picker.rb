@@ -45,7 +45,11 @@ module Tutor
       plugin = plugin_map.fetch(plugin_id)
       raise InvalidResponse, "plugin #{plugin_id} does not support skill #{skill_id}" unless plugin.fetch("supportedSkills").include?(skill_id)
 
-      errs = JSON::Validator.fully_validate(plugin.fetch("paramSchema"), content.fetch("params"))
+      # `zod-to-json-schema` emits a `$schema: "http://json-schema.org/draft-07/schema#"`
+      # marker that the json-schema gem (v6) treats as a fetch URL and chokes on.
+      # Drop it; the rest of the schema is structural draft-04-compatible.
+      schema_for_validation = plugin.fetch("paramSchema").reject { |k, _| k.to_s == "$schema" }
+      errs = JSON::Validator.fully_validate(schema_for_validation, content.fetch("params"))
       raise InvalidResponse, "params failed paramSchema validation: #{errs.join('; ')}" unless errs.empty?
     end
   end

@@ -43,7 +43,6 @@
     "@react-three/test-renderer": "9.1.0",
     "@types/react": "*",
     "@types/three": "0.184.0",
-    "babel-plugin-transform-import-meta": "^2.3.3",
     "babel-preset-expo": "55.0.18",
     "react-refresh": "0.18.0"
   }

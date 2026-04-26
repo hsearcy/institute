@@ -67,11 +67,14 @@ export function migrate(db: Db): void {
 /**
  * Production adapter using expo-sqlite.
  *
- * `openDatabaseSync` (not Async) is used because expo-sqlite 55 throws a
- * native NullPointerException on Android when the sync `execSync` /
- * `runSync` / `getFirstSync` / `getAllSync` family is called against a
- * connection opened via `openDatabaseAsync`. Sync methods need a
- * sync-opened handle.
+ * `openDatabaseSync` (not Async) is used because the sync `execSync` /
+ * `runSync` / `getFirstSync` / `getAllSync` family NPEs on Android when
+ * called against a connection opened with `openDatabaseAsync`. Sync
+ * methods need a sync-opened handle.
+ *
+ * NOTE: opening the SAME database twice in one process invalidates the
+ * first handle (subsequent prepareSync/execSync NPE on the stale conn).
+ * Always go through `getDb()` below — never call `openExpoDb` directly.
  */
 export async function openExpoDb(name = "institute.db"): Promise<Db> {
   const sqlite = await import("expo-sqlite");
@@ -91,4 +94,22 @@ export async function openExpoDb(name = "institute.db"): Promise<Db> {
       return (conn.getFirstSync<T>(sql, params as unknown as BindParams) ?? undefined) as T | undefined;
     },
   };
+}
+
+let _dbPromise: Promise<Db> | null = null;
+
+/**
+ * The single shared, migrated Db instance for the kid-app. Idempotent —
+ * subsequent calls return the same connection. Use this everywhere instead
+ * of openExpoDb() to avoid multiple native handles to the same file.
+ */
+export function getDb(): Promise<Db> {
+  if (!_dbPromise) {
+    _dbPromise = (async () => {
+      const db = await openExpoDb();
+      migrate(db);
+      return db;
+    })();
+  }
+  return _dbPromise;
 }

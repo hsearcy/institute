@@ -14,7 +14,7 @@ import { Toast } from "./src/ui/Toast";
 import { LoadingScreen } from "./src/ui/LoadingScreen";
 import { FpsOverlay } from "./src/ui/FpsOverlay";
 import { SHOW_FPS, type PortalId, PROFILE } from "./src/config";
-import { openExpoDb, migrate } from "./src/persistence/db";
+import { getDb } from "./src/persistence/db";
 import { loadSkillState, saveSkillState } from "./src/persistence/skillStateRepo";
 import { appendAttempt } from "./src/persistence/attemptRepo";
 import { MiniGameMount } from "./src/minigame/MiniGameMount";
@@ -55,8 +55,7 @@ export default function App() {
     sceneHandleRef.current = null;
     setMode({ kind: "hub" });
     try {
-      const db = await openExpoDb();
-      migrate(db);
+      const db = await getDb();
       for (const outcome of result.outcomes) {
         const skill = getSkill(TAXONOMY, outcome.skillId);
         if (!skill) { console.warn("unknown skill in outcome:", outcome.skillId); continue; }

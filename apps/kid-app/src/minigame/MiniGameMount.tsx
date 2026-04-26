@@ -5,7 +5,7 @@ import { Scene as SpellCastScene, type SpellCastSceneHandle } from "@institute/m
 import { FIXTURES } from "./fixtures";
 import { PROFILE, TUTOR_BASE_URL, TUTOR_SECRET } from "../config";
 import type { PortalId } from "../config";
-import { openExpoDb, migrate, type Db } from "../persistence/db";
+import { getDb } from "../persistence/db";
 import { computeEligiblePool } from "../tutor/eligiblePool";
 import { loadRecentAttempts } from "../persistence/attemptRepo";
 import { getAvailablePlugins } from "../tutor/pluginSchemas";
@@ -17,14 +17,6 @@ function ensureRegistered() {
   try { register(spellCastPlugin); }
   catch (e) { if (!(e instanceof Error) || !/already registered/i.test(e.message)) throw e; }
   registered = true;
-}
-
-let dbPromise: Promise<Db> | null = null;
-function getDb(): Promise<Db> {
-  if (!dbPromise) {
-    dbPromise = (async () => { const db = await openExpoDb(); migrate(db); return db; })();
-  }
-  return dbPromise;
 }
 
 type Props = {

@@ -19,4 +19,7 @@ config.resolver.nodeModulesPaths = [
 // Avoid hierarchical lookup ambiguity in monorepos.
 config.resolver.disableHierarchicalLookup = true;
 
+// Allow Metro to bundle GLB / glTF model files as assets.
+config.resolver.assetExts = [...config.resolver.assetExts, "glb", "gltf"];
+
 module.exports = config;

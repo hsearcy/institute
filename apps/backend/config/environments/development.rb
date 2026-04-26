@@ -6,6 +6,12 @@ Rails.application.configure do
   # Make code changes take effect immediately without server restart.
   config.enable_reloading = true
 
+  # Allow the dev box to be reached from devices on our Tailscale network
+  # (CGNAT 100.x.x.x) and via MagicDNS (*.ts.net). The kid-app talks to this
+  # backend from a phone on the tailnet during development.
+  config.hosts << /\A100\.\d{1,3}\.\d{1,3}\.\d{1,3}\z/
+  config.hosts << /\.ts\.net\z/
+
   # Do not eager load code on boot.
   config.eager_load = false
 

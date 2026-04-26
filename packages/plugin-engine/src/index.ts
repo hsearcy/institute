@@ -7,3 +7,4 @@ export type {
   EvaluateResult,
 } from "./contract.ts";
 export { ManifestBaseSchema } from "./contract.ts";
+export { register, getPlugin, listPluginIds, clearRegistry } from "./registry.ts";

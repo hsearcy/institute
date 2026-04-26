@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+# Boot the full kid-app dev stack:
+#   1. Rails backend (apps/backend) on :3000
+#   2. ngrok tunnel pointing at :3000
+#   3. kid-app Expo dev server with EXPO_PUBLIC_TUTOR_BASE_URL set to the tunnel URL
+#
+# Ctrl-C cleans up all three.
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+BACKEND="$ROOT/apps/backend"
+LOGDIR="$ROOT/tmp"
+mkdir -p "$LOGDIR"
+RAILS_LOG="$LOGDIR/rails.log"
+NGROK_LOG="$LOGDIR/ngrok.log"
+
+# --- pre-flight ---
+[[ -f "$BACKEND/.env" ]] || { echo "missing $BACKEND/.env (copy from .env.example)"; exit 1; }
+# shellcheck disable=SC1090,SC1091
+set -a; source "$BACKEND/.env"; set +a
+[[ -n "${ANTHROPIC_API_KEY:-}" ]] || { echo "ANTHROPIC_API_KEY is empty in $BACKEND/.env"; exit 1; }
+command -v ngrok >/dev/null || { echo "ngrok not found on PATH"; exit 1; }
+command -v jq    >/dev/null || { echo "jq not found on PATH"; exit 1; }
+
+PIDS=()
+cleanup() {
+  echo
+  echo "[dev] shutting down…"
+  # Kill in reverse order, ignore failures
+  for pid in "${PIDS[@]:-}"; do
+    [[ -n "$pid" ]] && kill -TERM "$pid" 2>/dev/null || true
+  done
+  # Give them a sec to terminate gracefully, then SIGKILL stragglers
+  sleep 1
+  for pid in "${PIDS[@]:-}"; do
+    [[ -n "$pid" ]] && kill -KILL "$pid" 2>/dev/null || true
+  done
+}
+trap cleanup EXIT INT TERM
+
+# --- 1. rails backend ---
+echo "[dev] starting Rails backend on :3000 (log: $RAILS_LOG)…"
+( cd "$BACKEND" && RBENV_VERSION=3.4.7 bin/rails server -b 0.0.0.0 -p 3000 ) \
+  > "$RAILS_LOG" 2>&1 &
+PIDS+=($!)
+
+# Wait for Rails to be listening
+for _ in {1..30}; do
+  if curl -fsS -o /dev/null http://127.0.0.1:3000/up 2>/dev/null; then
+    echo "[dev] Rails is up."
+    break
+  fi
+  sleep 1
+done
+
+# --- 2. ngrok tunnel ---
+echo "[dev] starting ngrok tunnel for :3000 (log: $NGROK_LOG)…"
+ngrok http 3000 --log=stdout > "$NGROK_LOG" 2>&1 &
+PIDS+=($!)
+
+# ngrok exposes its API on :4040; poll until the tunnel is registered
+TUTOR_URL=""
+for _ in {1..30}; do
+  TUTOR_URL="$(curl -fsS http://127.0.0.1:4040/api/tunnels 2>/dev/null | jq -r '.tunnels[]? | select(.proto=="https") | .public_url' | head -n1 || true)"
+  [[ -n "$TUTOR_URL" ]] && break
+  sleep 1
+done
+
+if [[ -z "$TUTOR_URL" ]]; then
+  echo "[dev] ngrok tunnel never came up. Tail of $NGROK_LOG:"
+  tail -n 20 "$NGROK_LOG"
+  exit 1
+fi
+
+echo "[dev] tunnel URL: $TUTOR_URL"
+
+# --- 3. kid-app ---
+# If TUTOR_SHARED_SECRET is set in .env, mirror it to the Expo public env so
+# the kid-app sends the matching bearer header.
+EXPO_VARS=( "EXPO_PUBLIC_TUTOR_BASE_URL=$TUTOR_URL" )
+if [[ -n "${TUTOR_SHARED_SECRET:-}" ]]; then
+  EXPO_VARS+=( "EXPO_PUBLIC_TUTOR_SECRET=$TUTOR_SHARED_SECRET" )
+fi
+
+echo "[dev] starting kid-app (Expo, --tunnel)…"
+echo "[dev] env: ${EXPO_VARS[*]}"
+echo
+
+# Run in foreground so Ctrl-C lands here and the trap fires.
+env "${EXPO_VARS[@]}" pnpm --filter @institute/kid-app start --tunnel

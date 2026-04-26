@@ -10,9 +10,13 @@ module Tutor
     def self.call(payload, client: RubyLLMClient, model: DEFAULT_MODEL)
       validate_request!(payload)
       schema = ResponseSchema.build(payload)
+      # Strip validation keywords Anthropic's structured output doesn't
+      # accept (e.g. `minimum` on integers). The full schema is still used
+      # below for post-validation of the response.
+      llm_schema = SchemaSanitizer.call(schema)
       messages = Prompt.messages(payload)
 
-      reply = client.chat(model: model, messages: messages, response_schema: schema)
+      reply = client.chat(model: model, messages: messages, response_schema: llm_schema)
       content = reply.fetch(:content)
       validate_response!(content, payload)
       content

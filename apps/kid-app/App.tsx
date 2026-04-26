@@ -7,12 +7,16 @@ import {
 } from "react-native-gesture-handler";
 import { StyleSheet, View } from "react-native";
 import type { SpellCastSceneHandle } from "@institute/minigame-spell-cast";
+import { applyOutcome, scheduleNextReview, getSkill, TAXONOMY, initialSkillState, type AttemptOutcome } from "@institute/skill-engine";
 import { HubScene } from "./src/world/HubScene";
 import { SceneController } from "./src/world/SceneController";
 import { Toast } from "./src/ui/Toast";
 import { LoadingScreen } from "./src/ui/LoadingScreen";
 import { FpsOverlay } from "./src/ui/FpsOverlay";
-import { SHOW_FPS, type PortalId } from "./src/config";
+import { SHOW_FPS, type PortalId, PROFILE } from "./src/config";
+import { openExpoDb, migrate } from "./src/persistence/db";
+import { loadSkillState, saveSkillState } from "./src/persistence/skillStateRepo";
+import { appendAttempt } from "./src/persistence/attemptRepo";
 import { MiniGameMount } from "./src/minigame/MiniGameMount";
 import { NumberPad } from "./src/minigame/NumberPad";
 import { BackButton } from "./src/minigame/BackButton";
@@ -46,10 +50,26 @@ export default function App() {
     }
   };
 
-  const onRoundComplete = (result: { status: "completed" | "aborted"; outcomes: unknown[]; durationMs: number }) => {
+  const onRoundComplete = async (result: { status: "completed" | "aborted"; outcomes: AttemptOutcome[]; durationMs: number }) => {
     console.log("[round complete]", result);
     sceneHandleRef.current = null;
     setMode({ kind: "hub" });
+    try {
+      const db = await openExpoDb();
+      migrate(db);
+      for (const outcome of result.outcomes) {
+        const skill = getSkill(TAXONOMY, outcome.skillId);
+        if (!skill) { console.warn("unknown skill in outcome:", outcome.skillId); continue; }
+        const prev = loadSkillState(db, PROFILE.id, outcome.skillId) ?? initialSkillState(PROFILE.id, outcome.skillId);
+        const next = applyOutcome(prev, outcome, skill.difficultyBand);
+        const update = scheduleNextReview(next, outcome, new Date());
+        const merged = { ...next, ...update, updatedAt: new Date() };
+        saveSkillState(db, merged);
+        appendAttempt(db, PROFILE.id, outcome);
+      }
+    } catch (e) {
+      console.error("failed to persist outcomes", e);
+    }
   };
 
   return (

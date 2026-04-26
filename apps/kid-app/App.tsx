@@ -1,32 +1,16 @@
 import { Canvas } from "@react-three/fiber/native";
-import { useRef } from "react";
 import { StyleSheet, View } from "react-native";
-import type { Mesh } from "three";
-import { useFrame } from "@react-three/fiber/native";
+import { HubScene } from "./src/world/HubScene";
+import { cameraPosition } from "./src/world/camera";
 
-function SpinningCube() {
-  const ref = useRef<Mesh>(null);
-  useFrame((_, delta) => {
-    if (ref.current) {
-      ref.current.rotation.x += delta * 0.5;
-      ref.current.rotation.y += delta * 0.5;
-    }
-  });
-  return (
-    <mesh ref={ref}>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color="#d4a04b" />
-    </mesh>
-  );
-}
+const CAMERA_SPEC = { distance: 10, pitch: Math.PI / 4, yaw: 0 };
 
 export default function App() {
+  const pos = cameraPosition(CAMERA_SPEC);
   return (
     <View style={styles.root}>
-      <Canvas camera={{ position: [3, 3, 3], fov: 50 }}>
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[3, 5, 2]} intensity={1.0} />
-        <SpinningCube />
+      <Canvas camera={{ position: pos as unknown as [number, number, number], fov: 50 }}>
+        <HubScene />
       </Canvas>
     </View>
   );

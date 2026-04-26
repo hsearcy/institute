@@ -1,0 +1,86 @@
+/**
+ * Minimal SQL interface our repos use. Two implementations:
+ *   - Production: thin wrapper around expo-sqlite (apps/kid-app uses this)
+ *   - Tests: thin wrapper around better-sqlite3 (in-memory)
+ *
+ * Why not import expo-sqlite directly: expo-sqlite has no Node runtime, so
+ * Vitest tests would die at import time. The Db interface keeps the repos
+ * Node-testable.
+ */
+export type SqlRow = Record<string, unknown>;
+
+export interface Db {
+  exec(sql: string): void; // multi-statement DDL
+  run(sql: string, params?: unknown[]): void; // INSERT/UPDATE/DELETE
+  all<T = SqlRow>(sql: string, params?: unknown[]): T[]; // SELECT
+  get<T = SqlRow>(sql: string, params?: unknown[]): T | undefined; // SELECT … LIMIT 1
+}
+
+const SCHEMA = `
+CREATE TABLE IF NOT EXISTS schema_version (version INTEGER NOT NULL);
+
+CREATE TABLE IF NOT EXISTS skill_state (
+  profile_id TEXT NOT NULL,
+  skill_id TEXT NOT NULL,
+  state TEXT NOT NULL,
+  attempts INTEGER NOT NULL,
+  correct INTEGER NOT NULL,
+  recent_window_json TEXT NOT NULL,
+  current_difficulty REAL NOT NULL,
+  srs_interval_days INTEGER NOT NULL,
+  srs_ease REAL NOT NULL,
+  next_review_at TEXT,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (profile_id, skill_id)
+);
+
+CREATE TABLE IF NOT EXISTS attempt (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  profile_id TEXT NOT NULL,
+  skill_id TEXT NOT NULL,
+  correct INTEGER NOT NULL,
+  hinted INTEGER NOT NULL,
+  scaffolded INTEGER NOT NULL,
+  difficulty REAL NOT NULL,
+  occurred_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS attempt_profile_occurred ON attempt(profile_id, occurred_at DESC);
+`;
+
+const SCHEMA_VERSION = 1;
+
+/** Apply schema. Drops and recreates if version mismatch (dev-only data loss is fine). */
+export function migrate(db: Db): void {
+  db.exec(SCHEMA);
+  const row = db.get<{ version?: number }>("SELECT version FROM schema_version LIMIT 1");
+  const current = row?.version;
+  if (current === undefined) {
+    db.run("INSERT INTO schema_version (version) VALUES (?)", [SCHEMA_VERSION]);
+    return;
+  }
+  if (current !== SCHEMA_VERSION) {
+    db.exec("DROP TABLE skill_state; DROP TABLE attempt; DROP TABLE schema_version;");
+    migrate(db);
+  }
+}
+
+/** Lazy production adapter using expo-sqlite. Tests construct their own Db. */
+export async function openExpoDb(name = "institute.db"): Promise<Db> {
+  const sqlite = await import("expo-sqlite");
+  const conn = await sqlite.openDatabaseAsync(name);
+  type BindParams = Parameters<typeof conn.runSync>[1];
+  return {
+    exec(sql) {
+      conn.execSync(sql);
+    },
+    run(sql, params = []) {
+      conn.runSync(sql, params as unknown as BindParams);
+    },
+    all<T = SqlRow>(sql: string, params: unknown[] = []) {
+      return conn.getAllSync<T>(sql, params as unknown as BindParams);
+    },
+    get<T = SqlRow>(sql: string, params: unknown[] = []) {
+      return (conn.getFirstSync<T>(sql, params as unknown as BindParams) ?? undefined) as T | undefined;
+    },
+  };
+}

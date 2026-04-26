@@ -25,6 +25,7 @@
     "expo": "54.0.33",
     "expo-asset": "~12.0.12",
     "expo-gl": "~16.0.10",
+    "expo-sqlite": "^55.0.15",
     "expo-status-bar": "3.0.9",
     "fbjs": "3.0.5",
     "inline-style-prefixer": "7.0.1",
@@ -43,9 +44,11 @@
   "devDependencies": {
     "@babel/core": "*",
     "@react-three/test-renderer": "9.1.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/react": "^19.1.17",
     "@types/three": "0.184.0",
     "babel-preset-expo": "54.0.10",
+    "better-sqlite3": "^12.9.0",
     "react-refresh": "0.18.0"
   }
 }

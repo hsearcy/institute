@@ -595,9 +595,11 @@ test("smoke: spell-cast vitest runs", () => {
 });
 ```
 
-- [ ] **Step 5.6: Update `pnpm-workspace.yaml`**
+- [ ] **Step 5.6: Update `pnpm-workspace.yaml`** (REQUIRED — pnpm globs are not recursive)
 
-Read `pnpm-workspace.yaml` at repo root. Confirm it already covers `packages/*` recursively. If it lists only `packages/*` (one level), add `packages/minigames/*` so spell-cast is detected:
+The current `pnpm-workspace.yaml` at the repo root has `packages: ["packages/*", "apps/*"]`. The `packages/*` glob matches `packages/skill-engine` and `packages/minigames` (the directory) but **does not recursively descend into** `packages/minigames/spell-cast`. Without an explicit entry, pnpm will not discover the new plugin and `pnpm install` will fail to resolve `@institute/minigame-spell-cast`.
+
+Modify the file to be:
 
 ```yaml
 packages:
@@ -606,7 +608,7 @@ packages:
   - "apps/*"
 ```
 
-(If it already had a wildcard like `packages/**` no change is needed.)
+After saving, verify the package is detected: `pnpm list -r --depth -1` should list `@institute/minigame-spell-cast` once `pnpm install` runs in Step 5.7.
 
 - [ ] **Step 5.7: Install + verify**
 
@@ -1219,6 +1221,11 @@ export function MiniGameMount({
     onComplete({ status: "aborted", outcomes: [], durationMs: 0 });
     return null;
   }
+  // M2 expedient: this `unknown` cast collapses the generic `Plugin<P>` to
+  // the SpellCastScene type because we know it's the only registered plugin
+  // right now. M6 will add 3 more plugins with different param shapes; at
+  // that point refactor MiniGameMount to be generic in P (or use a small
+  // per-plugin dispatch table) so each portal gets its own typed render path.
   const Scene = plugin.Scene as unknown as typeof SpellCastScene;
   return (
     <Scene

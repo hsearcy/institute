@@ -1,4 +1,4 @@
-import { test, expect, describe } from "bun:test";
+import { test, expect, describe } from "vitest";
 import { scheduleNextReview, MAX_INTERVAL_DAYS } from "../src/srs.ts";
 import { initialSkillState } from "../src/mastery.ts";
 

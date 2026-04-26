@@ -1,4 +1,4 @@
-import { test, expect, describe } from "bun:test";
+import { test, expect, describe } from "vitest";
 import { TAXONOMY } from "../src/skills.ts";
 import { validateTaxonomy } from "../src/taxonomy-utils.ts";
 

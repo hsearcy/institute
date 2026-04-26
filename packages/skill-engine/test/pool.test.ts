@@ -1,4 +1,4 @@
-import { test, expect, describe } from "bun:test";
+import { test, expect, describe } from "vitest";
 import { eligiblePool, DEFAULT_POOL_SIZE } from "../src/pool.ts";
 import { initialSkillState } from "../src/mastery.ts";
 import { TAXONOMY } from "../src/skills.ts";

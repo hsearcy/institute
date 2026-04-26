@@ -42,7 +42,6 @@ describe("registry", () => {
   test("register validates the manifest base schema (rejects empty id)", () => {
     const bad: Plugin<{ n: number }> = {
       manifest: {
-        // @ts-expect-error - intentionally bad
         id: "",
         title: "x",
         supportedSkills: ["x"],

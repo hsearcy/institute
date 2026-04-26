@@ -22,6 +22,8 @@ export type MasteryState = "unstarted" | "learning" | "practicing" | "mastered" 
  * count toward demotion).
  */
 export type AttemptOutcome = {
+  /** Which skill this attempt was for. M2 used a placeholder; M5 sets it from the round. */
+  skillId: SkillId;
   correct: boolean;
   hinted: boolean;
   scaffolded: boolean;

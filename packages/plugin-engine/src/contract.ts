@@ -14,6 +14,8 @@ export type RoundResult = {
 export type SceneProps<Params = unknown> = {
   params: Params;
   onComplete: (r: RoundResult) => void;
+  /** The skill this round is practicing. Plugins stamp it onto every AttemptOutcome. */
+  skillId: string;
 };
 
 /**

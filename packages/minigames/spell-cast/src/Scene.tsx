@@ -28,7 +28,7 @@ type Props = SceneProps<SpellCastParams> & {
   onHandleReady?: (h: SpellCastSceneHandle) => void;
 };
 
-export function Scene({ params, onComplete, onHandleReady }: Props) {
+export function Scene({ params, onComplete, onHandleReady, skillId }: Props) {
   const goblinRef = useRef<Group>(null);
   const [step, setStep] = useState(0);
   const [hp, setHp] = useState(params.sequence.length);
@@ -67,6 +67,7 @@ export function Scene({ params, onComplete, onHandleReady }: Props) {
       submitAnswer: (answer: number) => {
         const r = evaluate(params, step, answer);
         outcomesRef.current.push({
+          skillId,
           correct: r.correct,
           hinted: false,
           scaffolded: false,
@@ -90,7 +91,7 @@ export function Scene({ params, onComplete, onHandleReady }: Props) {
       },
       abort: () => finish("aborted"),
     });
-  }, [params, step, onHandleReady, finish]);
+  }, [params, step, onHandleReady, finish, skillId]);
 
   // Each correct answer shrinks the goblin proportionally to remaining HP.
   const scale = Math.max(0.05, hp / params.sequence.length);

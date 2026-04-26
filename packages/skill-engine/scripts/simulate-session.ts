@@ -45,6 +45,7 @@ function simulate() {
         const difficulty = skill.difficultyBand[0]
           + random() * (skill.difficultyBand[1] - skill.difficultyBand[0]);
         const outcome: AttemptOutcome = {
+          skillId,
           correct,
           hinted: false,
           scaffolded: false,

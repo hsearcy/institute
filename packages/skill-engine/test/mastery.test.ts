@@ -5,6 +5,7 @@ import type { AttemptOutcome } from "../src/types.ts";
 const at = (iso: string) => new Date(iso);
 
 const outcome = (overrides: Partial<AttemptOutcome>): AttemptOutcome => ({
+  skillId: "skip_count_2",
   correct: true,
   hinted: false,
   scaffolded: false,

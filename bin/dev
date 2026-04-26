@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 # Boot the full kid-app dev stack:
 #   1. Rails backend (apps/backend) on :3000
-#   2. kid-app Expo dev server with EXPO_PUBLIC_TUTOR_BASE_URL pointed at the
-#      dev machine's Tailscale address (the phone reaches it over the tailnet,
-#      no public tunnel needed for the backend).
+#   2. kid-app Expo dev server on :8081 — both reachable over the tailnet at
+#      the dev box's Tailscale address. No Expo `--tunnel` (ngrok) needed:
+#      Metro's bundler is exposed directly to the phone via Tailscale.
 #
-# Expo's own `--tunnel` (ngrok via @expo/ngrok) is still used for the JS bundle
-# delivery. Because we're NOT running a second ngrok agent for the backend,
-# there's no free-tier "1 agent per account" conflict.
+# REACT_NATIVE_PACKAGER_HOSTNAME tells Metro to embed the tailscale hostname
+# in the QR / dev URL so the phone connects to the right address.
 #
 # Ctrl-C cleans up everything.
 
@@ -76,8 +75,12 @@ if [[ -n "${TUTOR_SHARED_SECRET:-}" ]]; then
   EXPO_VARS+=( "EXPO_PUBLIC_TUTOR_SECRET=$TUTOR_SHARED_SECRET" )
 fi
 
-echo "[dev] starting kid-app (Expo, --tunnel)…"
+EXPO_VARS+=( "REACT_NATIVE_PACKAGER_HOSTNAME=$TUTOR_HOST" )
+
+echo "[dev] starting kid-app (Expo, LAN-over-tailnet at $TUTOR_HOST)…"
 echo "[dev] env: ${EXPO_VARS[*]}"
+echo "[dev] phone should be on the same tailnet; QR/URL will use $TUTOR_HOST"
 echo
 
-env "${EXPO_VARS[@]}" pnpm --filter @institute/kid-app start --tunnel
+# No --tunnel: the phone reaches Metro at $TUTOR_HOST:8081 over Tailscale.
+env "${EXPO_VARS[@]}" pnpm --filter @institute/kid-app exec expo start --host=lan

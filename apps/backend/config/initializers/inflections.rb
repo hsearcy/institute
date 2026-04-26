@@ -14,3 +14,10 @@
 # ActiveSupport::Inflector.inflections(:en) do |inflect|
 #   inflect.acronym "RESTful"
 # end
+
+# Acronyms used by autoloaded constants (matches the ruby_llm gem's own
+# Zeitwerk inflector so Tutor::RubyLLMClient resolves from
+# app/services/tutor/ruby_llm_client.rb).
+ActiveSupport::Inflector.inflections(:en) do |inflect|
+  inflect.acronym "LLM"
+end

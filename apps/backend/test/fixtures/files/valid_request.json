@@ -1,0 +1,44 @@
+{
+  "profile": { "id": "sam", "name": "Sam", "age": 6 },
+  "currentZone": "hub",
+  "eligiblePool": [
+    {
+      "skillId": "skip_count_2",
+      "description": "Skip count by 2s to 20",
+      "masteryState": "practicing",
+      "currentDifficulty": 0.4,
+      "attempts": 12,
+      "correct": 9
+    },
+    {
+      "skillId": "add_within_5",
+      "description": "Addition within 5",
+      "masteryState": "learning",
+      "currentDifficulty": 0.2,
+      "attempts": 3,
+      "correct": 2
+    }
+  ],
+  "recentHistory": [
+    { "skillId": "skip_count_2", "correct": true,  "occurredAt": "2026-04-26T12:00:00Z" },
+    { "skillId": "skip_count_2", "correct": true,  "occurredAt": "2026-04-26T12:00:30Z" },
+    { "skillId": "skip_count_2", "correct": false, "occurredAt": "2026-04-26T12:01:00Z" }
+  ],
+  "availablePlugins": [
+    {
+      "id": "spell-cast",
+      "title": "Spell Cast",
+      "supportedSkills": ["skip_count_2", "skip_count_5", "skip_count_10", "sequence_next"],
+      "paramSchema": {
+        "type": "object",
+        "properties": {
+          "enemyType": { "type": "string", "enum": ["goblin", "slime", "ghost"] },
+          "sequence": { "type": "array", "items": { "type": "integer", "minimum": 0 }, "minItems": 1 },
+          "intro": { "type": "string", "minLength": 1 }
+        },
+        "required": ["enemyType", "sequence", "intro"],
+        "additionalProperties": false
+      }
+    }
+  ]
+}

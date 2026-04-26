@@ -1,0 +1,9 @@
+{
+  "skillId": "skip_count_2",
+  "pluginId": "spell-cast",
+  "params": {
+    "enemyType": "goblin",
+    "sequence": [2, 4, 6, 8, 10],
+    "intro": "A goblin appears! Cast sparks by 2s to defeat it."
+  }
+}

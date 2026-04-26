@@ -1,14 +1,14 @@
 {
   "name": "institute",
   "private": true,
-  "workspaces": ["packages/*", "apps/*"],
+  "packageManager": "pnpm@10.33.2",
   "scripts": {
-    "test": "bun test",
-    "typecheck": "bun run --filter '*' typecheck"
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck"
   },
   "devDependencies": {
     "typescript": "^5.6.0",
-    "@types/bun": "latest"
+    "vitest": "^3.2.2"
   },
   "dependencies": {
     "base64-js": "1.5.1",

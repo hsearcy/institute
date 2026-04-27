@@ -47,12 +47,14 @@ export async function startRecorder(opts: StartRecorderOpts = {}): Promise<Recor
   const sub = recorder.addListener(
     "recordingStatusUpdate",
     (status: { isFinished?: boolean; url?: string | null }) => {
-      console.log("[recorder] status:", JSON.stringify(status), "recorder.uri=", recorder.uri);
       if (status.isFinished && !resolved) {
         resolved = true;
-        const uri = status.url ?? recorder.uri ?? "";
+        // recorder.uri is fully-qualified (file://…). status.url on Android
+        // omits the scheme. Prefer recorder.uri; only fall back to status.url
+        // if it already has a scheme.
+        const fromStatus = status.url && /^[a-z]+:\/\//i.test(status.url) ? status.url : null;
+        const uri = recorder.uri ?? fromStatus ?? withFileScheme(status.url ?? "");
         const result: RecordingResult = { uri, contentType: contentTypeForUri(uri) };
-        console.log("[recorder] auto-stopped, uri=", uri);
         resolveAuto?.(result);
         opts.onAutoStop?.(result);
       }
@@ -76,16 +78,22 @@ export async function startRecorder(opts: StartRecorderOpts = {}): Promise<Recor
       const result = await Promise.race([
         autoPromise,
         new Promise<RecordingResult>((res) => {
-          setTimeout(() => res({
-            uri: recorder.uri ?? "",
-            contentType: contentTypeForUri(recorder.uri ?? ""),
-          }), 500);
+          setTimeout(() => {
+            const uri = recorder.uri ?? "";
+            res({ uri, contentType: contentTypeForUri(uri) });
+          }, 500);
         }),
       ]);
       sub?.remove?.();
       return result;
     },
   };
+}
+
+function withFileScheme(path: string): string {
+  if (!path) return "";
+  if (/^[a-z]+:\/\//i.test(path)) return path;
+  return `file://${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 function contentTypeForUri(uri: string): string {

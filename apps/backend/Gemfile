@@ -40,6 +40,9 @@ gem "kamal", require: false
 # Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/]
 gem "thruster", require: false
 
+# HTTP client for ElevenLabs / Deepgram REST endpoints
+gem "faraday"
+
 group :development, :test do
   # Load ENV vars from .env files at boot. Production uses real env vars.
   gem "dotenv-rails"

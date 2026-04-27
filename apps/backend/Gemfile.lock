@@ -396,6 +396,7 @@ DEPENDENCIES
   capybara
   debug
   dotenv-rails
+  faraday
   importmap-rails
   json-schema
   kamal

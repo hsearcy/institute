@@ -70,3 +70,7 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
+
+# WebSocket client used by Stt::DeepgramSession to talk to Deepgram
+gem "faye-websocket"
+gem "eventmachine"

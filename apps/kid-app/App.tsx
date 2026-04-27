@@ -1,5 +1,5 @@
 import { Canvas } from "@react-three/fiber/native";
-import { Suspense, useRef, useState } from "react";
+import { Suspense, useCallback, useRef, useState } from "react";
 import {
   GestureHandlerRootView,
   PanGestureHandler,
@@ -49,15 +49,18 @@ export default function App() {
     setYaw((prev) => prev + e.nativeEvent.translationX * 0.0001);
   };
 
-  const onPortalTap = (id: PortalId) => {
+  const onPortalTap = useCallback((id: PortalId) => {
     if (id === "spell-cast") {
       setMode({ kind: "minigame", portalId: id, runId: `${Date.now()}` });
     } else {
       setToast(`Coming soon — ${PORTAL_LABELS[id]}!`);
     }
-  };
+  }, []);
 
-  const onRoundComplete = async (result: { status: "completed" | "aborted"; outcomes: AttemptOutcome[]; durationMs: number }) => {
+  // useCallback with empty deps — onRoundComplete must be stable so
+  // MiniGameMount's round-fetch effect doesn't re-fire on every parent
+  // re-render (e.g. on every voiceUi state change).
+  const onRoundComplete = useCallback(async (result: { status: "completed" | "aborted"; outcomes: AttemptOutcome[]; durationMs: number }) => {
     console.log("[round complete]", result);
     sceneHandleRef.current = null;
     setMode({ kind: "hub" });
@@ -76,7 +79,7 @@ export default function App() {
     } catch (e) {
       console.error("failed to persist outcomes", e);
     }
-  };
+  }, []);
 
   return (
     <GestureHandlerRootView style={styles.root}>

@@ -36,3 +36,7 @@ export const TUTOR_SECRET: string =
 
 /** Hardcoded for M5 — multi-profile picker is later. */
 export const PROFILE = { id: PROFILE_ID, name: "Sam", age: 6 } as const;
+
+/** Tutor backend WebSocket URL (ActionCable mount). Empty disables voice. */
+export const TUTOR_WS_URL: string =
+  TUTOR_BASE_URL ? TUTOR_BASE_URL.replace(/^http/, "ws") + "/cable" : "";

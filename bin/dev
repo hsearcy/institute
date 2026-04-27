@@ -50,18 +50,42 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 # --- 1. rails backend ---
+# Bail early if :3000 is already taken (stale rails server etc.) — much
+# better than the script silently hanging while polling /up forever.
+if ss -tln 2>/dev/null | grep -qE ':3000\s'; then
+  echo "[dev] ERROR: port 3000 is already in use. Likely a stale Rails server."
+  echo "[dev] To free it: pkill -f 'rails server' || pkill -f 'puma'"
+  exit 1
+fi
+
 echo "[dev] starting Rails backend on :3000 (log: $RAILS_LOG)…"
 ( cd "$BACKEND" && RBENV_VERSION=3.4.7 bin/rails server -b 0.0.0.0 -p 3000 ) \
   > "$RAILS_LOG" 2>&1 &
-PIDS+=($!)
+RAILS_PID=$!
+PIDS+=("$RAILS_PID")
 
+# Wait for Rails to respond on /up. Bail loudly if the process died OR we
+# never get a response — don't silently fall through to starting the kid-app.
+RAILS_UP=0
 for _ in {1..30}; do
+  if ! kill -0 "$RAILS_PID" 2>/dev/null; then
+    echo "[dev] ERROR: Rails server exited during boot. Tail of $RAILS_LOG:"
+    tail -n 30 "$RAILS_LOG"
+    exit 1
+  fi
   if curl -fsS -o /dev/null http://127.0.0.1:3000/up 2>/dev/null; then
     echo "[dev] Rails is up."
+    RAILS_UP=1
     break
   fi
   sleep 1
 done
+
+if [[ "$RAILS_UP" -ne 1 ]]; then
+  echo "[dev] ERROR: Rails didn't respond on /up within 30s. Tail of $RAILS_LOG:"
+  tail -n 30 "$RAILS_LOG"
+  exit 1
+fi
 
 echo "[dev] backend reachable from your tailnet at: $TUTOR_URL"
 

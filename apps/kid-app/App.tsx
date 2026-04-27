@@ -17,9 +17,12 @@ import { SHOW_FPS, type PortalId, PROFILE } from "./src/config";
 import { getDb } from "./src/persistence/db";
 import { loadSkillState, saveSkillState } from "./src/persistence/skillStateRepo";
 import { appendAttempt } from "./src/persistence/attemptRepo";
-import { MiniGameMount } from "./src/minigame/MiniGameMount";
+import { MiniGameMount, type VoiceUiState } from "./src/minigame/MiniGameMount";
 import { NumberPad } from "./src/minigame/NumberPad";
 import { BackButton } from "./src/minigame/BackButton";
+import { MicIcon } from "./src/minigame/MicIcon";
+import { Confirmation } from "./src/minigame/Confirmation";
+import { Pressable, StyleSheet as RNStyleSheet } from "react-native";
 
 const PORTAL_LABELS: Record<PortalId, string> = {
   "spell-cast": "Spell Cast",
@@ -36,6 +39,10 @@ export default function App() {
   const [fps, setFps] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const sceneHandleRef = useRef<SpellCastSceneHandle | null>(null);
+  const [voiceUi, setVoiceUi] = useState<VoiceUiState>({ kind: "off" });
+  const stopRecorderRef = useRef<(() => void) | null>(null);
+  const confirmPickRef = useRef<((n: number) => void) | null>(null);
+  const confirmNeitherRef = useRef<(() => void) | null>(null);
 
   const onPan = (e: PanGestureHandlerGestureEvent) => {
     if (mode.kind !== "hub") return; // disable orbit during a round
@@ -88,6 +95,10 @@ export default function App() {
                   portalId={mode.portalId}
                   onComplete={onRoundComplete}
                   handleRef={sceneHandleRef}
+                  onVoiceUiChange={setVoiceUi}
+                  stopRecorderRef={stopRecorderRef}
+                  confirmPickRef={confirmPickRef}
+                  confirmNeitherRef={confirmNeitherRef}
                 />
               )}
             </Canvas>
@@ -100,6 +111,21 @@ export default function App() {
             <>
               <BackButton onPress={() => sceneHandleRef.current?.abort()} />
               <NumberPad onPress={(n) => sceneHandleRef.current?.submitAnswer(n)} />
+              {voiceUi.kind === "listening" && (
+                <Pressable
+                  style={voiceStyles.micHit}
+                  onPress={() => stopRecorderRef.current?.()}
+                >
+                  <MicIcon active />
+                </Pressable>
+              )}
+              {voiceUi.kind === "confirm" && (
+                <Confirmation
+                  candidates={voiceUi.candidates}
+                  onPick={(n) => confirmPickRef.current?.(n)}
+                  onNeither={() => confirmNeitherRef.current?.()}
+                />
+              )}
             </>
           )}
         </View>
@@ -111,4 +137,13 @@ export default function App() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#7ec0ee" },
   canvas: { flex: 1 },
+});
+
+const voiceStyles = RNStyleSheet.create({
+  micHit: {
+    position: "absolute",
+    bottom: 60, alignSelf: "center",
+    width: 100, height: 100,
+    alignItems: "center", justifyContent: "center",
+  },
 });

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet } from "react-native";
 import { plugin as spellCastPlugin } from "@institute/minigame-spell-cast";
 import { register, getPlugin, validateParams, type RoundResult } from "@institute/plugin-engine";
 import { Scene as SpellCastScene, type SpellCastSceneHandle } from "@institute/minigame-spell-cast";
@@ -15,8 +14,6 @@ import { ensureMicPermission } from "../voice/permission";
 import { startRecorder, type RecorderHandle, type RecordingResult } from "../voice/recorder";
 import { speak } from "../voice/ttsClient";
 import { uploadAndTranscribe, type SttResult } from "../voice/sttHttp";
-import { MicIcon } from "./MicIcon";
-import { Confirmation } from "./Confirmation";
 
 let registered = false;
 function ensureRegistered() {
@@ -26,24 +23,39 @@ function ensureRegistered() {
   registered = true;
 }
 
-type Props = {
-  portalId: PortalId;
-  onComplete: (r: RoundResult) => void;
-  handleRef: React.MutableRefObject<SpellCastSceneHandle | null>;
-};
-
-type VoiceState =
+/**
+ * Voice-flow UI state surfaced to App.tsx so that the overlay components
+ * (mic icon, confirmation modal) can render OUTSIDE the R3F Canvas. (R3F
+ * panics if RN <View> components mount as scene-graph children.)
+ */
+export type VoiceUiState =
   | { kind: "off" }
   | { kind: "speaking" }
   | { kind: "listening" }
   | { kind: "uploading" }
   | { kind: "confirm"; candidates: [number, number] };
 
-export function MiniGameMount({ portalId, onComplete, handleRef }: Props) {
+type Props = {
+  portalId: PortalId;
+  onComplete: (r: RoundResult) => void;
+  handleRef: React.MutableRefObject<SpellCastSceneHandle | null>;
+  /** Mounted overlay reads this and renders UI accordingly. */
+  onVoiceUiChange: (s: VoiceUiState) => void;
+  /** Stop-recording-early hook the App's mic-tap calls. */
+  stopRecorderRef: React.MutableRefObject<(() => void) | null>;
+  /** Wired to the Confirmation modal's "pick" buttons. */
+  confirmPickRef: React.MutableRefObject<((n: number) => void) | null>;
+  /** Wired to the Confirmation modal's "neither" link. */
+  confirmNeitherRef: React.MutableRefObject<(() => void) | null>;
+};
+
+export function MiniGameMount({
+  portalId, onComplete, handleRef,
+  onVoiceUiChange, stopRecorderRef, confirmPickRef, confirmNeitherRef,
+}: Props) {
   ensureRegistered();
   const plugin = getPlugin(portalId);
   const [round, setRound] = useState<TutorResponse | null>(null);
-  const [voiceState, setVoiceState] = useState<VoiceState>({ kind: "off" });
   const recorderRef = useRef<RecorderHandle | null>(null);
   const voiceEnabledRef = useRef(false);
 
@@ -116,8 +128,7 @@ export function MiniGameMount({ portalId, onComplete, handleRef }: Props) {
         case "high":
           if (r.normalized !== null) {
             handleRef.current?.submitAnswer(r.normalized);
-            setVoiceState({ kind: "off" });
-            // Start the next listen after a short beat for the goblin animation.
+            onVoiceUiChange({ kind: "off" });
             setTimeout(() => listenForAnswer(), 600);
           }
           break;
@@ -126,11 +137,21 @@ export function MiniGameMount({ portalId, onComplete, handleRef }: Props) {
             const closest = expected
               .slice()
               .sort((a, b) => Math.abs(a - r.normalized!) - Math.abs(b - r.normalized!))[0] ?? r.normalized;
-            setVoiceState({ kind: "confirm", candidates: [r.normalized, closest] });
+            // Wire the confirmation buttons for App.tsx.
+            confirmPickRef.current = (n: number) => {
+              handleRef.current?.submitAnswer(n);
+              onVoiceUiChange({ kind: "off" });
+              setTimeout(() => listenForAnswer(), 400);
+            };
+            confirmNeitherRef.current = () => {
+              onVoiceUiChange({ kind: "off" });
+              setTimeout(() => listenForAnswer(), 200);
+            };
+            onVoiceUiChange({ kind: "confirm", candidates: [r.normalized, closest] });
           }
           break;
         case "no_match":
-          setVoiceState({ kind: "off" });
+          onVoiceUiChange({ kind: "off" });
           setTimeout(() => listenForAnswer(), 200);
           break;
       }
@@ -139,24 +160,33 @@ export function MiniGameMount({ portalId, onComplete, handleRef }: Props) {
     const listenForAnswer = async () => {
       if (cancelled || !voiceEnabledRef.current) return;
       try {
-        setVoiceState({ kind: "listening" });
+        onVoiceUiChange({ kind: "listening" });
         const handle = await startRecorder({
           maxDurationMs: 4000,
           onAutoStop: async (recording) => {
             recorderRef.current = null;
+            stopRecorderRef.current = null;
             await transcribe(recording);
           },
         });
         recorderRef.current = handle;
+        // Tap-to-stop hook for App.tsx's mic Pressable.
+        stopRecorderRef.current = () => {
+          handle.stop().then((rec) => {
+            if (!cancelled) transcribe(rec);
+          }).catch(() => {});
+          stopRecorderRef.current = null;
+          recorderRef.current = null;
+        };
       } catch (e) {
         console.warn("recorder failed", e);
-        setVoiceState({ kind: "off" });
+        onVoiceUiChange({ kind: "off" });
       }
     };
 
     const transcribe = async (recording: RecordingResult) => {
       if (cancelled) return;
-      setVoiceState({ kind: "uploading" });
+      onVoiceUiChange({ kind: "uploading" });
       try {
         const result = await uploadAndTranscribe({
           baseUrl: TUTOR_BASE_URL,
@@ -167,8 +197,7 @@ export function MiniGameMount({ portalId, onComplete, handleRef }: Props) {
         handleResult(result);
       } catch (e) {
         console.warn("stt upload failed", e);
-        setVoiceState({ kind: "off" });
-        // Don't auto-retry; tap-to-talk will be available via the mic button.
+        onVoiceUiChange({ kind: "off" });
       }
     };
 
@@ -177,7 +206,7 @@ export function MiniGameMount({ portalId, onComplete, handleRef }: Props) {
       voiceEnabledRef.current = true;
 
       if (intro) {
-        setVoiceState({ kind: "speaking" });
+        onVoiceUiChange({ kind: "speaking" });
         try {
           await speak({ baseUrl: TUTOR_BASE_URL, bearerToken: TUTOR_SECRET || undefined, text: intro });
         } catch (e) {
@@ -192,48 +221,22 @@ export function MiniGameMount({ portalId, onComplete, handleRef }: Props) {
       voiceEnabledRef.current = false;
       recorderRef.current?.stop().catch(() => {});
       recorderRef.current = null;
+      stopRecorderRef.current = null;
+      confirmPickRef.current = null;
+      confirmNeitherRef.current = null;
+      onVoiceUiChange({ kind: "off" });
     };
-  }, [plugin, round, handleRef]);
+  }, [plugin, round, handleRef, onVoiceUiChange, stopRecorderRef, confirmPickRef, confirmNeitherRef]);
 
   if (!plugin || !round) return null;
 
-  // M2 expedient cast — Scene is generic per plugin. Refactor in M6.
   const Scene = plugin.Scene as unknown as typeof SpellCastScene;
   return (
-    <>
-      <Scene
-        params={round.params as never}
-        skillId={round.skillId}
-        onComplete={onComplete}
-        onHandleReady={(h) => { handleRef.current = h; }}
-      />
-      {voiceState.kind === "listening" && (
-        <Pressable
-          style={styles.micHit}
-          onPress={() => { recorderRef.current?.stop().catch(() => {}); }}
-        >
-          <MicIcon active />
-        </Pressable>
-      )}
-      {voiceState.kind === "confirm" && (
-        <Confirmation
-          candidates={voiceState.candidates}
-          onPick={(n) => {
-            handleRef.current?.submitAnswer(n);
-            setVoiceState({ kind: "off" });
-          }}
-          onNeither={() => setVoiceState({ kind: "off" })}
-        />
-      )}
-    </>
+    <Scene
+      params={round.params as never}
+      skillId={round.skillId}
+      onComplete={onComplete}
+      onHandleReady={(h) => { handleRef.current = h; }}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  micHit: {
-    position: "absolute",
-    bottom: 60, alignSelf: "center",
-    width: 100, height: 100,
-    alignItems: "center", justifyContent: "center",
-  },
-});

@@ -23,6 +23,11 @@ export type UploadOpts = {
 export async function uploadAndTranscribe(opts: UploadOpts): Promise<SttResult> {
   if (!opts.baseUrl) throw new Error("no tutor base URL configured");
 
+  console.log("[stt] upload uri=", opts.recording.uri, "ct=", opts.recording.contentType);
+  if (!opts.recording.uri) {
+    throw new Error("recording uri is empty — recorder didn't produce a file");
+  }
+
   const form = new FormData();
   // RN's FormData accepts a { uri, name, type } object as the file value.
   form.append("audio", {

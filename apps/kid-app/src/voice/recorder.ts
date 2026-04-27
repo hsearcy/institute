@@ -47,10 +47,12 @@ export async function startRecorder(opts: StartRecorderOpts = {}): Promise<Recor
   const sub = recorder.addListener(
     "recordingStatusUpdate",
     (status: { isFinished?: boolean; url?: string | null }) => {
+      console.log("[recorder] status:", JSON.stringify(status), "recorder.uri=", recorder.uri);
       if (status.isFinished && !resolved) {
         resolved = true;
         const uri = status.url ?? recorder.uri ?? "";
         const result: RecordingResult = { uri, contentType: contentTypeForUri(uri) };
+        console.log("[recorder] auto-stopped, uri=", uri);
         resolveAuto?.(result);
         opts.onAutoStop?.(result);
       }

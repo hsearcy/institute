@@ -75,3 +75,33 @@ If anything fails:
 - Check `apps/backend/log/development.log` for the LLM raw response.
 - Confirm `EXPO_PUBLIC_TUTOR_BASE_URL` is reachable from the device (browser-test the URL on the tablet first).
 - Confirm the on-device SQLite has rows: `sqlite3 ~/.expo/devices/<id>/institute.db "SELECT * FROM skill_state"` (or equivalent inspection).
+
+---
+
+## M4 manual on-device checks
+
+After M4 ships:
+
+### Setup
+1. `apps/backend/.env` has `DEEPGRAM_API_KEY`, `ELEVENLABS_API_KEY`, and `ELEVENLABS_VOICE_ID` set. (Free-tier ElevenLabs requires a personal voice ID — library voices like Rachel return 402.)
+2. Run `/home/hfsearcy/git/institute/bin/dev`.
+
+### Checks
+- [ ] **First Spell Cast tap:** native mic permission prompt appears. Grant it.
+- [ ] **Tutor speaks intro:** ElevenLabs voice plays through the speaker.
+- [ ] **Mic icon appears + pulses** after the intro finishes; recording auto-stops at 4s OR you tap the mic icon to stop early.
+- [ ] **Say "two":** within ~1.5-2.5s of stopping, the goblin shrinks ~20%. Mic re-opens for the next step.
+- [ ] **Say "tree":** normalizer maps to 3. If 3 isn't expected, confirm modal appears: "Did you say 3 or <closest>?". Tap a choice → answer submits.
+- [ ] **Say "blah" / silence:** result is no_match; mic re-opens automatically.
+- [ ] **Backend offline (kill rails):** next round shows the goblin without intro audio + no mic; tap NumberPad still works (M2 path).
+- [ ] **Mic permission denied (settings → app):** voice flow disabled; NumberPad-only mode.
+- [ ] **Rails log shows:** `Started POST "/tts"` (one per round), `Started POST "/stt"` (one per spoken answer), and `[tutor] got round: skill=...` in kid-app log.
+
+### Known characteristics (single-shot path)
+- Each spoken answer takes ~1.5-2.5s end-to-end (4s max recording + ~500ms upload + ~700ms Deepgram transcription).
+- Streaming WS path (sub-second feedback) is in the backend (`SttChannel`, `Stt::DeepgramSession`) but unused — needs a custom dev client + `react-native-audio-record` to activate.
+
+If anything fails:
+- `[stt] upload uri=` log should show `file:///data/...` (with scheme). Empty or path-only uri = recorder bug.
+- `Tts::Stream error: ElevenLabs returned 402` = library voice on free tier. Use a personal voice ID.
+- `Stt::PreRecorded error: 401` = bad Deepgram key.

@@ -12,6 +12,11 @@ Rails.application.configure do
   config.hosts << /\A100\.\d{1,3}\.\d{1,3}\.\d{1,3}\z/
   config.hosts << /\.ts\.net\z/
 
+  # Permissive origin policy for Cable in dev — phone connects from a
+  # Tailscale IP that doesn't match the configured site URL.
+  config.action_cable.disable_request_forgery_protection = true
+  config.action_cable.allowed_request_origins = [/.*/]
+
   # Do not eager load code on boot.
   config.eager_load = false
 

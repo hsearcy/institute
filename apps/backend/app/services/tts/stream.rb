@@ -16,16 +16,22 @@ module Tts
     end
 
     module RealHttp
+      # Buffers the response body locally so error responses retain their
+      # body (Faraday's `on_data` callback would otherwise consume bytes
+      # before we know the status, hiding the error JSON from the log).
+      # Trade-off: we forfeit true byte-by-byte streaming. ElevenLabs
+      # responses for ~1 sentence of TTS are ~3-5KB and arrive in <1s,
+      # so the perceived latency hit is negligible.
       def self.post(url, body, headers, &on_chunk)
-        conn = Faraday.new do |f|
-          f.adapter :net_http
-        end
+        conn = Faraday.new { |f| f.adapter :net_http }
         response = conn.post(url) do |req|
           req.headers.merge!(headers)
           req.body = body
-          req.options.on_data = proc { |chunk, _| on_chunk.call(chunk) if chunk && !chunk.empty? }
         end
-        raise StreamError.new(response.status, response.body) if response.status >= 400
+        if response.status >= 400
+          raise StreamError.new(response.status, response.body.to_s)
+        end
+        on_chunk.call(response.body) if response.body && !response.body.empty?
       end
     end
 

@@ -1,0 +1,38 @@
+# Each row: [transcript, expected_answers, expected_normalized, expected_confidence]
+# expected_confidence: high | low | no_match
+
+digits:
+  - ["2",                [2, 4, 6, 8, 10],  2,    high]
+  - ["10",               [2, 4, 6, 8, 10],  10,   high]
+  - ["7.",               [5, 6, 7],         7,    high]
+  - [" 4 ",              [2, 4],            4,    high]
+
+word_numbers:
+  - ["two",              [2, 4, 6, 8, 10],  2,    high]
+  - ["four",             [2, 4, 6, 8, 10],  4,    high]
+  - ["ten",              [2, 4, 6, 8, 10],  10,   high]
+  - ["TWELVE",           [10, 11, 12],      12,   high]
+  - ["nineteen",         [18, 19, 20],      19,   high]
+
+toddler_isms:
+  - ["free",             [1, 2, 3],         3,    high]
+  - ["tree",             [3, 4, 5],         3,    high]
+  - ["twee",             [2, 3, 4],         3,    high]
+  - ["fwee",             [3, 4],            3,    high]
+  - ["fife",             [4, 5, 6],         5,    high]
+  - ["fwive",            [5],               5,    high]
+  - ["tin",              [9, 10],           10,   high]
+  - ["noyne",            [8, 9, 10],        9,    high]
+
+unexpected_but_valid:
+  - ["six",              [2, 4, 8, 10],     6,    low]
+  - ["one hundred",      [2, 4],            100,  low]
+
+unrecognizable:
+  - ["xyzzy",            [1, 2, 3],         null, no_match]
+  - ["",                 [1, 2, 3],         null, no_match]
+  - ["I don't know",     [1, 2, 3],         null, no_match]
+
+embedded_number:
+  - ["i think it's two", [1, 2, 3],         2,    high]
+  - ["um, four maybe",   [2, 4, 6],         4,    high]

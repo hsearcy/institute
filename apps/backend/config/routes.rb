@@ -13,6 +13,7 @@ Rails.application.routes.draw do
   # root "posts#index"
 
   post "/tutor/next_round", to: "tutor#next_round"
+  post "/tts", to: "tts#create"
 
   mount ActionCable.server => "/cable"
 end

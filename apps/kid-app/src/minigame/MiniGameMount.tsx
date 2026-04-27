@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Pressable, StyleSheet } from "react-native";
 import { plugin as spellCastPlugin } from "@institute/minigame-spell-cast";
 import { register, getPlugin, validateParams, type RoundResult } from "@institute/plugin-engine";
 import { Scene as SpellCastScene, type SpellCastSceneHandle } from "@institute/minigame-spell-cast";
@@ -11,13 +12,11 @@ import { loadRecentAttempts } from "../persistence/attemptRepo";
 import { getAvailablePlugins } from "../tutor/pluginSchemas";
 import { requestNextRound, type TutorResponse } from "../tutor/client";
 import { ensureMicPermission } from "../voice/permission";
-import { startRecorder } from "../voice/recorder";
-import { startSttSession } from "../voice/sttSession";
+import { startRecorder, type RecorderHandle, type RecordingResult } from "../voice/recorder";
 import { speak } from "../voice/ttsClient";
-import { runVoiceFlow, type VoiceFlowHandle } from "../voice/voiceFlow";
+import { uploadAndTranscribe, type SttResult } from "../voice/sttHttp";
 import { MicIcon } from "./MicIcon";
 import { Confirmation } from "./Confirmation";
-import { TUTOR_WS_URL } from "../config";
 
 let registered = false;
 function ensureRegistered() {
@@ -33,16 +32,22 @@ type Props = {
   handleRef: React.MutableRefObject<SpellCastSceneHandle | null>;
 };
 
+type VoiceState =
+  | { kind: "off" }
+  | { kind: "speaking" }
+  | { kind: "listening" }
+  | { kind: "uploading" }
+  | { kind: "confirm"; candidates: [number, number] };
+
 export function MiniGameMount({ portalId, onComplete, handleRef }: Props) {
   ensureRegistered();
   const plugin = getPlugin(portalId);
   const [round, setRound] = useState<TutorResponse | null>(null);
-  const [voiceState, setVoiceState] = useState<
-    | { kind: "off" }
-    | { kind: "speaking" | "listening" }
-    | { kind: "confirm"; candidates: [number, number] }
-  >({ kind: "off" });
+  const [voiceState, setVoiceState] = useState<VoiceState>({ kind: "off" });
+  const recorderRef = useRef<RecorderHandle | null>(null);
+  const voiceEnabledRef = useRef(false);
 
+  // 1. Fetch the round (M5).
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -96,56 +101,99 @@ export function MiniGameMount({ portalId, onComplete, handleRef }: Props) {
     return () => { cancelled = true; };
   }, [portalId, plugin, onComplete]);
 
+  // 2. Voice flow (single-shot per step).
   useEffect(() => {
     if (!plugin || !round) return;
-    let voice: VoiceFlowHandle | null = null;
     let cancelled = false;
-    (async () => {
-      if (!(await ensureMicPermission())) return; // NumberPad-only mode
+    voiceEnabledRef.current = false;
 
-      const intro = (round.params as { intro?: string })?.intro ?? "";
-      const expected = (round.params as { sequence?: number[] })?.sequence ?? [];
+    const expected = (round.params as { sequence?: number[] })?.sequence ?? [];
+    const intro    = (round.params as { intro?: string })?.intro ?? "";
 
-      setVoiceState({ kind: "speaking" });
+    const handleResult = (r: SttResult) => {
+      if (cancelled) return;
+      switch (r.confidence) {
+        case "high":
+          if (r.normalized !== null) {
+            handleRef.current?.submitAnswer(r.normalized);
+            setVoiceState({ kind: "off" });
+            // Start the next listen after a short beat for the goblin animation.
+            setTimeout(() => listenForAnswer(), 600);
+          }
+          break;
+        case "low":
+          if (r.normalized !== null) {
+            const closest = expected
+              .slice()
+              .sort((a, b) => Math.abs(a - r.normalized!) - Math.abs(b - r.normalized!))[0] ?? r.normalized;
+            setVoiceState({ kind: "confirm", candidates: [r.normalized, closest] });
+          }
+          break;
+        case "no_match":
+          setVoiceState({ kind: "off" });
+          setTimeout(() => listenForAnswer(), 200);
+          break;
+      }
+    };
+
+    const listenForAnswer = async () => {
+      if (cancelled || !voiceEnabledRef.current) return;
       try {
-        voice = await runVoiceFlow({
-          intro,
-          expectedAnswers: expected,
-          deps: {
-            speak: (text) => speak({ baseUrl: TUTOR_BASE_URL, bearerToken: TUTOR_SECRET || undefined, text }),
-            startRecorder: (onChunk) =>
-              startRecorder({
-                onChunk,
-                onStart: () => { if (!cancelled) setVoiceState({ kind: "listening" }); },
-                onError: () => {},
-              }),
-            startSttSession: (opts) =>
-              startSttSession({
-                wsUrl: TUTOR_WS_URL,
-                bearerToken: TUTOR_SECRET || undefined,
-                expectedAnswers: opts.expectedAnswers,
-                onResult: opts.onResult,
-                onError: opts.onError,
-              }),
-            submitAnswer: (n) => handleRef.current?.submitAnswer(n),
-            onLowConfidence: (candidate, expectedSet) => {
-              const closest = expectedSet
-                .slice()
-                .sort((a, b) => Math.abs(a - candidate) - Math.abs(b - candidate))[0] ?? candidate;
-              setVoiceState({ kind: "confirm", candidates: [candidate, closest] });
-            },
-            onNoMatch: () => { /* mic re-opens automatically by Deepgram endpointing */ },
+        setVoiceState({ kind: "listening" });
+        const handle = await startRecorder({
+          maxDurationMs: 4000,
+          onAutoStop: async (recording) => {
+            recorderRef.current = null;
+            await transcribe(recording);
           },
         });
+        recorderRef.current = handle;
       } catch (e) {
-        // recorder.ts is currently a stub that throws; that's fine for now —
-        // permission flow + Scene still mount, just without voice. Task 14
-        // wires the real recorder.
-        console.warn("voice flow failed; NumberPad fallback", e);
+        console.warn("recorder failed", e);
+        setVoiceState({ kind: "off" });
       }
+    };
+
+    const transcribe = async (recording: RecordingResult) => {
+      if (cancelled) return;
+      setVoiceState({ kind: "uploading" });
+      try {
+        const result = await uploadAndTranscribe({
+          baseUrl: TUTOR_BASE_URL,
+          bearerToken: TUTOR_SECRET || undefined,
+          expectedAnswers: expected,
+          recording,
+        });
+        handleResult(result);
+      } catch (e) {
+        console.warn("stt upload failed", e);
+        setVoiceState({ kind: "off" });
+        // Don't auto-retry; tap-to-talk will be available via the mic button.
+      }
+    };
+
+    (async () => {
+      if (!(await ensureMicPermission())) return; // NumberPad-only mode
+      voiceEnabledRef.current = true;
+
+      if (intro) {
+        setVoiceState({ kind: "speaking" });
+        try {
+          await speak({ baseUrl: TUTOR_BASE_URL, bearerToken: TUTOR_SECRET || undefined, text: intro });
+        } catch (e) {
+          console.warn("tts failed; continuing without intro audio", e);
+        }
+      }
+      await listenForAnswer();
     })();
-    return () => { cancelled = true; voice?.stop(); };
-  }, [plugin, round]);
+
+    return () => {
+      cancelled = true;
+      voiceEnabledRef.current = false;
+      recorderRef.current?.stop().catch(() => {});
+      recorderRef.current = null;
+    };
+  }, [plugin, round, handleRef]);
 
   if (!plugin || !round) return null;
 
@@ -159,14 +207,33 @@ export function MiniGameMount({ portalId, onComplete, handleRef }: Props) {
         onComplete={onComplete}
         onHandleReady={(h) => { handleRef.current = h; }}
       />
-      {voiceState.kind === "listening" && <MicIcon active />}
+      {voiceState.kind === "listening" && (
+        <Pressable
+          style={styles.micHit}
+          onPress={() => { recorderRef.current?.stop().catch(() => {}); }}
+        >
+          <MicIcon active />
+        </Pressable>
+      )}
       {voiceState.kind === "confirm" && (
         <Confirmation
           candidates={voiceState.candidates}
-          onPick={(n) => { handleRef.current?.submitAnswer(n); setVoiceState({ kind: "listening" }); }}
-          onNeither={() => setVoiceState({ kind: "listening" })}
+          onPick={(n) => {
+            handleRef.current?.submitAnswer(n);
+            setVoiceState({ kind: "off" });
+          }}
+          onNeither={() => setVoiceState({ kind: "off" })}
         />
       )}
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  micHit: {
+    position: "absolute",
+    bottom: 60, alignSelf: "center",
+    width: 100, height: 100,
+    alignItems: "center", justifyContent: "center",
+  },
+});

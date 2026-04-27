@@ -14,6 +14,7 @@ Rails.application.routes.draw do
 
   post "/tutor/next_round", to: "tutor#next_round"
   post "/tts", to: "tts#create"
+  post "/stt", to: "stt#create"
 
   mount ActionCable.server => "/cable"
 end

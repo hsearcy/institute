@@ -1,9 +1,9 @@
 import { useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { useFrame } from "@react-three/fiber/native";
 import { Float, RoundedBox, Sparkles } from "@react-three/drei/native";
-import type { Group, Mesh } from "three";
+import { Shape, ExtrudeGeometry, type Group } from "three";
 import type { SceneProps, AttemptOutcome } from "@institute/plugin-engine";
-import { MiniStage, BlobShadow, PALETTE, flatStandard } from "@institute/minigame-kit";
+import { MiniStage, BlobShadow, PALETTE, flatStandard, glowStandard } from "@institute/minigame-kit";
 import type { BlockTowerParams } from "./manifest.ts";
 import { evaluate } from "./evaluate.ts";
 
@@ -40,6 +40,80 @@ const BLOCK_SIZE = 0.72;
 const BLOCK_GAP = 0.1;
 const BLOCK_STEP = BLOCK_SIZE + BLOCK_GAP;
 
+// Glossy toy-plastic material for the blocks — smooth + a touch emissive so it
+// pops under bloom.
+function toyBlock(color: string) {
+  return flatStandard(color, { emissive: color, emissiveIntensity: 0.12, roughness: 0.32, flatShading: false });
+}
+
+// A cute face (eyes + smile) on the +Z face of a block, so the blocks read as
+// friendly toy-block buddies instead of plain cubes. Geometry-only (native-safe).
+function BlockFace({ size }: { size: number }) {
+  const z = size / 2 + 0.012;
+  const ex = size * 0.2;
+  const er = size * 0.11;
+  return (
+    <group position={[0, 0, z]}>
+      {[-ex, ex].map((x, i) => (
+        <group key={i} position={[x, size * 0.08, 0]}>
+          <mesh>
+            <sphereGeometry args={[er, 14, 14]} />
+            <meshStandardMaterial color="#ffffff" roughness={0.3} />
+          </mesh>
+          <mesh position={[0, 0, er * 0.55]}>
+            <sphereGeometry args={[er * 0.52, 12, 12]} />
+            <meshStandardMaterial color="#2a2a33" roughness={0.3} />
+          </mesh>
+          <mesh position={[er * 0.22, er * 0.28, er * 0.8]}>
+            <sphereGeometry args={[er * 0.2, 8, 8]} />
+            <meshBasicMaterial color="#ffffff" />
+          </mesh>
+        </group>
+      ))}
+      {/* upward smile (half-torus, flipped) */}
+      <mesh position={[0, -size * 0.12, 0]} rotation={[0, 0, Math.PI]}>
+        <torusGeometry args={[size * 0.15, size * 0.028, 8, 18, Math.PI]} />
+        <meshStandardMaterial color="#2a2a33" roughness={0.4} />
+      </mesh>
+    </group>
+  );
+}
+
+// The goal: a glowing golden star the tower reaches up to ("stack up to the star!").
+function GoalStar({ y }: { y: number }) {
+  const geo = useMemo(() => {
+    const shape = new Shape();
+    const spikes = 5;
+    const outer = 0.34;
+    const inner = 0.15;
+    for (let i = 0; i < spikes * 2; i++) {
+      const r = i % 2 === 0 ? outer : inner;
+      const a = (i / (spikes * 2)) * Math.PI * 2 - Math.PI / 2;
+      const px = Math.cos(a) * r;
+      const py = Math.sin(a) * r;
+      if (i === 0) shape.moveTo(px, py);
+      else shape.lineTo(px, py);
+    }
+    shape.closePath();
+    const g = new ExtrudeGeometry(shape, {
+      depth: 0.1,
+      bevelEnabled: true,
+      bevelThickness: 0.04,
+      bevelSize: 0.04,
+      bevelSegments: 2,
+    });
+    g.center();
+    return g;
+  }, []);
+  return (
+    <Float speed={2} rotationIntensity={0.3} floatIntensity={0.5} floatingRange={[-0.08, 0.08]}>
+      <mesh geometry={geo} position={[0, y, 0]}>
+        <meshStandardMaterial {...glowStandard(PALETTE.gold, PALETTE.gold, 0.9)} />
+      </mesh>
+    </Float>
+  );
+}
+
 // A small counter-block used to visualise an addend group. Gentle idle bob.
 function CountBlock({
   index,
@@ -59,8 +133,9 @@ function CountBlock({
   return (
     <group ref={ref} position={position}>
       <RoundedBox args={[0.44, 0.44, 0.44]} radius={0.09} smoothness={3}>
-        <meshStandardMaterial {...flatStandard(color, { emissive: color, emissiveIntensity: 0.08, roughness: 0.7 })} />
+        <meshStandardMaterial {...toyBlock(color)} />
       </RoundedBox>
+      <BlockFace size={0.44} />
     </group>
   );
 }
@@ -97,7 +172,7 @@ function AddendGroup({
 
 // One block in the tower. Animates a bouncy settle when it first appears.
 function TowerBlock({ slot, color }: { slot: number; color: string }) {
-  const ref = useRef<Mesh>(null);
+  const ref = useRef<Group>(null);
   const bornAt = useRef<number | null>(null);
   const restY = slot * BLOCK_STEP + BLOCK_SIZE / 2;
 
@@ -119,15 +194,12 @@ function TowerBlock({ slot, color }: { slot: number; color: string }) {
   });
 
   return (
-    <RoundedBox
-      ref={ref}
-      args={[BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE]}
-      radius={0.12}
-      smoothness={4}
-      position={[0, restY, 0]}
-    >
-      <meshStandardMaterial {...flatStandard(color, { emissive: color, emissiveIntensity: 0.1, roughness: 0.7 })} />
-    </RoundedBox>
+    <group ref={ref} position={[0, restY, 0]}>
+      <RoundedBox args={[BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE]} radius={0.12} smoothness={4}>
+        <meshStandardMaterial {...toyBlock(color)} />
+      </RoundedBox>
+      <BlockFace size={BLOCK_SIZE} />
+    </group>
   );
 }
 
@@ -241,14 +313,9 @@ export function Scene({ params, onComplete, onHandleReady, skillId }: Props) {
           ))}
         </group>
 
-        {/* Goal marker: an upright gold target hoop just above the tower at the
-            target height — "stack up to here", not a distant halo. */}
-        <Float speed={2} rotationIntensity={0.2} floatIntensity={0.5} floatingRange={[-0.06, 0.06]}>
-          <mesh position={[0, goalY, 0]}>
-            <torusGeometry args={[0.62, 0.07, 12, 32]} />
-            <meshStandardMaterial {...flatStandard(PALETTE.gold, { emissive: PALETTE.gold, emissiveIntensity: 0.6, roughness: 0.5, flatShading: false })} />
-          </mesh>
-        </Float>
+        {/* Goal marker: a glowing golden star at the target height — "stack up to
+            the star!" reads better than an abstract hoop for a young child. */}
+        <GoalStar y={goalY} />
 
         {celebrate && (
           <Sparkles count={24} scale={[1.8, goalY + 1, 1.8]} size={4} speed={0.6} color={PALETTE.gold} />

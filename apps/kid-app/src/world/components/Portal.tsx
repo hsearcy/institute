@@ -1,7 +1,8 @@
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber/native";
 import { Float, RoundedBox, Sparkles } from "@react-three/drei/native";
-import type { Group, Mesh } from "three";
+import { Color, DoubleSide } from "three";
+import type { Group, Mesh, ShaderMaterial } from "three";
 import type { PortalDef, PortalId } from "../../config";
 import { glowStandard, flatStandard, PALETTE } from "../theme";
 import { BlobShadow } from "./BlobShadow";
@@ -25,10 +26,62 @@ const PORTAL_COLORS: Record<PortalId, { body: string; emissive: string; flag: st
   "door-code":    { body: "#3a7d52", emissive: "#1a3d22", flag: "#a3e0b8" }, // green+mint
 };
 
+// Swirling vortex membrane. Pure GLSL — native-safe (no DOM/CanvasTexture).
+// A spiral pattern rotates around the gateway center, tinted to the portal's
+// color, with an additive-ish bright core that says "step through me!".
+const VORTEX_VERT = /* glsl */ `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const VORTEX_FRAG = /* glsl */ `
+  precision mediump float;
+  varying vec2 vUv;
+  uniform float uTime;
+  uniform vec3 uColor;
+  uniform vec3 uCore;
+
+  void main() {
+    // center the uv; treat the plane as a disc
+    vec2 p = vUv - 0.5;
+    float r = length(p) * 2.0;
+    float ang = atan(p.y, p.x);
+
+    // spiral: angle twists with radius and drifts over time
+    float swirl = ang * 3.0 + r * 9.0 - uTime * 1.6;
+    float bands = 0.5 + 0.5 * sin(swirl);
+
+    // soft elliptical mask so it fills the gateway and fades at the rim
+    float mask = smoothstep(1.0, 0.55, r);
+
+    // a bright pulsing core pulling the eye into the gateway
+    float core = smoothstep(0.6, 0.0, r) * (0.6 + 0.25 * sin(uTime * 2.0));
+
+    vec3 col = mix(uColor, uCore, bands * 0.6 + core);
+    float a = mask * (0.32 + bands * 0.4 + core * 0.5);
+    gl_FragColor = vec4(col, a);
+  }
+`;
+
 export function Portal({ def, phaseOffsetS = 0, onTap }: Props) {
   const pulseRef = useRef<Group>(null);
   const ringRef = useRef<Mesh>(null);
   const crystalRef = useRef<Mesh>(null);
+  const vortexRef = useRef<ShaderMaterial>(null);
+
+  const colors = PORTAL_COLORS[def.id];
+
+  const vortexUniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uColor: { value: new Color(colors.emissive) },
+      uCore: { value: new Color(colors.flag) },
+    }),
+    [colors.emissive, colors.flag],
+  );
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime + phaseOffsetS;
@@ -41,9 +94,11 @@ export function Portal({ def, phaseOffsetS = 0, onTap }: Props) {
       crystalRef.current.rotation.y = t * 0.9;
       crystalRef.current.position.y = 3.05 + Math.sin(t * 1.3) * 0.08;
     }
+    if (vortexRef.current) {
+      const u = vortexRef.current.uniforms.uTime;
+      if (u) u.value = t;
+    }
   });
-
-  const colors = PORTAL_COLORS[def.id];
 
   return (
     <group position={def.position}>
@@ -75,10 +130,18 @@ export function Portal({ def, phaseOffsetS = 0, onTap }: Props) {
           <meshStandardMaterial {...glowStandard(colors.body, colors.emissive, 0.9)} />
         </mesh>
 
-        {/* shimmering gateway membrane between the pylons */}
+        {/* swirling vortex membrane between the pylons (custom GLSL) */}
         <mesh position={[0, 1.5, 0]}>
-          <planeGeometry args={[0.78, 2.2]} />
-          <meshBasicMaterial color={colors.flag} transparent opacity={0.22} depthWrite={false} />
+          <planeGeometry args={[0.84, 2.3]} />
+          <shaderMaterial
+            ref={vortexRef}
+            vertexShader={VORTEX_VERT}
+            fragmentShader={VORTEX_FRAG}
+            uniforms={vortexUniforms}
+            transparent
+            depthWrite={false}
+            side={DoubleSide}
+          />
         </mesh>
 
         {/* rotating accent ring */}

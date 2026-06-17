@@ -12,6 +12,7 @@
   "dependencies": {
     "@react-three/drei": "*",
     "@react-three/fiber": "*",
+    "expo-asset": "*",
     "react": "*",
     "three": "*"
   },

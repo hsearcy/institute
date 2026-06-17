@@ -5,7 +5,7 @@
 // matches the hub. All primitives + GLSL only → native-safe (web + expo-gl).
 import { useEffect, useMemo, type ReactNode } from "react";
 import { BufferAttribute, CircleGeometry, Color, PerspectiveCamera } from "three";
-import { Float, RoundedBox } from "@react-three/drei/native";
+import { Environment, Float, Lightformer, RoundedBox } from "@react-three/drei/native";
 import { useThree } from "@react-three/fiber/native";
 import { PALETTE, flatStandard } from "./theme.ts";
 import { BlobShadow } from "./BlobShadow.tsx";
@@ -170,9 +170,22 @@ export function MiniStage({ children, scatter = true }: Props) {
     <>
       <StageCamera />
       <fog attach="fog" args={[PALETTE.fog, 18, 46]} />
-      <hemisphereLight args={[PALETTE.hemiSky, PALETTE.hemiGround, 0.9]} />
-      <directionalLight position={[6, 10, 4]} intensity={1.6} color={PALETTE.sun} />
-      <ambientLight intensity={0.12} />
+
+      {/* Procedural studio IBL (baked once, no network HDR) so authored GLB
+          characters/props get real reflections + soft fill — matches the hub. */}
+      <Environment resolution={256} frames={1}>
+        <Lightformer intensity={2.2} color="#fff4dd" position={[2, 6, 3]} scale={[10, 10, 1]} />
+        <Lightformer intensity={0.8} color="#bfe6ff" position={[-6, 3, 4]} scale={[8, 8, 1]} />
+        <Lightformer intensity={1.4} color="#dbe7ff" position={[0, 4, -7]} scale={[10, 5, 1]} />
+        <Lightformer intensity={0.6} color="#7fb056" rotation={[Math.PI / 2, 0, 0]} position={[0, -4, 0]} scale={[12, 12, 1]} />
+      </Environment>
+
+      {/* Direct rig over the IBL: warm key, cool back-rim, soft front fill. */}
+      <hemisphereLight args={[PALETTE.hemiSky, PALETTE.hemiGround, 0.35]} />
+      <directionalLight position={[6, 10, 4]} intensity={1.25} color={PALETTE.sun} />
+      <directionalLight position={[-5, 6, -6]} intensity={0.7} color="#cfe0ff" />
+      <directionalLight position={[0, 2, 9]} intensity={0.4} color="#fff0d0" />
+      <ambientLight intensity={0.06} />
       <SkyDome />
 
       <mesh geometry={geometry}>

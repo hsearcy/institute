@@ -12,7 +12,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@institute/minigame-kit": "workspace:*",
     "@institute/plugin-engine": "workspace:*",
+    "@react-three/drei": "*",
     "@react-three/fiber": "*",
     "react": "*",
     "three": "*",

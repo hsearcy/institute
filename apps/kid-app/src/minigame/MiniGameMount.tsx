@@ -64,11 +64,14 @@ type Props = {
   confirmPickRef: React.MutableRefObject<((n: number) => void) | null>;
   /** Wired to the Confirmation modal's "neither" link. */
   confirmNeitherRef: React.MutableRefObject<(() => void) | null>;
+  /** Fires on every answer (number-pad OR voice) with the evaluation result,
+   *  so the App can drive global audio + juice feedback in one place. */
+  onAnswer?: (r: { correct: boolean; expected: number; isLastStep: boolean }) => void;
 };
 
 export function MiniGameMount({
   portalId, onComplete, handleRef,
-  onVoiceUiChange, stopRecorderRef, confirmPickRef, confirmNeitherRef,
+  onVoiceUiChange, stopRecorderRef, confirmPickRef, confirmNeitherRef, onAnswer,
 }: Props) {
   ensureRegistered();
   const plugin = getPlugin(portalId);
@@ -254,7 +257,19 @@ export function MiniGameMount({
       params={round.params as never}
       skillId={round.skillId}
       onComplete={onComplete}
-      onHandleReady={(h) => { handleRef.current = h; }}
+      onHandleReady={(h) => {
+        // Wrap the scene handle so EVERY answer path (number-pad + voice) emits a
+        // single feedback event for App-level audio/juice — without each game
+        // having to know about it.
+        handleRef.current = {
+          ...h,
+          submitAnswer: (n: number) => {
+            const r = h.submitAnswer(n);
+            onAnswer?.(r);
+            return r;
+          },
+        };
+      }}
     />
   );
 }

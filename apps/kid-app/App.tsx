@@ -23,6 +23,8 @@ import {
 import { Hud } from "./src/ui/Hud";
 import { QuestPanel } from "./src/ui/QuestPanel";
 import { Shop } from "./src/ui/Shop";
+import { FeedbackOverlay, type FeedbackEvent, type FeedbackKind } from "./src/ui/FeedbackOverlay";
+import { initSfx, playSfx } from "./src/audio/sfx";
 import { Toast } from "./src/ui/Toast";
 import { LoadingScreen } from "./src/ui/LoadingScreen";
 import { FpsOverlay } from "./src/ui/FpsOverlay";
@@ -95,6 +97,17 @@ export default function App() {
   const [equipped, setEquipped] = useState<EquippedMap>({});
   const [shopOpen, setShopOpen] = useState(false);
 
+  // Global juice/audio feedback. Every answer (pad + voice) and reward funnels a
+  // single event here; the FeedbackOverlay flashes + bursts, and we play a SFX.
+  const [feedback, setFeedback] = useState<FeedbackEvent>(null);
+  const fbId = useRef(0);
+  const fireFeedback = useCallback((kind: FeedbackKind) => {
+    setFeedback({ id: ++fbId.current, kind });
+  }, []);
+
+  // Preload SFX players once.
+  useEffect(() => { initSfx(); }, []);
+
   // Load progression on mount; generate today's quest if it doesn't exist yet.
   useEffect(() => {
     let cancelled = false;
@@ -132,12 +145,24 @@ export default function App() {
   const IMPLEMENTED: PortalId[] = ["spell-cast", "block-tower", "cookie-share", "door-code"];
   const onPortalTap = useCallback((id: PortalId) => {
     if (IMPLEMENTED.includes(id)) {
+      playSfx("whoosh");
       setMode({ kind: "minigame", portalId: id, runId: `${Date.now()}` });
     } else {
       setToast(`Coming soon — ${PORTAL_LABELS[id]}!`);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Drives global audio + juice for every answer (number-pad or voice), wired
+  // through MiniGameMount's wrapped scene handle.
+  const onAnswer = useCallback((r: { correct: boolean; expected: number; isLastStep: boolean }) => {
+    if (r.correct) {
+      if (r.isLastStep) { playSfx("win"); fireFeedback("win"); }
+      else { playSfx("correct"); fireFeedback("correct"); }
+    } else {
+      playSfx("wrong"); fireFeedback("wrong");
+    }
+  }, [fireFeedback]);
 
   // useCallback with empty deps — onRoundComplete must be stable so
   // MiniGameMount's round-fetch effect doesn't re-fire on every parent
@@ -177,6 +202,8 @@ export default function App() {
       setQuest(res.quest);
       const totalGems = res.gemsAwarded + masteryGems;
       if (totalGems > 0) {
+        playSfx("collect");
+        fireFeedback(res.questJustCompleted ? "win" : "collect");
         setToast(`+${totalGems} 💎${res.questJustCompleted ? "   Quest complete! 🎉" : ""}`);
       }
     } catch (e) {
@@ -222,13 +249,15 @@ export default function App() {
                 gl.toneMapping = ACESFilmicToneMapping;
                 gl.toneMappingExposure = 1.1;
                 gl.outputColorSpace = SRGBColorSpace;
+                // Web-only: expose the renderer for QA/profiling (draw calls, tris).
+                if (typeof window !== "undefined") (window as unknown as { __gl?: unknown }).__gl = gl;
                 glReadyRef.current = true;
               }}
             >
               {mode.kind === "hub" ? (
                 <>
                   <HubScene onPortalTap={onPortalTap} cosmetics={cosmetics} />
-                  <SceneController yaw={yaw} pitch={Math.PI / 4} distance={10} onFps={setFps} />
+                  <SceneController yaw={yaw} pitch={0.58} distance={13} onFps={setFps} />
                 </>
               ) : (
                 <MiniGameMount
@@ -240,6 +269,7 @@ export default function App() {
                   stopRecorderRef={stopRecorderRef}
                   confirmPickRef={confirmPickRef}
                   confirmNeitherRef={confirmNeitherRef}
+                  onAnswer={onAnswer}
                 />
               )}
             </Canvas>
@@ -286,6 +316,8 @@ export default function App() {
               )}
             </>
           )}
+          {/* Global juice layer — sits above everything, never blocks input. */}
+          <FeedbackOverlay event={feedback} />
         </View>
       </PanGestureHandler>
     </GestureHandlerRootView>

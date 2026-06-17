@@ -4,3 +4,14 @@ dist/
 *.log
 .DS_Store
 /tmp/
+.env
+
+# Raw / unoptimized generated 3D assets (40-55MB each). Only the optimized,
+# runtime *.glb (hero.glb, tutor.glb, wizard.glb, goblin.glb) are tracked.
+apps/kid-app/assets/models/*/raw/
+apps/kid-app/assets/models/hero/*-pbr_model.glb
+apps/kid-app/assets/models/tutor/*-pbr_model.glb
+.expo/
+
+# Throwaway concept contact-sheet montages
+apps/kid-app/assets/concepts/*-contact.png

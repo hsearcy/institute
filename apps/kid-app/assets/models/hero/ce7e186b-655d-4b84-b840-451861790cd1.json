@@ -1,0 +1,37 @@
+{
+  "task_id": "ce7e186b-655d-4b84-b840-451861790cd1",
+  "type": "text_to_model",
+  "status": "success",
+  "input": {
+    "prompt": "game-ready cute stylized character for a children's game, a cheerful little kid explorer, soft rounded chibi proportions, big friendly head, simple sweet face, wearing a tiny adventurer outfit, full body standing in a relaxed A-pose with arms slightly away from the body, symmetric, clean topology, soft matte storybook colors, low-poly friendly Astroneer/Slime-Rancher art style, centered pivot, no text",
+    "model_version": "v3.1-20260211",
+    "texture": true,
+    "pbr": true,
+    "texture_quality": "detailed",
+    "texture_alignment": "geometry",
+    "export_uv": true,
+    "geometry_quality": "detailed"
+  },
+  "output": {
+    "pbr_model": "https://tripo-data.rg1.data.tripo3d.com/tcli_c241a8a47c9449fd8e7d94eebf1e751e/20260617/ce7e186b-655d-4b84-b840-451861790cd1/tripo_pbr_model_ce7e186b-655d-4b84-b840-451861790cd1.glb?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYzI0MWE4YTQ3Yzk0NDlmZDhlN2Q5NGVlYmYxZTc1MWUvMjAyNjA2MTcvY2U3ZTE4NmItNjU1ZC00Yjg0LWI4NDAtNDUxODYxNzkwY2QxL3RyaXBvX3Bicl9tb2RlbF9jZTdlMTg2Yi02NTVkLTRiODQtYjg0MC00NTE4NjE3OTBjZDEuZ2xiIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzgxNzQwODAwfX19XX0_&Signature=wH8szb4ZNyK6ejiIvffafD5gQm5EOomBLs-ZcKaRFYx64w7a5n1SZRHATpI1MmzMrO4gPjEprD7wbZ07VJwEi~kkBsNVFy41TJFyyv5AO0Dw03s02J48Bi7H68PV124IgeeozObT0NJaexloVnqiPK0Ezevk7x6576-HWhrjx6aLf0O8-LVQZEbGI4zKhDCVd9vVZgwH8unbHHAEx15DSZBaTgXwpmWy8cVl613kUZNddwvR6bhNF~uSUzztAbQP14ZR9FeYM8Lcfza11Cf-Q6n0UnAtg3-tspItUF0kwwUdTu3oEluosNUEKgzeAou8YKVjJ0JM~PBZ3oM2IyWMrg__",
+    "generated_image": "https://tripo-data.rg1.data.tripo3d.com/tcli_c241a8a47c9449fd8e7d94eebf1e751e/20260617/ce7e186b-655d-4b84-b840-451861790cd1/text2image.jpeg?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYzI0MWE4YTQ3Yzk0NDlmZDhlN2Q5NGVlYmYxZTc1MWUvMjAyNjA2MTcvY2U3ZTE4NmItNjU1ZC00Yjg0LWI4NDAtNDUxODYxNzkwY2QxL3RleHQyaW1hZ2UuanBlZyIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc4MTc0MDgwMH19fV19&Signature=r7qf--~8ETgHzv9KEdR09tfRZM9HwwGvCjZAgKMMGR4rOhqlWlFj5LWSqG6eQiqriPHqlodU137xleBJEJVJM3lo3ZLCzThIxCaxTBY5mjH6PZbBXJhMHLrQ9yMwaOPRMhzeOR1nYzL5Q9ZvacXmz6RHeYancrWSxGikCav7v0cgnlnL0-Xg5hM6oF8KRysrjLi5QE0kvcqn4kKRa0uCuBQBBiwDiueD03eAOtVsndde-V4HOwPoQb~2Pyq-3t~lrFGGykmW4TGz-lHtKccAavTgd-bgOqlnn9Sh~ZNzi-YG9pjumEx3UicvBL1E288Oe9-9PBWjXntHbfRvU8ZfLg__",
+    "rendered_image": "https://tripo-data.rg1.data.tripo3d.com/tcli_c241a8a47c9449fd8e7d94eebf1e751e/20260617/ce7e186b-655d-4b84-b840-451861790cd1/legacy_mesh.webp?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYzI0MWE4YTQ3Yzk0NDlmZDhlN2Q5NGVlYmYxZTc1MWUvMjAyNjA2MTcvY2U3ZTE4NmItNjU1ZC00Yjg0LWI4NDAtNDUxODYxNzkwY2QxL2xlZ2FjeV9tZXNoLndlYnAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODE3NDA4MDB9fX1dfQ__&Signature=R-rP00mGEOM0fr1zW10Ho4UzNfCCjoec3nVf0oX4ISZGA936MAtiuQWn0BV3kpXQAIcY3gFbsAgP9aUYJLpStjb1jhx826HIDNAQoWWTjgJEHq-edWi4aE~rqKfbhiInTVW0qcTnr~ImoSnpp6MOiXsyY6xhKq0wJq~vCqbuqzt18jIVdq7VQqSJ1kO9370sNJgo0stdIL-~vu3~kcUclBepxADYOBBpG-GrPamdchlUokvrFVn59tXB8Oo1WR2ytf1zFDzXg5XjnqUfptQPiy0j8qzwDpv3tfxaOOMsjPl92iD32cMTtCPVfQ749jc3tEov4ynrLuqOnc5-vEBBhQ__"
+  },
+  "progress": 100,
+  "create_time": 1781717700,
+  "consumed_credit": 50,
+  "prompt": "game-ready cute stylized character for a children's game, a cheerful little kid explorer, soft rounded chibi proportions, big friendly head, simple sweet face, wearing a tiny adventurer outfit, full body standing in a relaxed A-pose with arms slightly away from the body, symmetric, clean topology, soft matte storybook colors, low-poly friendly Astroneer/Slime-Rancher art style, centered pivot, no text",
+  "thumbnail": "https://tripo-data.rg1.data.tripo3d.com/tcli_c241a8a47c9449fd8e7d94eebf1e751e/20260617/ce7e186b-655d-4b84-b840-451861790cd1/legacy_mesh.webp?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYzI0MWE4YTQ3Yzk0NDlmZDhlN2Q5NGVlYmYxZTc1MWUvMjAyNjA2MTcvY2U3ZTE4NmItNjU1ZC00Yjg0LWI4NDAtNDUxODYxNzkwY2QxL2xlZ2FjeV9tZXNoLndlYnAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODE3NDA4MDB9fX1dfQ__&Signature=R-rP00mGEOM0fr1zW10Ho4UzNfCCjoec3nVf0oX4ISZGA936MAtiuQWn0BV3kpXQAIcY3gFbsAgP9aUYJLpStjb1jhx826HIDNAQoWWTjgJEHq-edWi4aE~rqKfbhiInTVW0qcTnr~ImoSnpp6MOiXsyY6xhKq0wJq~vCqbuqzt18jIVdq7VQqSJ1kO9370sNJgo0stdIL-~vu3~kcUclBepxADYOBBpG-GrPamdchlUokvrFVn59tXB8Oo1WR2ytf1zFDzXg5XjnqUfptQPiy0j8qzwDpv3tfxaOOMsjPl92iD32cMTtCPVfQ749jc3tEov4ynrLuqOnc5-vEBBhQ__",
+  "queuing_num": -1,
+  "running_left_time": -1,
+  "result": {
+    "pbr_model": {
+      "url": "https://tripo-data.rg1.data.tripo3d.com/tcli_c241a8a47c9449fd8e7d94eebf1e751e/20260617/ce7e186b-655d-4b84-b840-451861790cd1/tripo_pbr_model_ce7e186b-655d-4b84-b840-451861790cd1.glb?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYzI0MWE4YTQ3Yzk0NDlmZDhlN2Q5NGVlYmYxZTc1MWUvMjAyNjA2MTcvY2U3ZTE4NmItNjU1ZC00Yjg0LWI4NDAtNDUxODYxNzkwY2QxL3RyaXBvX3Bicl9tb2RlbF9jZTdlMTg2Yi02NTVkLTRiODQtYjg0MC00NTE4NjE3OTBjZDEuZ2xiIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzgxNzQwODAwfX19XX0_&Signature=wH8szb4ZNyK6ejiIvffafD5gQm5EOomBLs-ZcKaRFYx64w7a5n1SZRHATpI1MmzMrO4gPjEprD7wbZ07VJwEi~kkBsNVFy41TJFyyv5AO0Dw03s02J48Bi7H68PV124IgeeozObT0NJaexloVnqiPK0Ezevk7x6576-HWhrjx6aLf0O8-LVQZEbGI4zKhDCVd9vVZgwH8unbHHAEx15DSZBaTgXwpmWy8cVl613kUZNddwvR6bhNF~uSUzztAbQP14ZR9FeYM8Lcfza11Cf-Q6n0UnAtg3-tspItUF0kwwUdTu3oEluosNUEKgzeAou8YKVjJ0JM~PBZ3oM2IyWMrg__",
+      "type": "glb"
+    },
+    "rendered_image": {
+      "url": "https://tripo-data.rg1.data.tripo3d.com/tcli_c241a8a47c9449fd8e7d94eebf1e751e/20260617/ce7e186b-655d-4b84-b840-451861790cd1/legacy_mesh.webp?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYzI0MWE4YTQ3Yzk0NDlmZDhlN2Q5NGVlYmYxZTc1MWUvMjAyNjA2MTcvY2U3ZTE4NmItNjU1ZC00Yjg0LWI4NDAtNDUxODYxNzkwY2QxL2xlZ2FjeV9tZXNoLndlYnAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODE3NDA4MDB9fX1dfQ__&Signature=R-rP00mGEOM0fr1zW10Ho4UzNfCCjoec3nVf0oX4ISZGA936MAtiuQWn0BV3kpXQAIcY3gFbsAgP9aUYJLpStjb1jhx826HIDNAQoWWTjgJEHq-edWi4aE~rqKfbhiInTVW0qcTnr~ImoSnpp6MOiXsyY6xhKq0wJq~vCqbuqzt18jIVdq7VQqSJ1kO9370sNJgo0stdIL-~vu3~kcUclBepxADYOBBpG-GrPamdchlUokvrFVn59tXB8Oo1WR2ytf1zFDzXg5XjnqUfptQPiy0j8qzwDpv3tfxaOOMsjPl92iD32cMTtCPVfQ749jc3tEov4ynrLuqOnc5-vEBBhQ__",
+      "type": "webp"
+    }
+  }
+}

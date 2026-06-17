@@ -1,0 +1,37 @@
+{
+  "task_id": "6671ccf5-d48e-4f18-8bb8-cd3f06d65e28",
+  "type": "text_to_model",
+  "status": "success",
+  "input": {
+    "prompt": "game-ready cute magical companion creature for a children's game, a friendly round glowing slime spirit with big sweet expressive eyes and a little smile, soft squishy rounded blob body, tiny stubby arms, gentle floating pose, symmetric, soft matte lavender-purple storybook colors, low-poly friendly Slime-Rancher art style, clean topology, centered pivot, no text",
+    "model_version": "v3.1-20260211",
+    "texture": true,
+    "pbr": true,
+    "texture_quality": "detailed",
+    "texture_alignment": "geometry",
+    "export_uv": true,
+    "geometry_quality": "detailed"
+  },
+  "output": {
+    "pbr_model": "https://tripo-data.rg1.data.tripo3d.com/tcli_c241a8a47c9449fd8e7d94eebf1e751e/20260617/6671ccf5-d48e-4f18-8bb8-cd3f06d65e28/tripo_pbr_model_6671ccf5-d48e-4f18-8bb8-cd3f06d65e28.glb?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYzI0MWE4YTQ3Yzk0NDlmZDhlN2Q5NGVlYmYxZTc1MWUvMjAyNjA2MTcvNjY3MWNjZjUtZDQ4ZS00ZjE4LThiYjgtY2QzZjA2ZDY1ZTI4L3RyaXBvX3Bicl9tb2RlbF82NjcxY2NmNS1kNDhlLTRmMTgtOGJiOC1jZDNmMDZkNjVlMjguZ2xiIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzgxNzQwODAwfX19XX0_&Signature=e~4Rl~JruX7rnxwU5YAuF-oBCPTpgS9iY2ERPBgBIo~YqtY1rZhy7FOFuur5CkTOxCvp6TuG7vFbCZC315P9il18s7uv8uqH-eR6JeUMHZjQIyZO21dYqEKylxM6OT03SezNqCw2NgqcQMr1IVee~dLfUA2Emvb-tUzeiIvRAtFrAS46-oWX~6Akh3mLEXpXZHMv4GAbkQ-LOR6~QHKdz6OJN8PJTd6IEIAqXU3ue21nvnqKfYhiHkWLlSbE8iUF9t2RK-dBw4SrLSrS9r8y7HmjWlhW2UiQlj-ZOnnyHFxgucHfMvsTWTDt-xskIS37nLWxG3scyIkIPl8QnUVR3g__",
+    "generated_image": "https://tripo-data.rg1.data.tripo3d.com/tcli_c241a8a47c9449fd8e7d94eebf1e751e/20260617/6671ccf5-d48e-4f18-8bb8-cd3f06d65e28/text2image.jpeg?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYzI0MWE4YTQ3Yzk0NDlmZDhlN2Q5NGVlYmYxZTc1MWUvMjAyNjA2MTcvNjY3MWNjZjUtZDQ4ZS00ZjE4LThiYjgtY2QzZjA2ZDY1ZTI4L3RleHQyaW1hZ2UuanBlZyIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc4MTc0MDgwMH19fV19&Signature=gtO0BZF1vCYE3qKoPOSq1R9YY3mMvZ-L-lMK-xKyP02X2HqcH8kTEVPnP8ODrToqmnw9KdjnlIv17DlQDvg~Fh7rriSOjuWhOYePDAR1PmxwvvPRYaEMYOSU~s99g8I~4M6OqfpMwLwfwL17ZH5KtBLX5fQCTAeAHHE4uI96aRLiiyq6B7i5HnG-Nl4t6QMbm~neZmcatAtuxOgfA41cA2mKjg0Z7zMkmOlmZ7UP8b~eFRtJlM8NCwEjK-y6p1ya4icOeHt~OKi06WyN7htPlQJm84N07U6KYucp7pySgYk-2-Im5JoJmRNnhoctQvfn4633PbomQXjHG9GPoONXXQ__",
+    "rendered_image": "https://tripo-data.rg1.data.tripo3d.com/tcli_c241a8a47c9449fd8e7d94eebf1e751e/20260617/6671ccf5-d48e-4f18-8bb8-cd3f06d65e28/legacy_mesh.webp?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYzI0MWE4YTQ3Yzk0NDlmZDhlN2Q5NGVlYmYxZTc1MWUvMjAyNjA2MTcvNjY3MWNjZjUtZDQ4ZS00ZjE4LThiYjgtY2QzZjA2ZDY1ZTI4L2xlZ2FjeV9tZXNoLndlYnAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODE3NDA4MDB9fX1dfQ__&Signature=Cz0N3hRZLWbJYX8f8tBviNl-B7RTEu1XjQnzxr4uBnN3S3ktSfyjuX4ZvEvngIab~tOLUcJRnb1kllwkP3GIqQyFA4dJE-rRG33ZVD5BYdjb4IR93GvTtJcSOIVXThzIh~OjSVxR6JPB-N~74V24YOME5IXUna8-3a7mmppzL8Kw1O2XVK~-DTuExk9k33eW4m40zMBW1UXNZ2DOfXx1KvUHFUaGrLGWczHIRVG3vxKhmY6mWxlNGxU0QjQ3Gu8RmD0C~uU0Gkam-hVw7qvrAZHmEi-Y~J56-qGbzIq7oWTKcuSyBwozCgmZYMKnhmIPvHmSSnlEljEu3hhCP802-A__"
+  },
+  "progress": 100,
+  "create_time": 1781717748,
+  "consumed_credit": 50,
+  "prompt": "game-ready cute magical companion creature for a children's game, a friendly round glowing slime spirit with big sweet expressive eyes and a little smile, soft squishy rounded blob body, tiny stubby arms, gentle floating pose, symmetric, soft matte lavender-purple storybook colors, low-poly friendly Slime-Rancher art style, clean topology, centered pivot, no text",
+  "thumbnail": "https://tripo-data.rg1.data.tripo3d.com/tcli_c241a8a47c9449fd8e7d94eebf1e751e/20260617/6671ccf5-d48e-4f18-8bb8-cd3f06d65e28/legacy_mesh.webp?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYzI0MWE4YTQ3Yzk0NDlmZDhlN2Q5NGVlYmYxZTc1MWUvMjAyNjA2MTcvNjY3MWNjZjUtZDQ4ZS00ZjE4LThiYjgtY2QzZjA2ZDY1ZTI4L2xlZ2FjeV9tZXNoLndlYnAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODE3NDA4MDB9fX1dfQ__&Signature=Cz0N3hRZLWbJYX8f8tBviNl-B7RTEu1XjQnzxr4uBnN3S3ktSfyjuX4ZvEvngIab~tOLUcJRnb1kllwkP3GIqQyFA4dJE-rRG33ZVD5BYdjb4IR93GvTtJcSOIVXThzIh~OjSVxR6JPB-N~74V24YOME5IXUna8-3a7mmppzL8Kw1O2XVK~-DTuExk9k33eW4m40zMBW1UXNZ2DOfXx1KvUHFUaGrLGWczHIRVG3vxKhmY6mWxlNGxU0QjQ3Gu8RmD0C~uU0Gkam-hVw7qvrAZHmEi-Y~J56-qGbzIq7oWTKcuSyBwozCgmZYMKnhmIPvHmSSnlEljEu3hhCP802-A__",
+  "queuing_num": -1,
+  "running_left_time": -1,
+  "result": {
+    "pbr_model": {
+      "type": "glb",
+      "url": "https://tripo-data.rg1.data.tripo3d.com/tcli_c241a8a47c9449fd8e7d94eebf1e751e/20260617/6671ccf5-d48e-4f18-8bb8-cd3f06d65e28/tripo_pbr_model_6671ccf5-d48e-4f18-8bb8-cd3f06d65e28.glb?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYzI0MWE4YTQ3Yzk0NDlmZDhlN2Q5NGVlYmYxZTc1MWUvMjAyNjA2MTcvNjY3MWNjZjUtZDQ4ZS00ZjE4LThiYjgtY2QzZjA2ZDY1ZTI4L3RyaXBvX3Bicl9tb2RlbF82NjcxY2NmNS1kNDhlLTRmMTgtOGJiOC1jZDNmMDZkNjVlMjguZ2xiIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzgxNzQwODAwfX19XX0_&Signature=e~4Rl~JruX7rnxwU5YAuF-oBCPTpgS9iY2ERPBgBIo~YqtY1rZhy7FOFuur5CkTOxCvp6TuG7vFbCZC315P9il18s7uv8uqH-eR6JeUMHZjQIyZO21dYqEKylxM6OT03SezNqCw2NgqcQMr1IVee~dLfUA2Emvb-tUzeiIvRAtFrAS46-oWX~6Akh3mLEXpXZHMv4GAbkQ-LOR6~QHKdz6OJN8PJTd6IEIAqXU3ue21nvnqKfYhiHkWLlSbE8iUF9t2RK-dBw4SrLSrS9r8y7HmjWlhW2UiQlj-ZOnnyHFxgucHfMvsTWTDt-xskIS37nLWxG3scyIkIPl8QnUVR3g__"
+    },
+    "rendered_image": {
+      "type": "webp",
+      "url": "https://tripo-data.rg1.data.tripo3d.com/tcli_c241a8a47c9449fd8e7d94eebf1e751e/20260617/6671ccf5-d48e-4f18-8bb8-cd3f06d65e28/legacy_mesh.webp?Key-Pair-Id=K1676C64NMVM2J&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly90cmlwby1kYXRhLnJnMS5kYXRhLnRyaXBvM2QuY29tL3RjbGlfYzI0MWE4YTQ3Yzk0NDlmZDhlN2Q5NGVlYmYxZTc1MWUvMjAyNjA2MTcvNjY3MWNjZjUtZDQ4ZS00ZjE4LThiYjgtY2QzZjA2ZDY1ZTI4L2xlZ2FjeV9tZXNoLndlYnAiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE3ODE3NDA4MDB9fX1dfQ__&Signature=Cz0N3hRZLWbJYX8f8tBviNl-B7RTEu1XjQnzxr4uBnN3S3ktSfyjuX4ZvEvngIab~tOLUcJRnb1kllwkP3GIqQyFA4dJE-rRG33ZVD5BYdjb4IR93GvTtJcSOIVXThzIh~OjSVxR6JPB-N~74V24YOME5IXUna8-3a7mmppzL8Kw1O2XVK~-DTuExk9k33eW4m40zMBW1UXNZ2DOfXx1KvUHFUaGrLGWczHIRVG3vxKhmY6mWxlNGxU0QjQ3Gu8RmD0C~uU0Gkam-hVw7qvrAZHmEi-Y~J56-qGbzIq7oWTKcuSyBwozCgmZYMKnhmIPvHmSSnlEljEu3hhCP802-A__"
+    }
+  }
+}

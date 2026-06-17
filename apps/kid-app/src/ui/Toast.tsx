@@ -1,8 +1,9 @@
-import { useEffect } from "react";
-import { Animated, StyleSheet, Text, useAnimatedValue } from "react-native";
+import { useEffect, useRef } from "react";
+import { Animated, StyleSheet, Text } from "react-native";
 
 export function Toast({ message, onHide }: { message: string; onHide: () => void }) {
-  const opacity = useAnimatedValue(0);
+  // `useAnimatedValue` isn't in react-native-web 0.21; this is the cross-version form.
+  const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.sequence([

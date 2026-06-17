@@ -74,3 +74,5 @@ end
 # WebSocket client used by Stt::DeepgramSession to talk to Deepgram
 gem "faye-websocket"
 gem "eventmachine"
+
+gem "rack-cors", "~> 3.0"

@@ -28,6 +28,7 @@ const players: Partial<Record<SfxName, AudioPlayer>> = {};
 const loopPlayers: Partial<Record<keyof typeof LOOPS, AudioPlayer>> = {};
 let started = false;
 let bgPlaying = false;
+let musicMuted = false;
 
 /** Preload the players once. Safe to call repeatedly; no-op after the first. */
 export function initSfx(): void {
@@ -70,6 +71,27 @@ export function startBackground(): void {
     try { p.play(); any = true; } catch { /* blocked until gesture */ }
   }
   if (any) bgPlaying = true;
+}
+
+/** Mute/unmute just the background music bed (ambience keeps playing). Returns
+ *  the new muted state. Best-effort; never throws. */
+export function setMusicMuted(muted: boolean): boolean {
+  musicMuted = muted;
+  const p = loopPlayers.music;
+  if (p) {
+    try { p.volume = muted ? 0 : LOOPS.music.volume; } catch { /* ignore */ }
+  }
+  return musicMuted;
+}
+
+/** Toggle the background music mute and return the new muted state. */
+export function toggleMusicMuted(): boolean {
+  return setMusicMuted(!musicMuted);
+}
+
+/** Whether the background music is currently muted. */
+export function isMusicMuted(): boolean {
+  return musicMuted;
 }
 
 /** Play a one-shot effect from its start. Never throws. */

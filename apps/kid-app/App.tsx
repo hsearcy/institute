@@ -28,6 +28,7 @@ import { Shop } from "./src/ui/Shop";
 import { FeedbackOverlay, type FeedbackEvent, type FeedbackKind } from "./src/ui/FeedbackOverlay";
 import { initSfx, playSfx } from "./src/audio/sfx";
 import { Toast } from "./src/ui/Toast";
+import { MusicButton } from "./src/ui/MusicButton";
 import { LoadingScreen } from "./src/ui/LoadingScreen";
 import { FpsOverlay } from "./src/ui/FpsOverlay";
 import { SHOW_FPS, type PortalId, PROFILE } from "./src/config";
@@ -35,6 +36,7 @@ import { getDb } from "./src/persistence/db";
 import { loadSkillState, saveSkillState } from "./src/persistence/skillStateRepo";
 import { appendAttempt } from "./src/persistence/attemptRepo";
 import { MiniGameMount, type VoiceUiState } from "./src/minigame/MiniGameMount";
+import { GamePrompt } from "./src/minigame/GamePrompt";
 import { NumberPad } from "./src/minigame/NumberPad";
 import { BackButton } from "./src/minigame/BackButton";
 import { MicIcon } from "./src/minigame/MicIcon";
@@ -62,6 +64,39 @@ function initialMode(): Mode {
     }
   }
   return { kind: "hub" };
+}
+
+/** Build the on-screen task prompt for the current minigame step, so a kid never
+ *  depends on the spoken intro to know what to do. Defensive — returns "" on any
+ *  unexpected shape. */
+function promptFor(portalId: PortalId, params: unknown, step: number): string {
+  try {
+    const p = params as Record<string, unknown>;
+    if (portalId === "spell-cast") {
+      const seq = p.sequence as number[];
+      const by = seq.length > 1 ? seq[1]! - seq[0]! : seq[0]!;
+      const said = seq.slice(0, step).join("   ");
+      return `Count up by ${by}s!\n${said}${step > 0 ? "   " : ""}▢`;
+    }
+    if (portalId === "block-tower") {
+      const probs = p.problems as { a: number; b: number }[];
+      const q = probs[Math.min(step, probs.length - 1)]!;
+      return `How many blocks?\n${q.a} + ${q.b} = ▢`;
+    }
+    if (portalId === "cookie-share") {
+      const rounds = p.rounds as { cookies: number; friends: number }[];
+      const r = rounds[Math.min(step, rounds.length - 1)]!;
+      return `Share ${r.cookies} cookies with ${r.friends} friends.\nHow many each?`;
+    }
+    if (portalId === "door-code") {
+      const probs = p.problems as { a: number; b: number }[];
+      const q = probs[Math.min(step, probs.length - 1)]!;
+      return `Crack the code!\n${q.a} − ${q.b} = ▢`;
+    }
+  } catch {
+    /* fall through */
+  }
+  return "";
 }
 
 /** Map equipped cosmetic ids → the plain colors/ids the 3D hub renders. */
@@ -109,6 +144,14 @@ export default function App() {
 
   // Preload SFX players once.
   useEffect(() => { initSfx(); }, []);
+
+  // On-screen task prompt for the active minigame (playable without voice).
+  const [roundParams, setRoundParams] = useState<unknown>(null);
+  const [gameStep, setGameStep] = useState(0);
+  const onRoundReady = useCallback((_pid: PortalId, params: unknown) => {
+    setRoundParams(params);
+    setGameStep(0);
+  }, []);
 
   // Load progression on mount; generate today's quest if it doesn't exist yet.
   useEffect(() => {
@@ -159,6 +202,7 @@ export default function App() {
   // through MiniGameMount's wrapped scene handle.
   const onAnswer = useCallback((r: { correct: boolean; expected: number; isLastStep: boolean }) => {
     if (r.correct) {
+      setGameStep((s) => s + 1); // advance the on-screen prompt
       if (r.isLastStep) { playSfx("win"); fireFeedback("win"); punchCamera(0.6); }
       else { playSfx("correct"); fireFeedback("correct"); punchCamera(0.28); }
     } else {
@@ -275,6 +319,7 @@ export default function App() {
                     confirmPickRef={confirmPickRef}
                     confirmNeitherRef={confirmNeitherRef}
                     onAnswer={onAnswer}
+                    onRoundReady={onRoundReady}
                   />
                 )}
               </CosmeticsProvider>
@@ -305,6 +350,7 @@ export default function App() {
           {/* Mini-game overlays */}
           {mode.kind === "minigame" && (
             <>
+              <GamePrompt text={roundParams ? promptFor(mode.portalId, roundParams, gameStep) : ""} />
               <BackButton onPress={() => sceneHandleRef.current?.abort()} />
               <NumberPad onPress={(n) => sceneHandleRef.current?.submitAnswer(n)} />
               {voiceUi.kind === "listening" && (
@@ -324,6 +370,8 @@ export default function App() {
               )}
             </>
           )}
+          {/* Always-on music mute toggle. */}
+          <MusicButton />
           {/* Global juice layer — sits above everything, never blocks input. */}
           <FeedbackOverlay event={feedback} />
         </View>

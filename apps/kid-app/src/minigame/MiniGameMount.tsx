@@ -67,11 +67,14 @@ type Props = {
   /** Fires on every answer (number-pad OR voice) with the evaluation result,
    *  so the App can drive global audio + juice feedback in one place. */
   onAnswer?: (r: { correct: boolean; expected: number; isLastStep: boolean }) => void;
+  /** Fires once the round's params are loaded, so the App can show the on-screen
+   *  task prompt (the game must be playable without the spoken intro). */
+  onRoundReady?: (portalId: PortalId, params: unknown) => void;
 };
 
 export function MiniGameMount({
   portalId, onComplete, handleRef,
-  onVoiceUiChange, stopRecorderRef, confirmPickRef, confirmNeitherRef, onAnswer,
+  onVoiceUiChange, stopRecorderRef, confirmPickRef, confirmNeitherRef, onAnswer, onRoundReady,
 }: Props) {
   ensureRegistered();
   const plugin = getPlugin(portalId);
@@ -183,7 +186,7 @@ export function MiniGameMount({
       try {
         onVoiceUiChange({ kind: "listening" });
         const handle = await startRecorder({
-          maxDurationMs: 4000,
+          maxDurationMs: 2500, // hard cap; web silence-detection usually stops sooner
           onAutoStop: async (recording) => {
             recorderRef.current = null;
             stopRecorderRef.current = null;
@@ -223,17 +226,21 @@ export function MiniGameMount({
     };
 
     (async () => {
-      if (!(await ensureMicPermission())) return; // NumberPad-only mode
-      voiceEnabledRef.current = true;
-
+      // Speak the intro regardless of mic permission, so the kid always hears the
+      // task — we don't want any audio to depend on the mic prompt being granted.
       if (intro) {
         onVoiceUiChange({ kind: "speaking" });
         try {
           await speak({ baseUrl: TUTOR_BASE_URL, bearerToken: TUTOR_SECRET || undefined, text: intro });
         } catch (e) {
-          console.warn("tts failed; continuing without intro audio", e);
+          console.warn("tts intro failed; continuing", e);
         }
+        if (!cancelled) onVoiceUiChange({ kind: "off" });
       }
+
+      // Voice answering needs the mic; without it we stay in NumberPad-only mode.
+      if (!(await ensureMicPermission())) return;
+      voiceEnabledRef.current = true;
       await listenForAnswer();
     })();
 
@@ -248,6 +255,11 @@ export function MiniGameMount({
       onVoiceUiChange({ kind: "off" });
     };
   }, [plugin, round, handleRef, onVoiceUiChange, stopRecorderRef, confirmPickRef, confirmNeitherRef]);
+
+  // Surface the loaded round's params so the App can render the task prompt.
+  useEffect(() => {
+    if (round) onRoundReady?.(portalId, round.params);
+  }, [round, portalId, onRoundReady]);
 
   if (!plugin || !round) return null;
 

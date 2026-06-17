@@ -1,0 +1,22 @@
+{
+  "name": "@institute/minigame-kit",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@react-three/drei": "*",
+    "@react-three/fiber": "*",
+    "react": "*",
+    "three": "*"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.17",
+    "@types/three": "*"
+  }
+}

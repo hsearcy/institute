@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import type { RecordingResult } from "./recorder";
 
 export type SttResult = {
@@ -29,12 +30,21 @@ export async function uploadAndTranscribe(opts: UploadOpts): Promise<SttResult> 
   }
 
   const form = new FormData();
-  // RN's FormData accepts a { uri, name, type } object as the file value.
-  form.append("audio", {
-    uri: opts.recording.uri,
-    name: "round.m4a",
-    type: opts.recording.contentType,
-  } as unknown as Blob);
+  if (Platform.OS === "web") {
+    // The web recorder yields a blob: URL; browser FormData needs a real Blob,
+    // not RN's { uri, name, type } object. Materialize it and use its own MIME
+    // (MediaRecorder produces webm/opus).
+    const blob = await (await fetch(opts.recording.uri)).blob();
+    const ext = blob.type.includes("webm") ? "webm" : blob.type.includes("ogg") ? "ogg" : "m4a";
+    form.append("audio", blob, `round.${ext}`);
+  } else {
+    // RN's FormData accepts a { uri, name, type } object as the file value.
+    form.append("audio", {
+      uri: opts.recording.uri,
+      name: "round.m4a",
+      type: opts.recording.contentType,
+    } as unknown as Blob);
+  }
   form.append("expected_answers", opts.expectedAnswers.join(","));
 
   const headers: Record<string, string> = {};

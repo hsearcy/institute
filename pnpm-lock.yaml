@@ -57,12 +57,24 @@ importers:
       '@expo/metro':
         specifier: 55.1.0
         version: 55.1.0
+      '@institute/minigame-block-tower':
+        specifier: workspace:*
+        version: link:../../packages/minigames/block-tower
+      '@institute/minigame-cookie-share':
+        specifier: workspace:*
+        version: link:../../packages/minigames/cookie-share
+      '@institute/minigame-door-code':
+        specifier: workspace:*
+        version: link:../../packages/minigames/door-code
       '@institute/minigame-spell-cast':
         specifier: workspace:*
         version: link:../../packages/minigames/spell-cast
       '@institute/plugin-engine':
         specifier: workspace:*
         version: link:../../packages/plugin-engine
+      '@institute/progression':
+        specifier: workspace:*
+        version: link:../../packages/progression
       '@institute/skill-engine':
         specifier: workspace:*
         version: link:../../packages/skill-engine
@@ -132,6 +144,9 @@ importers:
       react-native-web:
         specifier: 0.21.2
         version: 0.21.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      sql.js:
+        specifier: ^1.14.1
+        version: 1.14.1
       styleq:
         specifier: 0.1.3
         version: 0.1.3
@@ -157,6 +172,9 @@ importers:
       '@types/react':
         specifier: ^19.1.17
         version: 19.1.17
+      '@types/sql.js':
+        specifier: ^1.4.11
+        version: 1.4.11
       '@types/three':
         specifier: 0.184.0
         version: 0.184.0
@@ -169,6 +187,121 @@ importers:
       react-refresh:
         specifier: 0.18.0
         version: 0.18.0
+
+  packages/minigame-kit:
+    dependencies:
+      '@react-three/drei':
+        specifier: '*'
+        version: 10.7.7(@react-three/fiber@9.6.0(@types/react@19.1.17)(expo-asset@55.0.16(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3))(expo-file-system@55.0.17(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)))(expo-gl@16.0.10(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native-web@0.21.2(react-dom@19.2.0(react@19.1.0))(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(three@0.184.0))(@types/react@19.1.17)(@types/three@0.184.0)(react-dom@19.2.0(react@19.1.0))(react@19.1.0)(three@0.184.0)
+      '@react-three/fiber':
+        specifier: '*'
+        version: 9.6.0(@types/react@19.1.17)(expo-asset@55.0.16(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3))(expo-file-system@55.0.17(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)))(expo-gl@16.0.10(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native-web@0.21.2(react-dom@19.2.0(react@19.1.0))(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(three@0.184.0)
+      react:
+        specifier: '*'
+        version: 19.1.0
+      three:
+        specifier: '*'
+        version: 0.184.0
+    devDependencies:
+      '@types/react':
+        specifier: 19.1.17
+        version: 19.1.17
+      '@types/three':
+        specifier: '*'
+        version: 0.184.0
+
+  packages/minigames/block-tower:
+    dependencies:
+      '@institute/minigame-kit':
+        specifier: workspace:*
+        version: link:../../minigame-kit
+      '@institute/plugin-engine':
+        specifier: workspace:*
+        version: link:../../plugin-engine
+      '@react-three/drei':
+        specifier: '*'
+        version: 10.7.7(@react-three/fiber@9.6.0(@types/react@19.1.17)(expo-asset@55.0.16(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3))(expo-file-system@55.0.17(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)))(expo-gl@16.0.10(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native-web@0.21.2(react-dom@19.2.0(react@19.1.0))(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(three@0.184.0))(@types/react@19.1.17)(@types/three@0.184.0)(react-dom@19.2.0(react@19.1.0))(react@19.1.0)(three@0.184.0)
+      '@react-three/fiber':
+        specifier: '*'
+        version: 9.6.0(@types/react@19.1.17)(expo-asset@55.0.16(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3))(expo-file-system@55.0.17(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)))(expo-gl@16.0.10(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native-web@0.21.2(react-dom@19.2.0(react@19.1.0))(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(three@0.184.0)
+      react:
+        specifier: '*'
+        version: 19.1.0
+      three:
+        specifier: '*'
+        version: 0.184.0
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      '@types/react':
+        specifier: 19.1.17
+        version: 19.1.17
+      '@types/three':
+        specifier: '*'
+        version: 0.184.0
+
+  packages/minigames/cookie-share:
+    dependencies:
+      '@institute/minigame-kit':
+        specifier: workspace:*
+        version: link:../../minigame-kit
+      '@institute/plugin-engine':
+        specifier: workspace:*
+        version: link:../../plugin-engine
+      '@react-three/drei':
+        specifier: '*'
+        version: 10.7.7(@react-three/fiber@9.6.0(@types/react@19.1.17)(expo-asset@55.0.16(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3))(expo-file-system@55.0.17(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)))(expo-gl@16.0.10(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native-web@0.21.2(react-dom@19.2.0(react@19.1.0))(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(three@0.184.0))(@types/react@19.1.17)(@types/three@0.184.0)(react-dom@19.2.0(react@19.1.0))(react@19.1.0)(three@0.184.0)
+      '@react-three/fiber':
+        specifier: '*'
+        version: 9.6.0(@types/react@19.1.17)(expo-asset@55.0.16(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3))(expo-file-system@55.0.17(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)))(expo-gl@16.0.10(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native-web@0.21.2(react-dom@19.2.0(react@19.1.0))(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(three@0.184.0)
+      react:
+        specifier: '*'
+        version: 19.1.0
+      three:
+        specifier: '*'
+        version: 0.184.0
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      '@types/react':
+        specifier: 19.1.17
+        version: 19.1.17
+      '@types/three':
+        specifier: '*'
+        version: 0.184.0
+
+  packages/minigames/door-code:
+    dependencies:
+      '@institute/minigame-kit':
+        specifier: workspace:*
+        version: link:../../minigame-kit
+      '@institute/plugin-engine':
+        specifier: workspace:*
+        version: link:../../plugin-engine
+      '@react-three/drei':
+        specifier: '*'
+        version: 10.7.7(@react-three/fiber@9.6.0(@types/react@19.1.17)(expo-asset@55.0.16(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3))(expo-file-system@55.0.17(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)))(expo-gl@16.0.10(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native-web@0.21.2(react-dom@19.2.0(react@19.1.0))(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(three@0.184.0))(@types/react@19.1.17)(@types/three@0.184.0)(react-dom@19.2.0(react@19.1.0))(react@19.1.0)(three@0.184.0)
+      '@react-three/fiber':
+        specifier: '*'
+        version: 9.6.0(@types/react@19.1.17)(expo-asset@55.0.16(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3))(expo-file-system@55.0.17(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)))(expo-gl@16.0.10(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native-web@0.21.2(react-dom@19.2.0(react@19.1.0))(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(three@0.184.0)
+      react:
+        specifier: '*'
+        version: 19.1.0
+      three:
+        specifier: '*'
+        version: 0.184.0
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      '@types/react':
+        specifier: 19.1.17
+        version: 19.1.17
+      '@types/three':
+        specifier: '*'
+        version: 0.184.0
 
   packages/minigames/spell-cast:
     dependencies:
@@ -210,6 +343,16 @@ importers:
       '@types/react':
         specifier: '*'
         version: 19.2.14
+
+  packages/progression:
+    dependencies:
+      '@institute/skill-engine':
+        specifier: workspace:*
+        version: link:../skill-engine
+    devDependencies:
+      vitest:
+        specifier: ^3.2.2
+        version: 3.2.4(@types/node@25.6.0)(lightningcss@1.32.0)(terser@5.46.2)(yaml@2.8.3)
 
   packages/skill-engine:
     dependencies:
@@ -1605,6 +1748,9 @@ packages:
   '@types/draco3d@1.4.10':
     resolution: {integrity: sha512-AX22jp8Y7wwaBgAixaSvkoG4M/+PlAcm3Qs4OW8yT9DM4xUpWKeFhLueTAyZF39pviAdcDdeJoACapiAceqNcw==}
 
+  '@types/emscripten@1.41.5':
+    resolution: {integrity: sha512-cMQm7pxu6BxtHyqJ7mQZ2kXWV5SLmugybFdHCBbJ5eHzOo6VhBckEgAT3//rP5FwPHNPeEiq4SmQ5ucBwsOo4Q==}
+
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
 
@@ -1648,6 +1794,9 @@ packages:
 
   '@types/responselike@1.0.3':
     resolution: {integrity: sha512-H/+L+UkTV33uf49PH5pCAUBVPNj2nDBXTN+qS1dOwyyg24l3CcicicCA7ca+HMvJBZcFgl5r8e+RR6elsb4Lyw==}
+
+  '@types/sql.js@1.4.11':
+    resolution: {integrity: sha512-QXIx38p2ZThJaK9vP5ZdqdlRe1FG9I8SmCZOS7FHfB/2qPAjZwkL7/vlfPg6N/oWHuuOaGg/P/IRwfP2W0kWVQ==}
 
   '@types/stack-utils@2.0.3':
     resolution: {integrity: sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw==}
@@ -3668,6 +3817,9 @@ packages:
   sprintf-js@1.0.3:
     resolution: {integrity: sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==}
 
+  sql.js@1.14.1:
+    resolution: {integrity: sha512-gcj8zBWU5cFsi9WUP+4bFNXAyF1iRpA3LLyS/DP5xlrNzGmPIizUeBggKa8DbDwdqaKwUcTEnChtd2grWo/x/A==}
+
   stack-utils@2.0.6:
     resolution: {integrity: sha512-XlkWvfIm6RmsWtNJx+uqtKLS8eqFbxUg0ZzLXqY0caEy9l7hruX8IpiDnjsLavoBgqCCR71TqWO8MaXYheJ3RQ==}
     engines: {node: '>=10'}
@@ -5057,7 +5209,6 @@ snapshots:
       - supports-color
       - typescript
       - utf-8-validate
-    optional: true
 
   '@expo/cli@55.0.26(@expo/dom-webview@55.0.5)(expo-constants@55.0.15(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0)))(expo-font@55.0.6(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(expo@55.0.17)(react-dom@19.2.0(react@19.2.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)(typescript@5.9.3)':
     dependencies:
@@ -5233,7 +5384,6 @@ snapshots:
     optionalDependencies:
       react: 19.1.0
       react-native: 0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)
-    optional: true
 
   '@expo/devtools@55.0.2(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)':
     dependencies:
@@ -5254,7 +5404,6 @@ snapshots:
       expo: 55.0.17(@babel/core@7.29.0)(@expo/dom-webview@55.0.5)(react-dom@19.2.0(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3)
       react: 19.1.0
       react-native: 0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)
-    optional: true
 
   '@expo/dom-webview@55.0.5(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)':
     dependencies:
@@ -5346,7 +5495,6 @@ snapshots:
       react: 19.1.0
       react-native: 0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)
       stacktrace-parser: 0.1.11
-    optional: true
 
   '@expo/log-box@55.0.11(@expo/dom-webview@55.0.5)(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)':
     dependencies:
@@ -5409,7 +5557,7 @@ snapshots:
       postcss: 8.4.49
       resolve-from: 5.0.0
     optionalDependencies:
-      expo: 55.0.17(@babel/core@7.29.0)(@expo/dom-webview@55.0.5)(react-dom@19.2.0(react@19.2.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
+      expo: 55.0.17(@babel/core@7.29.0)(@expo/dom-webview@55.0.5)(react-dom@19.2.0(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -5563,7 +5711,7 @@ snapshots:
       '@expo/json-file': 10.0.13
       '@react-native/normalize-colors': 0.83.6
       debug: 4.4.3
-      expo: 55.0.17(@babel/core@7.29.0)(@expo/dom-webview@55.0.5)(react-dom@19.2.0(react@19.2.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
+      expo: 55.0.17(@babel/core@7.29.0)(@expo/dom-webview@55.0.5)(react-dom@19.2.0(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3)
       resolve-from: 5.0.0
       semver: 7.7.4
       xml2js: 0.6.0
@@ -5593,7 +5741,6 @@ snapshots:
       react-dom: 19.2.0(react@19.1.0)
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   '@expo/router-server@55.0.15(expo-constants@55.0.15(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0)))(expo-font@55.0.6(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(expo-server@55.0.8)(expo@55.0.17)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)':
     dependencies:
@@ -5631,7 +5778,6 @@ snapshots:
       expo-font: 55.0.6(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)
       react: 19.1.0
       react-native: 0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)
-    optional: true
 
   '@expo/vector-icons@15.1.1(expo-font@55.0.6(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)':
     dependencies:
@@ -6000,7 +6146,6 @@ snapshots:
       react-native: 0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)
     optionalDependencies:
       '@types/react': 19.1.17
-    optional: true
 
   '@react-native/virtualized-lists@0.83.6(@types/react@19.2.14)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)':
     dependencies:
@@ -6039,6 +6184,39 @@ snapshots:
       zustand: 5.0.12(@types/react@19.1.17)(react@19.1.0)(use-sync-external-store@1.6.0(react@19.1.0))
     optionalDependencies:
       react-dom: 19.1.0(react@19.1.0)
+    transitivePeerDependencies:
+      - '@types/react'
+      - '@types/three'
+      - immer
+
+  '@react-three/drei@10.7.7(@react-three/fiber@9.6.0(@types/react@19.1.17)(expo-asset@55.0.16(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3))(expo-file-system@55.0.17(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)))(expo-gl@16.0.10(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native-web@0.21.2(react-dom@19.2.0(react@19.1.0))(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(three@0.184.0))(@types/react@19.1.17)(@types/three@0.184.0)(react-dom@19.2.0(react@19.1.0))(react@19.1.0)(three@0.184.0)':
+    dependencies:
+      '@babel/runtime': 7.29.2
+      '@mediapipe/tasks-vision': 0.10.17
+      '@monogrid/gainmap-js': 3.4.0(three@0.184.0)
+      '@react-three/fiber': 9.6.0(@types/react@19.1.17)(expo-asset@55.0.16(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3))(expo-file-system@55.0.17(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)))(expo-gl@16.0.10(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native-web@0.21.2(react-dom@19.2.0(react@19.1.0))(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(expo@55.0.17)(react-dom@19.2.0(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(three@0.184.0)
+      '@use-gesture/react': 10.3.1(react@19.1.0)
+      camera-controls: 3.1.2(three@0.184.0)
+      cross-env: 7.0.3
+      detect-gpu: 5.0.70
+      glsl-noise: 0.0.0
+      hls.js: 1.6.16
+      maath: 0.10.8(@types/three@0.184.0)(three@0.184.0)
+      meshline: 3.3.1(three@0.184.0)
+      react: 19.1.0
+      stats-gl: 2.4.2(@types/three@0.184.0)(three@0.184.0)
+      stats.js: 0.17.0
+      suspend-react: 0.1.3(react@19.1.0)
+      three: 0.184.0
+      three-mesh-bvh: 0.8.3(three@0.184.0)
+      three-stdlib: 2.36.1(three@0.184.0)
+      troika-three-text: 0.52.4(three@0.184.0)
+      tunnel-rat: 0.1.2(@types/react@19.1.17)(react@19.1.0)
+      use-sync-external-store: 1.6.0(react@19.1.0)
+      utility-types: 3.11.0
+      zustand: 5.0.12(@types/react@19.1.17)(react@19.1.0)(use-sync-external-store@1.6.0(react@19.2.0))
+    optionalDependencies:
+      react-dom: 19.2.0(react@19.1.0)
     transitivePeerDependencies:
       - '@types/react'
       - '@types/three'
@@ -6236,6 +6414,8 @@ snapshots:
 
   '@types/draco3d@1.4.10': {}
 
+  '@types/emscripten@1.41.5': {}
+
   '@types/estree@1.0.8': {}
 
   '@types/graceful-fs@4.1.9':
@@ -6284,6 +6464,11 @@ snapshots:
 
   '@types/responselike@1.0.3':
     dependencies:
+      '@types/node': 25.6.0
+
+  '@types/sql.js@1.4.11':
+    dependencies:
+      '@types/emscripten': 1.41.5
       '@types/node': 25.6.0
 
   '@types/stack-utils@2.0.3': {}
@@ -6624,7 +6809,7 @@ snapshots:
       resolve-from: 5.0.0
     optionalDependencies:
       '@babel/runtime': 7.29.2
-      expo: 55.0.17(@babel/core@7.29.0)(@expo/dom-webview@55.0.5)(react-dom@19.2.0(react@19.2.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
+      expo: 55.0.17(@babel/core@7.29.0)(@expo/dom-webview@55.0.5)(react-dom@19.2.0(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3)
     transitivePeerDependencies:
       - '@babel/core'
       - supports-color
@@ -7037,7 +7222,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
       - typescript
-    optional: true
 
   expo-asset@55.0.16(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)(typescript@5.9.3):
     dependencies:
@@ -7073,7 +7257,6 @@ snapshots:
       react-native: 0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   expo-constants@55.0.15(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0)):
     dependencies:
@@ -7098,7 +7281,6 @@ snapshots:
     dependencies:
       expo: 55.0.17(@babel/core@7.29.0)(@expo/dom-webview@55.0.5)(react-dom@19.2.0(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3)
       react-native: 0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)
-    optional: true
 
   expo-file-system@55.0.17(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0)):
     dependencies:
@@ -7118,7 +7300,6 @@ snapshots:
       fontfaceobserver: 2.3.0
       react: 19.1.0
       react-native: 0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)
-    optional: true
 
   expo-font@55.0.6(expo@55.0.17)(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0):
     dependencies:
@@ -7157,7 +7338,6 @@ snapshots:
     dependencies:
       expo: 55.0.17(@babel/core@7.29.0)(@expo/dom-webview@55.0.5)(react-dom@19.2.0(react@19.1.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3)
       react: 19.1.0
-    optional: true
 
   expo-keep-awake@55.0.6(expo@55.0.17)(react@19.2.0):
     dependencies:
@@ -7193,7 +7373,6 @@ snapshots:
       invariant: 2.2.4
       react: 19.1.0
       react-native: 0.83.6(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0)
-    optional: true
 
   expo-modules-core@55.0.23(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0):
     dependencies:
@@ -7294,7 +7473,6 @@ snapshots:
       - supports-color
       - typescript
       - utf-8-validate
-    optional: true
 
   expo@55.0.17(@babel/core@7.29.0)(@expo/dom-webview@55.0.5)(react-dom@19.2.0(react@19.2.0))(react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0))(react@19.2.0)(typescript@5.9.3):
     dependencies:
@@ -8636,7 +8814,6 @@ snapshots:
       - bufferutil
       - supports-color
       - utf-8-validate
-    optional: true
 
   react-native@0.83.6(@babel/core@7.29.0)(@types/react@19.2.14)(react@19.2.0):
     dependencies:
@@ -8897,6 +9074,8 @@ snapshots:
   source-map@0.6.1: {}
 
   sprintf-js@1.0.3: {}
+
+  sql.js@1.14.1: {}
 
   stack-utils@2.0.6:
     dependencies:

@@ -45,9 +45,39 @@ CREATE TABLE IF NOT EXISTS attempt (
   occurred_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS attempt_profile_occurred ON attempt(profile_id, occurred_at DESC);
+
+CREATE TABLE IF NOT EXISTS profile_progress (
+  profile_id TEXT PRIMARY KEY,
+  gems INTEGER NOT NULL,
+  streak INTEGER NOT NULL,
+  last_quest_date TEXT,
+  freeze_used_week TEXT
+);
+
+CREATE TABLE IF NOT EXISTS daily_quest (
+  profile_id TEXT NOT NULL,
+  date TEXT NOT NULL,
+  target_count INTEGER NOT NULL,
+  completed_count INTEGER NOT NULL,
+  status TEXT NOT NULL,
+  PRIMARY KEY (profile_id, date)
+);
+
+CREATE TABLE IF NOT EXISTS inventory (
+  profile_id TEXT NOT NULL,
+  item_id TEXT NOT NULL,
+  PRIMARY KEY (profile_id, item_id)
+);
+
+CREATE TABLE IF NOT EXISTS equipped (
+  profile_id TEXT NOT NULL,
+  slot TEXT NOT NULL,
+  item_id TEXT NOT NULL,
+  PRIMARY KEY (profile_id, slot)
+);
 `;
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 /** Apply schema. Drops and recreates if version mismatch (dev-only data loss is fine). */
 export function migrate(db: Db): void {
@@ -59,7 +89,9 @@ export function migrate(db: Db): void {
     return;
   }
   if (current !== SCHEMA_VERSION) {
-    db.exec("DROP TABLE skill_state; DROP TABLE attempt; DROP TABLE schema_version;");
+    db.exec(
+      "DROP TABLE skill_state; DROP TABLE attempt; DROP TABLE profile_progress; DROP TABLE daily_quest; DROP TABLE inventory; DROP TABLE equipped; DROP TABLE schema_version;",
+    );
     migrate(db);
   }
 }

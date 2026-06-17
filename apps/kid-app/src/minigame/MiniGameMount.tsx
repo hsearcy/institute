@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { plugin as spellCastPlugin } from "@institute/minigame-spell-cast";
+import { plugin as blockTowerPlugin } from "@institute/minigame-block-tower";
+import { plugin as cookieSharePlugin } from "@institute/minigame-cookie-share";
+import { plugin as doorCodePlugin } from "@institute/minigame-door-code";
 import { register, getPlugin, validateParams, type RoundResult } from "@institute/plugin-engine";
 import { Scene as SpellCastScene, type SpellCastSceneHandle } from "@institute/minigame-spell-cast";
 import { FIXTURES } from "./fixtures";
@@ -18,10 +21,24 @@ import { uploadAndTranscribe, type SttResult } from "../voice/sttHttp";
 let registered = false;
 function ensureRegistered() {
   if (registered) return;
-  try { register(spellCastPlugin); }
-  catch (e) { if (!(e instanceof Error) || !/already registered/i.test(e.message)) throw e; }
+  const safe = (fn: () => void) => {
+    try { fn(); }
+    catch (e) { if (!(e instanceof Error) || !/already registered/i.test(e.message)) throw e; }
+  };
+  safe(() => register(spellCastPlugin));
+  safe(() => register(blockTowerPlugin));
+  safe(() => register(cookieSharePlugin));
+  safe(() => register(doorCodePlugin));
   registered = true;
 }
+
+/** Fallback skill per portal when the tutor backend is unavailable (must exist in TAXONOMY). */
+const FALLBACK_SKILL: Record<PortalId, string> = {
+  "spell-cast": "skip_count_2",
+  "block-tower": "add_within_10",
+  "cookie-share": "equal_sharing",
+  "door-code": "sub_within_10",
+};
 
 /**
  * Voice-flow UI state surfaced to App.tsx so that the overlay components
@@ -67,10 +84,11 @@ export function MiniGameMount({
         onComplete({ status: "aborted", outcomes: [], durationMs: 0 });
         return;
       }
-      const fallback = (): TutorResponse =>
-        portalId === "spell-cast"
-          ? { skillId: "skip_count_2", pluginId: "spell-cast", params: FIXTURES["spell-cast"] }
-          : { skillId: "skip_count_2", pluginId: portalId, params: {} };
+      const fallback = (): TutorResponse => ({
+        skillId: FALLBACK_SKILL[portalId],
+        pluginId: portalId,
+        params: FIXTURES[portalId],
+      });
 
       let payload;
       try {

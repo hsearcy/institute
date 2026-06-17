@@ -1,0 +1,29 @@
+{
+  "name": "@institute/minigame-cookie-share",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@institute/plugin-engine": "workspace:*",
+    "@institute/minigame-kit": "workspace:*",
+    "@react-three/drei": "*",
+    "@react-three/fiber": "*",
+    "react": "*",
+    "three": "*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.17",
+    "@types/three": "*"
+  }
+}

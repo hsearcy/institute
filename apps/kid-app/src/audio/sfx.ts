@@ -18,8 +18,16 @@ const SOURCES = {
 
 export type SfxName = keyof typeof SOURCES;
 
+// Looping background beds: soft music + outdoor ambience under everything.
+const LOOPS = {
+  music: { src: require("../../assets/audio/music.mp3"), volume: 0.32 },
+  ambience: { src: require("../../assets/audio/ambience.mp3"), volume: 0.22 },
+} as const;
+
 const players: Partial<Record<SfxName, AudioPlayer>> = {};
+const loopPlayers: Partial<Record<keyof typeof LOOPS, AudioPlayer>> = {};
 let started = false;
+let bgPlaying = false;
 
 /** Preload the players once. Safe to call repeatedly; no-op after the first. */
 export function initSfx(): void {
@@ -38,11 +46,37 @@ export function initSfx(): void {
       /* leave undefined; playSfx no-ops for it */
     }
   }
+  for (const name of Object.keys(LOOPS) as (keyof typeof LOOPS)[]) {
+    try {
+      const p = createAudioPlayer(LOOPS[name].src);
+      p.loop = true;
+      p.volume = LOOPS[name].volume;
+      loopPlayers[name] = p;
+    } catch {
+      /* leave undefined */
+    }
+  }
+  startBackground();
+}
+
+/** Start the looping music + ambience. Idempotent; safe to retry after a gesture
+ *  (browsers block autoplay until the first user interaction). */
+export function startBackground(): void {
+  if (bgPlaying) return;
+  let any = false;
+  for (const name of Object.keys(loopPlayers) as (keyof typeof LOOPS)[]) {
+    const p = loopPlayers[name];
+    if (!p) continue;
+    try { p.play(); any = true; } catch { /* blocked until gesture */ }
+  }
+  if (any) bgPlaying = true;
 }
 
 /** Play a one-shot effect from its start. Never throws. */
 export function playSfx(name: SfxName, volume = 1): void {
   if (!started) initSfx();
+  // A tap is a user gesture — a good moment to (re)start blocked autoplay audio.
+  if (!bgPlaying) startBackground();
   const p = players[name];
   if (!p) return;
   try {

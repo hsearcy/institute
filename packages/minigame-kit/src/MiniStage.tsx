@@ -5,7 +5,7 @@
 // matches the hub. All primitives + GLSL only → native-safe (web + expo-gl).
 import { useEffect, useMemo, type ReactNode } from "react";
 import { BufferAttribute, CircleGeometry, Color, PerspectiveCamera } from "three";
-import { Environment, Float, Lightformer, RoundedBox } from "@react-three/drei/native";
+import { Environment, Float, Lightformer, RoundedBox, Sparkles } from "@react-three/drei/native";
 import { useThree } from "@react-three/fiber/native";
 import { PALETTE, flatStandard } from "./theme.ts";
 import { BlobShadow } from "./BlobShadow.tsx";
@@ -155,6 +155,65 @@ function Flower({ pos, color }: { pos: V3; color: string }) {
   );
 }
 
+// Low-poly stylized tree: trunk + two faceted foliage tiers. Rings the field for
+// depth so the stage never reads as an empty plane.
+const FOLIAGE = ["#6fae47", "#86cf5a", "#579a3c"];
+function Tree({ pos, scale = 1, hue }: { pos: V3; scale?: number; hue: string }) {
+  return (
+    <group position={pos as [number, number, number]} scale={scale}>
+      <mesh position={[0, 0.7, 0]} castShadow={false}>
+        <cylinderGeometry args={[0.18, 0.26, 1.4, 7]} />
+        <meshStandardMaterial {...flatStandard("#8a6a45", { roughness: 0.9 })} />
+      </mesh>
+      <mesh position={[0, 1.7, 0]}>
+        <icosahedronGeometry args={[0.98, 0]} />
+        <meshStandardMaterial {...flatStandard(hue, { roughness: 0.85 })} />
+      </mesh>
+      <mesh position={[0.1, 2.45, 0.05]}>
+        <icosahedronGeometry args={[0.6, 0]} />
+        <meshStandardMaterial {...flatStandard(hue, { roughness: 0.85 })} />
+      </mesh>
+      <BlobShadow radius={1.0 * scale} opacity={0.26} />
+    </group>
+  );
+}
+
+// A small rounded bush cluster.
+function Bush({ pos, hue }: { pos: V3; hue: string }) {
+  return (
+    <group position={pos as [number, number, number]}>
+      <mesh position={[0, 0.3, 0]}>
+        <icosahedronGeometry args={[0.5, 0]} />
+        <meshStandardMaterial {...flatStandard(hue, { roughness: 0.85 })} />
+      </mesh>
+      <mesh position={[0.42, 0.22, 0.1]}>
+        <icosahedronGeometry args={[0.34, 0]} />
+        <meshStandardMaterial {...flatStandard(hue, { roughness: 0.85 })} />
+      </mesh>
+      <BlobShadow radius={0.7} opacity={0.24} />
+    </group>
+  );
+}
+
+// Background tree/bush ring — kept out toward the field edge, clear of the centre.
+const TREES: { pos: V3; scale: number; hue: string }[] = [
+  { pos: [-15, 0, -9], scale: 1.3, hue: FOLIAGE[0]! },
+  { pos: [-19, 0, 1], scale: 1.0, hue: FOLIAGE[2]! },
+  { pos: [-11, 0, -15], scale: 1.1, hue: FOLIAGE[1]! },
+  { pos: [13, 0, -12], scale: 1.25, hue: FOLIAGE[0]! },
+  { pos: [18, 0, -3], scale: 1.05, hue: FOLIAGE[2]! },
+  { pos: [9, 0, -17], scale: 0.95, hue: FOLIAGE[1]! },
+  { pos: [16, 0, 7], scale: 1.15, hue: FOLIAGE[0]! },
+  { pos: [-16, 0, 9], scale: 1.0, hue: FOLIAGE[1]! },
+  { pos: [0, 0, -19], scale: 1.2, hue: FOLIAGE[2]! },
+];
+const BUSHES: { pos: V3; hue: string }[] = [
+  { pos: [-12, 0, 3], hue: FOLIAGE[1]! },
+  { pos: [12, 0, 2], hue: FOLIAGE[0]! },
+  { pos: [-8, 0, -11], hue: FOLIAGE[2]! },
+  { pos: [7, 0, -13], hue: FOLIAGE[1]! },
+];
+
 type Props = {
   children?: ReactNode;
   /** Set false to omit the scatter (e.g. a very busy game). */
@@ -197,8 +256,18 @@ export function MiniStage({ children, scatter = true, hero = true }: Props) {
         <meshStandardMaterial vertexColors flatShading roughness={0.95} metalness={0} />
       </mesh>
 
+      {/* Drifting magic motes across the whole stage — cheap, and the scene
+          instantly reads as alive instead of an empty field. */}
+      <Sparkles count={36} scale={[26, 7, 22]} position={[0, 3.4, -2]} size={2.4} speed={0.22} color={PALETTE.flowerWhite} opacity={0.5} />
+
       {scatter && (
         <>
+          {TREES.map((t, i) => (
+            <Tree key={`tree${i}`} {...t} />
+          ))}
+          {BUSHES.map((b, i) => (
+            <Bush key={`bush${i}`} {...b} />
+          ))}
           {ROCKS.map((r, i) => (
             <Rock key={`rock${i}`} {...r} />
           ))}

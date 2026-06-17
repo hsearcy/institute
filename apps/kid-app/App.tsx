@@ -12,6 +12,7 @@ import { applyOutcome, scheduleNextReview, getSkill, TAXONOMY, initialSkillState
 import { HubScene, type HubCosmetics } from "./src/world/HubScene";
 import { SceneController } from "./src/world/SceneController";
 import { CosmeticsProvider } from "@institute/minigame-kit";
+import { PostFx } from "./src/world/PostFx";
 import {
   todayYmd, generateQuest, applyRound, purchase, GEMS_MASTERY_MILESTONE,
   CATALOG, cosmeticById,
@@ -277,6 +278,8 @@ export default function App() {
                   />
                 )}
               </CosmeticsProvider>
+              {/* Bloom/color/vignette — web only (no-op on native). */}
+              <PostFx />
             </Canvas>
           </Suspense>
           {/* Hub-only overlays */}

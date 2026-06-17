@@ -27,6 +27,7 @@ import { QuestPanel } from "./src/ui/QuestPanel";
 import { Shop } from "./src/ui/Shop";
 import { FeedbackOverlay, type FeedbackEvent, type FeedbackKind } from "./src/ui/FeedbackOverlay";
 import { initSfx, playSfx } from "./src/audio/sfx";
+import { prefetchRound } from "./src/tutor/roundService";
 import { Toast } from "./src/ui/Toast";
 import { MusicButton } from "./src/ui/MusicButton";
 import { LoadingScreen } from "./src/ui/LoadingScreen";
@@ -144,6 +145,18 @@ export default function App() {
 
   // Preload SFX players once.
   useEffect(() => { initSfx(); }, []);
+
+  // Warm a round for each portal while the kid is in the hub (once progression
+  // is loaded so the tutor gets a real eligible pool), so tapping a portal starts
+  // instantly instead of waiting on the ~3.5s tutor LLM call. Idempotent — only
+  // portals without a cached round are fetched, so after a round completes its
+  // consumed portal is re-warmed on the next hub render.
+  useEffect(() => {
+    if (mode.kind !== "hub" || !progress) return;
+    for (const id of ["spell-cast", "block-tower", "cookie-share", "door-code"] as PortalId[]) {
+      prefetchRound(id);
+    }
+  }, [mode.kind, progress]);
 
   // On-screen task prompt for the active minigame (playable without voice).
   const [roundParams, setRoundParams] = useState<unknown>(null);

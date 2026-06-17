@@ -1,44 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import { plugin as spellCastPlugin } from "@institute/minigame-spell-cast";
-import { plugin as blockTowerPlugin } from "@institute/minigame-block-tower";
-import { plugin as cookieSharePlugin } from "@institute/minigame-cookie-share";
-import { plugin as doorCodePlugin } from "@institute/minigame-door-code";
-import { register, getPlugin, validateParams, type RoundResult } from "@institute/plugin-engine";
+import { getPlugin, type RoundResult } from "@institute/plugin-engine";
 import { Scene as SpellCastScene, type SpellCastSceneHandle } from "@institute/minigame-spell-cast";
-import { FIXTURES } from "./fixtures";
-import { PROFILE, TUTOR_BASE_URL, TUTOR_SECRET } from "../config";
+import { TUTOR_BASE_URL, TUTOR_SECRET } from "../config";
 import type { PortalId } from "../config";
-import { getDb } from "../persistence/db";
-import { computeEligiblePool } from "../tutor/eligiblePool";
-import { loadRecentAttempts } from "../persistence/attemptRepo";
-import { getAvailablePlugins } from "../tutor/pluginSchemas";
-import { requestNextRound, type TutorResponse } from "../tutor/client";
+import type { TutorResponse } from "../tutor/client";
+import { ensureRegistered, consumeRound } from "../tutor/roundService";
 import { ensureMicPermission } from "../voice/permission";
 import { startRecorder, type RecorderHandle, type RecordingResult } from "../voice/recorder";
 import { speak } from "../voice/ttsClient";
 import { uploadAndTranscribe, type SttResult } from "../voice/sttHttp";
-
-let registered = false;
-function ensureRegistered() {
-  if (registered) return;
-  const safe = (fn: () => void) => {
-    try { fn(); }
-    catch (e) { if (!(e instanceof Error) || !/already registered/i.test(e.message)) throw e; }
-  };
-  safe(() => register(spellCastPlugin));
-  safe(() => register(blockTowerPlugin));
-  safe(() => register(cookieSharePlugin));
-  safe(() => register(doorCodePlugin));
-  registered = true;
-}
-
-/** Fallback skill per portal when the tutor backend is unavailable (must exist in TAXONOMY). */
-const FALLBACK_SKILL: Record<PortalId, string> = {
-  "spell-cast": "skip_count_2",
-  "block-tower": "add_within_10",
-  "cookie-share": "equal_sharing",
-  "door-code": "sub_within_10",
-};
 
 /**
  * Voice-flow UI state surfaced to App.tsx so that the overlay components
@@ -82,7 +52,9 @@ export function MiniGameMount({
   const recorderRef = useRef<RecorderHandle | null>(null);
   const voiceEnabledRef = useRef(false);
 
-  // 1. Fetch the round (M5).
+  // 1. Get the round — uses a round the hub prefetched for this portal if one is
+  //    ready (instant), else fetches fresh. roundService always resolves (it
+  //    falls back to fixtures on any failure).
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -90,49 +62,8 @@ export function MiniGameMount({
         onComplete({ status: "aborted", outcomes: [], durationMs: 0 });
         return;
       }
-      const fallback = (): TutorResponse => ({
-        skillId: FALLBACK_SKILL[portalId],
-        pluginId: portalId,
-        params: FIXTURES[portalId],
-      });
-
-      let payload;
-      try {
-        const db = await getDb();
-        const eligible = computeEligiblePool(db, PROFILE.id, new Date());
-        const recent = loadRecentAttempts(db, PROFILE.id, 10).map((a) => ({
-          skillId: a.skillId,
-          correct: a.correct,
-          occurredAt: a.occurredAt.toISOString(),
-        }));
-        payload = {
-          profile: { id: PROFILE.id, name: PROFILE.name, age: PROFILE.age },
-          currentZone: "hub",
-          eligiblePool: eligible,
-          recentHistory: recent,
-          availablePlugins: getAvailablePlugins(),
-        };
-      } catch (e) {
-        console.warn("MiniGameMount payload build failed; falling back", e);
-        if (!cancelled) setRound(fallback());
-        return;
-      }
-
-      const response = await requestNextRound({
-        baseUrl: TUTOR_BASE_URL,
-        bearerToken: TUTOR_SECRET || undefined,
-        payload,
-        fallback,
-      });
-      if (cancelled) return;
-
-      const validated = validateParams(plugin, response.params);
-      if (!validated.ok) {
-        console.error("MiniGameMount: response.params failed schema validation; using fallback", validated.error);
-        setRound(fallback());
-        return;
-      }
-      setRound({ ...response, params: validated.value });
+      const r = await consumeRound(portalId);
+      if (!cancelled) setRound(r);
     })();
     return () => { cancelled = true; };
   }, [portalId, plugin, onComplete]);

@@ -11,7 +11,7 @@ import type { SpellCastSceneHandle } from "@institute/minigame-spell-cast";
 import { applyOutcome, scheduleNextReview, getSkill, TAXONOMY, initialSkillState, type AttemptOutcome } from "@institute/skill-engine";
 import { HubScene, type HubCosmetics } from "./src/world/HubScene";
 import { SceneController } from "./src/world/SceneController";
-import { CosmeticsProvider } from "@institute/minigame-kit";
+import { CosmeticsProvider, punchCamera } from "@institute/minigame-kit";
 import { PostFx } from "./src/world/PostFx";
 import {
   todayYmd, generateQuest, applyRound, purchase, GEMS_MASTERY_MILESTONE,
@@ -159,10 +159,10 @@ export default function App() {
   // through MiniGameMount's wrapped scene handle.
   const onAnswer = useCallback((r: { correct: boolean; expected: number; isLastStep: boolean }) => {
     if (r.correct) {
-      if (r.isLastStep) { playSfx("win"); fireFeedback("win"); }
-      else { playSfx("correct"); fireFeedback("correct"); }
+      if (r.isLastStep) { playSfx("win"); fireFeedback("win"); punchCamera(0.6); }
+      else { playSfx("correct"); fireFeedback("correct"); punchCamera(0.28); }
     } else {
-      playSfx("wrong"); fireFeedback("wrong");
+      playSfx("wrong"); fireFeedback("wrong"); punchCamera(0.5);
     }
   }, [fireFeedback]);
 

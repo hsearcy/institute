@@ -6,8 +6,9 @@
 import { useEffect, useMemo, type ReactNode } from "react";
 import { BufferAttribute, CircleGeometry, Color, PerspectiveCamera } from "three";
 import { Environment, Float, Lightformer, RoundedBox, Sparkles } from "@react-three/drei/native";
-import { useThree } from "@react-three/fiber/native";
+import { useFrame, useThree } from "@react-three/fiber/native";
 import { PALETTE, flatStandard } from "./theme.ts";
+import { consumeShake } from "./cameraShake.ts";
 import { BlobShadow } from "./BlobShadow.tsx";
 import { SkyDome } from "./SkyDome.tsx";
 import { HeroAvatar } from "./HeroAvatar.tsx";
@@ -17,13 +18,16 @@ import { useHeroCosmetics } from "./CosmeticsContext.tsx";
 // the camera defaults to an eye-level [0,0,5] — objects float against the sky and
 // the ground is edge-on. Frame a proper elevated 3/4 stage view here so every game
 // looks composed. Restores prior camera state on unmount (back to the hub).
+const CAM_BASE: readonly [number, number, number] = [0, 6, 11.5];
+const CAM_TARGET: readonly [number, number, number] = [0, 2.2, 0];
+
 function StageCamera() {
   const camera = useThree((s) => s.camera);
   const size = useThree((s) => s.size);
   useEffect(() => {
     const prev = { pos: camera.position.clone(), fov: (camera as PerspectiveCamera).fov };
-    camera.position.set(0, 6, 11.5);
-    camera.lookAt(0, 2.2, 0);
+    camera.position.set(CAM_BASE[0], CAM_BASE[1], CAM_BASE[2]);
+    camera.lookAt(CAM_TARGET[0], CAM_TARGET[1], CAM_TARGET[2]);
     if ((camera as PerspectiveCamera).isPerspectiveCamera) {
       (camera as PerspectiveCamera).fov = 46;
       camera.updateProjectionMatrix();
@@ -36,6 +40,13 @@ function StageCamera() {
       }
     };
   }, [camera, size.width, size.height]);
+
+  // Camera punch: apply a decaying shake offset on top of the base each frame.
+  useFrame((_, delta) => {
+    const [sx, sy] = consumeShake(delta);
+    camera.position.set(CAM_BASE[0] + sx, CAM_BASE[1] + sy, CAM_BASE[2]);
+    camera.lookAt(CAM_TARGET[0], CAM_TARGET[1], CAM_TARGET[2]);
+  });
   return null;
 }
 

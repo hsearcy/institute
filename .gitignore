@@ -15,3 +15,6 @@ apps/kid-app/assets/models/tutor/*-pbr_model.glb
 
 # Throwaway concept contact-sheet montages
 apps/kid-app/assets/concepts/*-contact.png
+
+# Rails bootsnap compile cache (regenerated tmp artifacts)
+apps/backend/tmp/cache/

@@ -3,7 +3,7 @@ import { useFrame } from "@react-three/fiber/native";
 import { RoundedBox, Float, Sparkles } from "@react-three/drei/native";
 import type { Group, Mesh, MeshStandardMaterial } from "three";
 import type { SceneProps, AttemptOutcome } from "@institute/plugin-engine";
-import { MiniStage, BlobShadow, PALETTE, flatStandard, glowStandard } from "@institute/minigame-kit";
+import { MiniStage, BlobShadow, PALETTE, flatStandard, glowStandard, Face } from "@institute/minigame-kit";
 import type { DoorCodeParams } from "./manifest.ts";
 import { evaluate } from "./evaluate.ts";
 
@@ -78,9 +78,9 @@ function CodeSlot({
           metalness={0.2}
         />
       </mesh>
-      {/* Glowing core */}
-      <mesh ref={coreRef} position={[0, 0, 0.02]}>
-        <sphereGeometry args={[0.13, 16, 16]} />
+      {/* Glowing faceted gem core */}
+      <mesh ref={coreRef} position={[0, 0, 0.04]} rotation={[0.3, 0.4, 0]}>
+        <icosahedronGeometry args={[0.15, 0]} />
         <meshStandardMaterial
           {...glowStandard(color, color, solved ? 1.8 : active ? 0.9 : 0.35)}
         />
@@ -121,6 +121,35 @@ function DoorLeaf({
       <RoundedBox args={[1.05, 2.7, 0.5]} radius={0.1} smoothness={3} position={[0, 0, 0.02]}>
         <meshStandardMaterial {...flatStandard("#766a52", { roughness: 0.75 })} />
       </RoundedBox>
+    </group>
+  );
+}
+
+// A cute stone door-keeper perched on the arch. Bobs idly, then cheers (excited
+// face + hop) when the door opens — gives the puzzle a friendly character.
+function Keeper({ opened }: { opened: boolean }) {
+  const ref = useRef<Group>(null);
+  // Perched on the arch's top-right corner (clear of the centred task banner).
+  const baseY = 4.5;
+  useFrame(({ clock }) => {
+    if (!ref.current) return;
+    const t = clock.elapsedTime;
+    ref.current.position.y = baseY + (opened ? Math.abs(Math.sin(t * 7)) * 0.18 : Math.sin(t * 1.4) * 0.05);
+    ref.current.rotation.y = -0.4 + Math.sin(t * 0.6) * 0.18;
+  });
+  return (
+    <group ref={ref} position={[1.25, baseY, 0.25]}>
+      <mesh>
+        <icosahedronGeometry args={[0.58, 0]} />
+        <meshStandardMaterial {...flatStandard("#9a8c70", { roughness: 0.8 })} />
+      </mesh>
+      {[-0.27, 0.27].map((x) => (
+        <mesh key={x} position={[x, 0.48, 0]} rotation={[0, 0, x < 0 ? 0.22 : -0.22]}>
+          <coneGeometry args={[0.09, 0.26, 6]} />
+          <meshStandardMaterial {...flatStandard("#7c7058", { roughness: 0.8 })} />
+        </mesh>
+      ))}
+      <Face size={1.2} position={[0, 0.02, 0.54]} mood={opened ? "excited" : "happy"} cheeks />
     </group>
   );
 }
@@ -211,6 +240,8 @@ export function Scene({ params, onComplete, onHandleReady, skillId }: Props) {
         <RoundedBox args={[3.7, 4.0, 0.7]} radius={0.18} smoothness={3} position={[0, 2.55, -0.2]}>
           <meshStandardMaterial {...flatStandard(PALETTE.rockDark, { roughness: 0.85 })} />
         </RoundedBox>
+        {/* The friendly door-keeper perched on the keystone. */}
+        <Keeper opened={opened} />
         {/* Dark doorway recess behind the leaves (the "burst of light" when open) */}
         <mesh position={[0, 2.15, -0.45]}>
           <planeGeometry args={[2.9, 3.3]} />

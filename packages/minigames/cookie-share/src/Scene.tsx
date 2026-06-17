@@ -3,7 +3,7 @@ import { useFrame } from "@react-three/fiber/native";
 import { RoundedBox, Float, Sparkles } from "@react-three/drei/native";
 import type { Group } from "three";
 import type { SceneProps, AttemptOutcome } from "@institute/plugin-engine";
-import { MiniStage, BlobShadow, flatStandard } from "@institute/minigame-kit";
+import { MiniStage, BlobShadow, flatStandard, Face } from "@institute/minigame-kit";
 import type { CookieShareParams } from "./manifest.ts";
 import { evaluate } from "./evaluate.ts";
 
@@ -41,8 +41,8 @@ function Cookie({ scale = 1 }: { scale?: number }) {
   return (
     <group scale={[scale, scale, scale]}>
       <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[COOKIE_RADIUS, COOKIE_RADIUS, 0.16, 22]} />
-        <meshStandardMaterial {...flatStandard("#c98a4b", { roughness: 0.7 })} />
+        <cylinderGeometry args={[COOKIE_RADIUS, COOKIE_RADIUS, 0.16, 24]} />
+        <meshStandardMaterial {...flatStandard("#d59650", { roughness: 0.45, flatShading: false })} />
       </mesh>
       {[
         [0.16, 0.11],
@@ -53,8 +53,8 @@ function Cookie({ scale = 1 }: { scale?: number }) {
         [0.0, 0.02],
       ].map(([x, y], i) => (
         <mesh key={i} position={[x!, y!, 0.09]}>
-          <sphereGeometry args={[0.06, 8, 8]} />
-          <meshStandardMaterial {...flatStandard("#5a3a1f", { roughness: 0.7 })} />
+          <sphereGeometry args={[0.065, 10, 10]} />
+          <meshStandardMaterial {...flatStandard("#46260f", { roughness: 0.4, flatShading: false })} />
         </mesh>
       ))}
     </group>
@@ -71,25 +71,32 @@ function Plate() {
   );
 }
 
-/** Cute low-poly friend: rounded body + head + dot eyes, in a cheerful color. */
-function Friend({ color }: { color: string }) {
+/** Cute low-poly friend: rounded glossy body + head with a shared cute face and
+ *  little arms. Does an excited "yum!" hop while cookies are being shared out. */
+function Friend({ color, excited }: { color: string; excited?: boolean }) {
+  const ref = useRef<Group>(null);
+  useFrame(({ clock }) => {
+    if (!ref.current) return;
+    ref.current.position.y = excited ? Math.abs(Math.sin(clock.elapsedTime * 8)) * 0.14 : 0;
+  });
+  const mat = flatStandard(color, { roughness: 0.4, flatShading: false });
   return (
-    <group>
-      <RoundedBox args={[0.7, 0.8, 0.6]} radius={0.18} smoothness={3} position={[0, 0.4, 0]}>
-        <meshStandardMaterial {...flatStandard(color, { roughness: 0.7 })} />
+    <group ref={ref}>
+      <RoundedBox args={[0.7, 0.8, 0.6]} radius={0.2} smoothness={3} position={[0, 0.4, 0]}>
+        <meshStandardMaterial {...mat} />
       </RoundedBox>
+      {/* little arms (raised a bit when excited) */}
+      {[-1, 1].map((s) => (
+        <mesh key={s} position={[s * 0.42, 0.52, 0.06]} rotation={[0, 0, s * (excited ? -1.1 : -0.5)]}>
+          <capsuleGeometry args={[0.08, 0.2, 4, 8]} />
+          <meshStandardMaterial {...mat} />
+        </mesh>
+      ))}
       <mesh position={[0, 1.0, 0]}>
         <sphereGeometry args={[0.34, 18, 18]} />
-        <meshStandardMaterial {...flatStandard(color, { roughness: 0.7 })} />
+        <meshStandardMaterial {...mat} />
       </mesh>
-      <mesh position={[-0.12, 1.04, 0.3]}>
-        <sphereGeometry args={[0.06, 10, 10]} />
-        <meshStandardMaterial color="#2a2a2a" roughness={0.7} metalness={0} />
-      </mesh>
-      <mesh position={[0.12, 1.04, 0.3]}>
-        <sphereGeometry args={[0.06, 10, 10]} />
-        <meshStandardMaterial color="#2a2a2a" roughness={0.7} metalness={0} />
-      </mesh>
+      <Face size={0.92} position={[0, 1.02, 0.3]} mood={excited ? "excited" : "happy"} cheeks />
     </group>
   );
 }
@@ -255,7 +262,7 @@ export function Scene({ params, onComplete, onHandleReady, skillId }: Props) {
             <BlobShadow radius={0.7} opacity={0.32} position={[0, 0.02, -0.9]} />
             <Float speed={1.6} rotationIntensity={0.15} floatIntensity={0.35}>
               <group position={[0, 0, -1.0]}>
-                <Friend color={FRIEND_COLORS[i % FRIEND_COLORS.length]!} />
+                <Friend color={FRIEND_COLORS[i % FRIEND_COLORS.length]!} excited={celebrate} />
               </group>
             </Float>
             <BlobShadow radius={0.62} opacity={0.3} position={[0, 0.03, 0]} />

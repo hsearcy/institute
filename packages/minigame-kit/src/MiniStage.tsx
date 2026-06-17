@@ -10,6 +10,8 @@ import { useThree } from "@react-three/fiber/native";
 import { PALETTE, flatStandard } from "./theme.ts";
 import { BlobShadow } from "./BlobShadow.tsx";
 import { SkyDome } from "./SkyDome.tsx";
+import { HeroAvatar } from "./HeroAvatar.tsx";
+import { useHeroCosmetics } from "./CosmeticsContext.tsx";
 
 // Minigame Scenes mount in the host Canvas WITHOUT the hub's SceneController, so
 // the camera defaults to an eye-level [0,0,5] — objects float against the sky and
@@ -157,6 +159,8 @@ type Props = {
   children?: ReactNode;
   /** Set false to omit the scatter (e.g. a very busy game). */
   scatter?: boolean;
+  /** Set false to omit the player's wizard avatar in the foreground. */
+  hero?: boolean;
 };
 
 /**
@@ -164,8 +168,9 @@ type Props = {
  * and scatter; render your gameplay as children (positioned around the origin,
  * sitting on y=0).
  */
-export function MiniStage({ children, scatter = true }: Props) {
+export function MiniStage({ children, scatter = true, hero = true }: Props) {
   const geometry = useGroundGeometry();
+  const cosmetics = useHeroCosmetics();
   return (
     <>
       <StageCamera />
@@ -206,6 +211,18 @@ export function MiniStage({ children, scatter = true }: Props) {
             </Float>
           ))}
         </>
+      )}
+
+      {/* The player's wizard, standing foreground-left as their avatar, turned to
+          face the puzzle in the centre of the stage. (spell-cast renders its own
+          casting hero via hero={false}.) */}
+      {hero && (
+        <HeroAvatar
+          height={1.85}
+          position={[-4.6, 0, 1.2]}
+          rotation={[0, 1.15, 0]}
+          outfitColor={cosmetics.heroOutfitColor}
+        />
       )}
 
       {children}

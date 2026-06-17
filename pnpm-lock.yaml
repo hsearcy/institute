@@ -66,6 +66,9 @@ importers:
       '@institute/minigame-door-code':
         specifier: workspace:*
         version: link:../../packages/minigames/door-code
+      '@institute/minigame-kit':
+        specifier: workspace:*
+        version: link:../../packages/minigame-kit
       '@institute/minigame-spell-cast':
         specifier: workspace:*
         version: link:../../packages/minigames/spell-cast

@@ -3,7 +3,7 @@ import { useFrame } from "@react-three/fiber/native";
 import { Float, Sparkles } from "@react-three/drei/native";
 import type { Group, Mesh, MeshBasicMaterial } from "three";
 import type { SceneProps, AttemptOutcome } from "@institute/plugin-engine";
-import { MiniStage, BlobShadow, GltfModel, PALETTE } from "@institute/minigame-kit";
+import { MiniStage, BlobShadow, GltfModel, HeroAvatar, useHeroCosmetics, PALETTE } from "@institute/minigame-kit";
 import type { SpellCastParams } from "./manifest.ts";
 import { evaluate } from "./evaluate.ts";
 
@@ -29,10 +29,11 @@ type Props = SceneProps<SpellCastParams> & {
 
 const GOBLIN_GLB = require("../assets/goblin.glb");
 
-// Where the little monster stands, and where spells come from (front, near the
-// camera, as if cast by the player's wand) and land (the monster's chest).
+// Where the little monster stands, where the wizard stands, and where spells
+// fly from (the wizard's wand/orb) to (the monster's chest).
 const GOBLIN_POS: [number, number, number] = [0, 0, -2.4];
-const CAST_FROM: [number, number, number] = [-0.4, 1.0, 6.5];
+const WIZARD_POS: [number, number, number] = [-4.6, 0, 1.2];
+const CAST_FROM: [number, number, number] = [-4.05, 1.05, 1.3];
 const CAST_TO: [number, number, number] = [0, 1.7, -2.2];
 const BOLT = "#8be9ff";
 
@@ -101,14 +102,17 @@ function SpellHit() {
 export function Scene({ params, onComplete, onHandleReady, skillId }: Props) {
   const goblinRef = useRef<Group>(null);
   const scaleRef = useRef<Group>(null);
+  const casterRef = useRef<Group>(null);
   const [step, setStep] = useState(0);
   const [hp, setHp] = useState(params.sequence.length);
   const [shake, setShake] = useState(0);
   const [castKey, setCastKey] = useState(0);
   const [defeated, setDefeated] = useState(false);
   const recoilRef = useRef(0);
+  const lungeRef = useRef(0);
   const startedAtRef = useRef(Date.now());
   const outcomesRef = useRef<AttemptOutcome[]>([]);
+  const cosmetics = useHeroCosmetics();
 
   const total = params.sequence.length;
 
@@ -132,6 +136,16 @@ export function Scene({ params, onComplete, onHandleReady, skillId }: Props) {
       goblinRef.current.position.z = -recoilRef.current;
       // Wrong-answer wiggle.
       goblinRef.current.position.x = shake > 0 ? Math.sin(t * 46) * 0.12 : 0;
+    }
+
+    // Wizard leans into each cast: a quick hop + step toward the monster (-z).
+    if (casterRef.current) {
+      lungeRef.current *= 0.85;
+      casterRef.current.position.set(
+        WIZARD_POS[0],
+        lungeRef.current * 0.18,
+        WIZARD_POS[2] - lungeRef.current * 0.3,
+      );
     }
 
     if (shake > 0) setShake((s) => Math.max(0, s - 1));
@@ -165,6 +179,7 @@ export function Scene({ params, onComplete, onHandleReady, skillId }: Props) {
           setHp((h) => h - 1);
           setCastKey((k) => k + 1); // fire a spell
           recoilRef.current = 0.5; // knock the monster back
+          lungeRef.current = 1; // wizard lunges into the cast
           if (r.isLastStep) {
             setDefeated(true);
             // Let the final spell + poof play before the round closes.
@@ -182,7 +197,12 @@ export function Scene({ params, onComplete, onHandleReady, skillId }: Props) {
   }, [params, step, onHandleReady, finish, skillId]);
 
   return (
-    <MiniStage>
+    <MiniStage hero={false}>
+      {/* The player's wizard, turned to face the monster, casting from the left. */}
+      <group ref={casterRef} position={WIZARD_POS}>
+        <HeroAvatar height={1.85} rotation={[0, 1.62, 0]} outfitColor={cosmetics.heroOutfitColor} />
+      </group>
+
       {/* The friendly little monster you befriend by skip-counting spells. */}
       <group ref={goblinRef} position={GOBLIN_POS}>
         <group ref={scaleRef}>

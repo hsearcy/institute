@@ -11,6 +11,7 @@ import type { SpellCastSceneHandle } from "@institute/minigame-spell-cast";
 import { applyOutcome, scheduleNextReview, getSkill, TAXONOMY, initialSkillState, type AttemptOutcome } from "@institute/skill-engine";
 import { HubScene, type HubCosmetics } from "./src/world/HubScene";
 import { SceneController } from "./src/world/SceneController";
+import { CosmeticsProvider } from "@institute/minigame-kit";
 import {
   todayYmd, generateQuest, applyRound, purchase, GEMS_MASTERY_MILESTONE,
   CATALOG, cosmeticById,
@@ -254,24 +255,28 @@ export default function App() {
                 glReadyRef.current = true;
               }}
             >
-              {mode.kind === "hub" ? (
-                <>
-                  <HubScene onPortalTap={onPortalTap} cosmetics={cosmetics} />
-                  <SceneController yaw={yaw} pitch={0.58} distance={13} onFps={setFps} />
-                </>
-              ) : (
-                <MiniGameMount
-                  key={mode.runId}
-                  portalId={mode.portalId}
-                  onComplete={onRoundComplete}
-                  handleRef={sceneHandleRef}
-                  onVoiceUiChange={setVoiceUi}
-                  stopRecorderRef={stopRecorderRef}
-                  confirmPickRef={confirmPickRef}
-                  confirmNeitherRef={confirmNeitherRef}
-                  onAnswer={onAnswer}
-                />
-              )}
+              {/* Provider lives INSIDE the Canvas so the cosmetic crosses R3F's
+                  separate reconciler into the minigame HeroAvatar. */}
+              <CosmeticsProvider value={{ heroOutfitColor: cosmetics.heroColor }}>
+                {mode.kind === "hub" ? (
+                  <>
+                    <HubScene onPortalTap={onPortalTap} cosmetics={cosmetics} />
+                    <SceneController yaw={yaw} pitch={0.58} distance={13} onFps={setFps} />
+                  </>
+                ) : (
+                  <MiniGameMount
+                    key={mode.runId}
+                    portalId={mode.portalId}
+                    onComplete={onRoundComplete}
+                    handleRef={sceneHandleRef}
+                    onVoiceUiChange={setVoiceUi}
+                    stopRecorderRef={stopRecorderRef}
+                    confirmPickRef={confirmPickRef}
+                    confirmNeitherRef={confirmNeitherRef}
+                    onAnswer={onAnswer}
+                  />
+                )}
+              </CosmeticsProvider>
             </Canvas>
           </Suspense>
           {/* Hub-only overlays */}

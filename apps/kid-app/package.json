@@ -18,6 +18,7 @@
     "@institute/minigame-block-tower": "workspace:*",
     "@institute/minigame-cookie-share": "workspace:*",
     "@institute/minigame-door-code": "workspace:*",
+    "@institute/minigame-kit": "workspace:*",
     "@institute/minigame-spell-cast": "workspace:*",
     "@institute/plugin-engine": "workspace:*",
     "@institute/progression": "workspace:*",

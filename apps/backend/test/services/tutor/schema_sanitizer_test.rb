@@ -16,7 +16,30 @@ class Tutor::SchemaSanitizerTest < ActiveSupport::TestCase
     assert_equal({ type: "array", items: { type: "integer" } }, Tutor::SchemaSanitizer.call(schema))
   end
 
-  test "preserves structural keywords (type, properties, required, enum, oneOf)" do
+  test "drops combinator keywords Anthropic rejects (oneOf/anyOf/allOf/not)" do
+    schema = {
+      type: "object",
+      properties: {
+        params: { oneOf: [{ type: "object" }, { type: "array" }] },
+        either: { anyOf: [{ type: "string" }] },
+        both:   { allOf: [{ type: "integer" }] },
+        nope:   { not: { type: "null" } },
+      },
+    }
+    # Combinators are removed entirely; the nodes collapse to permissive schemas.
+    expected = {
+      type: "object",
+      properties: { params: {}, either: {}, both: {}, nope: {} },
+    }
+    assert_equal expected, Tutor::SchemaSanitizer.call(schema)
+  end
+
+  test "drops $ref/$schema/$defs/definitions references" do
+    schema = { "$schema" => "http://json-schema.org/draft-07/schema#", type: "object", "$ref" => "#/x" }
+    assert_equal({ type: "object" }, Tutor::SchemaSanitizer.call(schema))
+  end
+
+  test "preserves structural keywords (type, properties, required, enum)" do
     schema = {
       type: "object",
       properties: {

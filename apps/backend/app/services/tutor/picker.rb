@@ -17,9 +17,22 @@ module Tutor
       messages = Prompt.messages(payload)
 
       reply = client.chat(model: model, messages: messages, response_schema: llm_schema)
-      content = reply.fetch(:content)
+      content = parse_params(reply.fetch(:content))
       validate_response!(content, payload)
       content
+    end
+
+    # `params` comes back as a JSON string (see ResponseSchema) — decode it to a
+    # Hash before validation. Tolerate a model that already returned an object.
+    def self.parse_params(content)
+      raw = content["params"]
+      return content unless raw.is_a?(String)
+
+      begin
+        content.merge("params" => JSON.parse(raw))
+      rescue JSON::ParserError => e
+        raise InvalidResponse, "params was not valid JSON: #{e.message}"
+      end
     end
 
     def self.validate_request!(payload)

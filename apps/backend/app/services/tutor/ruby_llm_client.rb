@@ -17,6 +17,9 @@ module Tutor
 
     def chat(model:, messages:, response_schema:)
       chat = RubyLLM.chat(model: model)
+      # Some sampling temperature so consecutive rounds for the same skill don't
+      # come back byte-for-byte identical (variety in numbers/length/enemy/intro).
+      chat.with_temperature(0.8) if chat.respond_to?(:with_temperature)
 
       system_msgs, other_msgs = messages.partition { |m| m[:role].to_s == "system" }
       system_msgs.each { |m| chat.with_instructions(m[:content], append: true) }

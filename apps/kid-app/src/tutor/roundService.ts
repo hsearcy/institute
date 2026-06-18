@@ -64,7 +64,10 @@ export async function fetchRound(portalId: PortalId): Promise<TutorResponse> {
       currentZone: "hub",
       eligiblePool: eligible,
       recentHistory: recent,
-      availablePlugins: getAvailablePlugins(),
+      // The kid already chose the game by tapping a portal, so only send THAT
+      // plugin's schema. Cuts the LLM payload ~4x (avoids the 30k-tokens/min rate
+      // limit) and stops the tutor from picking a different game than the kid did.
+      availablePlugins: getAvailablePlugins().filter((p) => p.id === portalId),
     };
   } catch (e) {
     console.warn("roundService: payload build failed; using fixtures", e);
@@ -110,4 +113,13 @@ export function consumeRound(portalId: PortalId): Promise<TutorResponse> {
     return cached;
   }
   return fetchRound(portalId);
+}
+
+/** Drop warmed round(s) after a round completes so the next prefetch reflects the
+ *  kid's updated skill state (else a stale pre-round round is served and the kid
+ *  sees the same problem again). Pass the just-played portal to drop only that one
+ *  (cheap — other games' skills are unaffected); omit to drop everything. */
+export function clearRoundCache(portalId?: PortalId): void {
+  if (portalId) cache.delete(portalId);
+  else cache.clear();
 }

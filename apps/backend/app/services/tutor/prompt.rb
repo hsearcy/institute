@@ -14,6 +14,10 @@ module Tutor
          within the kid's age-appropriate range. The `intro` field is a single short
          playful sentence the tutor will say (no emoji, no markdown).
 
+      Keep it fresh: vary the specific numbers, sequence length, and enemy/character
+      from recent rounds so two problems in a row never feel identical (while keeping
+      the chosen skill and an age-appropriate difficulty).
+
       IMPORTANT: the `params` field must be a STRING containing a JSON object that
       matches the chosen plugin's paramSchema — i.e. JSON encoded as a string, with
       every required field present. Do not return params as a bare object.

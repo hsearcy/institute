@@ -27,7 +27,7 @@ import { QuestPanel } from "./src/ui/QuestPanel";
 import { Shop } from "./src/ui/Shop";
 import { FeedbackOverlay, type FeedbackEvent, type FeedbackKind } from "./src/ui/FeedbackOverlay";
 import { initSfx, playSfx } from "./src/audio/sfx";
-import { prefetchRound } from "./src/tutor/roundService";
+import { prefetchRound, clearRoundCache } from "./src/tutor/roundService";
 import { Toast } from "./src/ui/Toast";
 import { MusicButton } from "./src/ui/MusicButton";
 import { LoadingScreen } from "./src/ui/LoadingScreen";
@@ -151,12 +151,15 @@ export default function App() {
   // instantly instead of waiting on the ~3.5s tutor LLM call. Idempotent — only
   // portals without a cached round are fetched, so after a round completes its
   // consumed portal is re-warmed on the next hub render.
+  const progressReady = progress != null;
   useEffect(() => {
-    if (mode.kind !== "hub" || !progress) return;
+    if (mode.kind !== "hub" || !progressReady) return;
+    // Idempotent: prefetchRound skips portals already cached, so on return from a
+    // round only the just-played portal (whose cache was cleared) actually fetches.
     for (const id of ["spell-cast", "block-tower", "cookie-share", "door-code"] as PortalId[]) {
       prefetchRound(id);
     }
-  }, [mode.kind, progress]);
+  }, [mode.kind, progressReady]);
 
   // On-screen task prompt for the active minigame (playable without voice).
   const [roundParams, setRoundParams] = useState<unknown>(null);
@@ -201,9 +204,11 @@ export default function App() {
   // All four minigames are implemented (M6). IMPLEMENTED keeps the "coming
   // soon" path alive for any future, not-yet-built portal.
   const IMPLEMENTED: PortalId[] = ["spell-cast", "block-tower", "cookie-share", "door-code"];
+  const playedPortalRef = useRef<PortalId | null>(null);
   const onPortalTap = useCallback((id: PortalId) => {
     if (IMPLEMENTED.includes(id)) {
       playSfx("whoosh");
+      playedPortalRef.current = id;
       setMode({ kind: "minigame", portalId: id, runId: `${Date.now()}` });
     } else {
       setToast(`Coming soon — ${PORTAL_LABELS[id]}!`);
@@ -257,6 +262,10 @@ export default function App() {
         : res.progress;
       saveProgress(db, newProgress);
       saveQuest(db, res.quest);
+      // The skill state just changed — drop the just-played portal's warmed round
+      // so the hub re-prefetches it from fresh state (otherwise the next round
+      // repeats this one's problem). Other games are unaffected, so keep theirs.
+      clearRoundCache(playedPortalRef.current ?? undefined);
       setProgress(newProgress);
       setQuest(res.quest);
       const totalGems = res.gemsAwarded + masteryGems;

@@ -248,7 +248,12 @@ app.post("/tts", async (c) => {
     {
       method: "POST",
       headers: { "xi-api-key": key, "Content-Type": "application/json" },
-      body: JSON.stringify({ text, model_id: "eleven_turbo_v2_5" }),
+      // speed 0.7–1.2 (1.0 = default); slower so a 6-year-old can follow.
+      body: JSON.stringify({
+        text,
+        model_id: "eleven_turbo_v2_5",
+        voice_settings: { stability: 0.5, similarity_boost: 0.75, speed: 0.75 },
+      }),
     },
   );
   if (!r.ok) return c.json({ error: `tts ${r.status}` }, 502);

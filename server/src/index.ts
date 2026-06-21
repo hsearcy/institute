@@ -115,33 +115,103 @@ const BRANCHES_TOOL = {
   },
 } as const;
 
-const SYSTEM = `You are an adaptive math tutor for a 6-year-old. He has solid number sense and addition within 10; he finger-counts past 10, subtraction is shaky, skip-counting and place value are developing, and he's curious about a little multiplication/division.
+const SYSTEM = `You are the adaptive tutor inside "Institute", a gem-mine math game for one 6-year-old. Each turn you produce the next problem for BOTH outcomes of the problem he is solving right now — "right" (he answers correctly) and "wrong" (he misses it) — so the game can instantly load whichever happens.
 
-You generate the next problem for BOTH outcomes of the problem he's solving right now:
-- "right": he got it right — build on it (slightly harder, or stretch toward the next skill) using his solve speed as a signal (fast+right → push more).
-- "wrong": he got it wrong — reinforce: same skill, easier numbers, rebuild confidence.
+You are given his LIVE per-skill mastery and concrete difficulty targets computed from his real attempts. Follow that data and those targets. Do NOT assume fixed strengths or weaknesses — they change as he learns.
 
 Rules:
-- Stay in his zone (mostly addition-within-20 and subtraction; light skip_counting/place_value; rare multiplication/division only when he's clearly ready).
-- Vary the specific numbers so problems never feel repetitive.
-- "prompt" is the short written form; "spoken" is a warm, kid-friendly sentence to read aloud (no emoji/markdown).
-- "answer" is the exact integer.
+- "difficulty" is 0..1 and must match the target you are given. It scales the numbers: e.g. add_within_20 ≈ 0.3 → sums ≤ 10, ≈ 0.7 → sums ≤ 16, ≈ 0.95 → sums to 20; subtraction similarly.
+- Keep him productive: "right" stretches a little harder, "wrong" eases off and rebuilds confidence in the SAME skill.
+- Stay mostly in addition-within-20 and subtraction; introduce skip_counting/place_value lightly, and multiplication/division only when an advance hint explicitly clears it.
+- Vary the specific numbers; never reuse the problem he is on.
+- "prompt" is the short written form; "spoken" is a warm, kid-friendly sentence to read aloud (no emoji/markdown). "answer" is the exact integer.
 Return via the next_problems tool only.`;
 
-async function llmBranches(profileId: string, current: Problem): Promise<{ right: Problem; wrong: Problem }> {
-  const ctx = {
-    currentProblem: { skill: current.skill, prompt: current.prompt, answer: current.answer, difficulty: current.difficulty },
-    perSkill: skillStats(profileId),
-    recent: recentAttempts(profileId, 8),
+type SkillSummary = { skill: string; label: string; attempts: number; accuracy: number; state: string; avgDifficulty: number };
+
+/** Per-skill mastery summary built fresh each call from the DB (replaces a frozen persona). */
+function learnerSummaries(profileId: string): SkillSummary[] {
+  const rows = db.query(
+    `SELECT s.skill, s.label, m.attempts, m.correct, m.last_difficulty, m.state
+     FROM skills s LEFT JOIN mastery m ON m.skill = s.skill AND m.profile_id = ?
+     ORDER BY s.ladder`,
+  ).all(profileId) as { skill: string; label: string; attempts: number | null; correct: number | null; last_difficulty: number | null; state: string | null }[];
+  return rows.map((r) => ({
+    skill: r.skill,
+    label: r.label,
+    attempts: r.attempts ?? 0,
+    accuracy: r.attempts ? (r.correct ?? 0) / r.attempts : 0,
+    state: r.state ?? "unstarted",
+    avgDifficulty: r.last_difficulty ?? 0.4,
+  }));
+}
+
+function describeLearner(sums: SkillSummary[]): string {
+  const lines = sums.map((s) => {
+    if (s.attempts === 0) return `- ${s.label}: not started`;
+    const pct = Math.round(s.accuracy * 100);
+    const tag = s.state === "mastered" ? "mastered" : s.accuracy < 0.6 ? "shaky" : s.accuracy < 0.8 ? "developing" : "strong";
+    return `- ${s.label}: ${tag} (${pct}% over ${s.attempts} attempts, recently around difficulty ${s.avgDifficulty.toFixed(2)})`;
+  });
+  return `His current mastery, computed from his real attempts:\n${lines.join("\n")}`;
+}
+
+function nextLadderSkill(skill: string): string | null {
+  const order = SKILLS as readonly string[];
+  const i = order.indexOf(skill);
+  return i >= 0 && i + 1 < order.length ? order[i + 1] : null;
+}
+
+const clampDiff = (x: number) => Math.max(0.1, Math.min(0.97, x));
+
+/** Compute concrete difficulty targets + a solve-pace tag to steer the model. */
+function adaptivePlan(
+  current: Problem,
+  recent: { skill: string; correct: number; solve_ms: number }[],
+  sums: SkillSummary[],
+) {
+  const cur = current.difficulty;
+  const skillRecent = recent.filter((r) => r.skill === current.skill);
+  const recentAcc = skillRecent.length ? skillRecent.filter((r) => r.correct).length / skillRecent.length : 0.7;
+  const lastMs = recent[0]?.solve_ms ?? 0;
+  const solveTag = lastMs === 0 ? "unknown" : lastMs < 4000 ? "fast" : lastMs < 9000 ? "steady" : "slow";
+  // Push harder when he's accurate and fast; ease more when he's struggling.
+  const up = (recentAcc >= 0.8 ? 0.14 : recentAcc >= 0.6 ? 0.08 : 0.04) + (solveTag === "fast" ? 0.04 : 0);
+  const down = 0.12 + (recentAcc < 0.5 ? 0.05 : 0);
+  const curSummary = sums.find((s) => s.skill === current.skill);
+  const advanceSkill = curSummary && curSummary.state === "mastered" ? nextLadderSkill(current.skill) : null;
+  return {
+    rightTarget: +clampDiff(cur + up).toFixed(2),
+    wrongTarget: +clampDiff(cur - down).toFixed(2),
+    solveTag,
+    recentAccuracyPct: Math.round(recentAcc * 100),
+    advanceSkill,
   };
+}
+
+async function llmBranches(profileId: string, current: Problem): Promise<{ right: Problem; wrong: Problem }> {
+  const sums = learnerSummaries(profileId);
+  const plan = adaptivePlan(current, recentAttempts(profileId, 10), sums);
+  const userContent = [
+    describeLearner(sums),
+    "",
+    `He is solving now: "${current.prompt}"  (skill: ${current.skill}, difficulty: ${current.difficulty.toFixed(2)}).`,
+    `His last problem was answered ${plan.solveTag}; his recent accuracy on ${current.skill} is ${plan.recentAccuracyPct}%.`,
+    "",
+    "Produce the two follow-ups, matching difficulty to these targets:",
+    `- "right" (he answers correctly): difficulty ≈ ${plan.rightTarget}` +
+      (plan.advanceSkill ? `, and since he has MASTERED ${current.skill} you may move up to ${plan.advanceSkill}.` : `, staying in ${current.skill}.`),
+    `- "wrong" (he misses it): reinforce ${current.skill} at difficulty ≈ ${plan.wrongTarget} with friendlier numbers.`,
+    `Vary the numbers; do not reuse "${current.prompt}".`,
+  ].join("\n");
   const resp = await anthropic.messages.create({
     model: TUTOR_MODEL,
     max_tokens: 1024,
-    temperature: 0.8,
+    temperature: 0.7,
     system: SYSTEM,
     tools: [BRANCHES_TOOL as unknown as Anthropic.Tool],
     tool_choice: { type: "tool", name: "next_problems" },
-    messages: [{ role: "user", content: JSON.stringify(ctx) }],
+    messages: [{ role: "user", content: userContent }],
   });
   const tool = resp.content.find((c) => c.type === "tool_use");
   if (!tool || tool.type !== "tool_use") throw new Error("no tool_use in response");

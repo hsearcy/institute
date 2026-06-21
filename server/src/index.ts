@@ -120,10 +120,12 @@ const SYSTEM = `You are the adaptive tutor inside "Institute", a gem-mine math g
 You are given his LIVE per-skill mastery and concrete difficulty targets computed from his real attempts. Follow that data and those targets. Do NOT assume fixed strengths or weaknesses — they change as he learns.
 
 Rules:
-- "difficulty" is 0..1 and must match the target you are given. It scales the numbers: e.g. add_within_20 ≈ 0.3 → sums ≤ 10, ≈ 0.7 → sums ≤ 16, ≈ 0.95 → sums to 20; subtraction similarly.
+- add_within_20: BOTH addends are single digits (1–9). "difficulty" controls how much it crosses ten (the "make a ten" skill), NOT the size of the addends: ≈0.3 → sum ≤ 10 (no carrying); ≈0.6 → sums up to ~14; ≈0.9 → sums 13–18 that cross ten (e.g. 7+8, 9+6, 8+5). NEVER use a two-digit addend (no "8 + 12"), and do NOT land on the same total repeatedly — especially do not keep making 20.
+- subtraction: minuend ≤ 20, single steps; difficulty controls size and whether it crosses ten (e.g. easy 9−4; harder 15−7). Vary the numbers.
+- "difficulty" (0..1) must match the target you are given.
 - Keep him productive: "right" stretches a little harder, "wrong" eases off and rebuilds confidence in the SAME skill.
 - Stay mostly in addition-within-20 and subtraction; introduce skip_counting/place_value lightly, and multiplication/division only when an advance hint explicitly clears it.
-- Vary the specific numbers; never reuse the problem he is on.
+- VARY the numbers a lot: consecutive problems must not share the same total and must not be permutations of one another (8+12, 9+11 are bad — repetitive). Never reuse the problem he is on.
 - "prompt" is the short written form; "spoken" is a warm, kid-friendly sentence to read aloud (no emoji/markdown). "answer" is the exact integer.
 Return via the next_problems tool only.`;
 
@@ -189,25 +191,44 @@ function adaptivePlan(
   };
 }
 
+// Recently-served problem prompts per profile (in-memory) so the tutor avoids repeats.
+const recentPrompts = new Map<string, string[]>();
+function notePrompt(profileId: string, prompt: string): void {
+  const arr = recentPrompts.get(profileId) ?? [];
+  arr.push(prompt);
+  while (arr.length > 12) arr.shift();
+  recentPrompts.set(profileId, arr);
+}
+/** A locally-generated problem whose prompt isn't already in `taken`. */
+function freshLocal(skill: Problem["skill"], difficulty: number, taken: Set<string>): Problem {
+  for (let i = 0; i < 10; i++) {
+    const p = stampId(localProblem(skill, difficulty));
+    if (!taken.has(p.prompt)) { taken.add(p.prompt); return p; }
+  }
+  return stampId(localProblem(skill, difficulty));
+}
+
 async function llmBranches(profileId: string, current: Problem): Promise<{ right: Problem; wrong: Problem }> {
   const sums = learnerSummaries(profileId);
   const plan = adaptivePlan(current, recentAttempts(profileId, 10), sums);
+  const avoid = recentPrompts.get(profileId) ?? [];
   const userContent = [
     describeLearner(sums),
     "",
     `He is solving now: "${current.prompt}"  (skill: ${current.skill}, difficulty: ${current.difficulty.toFixed(2)}).`,
     `His last problem was answered ${plan.solveTag}; his recent accuracy on ${current.skill} is ${plan.recentAccuracyPct}%.`,
+    avoid.length ? `Recently shown already — do NOT repeat any of these: ${avoid.join("; ")}.` : "",
     "",
     "Produce the two follow-ups, matching difficulty to these targets:",
     `- "right" (he answers correctly): difficulty ≈ ${plan.rightTarget}` +
       (plan.advanceSkill ? `, and since he has MASTERED ${current.skill} you may move up to ${plan.advanceSkill}.` : `, staying in ${current.skill}.`),
     `- "wrong" (he misses it): reinforce ${current.skill} at difficulty ≈ ${plan.wrongTarget} with friendlier numbers.`,
     `Vary the numbers; do not reuse "${current.prompt}".`,
-  ].join("\n");
+  ].filter(Boolean).join("\n");
   const resp = await anthropic.messages.create({
     model: TUTOR_MODEL,
     max_tokens: 1024,
-    temperature: 0.7,
+    temperature: 0.9,
     system: SYSTEM,
     tools: [BRANCHES_TOOL as unknown as Anthropic.Tool],
     tool_choice: { type: "tool", name: "next_problems" },
@@ -218,11 +239,13 @@ async function llmBranches(profileId: string, current: Problem): Promise<{ right
   const raw = tool.input as { right: unknown; wrong: unknown };
   let right = ProblemSchema.parse(stampId(correctDraft(raw.right as ProblemDraft)));
   let wrong = ProblemSchema.parse(stampId(correctDraft(raw.wrong as ProblemDraft)));
-  // Never re-serve the exact problem he just solved (the "same problem again" bug).
-  if (right.prompt === current.prompt)
-    right = stampId(localProblem(current.skill, Math.min(0.95, current.difficulty + 0.12)));
-  if (wrong.prompt === current.prompt)
-    wrong = stampId(localProblem(current.skill, Math.max(0.15, current.difficulty - 0.1)));
+  // Reject repeats (the just-solved problem or anything recently shown); regenerate locally.
+  const taken = new Set<string>([current.prompt, ...avoid]);
+  if (taken.has(right.prompt)) right = freshLocal(right.skill, right.difficulty, taken);
+  else taken.add(right.prompt);
+  if (taken.has(wrong.prompt)) wrong = freshLocal(wrong.skill, wrong.difficulty, taken);
+  notePrompt(profileId, right.prompt);
+  notePrompt(profileId, wrong.prompt);
   return { right, wrong };
 }
 
@@ -269,6 +292,7 @@ app.get("/health", (c) => c.json({ ok: true, model: TUTOR_MODEL }));
 app.post("/tutor/first", async (c) => {
   const { profileId } = StartRequestSchema.parse(await c.req.json());
   const problem = stampId(pickStart(skillStats(profileId)));
+  notePrompt(profileId, problem.prompt);
   return c.json(problem);
 });
 

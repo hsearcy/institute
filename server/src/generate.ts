@@ -17,9 +17,15 @@ export function localProblem(skill: Skill, difficulty: number): ProblemDraft {
   const d = Math.max(0, Math.min(1, difficulty));
   switch (skill) {
     case "add_within_20": {
-      const maxSum = d < 0.4 ? 10 : d < 0.7 ? 16 : 20;
-      const a = ri(1, Math.max(1, maxSum - 1));
-      const b = ri(1, Math.max(1, maxSum - a));
+      // Both addends single-digit; higher difficulty crosses ten (make-a-ten).
+      let a: number, b: number;
+      if (d < 0.4) {                       // no carry: sum ≤ 9
+        a = ri(1, 7); b = ri(1, 9 - a);
+      } else if (d < 0.7) {                // mixed, sums up to ~14
+        a = ri(2, 9); b = ri(2, Math.min(9, 14 - a));
+      } else {                             // crosses ten: sums 11–18
+        a = ri(4, 9); b = ri(Math.max(3, 11 - a), 9);
+      }
       return { skill, prompt: `${a} + ${b}`, spoken: `What is ${a} plus ${b}?`, answer: a + b, difficulty: d };
     }
     case "subtraction": {

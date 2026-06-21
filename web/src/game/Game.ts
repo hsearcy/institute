@@ -1,6 +1,6 @@
 import {
   Scene, PerspectiveCamera, WebGLRenderer, ACESFilmicToneMapping, SRGBColorSpace,
-  Color, FogExp2, Group, Box3, Vector2, Vector3, Clock,
+  FogExp2, Group, Box3, Vector2, Vector3, Clock,
   DirectionalLight, PointLight, HemisphereLight,
   IcosahedronGeometry, OctahedronGeometry, ConeGeometry, CylinderGeometry, PlaneGeometry, RingGeometry,
   MeshStandardMaterial, MeshPhysicalMaterial, MeshBasicMaterial, Mesh,
@@ -42,9 +42,11 @@ export class Game {
   private busy = false;
 
   // scene objects
-  private gem!: Mesh;
+  private hero!: Group;            // the geode being mined
   private gemLight!: PointLight;
   private dust!: Points;
+  private cracks = 0;              // how chipped the geode is this round (drives the inner glow)
+  private procClusters: Group[] = []; // placeholder crystal clusters; removed when GLBs load
   private bursts: { mesh: Mesh; vel: Vector3; life: number; spin: Vector3 }[] = [];
   private flyers: { mesh: Mesh; t: number; from: Vector3; to: Vector3 }[] = [];
   private sparkles: { mesh: Mesh; life: number }[] = [];
@@ -65,7 +67,7 @@ export class Game {
   private pickSwingAxisVec = new Vector3(1, 0, -0.8).normalize();
   private pickPivot = new Vector3(1.4, -1.05, 3.3);   // grip held out to the RIGHT, lower foreground
   private pickCock = 0.35;        // idle: head raised high & back over the shoulder
-  private pickSlam = -0.9;        // slam: head chops DOWN & forward, tip-first, onto the gem (0,1.7,0)
+  private pickSlam = -1.5;        // slam: head chops down-inward, tip-first, onto the geode at (0,0.75,0)
   // Yaw (the 1.4) turns the head so a POINTY pick tip leads the strike — the GLB's
   // tips run along ±X by default, which buried the flat side into the gem.
   private pickModelRot = new Vector3(0.15, 1.4, 0);
@@ -130,19 +132,6 @@ export class Game {
     lantern.position.set(-3.2, -1.4, 2.2);
     this.scene.add(lantern);
 
-    // Foreground rock frame — dark displaced chunks that vignette the prize.
-    const rockMat = new MeshStandardMaterial({ color: 0x2b2440, roughness: 1, metalness: 0, flatShading: true });
-    const frame: [number, number, number, number][] = [
-      [-7.2, 3.0, -3.5, 2.2], [7.2, 3.2, -3.5, 2.4],
-      [-7.4, -2.6, -2.5, 2.6], [7.4, -2.8, -2.5, 2.6],
-    ];
-    for (const [x, y, z, s] of frame) {
-      const r = new Mesh(new IcosahedronGeometry(s, 1), rockMat);
-      r.position.set(x, y, z);
-      r.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
-      r.scale.set(1, 0.8 + Math.random() * 0.5, 1);
-      this.scene.add(r);
-    }
 
     // Ledges + embedded crystal clusters (procedural; GLBs swap in via loadAssets).
     this.addCrystalCluster(-3.7, -0.9, 0.4, 0.9, 0x7ad0ff);
@@ -151,11 +140,12 @@ export class Game {
     this.addCrystalCluster(4.6, 1.4, -0.6, 0.7, 0x8affc8);
 
     // Hero gem (the prize being mined).
-    this.gem = this.makeGem(0x8be9ff, 1.15);
-    this.gem.position.set(0, 1.7, 0);
-    this.scene.add(this.gem);
-    this.gemLight = new PointLight(0x8be9ff, 22, 12, 2);
-    this.gemLight.position.set(0, 1.75, 1.2);
+    this.hero = new Group();
+    this.hero.position.set(0, HERO_Y, 0);
+    this.hero.add(this.makeGeodePlaceholder()); // until the GLB swaps in
+    this.scene.add(this.hero);
+    this.gemLight = new PointLight(0xcaa6ff, 7, 14, 2); // inner-crystal glow
+    this.gemLight.position.set(0, HERO_Y, 1.0);
     this.scene.add(this.gemLight);
 
     // Pickaxe rig: a pivot at the grip, a holder that pushes the head out along
@@ -198,6 +188,9 @@ export class Game {
 
     const cluster = await tryLoad('/assets/models/crystal-cluster.glb');
     if (cluster) {
+      // Real swap: drop the procedural placeholders so nothing clips through the GLBs.
+      for (const g of this.procClusters) this.scene.remove(g);
+      this.procClusters.length = 0;
       const spots: [number, number, number, number][] = [
         [-3.7, -1.0, 0.4, 1.5], [3.8, -1.2, 0.2, 1.7], [-4.6, 1.6, -0.6, 1.1], [4.6, 1.3, -0.6, 1.1],
       ];
@@ -212,6 +205,7 @@ export class Game {
 
     const geode = await tryLoad('/assets/models/geode.glb');
     if (geode) {
+      // Decorative geodes scattered on the floor.
       const spots: [number, number, number, number][] = [[-2.7, -1.8, 1.3, 1.3], [2.9, -1.9, 0.9, 1.5]];
       for (const [x, y, z, s] of spots) {
         const c = geode.clone(true);
@@ -220,6 +214,12 @@ export class Game {
         c.rotation.y = Math.random() * Math.PI * 2;
         this.scene.add(c);
       }
+      // The hero geode — the thing being mined — swaps in for the placeholder.
+      const heroGeode = geode.clone(true);
+      fitObject(heroGeode, 2.0);
+      heroGeode.rotation.set(HERO_ROT.x, HERO_ROT.y, HERO_ROT.z); // open face toward the camera
+      this.hero.clear();
+      this.hero.add(heroGeode);
     }
   }
 
@@ -242,22 +242,29 @@ export class Game {
     }
     g.position.set(x, y, z);
     g.scale.setScalar(scale);
+    this.procClusters.push(g);
     this.scene.add(g);
   }
 
-  private makeGem(color: number, scale: number): Mesh {
-    const geo = new OctahedronGeometry(0.82, 0);
-    geo.scale(1, 1.3, 1); // elongate into a cut-gem silhouette
-    const m = new Mesh(geo, new MeshPhysicalMaterial({
-      color, metalness: 0, roughness: 0.06,
-      transmission: 0.55, ior: 1.9, thickness: 0.7,
-      emissive: color, emissiveIntensity: 0.38,
-      attenuationColor: new Color(color), attenuationDistance: 2.0,
-      iridescence: 1.0, iridescenceIOR: 1.3, specularIntensity: 1,
-      clearcoat: 1, clearcoatRoughness: 0.04, flatShading: true, envMapIntensity: 1.7,
-    }));
-    m.scale.setScalar(scale);
+  /** Simple gray geode placeholder shown until the GLB loads. */
+  private makeGeodePlaceholder(): Mesh {
+    const m = new Mesh(
+      new IcosahedronGeometry(0.95, 1),
+      new MeshStandardMaterial({ color: 0x6f6880, roughness: 1, flatShading: true }),
+    );
+    m.scale.set(1, 0.92, 1);
     return m;
+  }
+
+  /** A faceted crystal shard (the geode's payload). Used for the burst + reward. */
+  private makeCrystal(color: number, size: number): Mesh {
+    return new Mesh(
+      new ConeGeometry(0.16 * size, 0.7 * size, 6),
+      new MeshPhysicalMaterial({
+        color, emissive: color, emissiveIntensity: 0.4, metalness: 0, roughness: 0.1,
+        transmission: 0.55, ior: 1.9, thickness: 0.5, clearcoat: 1, flatShading: true, envMapIntensity: 1.0,
+      }),
+    );
   }
 
   private makePickaxe(): Group {
@@ -346,6 +353,17 @@ export class Game {
     this.poseFrozen = true;
     this.setSwingRotation(this.swingAngle(Math.max(0, Math.min(1, p))));
   }
+  /** Live-tune the hero geode (position + child orientation) for the "open face" rotation. */
+  setHero(o: { posY?: number; rotX?: number; rotY?: number; rotZ?: number }): { posY: number; rot: number[] } {
+    if (o.posY !== undefined) this.hero.position.y = o.posY;
+    const c = this.hero.children[0];
+    if (c) {
+      if (o.rotX !== undefined) c.rotation.x = o.rotX;
+      if (o.rotY !== undefined) c.rotation.y = o.rotY;
+      if (o.rotZ !== undefined) c.rotation.z = o.rotZ;
+    }
+    return { posY: this.hero.position.y, rot: c ? [c.rotation.x, c.rotation.y, c.rotation.z] : [] };
+  }
 
   private makeDust(): Points {
     const n = 140;
@@ -389,20 +407,17 @@ export class Game {
     this.hud.setProblem(p.prompt);
     this.hud.setAnswer('');
     void speak(p.spoken);
-    this.resetGem(GEM_PALETTE[Math.floor(Math.random() * GEM_PALETTE.length)]);
+    this.resetHero();
     this.branchesPromise = fetchBranches(p).catch(() => null);
   }
 
-  private resetGem(color: number): void {
-    const mat = this.gem.material as MeshPhysicalMaterial;
-    mat.color.setHex(color);
-    mat.emissive.setHex(color);
-    mat.attenuationColor.setHex(color);
-    this.gem.scale.setScalar(1.15);
-    this.gem.visible = true;
+  private resetHero(): void {
+    this.hero.scale.setScalar(1);
+    this.hero.visible = true;
+    this.hero.rotation.set(0, 0, 0); // no spin; the geode child holds the face-us orientation
     this.gemHit = 0;
-    this.gemLight.color.setHex(color);
-    this.gemLight.intensity = 22;
+    this.cracks = 0;
+    this.gemLight.intensity = 7;
   }
 
   // ---- input -----------------------------------------------------------------
@@ -411,8 +426,23 @@ export class Game {
     startAmbience(); // first user gesture unlocks audio
     this.entered += String(d);
     this.hud.setAnswer(this.entered);
-    // The pickaxe swings down; the chink + gem flinch fire when it *connects*.
-    this.swing(() => { sfxChink(); this.gemHit = 1; this.spawnSparkle(); });
+    // The pickaxe swings down; the chink + chip fire when it *connects*.
+    this.swing(() => { sfxChink(); this.gemHit = 1; this.cracks += 1; this.crackChip(); });
+  }
+
+  /** A strike lands: the geode glows hotter from within and sheds a few crystal chips. */
+  private crackChip(): void {
+    this.shake = Math.max(this.shake, 0.12);
+    for (let i = 0; i < 3; i++) {
+      const c = this.makeCrystal(GEM_PALETTE[Math.floor(Math.random() * GEM_PALETTE.length)], 0.4 + Math.random() * 0.2);
+      c.position.copy(this.hero.position).add(new Vector3((Math.random() - 0.5) * 1.2, (Math.random() - 0.3) * 1.2, 0.5));
+      this.scene.add(c);
+      const dir = new Vector3((Math.random() - 0.5) * 2, Math.random() * 1.5 + 0.3, (Math.random() - 0.1) * 1.5).normalize();
+      this.bursts.push({
+        mesh: c, vel: dir.multiplyScalar(2.5 + Math.random() * 2), life: 0.5 + Math.random() * 0.3,
+        spin: new Vector3(Math.random() * 8, Math.random() * 8, Math.random() * 8),
+      });
+    }
   }
 
   /** Start a pickaxe swing; `onImpact` fires at the bottom of the slam. */
@@ -466,39 +496,37 @@ export class Game {
   }
 
   // ---- VFX -------------------------------------------------------------------
-  private shatterGem(): void {
-    const mat = this.gem.material as MeshPhysicalMaterial;
-    const color = mat.color.getHex();
-    const origin = this.gem.position.clone();
-    this.gem.visible = false;
-    this.gem.scale.setScalar(1.15); // reset for next round
+  /** Correct answer: the geode cracks open and bursts into a spray of crystals. */
+  private crackOpen(): void {
+    const origin = this.hero.position.clone();
+    const reward = GEM_PALETTE[Math.floor(Math.random() * GEM_PALETTE.length)];
+    this.hero.visible = false;
     this.gemLight.intensity = 0;
-    this.shake = 0.45;              // camera punch
+    this.shake = 0.5; // camera punch
 
-    // White flash pop at the core.
+    // Flash pop at the core (kept modest so the flying crystals read).
     const flash = new Mesh(
-      new IcosahedronGeometry(0.55, 1),
-      new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.95, blending: AdditiveBlending, depthWrite: false }),
+      new IcosahedronGeometry(0.45, 1),
+      new MeshBasicMaterial({ color: 0xfff4e0, transparent: true, opacity: 0.7, blending: AdditiveBlending, depthWrite: false }),
     );
     flash.position.copy(origin);
     this.scene.add(flash);
-    this.rings.push({ mesh: flash, life: 0.3, maxLife: 0.3, grow: 7, op0: 0.95 });
+    this.rings.push({ mesh: flash, life: 0.28, maxLife: 0.28, grow: 5, op0: 0.7 });
 
-    // Expanding shockwave ring in the gem's color, facing the camera.
+    // Expanding shockwave ring, facing the camera.
     const ring = new Mesh(
       new RingGeometry(0.35, 0.55, 44),
-      new MeshBasicMaterial({ color, transparent: true, opacity: 0.9, blending: AdditiveBlending, side: DoubleSide, depthWrite: false }),
+      new MeshBasicMaterial({ color: reward, transparent: true, opacity: 0.9, blending: AdditiveBlending, side: DoubleSide, depthWrite: false }),
     );
     ring.position.copy(origin);
     ring.lookAt(this.camera.position);
     this.scene.add(ring);
     this.rings.push({ mesh: ring, life: 0.55, maxLife: 0.55, grow: 16, op0: 0.9 });
 
-    // Shard spray — bigger, brighter, with a couple of big chunks for weight.
-    const shardMat = new MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 1.4, roughness: 0.2, flatShading: true });
-    for (let i = 0; i < 34; i++) {
-      const big = i < 5;
-      const shard = new Mesh(new OctahedronGeometry((big ? 0.22 : 0.09) + Math.random() * 0.1, 0), shardMat);
+    // Crystal spray — colorful shards tumbling out of the cracked geode.
+    for (let i = 0; i < 26; i++) {
+      const big = i < 4;
+      const shard = this.makeCrystal(GEM_PALETTE[Math.floor(Math.random() * GEM_PALETTE.length)], big ? 1.1 : 0.55 + Math.random() * 0.4);
       shard.position.copy(origin);
       this.scene.add(shard);
       const dir = new Vector3((Math.random() - 0.5) * 2, Math.random() * 1.7, (Math.random() - 0.2) * 2).normalize();
@@ -507,13 +535,13 @@ export class Game {
         spin: new Vector3(Math.random() * 10, Math.random() * 10, Math.random() * 10),
       });
     }
-    // Twinkle dust burst.
     for (let i = 0; i < 10; i++) this.spawnSparkle();
 
-    const reward = this.makeGem(color, 0.55);
-    reward.position.copy(origin);
-    this.scene.add(reward);
-    this.flyers.push({ mesh: reward, t: 0, from: origin.clone(), to: COUNTER_WORLD.clone() });
+    // The prize crystal flies into the hoard.
+    const prize = this.makeCrystal(reward, 0.9);
+    prize.position.copy(origin);
+    this.scene.add(prize);
+    this.flyers.push({ mesh: prize, t: 0, from: origin.clone(), to: COUNTER_WORLD.clone() });
   }
 
   private spawnSparkle(): void {
@@ -521,7 +549,7 @@ export class Game {
       new OctahedronGeometry(0.09, 0),
       new MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff2c0, emissiveIntensity: 1.4, transparent: true }),
     );
-    m.position.copy(this.gem.position).add(new Vector3((Math.random() - 0.5) * 1.4, (Math.random() - 0.5) * 1.4, 0.4));
+    m.position.copy(this.hero.position).add(new Vector3((Math.random() - 0.5) * 1.4, (Math.random() - 0.5) * 1.4, 0.4));
     this.scene.add(m);
     this.sparkles.push({ mesh: m, life: 0.5 });
   }
@@ -582,24 +610,22 @@ export class Game {
     const dt = Math.min(0.05, this.clock.getDelta());
     const t = this.clock.elapsedTime;
 
-    const gemMat = this.gem.material as MeshPhysicalMaterial;
     if (this.winT >= 0) {
-      // Charge-up: the gem swells, spins, and glows brighter, then bursts.
+      // Charge-up: the geode swells and glows hot (no spin), then cracks open.
       this.winT += dt;
-      const k = Math.min(1, this.winT / 0.16);
-      this.gem.scale.setScalar(1.15 + k * k * 0.85);
-      this.gem.rotation.y += dt * 7;
-      gemMat.emissiveIntensity = 0.4 + k * 1.8;
-      if (this.winT >= 0.16) { this.winT = -1; this.shatterGem(); }
-    } else if (this.gem.visible) {
+      const k = Math.min(1, this.winT / 0.2);
+      this.hero.scale.setScalar(1 + k * k * 0.45);
+      this.gemLight.intensity = 25 + k * 70;
+      if (this.winT >= 0.2) { this.winT = -1; this.crackOpen(); }
+    } else if (this.hero.visible) {
       if (this.gemHit > 0) this.gemHit = Math.max(0, this.gemHit - dt * 5);
       const recoil = Math.sin(this.gemHit * Math.PI);
-      this.gem.rotation.y += dt * 0.7;
-      this.gem.rotation.x = Math.sin(t * 0.7) * 0.14 - recoil * 0.12;
-      this.gem.position.y = 1.7 + Math.sin(t * 1.4) * 0.08;
-      this.gem.scale.setScalar(1.15 * (1 + recoil * 0.13));
-      gemMat.emissiveIntensity = 0.2 + Math.sin(t * 3) * 0.1 + recoil * 0.5;
+      this.hero.position.y = HERO_Y + Math.sin(t * 1.2) * 0.05; // gentle bob, no rotation
+      this.hero.scale.setScalar(1 + recoil * 0.08);
+      // Inner crystals pulse with light; brighter as the geode is chipped open.
+      this.gemLight.intensity = Math.min(18, 7 + this.cracks * 2.2) + Math.sin(t * 2.6) * 2.2 + recoil * 7;
     }
+    this.gemLight.position.set(this.hero.position.x, this.hero.position.y, this.hero.position.z + 1.0);
 
     if (!this.poseFrozen) {
       if (this.pickaxeSwing > 0) {
@@ -658,6 +684,10 @@ export class Game {
     this.renderer.dispose();
   }
 }
+
+// Hero geode placement (live-tunable via window.__game.setHero).
+const HERO_Y = -0.5;                          // lowered further per feedback
+const HERO_ROT = new Vector3(0.4, 3.93, 0);   // geode child rotation → open crystal face tilted toward camera
 
 // World point that projects up near the hoard wall (top-left of the HUD).
 const COUNTER_WORLD = new Vector3(-3.4, 3.0, 2.0);

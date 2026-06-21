@@ -144,7 +144,7 @@ export class Game {
     this.hero.position.set(0, HERO_Y, 0);
     this.hero.add(this.makeGeodePlaceholder()); // until the GLB swaps in
     this.scene.add(this.hero);
-    this.gemLight = new PointLight(0xcaa6ff, 7, 14, 2); // inner-crystal glow
+    this.gemLight = new PointLight(0xcaa6ff, 2, 14, 2); // inner-crystal glow
     this.gemLight.position.set(0, HERO_Y, 1.0);
     this.scene.add(this.gemLight);
 
@@ -166,7 +166,7 @@ export class Game {
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     // Bloom only on bright emissive (gems, crystals, lantern) — high threshold.
-    this.bloom = new UnrealBloomPass(new Vector2(1, 1), 0.55, 0.5, 0.82);
+    this.bloom = new UnrealBloomPass(new Vector2(1, 1), 0.12, 0.4, 0.92);
     this.composer.addPass(this.bloom);
     this.composer.addPass(new OutputPass());
   }
@@ -417,7 +417,7 @@ export class Game {
     this.hero.rotation.set(0, 0, 0); // no spin; the geode child holds the face-us orientation
     this.gemHit = 0;
     this.cracks = 0;
-    this.gemLight.intensity = 7;
+    this.gemLight.intensity = 2;
   }
 
   // ---- input -----------------------------------------------------------------
@@ -478,7 +478,7 @@ export class Game {
       this.busy = true;
       void speak(pick(PRAISE));
       // Pickaxe slams down → on impact the gem charges up and bursts.
-      this.swing(() => { sfxMine(); this.winT = 0; this.gemLight.intensity = 70; });
+      this.swing(() => { sfxMine(); this.winT = 0; this.gemLight.intensity = 18; });
       setTimeout(() => void this.advance(), 1450);
     } else {
       void speak(pick(NUDGE));
@@ -615,7 +615,7 @@ export class Game {
       this.winT += dt;
       const k = Math.min(1, this.winT / 0.2);
       this.hero.scale.setScalar(1 + k * k * 0.45);
-      this.gemLight.intensity = 25 + k * 70;
+      this.gemLight.intensity = 6 + k * 16;
       if (this.winT >= 0.2) { this.winT = -1; this.crackOpen(); }
     } else if (this.hero.visible) {
       if (this.gemHit > 0) this.gemHit = Math.max(0, this.gemHit - dt * 5);
@@ -623,7 +623,7 @@ export class Game {
       this.hero.position.y = HERO_Y + Math.sin(t * 1.2) * 0.05; // gentle bob, no rotation
       this.hero.scale.setScalar(1 + recoil * 0.08);
       // Inner crystals pulse with light; brighter as the geode is chipped open.
-      this.gemLight.intensity = Math.min(18, 7 + this.cracks * 2.2) + Math.sin(t * 2.6) * 2.2 + recoil * 7;
+      this.gemLight.intensity = Math.min(5, 2 + this.cracks * 0.7) + Math.sin(t * 2.6) * 0.4 + recoil * 2;
     }
     this.gemLight.position.set(this.hero.position.x, this.hero.position.y, this.hero.position.z + 1.0);
 

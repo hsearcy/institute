@@ -61,11 +61,14 @@ export class Game {
   // the camera) and swings it AWAY into the scene. The swing PITCHES about X (Y–Z
   // plane), so the head arcs from up/back-over-the-shoulder forward+down onto the
   // gem — depth, not a screen-plane windmill.
-  private pickSwingAxis: 'x' | 'z' = 'x';
-  private pickPivot = new Vector3(0.4, -1.05, 3.5);   // grip in the lower foreground, near the camera
-  private pickCock = -1.5;        // idle: head reared up & back over the shoulder
-  private pickSlam = -0.6;        // slam: head pitches forward & down into the gem at (0,1.7,0)
-  private pickModelRot = new Vector3(0.15, 0, 0); // fine head alignment along the +Y arm
+  // Diagonal swing axis: the head arcs down-AND-inward (right→center), not a flat pitch.
+  private pickSwingAxisVec = new Vector3(1, 0, -0.8).normalize();
+  private pickPivot = new Vector3(1.4, -1.05, 3.3);   // grip held out to the RIGHT, lower foreground
+  private pickCock = 0.35;        // idle: head raised high & back over the shoulder
+  private pickSlam = -0.9;        // slam: head chops DOWN & forward, tip-first, onto the gem (0,1.7,0)
+  // Yaw (the 1.4) turns the head so a POINTY pick tip leads the strike — the GLB's
+  // tips run along ±X by default, which buried the flat side into the gem.
+  private pickModelRot = new Vector3(0.15, 1.4, 0);
   private pickModelOffset = new Vector3(0, 1.8, 0); // push the head out along the arm, away from the grip
   private pickScale = 3.0;
   private pickSwingRate = 3.0;
@@ -282,9 +285,9 @@ export class Game {
   /** Re-seat the pivot + loaded model from the current rig params (idempotent). */
   /** Drive the swing on the configured axis (x = depth pitch, z = legacy screen-plane). */
   private setSwingRotation(angle: number): void {
-    this.pickaxe.rotation.set(0, 0, 0);
-    if (this.pickSwingAxis === 'x') this.pickaxe.rotation.x = angle;
-    else this.pickaxe.rotation.z = angle;
+    // Rotate the grip about a tunable axis so the head can arc diagonally
+    // (held out to the right, swinging down-and-inward toward the gem).
+    this.pickaxe.quaternion.setFromAxisAngle(this.pickSwingAxisVec, angle);
   }
 
   private applyPickRig(): void {
@@ -316,7 +319,7 @@ export class Game {
   setPickRig(o: {
     pivot?: [number, number, number]; cock?: number; slam?: number;
     modelRot?: [number, number, number]; modelOffset?: [number, number, number];
-    scale?: number; swingRate?: number; axis?: 'x' | 'z';
+    scale?: number; swingRate?: number; axisVec?: [number, number, number];
   }): { ok: true } {
     if (o.pivot) this.pickPivot.set(o.pivot[0], o.pivot[1], o.pivot[2]);
     if (o.cock !== undefined) this.pickCock = o.cock;
@@ -325,7 +328,7 @@ export class Game {
     if (o.modelOffset) this.pickModelOffset.set(o.modelOffset[0], o.modelOffset[1], o.modelOffset[2]);
     if (o.scale !== undefined) this.pickScale = o.scale;
     if (o.swingRate !== undefined) this.pickSwingRate = o.swingRate;
-    if (o.axis) this.pickSwingAxis = o.axis;
+    if (o.axisVec) this.pickSwingAxisVec.set(o.axisVec[0], o.axisVec[1], o.axisVec[2]).normalize();
     this.applyPickRig();
     return { ok: true };
   }
@@ -333,7 +336,7 @@ export class Game {
     return {
       pivot: this.pickPivot.toArray(), cock: this.pickCock, slam: this.pickSlam,
       modelRot: this.pickModelRot.toArray(), modelOffset: this.pickModelOffset.toArray(),
-      scale: this.pickScale, swingRate: this.pickSwingRate, axis: this.pickSwingAxis,
+      scale: this.pickScale, swingRate: this.pickSwingRate, axisVec: this.pickSwingAxisVec.toArray(),
       hasModel: !!this.pickModel,
     };
   }

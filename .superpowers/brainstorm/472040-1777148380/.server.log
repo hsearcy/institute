@@ -1,7 +1,0 @@
-{"type":"server-started","port":65522,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:65522","screen_dir":"/home/hfsearcy/git/institute/.superpowers/brainstorm/472040-1777148380"}
-{"type":"screen-added","file":"/home/hfsearcy/git/institute/.superpowers/brainstorm/472040-1777148380/core-loop-mockup.html"}
-{"type":"screen-added","file":"/home/hfsearcy/git/institute/.superpowers/brainstorm/472040-1777148380/core-loop-mockup-v2.html"}
-{"type":"screen-added","file":"/home/hfsearcy/git/institute/.superpowers/brainstorm/472040-1777148380/architecture-overview.html"}
-{"type":"screen-added","file":"/home/hfsearcy/git/institute/.superpowers/brainstorm/472040-1777148380/plugin-contract.html"}
-{"type":"screen-added","file":"/home/hfsearcy/git/institute/.superpowers/brainstorm/472040-1777148380/waiting.html"}
-{"type":"server-stopped","reason":"idle timeout"}

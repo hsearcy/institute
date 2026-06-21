@@ -1,0 +1,4 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body, #app { width: 100%; height: 100%; overflow: hidden; background: #1a1430; }
+body { font-family: system-ui, sans-serif; }
+#game-canvas { display: block; width: 100vw; height: 100vh; touch-action: none; }

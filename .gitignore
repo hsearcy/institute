@@ -5,6 +5,15 @@ dist/
 .DS_Store
 /tmp/
 
+# Runtime SQLite data (mastery history) — not source
+server/data/
+*.db
+*.db-*
+
+# Raw asset working dir (concepts + multi-MB Tripo GLBs). Runtime-optimized
+# copies live in web/public/assets and ARE tracked.
+/assets/
+
 # Secrets — never commit
 .env
 .env.*

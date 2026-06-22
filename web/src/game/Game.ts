@@ -1027,23 +1027,52 @@ function extractGeometry(root: Group, targetH: number): BufferGeometry | null {
 }
 
 /** The GLB pickaxe is one mesh; partition its triangles into a handle group (0)
- *  and a head group (1) by local Y — the GLB is head-up (+Y) — so a skin can
- *  re-material only the head and keep the baked wood handle. `cut` = fraction up
- *  the local height where the head begins. */
-function splitPickaxeHead(mesh: Mesh, cut = 0.56): void {
+ *  and a head group (1) so a skin can re-material only the head and keep the baked
+ *  wood handle. We classify by the model's own base-color texture — warm/brown
+ *  texels are the wooden handle, everything else (the metal head) gets re-skinned —
+ *  so the split follows the painted seam exactly. Falls back to a Y cut. */
+function splitPickaxeHead(mesh: Mesh): void {
   const geo = mesh.geometry;
   const pos = geo.getAttribute('position');
+  const uv = geo.getAttribute('uv');
+  const img = (mesh.material as MeshStandardMaterial).map?.image as { width: number; height: number } | undefined;
+
+  let texel: ((u: number, v: number) => [number, number, number]) | null = null;
+  if (img && uv && img.width) {
+    try {
+      const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
+      const ctx = cv.getContext('2d', { willReadFrequently: true })!;
+      ctx.drawImage(img as unknown as CanvasImageSource, 0, 0);
+      const data = ctx.getImageData(0, 0, img.width, img.height).data;
+      texel = (u, v) => {
+        const x = Math.max(0, Math.min(img.width - 1, Math.floor((u - Math.floor(u)) * img.width)));
+        const y = Math.max(0, Math.min(img.height - 1, Math.floor((1 - (v - Math.floor(v))) * img.height)));
+        const i = (y * img.width + x) * 4;
+        return [data[i], data[i + 1], data[i + 2]];
+      };
+    } catch { texel = null; }
+  }
+
   if (!geo.boundingBox) geo.computeBoundingBox();
   const { min, max } = geo.boundingBox!;
-  const headY = min.y + (max.y - min.y) * cut;
+  const headY = min.y + (max.y - min.y) * 0.56; // fallback only
   const src = geo.index
     ? Array.from(geo.index.array as ArrayLike<number>)
     : Array.from({ length: pos.count }, (_, i) => i);
   const handle: number[] = [], head: number[] = [];
   for (let i = 0; i < src.length; i += 3) {
     const a = src[i], b = src[i + 1], c = src[i + 2];
-    const cy = (pos.getY(a) + pos.getY(b) + pos.getY(c)) / 3;
-    (cy >= headY ? head : handle).push(a, b, c);
+    let isHead: boolean;
+    if (texel && uv) {
+      const u = (uv.getX(a) + uv.getX(b) + uv.getX(c)) / 3;
+      const v = (uv.getY(a) + uv.getY(b) + uv.getY(c)) / 3;
+      const [r, g, bl] = texel(u, v);
+      // wood = warm/brown (red clearly above blue, not a grey/metal texel)
+      isHead = !((r - bl) > 26 && r > 55 && r >= g);
+    } else {
+      isHead = (pos.getY(a) + pos.getY(b) + pos.getY(c)) / 3 >= headY;
+    }
+    (isHead ? head : handle).push(a, b, c);
   }
   geo.setIndex(handle.concat(head));
   geo.clearGroups();

@@ -344,11 +344,12 @@ app.post("/tts", async (c) => {
     {
       method: "POST",
       headers: { "xi-api-key": key, "Content-Type": "application/json" },
-      // speed 0.7–1.2 (1.0 = default); slower so a 6-year-old can follow.
+      // Warm + expressive for an encouraging kid tutor; slower so a 6-year-old can follow.
+      // stability lower = more emotional range; style adds warmth; speed 0.7–1.2 (1.0 default).
       body: JSON.stringify({
         text,
         model_id: "eleven_turbo_v2_5",
-        voice_settings: { stability: 0.5, similarity_boost: 0.75, speed: 0.75 },
+        voice_settings: { stability: 0.4, similarity_boost: 0.8, style: 0.35, use_speaker_boost: true, speed: 0.78 },
       }),
     },
   );

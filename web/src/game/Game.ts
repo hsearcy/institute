@@ -40,7 +40,6 @@ export class Game {
   private mined = false;
   private wrongCount = 0;          // wrong tries on the current problem (drives escalating help)
   private shownAt = 0;
-  private collection = 0;        // local count of gems that have visibly landed in the hoard
   private busy = false;
 
   // reward state (authoritative; seeded from /state, updated by /tutor/attempt)
@@ -421,10 +420,7 @@ export class Game {
     const st = await fetchState();
     if (!st) return;
     this.totalGems = st.gems;
-    if (seed) {
-      this.collection = st.gems;
-      this.hud.setCollection(st.gems);
-    }
+    if (seed) this.hud.setCollection(st.gems);
     this.hud.setStreak(st.streak, false);
     this.hud.setShields(st.shields);
     this.hud.setGemsForShop(st.gems);
@@ -617,22 +613,16 @@ export class Game {
     const r = this.pendingReward;
     this.pendingReward = null;
     if (!r) {
-      // No first-try reward for this mine (he missed earlier, or telemetry is offline),
-      // but a gem still visibly landed in the hoard — keep the counter in step with it.
-      this.hud.rollCollectionTo(this.collection);
+      // No server reward for this landed gem (a 2nd-try-correct the server didn't
+      // credit, or offline) — keep the counter at the authoritative total. The gem
+      // still landed as a hoard pip; the number just doesn't move.
+      this.hud.rollCollectionTo(this.totalGems);
       return;
     }
-    // One gem already landed (collection was ++'d). The server may have awarded MORE
-    // than one (streak bonus + completed-quest rewards) — credit that extra to the
-    // counter on top of the landed gem, so bonuses make it leap. We track the counter
-    // as a running hoard total (monotonic) rather than snapping to the server absolute,
-    // because the visible hoard fills on every correct mine, including post-miss ones
-    // the server doesn't credit toward `totalGems`.
-    const questBonus = r.questsCompleted.reduce((s, q) => s + q.reward, 0);
-    const streakBonus = Math.max(0, r.gemsEarned - 1);
-    this.collection += streakBonus + questBonus;
+    // The server total is authoritative — roll straight to it. Streak + completed-
+    // quest bonuses are already baked into totalGems, so they make the counter leap.
     this.totalGems = r.totalGems;
-    this.hud.rollCollectionTo(this.collection);
+    this.hud.rollCollectionTo(r.totalGems);
     this.hud.setStreak(r.streak, true);
     this.hud.setShields(r.shields);
     this.hud.setGemsForShop(r.totalGems);
@@ -780,7 +770,6 @@ export class Game {
         const col = (f.mesh.material as MeshPhysicalMaterial).color.getHex();
         this.scene.remove(f.mesh);
         this.flyers.splice(i, 1);
-        this.collection += 1;
         this.hud.addGem(col);   // gem lands in the visible hoard
         sfxCollect();
         // The prize gem arriving is the cue to commit the authoritative reward:

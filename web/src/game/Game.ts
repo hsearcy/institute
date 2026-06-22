@@ -72,7 +72,7 @@ export class Game {
   // pickaxe skin: which tier is equipped + the material we swapped in (so we can
   // restore the GLB's baked material for `wooden`, and animate `legendary`'s hue).
   private equippedSkin: SkinKey = 'wooden';
-  private skinMats = new Map<Mesh, Material | Material[]>(); // baked originals, kept for `wooden`
+  private skinMats = new Map<Mesh, Material>(); // baked original (the head's wood+steel)
   private legendaryMat: MeshPhysicalMaterial | null = null;  // animated when legendary is equipped
   private poseFrozen = false;     // tuning: when set, the swing/idle tick won't drive rotation
   // Pickaxe rig params (live-tunable via setPickRig for the rigging subagent).
@@ -205,11 +205,16 @@ export class Game {
       this.pickModel = pick;
       this.pickHolder.clear();
       this.pickHolder.add(pick);
-      // Stash the GLB's baked materials so `wooden` can restore the original look.
+      // The GLB is a single mesh — split each into a handle group (keeps the baked
+      // wood) + a head group (re-skinnable), so skins don't flatten the whole tool.
       this.skinMats.clear();
       pick.traverse((o) => {
         const m = o as Mesh;
-        if ((m as unknown as { isMesh?: boolean }).isMesh && m.material) this.skinMats.set(m, m.material);
+        if (!(m as unknown as { isMesh?: boolean }).isMesh || !m.geometry || !m.material || Array.isArray(m.material)) return;
+        const orig = m.material as Material;
+        this.skinMats.set(m, orig);
+        splitPickaxeHead(m);
+        m.material = [orig, orig]; // [handle, head] — both baked until a skin swaps the head
       });
       this.applyPickRig();
       this.applyPickaxeSkin(this.equippedSkin); // reflect whatever was equipped before the GLB landed
@@ -361,14 +366,12 @@ export class Game {
     model.traverse((o) => {
       const m = o as Mesh;
       if (!(m as unknown as { isMesh?: boolean }).isMesh || !m.material) return;
-      if (!spec.make) {
-        const orig = this.skinMats.get(m);
-        if (orig) m.material = orig; // restore the baked wood + steel
-        return;
-      }
-      const mat = spec.make();
-      m.material = mat;
-      if (spec.animated) this.legendaryMat = mat as MeshPhysicalMaterial;
+      const orig = this.skinMats.get(m);
+      if (!Array.isArray(m.material) || !orig) return; // unsplit fallback — leave as-is
+      // group 0 = handle (always the baked wood); group 1 = head (the skin).
+      const head = spec.make ? spec.make(orig as MeshStandardMaterial) : orig;
+      m.material = [orig, head];
+      if (spec.animated) this.legendaryMat = head as MeshPhysicalMaterial;
     });
     return { ok: true, key: skinKey };
   }
@@ -1021,6 +1024,31 @@ function extractGeometry(root: Group, targetH: number): BufferGeometry | null {
   merged.scale(targetH / (size.y || 1), targetH / (size.y || 1), targetH / (size.y || 1));
   merged.computeVertexNormals();
   return merged;
+}
+
+/** The GLB pickaxe is one mesh; partition its triangles into a handle group (0)
+ *  and a head group (1) by local Y — the GLB is head-up (+Y) — so a skin can
+ *  re-material only the head and keep the baked wood handle. `cut` = fraction up
+ *  the local height where the head begins. */
+function splitPickaxeHead(mesh: Mesh, cut = 0.56): void {
+  const geo = mesh.geometry;
+  const pos = geo.getAttribute('position');
+  if (!geo.boundingBox) geo.computeBoundingBox();
+  const { min, max } = geo.boundingBox!;
+  const headY = min.y + (max.y - min.y) * cut;
+  const src = geo.index
+    ? Array.from(geo.index.array as ArrayLike<number>)
+    : Array.from({ length: pos.count }, (_, i) => i);
+  const handle: number[] = [], head: number[] = [];
+  for (let i = 0; i < src.length; i += 3) {
+    const a = src[i], b = src[i + 1], c = src[i + 2];
+    const cy = (pos.getY(a) + pos.getY(b) + pos.getY(c)) / 3;
+    (cy >= headY ? head : handle).push(a, b, c);
+  }
+  geo.setIndex(handle.concat(head));
+  geo.clearGroups();
+  geo.addGroup(0, handle.length, 0);
+  geo.addGroup(handle.length, head.length, 1);
 }
 
 // Hero geode placement (live-tunable via window.__game.setHero).

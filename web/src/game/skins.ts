@@ -12,9 +12,10 @@ export type SkinSpec = {
   tint: string;
   /** A short flavor blurb for the shop row. */
   blurb: string;
-  /** Build the 3D material for the pickaxe. `null` ⇒ keep the GLB's baked material
-   *  (the wooden starter look). `legendary` is flagged so the tick loop cycles its hue. */
-  make: (() => Material) | null;
+  /** Build the head material, given the GLB's baked material (so we can reuse its
+   *  normal map for surface detail). `null` ⇒ keep the baked steel head (wooden).
+   *  `legendary` is flagged so the tick loop cycles its hue. */
+  make: ((orig?: MeshStandardMaterial) => Material) | null;
   /** Marks the iridescent legendary so the animation loop can drive its emissive. */
   animated?: boolean;
 };
@@ -28,50 +29,50 @@ export const PICKAXE_SKINS: Record<SkinKey, SkinSpec> = {
   stone: {
     tint: '#8d8f97',
     blurb: 'Solid grey rock',
-    make: () => new MeshStandardMaterial({ color: 0x8d8f97, roughness: 0.95, metalness: 0.0, flatShading: false }),
+    make: (o) => new MeshStandardMaterial({ color: 0x8d8f97, roughness: 0.95, metalness: 0.0, normalMap: o?.normalMap ?? null }),
   },
   iron: {
     tint: '#6d7480',
     blurb: 'Dark brushed steel',
-    make: () => new MeshStandardMaterial({ color: 0x6c7482, roughness: 0.42, metalness: 0.78, envMapIntensity: 1.1 }),
+    make: (o) => new MeshStandardMaterial({ color: 0x6c7482, roughness: 0.42, metalness: 0.78, envMapIntensity: 1.1, normalMap: o?.normalMap ?? null }),
   },
   silver: {
     tint: '#e6ebf2',
     blurb: 'Bright polished silver',
-    make: () => new MeshStandardMaterial({ color: 0xdfe6ef, roughness: 0.12, metalness: 1.0, envMapIntensity: 1.5 }),
+    make: (o) => new MeshStandardMaterial({ color: 0xdfe6ef, roughness: 0.12, metalness: 1.0, envMapIntensity: 1.5, normalMap: o?.normalMap ?? null }),
   },
   gold: {
     tint: '#ffce4d',
     blurb: 'Rich shiny gold',
-    make: () => new MeshStandardMaterial({ color: 0xffc23a, emissive: 0x4a2f00, emissiveIntensity: 0.35, roughness: 0.18, metalness: 1.0, envMapIntensity: 1.6 }),
+    make: (o) => new MeshStandardMaterial({ color: 0xffc23a, emissive: 0x4a2f00, emissiveIntensity: 0.35, roughness: 0.18, metalness: 1.0, envMapIntensity: 1.6, normalMap: o?.normalMap ?? null }),
   },
   diamond: {
     tint: '#7af0ff',
     blurb: 'Glowing cyan crystal',
-    make: () => new MeshPhysicalMaterial({
+    make: (o) => new MeshPhysicalMaterial({
       color: 0xbff7ff, emissive: 0x18c6e0, emissiveIntensity: 0.6,
       metalness: 0.0, roughness: 0.04, transmission: 0.65, ior: 2.2, thickness: 0.6,
-      clearcoat: 1.0, clearcoatRoughness: 0.05, envMapIntensity: 1.6,
+      clearcoat: 1.0, clearcoatRoughness: 0.05, envMapIntensity: 1.6, normalMap: o?.normalMap ?? null,
     }),
   },
   obsidian: {
     tint: '#1b1430',
     blurb: 'Glossy black, purple sheen',
-    make: () => new MeshPhysicalMaterial({
+    make: (o) => new MeshPhysicalMaterial({
       color: 0x0d0a17, emissive: 0x2a0a4a, emissiveIntensity: 0.22,
       metalness: 0.35, roughness: 0.08, clearcoat: 1.0, clearcoatRoughness: 0.06,
-      sheen: 1.0, sheenColor: new Color(0x9a5cff), sheenRoughness: 0.4, envMapIntensity: 1.3,
+      sheen: 1.0, sheenColor: new Color(0x9a5cff), sheenRoughness: 0.4, envMapIntensity: 1.3, normalMap: o?.normalMap ?? null,
     }),
   },
   legendary: {
     tint: '#ff5bd1',
     blurb: 'Iridescent — the showpiece',
     animated: true,
-    make: () => new MeshPhysicalMaterial({
+    make: (o) => new MeshPhysicalMaterial({
       color: 0xff2bbf, emissive: 0xff2bbf, emissiveIntensity: 0.4,
       metalness: 0.35, roughness: 0.2,
       iridescence: 1.0, iridescenceIOR: 2.2, iridescenceThicknessRange: [100, 820],
-      clearcoat: 1.0, clearcoatRoughness: 0.04, envMapIntensity: 1.6,
+      clearcoat: 1.0, clearcoatRoughness: 0.04, envMapIntensity: 1.6, normalMap: o?.normalMap ?? null,
     }),
   },
 };

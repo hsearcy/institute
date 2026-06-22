@@ -225,8 +225,12 @@ export class Hud {
   }
 
   // ---- quests --------------------------------------------------------------
-  setQuests(quests: Quest[]): void {
+  setQuests(questsIn: Quest[]): void {
     const list = this.root.querySelector('#quests-list')!;
+    // Fixed display order (the server's row order isn't deterministic) so rows
+    // never reshuffle / rebuild under the panel.
+    const order = ['mine_gems', 'solve_10', 'streak_5'];
+    const quests = [...questsIn].sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
     // Rebuild only if the set of keys changed; otherwise update in place.
     const keys = quests.map((q) => q.key).join(',');
     if (this.questsPanel.dataset.keys !== keys) {
@@ -287,9 +291,9 @@ export class Hud {
   private highlightQuest(key: string): void {
     const r = this.questRows.get(key);
     if (!r) return;
-    r.row.classList.remove('celebrate');
+    r.row.classList.remove('q-celebrate');
     void r.row.offsetWidth;
-    r.row.classList.add('celebrate');
+    r.row.classList.add('q-celebrate');
   }
 
   private banner(title: string, cls: string, sub?: string): void {
@@ -431,8 +435,9 @@ function injectStyles(): void {
   .q-prog { color: #cfc6e8; font-weight: 700; font-size: 12px; }
   .quest.done .q-fill { background: linear-gradient(90deg,#ffd23b,#ffb01f); box-shadow: 0 0 10px rgba(255,200,60,0.7); }
   .quest.done .q-prog { color: #ffd23b; }
-  .quest.celebrate { animation: questCeleb 1s ease; }
-  @keyframes questCeleb { 0%{transform:scale(1)} 30%{transform:scale(1.08); filter:brightness(1.4)} 100%{transform:scale(1)} }
+  .quest.q-celebrate { animation: questCeleb 1s ease; }
+  /* Glow pulse only — no scale, so it never overlaps the header or sibling rows. */
+  @keyframes questCeleb { 0%{filter:brightness(1)} 30%{filter:brightness(1.6) drop-shadow(0 0 10px rgba(255,210,80,0.9))} 100%{filter:brightness(1)} }
 
   .problem-wrap { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 6px; }
   .replay { pointer-events: auto; border: none; background: rgba(20,16,40,0.5); color: #fff; font-size: 22px;

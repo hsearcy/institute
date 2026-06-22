@@ -36,6 +36,8 @@ export const ProblemSchema = z.object({
   answer: z.number().int().min(0).max(999),
   /** 0..1 difficulty, for telemetry and the gem-rarity mapping. */
   difficulty: z.number().min(0).max(1),
+  /** A warm, kid-friendly strategy hint (e.g. make-a-ten), shown if he gets stuck. */
+  hint: z.string().max(200).optional(),
 });
 export type Problem = z.infer<typeof ProblemSchema>;
 

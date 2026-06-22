@@ -38,6 +38,7 @@ export class Game {
   private entered = '';
   private firstAttempt: boolean | null = null;
   private mined = false;
+  private wrongCount = 0;          // wrong tries on the current problem (drives escalating help)
   private shownAt = 0;
   private collection = 0;
   private busy = false;
@@ -409,10 +410,12 @@ export class Game {
     this.entered = '';
     this.firstAttempt = null;
     this.mined = false;
+    this.wrongCount = 0;
     this.busy = false;
     this.shownAt = performance.now();
     this.hud.setProblem(p.prompt);
     this.hud.setAnswer('');
+    this.hud.clearHint();
     void speak(p.spoken);
     this.resetHero();
     this.branchesPromise = fetchBranches(p).catch(() => null);
@@ -491,11 +494,30 @@ export class Game {
       this.swing(() => { sfxMine(); this.winT = 0; this.gemLight.intensity = 18; });
       setTimeout(() => void this.advance(), 1450);
     } else {
-      void speak(pick(NUDGE));
+      this.wrongCount += 1;
       this.hud.flashWrong();
-      this.entered = '';
-      this.swing(() => { sfxFizzle(); this.gemHit = 0.6; }); // strike lands but the gem holds
-      setTimeout(() => this.hud.setAnswer(''), 350);
+      this.swing(() => { sfxFizzle(); this.gemHit = 0.6; }); // strike lands but the geode holds
+      const hint = this.problem.hint;
+      if (this.wrongCount >= 3) {
+        // Stuck: reveal the answer + the strategy, then move on to an easier one.
+        this.busy = true;
+        const ans = this.problem.answer;
+        void speak(`That one is tricky! The answer is ${ans}.${hint ? ' ' + hint : ''} Let's try an easier one.`);
+        this.hud.setAnswer(String(ans));
+        this.hud.showHint(`The answer is ${ans} — let's try an easier one!`);
+        setTimeout(() => void this.advance(), 3400);
+      } else if (this.wrongCount === 2 && hint) {
+        // Second miss: teach a strategy, then let him try again.
+        void speak(hint);
+        this.hud.showHint(hint);
+        this.entered = '';
+        setTimeout(() => this.hud.setAnswer(''), 350);
+      } else {
+        // First miss (or no hint available): gentle nudge, try again.
+        void speak(pick(NUDGE));
+        this.entered = '';
+        setTimeout(() => this.hud.setAnswer(''), 350);
+      }
     }
   }
 

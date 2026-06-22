@@ -9,9 +9,22 @@ export type ProblemDraft = {
   spoken: string;
   answer: number;
   difficulty: number;
+  hint?: string;
 };
 
 const ri = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+/** Kid-friendly make-a-ten / count strategy hint for an addition. */
+function addHint(a: number, b: number): string {
+  const sum = a + b;
+  if (sum <= 10) return `Count on from ${Math.max(a, b)}: add ${Math.min(a, b)} more, one at a time.`;
+  const big = Math.max(a, b), small = Math.min(a, b);
+  const need = 10 - big, left = small - need;
+  return `Make a ten! ${big} plus ${need} makes 10, then ${left} more makes ${sum}.`;
+}
+function subHint(a: number, b: number): string {
+  return `Start at ${a} and count back ${b}: ${a}, ${a - 1}… until you've taken away ${b}.`;
+}
 
 export function localProblem(skill: Skill, difficulty: number): ProblemDraft {
   const d = Math.max(0, Math.min(1, difficulty));
@@ -26,13 +39,13 @@ export function localProblem(skill: Skill, difficulty: number): ProblemDraft {
       } else {                             // crosses ten: sums 11–18
         a = ri(4, 9); b = ri(Math.max(3, 11 - a), 9);
       }
-      return { skill, prompt: `${a} + ${b}`, spoken: `What is ${a} plus ${b}?`, answer: a + b, difficulty: d };
+      return { skill, prompt: `${a} + ${b}`, spoken: `What is ${a} plus ${b}?`, answer: a + b, difficulty: d, hint: addHint(a, b) };
     }
     case "subtraction": {
       const maxA = d < 0.4 ? 10 : d < 0.7 ? 15 : 20;
       const a = ri(2, maxA);
       const b = ri(1, a);
-      return { skill, prompt: `${a} − ${b}`, spoken: `What is ${a} minus ${b}?`, answer: a - b, difficulty: d };
+      return { skill, prompt: `${a} − ${b}`, spoken: `What is ${a} minus ${b}?`, answer: a - b, difficulty: d, hint: subHint(a, b) };
     }
     case "skip_counting": {
       const step = d < 0.4 ? 2 : d < 0.7 ? 5 : 10;
@@ -45,6 +58,7 @@ export function localProblem(skill: Skill, difficulty: number): ProblemDraft {
         spoken: `Keep counting by ${step}s. ${seq.join(", ")}... what comes next?`,
         answer: next,
         difficulty: d,
+        hint: `Add ${step} to the last number: ${seq[2]} plus ${step}.`,
       };
     }
     case "place_value": {
@@ -52,7 +66,7 @@ export function localProblem(skill: Skill, difficulty: number): ProblemDraft {
       const ones = ri(0, 9);
       const num = tens * 10 + ones;
       if (d < 0.5) {
-        return { skill, prompt: `Tens in ${num}?`, spoken: `How many tens are in ${num}?`, answer: tens, difficulty: d };
+        return { skill, prompt: `Tens in ${num}?`, spoken: `How many tens are in ${num}?`, answer: tens, difficulty: d, hint: `Each ten is a group of 10. Count the groups of 10 in ${num}.` };
       }
       return {
         skill,
@@ -60,19 +74,20 @@ export function localProblem(skill: Skill, difficulty: number): ProblemDraft {
         spoken: `${tens} tens and ${ones} ones make what number?`,
         answer: num,
         difficulty: d,
+        hint: `${tens} tens is ${tens * 10}, then add ${ones} more.`,
       };
     }
     case "multiplication": {
       const cap = d < 0.5 ? 5 : 9;
       const a = ri(2, cap);
       const b = ri(2, cap);
-      return { skill, prompt: `${a} × ${b}`, spoken: `What is ${a} times ${b}?`, answer: a * b, difficulty: d };
+      return { skill, prompt: `${a} × ${b}`, spoken: `What is ${a} times ${b}?`, answer: a * b, difficulty: d, hint: `${a} groups of ${b}. Skip-count by ${b}, ${a} times.` };
     }
     case "division": {
       const b = ri(2, 5);
       const q = ri(2, 5);
       const a = b * q;
-      return { skill, prompt: `${a} ÷ ${b}`, spoken: `What is ${a} divided by ${b}?`, answer: q, difficulty: d };
+      return { skill, prompt: `${a} ÷ ${b}`, spoken: `What is ${a} divided by ${b}?`, answer: q, difficulty: d, hint: `How many ${b}s fit into ${a}? Count by ${b}s up to ${a}.` };
     }
   }
 }

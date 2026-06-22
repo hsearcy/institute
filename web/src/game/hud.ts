@@ -18,6 +18,7 @@ export class Hud {
   private answerEl!: HTMLDivElement;
   private collectionEl!: HTMLSpanElement;
   private hoardEl!: HTMLDivElement;
+  private hintEl!: HTMLDivElement;
 
   constructor(h: Handlers) {
     injectStyles();
@@ -32,6 +33,7 @@ export class Hud {
         <button class="replay" title="Hear it again">🔊</button>
         <div class="problem" id="problem">…</div>
       </div>
+      <div class="hint" id="hint"></div>
       <div class="hud-bottom">
         <div class="answer" id="answer"></div>
         <div class="pad" id="pad"></div>
@@ -43,6 +45,7 @@ export class Hud {
     this.answerEl = this.root.querySelector('#answer')!;
     this.collectionEl = this.root.querySelector('#collection-count')!;
     this.hoardEl = this.root.querySelector('#hoard')!;
+    this.hintEl = this.root.querySelector('#hint')!;
 
     const pad = this.root.querySelector('#pad')!;
     const layout = [1, 2, 3, 4, 5, 6, 7, 8, 9, 'back', 0, 'mine'] as const;
@@ -69,6 +72,15 @@ export class Hud {
 
   setProblem(text: string): void {
     this.problemEl.textContent = text;
+  }
+  /** Show a strategy hint / answer reveal banner. */
+  showHint(text: string): void {
+    this.hintEl.textContent = text;
+    this.hintEl.classList.add('show');
+  }
+  clearHint(): void {
+    this.hintEl.textContent = '';
+    this.hintEl.classList.remove('show');
   }
   setAnswer(text: string): void {
     this.answerEl.textContent = text;
@@ -130,6 +142,11 @@ function injectStyles(): void {
     width: 46px; height: 46px; border-radius: 50%; cursor: pointer; }
   .problem { color: #fff; font-size: clamp(40px, 9vw, 84px); font-weight: 900;
     text-shadow: 0 4px 18px rgba(0,0,0,0.5); letter-spacing: 1px; }
+  .hint { align-self: center; max-width: min(560px, 88vw); margin: 8px auto 0; padding: 0 14px;
+    text-align: center; color: #ffe9a8; font-weight: 700; font-size: clamp(16px, 3.6vw, 24px);
+    line-height: 1.25; text-shadow: 0 2px 8px rgba(0,0,0,0.55); opacity: 0;
+    transform: translateY(-4px); transition: opacity .2s, transform .2s; pointer-events: none; }
+  .hint.show { opacity: 1; transform: translateY(0); }
   .hud-bottom { margin-top: auto; display: flex; flex-direction: column; align-items: flex-start;
     padding-left: clamp(16px, 7vw, 110px);
     margin-bottom: max(18px, env(safe-area-inset-bottom)); }

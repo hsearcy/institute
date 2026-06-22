@@ -99,8 +99,9 @@ const PROBLEM_DRAFT_SCHEMA = {
     spoken: { type: "string", description: "Kid-friendly spoken form, e.g. \"What is 8 plus 7?\"" },
     answer: { type: "integer", description: "The correct numeric answer the kid keys in" },
     difficulty: { type: "number", description: "0..1" },
+    hint: { type: "string", description: "One warm, concrete strategy hint a 6-year-old can act on if stuck — e.g. make-a-ten: \"Make a ten! 8 plus 2 is 10, then 5 more makes 15.\" Not just the answer." },
   },
-  required: ["skill", "prompt", "spoken", "answer", "difficulty"],
+  required: ["skill", "prompt", "spoken", "answer", "difficulty", "hint"],
   additionalProperties: false,
 } as const;
 
@@ -127,6 +128,7 @@ Rules:
 - Stay mostly in addition-within-20 and subtraction; introduce skip_counting/place_value lightly, and multiplication/division only when an advance hint explicitly clears it.
 - VARY the numbers a lot: consecutive problems must not share the same total and must not be permutations of one another (8+12, 9+11 are bad — repetitive). Never reuse the problem he is on.
 - "prompt" is the short written form; "spoken" is a warm, kid-friendly sentence to read aloud (no emoji/markdown). "answer" is the exact integer.
+- "hint" teaches a concrete strategy he can act on if he's stuck (make-a-ten, count-on, count-back) — a real method, never just restating the answer.
 Return via the next_problems tool only.`;
 
 type SkillSummary = { skill: string; label: string; attempts: number; accuracy: number; state: string; avgDifficulty: number };

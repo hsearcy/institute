@@ -115,5 +115,27 @@ export const StateSchema = z.object({
   bestStreak: z.number().int(),
   shields: z.number().int(),
   quests: z.array(QuestSchema),
+  /** The equipped pickaxe skin key (defaults to "wooden"). */
+  equipped: z.string(),
 });
 export type State = z.infer<typeof StateSchema>;
+
+// ---- Pickaxe-skin shop -----------------------------------------------------
+
+/** One catalog entry in the pickaxe-skin shop, as returned by GET /shop. */
+export const ShopItemSchema = z.object({
+  key: z.string(),
+  name: z.string(),
+  price: z.number().int(),
+  owned: z.boolean(),
+  equipped: z.boolean(),
+});
+export type ShopItem = z.infer<typeof ShopItemSchema>;
+
+/** The shop view returned by GET /shop: balance, equipped skin, full catalog. */
+export const ShopStateSchema = z.object({
+  gems: z.number().int(),
+  equipped: z.string(),
+  items: z.array(ShopItemSchema),
+});
+export type ShopState = z.infer<typeof ShopStateSchema>;

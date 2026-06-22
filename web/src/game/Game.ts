@@ -14,9 +14,14 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { type Material } from 'three';
 import type { Problem, Branches, Reward } from '@institute/shared';
 import { Hud } from './hud';
-import { fetchFirst, fetchBranches, recordAttempt, creditRetrySolve, fetchState, buyShield } from './tutor';
+import { PICKAXE_SKINS, isSkinKey, type SkinKey } from './skins';
+import {
+  fetchFirst, fetchBranches, recordAttempt, creditRetrySolve, fetchState, buyShield,
+  fetchShop, buyPickaxe, equipPickaxe,
+} from './tutor';
 import { speak, sfxChink, sfxMine, sfxFizzle, sfxCollect, sfxFanfare, startAmbience, preloadAudio } from './audio';
 
 // Saturated jewel tones — vivid against the dark cavern (muddy mid-tones removed).
@@ -64,6 +69,11 @@ export class Game {
   private pickaxeSwing = 0;       // 1 → 0 over a swing
   private onSwingImpact: (() => void) | null = null;
   private swingImpactDone = true;
+  // pickaxe skin: which tier is equipped + the material we swapped in (so we can
+  // restore the GLB's baked material for `wooden`, and animate `legendary`'s hue).
+  private equippedSkin: SkinKey = 'wooden';
+  private skinMats = new Map<Mesh, Material | Material[]>(); // baked originals, kept for `wooden`
+  private legendaryMat: MeshPhysicalMaterial | null = null;  // animated when legendary is equipped
   private poseFrozen = false;     // tuning: when set, the swing/idle tick won't drive rotation
   // Pickaxe rig params (live-tunable via setPickRig for the rigging subagent).
   // FIRST-PERSON rig: the player holds the pick in the lower foreground (grip near
@@ -112,6 +122,9 @@ export class Game {
       onReplay: () => this.problem && speak(this.problem.spoken),
       onBuyShield: () => void this.onBuyShield(),
       onToggleQuests: () => this.hud.toggleQuests(),
+      onToggleShop: () => this.hud.toggleShop(),
+      onBuyPickaxe: (key) => void this.onBuyPickaxe(key),
+      onEquipPickaxe: (key) => void this.onEquipPickaxe(key),
     });
 
     this.onResize();
@@ -192,7 +205,14 @@ export class Game {
       this.pickModel = pick;
       this.pickHolder.clear();
       this.pickHolder.add(pick);
+      // Stash the GLB's baked materials so `wooden` can restore the original look.
+      this.skinMats.clear();
+      pick.traverse((o) => {
+        const m = o as Mesh;
+        if ((m as unknown as { isMesh?: boolean }).isMesh && m.material) this.skinMats.set(m, m.material);
+      });
       this.applyPickRig();
+      this.applyPickaxeSkin(this.equippedSkin); // reflect whatever was equipped before the GLB landed
     }
 
     const cluster = await tryLoad('/assets/models/crystal-cluster.glb');
@@ -327,6 +347,32 @@ export class Game {
     }
   }
 
+  /** Re-skin the pickaxe to a tier: swap the head/handle material(s). `wooden`
+   *  restores the GLB's baked material; every other tier builds a fresh authored
+   *  MeshStandard/Physical material. Safe to call before the GLB loads (state is
+   *  remembered and re-applied in loadAssets). */
+  applyPickaxeSkin(key: string): { ok: boolean; key: SkinKey } {
+    const skinKey = (isSkinKey(key) ? key : 'wooden') as SkinKey;
+    this.equippedSkin = skinKey;
+    this.legendaryMat = null;
+    const model = this.pickModel;
+    if (!model) return { ok: false, key: skinKey }; // GLB not loaded yet; remembered for later
+    const spec = PICKAXE_SKINS[skinKey];
+    model.traverse((o) => {
+      const m = o as Mesh;
+      if (!(m as unknown as { isMesh?: boolean }).isMesh || !m.material) return;
+      if (!spec.make) {
+        const orig = this.skinMats.get(m);
+        if (orig) m.material = orig; // restore the baked wood + steel
+        return;
+      }
+      const mat = spec.make();
+      m.material = mat;
+      if (spec.animated) this.legendaryMat = mat as MeshPhysicalMaterial;
+    });
+    return { ok: true, key: skinKey };
+  }
+
   /** Swing angle at phase p∈[0,1]: small wind-up, fast slam, ease back to cock. */
   private swingAngle(p: number): number {
     let d: number;
@@ -425,6 +471,66 @@ export class Game {
     this.hud.setShields(st.shields);
     this.hud.setGemsForShop(st.gems);
     this.hud.setQuests(st.quests);
+    if (seed && st.equipped) {
+      this.applyPickaxeSkin(st.equipped); // wear the saved skin on startup
+      void this.refreshShop();            // seed the shop panel catalog
+    }
+  }
+
+  /** Pull the shop catalog and seed the panel (balance + per-tier owned/equipped). */
+  private async refreshShop(): Promise<void> {
+    const shop = await fetchShop();
+    if (shop) this.hud.setShop(shop);
+  }
+
+  /** Buy a pickaxe skin: debit (server-authoritative), auto-equip + apply the skin,
+   *  refresh the panel, and fire the over-the-top unlock celebration. */
+  private async onBuyPickaxe(key: string): Promise<void> {
+    startAmbience();
+    const res = await buyPickaxe(key);
+    if (!res) return;
+    if (res.ok) {
+      this.totalGems = res.gems;
+      this.hud.rollCollectionTo(res.gems);   // gems spent — roll the counter down
+      this.hud.setGemsForShop(res.gems);
+      this.applyPickaxeSkin(res.equipped);
+      void this.refreshShop();               // re-render rows (now owned + equipped)
+      this.unlockCelebration(res.item.name, res.item.key);
+    } else {
+      this.hud.setGemsForShop(res.gems);
+      this.hud.shopFeedback(`Need ${'?'} 💎 — keep mining!`);
+    }
+  }
+
+  /** Equip an already-owned skin: swap + a small confirm. */
+  private async onEquipPickaxe(key: string): Promise<void> {
+    startAmbience();
+    const res = await equipPickaxe(key);
+    if (!res || !res.ok) return;
+    this.applyPickaxeSkin(res.equipped);
+    void this.refreshShop();
+    sfxCollect();
+    const spec = PICKAXE_SKINS[res.equipped as SkinKey] ?? PICKAXE_SKINS.wooden;
+    const name = res.equipped.charAt(0).toUpperCase() + res.equipped.slice(1) + ' Pickaxe';
+    this.hud.equipConfirm(name, spec.tint);
+    this.beautySwing();
+  }
+
+  /** The full unlock juice: banner + confetti + flash + fanfare + camera punch +
+   *  a beauty swing showing off the new pickaxe. */
+  private unlockCelebration(name: string, key: string): void {
+    const spec = PICKAXE_SKINS[key as SkinKey] ?? PICKAXE_SKINS.wooden;
+    this.shake = Math.max(this.shake, 0.7);
+    this.celebrationBurst(8);
+    this.hud.celebrateUnlock(name, spec.tint);
+    sfxFanfare(true);
+    this.beautySwing();
+  }
+
+  /** A quick show-off swing of the equipped pickaxe (no gem chip; pure flourish). */
+  private beautySwing(): void {
+    if (this.busy) return; // don't fight an in-progress mining slam
+    this.swing(() => { sfxChink(); this.spawnSparkle(); });
   }
 
   private async onBuyShield(): Promise<void> {
@@ -851,6 +957,12 @@ export class Game {
     }
 
     this.dust.rotation.y += dt * 0.02;
+    if (this.legendaryMat) {
+      // Slow rainbow cycle on the showpiece skin's emissive (≈18s per full loop).
+      const hue = (t * 0.07) % 1;
+      this.legendaryMat.emissive.setHSL(hue, 1.0, 0.5);
+      this.legendaryMat.color.setHSL(hue, 0.95, 0.55);
+    }
     this.updateVfx(dt);
     this.composer.render();
   };

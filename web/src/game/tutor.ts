@@ -1,5 +1,5 @@
 // Talks to the tutor server. The shared schema types flow across the boundary.
-import type { Problem, Branches, Skill, Reward, State } from '@institute/shared';
+import type { Problem, Branches, Skill, Reward, State, ShopState, ShopItem } from '@institute/shared';
 import { API, PROFILE } from './config';
 
 async function post<T>(path: string, body: unknown): Promise<T> {
@@ -67,6 +67,47 @@ export async function buyShield(): Promise<
 > {
   try {
     return await post('/shop/buy-shield', { profileId: PROFILE });
+  } catch {
+    return null;
+  }
+}
+
+// ---- pickaxe-skin shop -------------------------------------------------------
+
+/** Fetch the pickaxe shop: gem balance, equipped skin, and the full catalog in
+ *  ladder order (wooden → legendary). Returns null on failure; never throws. */
+export async function fetchShop(): Promise<ShopState | null> {
+  try {
+    const r = await fetch(`${API}/shop?profileId=${encodeURIComponent(PROFILE)}`);
+    if (!r.ok) return null;
+    return (await r.json()) as ShopState;
+  } catch {
+    return null;
+  }
+}
+
+type BuyResult =
+  | { ok: true; gems: number; equipped: string; item: Pick<ShopItem, 'key' | 'name' | 'price'> }
+  | { ok: false; reason: string; gems: number }
+  | null;
+
+/** Buy a pickaxe skin. On success gems are already debited + the skin auto-equipped.
+ *  Returns the server result (or a not-enough-gems failure). Never throws. */
+export async function buyPickaxe(itemKey: string): Promise<BuyResult> {
+  try {
+    return await post('/shop/buy', { profileId: PROFILE, itemKey });
+  } catch {
+    return null;
+  }
+}
+
+/** Equip an already-owned pickaxe skin. Returns the new equipped key, or a
+ *  not-owned failure. Never throws. */
+export async function equipPickaxe(
+  itemKey: string,
+): Promise<{ ok: true; equipped: string } | { ok: false; reason: string } | null> {
+  try {
+    return await post('/shop/equip', { profileId: PROFILE, itemKey });
   } catch {
     return null;
   }

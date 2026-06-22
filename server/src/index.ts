@@ -66,7 +66,16 @@ db.exec(`
     done INTEGER DEFAULT 0,
     PRIMARY KEY (profile_id, quest_key, day)
   );
+  CREATE TABLE IF NOT EXISTS owned_items (
+    profile_id TEXT,
+    item_key TEXT,
+    PRIMARY KEY (profile_id, item_key)
+  );
 `);
+// Add the equipped-pickaxe column (guarded — ALTER throws if it already exists).
+try {
+  db.exec(`ALTER TABLE profile_state ADD COLUMN equipped_pickaxe TEXT DEFAULT 'wooden'`);
+} catch { /* column already present */ }
 // Seed the skill ladder (categories + descent order) from the shared schema.
 const seedSkill = db.query(`INSERT OR IGNORE INTO skills (skill, label, ladder) VALUES (?, ?, ?)`);
 SKILLS.forEach((s, i) => seedSkill.run(s, SKILL_LABELS[s], i));
@@ -89,7 +98,7 @@ function recordMastery(profileId: string, skill: string, correct: boolean, diffi
 
 // ---- Rewards: gems / streaks / daily quests / shield -----------------------
 
-type ProfileStateRow = { gems: number; streak: number; best_streak: number; shields: number };
+type ProfileStateRow = { gems: number; streak: number; best_streak: number; shields: number; equipped_pickaxe: string };
 type QuestRow = { quest_key: string; label: string; target: number; progress: number; reward: number; done: number };
 
 const utcDay = () => new Date().toISOString().slice(0, 10);
@@ -112,20 +121,47 @@ function streakBonus(streak: number): number {
 
 /** Read (creating if missing) the per-profile reward state. */
 function getProfileState(profileId: string): ProfileStateRow {
-  let row = db.query(`SELECT gems, streak, best_streak, shields FROM profile_state WHERE profile_id = ?`)
+  let row = db.query(`SELECT gems, streak, best_streak, shields, equipped_pickaxe FROM profile_state WHERE profile_id = ?`)
     .get(profileId) as ProfileStateRow | null;
   if (!row) {
-    db.query(`INSERT OR IGNORE INTO profile_state (profile_id, gems, streak, best_streak, shields, updated_at)
-              VALUES (?, 0, 0, 0, 0, ?)`).run(profileId, Date.now());
-    row = { gems: 0, streak: 0, best_streak: 0, shields: 0 };
+    db.query(`INSERT OR IGNORE INTO profile_state (profile_id, gems, streak, best_streak, shields, equipped_pickaxe, updated_at)
+              VALUES (?, 0, 0, 0, 0, 'wooden', ?)`).run(profileId, Date.now());
+    row = { gems: 0, streak: 0, best_streak: 0, shields: 0, equipped_pickaxe: "wooden" };
   }
+  // Existing rows predating the column come back with NULL — normalize to the default.
+  if (!row.equipped_pickaxe) row.equipped_pickaxe = "wooden";
   return row;
 }
 
 function saveProfileState(profileId: string, s: ProfileStateRow): void {
-  db.query(`UPDATE profile_state SET gems = ?, streak = ?, best_streak = ?, shields = ?, updated_at = ?
+  db.query(`UPDATE profile_state SET gems = ?, streak = ?, best_streak = ?, shields = ?, equipped_pickaxe = ?, updated_at = ?
             WHERE profile_id = ?`)
-    .run(s.gems, s.streak, s.best_streak, s.shields, Date.now(), profileId);
+    .run(s.gems, s.streak, s.best_streak, s.shields, s.equipped_pickaxe, Date.now(), profileId);
+}
+
+// ---- Pickaxe-skin shop -----------------------------------------------------
+
+/** Server-owned catalog of pickaxe skins, in ladder order. `wooden` is the free,
+ *  default-owned, default-equipped starter. */
+const PICKAXE_CATALOG = [
+  { key: "wooden", name: "Wooden Pickaxe", price: 0 },
+  { key: "stone", name: "Stone Pickaxe", price: 50 },
+  { key: "iron", name: "Iron Pickaxe", price: 120 },
+  { key: "silver", name: "Silver Pickaxe", price: 250 },
+  { key: "gold", name: "Gold Pickaxe", price: 450 },
+  { key: "diamond", name: "Diamond Pickaxe", price: 800 },
+  { key: "obsidian", name: "Obsidian Pickaxe", price: 1400 },
+  { key: "legendary", name: "Legendary Pickaxe", price: 2500 },
+] as const;
+
+const catalogEntry = (key: string) => PICKAXE_CATALOG.find((c) => c.key === key) ?? null;
+
+/** Whether the profile owns the item. `wooden` is always owned (free starter). */
+function ownsItem(profileId: string, itemKey: string): boolean {
+  if (itemKey === "wooden") return true;
+  const row = db.query(`SELECT 1 FROM owned_items WHERE profile_id = ? AND item_key = ?`)
+    .get(profileId, itemKey);
+  return !!row;
 }
 
 /** Ensure today's quest rows exist; return them. */
@@ -505,7 +541,60 @@ app.get("/state", (c) => {
     bestStreak: s.best_streak,
     shields: s.shields,
     quests: questView(getQuests(profileId)),
+    equipped: s.equipped_pickaxe,
   });
+});
+
+// ---- Pickaxe-skin shop endpoints -------------------------------------------
+
+// Catalog + balance + ownership/equipped flags (server is the source of truth).
+app.get("/shop", (c) => {
+  const profileId = c.req.query("profileId") ?? "sam";
+  const s = getProfileState(profileId);
+  const items = PICKAXE_CATALOG.map((cat) => ({
+    key: cat.key,
+    name: cat.name,
+    price: cat.price,
+    owned: ownsItem(profileId, cat.key),
+    equipped: s.equipped_pickaxe === cat.key,
+  }));
+  return c.json({ gems: s.gems, equipped: s.equipped_pickaxe, items });
+});
+
+// Buy a skin: spend gems, record ownership, and auto-equip it.
+app.post("/shop/buy", async (c) => {
+  const { profileId, itemKey } = await c.req.json();
+  const s = getProfileState(profileId);
+  const cat = catalogEntry(itemKey);
+  if (!cat || itemKey === "wooden" || ownsItem(profileId, itemKey)) {
+    return c.json({ ok: false, reason: "unavailable", gems: s.gems });
+  }
+  if (s.gems < cat.price) {
+    return c.json({ ok: false, reason: "not enough gems", gems: s.gems });
+  }
+  s.gems -= cat.price;
+  s.equipped_pickaxe = itemKey;
+  db.query(`INSERT OR IGNORE INTO owned_items (profile_id, item_key) VALUES (?, ?)`)
+    .run(profileId, itemKey);
+  saveProfileState(profileId, s);
+  return c.json({
+    ok: true,
+    gems: s.gems,
+    equipped: s.equipped_pickaxe,
+    item: { key: cat.key, name: cat.name, price: cat.price },
+  });
+});
+
+// Equip an already-owned skin (or wooden, always allowed).
+app.post("/shop/equip", async (c) => {
+  const { profileId, itemKey } = await c.req.json();
+  if (itemKey === "wooden" || ownsItem(profileId, itemKey)) {
+    const s = getProfileState(profileId);
+    s.equipped_pickaxe = itemKey;
+    saveProfileState(profileId, s);
+    return c.json({ ok: true, equipped: s.equipped_pickaxe });
+  }
+  return c.json({ ok: false, reason: "not owned" });
 });
 
 // Buy a shield: 40 gems → +1 shield. Saves a streak on the next wrong answer.

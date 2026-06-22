@@ -2,7 +2,8 @@
 // MINE (pickaxe) button, the animated gem counter, the streak flame, the daily
 // quests panel, the shield slot, and the over-the-top celebration layer. DOM (not
 // canvas) so text is crisp and the pad is touch-friendly on mobile.
-import type { Quest, CompletedQuest } from '@institute/shared';
+import type { Quest, CompletedQuest, ShopState } from '@institute/shared';
+import { PICKAXE_SKINS, type SkinKey, isSkinKey } from './skins';
 
 type Handlers = {
   onDigit: (d: number) => void;
@@ -11,6 +12,9 @@ type Handlers = {
   onReplay: () => void;
   onBuyShield: () => void;
   onToggleQuests: () => void;
+  onToggleShop: () => void;
+  onBuyPickaxe: (key: string) => void;
+  onEquipPickaxe: (key: string) => void;
 };
 
 const GEM_COLORS = ['#ff6b8a', '#ffa94d', '#ffd43b', '#69db7c', '#3bc9db', '#4dabf7', '#748ffc', '#b197fc', '#f783ac', '#ff8787'];
@@ -31,7 +35,12 @@ export class Hud {
   private buyShieldBtn!: HTMLButtonElement;
   private questsPanel!: HTMLDivElement;
   private questRows = new Map<string, { fill: HTMLDivElement; prog: HTMLSpanElement; row: HTMLDivElement }>();
+  private shopPanel!: HTMLDivElement;
+  private shopList!: HTMLDivElement;
+  private shopGemsEl!: HTMLSpanElement;
   private celebrate!: HTMLDivElement;
+  private onBuyPickaxe!: (key: string) => void;
+  private onEquipPickaxe!: (key: string) => void;
 
   // counter roll-up state
   private shownGems = 0;       // value currently rendered
@@ -56,6 +65,11 @@ export class Hud {
       <div class="quests" id="quests">
         <div class="quests-head">📜 Daily Quests</div>
         <div class="quests-list" id="quests-list"></div>
+      </div>
+      <button class="shop-toggle" id="shop-toggle" title="Pickaxe shop">⛏️</button>
+      <div class="shop" id="shop">
+        <div class="shop-head">⛏️ Pickaxe Shop <span class="shop-gems">💎 <span id="shop-gems">0</span></span></div>
+        <div class="shop-list" id="shop-list"></div>
       </div>
       <div class="problem-wrap">
         <button class="replay" title="Hear it again">🔊</button>
@@ -82,7 +96,12 @@ export class Hud {
     this.shieldCountEl = this.root.querySelector('#shield-count')!;
     this.buyShieldBtn = this.root.querySelector('#buy-shield')!;
     this.questsPanel = this.root.querySelector('#quests')!;
+    this.shopPanel = this.root.querySelector('#shop')!;
+    this.shopList = this.root.querySelector('#shop-list')!;
+    this.shopGemsEl = this.root.querySelector('#shop-gems')!;
     this.celebrate = this.root.querySelector('#celebrate')!;
+    this.onBuyPickaxe = h.onBuyPickaxe;
+    this.onEquipPickaxe = h.onEquipPickaxe;
 
     const pad = this.root.querySelector('#pad')!;
     const layout = [1, 2, 3, 4, 5, 6, 7, 8, 9, 'back', 0, 'mine'] as const;
@@ -107,6 +126,7 @@ export class Hud {
     this.root.querySelector('.replay')!.addEventListener('click', () => h.onReplay());
     this.buyShieldBtn.addEventListener('click', () => h.onBuyShield());
     this.root.querySelector('#quests-toggle')!.addEventListener('click', () => h.onToggleQuests());
+    this.root.querySelector('#shop-toggle')!.addEventListener('click', () => h.onToggleShop());
 
     this.flameEl.style.display = 'none'; // hidden until there's a streak
   }
@@ -263,7 +283,72 @@ export class Hud {
     }
   }
   toggleQuests(): void {
+    this.shopPanel.classList.remove('open'); // only one corner panel open at a time
     this.questsPanel.classList.toggle('open');
+  }
+
+  // ---- pickaxe shop --------------------------------------------------------
+  toggleShop(): void {
+    this.questsPanel.classList.remove('open');
+    this.shopPanel.classList.toggle('open');
+  }
+  closeShop(): void {
+    this.shopPanel.classList.remove('open');
+  }
+
+  /** Render the shop catalog in ladder order, each row state-aware:
+   *  Equipped (disabled) / Equip (owned) / Buy N💎 (affordable or greyed). */
+  setShop(state: ShopState): void {
+    this.shopGemsEl.textContent = String(state.gems);
+    this.shopList.innerHTML = '';
+    for (const item of state.items) {
+      const key = item.key;
+      const spec = isSkinKey(key) ? PICKAXE_SKINS[key as SkinKey] : null;
+      const tint = spec?.tint ?? '#888';
+      const blurb = spec?.blurb ?? '';
+      const row = document.createElement('div');
+      row.className = 'shop-row' + (item.equipped ? ' equipped' : '');
+      const afford = state.gems >= item.price;
+
+      let btnHtml: string;
+      if (item.equipped) {
+        btnHtml = `<button class="shop-btn is-equipped" disabled>Equipped</button>`;
+      } else if (item.owned) {
+        btnHtml = `<button class="shop-btn is-equip" data-equip="${key}">Equip</button>`;
+      } else {
+        btnHtml = `<button class="shop-btn is-buy${afford ? ' afford' : ' poor'}" data-buy="${key}"${afford ? '' : ' disabled'}>Buy ${item.price}💎</button>`;
+      }
+
+      row.innerHTML = `
+        <div class="swatch" style="--tint:${tint}"></div>
+        <div class="shop-meta">
+          <div class="shop-name">${item.name}</div>
+          <div class="shop-blurb">${blurb}</div>
+        </div>
+        ${btnHtml}`;
+      this.shopList.appendChild(row);
+    }
+    // Delegate clicks (rebuilt each render, so wire fresh).
+    this.shopList.querySelectorAll<HTMLButtonElement>('[data-buy]').forEach((b) =>
+      b.addEventListener('click', () => this.onBuyPickaxe(b.dataset.buy!)));
+    this.shopList.querySelectorAll<HTMLButtonElement>('[data-equip]').forEach((b) =>
+      b.addEventListener('click', () => this.onEquipPickaxe(b.dataset.equip!)));
+  }
+
+  /** Gentle not-enough-gems toast for a failed pickaxe buy. */
+  shopFeedback(msg: string): void {
+    this.toast(msg);
+  }
+
+  /** Over-the-top NEW PICKAXE UNLOCKED celebration, accented in the tier color. */
+  celebrateUnlock(name: string, tint: string): void {
+    this.screenFlash(tint);
+    this.banner('NEW PICKAXE!', 'unlock', name, tint);
+    this.confettiBurst(90, [tint, '#ffffff', '#ffd23b', '#ff7eb6', '#7af0ff', '#b197fc']);
+  }
+  /** Quiet confirm when equipping an already-owned skin. */
+  equipConfirm(name: string, tint: string): void {
+    this.banner('EQUIPPED', 'equipped-msg', name, tint);
   }
 
   // ---- celebrations (the headline juice) -----------------------------------
@@ -296,9 +381,10 @@ export class Hud {
     r.row.classList.add('q-celebrate');
   }
 
-  private banner(title: string, cls: string, sub?: string): void {
+  private banner(title: string, cls: string, sub?: string, accent?: string): void {
     const el = document.createElement('div');
     el.className = 'banner ' + cls;
+    if (accent) el.style.setProperty('--accent', accent);
     el.innerHTML = `<div class="b-title"></div>${sub ? '<div class="b-sub"></div>' : ''}`;
     (el.querySelector('.b-title') as HTMLElement).textContent = title;
     if (sub) (el.querySelector('.b-sub') as HTMLElement).textContent = sub;
@@ -439,6 +525,45 @@ function injectStyles(): void {
   /* Glow pulse only — no scale, so it never overlaps the header or sibling rows. */
   @keyframes questCeleb { 0%{filter:brightness(1)} 30%{filter:brightness(1.6) drop-shadow(0 0 10px rgba(255,210,80,0.9))} 100%{filter:brightness(1)} }
 
+  /* Pickaxe shop — toggle stacked under the quests toggle; panel mirrors quests. */
+  .shop-toggle { position: fixed; top: 116px; right: 14px; pointer-events: auto; cursor: pointer; border: none;
+    width: 44px; height: 44px; border-radius: 12px; font-size: 22px; background: rgba(40,28,12,0.62);
+    box-shadow: inset 0 0 0 1px rgba(255,210,120,0.3); backdrop-filter: blur(6px); }
+  .shop { position: fixed; top: 164px; right: 14px; width: min(312px, 84vw); max-height: min(62vh, 520px);
+    overflow-y: auto; pointer-events: auto;
+    background: rgba(18,14,34,0.86); border-radius: 16px; padding: 12px 12px 13px; backdrop-filter: blur(9px);
+    box-shadow: 0 12px 34px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,210,120,0.2);
+    transform-origin: top right; transform: scale(0.86) translateY(-8px); opacity: 0; visibility: hidden;
+    transition: opacity .18s ease, transform .18s cubic-bezier(.3,1.5,.5,1), visibility .18s; }
+  .shop.open { opacity: 1; visibility: visible; transform: scale(1) translateY(0); }
+  .shop-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+    color: #ffd9a0; font-weight: 900; font-size: 16px; margin-bottom: 10px; letter-spacing: .3px; }
+  .shop-head .shop-gems { color: #ffe9a8; font-size: 14px; font-weight: 800; flex: none; }
+  #shop-gems { font-variant-numeric: tabular-nums; }
+  .shop-list { display: flex; flex-direction: column; gap: 8px; }
+  .shop-row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 12px;
+    background: rgba(255,255,255,0.05); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06); }
+  .shop-row.equipped { background: rgba(120,230,160,0.12); box-shadow: inset 0 0 0 1px rgba(120,230,160,0.45); }
+  .swatch { width: 30px; height: 30px; flex: none; border-radius: 8px; transform: rotate(45deg);
+    background: radial-gradient(75% 60% at 30% 24%, rgba(255,255,255,0.85), rgba(255,255,255,0) 55%),
+      linear-gradient(150deg, color-mix(in srgb, var(--tint) 70%, white), var(--tint) 55%, color-mix(in srgb, var(--tint) 65%, #100a1c));
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.55), 0 2px 5px rgba(0,0,0,0.4); }
+  .shop-meta { flex: 1; min-width: 0; }
+  .shop-name { color: #fff; font-weight: 800; font-size: 14px; line-height: 1.15;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .shop-blurb { color: #b9b0d4; font-weight: 600; font-size: 11px; line-height: 1.2;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .shop-btn { flex: none; pointer-events: auto; cursor: pointer; border: none; font-family: inherit; font-weight: 800;
+    font-size: 12.5px; padding: 7px 11px; border-radius: 999px; color: #0b1c2e; transition: transform .08s, filter .12s; }
+  .shop-btn:active { transform: translateY(2px); }
+  .shop-btn.is-equipped { background: linear-gradient(160deg,#9bf0bd,#4fd089); color: #0a2417; opacity: .9; cursor: default; }
+  .shop-btn.is-equip { background: linear-gradient(160deg,#bfe3ff,#7fb8ff); box-shadow: inset 0 1px 1px rgba(255,255,255,0.6), 0 3px 0 #4f86c6; }
+  .shop-btn.is-equip:active { box-shadow: inset 0 1px 1px rgba(255,255,255,0.5), 0 1px 0 #4f86c6; }
+  .shop-btn.is-buy.afford { background: linear-gradient(160deg,#ffe27a,#ffb01f); color: #5a3a00;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.7), 0 3px 0 #b96a00; }
+  .shop-btn.is-buy.afford:active { box-shadow: inset 0 1px 1px rgba(255,255,255,0.6), 0 1px 0 #b96a00; }
+  .shop-btn.is-buy.poor { background: rgba(255,255,255,0.14); color: #cfc6e8; cursor: not-allowed; opacity: .7; }
+
   .problem-wrap { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 6px; }
   .replay { pointer-events: auto; border: none; background: rgba(20,16,40,0.5); color: #fff; font-size: 22px;
     width: 46px; height: 46px; border-radius: 50%; cursor: pointer; }
@@ -507,6 +632,16 @@ function injectStyles(): void {
   .banner.shieldsave .b-title { font-size: clamp(26px,6vw,52px); color: #eaf6ff;
     text-shadow: 0 0 16px rgba(120,190,255,0.95), 0 4px 0 rgba(30,70,120,0.8), 0 8px 22px rgba(0,0,0,0.6); }
   .banner.shieldsave { animation: bannerPop 2.1s cubic-bezier(.2,1.4,.4,1) forwards; }
+  /* Pickaxe unlock — title glows in the tier's accent color. */
+  .banner.unlock .b-title { font-size: clamp(40px,11vw,96px); color: #fff;
+    text-shadow: 0 0 22px var(--accent,#ffd23b), 0 0 44px var(--accent,#ffd23b), 0 4px 0 rgba(0,0,0,0.55), 0 8px 24px rgba(0,0,0,0.7); }
+  .banner.unlock .b-sub { color: var(--accent,#ffe9a8); font-size: clamp(22px,5vw,38px);
+    text-shadow: 0 0 14px var(--accent,#ffd23b), 0 2px 10px rgba(0,0,0,0.8); }
+  .banner.unlock { animation: bannerPop 2.1s cubic-bezier(.2,1.4,.4,1) forwards; }
+  .banner.equipped-msg .b-title { font-size: clamp(26px,6vw,52px); color: #eafff1;
+    text-shadow: 0 0 16px var(--accent,#9bf0bd), 0 4px 0 rgba(10,60,30,0.7), 0 8px 22px rgba(0,0,0,0.6); }
+  .banner.equipped-msg .b-sub { color: var(--accent,#bff0d4); }
+  .banner.equipped-msg { animation: bannerPop 1.6s cubic-bezier(.2,1.4,.4,1) forwards; }
   @keyframes bannerPop {
     0%{ transform:translate(-50%,-50%) scale(0.2) rotate(-8deg); opacity:0 }
     14%{ transform:translate(-50%,-50%) scale(1.18) rotate(2deg); opacity:1 }
@@ -535,6 +670,8 @@ function injectStyles(): void {
     .collection { font-size: 19px; padding: 6px 12px; min-width: 64px; }
     .buy-shield { font-size: 12px; padding: 6px 9px; }
     .quests { top: 104px; }
+    .shop-toggle { top: 108px; }
+    .shop { top: 156px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .flame .flame-emoji, .flame.mega { animation: none; }

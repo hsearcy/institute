@@ -289,7 +289,7 @@ function localBranches(current: Problem): { right: Problem; wrong: Problem } {
 const app = new Hono();
 app.use("*", cors());
 
-app.get("/health", (c) => c.json({ ok: true, model: TUTOR_MODEL }));
+app.get("/health", (c) => c.json({ ok: true, model: TUTOR_MODEL, voice: ELEVEN_VOICE }));
 
 app.post("/tutor/first", async (c) => {
   const { profileId } = StartRequestSchema.parse(await c.req.json());

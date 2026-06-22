@@ -14,10 +14,10 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import type { Problem, Branches } from '@institute/shared';
+import type { Problem, Branches, Reward } from '@institute/shared';
 import { Hud } from './hud';
-import { fetchFirst, fetchBranches, recordAttempt } from './tutor';
-import { speak, sfxChink, sfxMine, sfxFizzle, sfxCollect, startAmbience, preloadAudio } from './audio';
+import { fetchFirst, fetchBranches, recordAttempt, fetchState, buyShield } from './tutor';
+import { speak, sfxChink, sfxMine, sfxFizzle, sfxCollect, sfxFanfare, startAmbience, preloadAudio } from './audio';
 
 // Saturated jewel tones — vivid against the dark cavern (muddy mid-tones removed).
 const GEM_PALETTE = [0x2ee6a0, 0x4d8cff, 0xff4d7e, 0xffd23b, 0xb15cff, 0x32e0e0, 0xff7eb6];
@@ -40,8 +40,13 @@ export class Game {
   private mined = false;
   private wrongCount = 0;          // wrong tries on the current problem (drives escalating help)
   private shownAt = 0;
-  private collection = 0;
+  private collection = 0;        // local count of gems that have visibly landed in the hoard
   private busy = false;
+
+  // reward state (authoritative; seeded from /state, updated by /tutor/attempt)
+  private totalGems = 0;        // mirror of the server gem total (offline fallback only)
+  private pendingReward: Reward | null = null; // applied to the HUD when the prize gem lands
+  private awaitingReward = false;              // a correct attempt's reward is still in flight
 
   // scene objects
   private hero!: Group;            // the geode being mined
@@ -106,6 +111,8 @@ export class Game {
       onBackspace: () => this.onBackspace(),
       onMine: () => this.onMine(),
       onReplay: () => this.problem && speak(this.problem.spoken),
+      onBuyShield: () => void this.onBuyShield(),
+      onToggleQuests: () => this.hud.toggleQuests(),
     });
 
     this.onResize();
@@ -397,11 +404,47 @@ export class Game {
   }
 
   private async begin(): Promise<void> {
+    // Seed the HUD from the authoritative server state (gems, streak, shields, quests).
+    void this.syncState(true);
     try {
       this.showProblem(await fetchFirst());
     } catch (e) {
       this.hud.setProblem('(offline)');
       console.error('failed to load first problem', e);
+    }
+  }
+
+  /** Pull the persisted reward state and reflect it in the HUD. On the initial
+   *  seed the gem counter snaps (no roll-up); later syncs leave the counter alone
+   *  (it's driven by the attempt reward) and just refresh quests/streak/shields. */
+  private async syncState(seed = false): Promise<void> {
+    const st = await fetchState();
+    if (!st) return;
+    this.totalGems = st.gems;
+    if (seed) {
+      this.collection = st.gems;
+      this.hud.setCollection(st.gems);
+    }
+    this.hud.setStreak(st.streak, false);
+    this.hud.setShields(st.shields);
+    this.hud.setGemsForShop(st.gems);
+    this.hud.setQuests(st.quests);
+  }
+
+  private async onBuyShield(): Promise<void> {
+    startAmbience();
+    const res = await buyShield();
+    if (!res) return;
+    if (res.ok) {
+      this.totalGems = res.gems;
+      this.hud.setShields(res.shields);
+      this.hud.setGemsForShop(res.gems);
+      this.hud.rollCollectionTo(res.gems); // gems were spent — roll the counter down
+      this.hud.shieldFeedback(true);
+      sfxCollect();
+    } else {
+      this.hud.setGemsForShop(res.gems);
+      this.hud.shieldFeedback(false, 'Need 40 💎 for a shield!');
     }
   }
 
@@ -475,15 +518,21 @@ export class Game {
     const val = parseInt(this.entered, 10);
     const correct = val === this.problem.answer;
 
-    if (this.firstAttempt === null) {
+    // Only the FIRST attempt of each problem counts toward rewards. Capture the
+    // authoritative reward delta and drive the HUD from it (server is the source
+    // of truth for gems/streak/shields/quests/milestones).
+    const isFirst = this.firstAttempt === null;
+    if (isFirst) {
       this.firstAttempt = correct;
-      recordAttempt({
-        problemId: this.problem.id,
-        skill: this.problem.skill,
+      if (correct) this.awaitingReward = true;
+      const p = this.problem;
+      void recordAttempt({
+        problemId: p.id,
+        skill: p.skill,
         correct,
         solveMs: Math.round(performance.now() - this.shownAt),
-        difficulty: this.problem.difficulty,
-      });
+        difficulty: p.difficulty,
+      }).then((reward) => this.onReward(reward, correct));
     }
 
     if (correct) {
@@ -525,6 +574,110 @@ export class Game {
     const b = this.branchesPromise ? await this.branchesPromise : null;
     const next = b ? (this.firstAttempt ? b.right : b.wrong) : await fetchFirst();
     this.showProblem(next);
+  }
+
+  /** Apply the authoritative reward from a first-try attempt. Correct rewards are
+   *  deferred until the prize gem lands in the hoard (so the counter roll-up,
+   *  streak flame, and celebrations all fire together with the gem arrival).
+   *  Wrong rewards (streak reset / shield save) apply immediately on the miss. */
+  private onReward(reward: Reward | null, correct: boolean): void {
+    if (!reward) {
+      // Offline/telemetry failure: fall back to a local +1 so the loop still feels alive.
+      if (correct) { this.awaitingReward = false; this.totalGems += 1; this.pendingReward = null; }
+      return;
+    }
+    this.totalGems = reward.totalGems;
+    if (correct) {
+      this.awaitingReward = false;
+      this.pendingReward = reward; // applied in applyReward() when the gem lands
+    } else {
+      // Miss: reflect the streak/shield outcome right away.
+      this.hud.setShields(reward.shields);
+      this.hud.setGemsForShop(reward.totalGems);
+      if (reward.shieldUsed) {
+        this.hud.flashShieldSave();
+        this.hud.celebrateShieldSave();
+        void speak('Your shield saved your streak!');
+      } else {
+        this.hud.setStreak(reward.streak, false); // visibly resets to 0
+      }
+    }
+  }
+
+  /** Fired when the prize gem lands in the hoard: commit the deferred reward —
+   *  roll the counter to the true total, grow the streak flame, fire the
+   *  milestone + quest-complete celebrations, and refresh the quests panel. */
+  private applyReward(): void {
+    // The reward POST may still be in flight when the gem lands — wait briefly for it
+    // so the counter/streak/celebrations use the authoritative numbers.
+    if (this.awaitingReward && !this.pendingReward) {
+      setTimeout(() => this.applyReward(), 60);
+      return;
+    }
+    const r = this.pendingReward;
+    this.pendingReward = null;
+    if (!r) {
+      // No first-try reward for this mine (he missed earlier, or telemetry is offline),
+      // but a gem still visibly landed in the hoard — keep the counter in step with it.
+      this.hud.rollCollectionTo(this.collection);
+      return;
+    }
+    // One gem already landed (collection was ++'d). The server may have awarded MORE
+    // than one (streak bonus + completed-quest rewards) — credit that extra to the
+    // counter on top of the landed gem, so bonuses make it leap. We track the counter
+    // as a running hoard total (monotonic) rather than snapping to the server absolute,
+    // because the visible hoard fills on every correct mine, including post-miss ones
+    // the server doesn't credit toward `totalGems`.
+    const questBonus = r.questsCompleted.reduce((s, q) => s + q.reward, 0);
+    const streakBonus = Math.max(0, r.gemsEarned - 1);
+    this.collection += streakBonus + questBonus;
+    this.totalGems = r.totalGems;
+    this.hud.rollCollectionTo(this.collection);
+    this.hud.setStreak(r.streak, true);
+    this.hud.setShields(r.shields);
+    this.hud.setGemsForShop(r.totalGems);
+
+    if (r.milestone != null) {
+      this.shake = Math.max(this.shake, 0.5 + Math.min(0.6, r.milestone * 0.05)); // camera punch scales
+      this.celebrationBurst(r.milestone);
+      this.hud.celebrateMilestone(r.milestone);
+      sfxFanfare(true);
+    }
+    for (const q of r.questsCompleted) {
+      this.hud.celebrateQuest(q);
+      sfxFanfare(false);
+    }
+    // Refresh quest progress bars from the server (cheap; reflects live deltas).
+    void this.syncState(false);
+  }
+
+  /** Extra in-scene gem geyser for a streak milestone — scales with the milestone. */
+  private celebrationBurst(milestone: number): void {
+    const origin = COUNTER_WORLD.clone();
+    const n = Math.min(60, 24 + milestone * 3);
+    for (let i = 0; i < n; i++) {
+      const size = 0.18 + Math.random() * 0.22;
+      const shard = this.makeGemShard(GEM_PALETTE[Math.floor(Math.random() * GEM_PALETTE.length)], size);
+      shard.position.set((Math.random() - 0.5) * 8, 5 + Math.random() * 2, (Math.random() - 0.5) * 3);
+      this.scene.add(shard);
+      const dir = new Vector3((Math.random() - 0.5) * 1.4, -0.2 - Math.random(), (Math.random() - 0.3) * 0.8).normalize();
+      const life = 1.1 + Math.random() * 0.7;
+      this.bursts.push({
+        mesh: shard, vel: dir.multiplyScalar(2 + Math.random() * 3), life, maxLife: life, size,
+        spin: new Vector3((Math.random() - 0.5) * 14, (Math.random() - 0.5) * 14, (Math.random() - 0.5) * 14),
+      });
+    }
+    // A bright shockwave ring centered on screen for the punch.
+    const ring = new Mesh(
+      new RingGeometry(0.3, 0.5, 48),
+      new MeshBasicMaterial({ color: 0xffe9a8, transparent: true, opacity: 0.85, blending: AdditiveBlending, side: DoubleSide, depthWrite: false }),
+    );
+    ring.position.set(0, 0.8, 1);
+    ring.lookAt(this.camera.position);
+    this.scene.add(ring);
+    this.rings.push({ mesh: ring, life: 0.7, maxLife: 0.7, grow: 26, op0: 0.85 });
+    for (let i = 0; i < 16; i++) this.spawnSparkle();
+    void origin;
   }
 
   // ---- VFX -------------------------------------------------------------------
@@ -628,8 +781,11 @@ export class Game {
         this.scene.remove(f.mesh);
         this.flyers.splice(i, 1);
         this.collection += 1;
-        this.hud.addGem(col, this.collection); // gem lands in the visible hoard
+        this.hud.addGem(col);   // gem lands in the visible hoard
         sfxCollect();
+        // The prize gem arriving is the cue to commit the authoritative reward:
+        // roll the counter, grow the streak flame, and fire any celebrations.
+        this.applyReward();
       }
     }
     for (let i = this.sparkles.length - 1; i >= 0; i--) {

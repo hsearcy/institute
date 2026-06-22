@@ -73,3 +73,47 @@ export type BranchesRequest = z.infer<typeof BranchesRequestSchema>;
 
 export const TtsRequestSchema = z.object({ text: z.string().min(1).max(300) });
 export type TtsRequest = z.infer<typeof TtsRequestSchema>;
+
+// ---- Rewards (gems / streaks / daily quests / shield) ----------------------
+
+/** A daily quest the kid can complete for bonus gems (refreshes each UTC day). */
+export const QuestSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  target: z.number().int(),
+  progress: z.number().int(),
+  reward: z.number().int(),
+  done: z.boolean(),
+});
+export type Quest = z.infer<typeof QuestSchema>;
+
+/** A quest reported as just-completed by an attempt. */
+export const CompletedQuestSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  reward: z.number().int(),
+});
+export type CompletedQuest = z.infer<typeof CompletedQuestSchema>;
+
+/** The reward delta returned by POST /tutor/attempt for one first-try answer. */
+export const RewardSchema = z.object({
+  gemsEarned: z.number().int(),
+  totalGems: z.number().int(),
+  streak: z.number().int(),
+  bestStreak: z.number().int(),
+  shields: z.number().int(),
+  milestone: z.number().int().nullable(),
+  shieldUsed: z.boolean(),
+  questsCompleted: z.array(CompletedQuestSchema),
+});
+export type Reward = z.infer<typeof RewardSchema>;
+
+/** The persisted per-profile reward state returned by GET /state. */
+export const StateSchema = z.object({
+  gems: z.number().int(),
+  streak: z.number().int(),
+  bestStreak: z.number().int(),
+  shields: z.number().int(),
+  quests: z.array(QuestSchema),
+});
+export type State = z.infer<typeof StateSchema>;

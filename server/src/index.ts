@@ -47,6 +47,25 @@ db.exec(`
     updated_at INTEGER NOT NULL,
     PRIMARY KEY (profile_id, skill)
   );
+  CREATE TABLE IF NOT EXISTS profile_state (
+    profile_id TEXT PRIMARY KEY,
+    gems INTEGER DEFAULT 0,
+    streak INTEGER DEFAULT 0,
+    best_streak INTEGER DEFAULT 0,
+    shields INTEGER DEFAULT 0,
+    updated_at INTEGER
+  );
+  CREATE TABLE IF NOT EXISTS quests (
+    profile_id TEXT,
+    quest_key TEXT,
+    day TEXT,
+    label TEXT,
+    target INTEGER,
+    progress INTEGER DEFAULT 0,
+    reward INTEGER,
+    done INTEGER DEFAULT 0,
+    PRIMARY KEY (profile_id, quest_key, day)
+  );
 `);
 // Seed the skill ladder (categories + descent order) from the shared schema.
 const seedSkill = db.query(`INSERT OR IGNORE INTO skills (skill, label, ladder) VALUES (?, ?, ?)`);
@@ -67,6 +86,70 @@ function recordMastery(profileId: string, skill: string, correct: boolean, diffi
        last_difficulty = excluded.last_difficulty, state = excluded.state, updated_at = excluded.updated_at`,
   ).run(profileId, skill, attempts, corr, difficulty, state, Date.now());
 }
+
+// ---- Rewards: gems / streaks / daily quests / shield -----------------------
+
+type ProfileStateRow = { gems: number; streak: number; best_streak: number; shields: number };
+type QuestRow = { quest_key: string; label: string; target: number; progress: number; reward: number; done: number };
+
+const utcDay = () => new Date().toISOString().slice(0, 10);
+
+/** The exact three daily quests, regenerated lazily per UTC day. */
+const QUEST_DEFS = [
+  { key: "mine_gems", label: "Mine 30 gems today", target: 30, reward: 15 },
+  { key: "streak_5", label: "Reach a 5-streak", target: 5, reward: 20 },
+  { key: "solve_10", label: "Solve 10 problems", target: 10, reward: 10 },
+] as const;
+
+/** Streak bonus gems on top of the base +1 per correct answer. */
+function streakBonus(streak: number): number {
+  if (streak === 3) return 2;
+  if (streak === 5) return 5;
+  if (streak === 10) return 10;
+  if (streak > 10 && streak % 5 === 0) return 10;
+  return 0;
+}
+
+/** Read (creating if missing) the per-profile reward state. */
+function getProfileState(profileId: string): ProfileStateRow {
+  let row = db.query(`SELECT gems, streak, best_streak, shields FROM profile_state WHERE profile_id = ?`)
+    .get(profileId) as ProfileStateRow | null;
+  if (!row) {
+    db.query(`INSERT OR IGNORE INTO profile_state (profile_id, gems, streak, best_streak, shields, updated_at)
+              VALUES (?, 0, 0, 0, 0, ?)`).run(profileId, Date.now());
+    row = { gems: 0, streak: 0, best_streak: 0, shields: 0 };
+  }
+  return row;
+}
+
+function saveProfileState(profileId: string, s: ProfileStateRow): void {
+  db.query(`UPDATE profile_state SET gems = ?, streak = ?, best_streak = ?, shields = ?, updated_at = ?
+            WHERE profile_id = ?`)
+    .run(s.gems, s.streak, s.best_streak, s.shields, Date.now(), profileId);
+}
+
+/** Ensure today's quest rows exist; return them. */
+function getQuests(profileId: string, day = utcDay()): QuestRow[] {
+  const existing = db.query(
+    `SELECT quest_key, label, target, progress, reward, done FROM quests WHERE profile_id = ? AND day = ?`,
+  ).all(profileId, day) as QuestRow[];
+  if (existing.length < QUEST_DEFS.length) {
+    const ins = db.query(
+      `INSERT OR IGNORE INTO quests (profile_id, quest_key, day, label, target, progress, reward, done)
+       VALUES (?, ?, ?, ?, ?, 0, ?, 0)`,
+    );
+    for (const q of QUEST_DEFS) ins.run(profileId, q.key, day, q.label, q.target, q.reward);
+    return db.query(
+      `SELECT quest_key, label, target, progress, reward, done FROM quests WHERE profile_id = ? AND day = ?`,
+    ).all(profileId, day) as QuestRow[];
+  }
+  return existing;
+}
+
+const questView = (rows: QuestRow[]) => rows.map((r) => ({
+  key: r.quest_key, label: r.label, target: r.target,
+  progress: r.progress, reward: r.reward, done: !!r.done,
+}));
 
 function skillStats(profileId: string): SkillStat[] {
   const rows = db.query(
@@ -321,7 +404,90 @@ app.post("/tutor/attempt", async (c) => {
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
   ).run(profileId, problemId, skill, correct ? 1 : 0, Math.round(solveMs ?? 0), difficulty, Date.now());
   recordMastery(profileId, skill, !!correct, difficulty);
-  return c.json({ ok: true });
+
+  // ---- Reward state update (one first-try answer) --------------------------
+  const state = getProfileState(profileId);
+  const day = utcDay();
+  let gemsEarned = 0;
+  let milestone: number | null = null;
+  let shieldUsed = false;
+  const questsCompleted: { key: string; label: string; reward: number }[] = [];
+
+  if (correct) {
+    state.streak += 1;
+    state.best_streak = Math.max(state.best_streak, state.streak);
+    const bonus = streakBonus(state.streak);
+    gemsEarned = 1 + bonus;
+    state.gems += gemsEarned;
+    if (bonus > 0) milestone = state.streak;
+
+    // Update quest progress, completing any that hit target (reward → gems).
+    const rows = getQuests(profileId, day);
+    for (const r of rows) {
+      if (r.done) continue;
+      let progress = r.progress;
+      if (r.quest_key === "mine_gems") progress += gemsEarned;
+      else if (r.quest_key === "solve_10") progress += 1;
+      else if (r.quest_key === "streak_5") progress = Math.max(progress, state.streak);
+      let done = 0;
+      if (progress >= r.target) {
+        done = 1;
+        state.gems += r.reward;
+        questsCompleted.push({ key: r.quest_key, label: r.label, reward: r.reward });
+      }
+      db.query(`UPDATE quests SET progress = ?, done = ? WHERE profile_id = ? AND quest_key = ? AND day = ?`)
+        .run(progress, done, profileId, r.quest_key, day);
+    }
+  } else {
+    gemsEarned = 0;
+    if (state.shields > 0) {
+      state.shields -= 1;
+      shieldUsed = true; // shield saved the streak — leave it unchanged
+    } else {
+      state.streak = 0;
+    }
+  }
+  saveProfileState(profileId, state);
+
+  return c.json({
+    ok: true,
+    reward: {
+      gemsEarned,
+      totalGems: state.gems,
+      streak: state.streak,
+      bestStreak: state.best_streak,
+      shields: state.shields,
+      milestone,
+      shieldUsed,
+      questsCompleted,
+    },
+  });
+});
+
+// Persisted per-profile reward state + today's quests (generated if missing).
+app.get("/state", (c) => {
+  const profileId = c.req.query("profileId") ?? "sam";
+  const s = getProfileState(profileId);
+  return c.json({
+    gems: s.gems,
+    streak: s.streak,
+    bestStreak: s.best_streak,
+    shields: s.shields,
+    quests: questView(getQuests(profileId)),
+  });
+});
+
+// Buy a shield: 40 gems → +1 shield. Saves a streak on the next wrong answer.
+app.post("/shop/buy-shield", async (c) => {
+  const { profileId } = await c.req.json();
+  const s = getProfileState(profileId);
+  if (s.gems >= 40) {
+    s.gems -= 40;
+    s.shields += 1;
+    saveProfileState(profileId, s);
+    return c.json({ ok: true, gems: s.gems, shields: s.shields });
+  }
+  return c.json({ ok: false, reason: "not enough gems", gems: s.gems, shields: s.shields });
 });
 
 // Per-skill mastery view (server-side data for the deferred parent dashboard).

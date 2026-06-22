@@ -56,6 +56,43 @@ export function sfxFizzle(): void { play('wrong-soft'); }
 /** Reward gem lands in the collection. */
 export function sfxCollect(): void { play('gem-collect'); }
 
+/** A synthesized rising arpeggio + shimmer for celebrations — no asset needed, so
+ *  it always works even before MP3s parse. `big` adds octaves + sparkle for milestones. */
+export function sfxFanfare(big = false): void {
+  const c = ac();
+  const t0 = c.currentTime;
+  // Bright major arpeggio (C E G C — plus a high octave + fifth for big wins).
+  const notes = big ? [523, 659, 784, 1047, 1319, 1568] : [523, 659, 784, 1047];
+  notes.forEach((freq, i) => {
+    const at = t0 + i * (big ? 0.07 : 0.085);
+    const osc = c.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.exponentialRampToValueAtTime(big ? 0.34 : 0.26, at + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + 0.55);
+    osc.connect(g).connect(c.destination);
+    osc.start(at);
+    osc.stop(at + 0.6);
+  });
+  // A high sparkle tail on big wins.
+  if (big) {
+    const at = t0 + notes.length * 0.07;
+    const osc = c.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1568, at);
+    osc.frequency.exponentialRampToValueAtTime(3136, at + 0.4);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.exponentialRampToValueAtTime(0.18, at + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + 0.5);
+    osc.connect(g).connect(c.destination);
+    osc.start(at);
+    osc.stop(at + 0.55);
+  }
+}
+
 // ---- Ambience --------------------------------------------------------------
 let ambienceStarted = false;
 export function startAmbience(): void {

@@ -38,6 +38,17 @@ export async function recordAttempt(a: {
   }
 }
 
+/** Credit a gem for a correct answer that wasn't his first try (no streak).
+ *  Returns the reward delta, or null on failure. Never throws. */
+export async function creditRetrySolve(): Promise<Reward | null> {
+  try {
+    const res = await post<{ ok: boolean; reward: Reward }>('/reward/retry-solve', { profileId: PROFILE });
+    return res.reward ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /** Fetch the persisted reward state (gems, streak, shields, daily quests). */
 export async function fetchState(): Promise<State | null> {
   try {

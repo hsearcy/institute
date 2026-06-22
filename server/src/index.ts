@@ -464,6 +464,37 @@ app.post("/tutor/attempt", async (c) => {
   });
 });
 
+// A correct answer that wasn't his FIRST try: still earns a gem and counts toward
+// the gem/solve quests, but NOT the streak (a streak needs a clean first-try win).
+app.post("/reward/retry-solve", async (c) => {
+  const { profileId } = await c.req.json();
+  const state = getProfileState(profileId);
+  const day = utcDay();
+  state.gems += 1;
+  const questsCompleted: { key: string; label: string; reward: number }[] = [];
+  for (const r of getQuests(profileId, day)) {
+    if (r.done || r.quest_key === "streak_5") continue;
+    let progress = r.progress;
+    if (r.quest_key === "mine_gems") progress += 1;
+    else if (r.quest_key === "solve_10") progress += 1;
+    let done = 0;
+    if (progress >= r.target) {
+      done = 1; state.gems += r.reward;
+      questsCompleted.push({ key: r.quest_key, label: r.label, reward: r.reward });
+    }
+    db.query(`UPDATE quests SET progress = ?, done = ? WHERE profile_id = ? AND quest_key = ? AND day = ?`)
+      .run(progress, done, profileId, r.quest_key, day);
+  }
+  saveProfileState(profileId, state);
+  return c.json({
+    ok: true,
+    reward: {
+      gemsEarned: 1, totalGems: state.gems, streak: state.streak, bestStreak: state.best_streak,
+      shields: state.shields, milestone: null, shieldUsed: false, questsCompleted,
+    },
+  });
+});
+
 // Persisted per-profile reward state + today's quests (generated if missing).
 app.get("/state", (c) => {
   const profileId = c.req.query("profileId") ?? "sam";

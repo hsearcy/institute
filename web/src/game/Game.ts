@@ -16,7 +16,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { Problem, Branches, Reward } from '@institute/shared';
 import { Hud } from './hud';
-import { fetchFirst, fetchBranches, recordAttempt, fetchState, buyShield } from './tutor';
+import { fetchFirst, fetchBranches, recordAttempt, creditRetrySolve, fetchState, buyShield } from './tutor';
 import { speak, sfxChink, sfxMine, sfxFizzle, sfxCollect, sfxFanfare, startAmbience, preloadAudio } from './audio';
 
 // Saturated jewel tones — vivid against the dark cavern (muddy mid-tones removed).
@@ -529,6 +529,10 @@ export class Game {
         solveMs: Math.round(performance.now() - this.shownAt),
         difficulty: p.difficulty,
       }).then((reward) => this.onReward(reward, correct));
+    } else if (correct) {
+      // Solved on a retry — still earns a gem (no streak); flows through the same reward path.
+      this.awaitingReward = true;
+      void creditRetrySolve().then((reward) => this.onReward(reward, true));
     }
 
     if (correct) {

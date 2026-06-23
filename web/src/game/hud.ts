@@ -45,6 +45,7 @@ export class Hud {
   private shopList!: HTMLDivElement;
   private shopGemsEl!: HTMLSpanElement;
   private celebrate!: HTMLDivElement;
+  private bannerStack!: HTMLDivElement;
   private onBuyPickaxe!: (key: string) => void;
   private onEquipPickaxe!: (key: string) => void;
   private onHoardFull!: () => void;
@@ -90,7 +91,7 @@ export class Hud {
         <div class="answer" id="answer"></div>
         <div class="pad" id="pad"></div>
       </div>
-      <div class="celebrate" id="celebrate" aria-hidden="true"></div>
+      <div class="celebrate" id="celebrate" aria-hidden="true"><div class="banner-stack" id="banner-stack"></div></div>
     `;
     document.body.appendChild(this.root);
 
@@ -111,6 +112,7 @@ export class Hud {
     this.shopList = this.root.querySelector('#shop-list')!;
     this.shopGemsEl = this.root.querySelector('#shop-gems')!;
     this.celebrate = this.root.querySelector('#celebrate')!;
+    this.bannerStack = this.root.querySelector('#banner-stack')!;
     this.onBuyPickaxe = h.onBuyPickaxe;
     this.onEquipPickaxe = h.onEquipPickaxe;
     this.onHoardFull = h.onHoardFull;
@@ -423,7 +425,7 @@ export class Hud {
   }
   /** Quiet confirm when equipping an already-owned skin. */
   equipConfirm(name: string, tint: string): void {
-    this.banner('EQUIPPED', 'equipped-msg', name, tint);
+    this.banner('EQUIPPED', 'equipped-msg', name, tint, 2000);
   }
 
   // ---- celebrations (the headline juice) -----------------------------------
@@ -456,15 +458,17 @@ export class Hud {
     r.row.classList.add('q-celebrate');
   }
 
-  private banner(title: string, cls: string, sub?: string, accent?: string): void {
+  private banner(title: string, cls: string, sub?: string, accent?: string, lifeMs = 5100): void {
     const el = document.createElement('div');
     el.className = 'banner ' + cls;
     if (accent) el.style.setProperty('--accent', accent);
     el.innerHTML = `<div class="b-title"></div>${sub ? '<div class="b-sub"></div>' : ''}`;
     (el.querySelector('.b-title') as HTMLElement).textContent = title;
     if (sub) (el.querySelector('.b-sub') as HTMLElement).textContent = sub;
-    this.celebrate.appendChild(el);
-    setTimeout(() => el.remove(), 2200);
+    // Append to the centered flex column so simultaneous banners (e.g. a milestone
+    // AND a quest-complete) STACK vertically instead of overlapping.
+    this.bannerStack.appendChild(el);
+    setTimeout(() => el.remove(), lifeMs);
   }
 
   private screenFlash(color: string): void {
@@ -708,8 +712,10 @@ function injectStyles(): void {
   .celebrate { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 50; }
   .screen-flash { position: absolute; inset: -10%; opacity: 0; animation: flashAnim 0.65s ease-out forwards; mix-blend-mode: screen; }
   @keyframes flashAnim { 0%{opacity:0} 12%{opacity:0.9} 100%{opacity:0} }
-  .banner { position: absolute; left: 50%; top: 34%; transform: translate(-50%,-50%); text-align: center;
-    white-space: nowrap; will-change: transform, opacity; }
+  /* Centered column so simultaneous banners stack instead of overlapping. */
+  .banner-stack { position: absolute; left: 50%; top: 38%; transform: translate(-50%,-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 10px; width: max-content; max-width: 96vw; }
+  .banner { text-align: center; white-space: nowrap; will-change: transform, opacity; transform-origin: center; }
   .b-title { font-weight: 900; color: #fff; line-height: 1; letter-spacing: 1px;
     text-shadow: 0 0 18px rgba(255,210,60,0.9), 0 4px 0 rgba(180,90,0,0.8), 0 8px 22px rgba(0,0,0,0.6); }
   .b-sub { margin-top: 8px; font-weight: 800; font-size: clamp(18px,4vw,28px); color: #ffe9a8;
@@ -717,33 +723,37 @@ function injectStyles(): void {
   .banner.milestone .b-title { font-size: clamp(40px,11vw,96px);
     background: linear-gradient(180deg,#fff6cf,#ffd23b 55%,#ff8c1a); -webkit-background-clip: text; background-clip: text; color: transparent;
     -webkit-text-stroke: 2px rgba(120,50,0,0.5); }
-  .banner.milestone { animation: bannerPop 2.1s cubic-bezier(.2,1.4,.4,1) forwards; }
+  .banner.milestone { animation: bannerPop 5s cubic-bezier(.2,1.4,.4,1) forwards; }
   .banner.i1 .b-title { font-size: clamp(46px,12vw,104px); }
   .banner.i2 .b-title { font-size: clamp(52px,13vw,116px); }
   .banner.i3 .b-title { font-size: clamp(58px,14vw,130px); }
   .banner.quest .b-title { font-size: clamp(34px,8vw,68px); color: #fff;
     text-shadow: 0 0 16px rgba(255,210,60,0.95), 0 4px 0 rgba(150,80,0,0.85), 0 8px 22px rgba(0,0,0,0.6); }
-  .banner.quest { animation: bannerPop 2.1s cubic-bezier(.2,1.4,.4,1) forwards; }
+  .banner.quest { animation: bannerPop 5s cubic-bezier(.2,1.4,.4,1) forwards; }
   .banner.shieldsave .b-title { font-size: clamp(26px,6vw,52px); color: #eaf6ff;
     text-shadow: 0 0 16px rgba(120,190,255,0.95), 0 4px 0 rgba(30,70,120,0.8), 0 8px 22px rgba(0,0,0,0.6); }
-  .banner.shieldsave { animation: bannerPop 2.1s cubic-bezier(.2,1.4,.4,1) forwards; }
+  .banner.shieldsave { animation: bannerPop 5s cubic-bezier(.2,1.4,.4,1) forwards; }
   /* Pickaxe unlock — title glows in the tier's accent color. */
   .banner.unlock .b-title { font-size: clamp(40px,11vw,96px); color: #fff;
     text-shadow: 0 0 22px var(--accent,#ffd23b), 0 0 44px var(--accent,#ffd23b), 0 4px 0 rgba(0,0,0,0.55), 0 8px 24px rgba(0,0,0,0.7); }
   .banner.unlock .b-sub { color: var(--accent,#ffe9a8); font-size: clamp(22px,5vw,38px);
     text-shadow: 0 0 14px var(--accent,#ffd23b), 0 2px 10px rgba(0,0,0,0.8); }
-  .banner.unlock { animation: bannerPop 2.1s cubic-bezier(.2,1.4,.4,1) forwards; }
+  .banner.unlock { animation: bannerPop 5s cubic-bezier(.2,1.4,.4,1) forwards; }
   .banner.equipped-msg .b-title { font-size: clamp(26px,6vw,52px); color: #eafff1;
     text-shadow: 0 0 16px var(--accent,#9bf0bd), 0 4px 0 rgba(10,60,30,0.7), 0 8px 22px rgba(0,0,0,0.6); }
   .banner.equipped-msg .b-sub { color: var(--accent,#bff0d4); }
-  .banner.equipped-msg { animation: bannerPop 1.6s cubic-bezier(.2,1.4,.4,1) forwards; }
+  .banner.equipped-msg { animation: bannerPop 2.0s cubic-bezier(.2,1.4,.4,1) forwards; }
+  /* Centering is handled by .banner-stack, so the pop only scales/rotates/drifts
+     — no translate(-50%,…), which would fight the flex layout. The bounce stays
+     snappy (done by ~14%) and full opacity HOLDS to 90%, so at a 5s duration the
+     text sits readable for ~4.5s before a quick fade. */
   @keyframes bannerPop {
-    0%{ transform:translate(-50%,-50%) scale(0.2) rotate(-8deg); opacity:0 }
-    14%{ transform:translate(-50%,-50%) scale(1.18) rotate(2deg); opacity:1 }
-    24%{ transform:translate(-50%,-50%) scale(0.96) rotate(-1deg) }
-    34%{ transform:translate(-50%,-50%) scale(1.04) rotate(0deg) }
-    80%{ transform:translate(-50%,-50%) scale(1) rotate(0deg); opacity:1 }
-    100%{ transform:translate(-50%,-58%) scale(0.92); opacity:0 } }
+    0%{ transform: scale(0.2) rotate(-8deg); opacity:0 }
+    6%{ transform: scale(1.18) rotate(2deg); opacity:1 }
+    10%{ transform: scale(0.96) rotate(-1deg) }
+    14%{ transform: scale(1.04) rotate(0deg) }
+    90%{ transform: scale(1) rotate(0deg); opacity:1 }
+    100%{ transform: translateY(-14px) scale(0.92); opacity:0 } }
 
   .confetti { position: absolute; top: -24px; width: var(--sz); height: var(--sz); background: var(--c);
     border-radius: 2px; opacity: 0.95; will-change: transform;

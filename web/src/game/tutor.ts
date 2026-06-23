@@ -49,6 +49,17 @@ export async function creditRetrySolve(): Promise<Reward | null> {
   }
 }
 
+/** Credit the flat hoard-meter bonus when the gem bar fills. Returns the reward
+ *  delta (with the new authoritative total), or null on failure. Never throws. */
+export async function creditHoardBonus(): Promise<Reward | null> {
+  try {
+    const res = await post<{ ok: boolean; reward: Reward }>('/reward/hoard-bonus', { profileId: PROFILE });
+    return res.reward ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /** Fetch the persisted reward state (gems, streak, shields, daily quests). */
 export async function fetchState(): Promise<State | null> {
   try {

@@ -4,6 +4,7 @@
 // canvas) so text is crisp and the pad is touch-friendly on mobile.
 import type { Quest, CompletedQuest, ShopState } from '@institute/shared';
 import { PICKAXE_SKINS, type SkinKey, isSkinKey } from './skins';
+import { PROFILE } from './config';
 
 type Handlers = {
   onDigit: (d: number) => void;
@@ -15,10 +16,15 @@ type Handlers = {
   onToggleShop: () => void;
   onBuyPickaxe: (key: string) => void;
   onEquipPickaxe: (key: string) => void;
+  onHoardFull: () => void;
 };
 
 const GEM_COLORS = ['#ff6b8a', '#ffa94d', '#ffd43b', '#69db7c', '#3bc9db', '#4dabf7', '#748ffc', '#b197fc', '#f783ac', '#ff8787'];
 const SHIELD_COST = 40;
+// Hoard meter: pips needed to fill the bar, and the bonus shown when it overflows
+// (the server credits the same amount via /reward/hoard-bonus → HOARD_BONUS).
+const HOARD_CAP = 15;
+const HOARD_BONUS = 10;
 
 export class Hud {
   private root: HTMLDivElement;
@@ -41,6 +47,10 @@ export class Hud {
   private celebrate!: HTMLDivElement;
   private onBuyPickaxe!: (key: string) => void;
   private onEquipPickaxe!: (key: string) => void;
+  private onHoardFull!: () => void;
+  private hoardColors: number[] = [];     // persisted pip colors so the bar survives reloads
+  private hoardOverflowing = false;       // guard so a full bar fires the bonus once
+  private readonly hoardKey = 'institute:hoard:' + PROFILE;
 
   // counter roll-up state
   private shownGems = 0;       // value currently rendered
@@ -89,6 +99,7 @@ export class Hud {
     this.collectionEl = this.root.querySelector('#collection-count')!;
     this.collectionChip = this.root.querySelector('#collection-chip')!;
     this.hoardEl = this.root.querySelector('#hoard')!;
+    this.restoreHoard();
     this.hintEl = this.root.querySelector('#hint')!;
     this.flameEl = this.root.querySelector('#flame')!;
     this.flameCountEl = this.root.querySelector('#flame-count')!;
@@ -102,6 +113,7 @@ export class Hud {
     this.celebrate = this.root.querySelector('#celebrate')!;
     this.onBuyPickaxe = h.onBuyPickaxe;
     this.onEquipPickaxe = h.onEquipPickaxe;
+    this.onHoardFull = h.onHoardFull;
 
     const pad = this.root.querySelector('#pad')!;
     const layout = [1, 2, 3, 4, 5, 6, 7, 8, 9, 'back', 0, 'mine'] as const;
@@ -187,14 +199,68 @@ export class Hud {
     this.collectionChip.classList.add('pop');
   }
 
-  /** Add a mined gem (in its real color) to the visibly-filling hoard wall. */
+  /** Add a mined gem (in its real color) to the visibly-filling hoard meter.
+   *  When the meter reaches HOARD_CAP it overflows: a satisfying burst, a bonus
+   *  (credited server-side via onHoardFull), then it empties to fill again. */
   addGem(colorHex: number): void {
+    if (this.hoardOverflowing) return; // ignore mid-burst; reset will resume
+    this.appendPip(colorHex, true);
+    this.hoardColors.push(colorHex & 0xffffff);
+    this.persistHoard();
+    if (this.hoardColors.length >= HOARD_CAP) this.overflowHoard();
+  }
+
+  private appendPip(colorHex: number, animate: boolean): void {
     const pip = document.createElement('span');
     pip.className = 'gem-pip';
     pip.style.setProperty('--gem', '#' + (colorHex & 0xffffff).toString(16).padStart(6, '0'));
     this.hoardEl.appendChild(pip);
-    while (this.hoardEl.children.length > 60) this.hoardEl.removeChild(this.hoardEl.firstChild!);
-    requestAnimationFrame(() => pip.classList.add('in'));
+    if (animate) requestAnimationFrame(() => pip.classList.add('in'));
+    else pip.classList.add('in');
+  }
+
+  private persistHoard(): void {
+    try { localStorage.setItem(this.hoardKey, JSON.stringify(this.hoardColors)); } catch { /* ignore */ }
+  }
+
+  private restoreHoard(): void {
+    let saved: number[] = [];
+    try { saved = JSON.parse(localStorage.getItem(this.hoardKey) ?? '[]'); } catch { saved = []; }
+    if (!Array.isArray(saved)) saved = [];
+    this.hoardColors = saved.slice(0, HOARD_CAP - 1); // never restore into an overflow
+    for (const c of this.hoardColors) this.appendPip(c, false);
+  }
+
+  /** The meter is full: it rattles, then BURSTS open and a firehose of 3D gems
+   *  erupts from the bar (the spew + bonus credit happen in Game.onHoardFull). */
+  private overflowHoard(): void {
+    this.hoardOverflowing = true;
+    this.hoardEl.classList.add('shake'); // rattle first
+    setTimeout(() => {
+      this.hoardEl.classList.remove('shake');
+      this.hoardEl.classList.add('burst'); // pop the bar open
+      this.screenFlash('#ffe9a8');
+      this.banner('GEM BONUS!', 'quest', `+${HOARD_BONUS}💎`);
+      this.scatterPips();   // DOM pips fling out of the bar…
+      this.onHoardFull();   // …while Game erupts the 3D gem firehose + credits the bonus
+      setTimeout(() => {
+        this.hoardEl.classList.remove('burst');
+        this.hoardEl.innerHTML = '';
+        this.hoardColors = [];
+        this.persistHoard();
+        this.hoardOverflowing = false;
+      }, 1100);
+    }, 420);
+  }
+
+  /** Fling each gem pip out of the bar (random arc) as it bursts open. */
+  private scatterPips(): void {
+    this.hoardEl.querySelectorAll<HTMLElement>('.gem-pip').forEach((p) => {
+      const dx = (Math.random() * 2 - 1) * 140, dy = -50 - Math.random() * 140, rot = (Math.random() * 2 - 1) * 220;
+      p.style.transition = 'transform .6s cubic-bezier(.2,.9,.3,1), opacity .6s ease';
+      p.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg) scale(.35)`;
+      p.style.opacity = '0';
+    });
   }
 
   // ---- streak flame --------------------------------------------------------
@@ -239,9 +305,18 @@ export class Hud {
     this.buyShieldBtn.classList.add(ok ? 'ok' : 'bad');
     if (!ok && msg) this.toast(msg);
   }
-  /** Affordability hint on the buy button. */
+  /** Keep the shop in sync with the live gem total: the header balance, the
+   *  shield-button hint, AND each Buy button's affordability — without a full
+   *  re-render (so it updates even while the panel is open). */
   setGemsForShop(gems: number): void {
     this.buyShieldBtn.classList.toggle('afford', gems >= SHIELD_COST);
+    this.shopGemsEl.textContent = String(gems);
+    this.shopList.querySelectorAll<HTMLButtonElement>('.shop-btn.is-buy').forEach((b) => {
+      const afford = gems >= Number(b.dataset.price ?? '0');
+      b.classList.toggle('afford', afford);
+      b.classList.toggle('poor', !afford);
+      b.disabled = !afford;
+    });
   }
 
   // ---- quests --------------------------------------------------------------
@@ -316,7 +391,7 @@ export class Hud {
       } else if (item.owned) {
         btnHtml = `<button class="shop-btn is-equip" data-equip="${key}">Equip</button>`;
       } else {
-        btnHtml = `<button class="shop-btn is-buy${afford ? ' afford' : ' poor'}" data-buy="${key}"${afford ? '' : ' disabled'}>Buy ${item.price}💎</button>`;
+        btnHtml = `<button class="shop-btn is-buy${afford ? ' afford' : ' poor'}" data-buy="${key}" data-price="${item.price}"${afford ? '' : ' disabled'}>Buy ${item.price}💎</button>`;
       }
 
       row.innerHTML = `
@@ -485,11 +560,29 @@ function injectStyles(): void {
   .buy-shield.bad { animation: buyBad 0.4s; }
   @keyframes buyBad { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
 
-  /* The growing, ownable hoard — fills with the actual gems he mines, by color. */
-  .hoard { pointer-events: none; flex: 1; display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start;
-    max-height: 78px; overflow: hidden; padding: 7px 9px; border-radius: 14px;
-    background: rgba(20,16,40,0.34); backdrop-filter: blur(5px); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06); }
-  .hoard:empty { display: none; }
+  /* The hoard meter — a fixed-width bar that fills with the actual gems he mines
+     (by color), then bursts for a bonus when full. Always visible (a persistent
+     track), single row so "full" is well-defined. */
+  .hoard { pointer-events: none; flex: none; width: min(70vw, 348px); display: flex; flex-wrap: nowrap;
+    gap: 5px; align-items: center; height: 30px; overflow: hidden; padding: 5px 8px; border-radius: 11px;
+    background: rgba(20,16,40,0.40); backdrop-filter: blur(5px);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08), inset 0 0 14px rgba(0,0,0,0.25);
+    transition: box-shadow .3s ease, transform .3s ease; }
+  /* Overflow: rattle (shake), then pop the bar open (burst). */
+  .hoard.shake { animation: hoardShake .42s ease-in-out;
+    box-shadow: inset 0 0 0 2px rgba(255,220,120,0.95), 0 0 18px rgba(255,200,80,0.8); }
+  @keyframes hoardShake {
+    0%,100%{transform:translateX(0) rotate(0)}
+    10%{transform:translate(-3px,1px) rotate(-1.4deg)} 25%{transform:translate(4px,-2px) rotate(1.4deg)}
+    40%{transform:translate(-5px,1px) rotate(-1.6deg)} 55%{transform:translate(5px,-1px) rotate(1.4deg)}
+    70%{transform:translate(-4px,1px) rotate(-1deg)} 85%{transform:translate(2px,0) rotate(.6deg)} }
+  .hoard.burst { animation: hoardBurst .55s ease-out forwards; overflow: visible; }
+  @keyframes hoardBurst {
+    0%{transform:scale(1); filter:brightness(1)}
+    16%{transform:scale(1.22); filter:brightness(2.6);
+        box-shadow:inset 0 0 0 2px rgba(255,235,170,1), 0 0 44px rgba(255,220,120,1)}
+    100%{transform:scale(1.04); filter:brightness(1);
+        box-shadow:inset 0 0 0 1px rgba(255,255,255,0.08), inset 0 0 14px rgba(0,0,0,0.25)} }
   .gem-pip { width: 16px; height: 16px; border-radius: 4px 4px 5px 5px; transform: scale(0) rotate(45deg);
     transition: transform .35s cubic-bezier(.3,1.7,.5,1);
     background: radial-gradient(80% 60% at 30% 22%, rgba(255,255,255,0.9), rgba(255,255,255,0) 50%),

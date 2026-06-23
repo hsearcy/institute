@@ -20,7 +20,7 @@ import { Hud } from './hud';
 import { PICKAXE_SKINS, isSkinKey, type SkinKey } from './skins';
 import {
   fetchFirst, fetchBranches, recordAttempt, creditRetrySolve, fetchState, buyShield,
-  fetchShop, buyPickaxe, equipPickaxe,
+  fetchShop, buyPickaxe, equipPickaxe, creditHoardBonus,
 } from './tutor';
 import { speak, sfxChink, sfxMine, sfxFizzle, sfxCollect, sfxFanfare, startAmbience, preloadAudio } from './audio';
 
@@ -126,6 +126,7 @@ export class Game {
       onToggleShop: () => this.hud.toggleShop(),
       onBuyPickaxe: (key) => void this.onBuyPickaxe(key),
       onEquipPickaxe: (key) => void this.onEquipPickaxe(key),
+      onHoardFull: () => void this.onHoardFull(),
     });
 
     this.onResize();
@@ -762,6 +763,65 @@ export class Game {
     void this.syncState(false);
   }
 
+  /** The hoard meter filled: blast a firehose of 3D gems out of the bar, punch the
+   *  camera, then credit the bonus server-side and leap the counter + shop balance. */
+  private async onHoardFull(): Promise<void> {
+    this.hoardEruption();
+    this.shake = Math.max(this.shake, 0.55); // camera punch
+    sfxFanfare(true);
+    const reward = await creditHoardBonus();
+    if (!reward) return;
+    this.totalGems = reward.totalGems;
+    this.hud.rollCollectionTo(reward.totalGems);
+    this.hud.setGemsForShop(reward.totalGems);
+  }
+
+  /** A FIREHOSE of gems erupting out of the hoard bar (top-left, COUNTER_WORLD).
+   *  Staggered waves so it reads as a sustained jet/stream, then gravity (in
+   *  updateVfx) arcs them down and they rain across the cavern. */
+  private hoardEruption(): void {
+    const origin = COUNTER_WORLD.clone();
+    // Muzzle flash + shockwave ring right at the bar.
+    const flash = new Mesh(
+      new IcosahedronGeometry(0.4, 1),
+      new MeshBasicMaterial({ color: 0xfff6e0, transparent: true, opacity: 0.75, blending: AdditiveBlending, depthWrite: false }),
+    );
+    flash.position.copy(origin);
+    this.scene.add(flash);
+    this.rings.push({ mesh: flash, life: 0.28, maxLife: 0.28, grow: 4.5, op0: 0.75 });
+    const ring = new Mesh(
+      new RingGeometry(0.3, 0.5, 48),
+      new MeshBasicMaterial({ color: 0xffe9a8, transparent: true, opacity: 0.9, blending: AdditiveBlending, side: DoubleSide, depthWrite: false }),
+    );
+    ring.position.copy(origin); ring.lookAt(this.camera.position);
+    this.scene.add(ring);
+    this.rings.push({ mesh: ring, life: 0.6, maxLife: 0.6, grow: 24, op0: 0.9 });
+
+    // The jet sprays rightward and slightly up so the stream ARCS across the visible
+    // cavern (origin is up at the bar; a steep-up jet would just exit the top).
+    const jet = new Vector3(1.5, 0.5, 0.28).normalize();
+    const WAVES = 22, PER_WAVE = 9;
+    for (let w = 0; w < WAVES; w++) {
+      setTimeout(() => {
+        for (let i = 0; i < PER_WAVE; i++) {
+          const big = Math.random() < 0.18;
+          const size = (big ? 0.5 : 0.28) + Math.random() * 0.18;
+          const shard = this.makeGemShard(GEM_PALETTE[Math.floor(Math.random() * GEM_PALETTE.length)], size);
+          shard.position.copy(origin).add(new Vector3((Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.3));
+          this.scene.add(shard);
+          // Tight cone around the jet → a coherent stream, not a puff.
+          const dir = jet.clone().add(new Vector3((Math.random() - 0.5) * 0.65, (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.6)).normalize();
+          const speed = 6.5 + Math.random() * 4.5;
+          const life = 1.7 + Math.random() * 1.1;
+          this.bursts.push({
+            mesh: shard, vel: dir.multiplyScalar(speed), life, maxLife: life, size,
+            spin: new Vector3((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20),
+          });
+        }
+      }, w * 40);
+    }
+  }
+
   /** Extra in-scene gem geyser for a streak milestone — scales with the milestone. */
   private celebrationBurst(milestone: number): void {
     const origin = COUNTER_WORLD.clone();
@@ -875,7 +935,9 @@ export class Game {
       b.mesh.rotation.x += b.spin.x * dt;
       b.mesh.rotation.y += b.spin.y * dt;
       b.life -= dt;
-      b.mesh.scale.setScalar(b.size * Math.max(0, b.life / b.maxLife));
+      // Hold full size, then shrink only over the last 35% of life (gems stay vivid
+      // in flight instead of fading the instant they spawn).
+      b.mesh.scale.setScalar(b.size * Math.min(1, Math.max(0, b.life / b.maxLife) / 0.35));
       if (b.life <= 0) { this.scene.remove(b.mesh); this.bursts.splice(i, 1); }
     }
     for (let i = this.flyers.length - 1; i >= 0; i--) {

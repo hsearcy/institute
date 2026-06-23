@@ -103,6 +103,10 @@ type QuestRow = { quest_key: string; label: string; target: number; progress: nu
 
 const utcDay = () => new Date().toISOString().slice(0, 10);
 
+// Bonus gems awarded when the client's hoard meter fills up (kept in sync with
+// HOARD_BONUS on the client, which renders the "+N" banner).
+const HOARD_BONUS = 10;
+
 /** The exact three daily quests, regenerated lazily per UTC day. */
 const QUEST_DEFS = [
   { key: "mine_gems", label: "Mine 30 gems today", target: 30, reward: 15 },
@@ -527,6 +531,23 @@ app.post("/reward/retry-solve", async (c) => {
     reward: {
       gemsEarned: 1, totalGems: state.gems, streak: state.streak, bestStreak: state.best_streak,
       shields: state.shields, milestone: null, shieldUsed: false, questsCompleted,
+    },
+  });
+});
+
+// Hoard meter filled → award a flat bonus on top. Purely client-triggered (no
+// adversary in a kid's game); the server stays the gem authority by crediting +
+// returning the new total. Quests are untouched (the bonus is "extra").
+app.post("/reward/hoard-bonus", async (c) => {
+  const { profileId } = await c.req.json();
+  const state = getProfileState(profileId);
+  state.gems += HOARD_BONUS;
+  saveProfileState(profileId, state);
+  return c.json({
+    ok: true,
+    reward: {
+      gemsEarned: HOARD_BONUS, totalGems: state.gems, streak: state.streak, bestStreak: state.best_streak,
+      shields: state.shields, milestone: null, shieldUsed: false, questsCompleted: [],
     },
   });
 });

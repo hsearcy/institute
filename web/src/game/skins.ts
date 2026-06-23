@@ -50,9 +50,9 @@ export const PICKAXE_SKINS: Record<SkinKey, SkinSpec> = {
     tint: '#7af0ff',
     blurb: 'Glowing cyan crystal',
     make: (o) => new MeshPhysicalMaterial({
-      color: 0xbff7ff, emissive: 0x18c6e0, emissiveIntensity: 0.6,
-      metalness: 0.0, roughness: 0.04, transmission: 0.65, ior: 2.2, thickness: 0.6,
-      clearcoat: 1.0, clearcoatRoughness: 0.05, envMapIntensity: 1.6, normalMap: o?.normalMap ?? null,
+      color: 0xcffaff, emissive: 0x3ad9f2, emissiveIntensity: 1.35,
+      metalness: 0.0, roughness: 0.015, transmission: 0.55, ior: 2.4, thickness: 0.5,
+      clearcoat: 1.0, clearcoatRoughness: 0.015, envMapIntensity: 2.4, normalMap: o?.normalMap ?? null,
     }),
   },
   obsidian: {
@@ -69,10 +69,14 @@ export const PICKAXE_SKINS: Record<SkinKey, SkinSpec> = {
     blurb: 'Iridescent — the showpiece',
     animated: true,
     make: (o) => new MeshPhysicalMaterial({
-      color: 0xff2bbf, emissive: 0xff2bbf, emissiveIntensity: 0.4,
-      metalness: 0.35, roughness: 0.2,
-      iridescence: 1.0, iridescenceIOR: 2.2, iridescenceThicknessRange: [100, 820],
-      clearcoat: 1.0, clearcoatRoughness: 0.04, envMapIntensity: 1.6, normalMap: o?.normalMap ?? null,
+      // Colorful iridescent metal: high metalness keeps real specular highlights
+      // (so it never flattens to plastic), while the tick loop drives a saturated
+      // hue cycle on BOTH the base tint (anodized-metal color) and a moderate
+      // emissive glow + sliding iridescence film — a vivid oil-slick, not flat neon.
+      color: 0xff5bd1, metalness: 1.0, roughness: 0.08,
+      iridescence: 1.0, iridescenceIOR: 2.2, iridescenceThicknessRange: [260, 880],
+      emissive: 0x7a1f66, emissiveIntensity: 0.35,
+      clearcoat: 1.0, clearcoatRoughness: 0.03, envMapIntensity: 2.0, normalMap: o?.normalMap ?? null,
     }),
   },
 };

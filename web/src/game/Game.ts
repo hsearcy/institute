@@ -72,7 +72,8 @@ export class Game {
   // pickaxe skin: which tier is equipped + the material we swapped in (so we can
   // restore the GLB's baked material for `wooden`, and animate `legendary`'s hue).
   private equippedSkin: SkinKey = 'wooden';
-  private skinMats = new Map<Mesh, Material>(); // baked original (the head's wood+steel)
+  private skinMats = new Map<Mesh, Material>(); // each part's baked original material
+  private pickHeadMeshes: Mesh[] = []; // the metal head parts (blades+collar+knob); handle excluded
   private legendaryMat: MeshPhysicalMaterial | null = null;  // animated when legendary is equipped
   private poseFrozen = false;     // tuning: when set, the swing/idle tick won't drive rotation
   // Pickaxe rig params (live-tunable via setPickRig for the rigging subagent).
@@ -200,22 +201,30 @@ export class Game {
       loader.load(url, (g) => res(g.scene), undefined, () => res(null));
     });
 
-    const pick = await tryLoad('/assets/models/pickaxe.glb');
+    const pick = await tryLoad('/assets/models/pickaxe-seg.glb');
     if (pick) {
       this.pickModel = pick;
       this.pickHolder.clear();
       this.pickHolder.add(pick);
-      // The GLB is a single mesh — split each into a handle group (keeps the baked
-      // wood) + a head group (re-skinnable), so skins don't flatten the whole tool.
+      // Tripo mesh-segmentation gives us REAL separate meshes: one wooden handle plus
+      // four metal head pieces (two blades, collar, top knob). We classify by geometry
+      // — the handle is the only part that reaches the bottom of the tool — so the head
+      // pieces re-skin per tier while the handle always keeps its baked wood. No more
+      // fighting to split a fused mesh.
       this.skinMats.clear();
+      this.pickHeadMeshes.length = 0;
+      pick.updateMatrixWorld(true);
+      const meshes: Mesh[] = [];
       pick.traverse((o) => {
         const m = o as Mesh;
-        if (!(m as unknown as { isMesh?: boolean }).isMesh || !m.geometry || !m.material || Array.isArray(m.material)) return;
-        const orig = m.material as Material;
-        this.skinMats.set(m, orig);
-        splitPickaxeHead(m);
-        m.material = [orig, orig]; // [handle, head] — both baked until a skin swaps the head
+        if ((m as unknown as { isMesh?: boolean }).isMesh && m.geometry && m.material && !Array.isArray(m.material)) meshes.push(m);
       });
+      let handle: Mesh | null = null, lowest = Infinity;
+      for (const m of meshes) { const minY = new Box3().setFromObject(m).min.y; if (minY < lowest) { lowest = minY; handle = m; } }
+      for (const m of meshes) {
+        this.skinMats.set(m, m.material as Material);
+        if (m !== handle) this.pickHeadMeshes.push(m);
+      }
       this.applyPickRig();
       this.applyPickaxeSkin(this.equippedSkin); // reflect whatever was equipped before the GLB landed
     }
@@ -360,19 +369,18 @@ export class Game {
     const skinKey = (isSkinKey(key) ? key : 'wooden') as SkinKey;
     this.equippedSkin = skinKey;
     this.legendaryMat = null;
-    const model = this.pickModel;
-    if (!model) return { ok: false, key: skinKey }; // GLB not loaded yet; remembered for later
+    if (!this.pickModel || !this.pickHeadMeshes.length) return { ok: false, key: skinKey }; // GLB not loaded yet
     const spec = PICKAXE_SKINS[skinKey];
-    model.traverse((o) => {
-      const m = o as Mesh;
-      if (!(m as unknown as { isMesh?: boolean }).isMesh || !m.material) return;
-      const orig = this.skinMats.get(m);
-      if (!Array.isArray(m.material) || !orig) return; // unsplit fallback — leave as-is
-      // group 0 = handle (always the baked wood); group 1 = head (the skin).
-      const head = spec.make ? spec.make(orig as MeshStandardMaterial) : orig;
-      m.material = [orig, head];
-      if (spec.animated) this.legendaryMat = head as MeshPhysicalMaterial;
-    });
+    if (!spec.make) {
+      // `wooden` ⇒ restore each head piece's own baked steel material.
+      for (const m of this.pickHeadMeshes) m.material = this.skinMats.get(m) as Material;
+    } else {
+      // One shared tier material across all head pieces (so `legendary` animates as a
+      // single coherent surface, and the head reads as one forged unit).
+      const headMat = spec.make(this.skinMats.get(this.pickHeadMeshes[0]) as MeshStandardMaterial);
+      for (const m of this.pickHeadMeshes) m.material = headMat;
+      if (spec.animated) this.legendaryMat = headMat as MeshPhysicalMaterial;
+    }
     return { ok: true, key: skinKey };
   }
 
@@ -961,10 +969,18 @@ export class Game {
 
     this.dust.rotation.y += dt * 0.02;
     if (this.legendaryMat) {
-      // Slow rainbow cycle on the showpiece skin's emissive (≈18s per full loop).
-      const hue = (t * 0.07) % 1;
-      this.legendaryMat.emissive.setHSL(hue, 1.0, 0.5);
-      this.legendaryMat.color.setHSL(hue, 0.95, 0.55);
+      // Showpiece = vivid iridescent metal. metalness=1 keeps real specular so it
+      // never flattens to plastic; we cycle a SATURATED hue on the base tint (the
+      // metal's reflected color), a moderate colored emissive glow, and a sliding
+      // iridescence film — a colorful oil-slick, premium not neon.
+      const m = this.legendaryMat;
+      const hue = (t * 0.06) % 1;
+      m.color.setHSL(hue, 0.72, 0.55);
+      m.emissive.setHSL(hue, 0.9, 0.42);
+      m.emissiveIntensity = 0.35;
+      const lo = 260 + 180 * Math.sin(t * 0.6);
+      m.iridescenceThicknessRange = [lo, lo + 620];
+      m.iridescenceIOR = 2.2 + 0.25 * Math.sin(t * 0.37);
     }
     this.updateVfx(dt);
     this.composer.render();
@@ -1026,59 +1042,6 @@ function extractGeometry(root: Group, targetH: number): BufferGeometry | null {
   return merged;
 }
 
-/** The GLB pickaxe is one mesh; partition its triangles into a handle group (0)
- *  and a head group (1) so a skin can re-material only the head and keep the baked
- *  wood handle. We classify by the model's own base-color texture — warm/brown
- *  texels are the wooden handle, everything else (the metal head) gets re-skinned —
- *  so the split follows the painted seam exactly. Falls back to a Y cut. */
-function splitPickaxeHead(mesh: Mesh): void {
-  const geo = mesh.geometry;
-  const pos = geo.getAttribute('position');
-  const uv = geo.getAttribute('uv');
-  const img = (mesh.material as MeshStandardMaterial).map?.image as { width: number; height: number } | undefined;
-
-  let texel: ((u: number, v: number) => [number, number, number]) | null = null;
-  if (img && uv && img.width) {
-    try {
-      const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
-      const ctx = cv.getContext('2d', { willReadFrequently: true })!;
-      ctx.drawImage(img as unknown as CanvasImageSource, 0, 0);
-      const data = ctx.getImageData(0, 0, img.width, img.height).data;
-      texel = (u, v) => {
-        const x = Math.max(0, Math.min(img.width - 1, Math.floor((u - Math.floor(u)) * img.width)));
-        const y = Math.max(0, Math.min(img.height - 1, Math.floor((1 - (v - Math.floor(v))) * img.height)));
-        const i = (y * img.width + x) * 4;
-        return [data[i], data[i + 1], data[i + 2]];
-      };
-    } catch { texel = null; }
-  }
-
-  if (!geo.boundingBox) geo.computeBoundingBox();
-  const { min, max } = geo.boundingBox!;
-  const headY = min.y + (max.y - min.y) * 0.56; // fallback only
-  const src = geo.index
-    ? Array.from(geo.index.array as ArrayLike<number>)
-    : Array.from({ length: pos.count }, (_, i) => i);
-  const handle: number[] = [], head: number[] = [];
-  for (let i = 0; i < src.length; i += 3) {
-    const a = src[i], b = src[i + 1], c = src[i + 2];
-    let isHead: boolean;
-    if (texel && uv) {
-      const u = (uv.getX(a) + uv.getX(b) + uv.getX(c)) / 3;
-      const v = (uv.getY(a) + uv.getY(b) + uv.getY(c)) / 3;
-      const [r, g, bl] = texel(u, v);
-      // wood = warm/brown (red clearly above blue, not a grey/metal texel)
-      isHead = !((r - bl) > 26 && r > 55 && r >= g);
-    } else {
-      isHead = (pos.getY(a) + pos.getY(b) + pos.getY(c)) / 3 >= headY;
-    }
-    (isHead ? head : handle).push(a, b, c);
-  }
-  geo.setIndex(handle.concat(head));
-  geo.clearGroups();
-  geo.addGroup(0, handle.length, 0);
-  geo.addGroup(handle.length, head.length, 1);
-}
 
 // Hero geode placement (live-tunable via window.__game.setHero).
 const HERO_Y = -0.5;                          // lowered further per feedback

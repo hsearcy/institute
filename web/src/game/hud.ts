@@ -66,9 +66,9 @@ export class Hud {
         <div class="quests-head">📜 Daily Quests</div>
         <div class="quests-list" id="quests-list"></div>
       </div>
-      <button class="shop-toggle" id="shop-toggle" title="Pickaxe shop">⛏️</button>
+      <button class="shop-toggle" id="shop-toggle" title="Shop">🛒</button>
       <div class="shop" id="shop">
-        <div class="shop-head">⛏️ Pickaxe Shop <span class="shop-gems">💎 <span id="shop-gems">0</span></span></div>
+        <div class="shop-head">🛒 Shop <span class="shop-gems">💎 <span id="shop-gems">0</span></span></div>
         <div class="shop-list" id="shop-list"></div>
       </div>
       <div class="problem-wrap">
@@ -501,7 +501,7 @@ function injectStyles(): void {
   .quests-toggle { position: fixed; top: 64px; right: 14px; pointer-events: auto; cursor: pointer; border: none;
     width: 44px; height: 44px; border-radius: 12px; font-size: 22px; background: rgba(20,16,40,0.6);
     box-shadow: inset 0 0 0 1px rgba(255,233,168,0.22); backdrop-filter: blur(6px); }
-  .quests { position: fixed; top: 112px; right: 14px; width: min(280px, 80vw); pointer-events: auto;
+  .quests { position: fixed; top: 116px; right: 14px; width: min(280px, 80vw); pointer-events: auto;
     background: rgba(18,14,34,0.82); border-radius: 16px; padding: 12px 13px 13px; backdrop-filter: blur(9px);
     box-shadow: 0 12px 34px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,233,168,0.18);
     transform-origin: top right; transform: scale(0.86) translateY(-8px); opacity: 0; visibility: hidden;
@@ -525,11 +525,13 @@ function injectStyles(): void {
   /* Glow pulse only — no scale, so it never overlaps the header or sibling rows. */
   @keyframes questCeleb { 0%{filter:brightness(1)} 30%{filter:brightness(1.6) drop-shadow(0 0 10px rgba(255,210,80,0.9))} 100%{filter:brightness(1)} }
 
-  /* Pickaxe shop — toggle stacked under the quests toggle; panel mirrors quests. */
-  .shop-toggle { position: fixed; top: 116px; right: 14px; pointer-events: auto; cursor: pointer; border: none;
+  /* Shop — toggle sits LEFT of the quests toggle (a horizontal row); panel mirrors
+     quests and opens below the row. Only one corner panel is open at a time, so both
+     panels share the same anchor without overlapping either button. */
+  .shop-toggle { position: fixed; top: 64px; right: 66px; pointer-events: auto; cursor: pointer; border: none;
     width: 44px; height: 44px; border-radius: 12px; font-size: 22px; background: rgba(40,28,12,0.62);
     box-shadow: inset 0 0 0 1px rgba(255,210,120,0.3); backdrop-filter: blur(6px); }
-  .shop { position: fixed; top: 164px; right: 14px; width: min(312px, 84vw); max-height: min(62vh, 520px);
+  .shop { position: fixed; top: 116px; right: 14px; width: min(312px, 84vw); max-height: min(62vh, 520px);
     overflow-y: auto; pointer-events: auto;
     background: rgba(18,14,34,0.86); border-radius: 16px; padding: 12px 12px 13px; backdrop-filter: blur(9px);
     box-shadow: 0 12px 34px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,210,120,0.2);
@@ -669,9 +671,9 @@ function injectStyles(): void {
     .status { gap: 6px; }
     .collection { font-size: 19px; padding: 6px 12px; min-width: 64px; }
     .buy-shield { font-size: 12px; padding: 6px 9px; }
-    .quests { top: 104px; }
-    .shop-toggle { top: 108px; }
-    .shop { top: 156px; }
+    .quests { top: 112px; }
+    .shop-toggle { top: 64px; right: 66px; }
+    .shop { top: 112px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .flame .flame-emoji, .flame.mega { animation: none; }

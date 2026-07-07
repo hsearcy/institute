@@ -1,5 +1,5 @@
 // Talks to the tutor server. The shared schema types flow across the boundary.
-import type { Problem, Branches, Skill, Reward, State, ShopState, ShopItem } from '@institute/shared';
+import type { Problem, Branches, Skill, Reward, State, ShopState, ShopItem, Durability } from '@institute/shared';
 import { API, PROFILE } from './config';
 
 async function post<T>(path: string, body: unknown): Promise<T> {
@@ -98,7 +98,7 @@ export async function fetchShop(): Promise<ShopState | null> {
 }
 
 type BuyResult =
-  | { ok: true; gems: number; equipped: string; item: Pick<ShopItem, 'key' | 'name' | 'price'> }
+  | { ok: true; gems: number; equipped: string; item: Pick<ShopItem, 'key' | 'name' | 'price'>; durability?: Durability | null }
   | { ok: false; reason: string; gems: number }
   | null;
 
@@ -113,12 +113,24 @@ export async function buyPickaxe(itemKey: string): Promise<BuyResult> {
 }
 
 /** Equip an already-owned pickaxe skin. Returns the new equipped key, or a
- *  not-owned failure. Never throws. */
+ *  not-owned/broken failure. Never throws. */
 export async function equipPickaxe(
   itemKey: string,
-): Promise<{ ok: true; equipped: string } | { ok: false; reason: string } | null> {
+): Promise<{ ok: true; equipped: string; durability?: Durability | null } | { ok: false; reason: string } | null> {
   try {
     return await post('/shop/equip', { profileId: PROFILE, itemKey });
+  } catch {
+    return null;
+  }
+}
+
+/** Repair an owned pickaxe (spends gems, refills durability, re-equips it).
+ *  Returns the new balance + durability, or a failure. Never throws. */
+export async function repairPickaxe(
+  itemKey: string,
+): Promise<{ ok: true; gems: number; equipped: string; durability?: Durability | null } | { ok: false; reason: string; gems: number } | null> {
+  try {
+    return await post('/shop/repair', { profileId: PROFILE, itemKey });
   } catch {
     return null;
   }

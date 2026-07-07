@@ -16,6 +16,7 @@ type Handlers = {
   onToggleShop: () => void;
   onBuyPickaxe: (key: string) => void;
   onEquipPickaxe: (key: string) => void;
+  onRepairPickaxe: (key: string) => void;
   onHoardFull: () => void;
 };
 
@@ -48,7 +49,10 @@ export class Hud {
   private bannerStack!: HTMLDivElement;
   private onBuyPickaxe!: (key: string) => void;
   private onEquipPickaxe!: (key: string) => void;
+  private onRepairPickaxe!: (key: string) => void;
   private onHoardFull!: () => void;
+  private duraEl!: HTMLDivElement;
+  private duraFill!: HTMLDivElement;
   private hoardColors: number[] = [];     // persisted pip colors so the bar survives reloads
   private hoardOverflowing = false;       // guard so a full bar fires the bonus once
   private readonly hoardKey = 'institute:hoard:' + PROFILE;
@@ -70,6 +74,7 @@ export class Hud {
           <div class="flame" id="flame" aria-label="Streak"><span class="flame-emoji">🔥</span><span id="flame-count">0</span></div>
           <div class="shield" id="shield" aria-label="Streak shields">🛡️ <span id="shield-count">0</span></div>
           <button class="buy-shield" id="buy-shield" title="Buy a streak shield">＋🛡️ <b>${SHIELD_COST}</b>💎</button>
+          <div class="pick-dura" id="pick-dura" title="Pickaxe durability" hidden>⛏️<div class="dura-bar"><div class="dura-fill" id="dura-fill"></div></div></div>
         </div>
       </div>
       <button class="quests-toggle" id="quests-toggle" title="Daily quests">📜</button>
@@ -115,7 +120,10 @@ export class Hud {
     this.bannerStack = this.root.querySelector('#banner-stack')!;
     this.onBuyPickaxe = h.onBuyPickaxe;
     this.onEquipPickaxe = h.onEquipPickaxe;
+    this.onRepairPickaxe = h.onRepairPickaxe;
     this.onHoardFull = h.onHoardFull;
+    this.duraEl = this.root.querySelector('#pick-dura')!;
+    this.duraFill = this.root.querySelector('#dura-fill')!;
 
     const pad = this.root.querySelector('#pad')!;
     const layout = [1, 2, 3, 4, 5, 6, 7, 8, 9, 'back', 0, 'mine'] as const;
@@ -319,6 +327,11 @@ export class Hud {
       b.classList.toggle('poor', !afford);
       b.disabled = !afford;
     });
+    this.shopList.querySelectorAll<HTMLButtonElement>('.shop-btn.is-repair').forEach((b) => {
+      const afford = gems >= Number(b.dataset.cost ?? '0');
+      b.classList.toggle('poor', !afford);
+      b.disabled = !afford;
+    });
   }
 
   // ---- quests --------------------------------------------------------------
@@ -364,6 +377,24 @@ export class Hud {
     this.questsPanel.classList.toggle('open');
   }
 
+  /** Update the pickaxe-durability chip. `current`/`max` null (wooden) hides it.
+   *  Bar fills green → amber → red as it wears; pulses when about to break. */
+  setDurability(current: number | null | undefined, max: number | null | undefined): void {
+    if (current == null || max == null || max <= 0) { this.duraEl.hidden = true; return; }
+    this.duraEl.hidden = false;
+    const frac = Math.max(0, Math.min(1, current / max));
+    this.duraFill.style.width = (frac * 100) + '%';
+    const state = frac > 0.5 ? 'ok' : frac > 0.2 ? 'warn' : 'low';
+    this.duraEl.className = 'pick-dura ' + state;
+  }
+
+  /** Dramatic (not scary) notice that the equipped pickaxe just broke. */
+  breakBanner(name: string): void {
+    this.screenFlash('#ff9d6b');
+    this.banner('💥 SNAP!', 'broke', `${name} broke — repair it in the 🛒 shop`);
+    this.confettiBurst(40, ['#c9c2b6', '#8a8276', '#e8e2d6', '#b0a894']);
+  }
+
   // ---- pickaxe shop --------------------------------------------------------
   toggleShop(): void {
     this.questsPanel.classList.remove('open');
@@ -373,8 +404,8 @@ export class Hud {
     this.shopPanel.classList.remove('open');
   }
 
-  /** Render the shop catalog in ladder order, each row state-aware:
-   *  Equipped (disabled) / Equip (owned) / Buy N💎 (affordable or greyed). */
+  /** Render the shop catalog in ladder order, each row state-aware: Buy / Equip /
+   *  Equipped, plus a durability bar + Repair for owned tiers (broken ⇒ Repair only). */
   setShop(state: ShopState): void {
     this.shopGemsEl.textContent = String(state.gems);
     this.shopList.innerHTML = '';
@@ -383,26 +414,39 @@ export class Hud {
       const spec = isSkinKey(key) ? PICKAXE_SKINS[key as SkinKey] : null;
       const tint = spec?.tint ?? '#888';
       const blurb = spec?.blurb ?? '';
+      const wears = item.maxDurability != null; // non-wooden tiers wear
+      const cur = item.durability ?? item.maxDurability ?? 0;
+      const broken = wears && item.owned && cur <= 0;
+      const worn = wears && item.owned && cur < (item.maxDurability ?? 0);
       const row = document.createElement('div');
-      row.className = 'shop-row' + (item.equipped ? ' equipped' : '');
+      row.className = 'shop-row' + (item.equipped ? ' equipped' : '') + (broken ? ' broken' : '');
       const afford = state.gems >= item.price;
+      const canRepair = state.gems >= item.repairCost;
 
-      let btnHtml: string;
-      if (item.equipped) {
-        btnHtml = `<button class="shop-btn is-equipped" disabled>Equipped</button>`;
-      } else if (item.owned) {
-        btnHtml = `<button class="shop-btn is-equip" data-equip="${key}">Equip</button>`;
+      const btns: string[] = [];
+      if (!item.owned) {
+        btns.push(`<button class="shop-btn is-buy${afford ? ' afford' : ' poor'}" data-buy="${key}" data-price="${item.price}"${afford ? '' : ' disabled'}>Buy ${item.price}💎</button>`);
       } else {
-        btnHtml = `<button class="shop-btn is-buy${afford ? ' afford' : ' poor'}" data-buy="${key}" data-price="${item.price}"${afford ? '' : ' disabled'}>Buy ${item.price}💎</button>`;
+        if (item.equipped) btns.push(`<button class="shop-btn is-equipped" disabled>Equipped</button>`);
+        else if (!broken) btns.push(`<button class="shop-btn is-equip" data-equip="${key}">Equip</button>`);
+        if (worn) btns.push(`<button class="shop-btn is-repair${canRepair ? '' : ' poor'}${broken ? ' urgent' : ''}" data-repair="${key}" data-cost="${item.repairCost}"${canRepair ? '' : ' disabled'}>🔧 ${item.repairCost}💎</button>`);
       }
+
+      // durability bar (owned, worn tiers)
+      const frac = wears && item.maxDurability ? Math.max(0, Math.min(1, cur / item.maxDurability)) : 1;
+      const dstate = frac > 0.5 ? 'ok' : frac > 0.2 ? 'warn' : 'low';
+      const duraHtml = wears && item.owned
+        ? `<div class="row-dura ${dstate}"><div class="row-dura-fill" style="width:${frac * 100}%"></div></div>`
+        : '';
 
       row.innerHTML = `
         <div class="swatch" style="--tint:${tint}"></div>
         <div class="shop-meta">
           <div class="shop-name">${item.name}</div>
-          <div class="shop-blurb">${blurb}</div>
+          <div class="shop-blurb">${broken ? 'Broken — repair to use' : blurb}</div>
+          ${duraHtml}
         </div>
-        ${btnHtml}`;
+        <div class="shop-btns">${btns.join('')}</div>`;
       this.shopList.appendChild(row);
     }
     // Delegate clicks (rebuilt each render, so wire fresh).
@@ -410,6 +454,8 @@ export class Hud {
       b.addEventListener('click', () => this.onBuyPickaxe(b.dataset.buy!)));
     this.shopList.querySelectorAll<HTMLButtonElement>('[data-equip]').forEach((b) =>
       b.addEventListener('click', () => this.onEquipPickaxe(b.dataset.equip!)));
+    this.shopList.querySelectorAll<HTMLButtonElement>('[data-repair]').forEach((b) =>
+      b.addEventListener('click', () => this.onRepairPickaxe(b.dataset.repair!)));
   }
 
   /** Gentle not-enough-gems toast for a failed pickaxe buy. */
@@ -662,6 +708,37 @@ function injectStyles(): void {
     box-shadow: inset 0 1px 1px rgba(255,255,255,0.7), 0 3px 0 #b96a00; }
   .shop-btn.is-buy.afford:active { box-shadow: inset 0 1px 1px rgba(255,255,255,0.6), 0 1px 0 #b96a00; }
   .shop-btn.is-buy.poor { background: rgba(255,255,255,0.14); color: #cfc6e8; cursor: not-allowed; opacity: .7; }
+  .shop-btns { flex: none; display: flex; flex-direction: column; gap: 5px; align-items: stretch; }
+  .shop-btn.is-repair { background: linear-gradient(160deg,#ffd9a8,#ff9f45); color: #5a2e00;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.6), 0 3px 0 #c26510; font-size: 12px; padding: 6px 10px; }
+  .shop-btn.is-repair.urgent { background: linear-gradient(160deg,#ffb36b,#ff7a3d); color: #3a1400;
+    animation: repairPulse 1.1s ease-in-out infinite; }
+  .shop-btn.is-repair.poor { background: rgba(255,255,255,0.14); color: #cfc6e8; cursor: not-allowed; opacity: .7; box-shadow: none; animation: none; }
+  @keyframes repairPulse { 0%,100%{ filter: brightness(1) } 50%{ filter: brightness(1.35) } }
+  .shop-row.broken { background: rgba(255,120,80,0.10); box-shadow: inset 0 0 0 1px rgba(255,140,90,0.5); }
+  .row-dura { height: 5px; border-radius: 4px; margin-top: 5px; background: rgba(255,255,255,0.12); overflow: hidden; }
+  .row-dura-fill { height: 100%; border-radius: 4px; transition: width .3s ease; }
+  .row-dura.ok .row-dura-fill { background: linear-gradient(90deg,#69db7c,#2ee6a0); }
+  .row-dura.warn .row-dura-fill { background: linear-gradient(90deg,#ffd23b,#ffab2e); }
+  .row-dura.low .row-dura-fill { background: linear-gradient(90deg,#ff7a4d,#ff4d4d); }
+
+  /* Pickaxe-durability chip in the status row (hidden when wooden is equipped). */
+  .pick-dura { display: flex; align-items: center; gap: 5px; font-size: 15px; padding: 5px 9px; border-radius: 999px;
+    background: rgba(20,16,40,0.55); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); }
+  .pick-dura[hidden] { display: none; }
+  .dura-bar { width: 46px; height: 7px; border-radius: 5px; background: rgba(255,255,255,0.15); overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.4); }
+  .dura-fill { height: 100%; width: 100%; border-radius: 5px; transition: width .35s cubic-bezier(.3,1,.5,1), background .3s; }
+  .pick-dura.ok .dura-fill { background: linear-gradient(90deg,#69db7c,#2ee6a0); box-shadow: 0 0 6px rgba(46,230,160,0.5); }
+  .pick-dura.warn .dura-fill { background: linear-gradient(90deg,#ffd23b,#ffab2e); box-shadow: 0 0 6px rgba(255,180,50,0.5); }
+  .pick-dura.low .dura-fill { background: linear-gradient(90deg,#ff7a4d,#ff4d4d); box-shadow: 0 0 8px rgba(255,80,60,0.7); }
+  .pick-dura.low { animation: duraPulse 0.9s ease-in-out infinite; }
+  @keyframes duraPulse { 0%,100%{ box-shadow: inset 0 0 0 1px rgba(255,120,90,0.4) } 50%{ box-shadow: inset 0 0 0 1px rgba(255,120,90,1), 0 0 10px rgba(255,90,60,0.6) } }
+
+  .banner.broke .b-title { font-size: clamp(34px,9vw,80px); color: #ffd9b0;
+    text-shadow: 0 0 18px rgba(255,140,60,0.9), 0 4px 0 rgba(120,50,10,0.8), 0 8px 22px rgba(0,0,0,0.6); }
+  .banner.broke .b-sub { color: #ffcfa8; }
+  .banner.broke { animation: bannerPop 3.4s cubic-bezier(.2,1.4,.4,1) forwards; }
 
   .problem-wrap { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 6px; }
   .replay { pointer-events: auto; border: none; background: rgba(20,16,40,0.5); color: #fff; font-size: 22px;

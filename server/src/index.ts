@@ -76,6 +76,11 @@ db.exec(`
 try {
   db.exec(`ALTER TABLE profile_state ADD COLUMN equipped_pickaxe TEXT DEFAULT 'wooden'`);
 } catch { /* column already present */ }
+// Per-owned-item durability (NULL ⇒ treat as full). Pickaxes wear as he mines and
+// break at 0 (→ auto-swap to wooden); repair refills it.
+try {
+  db.exec(`ALTER TABLE owned_items ADD COLUMN durability INTEGER`);
+} catch { /* column already present */ }
 // Seed the skill ladder (categories + descent order) from the shared schema.
 const seedSkill = db.query(`INSERT OR IGNORE INTO skills (skill, label, ladder) VALUES (?, ?, ?)`);
 SKILLS.forEach((s, i) => seedSkill.run(s, SKILL_LABELS[s], i));
@@ -160,12 +165,61 @@ const PICKAXE_CATALOG = [
 
 const catalogEntry = (key: string) => PICKAXE_CATALOG.find((c) => c.key === key) ?? null;
 
+// Full durability per tier = how many gems it mines before wearing out. Pricier
+// tiers last much longer (a real reason to climb the ladder, not just looks).
+// wooden = the free fallback, never wears. Tunable — start soft.
+const DURABILITY: Record<string, number> = {
+  stone: 40, iron: 60, silver: 90, gold: 130, diamond: 180, obsidian: 250, legendary: 350,
+};
+const maxDurability = (key: string): number | null => (key === "wooden" ? null : DURABILITY[key] ?? 60);
+// Gentle repair cost: ~10% of the purchase price (min 5). wooden never repairs.
+const repairCost = (key: string): number => {
+  const cat = catalogEntry(key);
+  return cat && cat.price > 0 ? Math.max(5, Math.ceil(cat.price * 0.1)) : 0;
+};
+
 /** Whether the profile owns the item. `wooden` is always owned (free starter). */
 function ownsItem(profileId: string, itemKey: string): boolean {
   if (itemKey === "wooden") return true;
   const row = db.query(`SELECT 1 FROM owned_items WHERE profile_id = ? AND item_key = ?`)
     .get(profileId, itemKey);
   return !!row;
+}
+
+/** Current durability of an owned pickaxe (NULL column ⇒ full; unowned ⇒ 0). */
+function itemDurability(profileId: string, key: string): number {
+  const max = maxDurability(key);
+  if (max === null) return Infinity; // wooden
+  const row = db.query(`SELECT durability FROM owned_items WHERE profile_id = ? AND item_key = ?`)
+    .get(profileId, key) as { durability: number | null } | null;
+  if (!row) return 0;
+  return row.durability == null ? max : row.durability;
+}
+
+function setItemDurability(profileId: string, key: string, val: number): void {
+  db.query(`UPDATE owned_items SET durability = ? WHERE profile_id = ? AND item_key = ?`)
+    .run(val, profileId, key);
+}
+
+/** Read (and optionally wear −1) the equipped pickaxe's durability. On wear to 0
+ *  it breaks: the equip auto-reverts to wooden (skin stays owned at 0 until repaired).
+ *  Mutates `state.equipped_pickaxe` on break; the caller persists state. */
+function equippedDurability(
+  profileId: string,
+  state: ProfileStateRow,
+  wear: boolean,
+): { key: string; current: number | null; max: number | null; broke: boolean } {
+  const key = state.equipped_pickaxe;
+  const max = maxDurability(key);
+  if (max === null) return { key, current: null, max: null, broke: false }; // wooden
+  let cur = itemDurability(profileId, key);
+  let broke = false;
+  if (wear) {
+    cur = Math.max(0, cur - 1);
+    setItemDurability(profileId, key, cur);
+    if (cur <= 0) { state.equipped_pickaxe = "wooden"; broke = true; }
+  }
+  return { key, current: cur, max, broke };
 }
 
 /** Ensure today's quest rows exist; return them. */
@@ -487,6 +541,8 @@ app.post("/tutor/attempt", async (c) => {
       state.streak = 0;
     }
   }
+  // A correct answer mines a gem — that swing wears the equipped pickaxe.
+  const durability = equippedDurability(profileId, state, correct);
   saveProfileState(profileId, state);
 
   return c.json({
@@ -500,6 +556,7 @@ app.post("/tutor/attempt", async (c) => {
       milestone,
       shieldUsed,
       questsCompleted,
+      durability,
     },
   });
 });
@@ -525,12 +582,13 @@ app.post("/reward/retry-solve", async (c) => {
     db.query(`UPDATE quests SET progress = ?, done = ? WHERE profile_id = ? AND quest_key = ? AND day = ?`)
       .run(progress, done, profileId, r.quest_key, day);
   }
+  const durability = equippedDurability(profileId, state, true); // a mined gem wears it
   saveProfileState(profileId, state);
   return c.json({
     ok: true,
     reward: {
       gemsEarned: 1, totalGems: state.gems, streak: state.streak, bestStreak: state.best_streak,
-      shields: state.shields, milestone: null, shieldUsed: false, questsCompleted,
+      shields: state.shields, milestone: null, shieldUsed: false, questsCompleted, durability,
     },
   });
 });
@@ -563,6 +621,7 @@ app.get("/state", (c) => {
     shields: s.shields,
     quests: questView(getQuests(profileId)),
     equipped: s.equipped_pickaxe,
+    durability: equippedDurability(profileId, s, false),
   });
 });
 
@@ -572,13 +631,21 @@ app.get("/state", (c) => {
 app.get("/shop", (c) => {
   const profileId = c.req.query("profileId") ?? "sam";
   const s = getProfileState(profileId);
-  const items = PICKAXE_CATALOG.map((cat) => ({
-    key: cat.key,
-    name: cat.name,
-    price: cat.price,
-    owned: ownsItem(profileId, cat.key),
-    equipped: s.equipped_pickaxe === cat.key,
-  }));
+  const items = PICKAXE_CATALOG.map((cat) => {
+    const max = maxDurability(cat.key);
+    const owned = ownsItem(profileId, cat.key);
+    return {
+      key: cat.key,
+      name: cat.name,
+      price: cat.price,
+      owned,
+      equipped: s.equipped_pickaxe === cat.key,
+      // current durability if owned; else show it full so the shop previews the tier's stat
+      durability: max === null ? null : (owned ? itemDurability(profileId, cat.key) : max),
+      maxDurability: max,
+      repairCost: repairCost(cat.key),
+    };
+  });
   return c.json({ gems: s.gems, equipped: s.equipped_pickaxe, items });
 });
 
@@ -595,27 +662,52 @@ app.post("/shop/buy", async (c) => {
   }
   s.gems -= cat.price;
   s.equipped_pickaxe = itemKey;
-  db.query(`INSERT OR IGNORE INTO owned_items (profile_id, item_key) VALUES (?, ?)`)
-    .run(profileId, itemKey);
+  const max = maxDurability(itemKey);
+  db.query(`INSERT OR IGNORE INTO owned_items (profile_id, item_key, durability) VALUES (?, ?, ?)`)
+    .run(profileId, itemKey, max);
+  setItemDurability(profileId, itemKey, max ?? 0); // fresh + full even if re-owned
   saveProfileState(profileId, s);
   return c.json({
     ok: true,
     gems: s.gems,
     equipped: s.equipped_pickaxe,
     item: { key: cat.key, name: cat.name, price: cat.price },
+    durability: equippedDurability(profileId, s, false),
   });
 });
 
-// Equip an already-owned skin (or wooden, always allowed).
+// Equip an already-owned skin (or wooden, always allowed). Blocks equipping a
+// broken skin (durability 0) — it must be repaired first.
 app.post("/shop/equip", async (c) => {
   const { profileId, itemKey } = await c.req.json();
   if (itemKey === "wooden" || ownsItem(profileId, itemKey)) {
+    if (itemKey !== "wooden" && itemDurability(profileId, itemKey) <= 0) {
+      return c.json({ ok: false, reason: "broken" });
+    }
     const s = getProfileState(profileId);
     s.equipped_pickaxe = itemKey;
     saveProfileState(profileId, s);
-    return c.json({ ok: true, equipped: s.equipped_pickaxe });
+    return c.json({ ok: true, equipped: s.equipped_pickaxe, durability: equippedDurability(profileId, s, false) });
   }
   return c.json({ ok: false, reason: "not owned" });
+});
+
+// Repair an owned pickaxe: spend gems → refill durability → re-equip it (so a
+// just-broken tool is instantly back in hand). Never destroys the skin.
+app.post("/shop/repair", async (c) => {
+  const { profileId, itemKey } = await c.req.json();
+  const s = getProfileState(profileId);
+  const max = maxDurability(itemKey);
+  if (itemKey === "wooden" || max === null || !ownsItem(profileId, itemKey)) {
+    return c.json({ ok: false, reason: "unavailable", gems: s.gems });
+  }
+  const cost = repairCost(itemKey);
+  if (s.gems < cost) return c.json({ ok: false, reason: "not enough gems", gems: s.gems });
+  s.gems -= cost;
+  setItemDurability(profileId, itemKey, max);
+  s.equipped_pickaxe = itemKey;
+  saveProfileState(profileId, s);
+  return c.json({ ok: true, gems: s.gems, equipped: itemKey, durability: equippedDurability(profileId, s, false) });
 });
 
 // Buy a shield: 40 gems → +1 shield. Saves a streak on the next wrong answer.

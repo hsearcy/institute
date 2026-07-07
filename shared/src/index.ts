@@ -95,6 +95,17 @@ export const CompletedQuestSchema = z.object({
 });
 export type CompletedQuest = z.infer<typeof CompletedQuestSchema>;
 
+/** Live durability of the equipped pickaxe. `current`/`max` are null for wooden
+ *  (the free starter never wears). `broke` = it just hit 0 this action and the
+ *  equip auto-reverted to wooden. */
+export const DurabilitySchema = z.object({
+  key: z.string(),
+  current: z.number().int().nullable(),
+  max: z.number().int().nullable(),
+  broke: z.boolean(),
+});
+export type Durability = z.infer<typeof DurabilitySchema>;
+
 /** The reward delta returned by POST /tutor/attempt for one first-try answer. */
 export const RewardSchema = z.object({
   gemsEarned: z.number().int(),
@@ -105,6 +116,8 @@ export const RewardSchema = z.object({
   milestone: z.number().int().nullable(),
   shieldUsed: z.boolean(),
   questsCompleted: z.array(CompletedQuestSchema),
+  /** Equipped-pickaxe durability after this action (absent when nothing wore). */
+  durability: DurabilitySchema.nullable().optional(),
 });
 export type Reward = z.infer<typeof RewardSchema>;
 
@@ -117,6 +130,8 @@ export const StateSchema = z.object({
   quests: z.array(QuestSchema),
   /** The equipped pickaxe skin key (defaults to "wooden"). */
   equipped: z.string(),
+  /** Durability of the equipped pickaxe (null current/max for wooden). */
+  durability: DurabilitySchema.nullable().optional(),
 });
 export type State = z.infer<typeof StateSchema>;
 
@@ -129,6 +144,12 @@ export const ShopItemSchema = z.object({
   price: z.number().int(),
   owned: z.boolean(),
   equipped: z.boolean(),
+  /** Current durability (null = wooden/infinite; equals maxDurability if unowned). */
+  durability: z.number().int().nullable(),
+  /** Full durability for this tier (null for wooden). */
+  maxDurability: z.number().int().nullable(),
+  /** Gem cost to fully repair this tier (0 for wooden). */
+  repairCost: z.number().int(),
 });
 export type ShopItem = z.infer<typeof ShopItemSchema>;
 

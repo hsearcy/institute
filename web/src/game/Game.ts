@@ -3,7 +3,7 @@ import {
   FogExp2, Group, Box3, Vector2, Vector3, Clock,
   DirectionalLight, PointLight, HemisphereLight,
   IcosahedronGeometry, OctahedronGeometry, ConeGeometry, CylinderGeometry, PlaneGeometry, RingGeometry,
-  MeshStandardMaterial, MeshPhysicalMaterial, MeshBasicMaterial, Mesh,
+  MeshStandardMaterial, MeshPhysicalMaterial, MeshBasicMaterial, Mesh, Color,
   PMREMGenerator, TextureLoader, AdditiveBlending, DoubleSide,
   Points, BufferGeometry, Float32BufferAttribute, PointsMaterial,
 } from 'three';
@@ -15,12 +15,12 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { type Material } from 'three';
-import type { Problem, Branches, Reward } from '@institute/shared';
+import type { Problem, Branches, Reward, Durability } from '@institute/shared';
 import { Hud } from './hud';
 import { PICKAXE_SKINS, isSkinKey, type SkinKey } from './skins';
 import {
   fetchFirst, fetchBranches, recordAttempt, creditRetrySolve, fetchState, buyShield,
-  fetchShop, buyPickaxe, equipPickaxe, creditHoardBonus,
+  fetchShop, buyPickaxe, equipPickaxe, repairPickaxe, creditHoardBonus,
 } from './tutor';
 import { speak, sfxChink, sfxMine, sfxFizzle, sfxCollect, sfxFanfare, startAmbience, preloadAudio } from './audio';
 
@@ -75,6 +75,8 @@ export class Game {
   private skinMats = new Map<Mesh, Material>(); // each part's baked original material
   private pickHeadMeshes: Mesh[] = []; // the metal head parts (blades+collar+knob); handle excluded
   private legendaryMat: MeshPhysicalMaterial | null = null;  // animated when legendary is equipped
+  private pickHeadMat: MeshStandardMaterial | null = null;   // shared head material (for wear); null for wooden
+  private pickDurability: Durability | null = null;          // last-known equipped durability
   private poseFrozen = false;     // tuning: when set, the swing/idle tick won't drive rotation
   // Pickaxe rig params (live-tunable via setPickRig for the rigging subagent).
   // FIRST-PERSON rig: the player holds the pick in the lower foreground (grip near
@@ -126,6 +128,7 @@ export class Game {
       onToggleShop: () => this.hud.toggleShop(),
       onBuyPickaxe: (key) => void this.onBuyPickaxe(key),
       onEquipPickaxe: (key) => void this.onEquipPickaxe(key),
+      onRepairPickaxe: (key) => void this.onRepairPickaxe(key),
       onHoardFull: () => void this.onHoardFull(),
     });
 
@@ -373,16 +376,113 @@ export class Game {
     if (!this.pickModel || !this.pickHeadMeshes.length) return { ok: false, key: skinKey }; // GLB not loaded yet
     const spec = PICKAXE_SKINS[skinKey];
     if (!spec.make) {
-      // `wooden` ⇒ restore each head piece's own baked steel material.
+      // `wooden` ⇒ restore each head piece's own baked steel material. No wear.
       for (const m of this.pickHeadMeshes) m.material = this.skinMats.get(m) as Material;
+      this.pickHeadMat = null;
     } else {
       // One shared tier material across all head pieces (so `legendary` animates as a
       // single coherent surface, and the head reads as one forged unit).
-      const headMat = spec.make(this.skinMats.get(this.pickHeadMeshes[0]) as MeshStandardMaterial);
+      const headMat = spec.make(this.skinMats.get(this.pickHeadMeshes[0]) as MeshStandardMaterial) as MeshStandardMaterial;
+      // Snapshot the pristine look so wear can lerp toward battered/grimy from it.
+      const phys = headMat as MeshStandardMaterial & { envMapIntensity?: number };
+      headMat.userData.base = {
+        roughness: headMat.roughness, metalness: headMat.metalness,
+        envMapIntensity: phys.envMapIntensity ?? 1, color: headMat.color.clone(),
+        emissiveIntensity: headMat.emissiveIntensity,
+      };
       for (const m of this.pickHeadMeshes) m.material = headMat;
+      this.pickHeadMat = headMat;
       if (spec.animated) this.legendaryMat = headMat as MeshPhysicalMaterial;
     }
+    // Re-apply current wear to the freshly-built material (e.g. after re-equip).
+    if (this.pickDurability && this.pickDurability.key === skinKey && this.pickDurability.current != null && this.pickDurability.max) {
+      this.applyPickaxeWear(this.pickDurability.current / this.pickDurability.max);
+    }
     return { ok: true, key: skinKey };
+  }
+
+  /** Dull the head material as the pickaxe wears (frac 1=pristine → 0=broken):
+   *  rougher, less reflective, grimier, dimmer glow. Lerps from the pristine snapshot. */
+  private applyPickaxeWear(frac: number): void {
+    const m = this.pickHeadMat as (MeshStandardMaterial & { envMapIntensity?: number; userData: { base?: { roughness: number; metalness: number; envMapIntensity: number; color: Color; emissiveIntensity: number } } }) | null;
+    const base = m?.userData.base;
+    if (!m || !base) return;
+    const worn = Math.max(0, Math.min(1, 1 - frac));
+    // Convey wear as "dirtier + darker", NOT dead-matte — keep a real specular
+    // highlight so the head still reads as shaped metal (no blobby flattening).
+    const roughTarget = Math.max(base.roughness, 0.5); // never fully matte
+    m.roughness = base.roughness + (roughTarget - base.roughness) * worn;
+    m.metalness = base.metalness * (1 - 0.2 * worn);
+    m.envMapIntensity = base.envMapIntensity * (1 - 0.4 * worn); // stays reflective
+    m.emissiveIntensity = base.emissiveIntensity * (1 - 0.45 * worn);
+    m.color.copy(base.color).lerp(GRIME, 0.4 * worn); // keep most of the tier color
+  }
+
+  /** Apply a durability update from the server: refresh the meter + wear; on a break
+   *  shatter the tool and swap to the free wooden one (the skin stays owned). */
+  private applyDurability(d: Durability | null | undefined): void {
+    if (!d) return;
+    this.pickDurability = d;
+    if (d.broke) { this.onPickaxeBroke(d.key); return; }
+    this.hud.setDurability(d.current, d.max);
+    if (d.current != null && d.max) this.applyPickaxeWear(d.current / d.max);
+  }
+
+  /** The equipped pickaxe just wore out: dramatic shatter, then fall back to wooden. */
+  private onPickaxeBroke(key: string): void {
+    this.pickaxeShatter(key);
+    this.pickDurability = null;
+    this.applyPickaxeSkin('wooden');
+    this.hud.setDurability(null, null);
+    const name = key.charAt(0).toUpperCase() + key.slice(1) + ' Pickaxe';
+    this.hud.breakBanner(name);
+    void this.refreshShop(); // the broken tier now shows a Repair button
+  }
+
+  /** Burst the pickaxe into shards (in its tier color) at the tool's position. */
+  private pickaxeShatter(key: string): void {
+    const origin = new Vector3();
+    (this.pickModel ?? this.pickaxe).getWorldPosition(origin);
+    const tintCss = (PICKAXE_SKINS[key as SkinKey] ?? PICKAXE_SKINS.wooden).tint;
+    const tint = parseInt(tintCss.slice(1), 16) || 0xc9c2b6;
+    this.shake = Math.max(this.shake, 0.65);
+    sfxFizzle();
+    for (let i = 0; i < 34; i++) {
+      const size = 0.16 + Math.random() * 0.26;
+      const shard = this.makeGemShard(i % 3 === 0 ? 0xb8b0a2 : tint, size);
+      shard.position.copy(origin).add(new Vector3((Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5));
+      this.scene.add(shard);
+      const dir = new Vector3((Math.random() - 0.5) * 2, Math.random() * 1.6 + 0.1, (Math.random() - 0.3) * 2).normalize();
+      const life = 1.0 + Math.random() * 0.8;
+      this.bursts.push({
+        mesh: shard, vel: dir.multiplyScalar(4 + Math.random() * 5), life, maxLife: life, size,
+        spin: new Vector3((Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20, (Math.random() - 0.5) * 20),
+      });
+    }
+  }
+
+  /** Repair an owned pickaxe: spend gems, refill durability, re-equip it fresh. */
+  private async onRepairPickaxe(key: string): Promise<void> {
+    startAmbience();
+    const res = await repairPickaxe(key);
+    if (!res) return;
+    if (!res.ok) {
+      this.hud.setGemsForShop(res.gems);
+      this.hud.shopFeedback('Keep mining for repair gems!');
+      return;
+    }
+    this.totalGems = res.gems;
+    this.hud.rollCollectionTo(res.gems); // gems spent — roll down
+    this.hud.setGemsForShop(res.gems);
+    this.pickDurability = res.durability ?? null;
+    this.applyPickaxeSkin(res.equipped); // repaired = re-equipped, fresh
+    this.applyDurability(res.durability);
+    void this.refreshShop();
+    const spec = PICKAXE_SKINS[res.equipped as SkinKey] ?? PICKAXE_SKINS.wooden;
+    const name = res.equipped.charAt(0).toUpperCase() + res.equipped.slice(1) + ' Pickaxe';
+    this.hud.equipConfirm(name, spec.tint);
+    sfxCollect();
+    this.beautySwing();
   }
 
   /** Swing angle at phase p∈[0,1]: small wind-up, fast slam, ease back to cock. */
@@ -484,7 +584,9 @@ export class Game {
     this.hud.setGemsForShop(st.gems);
     this.hud.setQuests(st.quests);
     if (seed && st.equipped) {
+      this.pickDurability = st.durability ?? null;
       this.applyPickaxeSkin(st.equipped); // wear the saved skin on startup
+      this.applyDurability(st.durability); // restore the durability meter + visible wear
       void this.refreshShop();            // seed the shop panel catalog
     }
   }
@@ -505,7 +607,9 @@ export class Game {
       this.totalGems = res.gems;
       this.hud.rollCollectionTo(res.gems);   // gems spent — roll the counter down
       this.hud.setGemsForShop(res.gems);
+      this.pickDurability = res.durability ?? null;
       this.applyPickaxeSkin(res.equipped);
+      this.applyDurability(res.durability);  // fresh + full durability meter
       void this.refreshShop();               // re-render rows (now owned + equipped)
       this.unlockCelebration(res.item.name, res.item.key);
     } else {
@@ -519,7 +623,9 @@ export class Game {
     startAmbience();
     const res = await equipPickaxe(key);
     if (!res || !res.ok) return;
+    this.pickDurability = res.durability ?? null;
     this.applyPickaxeSkin(res.equipped);
+    this.applyDurability(res.durability);
     void this.refreshShop();
     sfxCollect();
     const spec = PICKAXE_SKINS[res.equipped as SkinKey] ?? PICKAXE_SKINS.wooden;
@@ -719,6 +825,7 @@ export class Game {
       } else {
         this.hud.setStreak(reward.streak, false); // visibly resets to 0
       }
+      this.applyDurability(reward.durability); // wrong answers don't wear, but keep the meter synced
     }
   }
 
@@ -759,6 +866,8 @@ export class Game {
       this.hud.celebrateQuest(q);
       sfxFanfare(false);
     }
+    // Wear the pickaxe for this mined gem (may shatter → swap to wooden).
+    this.applyDurability(r.durability);
     // Refresh quest progress bars from the server (cheap; reflects live deltas).
     void this.syncState(false);
   }
@@ -1111,6 +1220,8 @@ const HERO_ROT = new Vector3(0.4, 3.93, 0);   // geode child rotation → open c
 
 // World point that projects up near the hoard wall (top-left of the HUD).
 const COUNTER_WORLD = new Vector3(-3.4, 3.0, 2.0);
+// Grimy tone a worn pickaxe head lerps toward as durability drops.
+const GRIME = new Color(0x4a453e);
 const PRAISE = ['Yes! Nice mining!', 'You got it!', 'Sparkly!', 'Great job!', 'Wonderful!'];
 const NUDGE = ['So close, try again!', 'Hmm, not quite — give it another go!', 'Almost! Try once more.'];
 const pick = (a: string[]): string => a[Math.floor(Math.random() * a.length)];

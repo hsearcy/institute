@@ -21,6 +21,7 @@ import { PICKAXE_SKINS, isSkinKey, type SkinKey } from './skins';
 import {
   fetchFirst, fetchBranches, recordAttempt, creditRetrySolve, fetchState, buyShield,
   fetchShop, buyPickaxe, equipPickaxe, repairPickaxe, creditHoardBonus, fetchMastery,
+  buyCrazyCoin, redeemCrazyCoin,
 } from './tutor';
 import { speak, sfxChink, sfxMine, sfxFizzle, sfxCollect, sfxFanfare, startAmbience, preloadAudio } from './audio';
 
@@ -129,6 +130,8 @@ export class Game {
       onBuyPickaxe: (key) => void this.onBuyPickaxe(key),
       onEquipPickaxe: (key) => void this.onEquipPickaxe(key),
       onRepairPickaxe: (key) => void this.onRepairPickaxe(key),
+      onBuyCrazyCoin: () => void this.onBuyCrazyCoin(),
+      onRedeemCrazyCoin: () => void this.onRedeemCrazyCoin(),
       onHoardFull: () => void this.onHoardFull(),
       onOpenParent: () => void this.onOpenParent(),
     });
@@ -650,6 +653,34 @@ export class Game {
   private beautySwing(): void {
     if (this.busy) return; // don't fight an in-progress mining slam
     this.swing(() => { sfxChink(); this.spawnSparkle(); });
+  }
+
+  /** Buy a Crazy Coin (200 gems → 15 minutes of shows): debit, badge the shop
+   *  row, and fire the biggest celebration in the store — it's the top prize. */
+  private async onBuyCrazyCoin(): Promise<void> {
+    startAmbience();
+    const res = await buyCrazyCoin();
+    if (!res) return;
+    if (res.ok) {
+      this.totalGems = res.gems;
+      this.hud.rollCollectionTo(res.gems);   // gems spent — roll the counter down
+      this.hud.setGemsForShop(res.gems);
+      this.hud.setCrazyCoins(res.crazyCoins, res.gems);
+      this.shake = Math.max(this.shake, 0.7);
+      this.celebrationBurst(8);
+      this.hud.celebrateCrazyCoin(res.crazyCoins);
+      sfxFanfare(true);
+    } else {
+      this.hud.setGemsForShop(res.gems);
+      this.hud.shopFeedback('Need 200 💎 for a Crazy Coin — keep mining!');
+    }
+  }
+
+  /** Parent redeems one coin from the dashboard (he cashed in his 15 minutes). */
+  private async onRedeemCrazyCoin(): Promise<void> {
+    const res = await redeemCrazyCoin();
+    if (!res) return;
+    this.hud.setParentCoins(res.crazyCoins);
   }
 
   private async onBuyShield(): Promise<void> {

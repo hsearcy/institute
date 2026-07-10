@@ -105,6 +105,32 @@ describe("topic-graph tutor flow", () => {
     expect(row.reviewDueAt).toBeLessThan(Date.now() + day + 60_000);
   });
 
+  test("crazy coin: buy debits 200 gems, parent redeem decrements, both guard", async () => {
+    // Broke: buy must refuse.
+    let r = await call("POST", "/shop/buy-crazy-coin", { profileId: "kid8" });
+    expect(r).toEqual({ ok: false, reason: "not enough gems", gems: 0, crazyCoins: 0 });
+    // No coins: redeem must refuse.
+    r = await call("POST", "/shop/redeem-crazy-coin", { profileId: "kid8" });
+    expect(r).toEqual({ ok: false, reason: "no coins", crazyCoins: 0 });
+
+    // Credit 250 gems via hoard bonuses (10 each), then buy.
+    for (let i = 0; i < 25; i++) await call("POST", "/reward/hoard-bonus", { profileId: "kid8" });
+    r = await call("POST", "/shop/buy-crazy-coin", { profileId: "kid8" });
+    expect(r).toEqual({ ok: true, gems: 50, crazyCoins: 1 });
+
+    // The count flows to the kid's shop AND the parent dashboard.
+    const shop = await call("GET", "/shop?profileId=kid8");
+    expect(shop.crazyCoins).toBe(1);
+    const m = await call("GET", "/mastery?profileId=kid8");
+    expect(m.crazyCoins).toBe(1);
+
+    // Parent redeems it — gems untouched (already spent at purchase).
+    r = await call("POST", "/shop/redeem-crazy-coin", { profileId: "kid8" });
+    expect(r).toEqual({ ok: true, crazyCoins: 0 });
+    const state = await call("GET", "/state?profileId=kid8");
+    expect(state.gems).toBe(50);
+  });
+
   test("right branch rotates topic after a 4-run (interleaving)", async () => {
     // Build a 4-run on Number Bonds for a fresh profile, then ask for branches.
     const topicId = "mt_e8CZ7E5qW7";

@@ -102,6 +102,11 @@ try {
 try {
   db.exec(`ALTER TABLE owned_items ADD COLUMN durability INTEGER`);
 } catch { /* column already present */ }
+// Crazy Coins: a real-world consumable — each coin trades for 15 minutes of
+// shows, redeemed by a parent from the dashboard (guarded ALTER).
+try {
+  db.exec(`ALTER TABLE profile_state ADD COLUMN crazy_coins INTEGER DEFAULT 0`);
+} catch { /* column already present */ }
 // Seed the skill ladder (categories + descent order) from the shared schema.
 const seedSkill = db.query(`INSERT OR IGNORE INTO skills (skill, label, ladder) VALUES (?, ?, ?)`);
 SKILLS.forEach((s, i) => seedSkill.run(s, SKILL_LABELS[s], i));
@@ -221,7 +226,7 @@ db.query(`UPDATE topic_mastery SET review_interval_days = 1, review_due_at = ?
 
 // ---- Rewards: gems / streaks / daily quests / shield -----------------------
 
-type ProfileStateRow = { gems: number; streak: number; best_streak: number; shields: number; equipped_pickaxe: string };
+type ProfileStateRow = { gems: number; streak: number; best_streak: number; shields: number; crazy_coins: number; equipped_pickaxe: string };
 type QuestRow = { quest_key: string; label: string; target: number; progress: number; reward: number; done: number };
 
 const utcDay = () => new Date().toISOString().slice(0, 10);
@@ -248,22 +253,23 @@ function streakBonus(streak: number): number {
 
 /** Read (creating if missing) the per-profile reward state. */
 function getProfileState(profileId: string): ProfileStateRow {
-  let row = db.query(`SELECT gems, streak, best_streak, shields, equipped_pickaxe FROM profile_state WHERE profile_id = ?`)
+  let row = db.query(`SELECT gems, streak, best_streak, shields, crazy_coins, equipped_pickaxe FROM profile_state WHERE profile_id = ?`)
     .get(profileId) as ProfileStateRow | null;
   if (!row) {
-    db.query(`INSERT OR IGNORE INTO profile_state (profile_id, gems, streak, best_streak, shields, equipped_pickaxe, updated_at)
-              VALUES (?, 0, 0, 0, 0, 'wooden', ?)`).run(profileId, Date.now());
-    row = { gems: 0, streak: 0, best_streak: 0, shields: 0, equipped_pickaxe: "wooden" };
+    db.query(`INSERT OR IGNORE INTO profile_state (profile_id, gems, streak, best_streak, shields, crazy_coins, equipped_pickaxe, updated_at)
+              VALUES (?, 0, 0, 0, 0, 0, 'wooden', ?)`).run(profileId, Date.now());
+    row = { gems: 0, streak: 0, best_streak: 0, shields: 0, crazy_coins: 0, equipped_pickaxe: "wooden" };
   }
-  // Existing rows predating the column come back with NULL — normalize to the default.
+  // Existing rows predating the columns come back with NULL — normalize to the defaults.
   if (!row.equipped_pickaxe) row.equipped_pickaxe = "wooden";
+  if (!row.crazy_coins) row.crazy_coins = 0;
   return row;
 }
 
 function saveProfileState(profileId: string, s: ProfileStateRow): void {
-  db.query(`UPDATE profile_state SET gems = ?, streak = ?, best_streak = ?, shields = ?, equipped_pickaxe = ?, updated_at = ?
+  db.query(`UPDATE profile_state SET gems = ?, streak = ?, best_streak = ?, shields = ?, crazy_coins = ?, equipped_pickaxe = ?, updated_at = ?
             WHERE profile_id = ?`)
-    .run(s.gems, s.streak, s.best_streak, s.shields, s.equipped_pickaxe, Date.now(), profileId);
+    .run(s.gems, s.streak, s.best_streak, s.shields, s.crazy_coins, s.equipped_pickaxe, Date.now(), profileId);
 }
 
 // ---- Pickaxe-skin shop -----------------------------------------------------
@@ -822,7 +828,7 @@ app.get("/shop", (c) => {
       repairCost: repairCost(cat.key),
     };
   });
-  return c.json({ gems: s.gems, equipped: s.equipped_pickaxe, items });
+  return c.json({ gems: s.gems, equipped: s.equipped_pickaxe, items, crazyCoins: s.crazy_coins });
 });
 
 // Buy a skin: spend gems, record ownership, and auto-equip it.
@@ -899,6 +905,35 @@ app.post("/shop/buy-shield", async (c) => {
   return c.json({ ok: false, reason: "not enough gems", gems: s.gems, shields: s.shields });
 });
 
+// Crazy Coin: 200 gems → +1 coin. A real-world reward — each coin trades for
+// 15 minutes of shows; a parent redeems it from the dashboard. Kept in sync
+// with CRAZY_COIN_COST on the client (which renders the price tag).
+const CRAZY_COIN_COST = 200;
+app.post("/shop/buy-crazy-coin", async (c) => {
+  const { profileId } = await c.req.json();
+  const s = getProfileState(profileId);
+  if (s.gems >= CRAZY_COIN_COST) {
+    s.gems -= CRAZY_COIN_COST;
+    s.crazy_coins += 1;
+    saveProfileState(profileId, s);
+    return c.json({ ok: true, gems: s.gems, crazyCoins: s.crazy_coins });
+  }
+  return c.json({ ok: false, reason: "not enough gems", gems: s.gems, crazyCoins: s.crazy_coins });
+});
+
+// Parent redeems one Crazy Coin (kid cashes it in for 15 minutes of shows).
+// Only decrements the counter — the gems were already spent at purchase.
+app.post("/shop/redeem-crazy-coin", async (c) => {
+  const { profileId } = await c.req.json();
+  const s = getProfileState(profileId);
+  if (s.crazy_coins <= 0) {
+    return c.json({ ok: false, reason: "no coins", crazyCoins: s.crazy_coins });
+  }
+  s.crazy_coins -= 1;
+  saveProfileState(profileId, s);
+  return c.json({ ok: true, crazyCoins: s.crazy_coins });
+});
+
 // Topic-graph mastery view (parent dashboard): per-topic state, unlock status,
 // and the taxonomy's parent-facing assessment prompt.
 app.get("/mastery", (c) => {
@@ -920,7 +955,7 @@ app.get("/mastery", (c) => {
       reviewIntervalDays: r?.review_interval_days ?? null,
     };
   });
-  return c.json({ profileId, topics });
+  return c.json({ profileId, topics, crazyCoins: getProfileState(profileId).crazy_coins });
 });
 
 app.post("/tts", async (c) => {

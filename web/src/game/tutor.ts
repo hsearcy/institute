@@ -85,6 +85,30 @@ export async function buyShield(): Promise<
   }
 }
 
+/** Buy a Crazy Coin (200 gems) — a real-world reward worth 15 minutes of shows,
+ *  redeemed by a parent from the dashboard. Never throws. */
+export async function buyCrazyCoin(): Promise<
+  { ok: true; gems: number; crazyCoins: number } | { ok: false; reason: string; gems: number; crazyCoins: number } | null
+> {
+  try {
+    return await post('/shop/buy-crazy-coin', { profileId: PROFILE });
+  } catch {
+    return null;
+  }
+}
+
+/** Parent redeems one Crazy Coin (kid cashes it in for his 15 minutes).
+ *  Returns the new coin count, or a no-coins failure. Never throws. */
+export async function redeemCrazyCoin(): Promise<
+  { ok: true; crazyCoins: number } | { ok: false; reason: string; crazyCoins: number } | null
+> {
+  try {
+    return await post('/shop/redeem-crazy-coin', { profileId: PROFILE });
+  } catch {
+    return null;
+  }
+}
+
 // ---- parent mastery dashboard --------------------------------------------------
 
 export type MasteryTopic = {
@@ -101,7 +125,7 @@ export type MasteryTopic = {
   assessmentPrompt: string;
 };
 
-export type Mastery = { profileId: string; topics: MasteryTopic[] };
+export type Mastery = { profileId: string; topics: MasteryTopic[]; crazyCoins: number };
 
 /** Fetch the topic-mastery graph for the parent dashboard. Returns null on
  *  failure so the overlay can show a gentle notice; never throws. */

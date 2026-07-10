@@ -18,12 +18,17 @@ type Handlers = {
   onBuyPickaxe: (key: string) => void;
   onEquipPickaxe: (key: string) => void;
   onRepairPickaxe: (key: string) => void;
+  onBuyCrazyCoin: () => void;
+  onRedeemCrazyCoin: () => void;
   onHoardFull: () => void;
   onOpenParent: () => void;
 };
 
 const GEM_COLORS = ['#ff6b8a', '#ffa94d', '#ffd43b', '#69db7c', '#3bc9db', '#4dabf7', '#748ffc', '#b197fc', '#f783ac', '#ff8787'];
 const SHIELD_COST = 40;
+// Crazy Coin: a real-world reward — each coin trades for 15 minutes of shows,
+// redeemed by a parent. Kept in sync with CRAZY_COIN_COST on the server.
+const CRAZY_COIN_COST = 200;
 // Hoard meter: pips needed to fill the bar, and the bonus shown when it overflows
 // (the server credits the same amount via /reward/hoard-bonus → HOARD_BONUS).
 const HOARD_CAP = 15;
@@ -52,6 +57,10 @@ export class Hud {
   private onBuyPickaxe!: (key: string) => void;
   private onEquipPickaxe!: (key: string) => void;
   private onRepairPickaxe!: (key: string) => void;
+  private onRedeemCrazyCoin!: () => void;
+  private buyCoinBtn!: HTMLButtonElement;
+  private coinOwnedEl!: HTMLSpanElement;
+  private coinCountEl!: HTMLElement;
   private onHoardFull!: () => void;
   private duraEl!: HTMLDivElement;
   private duraFill!: HTMLDivElement;
@@ -89,6 +98,14 @@ export class Hud {
       <button class="shop-toggle" id="shop-toggle" title="Shop">🛒</button>
       <div class="shop" id="shop">
         <div class="shop-head">🛒 Shop <span class="shop-gems">💎 <span id="shop-gems">0</span></span></div>
+        <div class="shop-coin" id="shop-coin">
+          <div class="coin-medal">🪙</div>
+          <div class="shop-meta">
+            <div class="shop-name">Crazy Coin <span class="coin-owned" id="coin-owned" hidden>×<b id="coin-count">0</b></span></div>
+            <div class="shop-blurb">Trade with a grown-up!</div>
+          </div>
+          <div class="shop-btns"><button class="shop-btn is-buy poor" id="buy-coin" data-price="${CRAZY_COIN_COST}" disabled>Buy ${CRAZY_COIN_COST}💎</button></div>
+        </div>
         <div class="shop-list" id="shop-list"></div>
       </div>
       <div class="problem-wrap">
@@ -138,6 +155,11 @@ export class Hud {
     this.onBuyPickaxe = h.onBuyPickaxe;
     this.onEquipPickaxe = h.onEquipPickaxe;
     this.onRepairPickaxe = h.onRepairPickaxe;
+    this.onRedeemCrazyCoin = h.onRedeemCrazyCoin;
+    this.buyCoinBtn = this.root.querySelector('#buy-coin')!;
+    this.coinOwnedEl = this.root.querySelector('#coin-owned')!;
+    this.coinCountEl = this.root.querySelector('#coin-count')!;
+    this.buyCoinBtn.addEventListener('click', () => h.onBuyCrazyCoin());
     this.onHoardFull = h.onHoardFull;
     this.duraEl = this.root.querySelector('#pick-dura')!;
     this.duraFill = this.root.querySelector('#dura-fill')!;
@@ -354,6 +376,10 @@ export class Hud {
   setGemsForShop(gems: number): void {
     this.buyShieldBtn.classList.toggle('afford', gems >= SHIELD_COST);
     this.shopGemsEl.textContent = String(gems);
+    const coinAfford = gems >= CRAZY_COIN_COST;
+    this.buyCoinBtn.classList.toggle('afford', coinAfford);
+    this.buyCoinBtn.classList.toggle('poor', !coinAfford);
+    this.buyCoinBtn.disabled = !coinAfford;
     this.shopList.querySelectorAll<HTMLButtonElement>('.shop-btn.is-buy').forEach((b) => {
       const afford = gems >= Number(b.dataset.price ?? '0');
       b.classList.toggle('afford', afford);
@@ -441,6 +467,7 @@ export class Hud {
    *  Equipped, plus a durability bar + Repair for owned tiers (broken ⇒ Repair only). */
   setShop(state: ShopState): void {
     this.shopGemsEl.textContent = String(state.gems);
+    this.setCrazyCoins(state.crazyCoins ?? 0, state.gems);
     this.shopList.innerHTML = '';
     for (const item of state.items) {
       const key = item.key;
@@ -496,6 +523,23 @@ export class Hud {
     this.toast(msg);
   }
 
+  /** Update the Crazy Coin row: owned count badge + Buy affordability. */
+  setCrazyCoins(count: number, gems: number): void {
+    this.coinCountEl.textContent = String(count);
+    this.coinOwnedEl.hidden = count <= 0;
+    const afford = gems >= CRAZY_COIN_COST;
+    this.buyCoinBtn.classList.toggle('afford', afford);
+    this.buyCoinBtn.classList.toggle('poor', !afford);
+    this.buyCoinBtn.disabled = !afford;
+  }
+
+  /** The big one — he traded 200 gems for real-world show time. */
+  celebrateCrazyCoin(count: number): void {
+    this.screenFlash('#ffd23b');
+    this.banner('🪙 CRAZY COIN! 🪙', 'unlock', `You have ${count} — go tell a grown-up!`, '#ffd23b');
+    this.confettiBurst(90, ['#ffd23b', '#ffb01f', '#ffffff', '#ff8fb1', '#7af0ff']);
+  }
+
   /** Over-the-top NEW PICKAXE UNLOCKED celebration, accented in the tier color. */
   celebrateUnlock(name: string, tint: string): void {
     this.screenFlash(tint);
@@ -532,6 +576,7 @@ export class Hud {
       this.parentBody.appendChild(note);
       return;
     }
+    this.parentBody.appendChild(this.buildCoinPanel(m.crazyCoins ?? 0));
     // Group by domain, preserving the server's domain order.
     const domains = new Map<string, MasteryTopic[]>();
     for (const t of m.topics) {
@@ -559,6 +604,31 @@ export class Hud {
       section.appendChild(chain);
       this.parentBody.appendChild(section);
     }
+  }
+
+  /** Crazy Coin balance for grown-ups: what he's earned (200 gems each) and a
+   *  Redeem button to spend one when he cashes it in for his 15 minutes. */
+  private buildCoinPanel(count: number): HTMLElement {
+    const panel = document.createElement('section');
+    panel.className = 'pd-coins';
+    panel.innerHTML = `
+      <div class="pd-coins-info">
+        <div class="pd-coins-count">🪙 Crazy Coins: <b id="pd-coin-count">${count}</b></div>
+        <div class="pd-coins-sub">Costs him 200 💎 each. Redeem one when he cashes it in.</div>
+      </div>
+      <button class="pd-redeem" id="pd-redeem"${count > 0 ? '' : ' disabled'}>Redeem 1</button>`;
+    panel.querySelector('#pd-redeem')!.addEventListener('click', () => this.onRedeemCrazyCoin());
+    return panel;
+  }
+
+  /** Reflect a redeem in the open dashboard (and the kid-facing shop badge). */
+  setParentCoins(count: number): void {
+    const el = this.parentBody.querySelector('#pd-coin-count');
+    if (el) el.textContent = String(count);
+    const btn = this.parentBody.querySelector<HTMLButtonElement>('#pd-redeem');
+    if (btn) btn.disabled = count <= 0;
+    this.coinCountEl.textContent = String(count);
+    this.coinOwnedEl.hidden = count <= 0;
   }
 
   /** One topic on the chain: numbered node + connector rail, then the card. */
@@ -855,6 +925,13 @@ function injectStyles(): void {
   .shop-head .shop-gems { color: #ffe9a8; font-size: 14px; font-weight: 800; flex: none; }
   #shop-gems { font-variant-numeric: tabular-nums; }
   .shop-list { display: flex; flex-direction: column; gap: 8px; }
+  /* Crazy Coin: the featured real-world reward, pinned above the pickaxe list. */
+  .shop-coin { display: flex; align-items: center; gap: 10px; padding: 8px 8px; border-radius: 12px; margin-bottom: 10px;
+    background: linear-gradient(160deg, rgba(255,210,60,0.16), rgba(255,150,30,0.10));
+    box-shadow: inset 0 0 0 1px rgba(255,210,120,0.4); }
+  .coin-medal { flex: none; font-size: 24px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
+  .coin-owned { color: #ffe9a8; font-weight: 900; font-size: 12.5px; margin-left: 4px; }
+  .coin-owned[hidden] { display: none; }
   .shop-row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 12px;
     background: rgba(255,255,255,0.05); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06); }
   .shop-row.equipped { background: rgba(120,230,160,0.12); box-shadow: inset 0 0 0 1px rgba(120,230,160,0.45); }
@@ -1047,6 +1124,21 @@ function injectStyles(): void {
   .pd-close:hover { background: rgba(255,255,255,0.16); color: #fff; }
   .pd-body { overflow-y: auto; padding: 16px 18px 24px; }
   .pd-note { color: #cfc6e8; font-weight: 700; font-size: 15px; text-align: center; padding: 34px 12px; }
+
+  /* Crazy Coin balance + redeem control (grown-ups only). */
+  .pd-coins { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; margin-bottom: 18px;
+    background: linear-gradient(160deg, rgba(255,210,60,0.12), rgba(255,150,30,0.07));
+    box-shadow: inset 0 0 0 1px rgba(255,210,120,0.3); }
+  .pd-coins-info { flex: 1; min-width: 0; }
+  .pd-coins-count { color: #ffd9a0; font-weight: 900; font-size: 15.5px; }
+  .pd-coins-count b { color: #ffe9a8; font-variant-numeric: tabular-nums; }
+  .pd-coins-sub { color: #b9b0d4; font-weight: 600; font-size: 12px; line-height: 1.35; margin-top: 2px; }
+  .pd-redeem { flex: none; pointer-events: auto; cursor: pointer; border: none; font-family: inherit; font-weight: 800;
+    font-size: 12.5px; padding: 8px 14px; border-radius: 999px; color: #5a3a00;
+    background: linear-gradient(160deg,#ffe27a,#ffb01f);
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.7), 0 3px 0 #b96a00; transition: transform .08s; }
+  .pd-redeem:active { transform: translateY(2px); box-shadow: inset 0 1px 1px rgba(255,255,255,0.6), 0 1px 0 #b96a00; }
+  .pd-redeem:disabled { background: rgba(255,255,255,0.14); color: #cfc6e8; cursor: not-allowed; opacity: .7; box-shadow: none; }
 
   .pd-domain { margin-bottom: 22px; }
   .pd-domain:last-child { margin-bottom: 4px; }

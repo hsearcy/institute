@@ -159,11 +159,13 @@ export const ShopItemSchema = z.object({
 });
 export type ShopItem = z.infer<typeof ShopItemSchema>;
 
-/** The shop view returned by GET /shop: balance, equipped skin, full catalog. */
+/** The shop view returned by GET /shop: balance, equipped skin, full catalog,
+ *  and the Crazy Coin count (a real-world reward — 15 minutes of shows each). */
 export const ShopStateSchema = z.object({
   gems: z.number().int(),
   equipped: z.string(),
   items: z.array(ShopItemSchema),
+  crazyCoins: z.number().int(),
 });
 export type ShopState = z.infer<typeof ShopStateSchema>;
 

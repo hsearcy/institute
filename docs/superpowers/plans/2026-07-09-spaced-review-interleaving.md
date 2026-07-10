@@ -24,7 +24,7 @@
    - **Priority 1 — due review:** a mastered topic with `due ≤ now` (oldest due first), UNLESS the previous attempt was already a review (never two reviews back-to-back — reviews season the session, they don't take it over).
    - **Priority 2 — stay:** if there's a current topic that is still frontier (unlocked, not mastered) and the run of consecutive attempts on it is < 4, stay on it.
    - **Priority 3 — rotate:** pick a frontier topic ≠ current, preferring a **different domain** than the current topic (non-interference), then least-recently-attempted, then youngest `ageRange[0]`. Fall back to any frontier topic, then (all mastered, nothing due) the deepest topic by age.
-   - Difficulty: reviews at `max(0.3, last_difficulty − 0.1)` (confidence-friendly re-entry); learning topics use the existing accuracy-anchored formula.
+   - Difficulty: reviews at `max(0.3, last_difficulty − 0.1)` (confidence-friendly re-entry); learning topics resume at their stored `last_difficulty` (clamped); the finer accuracy anchoring stays inside the LLM difficulty targets, not the selector.
    - Returns `{ topic, difficulty, mode: "review" | "learn" }`.
 4. **Wrong branch never changes:** it stays on the current topic at reduced difficulty — struggling is the wrong moment to switch subjects.
 5. **`/mastery` gains `reviewDueAt` + `reviewIntervalDays`** per topic (additive — the dashboard being built in parallel simply won't show them yet).
@@ -294,7 +294,7 @@ export function selectNext(s: SelectInput): Selection {
     : undefined;
   const lastSeen = (id: string): number => {
     const i = s.recentTopicIds.indexOf(id);
-    return i === -1 ? Infinity : i; // larger = longer ago
+    return i === -1 ? 1e9 : i; // large finite sentinel (Infinity-Infinity = NaN breaks sort)
   };
   const pool = candidates.length ? candidates : frontier;
   if (pool.length) {
@@ -388,11 +388,11 @@ function recordTopicMastery(profileId: string, topicId: string, correct: boolean
   // so these windows include the attempt being recorded.
   const recentResults = (db.query(
     `SELECT correct FROM attempts WHERE profile_id = ? AND topic_id = ?
-     ORDER BY created_at DESC LIMIT 12`,
+     ORDER BY created_at DESC, id DESC LIMIT 12`,
   ).all(profileId, topicId) as { correct: number }[]).map((r) => !!r.correct);
   const recentSolveMs = (db.query(
     `SELECT solve_ms FROM attempts WHERE profile_id = ? AND topic_id = ? AND correct = 1
-     ORDER BY created_at DESC LIMIT 8`,
+     ORDER BY created_at DESC, id DESC LIMIT 8`,
   ).all(profileId, topicId) as { solve_ms: number }[]).map((r) => r.solve_ms);
   const state = topicState({
     lifetimeAttempts: attempts, recentResults, lifetimeRatio: corr / attempts,
@@ -442,7 +442,7 @@ function selectFor(profileId: string, currentTopicId: string | null) {
 ```
 
 - Replace `pickStartTopic`'s body with `selectFor(profileId, null)` (keep the endpoint shape).
-- In `adaptivePlan`, replace the `advanceTopic` computation: `const next = selectFor(profileId, current.topicId ?? null);` → `advanceTopic = next.topic.id !== current.topicId ? next.topic : null`, and thread `next.mode`/`next.difficulty` so the LLM right-branch difficulty target uses `next.mode === "review" ? next.difficulty : rightTarget` and the prompt says "REVIEW an earlier skill (friendly confidence check)" when mode is review. `localBranches` right side follows the same selection (call `selectFor` there too; wrong side unchanged).
+- In `adaptivePlan`, replace the `advanceTopic` computation: `const next = selectFor(profileId, current.topicId ?? null);` → `advanceTopic = next.topic.id !== current.topicId ? next.topic : null`, and thread `next.mode`/`next.difficulty` so the LLM right-branch difficulty target uses `next.mode === "review" ? next.difficulty : rightTarget` and the prompt says "REVIEW an earlier skill (friendly confidence check)" when mode is review. `localBranches` right side follows the same selection (change its signature to `localBranches(profileId: string, current: Problem)` — profileId is in scope at the call site in `nextProblems` — and route its right side through `selectFor`; wrong side unchanged).
 
 - [ ] **Step 6: `/mastery` additions:** include `reviewDueAt: r?.review_due_at ?? null, reviewIntervalDays: r?.review_interval_days ?? null` per topic.
 

@@ -88,4 +88,36 @@ describe("topic-graph tutor flow", () => {
     // ⇒ Add & Take to 10 unlocked
     expect(m.topics.find((t: any) => t.id === "mt__we2TDqnJx").unlocked).toBe(true);
   });
+
+  test("mastering a topic schedules a review ~1 day out", async () => {
+    for (let i = 0; i < 8; i++) {
+      await call("POST", "/tutor/attempt", {
+        profileId: "kid6", problemId: `p${i}`, skill: "add_within_20",
+        topicId: "mt_e8CZ7E5qW7", correct: true, solveMs: 2500, difficulty: 0.5,
+      });
+    }
+    const m = await call("GET", "/mastery?profileId=kid6");
+    const row = m.topics.find((t: any) => t.id === "mt_e8CZ7E5qW7");
+    expect(row.state).toBe("mastered");
+    expect(row.reviewIntervalDays).toBe(1);
+    const day = 24 * 60 * 60 * 1000;
+    expect(row.reviewDueAt).toBeGreaterThan(Date.now() + day - 60_000);
+    expect(row.reviewDueAt).toBeLessThan(Date.now() + day + 60_000);
+  });
+
+  test("right branch rotates topic after a 4-run (interleaving)", async () => {
+    // Build a 4-run on Number Bonds for a fresh profile, then ask for branches.
+    const topicId = "mt_e8CZ7E5qW7";
+    for (let i = 0; i < 4; i++) {
+      await call("POST", "/tutor/attempt", {
+        profileId: "kid7", problemId: `p${i}`, skill: "add_within_20",
+        topicId, correct: i % 2 === 0, solveMs: 6000, difficulty: 0.5, // mixed → not mastered
+      });
+    }
+    const current = { id: "px", skill: "add_within_20", topicId, topicLabel: "Number Bonds",
+      prompt: "3 + ? = 9", spoken: "3 plus what makes 9?", answer: 6, difficulty: 0.5 };
+    const b = await call("POST", "/tutor/branches", { profileId: "kid7", current });
+    expect(b.right.topicId).not.toBe(topicId);     // rotated away after the run
+    expect(b.wrong.topicId).toBe(topicId);          // wrong branch never switches
+  });
 });

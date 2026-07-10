@@ -15,14 +15,14 @@ export type ProblemDraft = {
 const ri = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 /** Kid-friendly make-a-ten / count strategy hint for an addition. */
-function addHint(a: number, b: number): string {
+export function addHint(a: number, b: number): string {
   const sum = a + b;
   if (sum <= 10) return `Count on from ${Math.max(a, b)}: add ${Math.min(a, b)} more, one at a time.`;
   const big = Math.max(a, b), small = Math.min(a, b);
   const need = 10 - big, left = small - need;
   return `Make a ten! ${big} plus ${need} makes 10, then ${left} more makes ${sum}.`;
 }
-function subHint(a: number, b: number): string {
+export function subHint(a: number, b: number): string {
   return `Start at ${a} and count back ${b}: ${a}, ${a - 1}… until you've taken away ${b}.`;
 }
 

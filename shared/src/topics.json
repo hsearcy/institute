@@ -1,0 +1,401 @@
+{
+ "_attribution": "Marble Skill Taxonomy v1 © Generative Spark, Inc. — ODbL 1.0 / CC BY-SA 4.0 — see data/taxonomy/NOTICE",
+ "topics": [
+  {
+   "id": "mt_M5PPDJStGm",
+   "name": "Rote counting to 100",
+   "kidLabel": "Counting",
+   "domain": "Counting & Cardinality",
+   "ageRange": [
+    5,
+    6
+   ],
+   "description": "Rote count forwards and backwards from 0 to 100, beginning from 0, 1, or any given number, by ones",
+   "evidence": [
+    "Recite the number sequence 1–100 without skipping or repeating",
+    "Count backward from 20 to 0",
+    "Count forward starting from a number other than 1 (e.g. 'start at 23')"
+   ],
+   "assessmentPrompt": "Can {{name}} count out loud all the way from 0 to 100 — and if you say \"start from 47\", can they carry on from there without going back to the beginning?",
+   "legacySkill": "skip_counting",
+   "gen": {
+    "kind": "next_number",
+    "max": 100
+   },
+   "fluentMs": null,
+   "prereqs": []
+  },
+  {
+   "id": "mt_ghF3Vv6taM",
+   "name": "Fluent adding and subtracting within 5",
+   "kidLabel": "Add & Take to 5",
+   "domain": "Addition & Subtraction",
+   "ageRange": [
+    5,
+    6
+   ],
+   "description": "Fluently add and subtract within 5",
+   "evidence": [
+    "Answer 2 + 3 quickly without counting on fingers",
+    "Answer 5 – 2 from recall or with minimal counting",
+    "Complete a set of within-5 addition/subtraction facts accurately and quickly"
+   ],
+   "assessmentPrompt": "Can {{name}} give you the answer to sums like '2 + 3' or '5 − 2' straight away, without needing to count on their fingers every time?",
+   "legacySkill": "add_within_20",
+   "gen": {
+    "kind": "add_sub",
+    "max": 5
+   },
+   "fluentMs": 7000,
+   "prereqs": []
+  },
+  {
+   "id": "mt_e8CZ7E5qW7",
+   "name": "Number bonds to 9",
+   "kidLabel": "Number Bonds",
+   "domain": "Addition & Subtraction",
+   "ageRange": [
+    4,
+    6
+   ],
+   "description": "Find the number that makes 10 when added to a given number from 1 to 9 (number bonds to 10)",
+   "evidence": [
+    "Given 7, respond '3' to make 10",
+    "Use a ten-frame to find the complement to 10",
+    "Record pairs that make 10 as equations (e.g. 6 + 4 = 10)"
+   ],
+   "assessmentPrompt": "If {{name}} has 6 strawberries and needs 10 for a recipe, can they quickly tell you they need 4 more — without counting all the way up from 1?",
+   "legacySkill": "add_within_20",
+   "gen": {
+    "kind": "missing_addend",
+    "totalMax": 10
+   },
+   "fluentMs": null,
+   "prereqs": []
+  },
+  {
+   "id": "mt__we2TDqnJx",
+   "name": "Fluent adding and subtracting within 10",
+   "kidLabel": "Add & Take to 10",
+   "domain": "Addition & Subtraction",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Fluently add and subtract within 10",
+   "evidence": [
+    "Answer any addition fact within 10 quickly from memory",
+    "Answer any subtraction fact within 10 quickly from memory",
+    "Complete a timed set of within-10 facts with high accuracy"
+   ],
+   "assessmentPrompt": "Can {{name}} answer sums like '7 + 3' or '9 − 4' almost instantly — without stopping to count on their fingers?",
+   "legacySkill": "add_within_20",
+   "gen": {
+    "kind": "add_sub",
+    "max": 10
+   },
+   "fluentMs": 6000,
+   "prereqs": [
+    "mt_e8CZ7E5qW7",
+    "mt_ghF3Vv6taM"
+   ]
+  },
+  {
+   "id": "mt_m1W6nTQJ2b",
+   "name": "Addition and subtraction within 20",
+   "kidLabel": "Add & Take to 20",
+   "domain": "Addition & Subtraction",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Add and subtract within 20 using strategies such as making ten, decomposing a number leading to ten, and using known facts",
+   "evidence": [
+    "Solve 8 + 6 using making ten: 8 + 2 + 4 = 14",
+    "Solve 13 − 4 by decomposing: 13 − 3 − 1 = 9",
+    "Use a known fact (8 + 4 = 12) to derive 12 − 8 = 4"
+   ],
+   "assessmentPrompt": "If {{name}} needs to work out '8 + 6', can they split the 6 into 2 + 4, use the 2 to fill up to 10, then add the remaining 4 to get 14?",
+   "legacySkill": "add_within_20",
+   "gen": {
+    "kind": "add_sub",
+    "max": 20,
+    "carry": true
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt__we2TDqnJx",
+    "mt_e8CZ7E5qW7"
+   ]
+  },
+  {
+   "id": "mt__t4afSyZRm",
+   "name": "Fluent adding and subtracting within 20",
+   "kidLabel": "Lightning 20s",
+   "domain": "Addition & Subtraction",
+   "ageRange": [
+    7,
+    8
+   ],
+   "description": "Fluently add and subtract within 20 using mental strategies; know from memory all sums of two one-digit numbers",
+   "evidence": [
+    "Answer any single-digit addition fact within 3 seconds",
+    "Recall subtraction facts within 20 from memory (e.g. 15 − 8 = 7)",
+    "Use known addition facts to derive related subtraction facts rapidly"
+   ],
+   "assessmentPrompt": "Can {{name}} instantly recall all the single-digit addition facts — like '7 + 8 = 15' — without needing to count or think for more than a second?",
+   "legacySkill": "add_within_20",
+   "gen": {
+    "kind": "add_sub",
+    "max": 20,
+    "carry": true
+   },
+   "fluentMs": 8000,
+   "prereqs": [
+    "mt__we2TDqnJx",
+    "mt_m1W6nTQJ2b"
+   ]
+  },
+  {
+   "id": "mt_Zx1xZM-RbX",
+   "name": "Adding Three Small Numbers",
+   "kidLabel": "Triple Add",
+   "domain": "Addition & Subtraction",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Add three one-digit numbers using strategies including looking for pairs that make 10",
+   "evidence": [
+    "Calculate 5 + 7 + 3 by first adding 7 + 3 = 10, then 5 + 10 = 15",
+    "Add any three single-digit numbers correctly",
+    "Identify useful pairs within three addends to make the calculation easier"
+   ],
+   "assessmentPrompt": "If {{name}} needs to add 4 + 6 + 8, can they spot that 4 and 6 make 10 first, then add 8 to get 18 — rather than just adding in order from left to right?",
+   "legacySkill": "add_within_20",
+   "gen": {
+    "kind": "add3",
+    "sumMax": 20
+   },
+   "fluentMs": null,
+   "prereqs": []
+  },
+  {
+   "id": "mt_ezc2m_0dzN",
+   "name": "Finding a missing number in addition",
+   "kidLabel": "Mystery Number",
+   "domain": "Addition & Subtraction",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Understand subtraction as finding an unknown addend (e.g. 10 − 8 = ? is the same as 8 + ? = 10)",
+   "evidence": [
+    "Solve 10 − 8 by thinking 'what do I add to 8 to make 10?'",
+    "Explain that subtraction can be thought of as a missing-addend problem",
+    "Use known addition facts to solve related subtraction problems"
+   ],
+   "assessmentPrompt": "Can {{name}} see that '10 − 8 = ?' is the same as asking 'what do I add to 8 to reach 10?' — so they can use their adding knowledge to help with subtraction?",
+   "legacySkill": "add_within_20",
+   "gen": {
+    "kind": "missing_addend",
+    "totalMax": 20
+   },
+   "fluentMs": null,
+   "prereqs": []
+  },
+  {
+   "id": "mt_nvdpxAJTBG",
+   "name": "Counting in 2s",
+   "kidLabel": "Counting by 2s",
+   "domain": "Counting & Cardinality",
+   "ageRange": [
+    5,
+    7
+   ],
+   "description": "Count in multiples of 2, 5, and 10 (skip counting)",
+   "evidence": [
+    "Count 2, 4, 6, 8 … up to at least 20",
+    "Count 5, 10, 15, 20 … up to at least 50",
+    "Count 10, 20, 30 … up to 100"
+   ],
+   "assessmentPrompt": "If {{name}} is counting socks being paired up, can they skip-count in twos — 2, 4, 6, 8 — all the way to 20? Can they also count up in fives when counting coins, or in tens on a number line?",
+   "legacySkill": "skip_counting",
+   "gen": {
+    "kind": "skip",
+    "steps": [
+     2
+    ]
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_M5PPDJStGm"
+   ]
+  },
+  {
+   "id": "mt_kw7xmp68rU",
+   "name": "10 More or 10 Less",
+   "kidLabel": "Ten Jumps",
+   "domain": "Number Representation & Place Value",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Mentally find 10 more or 10 less than a given two-digit number without counting",
+   "evidence": [
+    "Given 56, quickly say 66 is 10 more and 46 is 10 less",
+    "Explain that adding 10 increases the tens digit by 1",
+    "Answer '10 more than 73' without using fingers or counting on"
+   ],
+   "assessmentPrompt": "Can {{name}} quickly tell you what is 10 more than 43 or 10 less than 71 — without counting up or down one at a time?",
+   "legacySkill": "place_value",
+   "gen": {
+    "kind": "ten_more_less",
+    "max": 90
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_THl9GLxwoL"
+   ]
+  },
+  {
+   "id": "mt_THl9GLxwoL",
+   "name": "The two digits of a two-digit number",
+   "kidLabel": "Tens & Ones",
+   "domain": "Number Representation & Place Value",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Understand that the two digits of a two-digit number represent amounts of tens and ones",
+   "evidence": [
+    "Explain that in 47, the 4 represents 4 tens (40) and the 7 represents 7 ones",
+    "Use base-ten blocks to show a two-digit number as tens and ones",
+    "Identify the tens digit and ones digit in any two-digit number"
+   ],
+   "assessmentPrompt": "If {{name}} sees the number 47, can they tell you there are 4 tens (forty) and 7 ones — rather than just reading the digits as 'four seven'?",
+   "legacySkill": "place_value",
+   "gen": {
+    "kind": "compose_tens",
+    "tensMax": 9
+   },
+   "fluentMs": null,
+   "prereqs": []
+  },
+  {
+   "id": "mt_I5j1ZWo2cn",
+   "name": "Adding and subtracting tens mentally",
+   "kidLabel": "Tens Math",
+   "domain": "Addition & Subtraction",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Add and subtract a two-digit number and tens mentally and using concrete/pictorial representations",
+   "evidence": [
+    "Calculate 45 + 30 = 75 mentally",
+    "Calculate 82 − 40 = 42 mentally",
+    "Explain that only the tens digit changes when adding/subtracting tens"
+   ],
+   "assessmentPrompt": "Can {{name}} quickly work out '54 + 30' or '78 − 20' in their head — knowing that only the tens digit changes?",
+   "legacySkill": "place_value",
+   "gen": {
+    "kind": "add_sub_tens"
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_THl9GLxwoL",
+    "mt_kw7xmp68rU"
+   ]
+  },
+  {
+   "id": "mt_PZ909yPrEC",
+   "name": "Multiplication as repeated addition",
+   "kidLabel": "Groups Of",
+   "domain": "Multiplication & Division",
+   "ageRange": [
+    5,
+    6
+   ],
+   "description": "Understand multiplication as repeated addition and grouping equal sets",
+   "evidence": [
+    "Explain that 3 groups of 2 is the same as 2 + 2 + 2",
+    "Use objects to make equal groups and count the total",
+    "Recognise an array as showing equal rows"
+   ],
+   "assessmentPrompt": "If {{name}} needs to count 4 bags with 3 apples in each, can they see that instead of counting all 12 one by one, they could add 3 + 3 + 3 + 3 — or say '4 groups of 3'?",
+   "legacySkill": "multiplication",
+   "gen": {
+    "kind": "mul",
+    "tables": [
+     2,
+     5,
+     10
+    ]
+   },
+   "fluentMs": null,
+   "prereqs": []
+  },
+  {
+   "id": "mt_HhuSDxwDNM",
+   "name": "Times tables",
+   "kidLabel": "Times Tables",
+   "domain": "Multiplication & Division",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Recall and use multiplication and division facts for the 2, 5, and 10 multiplication tables",
+   "evidence": [
+    "Quickly answer 5 × 3 = 15 from memory",
+    "Quickly answer 20 ÷ 5 = 4 from memory",
+    "Recite the 2, 5, and 10 times tables fluently"
+   ],
+   "assessmentPrompt": "Can {{name}} quickly recall times table facts from the 2s, 5s, and 10s — like '5 × 6 = 30' or '20 ÷ 2 = 10' — forwards and backwards?",
+   "legacySkill": "multiplication",
+   "gen": {
+    "kind": "mul_div",
+    "tables": [
+     2,
+     5,
+     10
+    ]
+   },
+   "fluentMs": 7000,
+   "prereqs": [
+    "mt_PZ909yPrEC",
+    "mt_nvdpxAJTBG"
+   ]
+  },
+  {
+   "id": "mt_LpSuPgL31x",
+   "name": "Division as equal sharing",
+   "kidLabel": "Fair Shares",
+   "domain": "Multiplication & Division",
+   "ageRange": [
+    4,
+    6
+   ],
+   "description": "Understand division as sharing equally into groups or as grouping (how many groups of a given size can be made)",
+   "evidence": [
+    "Share 10 counters equally between 2 plates",
+    "Group 12 objects into sets of 3 and count 4 groups",
+    "Use concrete objects to solve 'How many groups of 2 in 8?'"
+   ],
+   "assessmentPrompt": "If {{name}} has 12 grapes to share equally between 3 friends, can they work out that each friend gets 4 — and explain what they did?",
+   "legacySkill": "division",
+   "gen": {
+    "kind": "div",
+    "divisors": [
+     2,
+     3,
+     4,
+     5
+    ],
+    "quotientMax": 5
+   },
+   "fluentMs": null,
+   "prereqs": []
+  }
+ ]
+}

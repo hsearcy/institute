@@ -28,6 +28,10 @@ export const ProblemSchema = z.object({
   /** Unique id (the server stamps this). */
   id: z.string(),
   skill: z.enum(SKILLS),
+  /** Curated-graph topic this problem exercises (Marble taxonomy id). */
+  topicId: z.string().optional(),
+  /** Short kid-facing topic label for the HUD, e.g. "Number Bonds". */
+  topicLabel: z.string().optional(),
   /** Written form shown on the rock, e.g. "8 + 7" or "5, 10, 15, ?". */
   prompt: z.string().min(1).max(40),
   /** Kid-friendly spoken form the tutor reads, e.g. "What is eight plus seven?". */
@@ -54,6 +58,8 @@ export const AttemptSchema = z.object({
   profileId: z.string(),
   problemId: z.string(),
   skill: z.enum(SKILLS),
+  /** Curated-graph topic the problem exercised (drives topic mastery + unlocks). */
+  topicId: z.string().optional(),
   correct: z.boolean(),
   solveMs: z.number().int().min(0),
 });
@@ -160,3 +166,6 @@ export const ShopStateSchema = z.object({
   items: z.array(ShopItemSchema),
 });
 export type ShopState = z.infer<typeof ShopStateSchema>;
+
+// ---- Curated skill graph (Marble taxonomy) ---------------------------------
+export * from "./topics.ts";

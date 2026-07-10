@@ -1,19 +1,6 @@
 // scripts/curation.ts — THE curated topic list. Adding a topic to the game = add a
 // row here (+ a GenSpec) and re-run `bun scripts/curate-topics.ts`.
-// GenSpec lives here until Task 3 moves it into shared/src/topics.ts (which can't
-// exist before topics.json is first generated).
-export type GenSpec =
-  | { kind: "add_sub"; max: number; carry?: boolean }
-  | { kind: "missing_addend"; totalMax: number }
-  | { kind: "add3"; sumMax: number }
-  | { kind: "next_number"; max: number }
-  | { kind: "skip"; steps: number[] }
-  | { kind: "ten_more_less"; max: number }
-  | { kind: "compose_tens"; tensMax: number }
-  | { kind: "add_sub_tens" }
-  | { kind: "mul"; tables: number[] }
-  | { kind: "mul_div"; tables: number[] }
-  | { kind: "div"; divisors: number[]; quotientMax: number };
+import type { GenSpec } from "../shared/src/topics.ts";
 
 export type CurationRow = {
   id: string;             // taxonomy id (mt_…)

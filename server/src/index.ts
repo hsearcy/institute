@@ -21,7 +21,7 @@ import { nextReview } from "./review.ts";
 import { selectNext } from "./select.ts";
 
 const PORT = Number(process.env.PORT ?? 8787);
-const TUTOR_MODEL = process.env.TUTOR_MODEL ?? "claude-haiku-4-5-20251001";
+const TUTOR_MODEL = process.env.TUTOR_MODEL ?? "claude-sonnet-5";
 const ELEVEN_VOICE = process.env.ELEVENLABS_VOICE_ID ?? "21m00Tcm4TlvDq8ikWAM";
 
 // ---- DB --------------------------------------------------------------------

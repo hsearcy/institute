@@ -26,6 +26,8 @@ export function fetchBranches(current: Problem): Promise<Branches> {
 export async function recordAttempt(a: {
   problemId: string;
   skill: Skill;
+  /** Curated-graph topic id — drives topic mastery + unlocks on the server. */
+  topicId?: string;
   correct: boolean;
   solveMs: number;
   difficulty: number;

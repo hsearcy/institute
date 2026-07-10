@@ -749,6 +749,7 @@ export class Game {
       void recordAttempt({
         problemId: p.id,
         skill: p.skill,
+        topicId: p.topicId,
         correct,
         solveMs: Math.round(performance.now() - this.shownAt),
         difficulty: p.difficulty,

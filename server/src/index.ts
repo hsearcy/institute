@@ -11,8 +11,12 @@ import Anthropic from "@anthropic-ai/sdk";
 import {
   SKILLS, SKILL_LABELS, ProblemSchema, type Problem,
   StartRequestSchema, BranchesRequestSchema, TtsRequestSchema,
+  TOPICS, topicById, type Topic,
 } from "@institute/shared";
-import { localProblem, pickStart, type ProblemDraft, type SkillStat } from "./generate.ts";
+import { localProblem, type ProblemDraft, type SkillStat } from "./generate.ts";
+import { unlockedTopics, frontierTopics } from "./graph.ts";
+import { problemForTopic } from "./topicgen.ts";
+import { topicState } from "./mastery.ts";
 
 const PORT = Number(process.env.PORT ?? 8787);
 const TUTOR_MODEL = process.env.TUTOR_MODEL ?? "claude-haiku-4-5-20251001";
@@ -71,7 +75,19 @@ db.exec(`
     item_key TEXT,
     PRIMARY KEY (profile_id, item_key)
   );
+  CREATE TABLE IF NOT EXISTS topic_mastery (
+    profile_id TEXT NOT NULL,
+    topic_id TEXT NOT NULL,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    correct INTEGER NOT NULL DEFAULT 0,
+    last_difficulty REAL NOT NULL DEFAULT 0.4,
+    state TEXT NOT NULL DEFAULT 'practicing',
+    updated_at INTEGER NOT NULL,
+    PRIMARY KEY (profile_id, topic_id)
+  );
 `);
+// Attempts gain the curated-topic dimension (guarded — ALTER throws if present).
+try { db.exec(`ALTER TABLE attempts ADD COLUMN topic_id TEXT`); } catch { /* column exists */ }
 // Add the equipped-pickaxe column (guarded — ALTER throws if it already exists).
 try {
   db.exec(`ALTER TABLE profile_state ADD COLUMN equipped_pickaxe TEXT DEFAULT 'wooden'`);
@@ -99,6 +115,73 @@ function recordMastery(profileId: string, skill: string, correct: boolean, diffi
        attempts = excluded.attempts, correct = excluded.correct,
        last_difficulty = excluded.last_difficulty, state = excluded.state, updated_at = excluded.updated_at`,
   ).run(profileId, skill, attempts, corr, difficulty, state, Date.now());
+}
+
+// ---- Curated-topic mastery (the skill graph) --------------------------------
+
+type TopicMasteryRow = { topic_id: string; attempts: number; correct: number; last_difficulty: number; state: string };
+
+function topicMasteryRows(profileId: string): TopicMasteryRow[] {
+  return db.query(
+    `SELECT topic_id, attempts, correct, last_difficulty, state FROM topic_mastery WHERE profile_id = ?`,
+  ).all(profileId) as TopicMasteryRow[];
+}
+const masteredTopicIds = (profileId: string): Set<string> =>
+  new Set(topicMasteryRows(profileId).filter((r) => r.state === "mastered").map((r) => r.topic_id));
+
+/** Upsert per-topic mastery after an attempt; fluency uses the last 8 correct solves. */
+function recordTopicMastery(profileId: string, topicId: string, correct: boolean, difficulty: number): void {
+  const topic = topicById(topicId);
+  if (!topic) return;
+  const row = db.query(`SELECT attempts, correct FROM topic_mastery WHERE profile_id = ? AND topic_id = ?`)
+    .get(profileId, topicId) as { attempts: number; correct: number } | null;
+  const attempts = (row?.attempts ?? 0) + 1;
+  const corr = (row?.correct ?? 0) + (correct ? 1 : 0);
+  const recent = (db.query(
+    `SELECT solve_ms FROM attempts WHERE profile_id = ? AND topic_id = ? AND correct = 1
+     ORDER BY created_at DESC LIMIT 8`,
+  ).all(profileId, topicId) as { solve_ms: number }[]).map((r) => r.solve_ms);
+  const state = topicState({ attempts, correct: corr, recentSolveMs: recent, fluentMs: topic.fluentMs });
+  db.query(
+    `INSERT INTO topic_mastery (profile_id, topic_id, attempts, correct, last_difficulty, state, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
+     ON CONFLICT(profile_id, topic_id) DO UPDATE SET
+       attempts = excluded.attempts, correct = excluded.correct,
+       last_difficulty = excluded.last_difficulty, state = excluded.state, updated_at = excluded.updated_at`,
+  ).run(profileId, topicId, attempts, corr, difficulty, state, Date.now());
+}
+
+/** Map an old-model mastered skill onto curated-topic grants (synthetic 8/8). */
+const LEGACY_GRANTS: Record<string, string[]> = {
+  add_within_20: ["mt_ghF3Vv6taM", "mt_e8CZ7E5qW7"],
+  subtraction: ["mt_ghF3Vv6taM"],
+  skip_counting: ["mt_M5PPDJStGm", "mt_nvdpxAJTBG"],
+  place_value: ["mt_THl9GLxwoL"],
+  multiplication: ["mt_PZ909yPrEC"],
+  division: ["mt_LpSuPgL31x"],
+};
+
+export function grantLegacyMastery(profileId: string, masteredSkills: string[]): void {
+  for (const skill of masteredSkills) {
+    for (const topicId of LEGACY_GRANTS[skill] ?? []) {
+      db.query(
+        `INSERT INTO topic_mastery (profile_id, topic_id, attempts, correct, last_difficulty, state, updated_at)
+         VALUES (?, ?, 8, 8, 0.5, 'mastered', ?)
+         ON CONFLICT(profile_id, topic_id) DO NOTHING`,
+      ).run(profileId, topicId, Date.now());
+    }
+  }
+}
+
+// One-shot startup migration: any profile with legacy mastered skills but no
+// topic_mastery rows gets its grants.
+for (const row of db.query(
+  `SELECT DISTINCT profile_id FROM mastery WHERE state = 'mastered'
+   AND profile_id NOT IN (SELECT DISTINCT profile_id FROM topic_mastery)`,
+).all() as { profile_id: string }[]) {
+  const skills = (db.query(`SELECT skill FROM mastery WHERE profile_id = ? AND state = 'mastered'`)
+    .all(row.profile_id) as { skill: string }[]).map((r) => r.skill);
+  grantLegacyMastery(row.profile_id, skills);
 }
 
 // ---- Rewards: gems / streaks / daily quests / shield -----------------------
@@ -257,16 +340,23 @@ function skillStats(profileId: string): SkillStat[] {
 
 function recentAttempts(profileId: string, n: number) {
   return db.query(
-    `SELECT skill, correct, solve_ms, difficulty FROM attempts
+    `SELECT skill, topic_id, correct, solve_ms, difficulty FROM attempts
      WHERE profile_id = ? ORDER BY created_at DESC LIMIT ?`,
-  ).all(profileId, n) as { skill: string; correct: number; solve_ms: number; difficulty: number }[];
+  ).all(profileId, n) as { skill: string; topic_id: string | null; correct: number; solve_ms: number; difficulty: number }[];
 }
 
 let idCounter = 0;
 const stampId = (d: ProblemDraft): Problem => ({ ...d, id: `p${Date.now().toString(36)}_${idCounter++}` });
 
 // ---- LLM tutor -------------------------------------------------------------
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+  // Tests point at a dead endpoint and need instant local fallback (retries 0).
+  maxRetries: Number(process.env.TUTOR_MAX_RETRIES ?? 2),
+  // Branches are speculative pre-generation: past ~15s the answer has already
+  // happened and the local fallback is strictly better than waiting.
+  timeout: Number(process.env.TUTOR_TIMEOUT_MS ?? 15_000),
+});
 
 const PROBLEM_DRAFT_SCHEMA = {
   type: "object",
@@ -298,11 +388,9 @@ const SYSTEM = `You are the adaptive tutor inside "Institute", a gem-mine math g
 You are given his LIVE per-skill mastery and concrete difficulty targets computed from his real attempts. Follow that data and those targets. Do NOT assume fixed strengths or weaknesses — they change as he learns.
 
 Rules:
-- add_within_20: BOTH addends are single digits (1–9). "difficulty" controls how much it crosses ten (the "make a ten" skill), NOT the size of the addends: ≈0.3 → sum ≤ 10 (no carrying); ≈0.6 → sums up to ~14; ≈0.9 → sums 13–18 that cross ten (e.g. 7+8, 9+6, 8+5). NEVER use a two-digit addend (no "8 + 12"), and do NOT land on the same total repeatedly — especially do not keep making 20.
-- subtraction: minuend ≤ 20, single steps; difficulty controls size and whether it crosses ten (e.g. easy 9−4; harder 15−7). Vary the numbers.
+- You will be told the exact TOPIC each branch must exercise, with its teaching goal, what mastery looks like, and an example problem of the right shape. Stay inside that topic's numeric envelope — match the example's FORM (operation, number sizes, prompt shape) with different numbers.
 - "difficulty" (0..1) must match the target you are given.
-- Keep him productive: "right" stretches a little harder, "wrong" eases off and rebuilds confidence in the SAME skill.
-- Stay mostly in addition-within-20 and subtraction; introduce skip_counting/place_value lightly, and multiplication/division only when an advance hint explicitly clears it.
+- Keep him productive: "right" stretches a little harder, "wrong" eases off and rebuilds confidence in the SAME topic.
 - VARY the numbers a lot: consecutive problems must not share the same total and must not be permutations of one another (8+12, 9+11 are bad — repetitive). Never reuse the problem he is on.
 - "prompt" is the short written form; "spoken" is a warm, kid-friendly sentence to read aloud (no emoji/markdown). "answer" is the exact integer.
 - "hint" teaches a concrete strategy he can act on if he's stuck (make-a-ten, count-on, count-back) — a real method, never just restating the answer.
@@ -337,36 +425,37 @@ function describeLearner(sums: SkillSummary[]): string {
   return `His current mastery, computed from his real attempts:\n${lines.join("\n")}`;
 }
 
-function nextLadderSkill(skill: string): string | null {
-  const order = SKILLS as readonly string[];
-  const i = order.indexOf(skill);
-  return i >= 0 && i + 1 < order.length ? order[i + 1] : null;
-}
-
 const clampDiff = (x: number) => Math.max(0.1, Math.min(0.97, x));
 
 /** Compute concrete difficulty targets + a solve-pace tag to steer the model. */
 function adaptivePlan(
+  profileId: string,
   current: Problem,
-  recent: { skill: string; correct: number; solve_ms: number }[],
-  sums: SkillSummary[],
+  recent: { skill: string; topic_id?: string | null; correct: number; solve_ms: number }[],
 ) {
   const cur = current.difficulty;
-  const skillRecent = recent.filter((r) => r.skill === current.skill);
-  const recentAcc = skillRecent.length ? skillRecent.filter((r) => r.correct).length / skillRecent.length : 0.7;
+  // Prefer per-topic recency; fall back to per-skill for problems without a topic.
+  const related = current.topicId
+    ? recent.filter((r) => r.topic_id === current.topicId)
+    : recent.filter((r) => r.skill === current.skill);
+  const recentAcc = related.length ? related.filter((r) => r.correct).length / related.length : 0.7;
   const lastMs = recent[0]?.solve_ms ?? 0;
   const solveTag = lastMs === 0 ? "unknown" : lastMs < 4000 ? "fast" : lastMs < 9000 ? "steady" : "slow";
   // Push harder when he's accurate and fast; ease more when he's struggling.
   const up = (recentAcc >= 0.8 ? 0.14 : recentAcc >= 0.6 ? 0.08 : 0.04) + (solveTag === "fast" ? 0.04 : 0);
   const down = 0.12 + (recentAcc < 0.5 ? 0.05 : 0);
-  const curSummary = sums.find((s) => s.skill === current.skill);
-  const advanceSkill = curSummary && curSummary.state === "mastered" ? nextLadderSkill(current.skill) : null;
+  // advance = current topic just mastered ⇒ move to another frontier topic.
+  const curTopic = current.topicId ? topicById(current.topicId) : undefined;
+  const mastered = masteredTopicIds(profileId);
+  const advanceTopic = curTopic && mastered.has(curTopic.id)
+    ? frontierTopics(TOPICS, mastered).find((t) => t.id !== curTopic.id) ?? null
+    : null;
   return {
     rightTarget: +clampDiff(cur + up).toFixed(2),
     wrongTarget: +clampDiff(cur - down).toFixed(2),
     solveTag,
     recentAccuracyPct: Math.round(recentAcc * 100),
-    advanceSkill,
+    advanceTopic,
   };
 }
 
@@ -378,30 +467,47 @@ function notePrompt(profileId: string, prompt: string): void {
   while (arr.length > 12) arr.shift();
   recentPrompts.set(profileId, arr);
 }
-/** A locally-generated problem whose prompt isn't already in `taken`. */
-function freshLocal(skill: Problem["skill"], difficulty: number, taken: Set<string>): Problem {
+/** A locally-generated problem whose prompt isn't already in `taken`. Uses the
+ *  topic's GenSpec when a topic is known; legacy per-skill generator otherwise. */
+function freshLocal(topic: Topic | undefined, skill: Problem["skill"], difficulty: number, taken: Set<string>): Problem {
+  const make = () => stampId(topic ? problemForTopic(topic, difficulty) : localProblem(skill, difficulty));
   for (let i = 0; i < 10; i++) {
-    const p = stampId(localProblem(skill, difficulty));
+    const p = make();
     if (!taken.has(p.prompt)) { taken.add(p.prompt); return p; }
   }
-  return stampId(localProblem(skill, difficulty));
+  return make();
+}
+
+/** One topic's teaching brief for the model, with a concrete example at the target difficulty. */
+function topicBlock(t: Topic, target: number): string {
+  return [
+    `TOPIC: ${t.name} (${t.kidLabel})`,
+    `Goal: ${t.description}`,
+    `Mastery looks like: ${t.evidence.join("; ")}`,
+    `Example of the right shape: "${problemForTopic(t, target).prompt}"`,
+  ].join("\n");
 }
 
 async function llmBranches(profileId: string, current: Problem): Promise<{ right: Problem; wrong: Problem }> {
   const sums = learnerSummaries(profileId);
-  const plan = adaptivePlan(current, recentAttempts(profileId, 10), sums);
+  const plan = adaptivePlan(profileId, current, recentAttempts(profileId, 10));
+  const curTopic = current.topicId ? topicById(current.topicId) : undefined;
+  const rightTopic = plan.advanceTopic ?? curTopic;
+  const wrongTopic = curTopic;
   const avoid = recentPrompts.get(profileId) ?? [];
   const userContent = [
     describeLearner(sums),
     "",
-    `He is solving now: "${current.prompt}"  (skill: ${current.skill}, difficulty: ${current.difficulty.toFixed(2)}).`,
-    `His last problem was answered ${plan.solveTag}; his recent accuracy on ${current.skill} is ${plan.recentAccuracyPct}%.`,
+    `He is solving now: "${current.prompt}"  (topic: ${curTopic?.name ?? current.skill}, difficulty: ${current.difficulty.toFixed(2)}).`,
+    `His last problem was answered ${plan.solveTag}; his recent accuracy here is ${plan.recentAccuracyPct}%.`,
     avoid.length ? `Recently shown already — do NOT repeat any of these: ${avoid.join("; ")}.` : "",
     "",
     "Produce the two follow-ups, matching difficulty to these targets:",
     `- "right" (he answers correctly): difficulty ≈ ${plan.rightTarget}` +
-      (plan.advanceSkill ? `, and since he has MASTERED ${current.skill} you may move up to ${plan.advanceSkill}.` : `, staying in ${current.skill}.`),
-    `- "wrong" (he misses it): reinforce ${current.skill} at difficulty ≈ ${plan.wrongTarget} with friendlier numbers.`,
+      (plan.advanceTopic ? `, and since he has MASTERED the current topic, move on to this one:` : `, staying on this topic:`),
+    rightTopic ? topicBlock(rightTopic, plan.rightTarget) : "",
+    `- "wrong" (he misses it): rebuild confidence at difficulty ≈ ${plan.wrongTarget} with friendlier numbers, on this topic:`,
+    wrongTopic ? topicBlock(wrongTopic, plan.wrongTarget) : "",
     `Vary the numbers; do not reuse "${current.prompt}".`,
   ].filter(Boolean).join("\n");
   const resp = await anthropic.messages.create({
@@ -416,13 +522,16 @@ async function llmBranches(profileId: string, current: Problem): Promise<{ right
   const tool = resp.content.find((c) => c.type === "tool_use");
   if (!tool || tool.type !== "tool_use") throw new Error("no tool_use in response");
   const raw = tool.input as { right: unknown; wrong: unknown };
-  let right = ProblemSchema.parse(stampId(correctDraft(raw.right as ProblemDraft)));
-  let wrong = ProblemSchema.parse(stampId(correctDraft(raw.wrong as ProblemDraft)));
+  // The model narrates; the code decides identity: stamp topic + skill authoritatively.
+  const stampTopic = (p: Problem, t: Topic | undefined): Problem =>
+    t ? { ...p, topicId: t.id, topicLabel: t.kidLabel, skill: t.legacySkill as Problem["skill"] } : p;
+  let right = stampTopic(ProblemSchema.parse(stampId(correctDraft(raw.right as ProblemDraft))), rightTopic);
+  let wrong = stampTopic(ProblemSchema.parse(stampId(correctDraft(raw.wrong as ProblemDraft))), wrongTopic);
   // Reject repeats (the just-solved problem or anything recently shown); regenerate locally.
   const taken = new Set<string>([current.prompt, ...avoid]);
-  if (taken.has(right.prompt)) right = freshLocal(right.skill, right.difficulty, taken);
+  if (taken.has(right.prompt)) right = freshLocal(rightTopic, right.skill, right.difficulty, taken);
   else taken.add(right.prompt);
-  if (taken.has(wrong.prompt)) wrong = freshLocal(wrong.skill, wrong.difficulty, taken);
+  if (taken.has(wrong.prompt)) wrong = freshLocal(wrongTopic, wrong.skill, wrong.difficulty, taken);
   notePrompt(profileId, right.prompt);
   notePrompt(profileId, wrong.prompt);
   return { right, wrong };
@@ -454,11 +563,13 @@ function correctDraft(d: ProblemDraft): ProblemDraft {
   return d;
 }
 
-/** Local fallback branches: harder on right, easier same-skill on wrong. */
+/** Local fallback branches: harder on right, easier same-topic on wrong. */
 function localBranches(current: Problem): { right: Problem; wrong: Problem } {
+  const topic = current.topicId ? topicById(current.topicId) : undefined;
+  const make = (d: number) => stampId(topic ? problemForTopic(topic, d) : localProblem(current.skill, d));
   return {
-    right: stampId(localProblem(current.skill, Math.min(0.95, current.difficulty + 0.12))),
-    wrong: stampId(localProblem(current.skill, Math.max(0.15, current.difficulty - 0.12))),
+    right: make(Math.min(0.95, current.difficulty + 0.12)),
+    wrong: make(Math.max(0.15, current.difficulty - 0.12)),
   };
 }
 
@@ -468,9 +579,34 @@ app.use("*", cors());
 
 app.get("/health", (c) => c.json({ ok: true, model: TUTOR_MODEL, voice: ELEVEN_VOICE }));
 
+/** Choose the next topic to serve: prefer the in-progress frontier topic with the
+ *  most attempts (finish what's started), else the youngest frontier topic. */
+function pickStartTopic(profileId: string): { topic: Topic; difficulty: number } {
+  const rows = topicMasteryRows(profileId);
+  const byTopic = new Map(rows.map((r) => [r.topic_id, r]));
+  const frontier = frontierTopics(TOPICS, masteredTopicIds(profileId));
+  if (frontier.length === 0) {
+    // Everything mastered — keep him playing at the oldest-age (deepest) topic.
+    const deepest = [...TOPICS].sort((a, b) => b.ageRange[0] - a.ageRange[0])[0];
+    return { topic: deepest, difficulty: 0.8 };
+  }
+  frontier.sort((a, b) => {
+    const pa = byTopic.get(a.id)?.attempts ?? 0, pb = byTopic.get(b.id)?.attempts ?? 0;
+    if (pa !== pb) return pb - pa;
+    return a.ageRange[0] - b.ageRange[0];
+  });
+  const topic = frontier[0];
+  const st = byTopic.get(topic.id);
+  const acc = st && st.attempts >= 3 ? st.correct / st.attempts : 0.6;
+  const base = st?.last_difficulty ?? 0.4;
+  const difficulty = Math.max(0.2, Math.min(0.95, base + (acc - 0.75) * 0.5));
+  return { topic, difficulty };
+}
+
 app.post("/tutor/first", async (c) => {
   const { profileId } = StartRequestSchema.parse(await c.req.json());
-  const problem = stampId(pickStart(skillStats(profileId)));
+  const { topic, difficulty } = pickStartTopic(profileId);
+  const problem = stampId(problemForTopic(topic, difficulty));
   notePrompt(profileId, problem.prompt);
   return c.json(problem);
 });
@@ -494,10 +630,12 @@ app.post("/tutor/attempt", async (c) => {
   const { profileId, problemId, skill, correct, solveMs } = body;
   const difficulty = typeof body.difficulty === "number" ? body.difficulty : 0.5;
   db.query(
-    `INSERT INTO attempts (profile_id, problem_id, skill, correct, solve_ms, difficulty, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-  ).run(profileId, problemId, skill, correct ? 1 : 0, Math.round(solveMs ?? 0), difficulty, Date.now());
+    `INSERT INTO attempts (profile_id, problem_id, skill, topic_id, correct, solve_ms, difficulty, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(profileId, problemId, skill, typeof body.topicId === "string" ? body.topicId : null,
+    correct ? 1 : 0, Math.round(solveMs ?? 0), difficulty, Date.now());
   recordMastery(profileId, skill, !!correct, difficulty);
+  if (typeof body.topicId === "string") recordTopicMastery(profileId, body.topicId, !!correct, difficulty);
 
   // ---- Reward state update (one first-try answer) --------------------------
   const state = getProfileState(profileId);
@@ -723,15 +861,26 @@ app.post("/shop/buy-shield", async (c) => {
   return c.json({ ok: false, reason: "not enough gems", gems: s.gems, shields: s.shields });
 });
 
-// Per-skill mastery view (server-side data for the deferred parent dashboard).
+// Topic-graph mastery view (parent dashboard): per-topic state, unlock status,
+// and the taxonomy's parent-facing assessment prompt.
 app.get("/mastery", (c) => {
   const profileId = c.req.query("profileId") ?? "sam";
-  const rows = db.query(
-    `SELECT s.skill, s.label, s.ladder, m.attempts, m.correct, m.last_difficulty, m.state
-     FROM skills s LEFT JOIN mastery m ON m.skill = s.skill AND m.profile_id = ?
-     ORDER BY s.ladder`,
-  ).all(profileId);
-  return c.json({ profileId, skills: rows });
+  const kidName = c.req.query("name") ?? "your child";
+  const rows = new Map(topicMasteryRows(profileId).map((r) => [r.topic_id, r]));
+  const mastered = masteredTopicIds(profileId);
+  const unlocked = new Set(unlockedTopics(TOPICS, mastered).map((t) => t.id));
+  const topics = TOPICS.map((t) => {
+    const r = rows.get(t.id);
+    return {
+      id: t.id, name: t.name, kidLabel: t.kidLabel, domain: t.domain,
+      prereqs: t.prereqs, unlocked: unlocked.has(t.id),
+      attempts: r?.attempts ?? 0, correct: r?.correct ?? 0,
+      state: r?.state ?? "unstarted",
+      fluentMs: t.fluentMs,
+      assessmentPrompt: t.assessmentPrompt.replaceAll("{{name}}", kidName),
+    };
+  });
+  return c.json({ profileId, topics });
 });
 
 app.post("/tts", async (c) => {

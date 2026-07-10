@@ -1,0 +1,91 @@
+// server/src/integration.test.ts — end-to-end over app.fetch with :memory: sqlite.
+process.env.DB_PATH = ":memory:";
+process.env.ANTHROPIC_API_KEY = "test-key-no-network";
+process.env.ANTHROPIC_BASE_URL = "http://127.0.0.1:9"; // refused connection → LLM fails → local fallback (no network dependency)
+process.env.TUTOR_MAX_RETRIES = "0"; // no retry backoff — fall back immediately
+process.env.TUTOR_TIMEOUT_MS = "300"; // the dead endpoint hangs (WSL2); time out fast instead
+const { default: server } = await import("./index.ts");
+import { describe, expect, test } from "bun:test";
+import { TOPICS } from "@institute/shared";
+
+const call = async (method: string, path: string, body?: unknown) => {
+  const res = await server.fetch(
+    new Request(`http://x${path}`, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    }),
+  );
+  return res.json() as Promise<any>;
+};
+
+describe("topic-graph tutor flow", () => {
+  test("first problem comes from a root topic and carries topicId + label", async () => {
+    const p = await call("POST", "/tutor/first", { profileId: "kid1" });
+    const topic = TOPICS.find((t) => t.id === p.topicId);
+    expect(topic).toBeDefined();
+    expect(topic!.prereqs).toEqual([]); // nothing mastered yet ⇒ must be a root
+    expect(p.topicLabel).toBe(topic!.kidLabel);
+    expect(typeof p.answer).toBe("number");
+  });
+
+  test("mastering ALL prereqs of a topic unlocks it", async () => {
+    // Deterministic: Add & Take to 10 (mt__we2TDqnJx) requires BOTH roots
+    // Add & Take to 5 (mt_ghF3Vv6taM) and Number Bonds (mt_e8CZ7E5qW7).
+    const target = TOPICS.find((t) => t.id === "mt__we2TDqnJx")!;
+    expect([...target.prereqs].sort()).toEqual(["mt_e8CZ7E5qW7", "mt_ghF3Vv6taM"]);
+
+    const master = async (topicId: string) => {
+      for (let i = 0; i < 8; i++) {
+        await call("POST", "/tutor/attempt", {
+          profileId: "kid2", problemId: `${topicId}-p${i}`, skill: "add_within_20",
+          topicId, correct: true, solveMs: 2500, difficulty: 0.5,
+        });
+      }
+    };
+
+    await master("mt_ghF3Vv6taM");
+    let m = await call("GET", "/mastery?profileId=kid2");
+    expect(m.topics.find((t: any) => t.id === "mt_ghF3Vv6taM").state).toBe("mastered");
+    // Only ONE of the two prereqs is mastered — target must stay locked.
+    expect(m.topics.find((t: any) => t.id === "mt__we2TDqnJx").unlocked).toBe(false);
+
+    await master("mt_e8CZ7E5qW7");
+    m = await call("GET", "/mastery?profileId=kid2");
+    expect(m.topics.find((t: any) => t.id === "mt__we2TDqnJx").unlocked).toBe(true);
+    // …and /tutor/first now serves from the frontier, never a mastered root.
+    const next = await call("POST", "/tutor/first", { profileId: "kid2" });
+    expect(["mt_ghF3Vv6taM", "mt_e8CZ7E5qW7"]).not.toContain(next.topicId);
+  });
+
+  test("fluency topics stay practicing when solves are slow", async () => {
+    // use a fluency root directly: Add & Take to 5 (fluentMs 7000)
+    for (let i = 0; i < 10; i++) {
+      await call("POST", "/tutor/attempt", {
+        profileId: "kid3", problemId: `p${i}`, skill: "add_within_20",
+        topicId: "mt_ghF3Vv6taM", correct: true, solveMs: 15000, difficulty: 0.5,
+      });
+    }
+    const m = await call("GET", "/mastery?profileId=kid3");
+    expect(m.topics.find((t: any) => t.id === "mt_ghF3Vv6taM").state).toBe("practicing");
+  });
+
+  test("branches fall back locally and stay on the current topic", async () => {
+    const first = await call("POST", "/tutor/first", { profileId: "kid4" });
+    const b = await call("POST", "/tutor/branches", { profileId: "kid4", current: first });
+    expect(b.right.topicId).toBeDefined();
+    expect(b.wrong.topicId).toBe(first.topicId); // wrong branch reinforces same topic
+    expect(b.right.difficulty).toBeGreaterThan(b.wrong.difficulty);
+  });
+
+  test("legacy mastery rows migrate to topic grants", async () => {
+    // The migration function is exported for testability.
+    const { grantLegacyMastery } = await import("./index.ts");
+    grantLegacyMastery("kid5", ["add_within_20"]);
+    const m = await call("GET", "/mastery?profileId=kid5");
+    expect(m.topics.find((t: any) => t.id === "mt_ghF3Vv6taM").state).toBe("mastered");
+    expect(m.topics.find((t: any) => t.id === "mt_e8CZ7E5qW7").state).toBe("mastered");
+    // ⇒ Add & Take to 10 unlocked
+    expect(m.topics.find((t: any) => t.id === "mt__we2TDqnJx").unlocked).toBe(true);
+  });
+});

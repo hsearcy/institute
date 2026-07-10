@@ -17,3 +17,6 @@ server/data/
 # Secrets — never commit
 .env
 .env.*
+
+# git worktrees
+.worktrees/

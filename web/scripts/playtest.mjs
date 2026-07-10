@@ -2,21 +2,31 @@
 // pad, MINE, and assert the gem is mined, the collection increments, and the next
 // problem appears. Runs several rounds (correct + one deliberate wrong) so the
 // adaptive-branch advance and the retry path are both exercised.
-import { chromium } from 'playwright';
+import { chromium } from '@playwright/test';
 
 const URL = process.argv[2] ?? 'http://127.0.0.1:5188';
 
-function solve(prompt) {
-  const m = prompt.replace(/−/g, '-').match(/(\d+)\s*([+\-x×÷*/])\s*(\d+)/);
-  if (!m) throw new Error(`unparseable prompt: "${prompt}"`);
-  const a = +m[1], b = +m[3];
-  switch (m[2]) {
-    case '+': return a + b;
-    case '-': return a - b;
-    case 'x': case '×': case '*': return a * b;
-    case '÷': case '/': return a / b;
-    default: throw new Error(`unknown op ${m[2]}`);
+function solve(rawPrompt) {
+  const prompt = rawPrompt.replace(/−/g, '-').trim();
+  let m;
+  // Topic shapes from the curated skill graph:
+  if ((m = prompt.match(/^(\d+) \+ \? = (\d+)$/))) return +m[2] - +m[1];             // missing addend
+  if ((m = prompt.match(/^(\d+) tens (\d+) ones$/))) return +m[1] * 10 + +m[2];      // compose tens
+  if ((m = prompt.match(/^Tens in (\d+)\?$/))) return Math.floor(+m[1] / 10);        // legacy place value
+  if ((m = prompt.match(/^(\d+), then\?$/))) return +m[1] + 1;                       // next number
+  if ((m = prompt.match(/^(\d+), (\d+), (\d+), \?$/))) return +m[3] + (+m[2] - +m[1]); // skip counting
+  if ((m = prompt.match(/^(\d+) \+ (\d+) \+ (\d+)$/))) return +m[1] + +m[2] + +m[3]; // three addends
+  // Plain binary arithmetic:
+  if ((m = prompt.match(/^(\d+)\s*([+\-x×÷*/])\s*(\d+)$/))) {
+    const a = +m[1], b = +m[3];
+    switch (m[2]) {
+      case '+': return a + b;
+      case '-': return a - b;
+      case 'x': case '×': case '*': return a * b;
+      case '÷': case '/': return a / b;
+    }
   }
+  throw new Error(`unparseable prompt: "${prompt}"`);
 }
 
 const browser = await chromium.launch();

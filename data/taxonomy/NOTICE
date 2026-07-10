@@ -1,0 +1,9 @@
+This directory contains a Mathematics-subject extract of the
+Marble Skill Taxonomy (v1) · © Generative Spark, Inc. (Marble)
+https://withmarble.com · https://github.com/withmarbleapp/os-taxonomy
+
+Database licensed under ODbL 1.0; Marble-authored textual content
+(descriptions, evidence, assessment prompts, dependency reasons)
+licensed under CC BY-SA 4.0. The Institute app is a "produced work"
+built on this database. Modifications: filtered to subject =
+"Mathematics"; cross-subject dependency edges removed.

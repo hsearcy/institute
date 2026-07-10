@@ -20,7 +20,7 @@ import { Hud } from './hud';
 import { PICKAXE_SKINS, isSkinKey, type SkinKey } from './skins';
 import {
   fetchFirst, fetchBranches, recordAttempt, creditRetrySolve, fetchState, buyShield,
-  fetchShop, buyPickaxe, equipPickaxe, repairPickaxe, creditHoardBonus,
+  fetchShop, buyPickaxe, equipPickaxe, repairPickaxe, creditHoardBonus, fetchMastery,
 } from './tutor';
 import { speak, sfxChink, sfxMine, sfxFizzle, sfxCollect, sfxFanfare, startAmbience, preloadAudio } from './audio';
 
@@ -130,6 +130,7 @@ export class Game {
       onEquipPickaxe: (key) => void this.onEquipPickaxe(key),
       onRepairPickaxe: (key) => void this.onRepairPickaxe(key),
       onHoardFull: () => void this.onHoardFull(),
+      onOpenParent: () => void this.onOpenParent(),
     });
 
     this.onResize();
@@ -666,6 +667,13 @@ export class Game {
       this.hud.setGemsForShop(res.gems);
       this.hud.shieldFeedback(false, 'Need 40 💎 for a shield!');
     }
+  }
+
+  /** Open the parent dashboard: show the overlay immediately (loading state),
+   *  then render the mastery graph — or a gentle notice if the tutor is away. */
+  private async onOpenParent(): Promise<void> {
+    this.hud.openParentDash();
+    this.hud.setMastery(await fetchMastery());
   }
 
   private showProblem(p: Problem): void {

@@ -3,6 +3,7 @@
 // quests panel, the shield slot, and the over-the-top celebration layer. DOM (not
 // canvas) so text is crisp and the pad is touch-friendly on mobile.
 import type { Quest, CompletedQuest, ShopState } from '@institute/shared';
+import type { Mastery, MasteryTopic } from './tutor';
 import { PICKAXE_SKINS, type SkinKey, isSkinKey } from './skins';
 import { PROFILE } from './config';
 
@@ -18,6 +19,7 @@ type Handlers = {
   onEquipPickaxe: (key: string) => void;
   onRepairPickaxe: (key: string) => void;
   onHoardFull: () => void;
+  onOpenParent: () => void;
 };
 
 const GEM_COLORS = ['#ff6b8a', '#ffa94d', '#ffd43b', '#69db7c', '#3bc9db', '#4dabf7', '#748ffc', '#b197fc', '#f783ac', '#ff8787'];
@@ -53,6 +55,8 @@ export class Hud {
   private onHoardFull!: () => void;
   private duraEl!: HTMLDivElement;
   private duraFill!: HTMLDivElement;
+  private parentDash!: HTMLDivElement;
+  private parentBody!: HTMLDivElement;
   private hoardColors: number[] = [];     // persisted pip colors so the bar survives reloads
   private hoardOverflowing = false;       // guard so a full bar fires the bonus once
   private readonly hoardKey = 'institute:hoard:' + PROFILE;
@@ -97,6 +101,19 @@ export class Hud {
         <div class="pad" id="pad"></div>
       </div>
       <div class="celebrate" id="celebrate" aria-hidden="true"><div class="banner-stack" id="banner-stack"></div></div>
+      <button class="parent-toggle" id="parent-toggle" title="For grown-ups" aria-label="Parent dashboard">P</button>
+      <div class="parent-dash" id="parent-dash" role="dialog" aria-label="Parent dashboard">
+        <div class="pd-frame">
+          <div class="pd-head">
+            <div class="pd-titles">
+              <div class="pd-title" id="pd-title"></div>
+              <div class="pd-sub">For grown-ups — where he is on each math topic</div>
+            </div>
+            <button class="pd-close" id="pd-close" aria-label="Close">✕</button>
+          </div>
+          <div class="pd-body" id="pd-body"></div>
+        </div>
+      </div>
     `;
     document.body.appendChild(this.root);
 
@@ -149,6 +166,22 @@ export class Hud {
     this.buyShieldBtn.addEventListener('click', () => h.onBuyShield());
     this.root.querySelector('#quests-toggle')!.addEventListener('click', () => h.onToggleQuests());
     this.root.querySelector('#shop-toggle')!.addEventListener('click', () => h.onToggleShop());
+
+    // Parent dashboard — a deliberately quiet corner button (nothing shiny for
+    // little eyes); the overlay itself is read-only and closes on ✕ / Escape /
+    // a click on the dimmed backdrop.
+    this.parentDash = this.root.querySelector('#parent-dash')!;
+    this.parentBody = this.root.querySelector('#pd-body')!;
+    const kidName = PROFILE.charAt(0).toUpperCase() + PROFILE.slice(1);
+    (this.root.querySelector('#pd-title') as HTMLElement).textContent = `${kidName}’s Learning Map`;
+    this.root.querySelector('#parent-toggle')!.addEventListener('click', () => h.onOpenParent());
+    this.root.querySelector('#pd-close')!.addEventListener('click', () => this.closeParentDash());
+    this.parentDash.addEventListener('click', (e) => {
+      if (e.target === this.parentDash) this.closeParentDash();
+    });
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.parentDash.classList.contains('open')) this.closeParentDash();
+    });
 
     this.flameEl.style.display = 'none'; // hidden until there's a streak
   }
@@ -474,6 +507,120 @@ export class Hud {
     this.banner('EQUIPPED', 'equipped-msg', name, tint, 2000);
   }
 
+  // ---- parent mastery dashboard ---------------------------------------------
+  /** Open the read-only parent overlay in its loading state (Game then fetches
+   *  the mastery graph and calls setMastery with the result). */
+  openParentDash(): void {
+    this.questsPanel.classList.remove('open');
+    this.shopPanel.classList.remove('open');
+    this.parentBody.innerHTML = '<div class="pd-note">Loading his progress…</div>';
+    this.parentDash.classList.add('open');
+  }
+  closeParentDash(): void {
+    this.parentDash.classList.remove('open');
+  }
+
+  /** Render the topic-mastery graph: topics grouped by domain, each domain shown
+   *  as an ordered chain (prereqs first) down a connector rail. Null (fetch
+   *  failed) shows a gentle notice — the game itself is never affected. */
+  setMastery(m: Mastery | null): void {
+    this.parentBody.innerHTML = '';
+    if (!m) {
+      const note = document.createElement('div');
+      note.className = 'pd-note';
+      note.textContent = 'Can’t reach the tutor right now — check that the tutor server is running, then try again.';
+      this.parentBody.appendChild(note);
+      return;
+    }
+    // Group by domain, preserving the server's domain order.
+    const domains = new Map<string, MasteryTopic[]>();
+    for (const t of m.topics) {
+      if (!domains.has(t.domain)) domains.set(t.domain, []);
+      domains.get(t.domain)!.push(t);
+    }
+    for (const [domain, topics] of domains) {
+      const ordered = orderByPrereqs(topics);
+      const mastered = ordered.filter((t) => t.state === 'mastered').length;
+      const section = document.createElement('section');
+      section.className = 'pd-domain';
+      const head = document.createElement('div');
+      head.className = 'pd-domain-head';
+      const hName = document.createElement('span');
+      hName.className = 'pd-domain-name';
+      hName.textContent = domain;
+      const hTally = document.createElement('span');
+      hTally.className = 'pd-domain-tally';
+      hTally.textContent = `${mastered} of ${ordered.length} mastered`;
+      head.append(hName, hTally);
+      section.appendChild(head);
+      const chain = document.createElement('div');
+      chain.className = 'pd-chain';
+      ordered.forEach((t, i) => chain.appendChild(this.buildTopicRow(t, i + 1, i === ordered.length - 1)));
+      section.appendChild(chain);
+      this.parentBody.appendChild(section);
+    }
+  }
+
+  /** One topic on the chain: numbered node + connector rail, then the card. */
+  private buildTopicRow(t: MasteryTopic, step: number, last: boolean): HTMLDivElement {
+    const locked = !t.unlocked;
+    const state = locked ? 'locked' : t.state;
+    const row = document.createElement('div');
+    row.className = `pd-topic ${state}`;
+
+    const rail = document.createElement('div');
+    rail.className = 'pd-rail';
+    const node = document.createElement('span');
+    node.className = 'pd-node';
+    node.textContent = locked ? '🔒' : t.state === 'mastered' ? '✓' : String(step);
+    rail.appendChild(node);
+    if (!last) {
+      const link = document.createElement('span');
+      link.className = 'pd-link';
+      rail.appendChild(link);
+    }
+
+    const card = document.createElement('div');
+    card.className = 'pd-card';
+    const top = document.createElement('div');
+    top.className = 'pd-top';
+    const kid = document.createElement('span');
+    kid.className = 'pd-kid';
+    kid.textContent = t.kidLabel;
+    top.appendChild(kid);
+    const badge = document.createElement('span');
+    badge.className = 'pd-badge';
+    badge.textContent = locked ? 'Locked' : t.state === 'mastered' ? 'Mastered' : t.state === 'practicing' ? 'Practicing' : 'Ready';
+    top.appendChild(badge);
+    if (t.attempts > 0) {
+      const acc = document.createElement('span');
+      acc.className = 'pd-tag pd-acc';
+      acc.textContent = `${t.correct}/${t.attempts} correct`;
+      top.appendChild(acc);
+    }
+    if (t.fluentMs != null) {
+      const flu = document.createElement('span');
+      flu.className = 'pd-tag pd-fluent';
+      flu.textContent = `⚡ speed goal: under ${formatSeconds(t.fluentMs)}s`;
+      top.appendChild(flu);
+    }
+    const name = document.createElement('div');
+    name.className = 'pd-name';
+    name.textContent = t.name;
+    const ask = document.createElement('div');
+    ask.className = 'pd-ask';
+    const askLabel = document.createElement('span');
+    askLabel.className = 'pd-ask-label';
+    askLabel.textContent = 'Ask him:';
+    const askText = document.createElement('em');
+    askText.textContent = ' ' + t.assessmentPrompt;
+    ask.append(askLabel, askText);
+    card.append(top, name, ask);
+
+    row.append(rail, card);
+    return row;
+  }
+
   // ---- celebrations (the headline juice) -----------------------------------
   /** Big streak-milestone celebration. Intensity scales with the milestone. */
   celebrateMilestone(streak: number): void {
@@ -559,6 +706,28 @@ export class Hud {
     this.celebrate.appendChild(t);
     setTimeout(() => t.remove(), 1800);
   }
+}
+
+/** Order a domain's topics so every topic comes after its (in-domain) prereqs —
+ *  a stable topological sort, so chains render top-to-bottom in learning order.
+ *  Cross-domain prereqs are treated as satisfied (they order in their own domain). */
+function orderByPrereqs(topics: MasteryTopic[]): MasteryTopic[] {
+  const inDomain = new Set(topics.map((t) => t.id));
+  const placed = new Set<string>();
+  const remaining = [...topics];
+  const out: MasteryTopic[] = [];
+  while (remaining.length) {
+    const i = remaining.findIndex((t) => t.prereqs.every((p) => !inDomain.has(p) || placed.has(p)));
+    const pick = remaining.splice(Math.max(i, 0), 1)[0]; // cycle fallback: keep server order
+    placed.add(pick.id);
+    out.push(pick);
+  }
+  return out;
+}
+
+/** 7000 → "7", 6500 → "6.5" — seconds without a trailing .0. */
+function formatSeconds(ms: number): string {
+  return String(Math.round(ms / 100) / 10);
 }
 
 function injectStyles(): void {
@@ -847,6 +1016,83 @@ function injectStyles(): void {
   @keyframes toastAnim { 0%{opacity:0;transform:translateY(-8px)} 12%{opacity:1;transform:translateY(0)}
     80%{opacity:1} 100%{opacity:0;transform:translateY(-8px)} }
 
+  /* ---- Parent dashboard ---- */
+  /* The toggle is deliberately quiet: a small translucent serif monogram tucked in
+     the bottom-left corner — no pulse, no color pop, just a soft brighten on hover. */
+  .parent-toggle { position: fixed; left: 12px; bottom: max(12px, env(safe-area-inset-bottom));
+    pointer-events: auto; cursor: pointer; border: none; width: 30px; height: 30px; border-radius: 50%;
+    font-family: Georgia, 'Times New Roman', serif; font-weight: 600; font-size: 15px; line-height: 1;
+    color: #cfc6e8; background: rgba(20,16,40,0.45); backdrop-filter: blur(4px);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.10); opacity: 0.4;
+    transition: opacity .2s ease, box-shadow .2s ease; }
+  .parent-toggle:hover, .parent-toggle:focus-visible { opacity: 0.95;
+    box-shadow: inset 0 0 0 1px rgba(255,233,168,0.35); }
+
+  .parent-dash { position: fixed; inset: 0; z-index: 60; pointer-events: none;
+    background: rgba(10,7,22,0.78); backdrop-filter: blur(10px);
+    display: flex; align-items: stretch; justify-content: center;
+    opacity: 0; visibility: hidden; transition: opacity .22s ease, visibility .22s; }
+  .parent-dash.open { pointer-events: auto; opacity: 1; visibility: visible; }
+  .pd-frame { width: min(880px, 94vw); margin: clamp(10px, 3vh, 28px) auto;
+    display: flex; flex-direction: column; min-height: 0;
+    background: rgba(18,14,34,0.92); border-radius: 20px; overflow: hidden;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,233,168,0.16); }
+  .pd-head { flex: none; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    padding: 16px 18px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .pd-title { color: #ffe9a8; font-weight: 900; font-size: clamp(20px, 4vw, 26px); letter-spacing: .3px; }
+  .pd-sub { color: #b9b0d4; font-weight: 600; font-size: 13px; margin-top: 2px; }
+  .pd-close { flex: none; pointer-events: auto; cursor: pointer; border: none; width: 40px; height: 40px;
+    border-radius: 50%; font-size: 17px; color: #cfc6e8; background: rgba(255,255,255,0.08);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); transition: background .15s ease, color .15s ease; }
+  .pd-close:hover { background: rgba(255,255,255,0.16); color: #fff; }
+  .pd-body { overflow-y: auto; padding: 16px 18px 24px; }
+  .pd-note { color: #cfc6e8; font-weight: 700; font-size: 15px; text-align: center; padding: 34px 12px; }
+
+  .pd-domain { margin-bottom: 22px; }
+  .pd-domain:last-child { margin-bottom: 4px; }
+  .pd-domain-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+    margin-bottom: 10px; }
+  .pd-domain-name { color: #ffd9a0; font-weight: 900; font-size: 16.5px; letter-spacing: .3px; }
+  .pd-domain-tally { color: #b9b0d4; font-weight: 700; font-size: 12.5px; flex: none; }
+  .pd-chain { display: flex; flex-direction: column; }
+
+  .pd-topic { display: flex; gap: 12px; padding-bottom: 10px; }
+  .pd-topic:last-child { padding-bottom: 0; }
+  .pd-rail { flex: none; width: 26px; display: flex; flex-direction: column; align-items: center; }
+  .pd-node { flex: none; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-weight: 900; font-size: 13px; color: #cfc6e8;
+    background: rgba(255,255,255,0.10); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); }
+  .pd-link { flex: 1; width: 2px; min-height: 12px; margin-top: 4px; border-radius: 2px;
+    background: rgba(255,255,255,0.12); }
+  .pd-card { flex: 1; min-width: 0; padding: 9px 12px 10px; border-radius: 12px;
+    background: rgba(255,255,255,0.05); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06); }
+  .pd-top { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+  .pd-kid { color: #fff; font-weight: 800; font-size: 15.5px; line-height: 1.15; }
+  .pd-badge { flex: none; font-weight: 800; font-size: 11px; letter-spacing: .4px; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 999px; background: rgba(255,255,255,0.14); color: #cfc6e8; }
+  .pd-tag { flex: none; color: #b9b0d4; font-weight: 700; font-size: 12px; padding: 3px 8px;
+    border-radius: 999px; background: rgba(255,255,255,0.06); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07); }
+  .pd-fluent { color: #8be9ff; }
+  .pd-name { color: #b9b0d4; font-weight: 600; font-size: 12px; line-height: 1.25; margin-top: 2px; }
+  .pd-ask { margin-top: 6px; color: #cfc6e8; font-weight: 600; font-size: 12.5px; line-height: 1.35; }
+  .pd-ask-label { color: #ffe9a8; font-weight: 800; font-style: normal; }
+  .pd-ask em { font-style: italic; }
+
+  /* State accents mirror the game's progress colors: quest-green for mastered,
+     durability-amber for practicing, neutral for ready, dimmed for locked. */
+  .pd-topic.mastered .pd-node { background: linear-gradient(160deg,#9bf0bd,#4fd089); color: #0a2417;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.5), 0 0 8px rgba(46,230,160,0.35); }
+  .pd-topic.mastered .pd-badge { background: linear-gradient(160deg,#9bf0bd,#4fd089); color: #0a2417; }
+  .pd-topic.mastered .pd-card { box-shadow: inset 0 0 0 1px rgba(120,230,160,0.28); }
+  .pd-topic.mastered .pd-link { background: rgba(79,208,137,0.45); }
+  .pd-topic.practicing .pd-node { background: linear-gradient(160deg,#ffe27a,#ffab2e); color: #5a3a00;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.55), 0 0 8px rgba(255,180,50,0.3); }
+  .pd-topic.practicing .pd-badge { background: linear-gradient(160deg,#ffe27a,#ffab2e); color: #5a3a00; }
+  .pd-topic.practicing .pd-card { box-shadow: inset 0 0 0 1px rgba(255,210,120,0.24); }
+  .pd-topic.locked { opacity: 0.55; }
+  .pd-topic.locked .pd-node { font-size: 12px; background: rgba(255,255,255,0.06); }
+  .pd-topic.locked .pd-kid { color: #cfc6e8; }
+
   @media (max-width: 560px) {
     .status { gap: 6px; }
     .collection { font-size: 19px; padding: 6px 12px; min-width: 64px; }
@@ -854,6 +1100,8 @@ function injectStyles(): void {
     .quests { top: 112px; }
     .shop-toggle { top: 64px; right: 66px; }
     .shop { top: 112px; }
+    .pd-frame { width: 100vw; margin: 0; border-radius: 0; }
+    .pd-body { padding: 12px 12px 20px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .flame .flame-emoji, .flame.mega { animation: none; }

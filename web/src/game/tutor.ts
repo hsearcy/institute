@@ -83,6 +83,37 @@ export async function buyShield(): Promise<
   }
 }
 
+// ---- parent mastery dashboard --------------------------------------------------
+
+export type MasteryTopic = {
+  id: string;
+  name: string;
+  kidLabel: string;
+  domain: string;
+  prereqs: string[];
+  unlocked: boolean;
+  attempts: number;
+  correct: number;
+  state: 'unstarted' | 'practicing' | 'mastered';
+  fluentMs: number | null;
+  assessmentPrompt: string;
+};
+
+export type Mastery = { profileId: string; topics: MasteryTopic[] };
+
+/** Fetch the topic-mastery graph for the parent dashboard. Returns null on
+ *  failure so the overlay can show a gentle notice; never throws. */
+export async function fetchMastery(): Promise<Mastery | null> {
+  try {
+    const name = PROFILE.charAt(0).toUpperCase() + PROFILE.slice(1);
+    const r = await fetch(`${API}/mastery?profileId=${encodeURIComponent(PROFILE)}&name=${encodeURIComponent(name)}`);
+    if (!r.ok) return null;
+    return (await r.json()) as Mastery;
+  } catch {
+    return null;
+  }
+}
+
 // ---- pickaxe-skin shop -------------------------------------------------------
 
 /** Fetch the pickaxe shop: gem balance, equipped skin, and the full catalog in

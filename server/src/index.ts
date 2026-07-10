@@ -17,6 +17,8 @@ import { localProblem, type ProblemDraft, type SkillStat } from "./generate.ts";
 import { unlockedTopics, frontierTopics } from "./graph.ts";
 import { problemForTopic } from "./topicgen.ts";
 import { topicState } from "./mastery.ts";
+import { nextReview } from "./review.ts";
+import { selectNext } from "./select.ts";
 
 const PORT = Number(process.env.PORT ?? 8787);
 const TUTOR_MODEL = process.env.TUTOR_MODEL ?? "claude-haiku-4-5-20251001";
@@ -88,6 +90,9 @@ db.exec(`
 `);
 // Attempts gain the curated-topic dimension (guarded — ALTER throws if present).
 try { db.exec(`ALTER TABLE attempts ADD COLUMN topic_id TEXT`); } catch { /* column exists */ }
+// Spaced-review schedule per mastered topic (guarded ALTERs).
+try { db.exec(`ALTER TABLE topic_mastery ADD COLUMN review_interval_days REAL`); } catch { /* exists */ }
+try { db.exec(`ALTER TABLE topic_mastery ADD COLUMN review_due_at INTEGER`); } catch { /* exists */ }
 // Add the equipped-pickaxe column (guarded — ALTER throws if it already exists).
 try {
   db.exec(`ALTER TABLE profile_state ADD COLUMN equipped_pickaxe TEXT DEFAULT 'wooden'`);
@@ -119,36 +124,62 @@ function recordMastery(profileId: string, skill: string, correct: boolean, diffi
 
 // ---- Curated-topic mastery (the skill graph) --------------------------------
 
-type TopicMasteryRow = { topic_id: string; attempts: number; correct: number; last_difficulty: number; state: string };
+type TopicMasteryRow = {
+  topic_id: string; attempts: number; correct: number; last_difficulty: number; state: string;
+  review_interval_days: number | null; review_due_at: number | null;
+};
 
 function topicMasteryRows(profileId: string): TopicMasteryRow[] {
   return db.query(
-    `SELECT topic_id, attempts, correct, last_difficulty, state FROM topic_mastery WHERE profile_id = ?`,
+    `SELECT topic_id, attempts, correct, last_difficulty, state, review_interval_days, review_due_at
+     FROM topic_mastery WHERE profile_id = ?`,
   ).all(profileId) as TopicMasteryRow[];
 }
 const masteredTopicIds = (profileId: string): Set<string> =>
   new Set(topicMasteryRows(profileId).filter((r) => r.state === "mastered").map((r) => r.topic_id));
 
-/** Upsert per-topic mastery after an attempt; fluency uses the last 8 correct solves. */
+/** Upsert per-topic mastery after an attempt. Accuracy is windowed (last 12
+ *  attempts); fluency uses the last 8 correct solves. An attempt on an
+ *  already-mastered topic is a REVIEW — it reschedules the next one. NOTE: the
+ *  /tutor/attempt handler inserts the attempt row BEFORE calling this, so the
+ *  windows include the attempt being recorded. */
 function recordTopicMastery(profileId: string, topicId: string, correct: boolean, difficulty: number): void {
   const topic = topicById(topicId);
   if (!topic) return;
-  const row = db.query(`SELECT attempts, correct FROM topic_mastery WHERE profile_id = ? AND topic_id = ?`)
-    .get(profileId, topicId) as { attempts: number; correct: number } | null;
+  const row = db.query(
+    `SELECT attempts, correct, state, review_interval_days FROM topic_mastery WHERE profile_id = ? AND topic_id = ?`,
+  ).get(profileId, topicId) as { attempts: number; correct: number; state: string; review_interval_days: number | null } | null;
+  const wasMastered = row?.state === "mastered";
   const attempts = (row?.attempts ?? 0) + 1;
   const corr = (row?.correct ?? 0) + (correct ? 1 : 0);
-  const recent = (db.query(
+  const recentResults = (db.query(
+    `SELECT correct FROM attempts WHERE profile_id = ? AND topic_id = ?
+     ORDER BY created_at DESC, id DESC LIMIT 12`,
+  ).all(profileId, topicId) as { correct: number }[]).map((r) => !!r.correct);
+  const recentSolveMs = (db.query(
     `SELECT solve_ms FROM attempts WHERE profile_id = ? AND topic_id = ? AND correct = 1
-     ORDER BY created_at DESC LIMIT 8`,
+     ORDER BY created_at DESC, id DESC LIMIT 8`,
   ).all(profileId, topicId) as { solve_ms: number }[]).map((r) => r.solve_ms);
-  const state = topicState({ attempts, correct: corr, recentSolveMs: recent, fluentMs: topic.fluentMs });
+  const state = topicState({
+    lifetimeAttempts: attempts, recentResults, lifetimeRatio: corr / attempts,
+    recentSolveMs, fluentMs: topic.fluentMs,
+  });
+  // Review schedule: any attempt while mastered is a review outcome; the moment
+  // of first mastery schedules the first review.
+  let schedule: { intervalDays: number; dueAt: number } | null = null;
+  if (wasMastered) schedule = nextReview(row?.review_interval_days ?? null, correct, Date.now());
+  else if (state === "mastered") schedule = nextReview(null, correct, Date.now());
   db.query(
-    `INSERT INTO topic_mastery (profile_id, topic_id, attempts, correct, last_difficulty, state, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO topic_mastery (profile_id, topic_id, attempts, correct, last_difficulty, state, review_interval_days, review_due_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(profile_id, topic_id) DO UPDATE SET
        attempts = excluded.attempts, correct = excluded.correct,
-       last_difficulty = excluded.last_difficulty, state = excluded.state, updated_at = excluded.updated_at`,
-  ).run(profileId, topicId, attempts, corr, difficulty, state, Date.now());
+       last_difficulty = excluded.last_difficulty, state = excluded.state,
+       review_interval_days = COALESCE(excluded.review_interval_days, topic_mastery.review_interval_days),
+       review_due_at = COALESCE(excluded.review_due_at, topic_mastery.review_due_at),
+       updated_at = excluded.updated_at`,
+  ).run(profileId, topicId, attempts, corr, difficulty, state,
+    schedule?.intervalDays ?? null, schedule?.dueAt ?? null, Date.now());
 }
 
 /** Map an old-model mastered skill onto curated-topic grants (synthetic 8/8). */
@@ -183,6 +214,10 @@ for (const row of db.query(
     .all(row.profile_id) as { skill: string }[]).map((r) => r.skill);
   grantLegacyMastery(row.profile_id, skills);
 }
+// Backfill: mastered rows without a schedule (legacy grants) become due NOW —
+// the first sessions verify granted knowledge before building on it.
+db.query(`UPDATE topic_mastery SET review_interval_days = 1, review_due_at = ?
+          WHERE state = 'mastered' AND review_due_at IS NULL`).run(Date.now());
 
 // ---- Rewards: gems / streaks / daily quests / shield -----------------------
 
@@ -444,19 +479,36 @@ function adaptivePlan(
   // Push harder when he's accurate and fast; ease more when he's struggling.
   const up = (recentAcc >= 0.8 ? 0.14 : recentAcc >= 0.6 ? 0.08 : 0.04) + (solveTag === "fast" ? 0.04 : 0);
   const down = 0.12 + (recentAcc < 0.5 ? 0.05 : 0);
-  // advance = current topic just mastered ⇒ move to another frontier topic.
-  const curTopic = current.topicId ? topicById(current.topicId) : undefined;
-  const mastered = masteredTopicIds(profileId);
-  const advanceTopic = curTopic && mastered.has(curTopic.id)
-    ? frontierTopics(TOPICS, mastered).find((t) => t.id !== curTopic.id) ?? null
-    : null;
+  // Where the right branch goes: the unified selector (due reviews → focus run
+  // → domain-rotating interleave). Staying put is selection returning current.
+  const next = selectFor(profileId, current.topicId ?? null);
+  const advanceTopic = next.topic.id !== current.topicId ? next.topic : null;
   return {
-    rightTarget: +clampDiff(cur + up).toFixed(2),
+    rightTarget: next.mode === "review" ? next.difficulty : +clampDiff(cur + up).toFixed(2),
     wrongTarget: +clampDiff(cur - down).toFixed(2),
     solveTag,
     recentAccuracyPct: Math.round(recentAcc * 100),
     advanceTopic,
+    rightMode: next.mode,
   };
+}
+
+/** Assemble selectNext inputs from the DB. `currentTopicId` null ⇒ session start. */
+function selectFor(profileId: string, currentTopicId: string | null) {
+  const recent = recentAttempts(profileId, 12);
+  const rows = topicMasteryRows(profileId);
+  const masteredNow = new Set(rows.filter((r) => r.state === "mastered").map((r) => r.topic_id));
+  // "last was review" ≈ the most recent attempt hit a topic that is currently mastered
+  const lastWasReview = recent[0]?.topic_id != null && masteredNow.has(recent[0].topic_id);
+  return selectNext({
+    topics: TOPICS, now: Date.now(), currentTopicId,
+    mastery: rows.map((r) => ({
+      topicId: r.topic_id, state: r.state, lastDifficulty: r.last_difficulty,
+      reviewDueAt: r.review_due_at, reviewIntervalDays: r.review_interval_days,
+    })),
+    recentTopicIds: recent.map((r) => r.topic_id ?? "").filter(Boolean),
+    lastWasReview,
+  });
 }
 
 // Recently-served problem prompts per profile (in-memory) so the tutor avoids repeats.
@@ -504,7 +556,9 @@ async function llmBranches(profileId: string, current: Problem): Promise<{ right
     "",
     "Produce the two follow-ups, matching difficulty to these targets:",
     `- "right" (he answers correctly): difficulty ≈ ${plan.rightTarget}` +
-      (plan.advanceTopic ? `, and since he has MASTERED the current topic, move on to this one:` : `, staying on this topic:`),
+      (plan.rightMode === "review"
+        ? `, as a REVIEW of an earlier skill — a friendly confidence check on this topic:`
+        : plan.advanceTopic ? `, moving on to this topic:` : `, staying on this topic:`),
     rightTopic ? topicBlock(rightTopic, plan.rightTarget) : "",
     `- "wrong" (he misses it): rebuild confidence at difficulty ≈ ${plan.wrongTarget} with friendlier numbers, on this topic:`,
     wrongTopic ? topicBlock(wrongTopic, plan.wrongTarget) : "",
@@ -563,13 +617,19 @@ function correctDraft(d: ProblemDraft): ProblemDraft {
   return d;
 }
 
-/** Local fallback branches: harder on right, easier same-topic on wrong. */
-function localBranches(current: Problem): { right: Problem; wrong: Problem } {
-  const topic = current.topicId ? topicById(current.topicId) : undefined;
-  const make = (d: number) => stampId(topic ? problemForTopic(topic, d) : localProblem(current.skill, d));
+/** Local fallback branches: right side follows the unified selector (reviews,
+ *  rotation); wrong side always eases off on the SAME topic. */
+function localBranches(profileId: string, current: Problem): { right: Problem; wrong: Problem } {
+  const curTopic = current.topicId ? topicById(current.topicId) : undefined;
+  const make = (topic: Topic | undefined, d: number) =>
+    stampId(topic ? problemForTopic(topic, d) : localProblem(current.skill, d));
+  const next = curTopic ? selectFor(profileId, curTopic.id) : null;
+  const right = next
+    ? make(next.topic, next.mode === "review" ? next.difficulty : Math.min(0.95, current.difficulty + 0.12))
+    : make(undefined, Math.min(0.95, current.difficulty + 0.12));
   return {
-    right: make(Math.min(0.95, current.difficulty + 0.12)),
-    wrong: make(Math.max(0.15, current.difficulty - 0.12)),
+    right,
+    wrong: make(curTopic, Math.max(0.15, current.difficulty - 0.12)),
   };
 }
 
@@ -579,33 +639,11 @@ app.use("*", cors());
 
 app.get("/health", (c) => c.json({ ok: true, model: TUTOR_MODEL, voice: ELEVEN_VOICE }));
 
-/** Choose the next topic to serve: prefer the in-progress frontier topic with the
- *  most attempts (finish what's started), else the youngest frontier topic. */
-function pickStartTopic(profileId: string): { topic: Topic; difficulty: number } {
-  const rows = topicMasteryRows(profileId);
-  const byTopic = new Map(rows.map((r) => [r.topic_id, r]));
-  const frontier = frontierTopics(TOPICS, masteredTopicIds(profileId));
-  if (frontier.length === 0) {
-    // Everything mastered — keep him playing at the oldest-age (deepest) topic.
-    const deepest = [...TOPICS].sort((a, b) => b.ageRange[0] - a.ageRange[0])[0];
-    return { topic: deepest, difficulty: 0.8 };
-  }
-  frontier.sort((a, b) => {
-    const pa = byTopic.get(a.id)?.attempts ?? 0, pb = byTopic.get(b.id)?.attempts ?? 0;
-    if (pa !== pb) return pb - pa;
-    return a.ageRange[0] - b.ageRange[0];
-  });
-  const topic = frontier[0];
-  const st = byTopic.get(topic.id);
-  const acc = st && st.attempts >= 3 ? st.correct / st.attempts : 0.6;
-  const base = st?.last_difficulty ?? 0.4;
-  const difficulty = Math.max(0.2, Math.min(0.95, base + (acc - 0.75) * 0.5));
-  return { topic, difficulty };
-}
-
 app.post("/tutor/first", async (c) => {
   const { profileId } = StartRequestSchema.parse(await c.req.json());
-  const { topic, difficulty } = pickStartTopic(profileId);
+  // Session start = the unified selector with no current topic: a due review
+  // first (gentle re-entry), else the interleave rotation over the frontier.
+  const { topic, difficulty } = selectFor(profileId, null);
   const problem = stampId(problemForTopic(topic, difficulty));
   notePrompt(profileId, problem.prompt);
   return c.json(problem);
@@ -619,7 +657,7 @@ async function nextProblems(c: Context) {
     return c.json(await llmBranches(profileId, current));
   } catch (e) {
     console.warn("[tutor] LLM branches failed; local fallback:", (e as Error)?.message);
-    return c.json(localBranches(current));
+    return c.json(localBranches(profileId, current));
   }
 }
 app.post("/next-problems", nextProblems);
@@ -878,6 +916,8 @@ app.get("/mastery", (c) => {
       state: r?.state ?? "unstarted",
       fluentMs: t.fluentMs,
       assessmentPrompt: t.assessmentPrompt.replaceAll("{{name}}", kidName),
+      reviewDueAt: r?.review_due_at ?? null,
+      reviewIntervalDays: r?.review_interval_days ?? null,
     };
   });
   return c.json({ profileId, topics });

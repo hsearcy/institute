@@ -779,14 +779,19 @@ export class Game {
   private async onExplain(): Promise<void> {
     if (!this.problem || this.explaining) return;
     this.explaining = true;
+    // Visible "I'm thinking" state: kids mash buttons that don't react instantly.
+    // The icon becomes an animated thought bubble and taps are ignored until the
+    // explanation has finished playing.
     const btn = document.querySelector('.replay.explain');
     btn?.classList.add('busy');
+    if (btn) btn.textContent = '💭';
     try {
       const p = this.problem;
       const text = (await fetchExplain(p)) ?? p.hint ?? 'Read it again slowly — what is it asking?';
       if (this.problem?.id === p.id) await speak(text); // still the same problem
     } finally {
       btn?.classList.remove('busy');
+      if (btn) btn.textContent = '🎓';
       this.explaining = false;
     }
   }

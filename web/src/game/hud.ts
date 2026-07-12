@@ -1003,8 +1003,8 @@ function injectStyles(): void {
   .replay.explain.avail { opacity: 1; pointer-events: auto; transform: scale(1); }
   .replay { pointer-events: auto; border: none; background: rgba(20,16,40,0.5); color: #fff; font-size: 22px;
     width: 46px; height: 46px; border-radius: 50%; cursor: pointer; }
-  .replay.explain.busy { opacity: 0.45; animation: explainPulse 1.1s ease-in-out infinite; }
-  @keyframes explainPulse { 50% { transform: scale(0.92); } }
+  .replay.explain.busy { pointer-events: none; animation: thinking 0.9s ease-in-out infinite; }
+  @keyframes thinking { 0%, 100% { transform: scale(1) rotate(-6deg); } 50% { transform: scale(1.14) rotate(6deg); } }
   .problem { color: #fff; font-size: clamp(40px, 9vw, 84px); font-weight: 900;
     text-shadow: 0 4px 18px rgba(0,0,0,0.5); letter-spacing: 1px; }
   .hint { align-self: center; max-width: min(560px, 88vw); margin: 8px auto 0; padding: 0 14px;

@@ -1021,7 +1021,7 @@ app.post("/tutor/explain", async (c) => {
     let text = "";
     for (let attempt = 0; attempt < 2; attempt++) {
       const resp = await anthropic.messages.create({
-        model: TUTOR_MODEL, max_tokens: 250, temperature: 0.7,
+        model: TUTOR_MODEL, max_tokens: 250, // no temperature — rejected by claude-sonnet-5
         system: EXPLAIN_SYSTEM,
         messages: [{ role: "user", content: userContent }],
       });

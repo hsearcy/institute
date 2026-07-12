@@ -73,6 +73,17 @@ db.exec(`
     done INTEGER DEFAULT 0,
     PRIMARY KEY (profile_id, quest_key, day)
   );
+  CREATE TABLE IF NOT EXISTS weekly_quests (
+    profile_id TEXT,
+    quest_key TEXT,
+    week_start TEXT,
+    label TEXT,
+    target INTEGER,
+    progress INTEGER DEFAULT 0,
+    reward INTEGER,
+    done INTEGER DEFAULT 0,
+    PRIMARY KEY (profile_id, quest_key, week_start)
+  );
   CREATE TABLE IF NOT EXISTS owned_items (
     profile_id TEXT,
     item_key TEXT,
@@ -246,6 +257,13 @@ const QUEST_DEFS = [
   { key: "topic_explorer", label: "Explore 4 math topics", target: 4, reward: 15 },
 ] as const;
 
+const WEEKLY_QUEST_DEF = {
+  key: "daily_quests_5_days",
+  label: "Finish Daily Quests on 5 Days",
+  target: 5,
+  reward: 250,
+} as const;
+
 /** Streak bonus gems on top of the base +1 per correct answer. */
 function streakBonus(streak: number): number {
   if (streak === 3) return 2;
@@ -379,6 +397,62 @@ const questView = (rows: QuestRow[]) => rows.map((r) => ({
   progress: r.progress, reward: r.reward, done: !!r.done,
 }));
 
+/** Sunday that owns a UTC calendar day, formatted like the daily quest key. */
+function weekStart(day: string): string {
+  const date = new Date(`${day}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() - date.getUTCDay());
+  return date.toISOString().slice(0, 10);
+}
+
+function getWeeklyQuest(profileId: string, day = utcDay()): QuestRow {
+  const week = weekStart(day);
+  db.query(
+    `INSERT OR IGNORE INTO weekly_quests
+       (profile_id, quest_key, week_start, label, target, progress, reward, done)
+     VALUES (?, ?, ?, ?, ?, 0, ?, 0)`,
+  ).run(profileId, WEEKLY_QUEST_DEF.key, week, WEEKLY_QUEST_DEF.label,
+    WEEKLY_QUEST_DEF.target, WEEKLY_QUEST_DEF.reward);
+  db.query(
+    `UPDATE weekly_quests SET label = ?, target = ?, reward = ?
+     WHERE profile_id = ? AND quest_key = ? AND week_start = ? AND done = 0`,
+  ).run(WEEKLY_QUEST_DEF.label, WEEKLY_QUEST_DEF.target, WEEKLY_QUEST_DEF.reward,
+    profileId, WEEKLY_QUEST_DEF.key, week);
+  return db.query(
+    `SELECT quest_key, label, target, progress, reward, done FROM weekly_quests
+     WHERE profile_id = ? AND quest_key = ? AND week_start = ?`,
+  ).get(profileId, WEEKLY_QUEST_DEF.key, week) as QuestRow;
+}
+
+function completedDailyBoards(profileId: string, day: string): number {
+  const row = db.query(
+    `SELECT COUNT(*) AS count FROM (
+       SELECT day FROM quests
+       WHERE profile_id = ? AND day >= ? AND day <= ?
+       GROUP BY day
+       HAVING COUNT(*) = ? AND SUM(done) = ?
+     )`,
+  ).get(profileId, weekStart(day), day, QUEST_DEFS.length, QUEST_DEFS.length) as { count: number };
+  return row.count;
+}
+
+function advanceWeeklyQuest(
+  profileId: string,
+  day: string,
+  state: ProfileStateRow,
+): { key: string; label: string; reward: number }[] {
+  const quest = getWeeklyQuest(profileId, day);
+  if (quest.done) return [];
+  const progress = completedDailyBoards(profileId, day);
+  const done = progress >= quest.target ? 1 : 0;
+  db.query(
+    `UPDATE weekly_quests SET progress = ?, done = ?
+     WHERE profile_id = ? AND quest_key = ? AND week_start = ?`,
+  ).run(progress, done, profileId, quest.quest_key, weekStart(day));
+  if (!done) return [];
+  state.gems += quest.reward;
+  return [{ key: quest.quest_key, label: quest.label, reward: quest.reward }];
+}
+
 type QuestEvent = {
   firstTry: boolean;
   gemsEarned: number;
@@ -419,6 +493,7 @@ function advanceQuests(
     db.query(`UPDATE quests SET progress = ?, done = ? WHERE profile_id = ? AND quest_key = ? AND day = ?`)
       .run(progress, done, profileId, r.quest_key, day);
   }
+  completed.push(...advanceWeeklyQuest(profileId, day, state));
   return completed;
 }
 
@@ -873,6 +948,7 @@ app.get("/state", (c) => {
     bestStreak: s.best_streak,
     shields: s.shields,
     quests: questView(getQuests(profileId)),
+    weeklyQuest: questView([getWeeklyQuest(profileId)])[0],
     equipped: s.equipped_pickaxe,
     durability: equippedDurability(profileId, s, false),
   });

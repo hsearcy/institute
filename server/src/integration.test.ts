@@ -20,6 +20,48 @@ const call = async (method: string, path: string, body?: unknown) => {
 };
 
 describe("topic-graph tutor flow", () => {
+  test("weekly quest counts five completed daily boards, awards 250 once, and resets Sunday", async () => {
+    const profileId = "weekly-quest";
+    const topics = TOPICS.filter((t) => t.prereqs.length === 0).slice(0, 4);
+    let lastReward: any = null;
+
+    try {
+      // 2026-07-12 is a Sunday. Finish all five daily quests Sunday–Thursday.
+      for (let day = 0; day < 5; day++) {
+        setSystemTime(new Date(`2026-07-${12 + day}T12:00:00.000Z`));
+        for (let i = 0; i < 25; i++) {
+          const topic = topics[i % topics.length];
+          const result = await call("POST", "/tutor/attempt", {
+            profileId, problemId: `weekly-${day}-${i}`, skill: "add_within_20", topicId: topic.id,
+            correct: true, solveMs: 10_000, difficulty: 0.4,
+          });
+          lastReward = result.reward;
+        }
+        const state = await call("GET", `/state?profileId=${profileId}`);
+        expect(state.weeklyQuest.progress).toBe(day + 1);
+      }
+
+      expect(lastReward.questsCompleted).toEqual(expect.arrayContaining([
+        expect.objectContaining({ key: "daily_quests_5_days", reward: 250 }),
+      ]));
+      let state = await call("GET", `/state?profileId=${profileId}`);
+      expect(state.weeklyQuest).toMatchObject({ target: 5, progress: 5, reward: 250, done: true });
+
+      // More answers cannot award the completed weekly quest again.
+      const extra = await call("POST", "/tutor/attempt", {
+        profileId, problemId: "weekly-extra", skill: "add_within_20", topicId: topics[0].id,
+        correct: true, solveMs: 10_000, difficulty: 0.4,
+      });
+      expect(extra.reward.questsCompleted.some((q: any) => q.key === "daily_quests_5_days")).toBe(false);
+
+      setSystemTime(new Date("2026-07-19T12:00:00.000Z")); // next Sunday
+      state = await call("GET", `/state?profileId=${profileId}`);
+      expect(state.weeklyQuest).toMatchObject({ progress: 0, done: false });
+    } finally {
+      setSystemTime();
+    }
+  });
+
   test("daily streak quest starts at zero even when the profile streak carries over", async () => {
     const profileId = "quest-carried-streak";
     const answer = async (i: number) => call("POST", "/tutor/attempt", {

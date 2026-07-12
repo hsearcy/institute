@@ -143,6 +143,8 @@ export const StateSchema = z.object({
   bestStreak: z.number().int(),
   shields: z.number().int(),
   quests: z.array(QuestSchema),
+  /** Sunday–Saturday quest for completing the full daily board on five days. */
+  weeklyQuest: QuestSchema,
   /** The equipped pickaxe skin key (defaults to "wooden"). */
   equipped: z.string(),
   /** Durability of the equipped pickaxe (null current/max for wooden). */

@@ -91,10 +91,12 @@ export class Hud {
           <div class="pick-dura" id="pick-dura" title="Pickaxe durability" hidden>⛏️<div class="dura-bar"><div class="dura-fill" id="dura-fill"></div></div></div>
         </div>
       </div>
-      <button class="quests-toggle" id="quests-toggle" title="Daily quests">📜</button>
+      <button class="quests-toggle" id="quests-toggle" title="Quests">📜</button>
       <div class="quests" id="quests">
         <div class="quests-head">📜 Daily Quests</div>
         <div class="quests-list" id="quests-list"></div>
+        <div class="quests-head weekly">🏆 Weekly Quest</div>
+        <div class="quests-list" id="weekly-quest-list"></div>
       </div>
       <button class="shop-toggle" id="shop-toggle" title="Shop">🛒</button>
       <div class="shop" id="shop">
@@ -407,16 +409,19 @@ export class Hud {
   }
 
   // ---- quests --------------------------------------------------------------
-  setQuests(questsIn: Quest[]): void {
+  setQuests(questsIn: Quest[], weeklyQuest: Quest): void {
     const list = this.root.querySelector('#quests-list')!;
+    const weeklyList = this.root.querySelector('#weekly-quest-list')!;
     // Fixed display order (the server's row order isn't deterministic) so rows
     // never reshuffle / rebuild under the panel.
     const order = ['mine_gems', 'solve_10', 'streak_5', 'speed_8', 'topic_explorer'];
-    const quests = [...questsIn].sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
+    const dailyQuests = [...questsIn].sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
+    const quests = [...dailyQuests, weeklyQuest];
     // Rebuild only if the set of keys changed; otherwise update in place.
     const keys = quests.map((q) => q.key).join(',');
     if (this.questsPanel.dataset.keys !== keys) {
       list.innerHTML = '';
+      weeklyList.innerHTML = '';
       this.questRows.clear();
       for (const q of quests) {
         const row = document.createElement('div');
@@ -426,7 +431,7 @@ export class Hud {
           <div class="q-bar"><div class="q-fill"></div></div>
           <div class="q-prog"></div>`;
         (row.querySelector('.q-label') as HTMLElement).textContent = q.label;
-        list.appendChild(row);
+        (q.key === weeklyQuest.key ? weeklyList : list).appendChild(row);
         this.questRows.set(q.key, {
           fill: row.querySelector('.q-fill')!,
           prog: row.querySelector('.q-prog')!,
@@ -904,6 +909,7 @@ function injectStyles(): void {
     transition: opacity .18s ease, transform .18s cubic-bezier(.3,1.5,.5,1), visibility .18s; }
   .quests.open { opacity: 1; visibility: visible; transform: scale(1) translateY(0); }
   .quests-head { color: #ffe9a8; font-weight: 900; font-size: 16px; margin-bottom: 9px; letter-spacing: .3px; }
+  .quests-head.weekly { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,233,168,0.18); color: #ffd23b; }
   .quest { margin-bottom: 11px; }
   .quest:last-child { margin-bottom: 0; }
   .q-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }

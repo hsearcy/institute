@@ -587,7 +587,7 @@ export class Game {
     this.hud.setStreak(st.streak, false);
     this.hud.setShields(st.shields);
     this.hud.setGemsForShop(st.gems);
-    this.hud.setQuests(st.quests);
+    this.hud.setQuests(st.quests, st.weeklyQuest);
     if (seed && st.equipped) {
       this.pickDurability = st.durability ?? null;
       this.applyPickaxeSkin(st.equipped); // wear the saved skin on startup

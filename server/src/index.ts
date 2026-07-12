@@ -10,7 +10,7 @@ import { Database } from "bun:sqlite";
 import Anthropic from "@anthropic-ai/sdk";
 import {
   SKILLS, SKILL_LABELS, ProblemSchema, type Problem,
-  StartRequestSchema, BranchesRequestSchema, TtsRequestSchema,
+  StartRequestSchema, BranchesRequestSchema, TtsRequestSchema, ExplainRequestSchema,
   TOPICS, topicById, type Topic,
 } from "@institute/shared";
 import { localProblem, type ProblemDraft, type SkillStat } from "./generate.ts";
@@ -987,6 +987,58 @@ app.get("/mastery", (c) => {
     };
   });
   return c.json({ profileId, topics, crazyCoins: getProfileState(profileId).crazy_coins });
+});
+
+// ---- Explain (the 🎓 button) ------------------------------------------------
+
+/** True when the explanation states the answer as a standalone number token.
+ *  Numbers FROM the prompt are fine; only the answer itself is forbidden. */
+export function leaksAnswer(text: string, answer: number): boolean {
+  return new RegExp(`(?<!\\d)${answer}(?!\\d)`).test(text);
+}
+
+const EXPLAIN_SYSTEM = `You are the warm tutor voice inside a gem-mine math game, explaining ONE problem to a 6-year-old who tapped "explain". Rules:
+- At most 60 spoken words. Plain sentences a child can follow by ear. No emoji, no markdown, no lists.
+- Teach the concrete STRATEGY using his actual numbers (make-a-ten, count on, count back, think in tens, share one at a time, skip-count...).
+- NEVER say the final answer, and never spell it out in words either. Stop one step short.
+- End with one small, encouraging leading question that points at the last step.`;
+
+const explainCache = new Map<string, string>();
+
+app.post("/tutor/explain", async (c) => {
+  const { problem } = ExplainRequestSchema.parse(await c.req.json());
+  const cached = explainCache.get(problem.id);
+  if (cached) return c.json({ text: cached });
+  const fallback = problem.hint ?? "Read it again slowly — what is it asking you to find?";
+  const topic = problem.topicId ? topicById(problem.topicId) : undefined;
+  const userContent = [
+    `The problem on screen: "${problem.prompt}" (read aloud as: "${problem.spoken}").`,
+    topic ? `It practices the topic "${topic.name}": ${topic.description}` : "",
+    topic?.evidence.length ? `Mastery of this topic looks like: ${topic.evidence.join("; ")}` : "",
+    `Explain how to work it out. Do NOT reveal that the answer is ${problem.answer} — never say that number.`,
+  ].filter(Boolean).join("\n");
+  try {
+    let text = "";
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const resp = await anthropic.messages.create({
+        model: TUTOR_MODEL, max_tokens: 250, temperature: 0.7,
+        system: EXPLAIN_SYSTEM,
+        messages: [{ role: "user", content: userContent }],
+      });
+      const block = resp.content.find((b) => b.type === "text");
+      text = (block && block.type === "text" ? block.text : "").trim();
+      if (text && !leaksAnswer(text, problem.answer)) break;
+      text = ""; // leaked or empty → retry once, then fall back
+    }
+    const out = text || fallback;
+    explainCache.set(problem.id, out);
+    if (explainCache.size > 50) explainCache.delete(explainCache.keys().next().value!);
+    return c.json({ text: out });
+  } catch (e) {
+    console.warn("[tutor] explain failed; hint fallback:", (e as Error)?.message);
+    explainCache.set(problem.id, fallback);
+    return c.json({ text: fallback });
+  }
 });
 
 app.post("/tts", async (c) => {

@@ -163,4 +163,22 @@ describe("topic-graph tutor flow", () => {
     expect(b.wrong.difficulty).toBeLessThanOrEqual(0.5);
     expect(b.right.topicId).toBeDefined();          // right branch unaffected shape
   });
+
+  test("explain falls back to the local hint when the LLM is unreachable, and caches", async () => {
+    const problem = { id: "pex1", skill: "add_within_20", topicId: "mt_e8CZ7E5qW7",
+      prompt: "6 + ? = 10", spoken: "6 plus what makes 10?", answer: 4,
+      difficulty: 0.4, hint: "Count up from 6 until you reach 10." };
+    const r1 = await call("POST", "/tutor/explain", { profileId: "kid9", problem });
+    expect(r1.text).toBe("Count up from 6 until you reach 10.");
+    const r2 = await call("POST", "/tutor/explain", { profileId: "kid9", problem });
+    expect(r2.text).toBe(r1.text); // cached / stable
+  });
+
+  test("leaksAnswer catches standalone answer tokens only", async () => {
+    const { leaksAnswer } = await import("./index.ts");
+    expect(leaksAnswer("so six and four make ten", 4)).toBe(false);
+    expect(leaksAnswer("the answer is 4", 4)).toBe(true);
+    expect(leaksAnswer("count 14 gems", 4)).toBe(false); // 4 inside 14 is fine
+    expect(leaksAnswer("what do 6 and how many make 10?", 4)).toBe(false);
+  });
 });

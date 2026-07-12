@@ -77,6 +77,15 @@ export const BranchesRequestSchema = z.object({
 });
 export type BranchesRequest = z.infer<typeof BranchesRequestSchema>;
 
+/** Kid taps 🎓 → the tutor explains THIS problem aloud (never stating the answer). */
+export const ExplainRequestSchema = z.object({
+  profileId: z.string(),
+  problem: ProblemSchema,
+});
+export type ExplainRequest = z.infer<typeof ExplainRequestSchema>;
+export const ExplainResponseSchema = z.object({ text: z.string().min(1).max(600) });
+export type ExplainResponse = z.infer<typeof ExplainResponseSchema>;
+
 export const TtsRequestSchema = z.object({ text: z.string().min(1).max(300) });
 export type TtsRequest = z.infer<typeof TtsRequestSchema>;
 

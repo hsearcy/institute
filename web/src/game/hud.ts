@@ -313,12 +313,14 @@ export class Hud {
     this.hoardOverflowing = true;
     this.hoardEl.classList.add('shake'); // rattle first
     setTimeout(() => {
-      this.hoardEl.classList.remove('shake');
-      this.hoardEl.classList.add('burst'); // pop the bar open
-      this.screenFlash('#ffe9a8');
-      this.banner('GEM BONUS!', 'quest', `+${HOARD_BONUS}💎`);
-      this.scatterPips();   // DOM pips fling out of the bar…
-      this.onHoardFull();   // …while Game erupts the 3D gem firehose + credits the bonus
+      try {
+        this.hoardEl.classList.remove('shake');
+        this.hoardEl.classList.add('burst'); // pop the bar open
+        this.screenFlash('#ffe9a8');
+        this.banner('GEM BONUS!', 'quest', `+${HOARD_BONUS}💎`);
+        this.scatterPips();   // DOM pips fling out of the bar…
+      } catch (e) { console.warn('[hoard] burst VFX fail:', e); }
+      this.onHoardFull();     // …while Game erupts the 3D gem firehose + credits the bonus
       setTimeout(() => {
         this.hoardEl.classList.remove('burst');
         this.hoardEl.innerHTML = '';
@@ -1007,11 +1009,12 @@ function injectStyles(): void {
   @keyframes thinking { 0%, 100% { transform: scale(1) rotate(-6deg); } 50% { transform: scale(1.14) rotate(6deg); } }
   .problem { color: #fff; font-size: clamp(40px, 9vw, 84px); font-weight: 900;
     text-shadow: 0 4px 18px rgba(0,0,0,0.5); letter-spacing: 1px; }
-  .hint { align-self: center; max-width: min(560px, 88vw); margin: 8px auto 0; padding: 0 14px;
-    text-align: center; color: #ffe9a8; font-weight: 700; font-size: clamp(16px, 3.6vw, 24px);
-    line-height: 1.25; text-shadow: 0 2px 8px rgba(0,0,0,0.55); opacity: 0;
-    transform: translateY(-4px); transition: opacity .2s, transform .2s; pointer-events: none; }
-  .hint.show { opacity: 1; transform: translateY(0); }
+  .hint { position: absolute; left: 50%; top: clamp(96px, 19vh, 170px); transform: translate(-50%, -4px);
+    max-width: min(560px, 88vw); max-height: 30vh; overflow-y: auto; padding: 2px 14px;
+    text-align: center; color: #ffe9a8; font-weight: 700; font-size: clamp(15px, 3vw, 22px);
+    line-height: 1.25; text-shadow: 0 2px 8px rgba(0,0,0,0.55), 0 0 16px rgba(0,0,0,0.5); opacity: 0;
+    transition: opacity .2s, transform .2s; pointer-events: none; }
+  .hint.show { opacity: 1; transform: translate(-50%, 0); }
   .hud-bottom { margin-top: auto; display: flex; flex-direction: column; align-items: flex-start;
     padding-left: clamp(16px, 7vw, 110px);
     margin-bottom: max(18px, env(safe-area-inset-bottom)); }

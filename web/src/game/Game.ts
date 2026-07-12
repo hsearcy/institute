@@ -942,10 +942,13 @@ export class Game {
   /** The hoard meter filled: blast a firehose of 3D gems out of the bar, punch the
    *  camera, then credit the bonus server-side and leap the counter + shop balance. */
   private async onHoardFull(): Promise<void> {
-    this.hoardEruption();
-    this.shake = Math.max(this.shake, 0.55); // camera punch
-    sfxFanfare(true);
-    const reward = await creditHoardBonus();
+    const pending = creditHoardBonus(); // credit FIRST — VFX must never block it
+    try {
+      this.hoardEruption();
+      this.shake = Math.max(this.shake, 0.55); // camera punch
+      sfxFanfare(true);
+    } catch (e) { console.warn("[hoard] eruption fail:", e); }
+    const reward = await pending;
     if (!reward) return;
     this.totalGems = reward.totalGems;
     this.hud.rollCollectionTo(reward.totalGems);
@@ -1129,11 +1132,11 @@ export class Game {
         const col = (f.mesh.material as MeshPhysicalMaterial).color.getHex();
         this.scene.remove(f.mesh);
         this.flyers.splice(i, 1);
-        this.hud.addGem(col);   // gem lands in the visible hoard
-        sfxCollect();
-        // The prize gem arriving is the cue to commit the authoritative reward:
-        // roll the counter, grow the streak flame, and fire any celebrations.
+        // The prize gem arriving is the cue to commit the authoritative reward.
+        // Money FIRST, cosmetics after (in a guard): a VFX/audio hiccup must
+        // never eat the counter roll or the hoard-bonus credit.
         this.applyReward();
+        try { this.hud.addGem(col); sfxCollect(); } catch (e) { console.warn("[hoard] cosmetic fail:", e); }
       }
     }
     for (let i = this.sparkles.length - 1; i >= 0; i--) {

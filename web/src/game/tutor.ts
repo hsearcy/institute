@@ -20,6 +20,17 @@ export function fetchBranches(current: Problem): Promise<Branches> {
   return post<Branches>('/tutor/branches', { profileId: PROFILE, current });
 }
 
+/** 🎓 button: a spoken strategy explanation of THIS problem (never the answer).
+ *  Never throws — null lets the caller fall back to the local hint. */
+export async function fetchExplain(problem: Problem): Promise<string | null> {
+  try {
+    const r = await post<{ text: string }>('/tutor/explain', { profileId: PROFILE, problem });
+    return r.text || null;
+  } catch {
+    return null;
+  }
+}
+
 /** Record one first-try answer; returns the authoritative reward delta (gems,
  *  streak, milestone, completed quests, shield use). Never throws — on a network
  *  failure it resolves to null so gameplay is never blocked on telemetry. */

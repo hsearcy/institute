@@ -12,6 +12,7 @@ type Handlers = {
   onBackspace: () => void;
   onMine: () => void;
   onReplay: () => void;
+  onExplain: () => void;
   onBuyShield: () => void;
   onToggleQuests: () => void;
   onToggleShop: () => void;
@@ -110,6 +111,7 @@ export class Hud {
       </div>
       <div class="problem-wrap">
         <button class="replay" title="Hear it again">🔊</button>
+        <button class="replay explain" title="Teach me" aria-label="Explain this problem">🎓</button>
         <div class="problem" id="problem">…</div>
       </div>
       <div class="hint" id="hint"></div>
@@ -184,7 +186,8 @@ export class Hud {
       }
       pad.appendChild(b);
     }
-    this.root.querySelector('.replay')!.addEventListener('click', () => h.onReplay());
+    this.root.querySelector('.replay:not(.explain)')!.addEventListener('click', () => h.onReplay());
+    this.root.querySelector('.explain')!.addEventListener('click', () => h.onExplain());
     this.buyShieldBtn.addEventListener('click', () => h.onBuyShield());
     this.root.querySelector('#quests-toggle')!.addEventListener('click', () => h.onToggleQuests());
     this.root.querySelector('#shop-toggle')!.addEventListener('click', () => h.onToggleShop());
@@ -989,6 +992,8 @@ function injectStyles(): void {
   .problem-wrap { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 6px; }
   .replay { pointer-events: auto; border: none; background: rgba(20,16,40,0.5); color: #fff; font-size: 22px;
     width: 46px; height: 46px; border-radius: 50%; cursor: pointer; }
+  .replay.explain.busy { opacity: 0.45; animation: explainPulse 1.1s ease-in-out infinite; }
+  @keyframes explainPulse { 50% { transform: scale(0.92); } }
   .problem { color: #fff; font-size: clamp(40px, 9vw, 84px); font-weight: 900;
     text-shadow: 0 4px 18px rgba(0,0,0,0.5); letter-spacing: 1px; }
   .hint { align-self: center; max-width: min(560px, 88vw); margin: 8px auto 0; padding: 0 14px;

@@ -19,7 +19,7 @@ import type { Problem, Branches, Reward, Durability } from '@institute/shared';
 import { Hud } from './hud';
 import { PICKAXE_SKINS, isSkinKey, type SkinKey } from './skins';
 import {
-  fetchFirst, fetchBranches, recordAttempt, creditRetrySolve, fetchState, buyShield,
+  fetchFirst, fetchBranches, fetchExplain, recordAttempt, creditRetrySolve, fetchState, buyShield,
   fetchShop, buyPickaxe, equipPickaxe, repairPickaxe, creditHoardBonus, fetchMastery,
   buyCrazyCoin, redeemCrazyCoin,
 } from './tutor';
@@ -124,6 +124,7 @@ export class Game {
       onBackspace: () => this.onBackspace(),
       onMine: () => this.onMine(),
       onReplay: () => this.problem && speak(this.problem.spoken),
+      onExplain: () => void this.onExplain(),
       onBuyShield: () => void this.onBuyShield(),
       onToggleQuests: () => this.hud.toggleQuests(),
       onToggleShop: () => this.hud.toggleShop(),
@@ -770,6 +771,24 @@ export class Game {
     if (this.mined || this.busy) return;
     this.entered = this.entered.slice(0, -1);
     this.hud.setAnswer(this.entered);
+  }
+
+  /** 🎓: the tutor explains the current problem's strategy aloud (never the
+   *  answer). Guarded against double-taps; falls back to the local hint offline. */
+  private explaining = false;
+  private async onExplain(): Promise<void> {
+    if (!this.problem || this.explaining) return;
+    this.explaining = true;
+    const btn = document.querySelector('.replay.explain');
+    btn?.classList.add('busy');
+    try {
+      const p = this.problem;
+      const text = (await fetchExplain(p)) ?? p.hint ?? 'Read it again slowly — what is it asking?';
+      if (this.problem?.id === p.id) await speak(text); // still the same problem
+    } finally {
+      btn?.classList.remove('busy');
+      this.explaining = false;
+    }
   }
 
   private onMine(): void {

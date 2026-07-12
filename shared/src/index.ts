@@ -86,7 +86,7 @@ export type ExplainRequest = z.infer<typeof ExplainRequestSchema>;
 export const ExplainResponseSchema = z.object({ text: z.string().min(1).max(600) });
 export type ExplainResponse = z.infer<typeof ExplainResponseSchema>;
 
-export const TtsRequestSchema = z.object({ text: z.string().min(1).max(300) });
+export const TtsRequestSchema = z.object({ text: z.string().min(1).max(600) });
 export type TtsRequest = z.infer<typeof TtsRequestSchema>;
 
 // ---- Rewards (gems / streaks / daily quests / shield) ----------------------

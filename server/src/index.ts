@@ -1030,6 +1030,11 @@ app.post("/tutor/explain", async (c) => {
       if (text && !leaksAnswer(text, problem.answer)) break;
       text = ""; // leaked or empty → retry once, then fall back
     }
+    // Keep it speakable: TTS accepts ≤600 chars — trim overruns at a sentence end.
+    if (text.length > 550) {
+      const cut = text.slice(0, 550);
+      text = cut.slice(0, Math.max(cut.lastIndexOf("."), cut.lastIndexOf("?"), cut.lastIndexOf("!")) + 1) || cut;
+    }
     const out = text || fallback;
     explainCache.set(problem.id, out);
     if (explainCache.size > 50) explainCache.delete(explainCache.keys().next().value!);

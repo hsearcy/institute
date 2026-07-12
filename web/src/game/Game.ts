@@ -788,7 +788,10 @@ export class Game {
     try {
       const p = this.problem;
       const text = (await fetchExplain(p)) ?? p.hint ?? 'Read it again slowly — what is it asking?';
-      if (this.problem?.id === p.id) await speak(text); // still the same problem
+      if (this.problem?.id === p.id) {           // still the same problem
+        this.hud.showHint(text);                 // always visible — even if audio fails
+        await speak(text);
+      }
     } finally {
       btn?.classList.remove('busy');
       if (btn) btn.textContent = '🎓';

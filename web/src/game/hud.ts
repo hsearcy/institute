@@ -225,13 +225,34 @@ export class Hud {
     this.explainTimer = setTimeout(() => explain?.classList.add('avail'), 10_000);
   }
   /** Show a strategy hint / answer reveal banner. */
+  private hintScrollRaf = 0;
   showHint(text: string): void {
+    cancelAnimationFrame(this.hintScrollRaf);
     this.hintEl.textContent = text;
+    this.hintEl.classList.toggle('long', text.length > 140);
     this.hintEl.classList.add('show');
+    this.hintEl.scrollTop = 0;
+    // Long explanations don't fit the capped banner: drift the overflow into view
+    // at roughly the tutor's speaking pace (no scrollbar, nothing to operate).
+    requestAnimationFrame(() => {
+      const overflow = this.hintEl.scrollHeight - this.hintEl.clientHeight;
+      if (overflow <= 0) return;
+      const durationMs = Math.max(4000, text.length * 62); // ≈ TTS pace at 0.78 speed
+      const startAt = performance.now() + 2200;            // let him hear the opening first
+      const step = (now: number) => {
+        const t = Math.min(1, Math.max(0, (now - startAt) / durationMs));
+        this.hintEl.scrollTop = overflow * t;
+        if (t < 1 && this.hintEl.classList.contains('show')) {
+          this.hintScrollRaf = requestAnimationFrame(step);
+        }
+      };
+      this.hintScrollRaf = requestAnimationFrame(step);
+    });
   }
   clearHint(): void {
+    cancelAnimationFrame(this.hintScrollRaf);
     this.hintEl.textContent = '';
-    this.hintEl.classList.remove('show');
+    this.hintEl.classList.remove('show', 'long');
   }
   setAnswer(text: string): void {
     this.answerEl.textContent = text;
@@ -1016,12 +1037,15 @@ function injectStyles(): void {
   @keyframes thinking { 0%, 100% { transform: scale(1) rotate(-6deg); } 50% { transform: scale(1.14) rotate(6deg); } }
   .problem { color: #fff; font-size: clamp(40px, 9vw, 84px); font-weight: 900;
     text-shadow: 0 4px 18px rgba(0,0,0,0.5); letter-spacing: 1px; }
-  .hint { position: absolute; left: 50%; top: clamp(96px, 19vh, 170px); transform: translate(-50%, -4px);
-    max-width: min(560px, 88vw); max-height: 30vh; overflow-y: auto; padding: 2px 14px;
+  .hint { align-self: center; max-width: min(560px, 88vw); max-height: clamp(72px, 18vh, 150px);
+    overflow: hidden; margin: 6px auto 0; padding: 2px 14px;
     text-align: center; color: #ffe9a8; font-weight: 700; font-size: clamp(15px, 3vw, 22px);
-    line-height: 1.25; text-shadow: 0 2px 8px rgba(0,0,0,0.55), 0 0 16px rgba(0,0,0,0.5); opacity: 0;
-    transition: opacity .2s, transform .2s; pointer-events: none; }
-  .hint.show { opacity: 1; transform: translate(-50%, 0); }
+    line-height: 1.3; text-shadow: 0 2px 8px rgba(0,0,0,0.55), 0 0 16px rgba(0,0,0,0.5); opacity: 0;
+    transform: translateY(-4px); transition: opacity .2s, transform .2s; pointer-events: none;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 16px), transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 16px), transparent 100%); }
+  .hint.show { opacity: 1; transform: translateY(0); }
+  .hint.long { font-size: clamp(13px, 2.4vw, 18px); }
   .hud-bottom { margin-top: auto; display: flex; flex-direction: column; align-items: flex-start;
     padding-left: clamp(16px, 7vw, 110px);
     margin-bottom: max(18px, env(safe-area-inset-bottom)); }

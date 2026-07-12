@@ -5,7 +5,7 @@ process.env.ANTHROPIC_BASE_URL = "http://127.0.0.1:9"; // refused connection →
 process.env.TUTOR_MAX_RETRIES = "0"; // no retry backoff — fall back immediately
 process.env.TUTOR_TIMEOUT_MS = "300"; // the dead endpoint hangs (WSL2); time out fast instead
 const { default: server } = await import("./index.ts");
-import { describe, expect, test } from "bun:test";
+import { describe, expect, setSystemTime, test } from "bun:test";
 import { TOPICS } from "@institute/shared";
 
 const call = async (method: string, path: string, body?: unknown) => {
@@ -20,6 +20,93 @@ const call = async (method: string, path: string, body?: unknown) => {
 };
 
 describe("topic-graph tutor flow", () => {
+  test("daily streak quest starts at zero even when the profile streak carries over", async () => {
+    const profileId = "quest-carried-streak";
+    const answer = async (i: number) => call("POST", "/tutor/attempt", {
+      profileId, problemId: `carried-${i}`, skill: "add_within_20",
+      correct: true, solveMs: 10_000, difficulty: 0.4,
+    });
+
+    try {
+      setSystemTime(new Date("2030-01-01T12:00:00.000Z"));
+      for (let i = 0; i < 25; i++) await answer(i);
+      setSystemTime(new Date("2030-01-02T12:00:00.000Z"));
+      await answer(25);
+
+      const state = await call("GET", `/state?profileId=${profileId}`);
+      expect(state.streak).toBe(26);
+      expect(state.quests.find((q: any) => q.key === "streak_5"))
+        .toMatchObject({ progress: 1, done: false });
+    } finally {
+      setSystemTime();
+    }
+  });
+
+  test("an unshielded miss resets only today's streak quest run", async () => {
+    const profileId = "quest-daily-streak-reset";
+    for (let i = 0; i < 3; i++) {
+      await call("POST", "/tutor/attempt", {
+        profileId, problemId: `right-${i}`, skill: "add_within_20",
+        correct: true, solveMs: 10_000, difficulty: 0.4,
+      });
+    }
+    await call("POST", "/tutor/attempt", {
+      profileId, problemId: "wrong", skill: "add_within_20",
+      correct: false, solveMs: 10_000, difficulty: 0.4,
+    });
+    await call("POST", "/tutor/attempt", {
+      profileId, problemId: "right-again", skill: "add_within_20",
+      correct: true, solveMs: 10_000, difficulty: 0.4,
+    });
+
+    const state = await call("GET", `/state?profileId=${profileId}`);
+    expect(state.quests.find((q: any) => q.key === "streak_5").progress).toBe(1);
+  });
+
+  test("daily quests reward endurance, accuracy, speed, and topic variety", async () => {
+    const profileId = "quest-variety";
+    let state = await call("GET", `/state?profileId=${profileId}`);
+    expect(state.quests.map((q: any) => [q.key, q.target])).toEqual(expect.arrayContaining([
+      ["mine_gems", 60],
+      ["solve_10", 25],
+      ["streak_5", 10],
+      ["speed_8", 8],
+      ["topic_explorer", 4],
+    ]));
+
+    const topics = TOPICS.filter((t) => t.prereqs.length === 0).slice(0, 4);
+    // Exactly 15 seconds is not "under 15 seconds."
+    await call("POST", "/tutor/attempt", {
+      profileId, problemId: "slow", skill: "add_within_20", topicId: topics[0].id,
+      correct: true, solveMs: 15_000, difficulty: 0.4,
+    });
+    for (let i = 0; i < 8; i++) {
+      const topic = topics[i % topics.length];
+      await call("POST", "/tutor/attempt", {
+        profileId, problemId: `fast-${i}`, skill: "add_within_20", topicId: topic.id,
+        correct: true, solveMs: 14_999, difficulty: 0.4,
+      });
+    }
+
+    state = await call("GET", `/state?profileId=${profileId}`);
+    const quests = Object.fromEntries(state.quests.map((q: any) => [q.key, q]));
+    expect(quests.speed_8).toMatchObject({ progress: 8, done: true });
+    expect(quests.topic_explorer).toMatchObject({ progress: 4, done: true });
+    expect(quests.solve_10).toMatchObject({ progress: 9, done: false });
+    expect(quests.streak_5).toMatchObject({ progress: 9, done: false });
+  });
+
+  test("retry solves count for endurance but not speed or topic variety", async () => {
+    const profileId = "quest-retry";
+    await call("POST", "/reward/retry-solve", { profileId });
+    const state = await call("GET", `/state?profileId=${profileId}`);
+    const quests = Object.fromEntries(state.quests.map((q: any) => [q.key, q]));
+    expect(quests.mine_gems.progress).toBe(1);
+    expect(quests.solve_10.progress).toBe(1);
+    expect(quests.speed_8.progress).toBe(0);
+    expect(quests.topic_explorer.progress).toBe(0);
+  });
+
   test("first problem comes from a root topic and carries topicId + label", async () => {
     const p = await call("POST", "/tutor/first", { profileId: "kid1" });
     const topic = TOPICS.find((t) => t.id === p.topicId);

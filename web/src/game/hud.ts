@@ -411,7 +411,7 @@ export class Hud {
     const list = this.root.querySelector('#quests-list')!;
     // Fixed display order (the server's row order isn't deterministic) so rows
     // never reshuffle / rebuild under the panel.
-    const order = ['mine_gems', 'solve_10', 'streak_5'];
+    const order = ['mine_gems', 'solve_10', 'streak_5', 'speed_8', 'topic_explorer'];
     const quests = [...questsIn].sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
     // Rebuild only if the set of keys changed; otherwise update in place.
     const keys = quests.map((q) => q.key).join(',');
@@ -898,6 +898,7 @@ function injectStyles(): void {
     box-shadow: inset 0 0 0 1px rgba(255,233,168,0.22); backdrop-filter: blur(6px); }
   .quests { position: fixed; top: 116px; right: 14px; width: min(280px, 80vw); pointer-events: auto;
     background: rgba(18,14,34,0.82); border-radius: 16px; padding: 12px 13px 13px; backdrop-filter: blur(9px);
+    max-height: min(70vh, 520px); overflow-y: auto;
     box-shadow: 0 12px 34px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,233,168,0.18);
     transform-origin: top right; transform: scale(0.86) translateY(-8px); opacity: 0; visibility: hidden;
     transition: opacity .18s ease, transform .18s cubic-bezier(.3,1.5,.5,1), visibility .18s; }

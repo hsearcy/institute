@@ -236,11 +236,14 @@ const utcDay = () => new Date().toISOString().slice(0, 10);
 // HOARD_BONUS on the client, which renders the "+N" banner).
 const HOARD_BONUS = 10;
 
-/** The exact three daily quests, regenerated lazily per UTC day. */
+/** The five daily quests, regenerated lazily per UTC day. Keep the legacy keys
+ *  for the first three so an in-progress day survives deploys. */
 const QUEST_DEFS = [
-  { key: "mine_gems", label: "Mine 30 gems today", target: 30, reward: 15 },
-  { key: "streak_5", label: "Reach a 5-streak", target: 5, reward: 20 },
-  { key: "solve_10", label: "Solve 10 problems", target: 10, reward: 10 },
+  { key: "mine_gems", label: "Mine 60 gems today", target: 60, reward: 25 },
+  { key: "solve_10", label: "Solve 25 problems", target: 25, reward: 20 },
+  { key: "streak_5", label: "Reach a 10-streak", target: 10, reward: 20 },
+  { key: "speed_8", label: "Lightning: 8 under 15 seconds", target: 8, reward: 10 },
+  { key: "topic_explorer", label: "Explore 4 math topics", target: 4, reward: 15 },
 ] as const;
 
 /** Streak bonus gems on top of the base +1 per correct answer. */
@@ -358,17 +361,75 @@ function getQuests(profileId: string, day = utcDay()): QuestRow[] {
        VALUES (?, ?, ?, ?, ?, 0, ?, 0)`,
     );
     for (const q of QUEST_DEFS) ins.run(profileId, q.key, day, q.label, q.target, q.reward);
-    return db.query(
-      `SELECT quest_key, label, target, progress, reward, done FROM quests WHERE profile_id = ? AND day = ?`,
-    ).all(profileId, day) as QuestRow[];
   }
-  return existing;
+  // Apply balance changes to unfinished legacy rows without taking away a quest
+  // the kid already completed earlier today.
+  const tune = db.query(
+    `UPDATE quests SET label = ?, target = ?, reward = ?
+     WHERE profile_id = ? AND quest_key = ? AND day = ? AND done = 0`,
+  );
+  for (const q of QUEST_DEFS) tune.run(q.label, q.target, q.reward, profileId, q.key, day);
+  return db.query(
+    `SELECT quest_key, label, target, progress, reward, done FROM quests WHERE profile_id = ? AND day = ?`,
+  ).all(profileId, day) as QuestRow[];
 }
 
 const questView = (rows: QuestRow[]) => rows.map((r) => ({
   key: r.quest_key, label: r.label, target: r.target,
   progress: r.progress, reward: r.reward, done: !!r.done,
 }));
+
+type QuestEvent = {
+  firstTry: boolean;
+  gemsEarned: number;
+  solveMs?: number;
+};
+
+/** Advance today's quests from one solved problem. Speed and topic breadth are
+ *  deliberately first-try-only; retries still count as persistence/endurance. */
+function advanceQuests(
+  profileId: string,
+  day: string,
+  state: ProfileStateRow,
+  event: QuestEvent,
+): { key: string; label: string; reward: number }[] {
+  const completed: { key: string; label: string; reward: number }[] = [];
+  const dayStart = Date.parse(`${day}T00:00:00.000Z`);
+  const distinctTopics = event.firstTry
+    ? (db.query(
+      `SELECT COUNT(DISTINCT topic_id) AS count FROM attempts
+       WHERE profile_id = ? AND correct = 1 AND topic_id IS NOT NULL AND created_at >= ?`,
+    ).get(profileId, dayStart) as { count: number }).count
+    : 0;
+
+  for (const r of getQuests(profileId, day)) {
+    if (r.done) continue;
+    let progress = r.progress;
+    if (r.quest_key === "mine_gems") progress += event.gemsEarned;
+    else if (r.quest_key === "solve_10") progress += 1;
+    else if (r.quest_key === "streak_5" && event.firstTry) progress += 1;
+    else if (r.quest_key === "speed_8" && event.firstTry && (event.solveMs ?? Infinity) < 15_000) progress += 1;
+    else if (r.quest_key === "topic_explorer" && event.firstTry) progress = distinctTopics;
+
+    const done = progress >= r.target ? 1 : 0;
+    if (done) {
+      state.gems += r.reward;
+      completed.push({ key: r.quest_key, label: r.label, reward: r.reward });
+    }
+    db.query(`UPDATE quests SET progress = ?, done = ? WHERE profile_id = ? AND quest_key = ? AND day = ?`)
+      .run(progress, done, profileId, r.quest_key, day);
+  }
+  return completed;
+}
+
+/** A daily streak is independent of the profile's cross-day streak. A shield
+ *  skips this reset because it explicitly saves the streak. */
+function resetDailyStreakQuest(profileId: string, day: string): void {
+  db.query(
+    `UPDATE quests SET progress = 0
+     WHERE profile_id = ? AND quest_key = 'streak_5' AND day = ? AND done = 0`,
+  ).run(profileId, day);
+}
 
 function skillStats(profileId: string): SkillStat[] {
   const rows = db.query(
@@ -728,23 +789,11 @@ app.post("/tutor/attempt", async (c) => {
     state.gems += gemsEarned;
     if (bonus > 0) milestone = state.streak;
 
-    // Update quest progress, completing any that hit target (reward → gems).
-    const rows = getQuests(profileId, day);
-    for (const r of rows) {
-      if (r.done) continue;
-      let progress = r.progress;
-      if (r.quest_key === "mine_gems") progress += gemsEarned;
-      else if (r.quest_key === "solve_10") progress += 1;
-      else if (r.quest_key === "streak_5") progress = Math.max(progress, state.streak);
-      let done = 0;
-      if (progress >= r.target) {
-        done = 1;
-        state.gems += r.reward;
-        questsCompleted.push({ key: r.quest_key, label: r.label, reward: r.reward });
-      }
-      db.query(`UPDATE quests SET progress = ?, done = ? WHERE profile_id = ? AND quest_key = ? AND day = ?`)
-        .run(progress, done, profileId, r.quest_key, day);
-    }
+    questsCompleted.push(...advanceQuests(profileId, day, state, {
+      firstTry: true,
+      gemsEarned,
+      solveMs: Math.round(solveMs ?? 0),
+    }));
   } else {
     gemsEarned = 0;
     if (state.shields > 0) {
@@ -752,6 +801,7 @@ app.post("/tutor/attempt", async (c) => {
       shieldUsed = true; // shield saved the streak — leave it unchanged
     } else {
       state.streak = 0;
+      resetDailyStreakQuest(profileId, day);
     }
   }
   // A correct answer mines a gem — that swing wears the equipped pickaxe.
@@ -781,20 +831,10 @@ app.post("/reward/retry-solve", async (c) => {
   const state = getProfileState(profileId);
   const day = utcDay();
   state.gems += 1;
-  const questsCompleted: { key: string; label: string; reward: number }[] = [];
-  for (const r of getQuests(profileId, day)) {
-    if (r.done || r.quest_key === "streak_5") continue;
-    let progress = r.progress;
-    if (r.quest_key === "mine_gems") progress += 1;
-    else if (r.quest_key === "solve_10") progress += 1;
-    let done = 0;
-    if (progress >= r.target) {
-      done = 1; state.gems += r.reward;
-      questsCompleted.push({ key: r.quest_key, label: r.label, reward: r.reward });
-    }
-    db.query(`UPDATE quests SET progress = ?, done = ? WHERE profile_id = ? AND quest_key = ? AND day = ?`)
-      .run(progress, done, profileId, r.quest_key, day);
-  }
+  const questsCompleted = advanceQuests(profileId, day, state, {
+    firstTry: false,
+    gemsEarned: 1,
+  });
   const durability = equippedDurability(profileId, state, true); // a mined gem wears it
   saveProfileState(profileId, state);
   return c.json({

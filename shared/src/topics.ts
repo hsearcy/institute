@@ -53,6 +53,9 @@ export const TopicSchema = z.object({
   gen: GenSpecSchema,
   fluentMs: z.number().int().nullable(),
   prereqs: z.array(z.string()),
+  /** Soft-edge remediation targets: NOT unlock gates — where the tutor steps
+   *  down to when the child keeps missing this topic. */
+  helpPrereqs: z.array(z.string()),
 });
 export type Topic = z.infer<typeof TopicSchema>;
 

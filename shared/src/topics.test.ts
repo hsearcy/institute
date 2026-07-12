@@ -10,6 +10,15 @@ describe("curated topics", () => {
   test("every prereq id resolves", () => {
     for (const t of TOPICS) for (const p of t.prereqs) expect(topicById(p)).toBeDefined();
   });
+  test("helpPrereqs resolve, exclude self, and are disjoint from hard prereqs", () => {
+    for (const t of TOPICS) {
+      for (const p of t.helpPrereqs) {
+        expect(topicById(p)).toBeDefined();
+        expect(p).not.toBe(t.id);
+        expect(t.prereqs).not.toContain(p);
+      }
+    }
+  });
   test("graph is acyclic", () => {
     const state = new Map<string, number>(); // 0 visiting, 1 done
     const visit = (id: string): void => {

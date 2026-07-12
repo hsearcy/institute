@@ -37,3 +37,17 @@ describe("contractEdges", () => {
     expect(contractEdges(dia, new Set(["X", "Z"])).get("Z")).toEqual(["X"]);
   });
 });
+
+describe("contractEdges with union strengths", () => {
+  const mixed = [
+    { topicId: "B", prerequisiteId: "A", strength: "soft" },
+    { topicId: "C", prerequisiteId: "B", strength: "hard" },
+  ];
+  test("union contraction crosses soft hops", () => {
+    const out = contractEdges(mixed, new Set(["A", "C"]), new Set(["hard", "soft"]));
+    expect(out.get("C")).toEqual(["A"]);
+  });
+  test("default stays hard-only", () => {
+    expect(contractEdges(mixed, new Set(["A", "C"])).get("C")).toEqual([]);
+  });
+});

@@ -1,12 +1,17 @@
 // scripts/contract-graph.ts — contract taxonomy prereq edges onto a curated subset.
-// For each curated topic, walk hard-prereq ancestors; the nearest curated ancestor
-// on each path becomes a direct prereq (excluded intermediates are skipped over).
+// For each curated topic, walk prereq ancestors over edges of the given strengths
+// (default: hard only); the nearest curated ancestor on each path becomes a direct
+// prereq (excluded intermediates are skipped over).
 export type Edge = { topicId: string; prerequisiteId: string; strength: string };
 
-export function contractEdges(edges: Edge[], curated: Set<string>): Map<string, string[]> {
+export function contractEdges(
+  edges: Edge[],
+  curated: Set<string>,
+  strengths: ReadonlySet<string> = new Set(["hard"]),
+): Map<string, string[]> {
   const hardPrereqs = new Map<string, string[]>();
   for (const e of edges) {
-    if (e.strength !== "hard") continue;
+    if (!strengths.has(e.strength)) continue;
     const arr = hardPrereqs.get(e.topicId) ?? [];
     arr.push(e.prerequisiteId);
     hardPrereqs.set(e.topicId, arr);

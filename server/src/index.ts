@@ -19,6 +19,7 @@ import { problemForTopic } from "./topicgen.ts";
 import { topicState } from "./mastery.ts";
 import { nextReview } from "./review.ts";
 import { selectNext } from "./select.ts";
+import { rescueTopic } from "./rescue.ts";
 
 const PORT = Number(process.env.PORT ?? 8787);
 const TUTOR_MODEL = process.env.TUTOR_MODEL ?? "claude-sonnet-5";
@@ -546,12 +547,38 @@ function topicBlock(t: Topic, target: number): string {
   ].join("\n");
 }
 
+/** The wrong branch's target. Normally the current topic (easier numbers) — but if
+ *  the PREVIOUS attempt already missed this topic, serving the wrong branch means a
+ *  2nd consecutive miss: step DOWN the graph to a prereq he can win at instead. */
+function wrongBranchPlan(
+  profileId: string,
+  current: Problem,
+  recent: { topic_id?: string | null; correct: number }[],
+): { topic: Topic | undefined; rescuing: boolean; difficulty: number } {
+  const curTopic = current.topicId ? topicById(current.topicId) : undefined;
+  const fallback = { topic: curTopic, rescuing: false, difficulty: Math.max(0.15, current.difficulty - 0.12) };
+  if (!curTopic) return fallback;
+  const lastMissedHere = recent[0] && recent[0].topic_id === curTopic.id && !recent[0].correct;
+  if (!lastMissedHere) return fallback;
+  const rows = topicMasteryRows(profileId);
+  const rescue = rescueTopic(curTopic, rows.map((r) => ({
+    topicId: r.topic_id, state: r.state, lastDifficulty: r.last_difficulty,
+    reviewDueAt: r.review_due_at, reviewIntervalDays: r.review_interval_days,
+  })), TOPICS);
+  if (!rescue) return fallback;
+  const last = rows.find((r) => r.topic_id === rescue.id)?.last_difficulty ?? 0.35;
+  return { topic: rescue, rescuing: true, difficulty: Math.max(0.25, last - 0.1) };
+}
+
 async function llmBranches(profileId: string, current: Problem): Promise<{ right: Problem; wrong: Problem }> {
   const sums = learnerSummaries(profileId);
-  const plan = adaptivePlan(profileId, current, recentAttempts(profileId, 10));
+  const recent = recentAttempts(profileId, 10);
+  const plan = adaptivePlan(profileId, current, recent);
   const curTopic = current.topicId ? topicById(current.topicId) : undefined;
   const rightTopic = plan.advanceTopic ?? curTopic;
-  const wrongTopic = curTopic;
+  const wrongPlan = wrongBranchPlan(profileId, current, recent);
+  const wrongTopic = wrongPlan.topic;
+  const wrongTarget = wrongPlan.rescuing ? +wrongPlan.difficulty.toFixed(2) : plan.wrongTarget;
   const avoid = recentPrompts.get(profileId) ?? [];
   const userContent = [
     describeLearner(sums),
@@ -566,8 +593,10 @@ async function llmBranches(profileId: string, current: Problem): Promise<{ right
         ? `, as a REVIEW of an earlier skill — a friendly confidence check on this topic:`
         : plan.advanceTopic ? `, moving on to this topic:` : `, staying on this topic:`),
     rightTopic ? topicBlock(rightTopic, plan.rightTarget) : "",
-    `- "wrong" (he misses it): rebuild confidence at difficulty ≈ ${plan.wrongTarget} with friendlier numbers, on this topic:`,
-    wrongTopic ? topicBlock(wrongTopic, plan.wrongTarget) : "",
+    wrongPlan.rescuing
+      ? `- "wrong" (he misses it): that would be his SECOND miss in a row here, so step down to a warm-up he already knows — difficulty ≈ ${wrongTarget}, on this easier prerequisite topic:`
+      : `- "wrong" (he misses it): rebuild confidence at difficulty ≈ ${wrongTarget} with friendlier numbers, on this topic:`,
+    wrongTopic ? topicBlock(wrongTopic, wrongTarget) : "",
     `Vary the numbers; do not reuse "${current.prompt}".`,
   ].filter(Boolean).join("\n");
   const resp = await anthropic.messages.create({
@@ -624,7 +653,8 @@ function correctDraft(d: ProblemDraft): ProblemDraft {
 }
 
 /** Local fallback branches: right side follows the unified selector (reviews,
- *  rotation); wrong side always eases off on the SAME topic. */
+ *  rotation); wrong side eases off on the same topic — or steps down to a prereq
+ *  when this would be the 2nd consecutive miss (the soft-edge safety net). */
 function localBranches(profileId: string, current: Problem): { right: Problem; wrong: Problem } {
   const curTopic = current.topicId ? topicById(current.topicId) : undefined;
   const make = (topic: Topic | undefined, d: number) =>
@@ -633,9 +663,10 @@ function localBranches(profileId: string, current: Problem): { right: Problem; w
   const right = next
     ? make(next.topic, next.mode === "review" ? next.difficulty : Math.min(0.95, current.difficulty + 0.12))
     : make(undefined, Math.min(0.95, current.difficulty + 0.12));
+  const wrongPlan = wrongBranchPlan(profileId, current, recentAttempts(profileId, 3));
   return {
     right,
-    wrong: make(curTopic, Math.max(0.15, current.difficulty - 0.12)),
+    wrong: make(wrongPlan.topic, wrongPlan.difficulty),
   };
 }
 

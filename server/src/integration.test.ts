@@ -137,13 +137,30 @@ describe("topic-graph tutor flow", () => {
     for (let i = 0; i < 4; i++) {
       await call("POST", "/tutor/attempt", {
         profileId: "kid7", problemId: `p${i}`, skill: "add_within_20",
-        topicId, correct: i % 2 === 0, solveMs: 6000, difficulty: 0.5, // mixed → not mastered
+        topicId, correct: i % 2 === 1, solveMs: 6000, difficulty: 0.5, // mixed, ENDS ON CORRECT so the rescue trigger stays unarmed — this test is about rotation only
       });
     }
     const current = { id: "px", skill: "add_within_20", topicId, topicLabel: "Number Bonds",
       prompt: "3 + ? = 9", spoken: "3 plus what makes 9?", answer: 6, difficulty: 0.5 };
     const b = await call("POST", "/tutor/branches", { profileId: "kid7", current });
     expect(b.right.topicId).not.toBe(topicId);     // rotated away after the run
-    expect(b.wrong.topicId).toBe(topicId);          // wrong branch never switches
+    expect(b.wrong.topicId).toBe(topicId);          // wrong branch stays put (no rescue armed)
+  });
+
+  test("two consecutive misses route the wrong branch down to a prerequisite", async () => {
+    // Add & Take to 10 has hard prereqs {Number Bonds, Add & Take to 5}.
+    const topicId = "mt__we2TDqnJx";
+    const stepDowns = ["mt_e8CZ7E5qW7", "mt_ghF3Vv6taM"];
+    // Previous problem on this topic was MISSED → the next miss is the 2nd consecutive.
+    await call("POST", "/tutor/attempt", {
+      profileId: "kid8", problemId: "p0", skill: "add_within_20",
+      topicId, correct: false, solveMs: 9000, difficulty: 0.5,
+    });
+    const current = { id: "p1", skill: "add_within_20", topicId, topicLabel: "Add & Take to 10",
+      prompt: "6 + 3", spoken: "What is 6 plus 3?", answer: 9, difficulty: 0.5 };
+    const b = await call("POST", "/tutor/branches", { profileId: "kid8", current });
+    expect(stepDowns).toContain(b.wrong.topicId);   // stepped down the graph
+    expect(b.wrong.difficulty).toBeLessThanOrEqual(0.5);
+    expect(b.right.topicId).toBeDefined();          // right branch unaffected shape
   });
 });

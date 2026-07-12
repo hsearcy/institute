@@ -110,8 +110,10 @@ export class Hud {
         <div class="shop-list" id="shop-list"></div>
       </div>
       <div class="problem-wrap">
-        <button class="replay" title="Hear it again">🔊</button>
-        <button class="replay explain" title="Teach me" aria-label="Explain this problem">🎓</button>
+        <div class="voice-stack">
+          <button class="replay" title="Hear it again">🔊</button>
+          <button class="replay explain" title="Teach me" aria-label="Explain this problem">🎓</button>
+        </div>
         <div class="problem" id="problem">…</div>
       </div>
       <div class="hint" id="hint"></div>
@@ -211,8 +213,14 @@ export class Hud {
     this.flameEl.style.display = 'none'; // hidden until there's a streak
   }
 
+  private explainTimer: ReturnType<typeof setTimeout> | null = null;
   setProblem(text: string): void {
     this.problemEl.textContent = text;
+    // The 🎓 helper only appears after he's had a fair try (~10s) at the problem.
+    const explain = this.root.querySelector('.explain');
+    if (this.explainTimer) clearTimeout(this.explainTimer);
+    explain?.classList.remove('avail');
+    this.explainTimer = setTimeout(() => explain?.classList.add('avail'), 10_000);
   }
   /** Show a strategy hint / answer reveal banner. */
   showHint(text: string): void {
@@ -990,6 +998,9 @@ function injectStyles(): void {
   .banner.broke { animation: bannerPop 3.4s cubic-bezier(.2,1.4,.4,1) forwards; }
 
   .problem-wrap { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 6px; }
+  .voice-stack { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .replay.explain { opacity: 0; pointer-events: none; transform: scale(0.7); transition: opacity .5s ease, transform .5s cubic-bezier(.2,1.4,.4,1); }
+  .replay.explain.avail { opacity: 1; pointer-events: auto; transform: scale(1); }
   .replay { pointer-events: auto; border: none; background: rgba(20,16,40,0.5); color: #fff; font-size: 22px;
     width: 46px; height: 46px; border-radius: 50%; cursor: pointer; }
   .replay.explain.busy { opacity: 0.45; animation: explainPulse 1.1s ease-in-out infinite; }

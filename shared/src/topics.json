@@ -46,7 +46,7 @@
     "kind": "add_sub",
     "max": 5
    },
-   "fluentMs": 7000,
+   "fluentMs": 9000,
    "prereqs": []
   },
   {
@@ -94,7 +94,7 @@
     "kind": "add_sub",
     "max": 10
    },
-   "fluentMs": 6000,
+   "fluentMs": 8000,
    "prereqs": [
     "mt_e8CZ7E5qW7",
     "mt_ghF3Vv6taM"
@@ -150,7 +150,7 @@
     "max": 20,
     "carry": true
    },
-   "fluentMs": 8000,
+   "fluentMs": 10000,
    "prereqs": [
     "mt__we2TDqnJx",
     "mt_m1W6nTQJ2b"
@@ -361,7 +361,7 @@
      10
     ]
    },
-   "fluentMs": 7000,
+   "fluentMs": 9000,
    "prereqs": [
     "mt_PZ909yPrEC",
     "mt_nvdpxAJTBG"
@@ -396,6 +396,554 @@
    },
    "fluentMs": null,
    "prereqs": []
+  },
+  {
+   "id": "mt_s2mfRBoTal",
+   "name": "Number bonds",
+   "kidLabel": "Bond Master",
+   "domain": "Addition & Subtraction",
+   "ageRange": [
+    5,
+    6
+   ],
+   "description": "Recall number bonds (addition and related subtraction facts) within 20",
+   "evidence": [
+    "Quickly recall that 8 + 5 = 13",
+    "Given 13 – 5, respond 8 using knowledge of related addition fact",
+    "Know all pairs of single-digit numbers that sum to numbers up to 20"
+   ],
+   "assessmentPrompt": "Can {{name}} quickly recall facts like '8 + 7 = 15' and immediately know that '15 − 7 = 8' — without having to work out the subtraction from scratch?",
+   "legacySkill": "add_within_20",
+   "gen": {
+    "kind": "missing_addend",
+    "totalMax": 20
+   },
+   "fluentMs": 9000,
+   "prereqs": [
+    "mt_e8CZ7E5qW7",
+    "mt_ghF3Vv6taM"
+   ]
+  },
+  {
+   "id": "mt_AKAtWEwpcj",
+   "name": "Mental addition and subtraction (age 6+)",
+   "kidLabel": "Big Number Add",
+   "domain": "Addition & Subtraction",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Add and subtract a two-digit number and ones mentally and using concrete/pictorial representations",
+   "evidence": [
+    "Calculate 36 + 7 = 43 using objects or mentally",
+    "Calculate 52 − 4 = 48 using a number line or mentally",
+    "Explain bridging through 10 when adding ones to a two-digit number"
+   ],
+   "assessmentPrompt": "Can {{name}} work out '36 + 7' or '42 − 5' in their head — keeping the tens in place and only adjusting the ones?",
+   "legacySkill": "add_within_20",
+   "gen": {
+    "kind": "two_digit_ones"
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_THl9GLxwoL",
+    "mt_s2mfRBoTal"
+   ]
+  },
+  {
+   "id": "mt_glPPG-kTQY",
+   "name": "Adding within 100",
+   "kidLabel": "Climb to 100",
+   "domain": "Addition & Subtraction",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Add within 100 using strategies based on place value, including adding a two-digit and one-digit number, and a two-digit and a multiple of 10",
+   "evidence": [
+    "Calculate 46 + 7 using place value (46 + 4 + 3 = 53)",
+    "Calculate 38 + 40 = 78 using tens understanding",
+    "Relate the strategy to a written method and explain the reasoning"
+   ],
+   "assessmentPrompt": "Can {{name}} work out sums like '47 + 8' or '35 + 50' by thinking about the tens and ones separately rather than counting up one at a time?",
+   "legacySkill": "add_within_20",
+   "gen": {
+    "kind": "add_within_100"
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_THl9GLxwoL",
+    "mt_m1W6nTQJ2b"
+   ]
+  },
+  {
+   "id": "mt_UQnAFPs83F",
+   "name": "Adding two two-digit numbers",
+   "kidLabel": "Double Digits",
+   "domain": "Addition & Subtraction",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Add and subtract two two-digit numbers using concrete objects, pictorial representations, and mental methods",
+   "evidence": [
+    "Calculate 34 + 27 using base-ten blocks or column addition",
+    "Calculate 63 − 28 using a number line or partitioning",
+    "Explain a strategy for adding or subtracting two two-digit numbers"
+   ],
+   "assessmentPrompt": "Can {{name}} add or subtract two two-digit numbers — like '43 + 28' — using counters, a drawing, or working it out in their head?",
+   "legacySkill": "add_within_20",
+   "gen": {
+    "kind": "add_2d2d"
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_AKAtWEwpcj",
+    "mt_I5j1ZWo2cn"
+   ]
+  },
+  {
+   "id": "mt_cChv2j_-Da",
+   "name": "Fluent adding and subtracting within 100",
+   "kidLabel": "Lightning 100s",
+   "domain": "Addition & Subtraction",
+   "ageRange": [
+    7,
+    8
+   ],
+   "description": "Fluently add and subtract within 100 using strategies based on place value, properties of operations, and the relationship between addition and subtraction",
+   "evidence": [
+    "Add two-digit numbers within 100 efficiently (e.g. 46 + 37 using place-value partitioning)",
+    "Subtract two-digit numbers within 100 fluently (e.g. 83 − 25)",
+    "Choose between strategies (decomposing, compensating, using known facts) based on the numbers involved"
+   ],
+   "assessmentPrompt": "Can {{name}} reliably add or subtract two-digit numbers like '68 + 27' or '91 − 45', choosing the best strategy for each problem?",
+   "legacySkill": "add_within_20",
+   "gen": {
+    "kind": "add_2d2d"
+   },
+   "fluentMs": 12000,
+   "prereqs": [
+    "mt__t4afSyZRm",
+    "mt_glPPG-kTQY"
+   ]
+  },
+  {
+   "id": "mt_3JgrHY221M",
+   "name": "Unknown in Addition & Subtraction",
+   "kidLabel": "Mystery Master",
+   "domain": "Addition & Subtraction",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Determine the unknown whole number in an addition or subtraction equation relating three whole numbers",
+   "evidence": [
+    "Solve 8 + ? = 11 and write 3",
+    "Solve 5 = □ − 3 and write 8",
+    "Solve 6 + 6 = □ and write 12"
+   ],
+   "assessmentPrompt": "If {{name}} sees '? + 6 = 14' or '9 − ? = 4' written on paper, can they figure out what number goes in the gap?",
+   "legacySkill": "add_within_20",
+   "gen": {
+    "kind": "missing_any",
+    "max": 20
+   },
+   "fluentMs": null,
+   "prereqs": []
+  },
+  {
+   "id": "mt__YRJ23GuIK",
+   "name": "Two written numerals between 1 and 10",
+   "kidLabel": "Bigger or Smaller",
+   "domain": "Counting & Cardinality",
+   "ageRange": [
+    5,
+    6
+   ],
+   "description": "Compare two written numerals between 1 and 10 to determine which is greater or less",
+   "evidence": [
+    "Given two written numerals (e.g. 4 and 7), identify which is greater",
+    "Correctly use > and < or 'greater than' / 'less than' to compare single-digit numerals"
+   ],
+   "assessmentPrompt": "If you write \"3\" and \"8\" on two pieces of paper and ask {{name}} which number is bigger, can they get it right — and could they tell you why?",
+   "legacySkill": "skip_counting",
+   "gen": {
+    "kind": "compare_pick",
+    "max": 10
+   },
+   "fluentMs": null,
+   "prereqs": []
+  },
+  {
+   "id": "mt_aHAM29nidj",
+   "name": "Counting forwards and backwards",
+   "kidLabel": "Counting by 3s",
+   "domain": "Counting & Cardinality",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Count forwards and backwards in steps of 3 from 0",
+   "evidence": [
+    "Count 3, 6, 9, 12, 15 … up to at least 30",
+    "Count backwards in 3s from 30",
+    "Identify the next number in a sequence of multiples of 3"
+   ],
+   "assessmentPrompt": "Can {{name}} count in threes — 3, 6, 9, 12, 15 — far enough to reach 30 without losing track or needing to start over?",
+   "legacySkill": "skip_counting",
+   "gen": {
+    "kind": "skip",
+    "steps": [
+     3
+    ],
+    "back": true
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_nvdpxAJTBG"
+   ]
+  },
+  {
+   "id": "mt_OkSJfrmFb_",
+   "name": "Counting forwards and backwards (age 6+)",
+   "kidLabel": "Ten Hops Anywhere",
+   "domain": "Counting & Cardinality",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Count forwards and backwards in tens from any number (not just multiples of 10)",
+   "evidence": [
+    "Count 7, 17, 27, 37 … from a non-multiple starting point",
+    "Count backwards in tens from 83",
+    "Explain the pattern of adding/subtracting 10"
+   ],
+   "assessmentPrompt": "If {{name}} starts at 37 and you ask them to count up in tens, can they say 37, 47, 57, 67 — crossing over into the next hundred without getting stuck?",
+   "legacySkill": "skip_counting",
+   "gen": {
+    "kind": "skip",
+    "steps": [
+     10
+    ],
+    "offset": true
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_THl9GLxwoL",
+    "mt_nvdpxAJTBG"
+   ]
+  },
+  {
+   "id": "mt_IzQvs7k_sE",
+   "name": "Skip Counting (4s, 8s, 50s, 100s)",
+   "kidLabel": "Super Skips",
+   "domain": "Counting & Cardinality",
+   "ageRange": [
+    7,
+    8
+   ],
+   "description": "Count from 0 in multiples of 4, 8, 50, and 100",
+   "evidence": [
+    "Recite the multiples of 4 from 0 to at least 48",
+    "Recite the multiples of 8 from 0 to at least 96",
+    "Count in steps of 50 and 100 from 0 to 1000"
+   ],
+   "assessmentPrompt": "Can {{name}} count in fours all the way to 48, count in eights, or count up in hundreds from any starting point — for example 350, 450, 550?",
+   "legacySkill": "skip_counting",
+   "gen": {
+    "kind": "skip",
+    "steps": [
+     4,
+     8,
+     50,
+     100
+    ]
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_nvdpxAJTBG"
+   ]
+  },
+  {
+   "id": "mt_M2v1A9OEuM",
+   "name": "Counting Within 1,000",
+   "kidLabel": "Counting to 1000",
+   "domain": "Counting & Cardinality",
+   "ageRange": [
+    7,
+    8
+   ],
+   "description": "Count within 1000, including skip-counting by 5s, 10s, and 100s",
+   "evidence": [
+    "Count forwards and backwards within 1000 from any starting number",
+    "Skip-count by 5s from any multiple of 5 to 1000",
+    "Skip-count by 100s from any number (e.g. 150, 250, 350 …)"
+   ],
+   "assessmentPrompt": "Can {{name}} count confidently up to 1000 — and if you ask them to count by hundreds from 200, or by tens from 650, can they do it without losing their place?",
+   "legacySkill": "skip_counting",
+   "gen": {
+    "kind": "skip",
+    "steps": [
+     5,
+     10,
+     100
+    ],
+    "offset": true
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_nvdpxAJTBG"
+   ]
+  },
+  {
+   "id": "mt_wh3UqnWsa7",
+   "name": "Multiplication as repeated addition (age 6+)",
+   "kidLabel": "Groups Galore",
+   "domain": "Multiplication & Division",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Solve problems involving multiplication and division using arrays, repeated addition, mental methods, and known facts",
+   "evidence": [
+    "Solve 'There are 5 bags with 2 apples in each. How many apples?' using repeated addition or known fact",
+    "Solve 'Share 15 sweets equally among 3 children' using grouping",
+    "Draw an array to solve a multiplication problem in context"
+   ],
+   "assessmentPrompt": "If you tell {{name}} 'you have 5 bags with 4 marbles in each — how many altogether?', can they figure it out using objects, a drawing, or mental adding?",
+   "legacySkill": "multiplication",
+   "gen": {
+    "kind": "mul_div",
+    "tables": [
+     2,
+     3,
+     4,
+     5,
+     10
+    ]
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_HhuSDxwDNM"
+   ]
+  },
+  {
+   "id": "mt_wQ89AEXhz3",
+   "name": "Times tables (age 7+)",
+   "kidLabel": "Times Tables II",
+   "domain": "Multiplication & Division",
+   "ageRange": [
+    7,
+    8
+   ],
+   "description": "Recall and use multiplication and division facts for the 3, 4, and 8 multiplication tables",
+   "evidence": [
+    "Recall 3 × 1 through 3 × 12 and corresponding division facts",
+    "Recall 4 × 1 through 4 × 12 and corresponding division facts",
+    "Recall 8 × 1 through 8 × 12 and corresponding division facts"
+   ],
+   "assessmentPrompt": "Can {{name}} quickly recall facts from the 3, 4, and 8 times tables — like '8 × 7 = 56' or '36 ÷ 4 = 9' — without having to work them out each time?",
+   "legacySkill": "multiplication",
+   "gen": {
+    "kind": "mul_div",
+    "tables": [
+     3,
+     4,
+     8
+    ]
+   },
+   "fluentMs": 9000,
+   "prereqs": [
+    "mt_HhuSDxwDNM"
+   ]
+  },
+  {
+   "id": "mt_0u4KLbvBa1",
+   "name": "Odd and even numbers",
+   "kidLabel": "Odd One Out",
+   "domain": "Multiplication & Division",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Recognise odd and even numbers",
+   "evidence": [
+    "Identify whether a given number is odd or even",
+    "Explain that even numbers can be divided into 2 equal groups",
+    "Spot the pattern: even numbers end in 0, 2, 4, 6, or 8"
+   ],
+   "assessmentPrompt": "If you give {{name}} a number like 37 or 84, can they quickly tell you whether it's odd or even — and explain how they know?",
+   "legacySkill": "division",
+   "gen": {
+    "kind": "odd_pick"
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_LpSuPgL31x"
+   ]
+  },
+  {
+   "id": "mt_U0waNfD8PB",
+   "name": "Comparing and ordering numbers",
+   "kidLabel": "Number Battles",
+   "domain": "Number Representation & Place Value",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Compare and order two-digit numbers using the symbols >, =, and <, based on place value understanding",
+   "evidence": [
+    "Correctly place > or < between 34 and 43",
+    "Order a set of two-digit numbers from smallest to largest",
+    "Explain a comparison by referring to the tens digit first, then ones"
+   ],
+   "assessmentPrompt": "If you show {{name}} the numbers 34, 67, and 21, can they put them in order from smallest to largest — and use the symbols > or < correctly?",
+   "legacySkill": "place_value",
+   "gen": {
+    "kind": "compare_pick",
+    "max": 99
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_THl9GLxwoL"
+   ]
+  },
+  {
+   "id": "mt_aPBzD28_mT",
+   "name": "The three digits of a three-digit number",
+   "kidLabel": "Hundreds & More",
+   "domain": "Number Representation & Place Value",
+   "ageRange": [
+    7,
+    8
+   ],
+   "description": "Understand that the three digits of a three-digit number represent amounts of hundreds, tens, and ones",
+   "evidence": [
+    "State the value of each digit in a three-digit number (e.g. in 362, the 3 represents 3 hundreds)",
+    "Partition a three-digit number into hundreds, tens, and ones (e.g. 485 = 400 + 80 + 5)",
+    "Explain why 706 has 7 hundreds, 0 tens, and 6 ones"
+   ],
+   "assessmentPrompt": "If {{name}} sees the number 348, can they tell you there are 3 hundreds, 4 tens, and 8 ones — rather than just reading the digits as 'three four eight'?",
+   "legacySkill": "place_value",
+   "gen": {
+    "kind": "compose_hundreds"
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_THl9GLxwoL"
+   ]
+  },
+  {
+   "id": "mt_izien3ZX51",
+   "name": "10 or 100 More or Less",
+   "kidLabel": "Jump 10s & 100s",
+   "domain": "Number Representation & Place Value",
+   "ageRange": [
+    7,
+    8
+   ],
+   "description": "Find 10 or 100 more or less than a given number up to 1000",
+   "evidence": [
+    "Given a three-digit number, state what is 10 more and 10 less",
+    "Given a three-digit number, state what is 100 more and 100 less",
+    "Explain the strategy using place-value understanding (e.g. only the tens/hundreds digit changes)"
+   ],
+   "assessmentPrompt": "Can {{name}} quickly work out '10 more than 342' or '100 less than 875' in their head — knowing which digit changes and which stays the same?",
+   "legacySkill": "place_value",
+   "gen": {
+    "kind": "ten_more_less",
+    "max": 900,
+    "steps": [
+     10,
+     100
+    ]
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_aPBzD28_mT",
+    "mt_kw7xmp68rU"
+   ]
+  },
+  {
+   "id": "mt_cPZwlUk8Nd",
+   "name": "Coin Values",
+   "kidLabel": "Coin Counter",
+   "domain": "Measurement",
+   "ageRange": [
+    5,
+    6
+   ],
+   "description": "Recognise and know the value of different coins and notes",
+   "evidence": [
+    "Identify 1p, 2p, 5p, 10p, 20p, 50p, £1 and £2 coins",
+    "Know that a £2 coin is worth more than a 50p coin",
+    "Recognise £5 and £10 notes"
+   ],
+   "assessmentPrompt": "If {{name}} is given a handful of coins, can they name each one — like 2p, 5p, 20p — and sort them from least to most valuable?",
+   "legacySkill": "skip_counting",
+   "gen": {
+    "kind": "coins"
+   },
+   "fluentMs": null,
+   "prereqs": []
+  },
+  {
+   "id": "mt_AF2BeFQwfX",
+   "name": "Adding money and giving change",
+   "kidLabel": "Money Maker",
+   "domain": "Measurement",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Find different combinations of coins that equal the same amount of money",
+   "evidence": [
+    "Show that 50p can be made with 2×20p + 1×10p, or 5×10p, or 1×50p",
+    "Systematically find multiple coin combinations for a given total",
+    "Explain why different coin sets give the same total"
+   ],
+   "assessmentPrompt": "If {{name}} needs to make exactly 30p, can they find two or three different ways to do it using different combinations of coins?",
+   "legacySkill": "skip_counting",
+   "gen": {
+    "kind": "money_sum"
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_cPZwlUk8Nd"
+   ]
+  },
+  {
+   "id": "mt_QaYfeVL-0C",
+   "name": "Estimating by rounding",
+   "kidLabel": "Rounding Ranger",
+   "domain": "Addition & Subtraction",
+   "ageRange": [
+    7,
+    9
+   ],
+   "description": "Estimate the answer to a calculation and use inverse operations to check answers; apply to increasingly large numbers using rounding and inverse reasoning",
+   "evidence": [
+    "Round numbers to the nearest 10 or 100 to estimate a sum or difference before calculating",
+    "Use addition to check a subtraction answer, or vice versa",
+    "Identify when a calculated answer is unreasonable based on the estimate",
+    "Round numbers to estimate a sum or difference before calculating",
+    "Use addition to check a subtraction answer and vice versa",
+    "Identify an unreasonable answer by comparing to the estimate"
+   ],
+   "assessmentPrompt": "Before {{name}} works out a calculation, can they make a sensible rough guess — and then check their answer using the opposite operation?",
+   "legacySkill": "place_value",
+   "gen": {
+    "kind": "round_to",
+    "bases": [
+     10,
+     100
+    ]
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_ezc2m_0dzN"
+   ]
   }
  ]
 }

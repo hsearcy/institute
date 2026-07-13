@@ -112,30 +112,30 @@ describe("topic-graph tutor flow", () => {
       ["mine_gems", 60],
       ["solve_10", 25],
       ["streak_5", 10],
-      ["speed_8", 8],
+      ["speed_8", 5],
       ["topic_explorer", 4],
     ]));
 
     const topics = TOPICS.filter((t) => t.prereqs.length === 0).slice(0, 4);
-    // Exactly 15 seconds is not "under 15 seconds."
+    // Exactly 20 seconds is not "under 20 seconds."
     await call("POST", "/tutor/attempt", {
       profileId, problemId: "slow", skill: "add_within_20", topicId: topics[0].id,
-      correct: true, solveMs: 15_000, difficulty: 0.4,
+      correct: true, solveMs: 20_000, difficulty: 0.4,
     });
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 5; i++) {
       const topic = topics[i % topics.length];
       await call("POST", "/tutor/attempt", {
         profileId, problemId: `fast-${i}`, skill: "add_within_20", topicId: topic.id,
-        correct: true, solveMs: 14_999, difficulty: 0.4,
+        correct: true, solveMs: 19_999, difficulty: 0.4,
       });
     }
 
     state = await call("GET", `/state?profileId=${profileId}`);
     const quests = Object.fromEntries(state.quests.map((q: any) => [q.key, q]));
-    expect(quests.speed_8).toMatchObject({ progress: 8, done: true });
+    expect(quests.speed_8).toMatchObject({ progress: 5, done: true });
     expect(quests.topic_explorer).toMatchObject({ progress: 4, done: true });
-    expect(quests.solve_10).toMatchObject({ progress: 9, done: false });
-    expect(quests.streak_5).toMatchObject({ progress: 9, done: false });
+    expect(quests.solve_10).toMatchObject({ progress: 6, done: false });
+    expect(quests.streak_5).toMatchObject({ progress: 6, done: false });
   });
 
   test("retry solves count for endurance but not speed or topic variety", async () => {

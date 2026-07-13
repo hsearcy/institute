@@ -253,7 +253,8 @@ const QUEST_DEFS = [
   { key: "mine_gems", label: "Mine 60 gems today", target: 60, reward: 25 },
   { key: "solve_10", label: "Solve 25 problems", target: 25, reward: 20 },
   { key: "streak_5", label: "Reach a 10-streak", target: 10, reward: 20 },
-  { key: "speed_8", label: "Lightning: 8 under 15 seconds", target: 8, reward: 10 },
+  // Keep the legacy key so an in-progress daily board survives this deploy.
+  { key: "speed_8", label: "Lightning: 5 under 20 seconds", target: 5, reward: 10 },
   { key: "topic_explorer", label: "Explore 4 math topics", target: 4, reward: 15 },
 ] as const;
 
@@ -482,7 +483,7 @@ function advanceQuests(
     if (r.quest_key === "mine_gems") progress += event.gemsEarned;
     else if (r.quest_key === "solve_10") progress += 1;
     else if (r.quest_key === "streak_5" && event.firstTry) progress += 1;
-    else if (r.quest_key === "speed_8" && event.firstTry && (event.solveMs ?? Infinity) < 15_000) progress += 1;
+    else if (r.quest_key === "speed_8" && event.firstTry && (event.solveMs ?? Infinity) < 20_000) progress += 1;
     else if (r.quest_key === "topic_explorer" && event.firstTry) progress = distinctTopics;
 
     const done = progress >= r.target ? 1 : 0;

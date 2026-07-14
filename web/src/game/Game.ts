@@ -834,8 +834,14 @@ export class Game {
       this.swing(() => { sfxMine(); this.winT = 0; this.gemLight.intensity = 18; });
       // Cap the praise wait tightly: if TTS is having a slow day, keep the game
       // moving (the praise just overlaps the next problem, as before).
+      const solveMs = performance.now() - this.shownAt;
+      const praisePool =
+        this.wrongCount > 0 ? PRAISE_RETRY :        // recovered after a miss — the growth moment
+        solveMs < 4000 ? (Math.random() < 0.5 ? PRAISE_FAST : PRAISE) : // instant recall: automaticity praise (mixed, not every time)
+        solveMs > 12_000 ? PRAISE_GRIT :             // a long grind — persistence praise
+        PRAISE;
       void Promise.all([
-        Promise.race([speak(pick(PRAISE)), sleep(6_000)]),
+        Promise.race([speak(pick(praisePool)), sleep(6_000)]),
         sleep(1450),
       ]).then(() => void this.advance());
     } else {
@@ -1331,8 +1337,36 @@ const COUNTER_WORLD = new Vector3(-3.4, 3.0, 2.0);
 const GRIME = new Color(0x4a453e);
 const sleep = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
 
-const PRAISE = ['Yes! Nice mining!', 'You got it!', 'Sparkly!', 'Great job!', 'Wonderful!'];
-const NUDGE = ['So close, try again!', 'Hmm, not quite — give it another go!', 'Almost! Try once more.', 'Good thinking — check it once more!', 'Brave try! Have another look.'];
+// Growth-mindset praise (Dweck): name the PROCESS — strategy, persistence,
+// progress-from-practice — never bare ability. Matched to HOW he solved it:
+// instant recall gets "your practice is showing" (effort-praise on easy wins
+// backfires), long grinds get persistence, retry-wins get the mistake→fix arc.
+// Generic quick wins stay in the mix so it never turns preachy. ≤90 chars each
+// (the TTS cache line).
+const PRAISE = ['You got it!', 'Nice mining!', 'You figured that one out!', 'Sparkly!', 'Another gem — you earned it!'];
+const PRAISE_FAST = [
+  'Lightning fast — your practice is showing!',
+  'You just knew that one. That comes from practicing!',
+  'Zip! Your brain is getting quicker every day.',
+];
+const PRAISE_GRIT = [
+  'You stuck with it and cracked it — that is real mining!',
+  'That took some thinking, and you did not give up!',
+  'Big think, big gem! Nice sticking with it.',
+];
+const PRAISE_RETRY = [
+  'You fixed it yourself — that is how learning works!',
+  'See? A second look and you cracked it!',
+  'A miss, then a fix — that is how miners get stronger!',
+];
+// Retries: "not yet" is the growth-mindset word — and nudge toward a STRATEGY.
+const NUDGE = [
+  'Not yet — take another look!',
+  'Hmm, not quite. Try it a different way!',
+  'So close! Check your counting once more.',
+  'Not yet! Slow down and give it another go.',
+  'Try counting it out loud this time!',
+];
 // Spoken when a problem defeats him (3 tries) — growth-mindset framing FIRST,
 // because missing hard ones is exactly how the tutor calibrates. Never scary.
 const WARM_MISS = [

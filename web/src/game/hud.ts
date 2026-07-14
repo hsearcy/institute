@@ -760,6 +760,15 @@ export class Hud {
     r.row.classList.add('q-celebrate');
   }
 
+  /** The streak counter fell, but what he built is permanent — trophy moment. */
+  celebrateBestStreak(best: number): void {
+    this.banner(`Best streak: ${best} ⭐`, 'quest', 'Yours forever!');
+  }
+  /** All five dailies done → a free shield for the next tough gem. */
+  celebrateShieldEarned(): void {
+    this.banner('ALL QUESTS DONE!', 'unlock', '+1 🛡 shield earned!', '#8ecbff');
+  }
+
   private banner(title: string, cls: string, sub?: string, accent?: string, lifeMs = 5100): void {
     const el = document.createElement('div');
     el.className = 'banner ' + cls;

@@ -209,6 +209,13 @@ const LEGACY_GRANTS: Record<string, string[]> = {
   division: ["mt_LpSuPgL31x"],
 };
 
+/** Test hook: give a profile one shield without buying it. */
+export function grantShieldForTest(profileId: string): void {
+  const st = getProfileState(profileId);
+  st.shields += 1;
+  saveProfileState(profileId, st);
+}
+
 export function grantLegacyMastery(profileId: string, masteredSkills: string[]): void {
   for (const skill of masteredSkills) {
     for (const topicId of LEGACY_GRANTS[skill] ?? []) {
@@ -468,9 +475,10 @@ function advanceQuests(
   day: string,
   state: ProfileStateRow,
   event: QuestEvent,
-): { key: string; label: string; reward: number }[] {
+): { completed: { key: string; label: string; reward: number }[]; allDailiesShield: boolean } {
   const completed: { key: string; label: string; reward: number }[] = [];
   const dayStart = Date.parse(`${day}T00:00:00.000Z`);
+  const doneBefore = getQuests(profileId, day).filter((r) => r.done).length;
   const distinctTopics = event.firstTry
     ? (db.query(
       `SELECT COUNT(DISTINCT topic_id) AS count FROM attempts
@@ -496,7 +504,12 @@ function advanceQuests(
       .run(progress, done, profileId, r.quest_key, day);
   }
   completed.push(...advanceWeeklyQuest(profileId, day, state));
-  return completed;
+  // Finishing the whole daily board earns a shield: a free "oops" for tomorrow,
+  // so admitting "I don't know this one" is never scary.
+  const doneAfter = getQuests(profileId, day).filter((r) => r.done).length;
+  const allDailiesShield = doneBefore < QUEST_DEFS.length && doneAfter >= QUEST_DEFS.length;
+  if (allDailiesShield) state.shields += 1;
+  return { completed, allDailiesShield };
 }
 
 /** A daily streak is independent of the profile's cross-day streak. A shield
@@ -856,7 +869,8 @@ app.post("/tutor/attempt", async (c) => {
   const day = utcDay();
   let gemsEarned = 0;
   let milestone: number | null = null;
-  let shieldUsed = false;
+  const shieldUsed = false;
+  let allDailiesShield = false;
   const questsCompleted: { key: string; label: string; reward: number }[] = [];
 
   if (correct) {
@@ -867,20 +881,18 @@ app.post("/tutor/attempt", async (c) => {
     state.gems += gemsEarned;
     if (bonus > 0) milestone = state.streak;
 
-    questsCompleted.push(...advanceQuests(profileId, day, state, {
+    const q = advanceQuests(profileId, day, state, {
       firstTry: true,
       gemsEarned,
       solveMs: Math.round(solveMs ?? 0),
-    }));
+    });
+    questsCompleted.push(...q.completed);
+    allDailiesShield = q.allDailiesShield;
   } else {
+    // A wrong FIRST try is learning data, not a punishable miss: he still has
+    // retries. The streak/shield outcome happens at /reward/miss, which the
+    // client calls only when the problem gives up and moves on.
     gemsEarned = 0;
-    if (state.shields > 0) {
-      state.shields -= 1;
-      shieldUsed = true; // shield saved the streak — leave it unchanged
-    } else {
-      state.streak = 0;
-      resetDailyStreakQuest(profileId, day);
-    }
   }
   // A correct answer mines a gem — that swing wears the equipped pickaxe.
   const durability = equippedDurability(profileId, state, correct);
@@ -897,7 +909,34 @@ app.post("/tutor/attempt", async (c) => {
       milestone,
       shieldUsed,
       questsCompleted,
+      allDailiesShield,
       durability,
+    },
+  });
+});
+
+// The problem gave up and moved on (3 tries exhausted) — THIS is the miss that
+// counts: consume a shield if he has one, else the streak resets. bestStreak is
+// untouched either way (it's his forever).
+app.post("/reward/miss", async (c) => {
+  const { profileId } = await c.req.json();
+  const state = getProfileState(profileId);
+  let shieldUsed = false;
+  let streakLost = 0;
+  if (state.shields > 0) {
+    state.shields -= 1;
+    shieldUsed = true; // shield saved the streak — leave it unchanged
+  } else {
+    streakLost = state.streak;
+    state.streak = 0;
+    resetDailyStreakQuest(profileId, utcDay());
+  }
+  saveProfileState(profileId, state);
+  return c.json({
+    ok: true,
+    reward: {
+      gemsEarned: 0, totalGems: state.gems, streak: state.streak, bestStreak: state.best_streak,
+      shields: state.shields, milestone: null, shieldUsed, streakLost, questsCompleted: [],
     },
   });
 });
@@ -909,7 +948,7 @@ app.post("/reward/retry-solve", async (c) => {
   const state = getProfileState(profileId);
   const day = utcDay();
   state.gems += 1;
-  const questsCompleted = advanceQuests(profileId, day, state, {
+  const { completed: questsCompleted, allDailiesShield } = advanceQuests(profileId, day, state, {
     firstTry: false,
     gemsEarned: 1,
   });
@@ -919,7 +958,7 @@ app.post("/reward/retry-solve", async (c) => {
     ok: true,
     reward: {
       gemsEarned: 1, totalGems: state.gems, streak: state.streak, bestStreak: state.best_streak,
-      shields: state.shields, milestone: null, shieldUsed: false, questsCompleted, durability,
+      shields: state.shields, milestone: null, shieldUsed: false, questsCompleted, allDailiesShield, durability,
     },
   });
 });

@@ -84,7 +84,7 @@ describe("topic-graph tutor flow", () => {
     }
   });
 
-  test("an unshielded miss resets only today's streak quest run", async () => {
+  test("a wrong first try is penalty-free; the counted miss lives at /reward/miss", async () => {
     const profileId = "quest-daily-streak-reset";
     for (let i = 0; i < 3; i++) {
       await call("POST", "/tutor/attempt", {
@@ -92,17 +92,63 @@ describe("topic-graph tutor flow", () => {
         correct: true, solveMs: 10_000, difficulty: 0.4,
       });
     }
-    await call("POST", "/tutor/attempt", {
+    // A wrong FIRST try no longer touches streak/shields/quests — he has retries left.
+    const wrong = await call("POST", "/tutor/attempt", {
       profileId, problemId: "wrong", skill: "add_within_20",
       correct: false, solveMs: 10_000, difficulty: 0.4,
     });
+    expect(wrong.reward.streak).toBe(3);
+    expect(wrong.reward.shieldUsed).toBe(false);
+    let state = await call("GET", `/state?profileId=${profileId}`);
+    expect(state.quests.find((q: any) => q.key === "streak_5").progress).toBe(3);
+
+    // The problem moving on IS the miss: streak resets (no shield), quest run resets,
+    // and streakLost carries what fell for the best-streak trophy.
+    const miss = await call("POST", "/reward/miss", { profileId });
+    expect(miss.reward.streak).toBe(0);
+    expect(miss.reward.streakLost).toBe(3);
+    expect(miss.reward.bestStreak).toBe(3); // the trophy survives
+    state = await call("GET", `/state?profileId=${profileId}`);
+    expect(state.quests.find((q: any) => q.key === "streak_5").progress).toBe(0);
+
     await call("POST", "/tutor/attempt", {
       profileId, problemId: "right-again", skill: "add_within_20",
       correct: true, solveMs: 10_000, difficulty: 0.4,
     });
-
-    const state = await call("GET", `/state?profileId=${profileId}`);
+    state = await call("GET", `/state?profileId=${profileId}`);
     expect(state.quests.find((q: any) => q.key === "streak_5").progress).toBe(1);
+  });
+
+  test("a shield absorbs the counted miss and keeps the streak", async () => {
+    const profileId = "shield-absorbs";
+    for (let i = 0; i < 4; i++) {
+      await call("POST", "/tutor/attempt", {
+        profileId, problemId: `r-${i}`, skill: "add_within_20",
+        correct: true, solveMs: 9_000, difficulty: 0.4,
+      });
+    }
+    const { grantShieldForTest } = await import("./index.ts");
+    grantShieldForTest(profileId);
+    const miss = await call("POST", "/reward/miss", { profileId });
+    expect(miss.reward.shieldUsed).toBe(true);
+    expect(miss.reward.streak).toBe(4);
+    expect(miss.reward.streakLost).toBe(0);
+  });
+
+  test("finishing the whole daily board awards a shield exactly once", async () => {
+    const profileId = "all-dailies-shield";
+    let sawShieldAward = 0;
+    let shieldsAt = -1;
+    for (let i = 0; i < 30; i++) {
+      const r = await call("POST", "/tutor/attempt", {
+        profileId, problemId: `q-${i}`, skill: "add_within_20",
+        topicId: ["mt_e8CZ7E5qW7", "mt_ghF3Vv6taM", "mt_M5PPDJStGm", "mt_LpSuPgL31x", "mt_THl9GLxwoL"][i % 5],
+        correct: true, solveMs: 3_000, difficulty: 0.5,
+      });
+      if (r.reward.allDailiesShield) { sawShieldAward++; shieldsAt = r.reward.shields; }
+    }
+    expect(sawShieldAward).toBe(1);
+    expect(shieldsAt).toBeGreaterThanOrEqual(1);
   });
 
   test("daily quests reward endurance, accuracy, speed, and topic variety", async () => {

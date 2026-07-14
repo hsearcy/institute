@@ -131,6 +131,10 @@ export const RewardSchema = z.object({
   milestone: z.number().int().nullable(),
   shieldUsed: z.boolean(),
   questsCompleted: z.array(CompletedQuestSchema),
+  /** The streak that was just lost to a counted miss (0 if shielded/none) — drives the best-streak trophy. */
+  streakLost: z.number().int().optional(),
+  /** True the moment the LAST daily quest completes: the all-dailies shield was just awarded. */
+  allDailiesShield: z.boolean().optional(),
   /** Equipped-pickaxe durability after this action (absent when nothing wore). */
   durability: DurabilitySchema.nullable().optional(),
 });

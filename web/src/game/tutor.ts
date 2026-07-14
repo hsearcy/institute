@@ -73,6 +73,17 @@ export async function creditHoardBonus(): Promise<Reward | null> {
   }
 }
 
+/** The problem gave up (3 tries) and moved on — report the COUNTED miss.
+ *  Never throws; null on network failure (streak stays visually unchanged). */
+export async function reportMiss(): Promise<Reward | null> {
+  try {
+    const res = await post<{ ok: boolean; reward: Reward }>('/reward/miss', { profileId: PROFILE });
+    return res.reward ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /** Fetch the persisted reward state (gems, streak, shields, daily quests). */
 export async function fetchState(): Promise<State | null> {
   try {

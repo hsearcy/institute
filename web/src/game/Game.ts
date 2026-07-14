@@ -20,7 +20,7 @@ import { Hud } from './hud';
 import { PICKAXE_SKINS, isSkinKey, type SkinKey } from './skins';
 import {
   fetchFirst, fetchBranches, fetchExplain, recordAttempt, creditRetrySolve, fetchState, buyShield,
-  fetchShop, buyPickaxe, equipPickaxe, repairPickaxe, creditHoardBonus, fetchMastery,
+  fetchShop, buyPickaxe, equipPickaxe, repairPickaxe, creditHoardBonus, reportMiss, fetchMastery,
   buyCrazyCoin, redeemCrazyCoin,
 } from './tutor';
 import { speak, sfxChink, sfxMine, sfxFizzle, sfxCollect, sfxFanfare, startAmbience, preloadAudio } from './audio';
@@ -839,12 +839,14 @@ export class Game {
       this.swing(() => { sfxFizzle(); this.gemHit = 0.6; }); // strike lands but the geode holds
       const hint = this.problem.hint;
       if (this.wrongCount >= 3) {
-        // Stuck: reveal the answer + the strategy, then move on to an easier one.
+        // Stuck: THIS is the counted miss. Warm growth framing — missing a tough
+        // one is how the tutor learns what to teach — then reveal and move on.
         this.busy = true;
         const ans = this.problem.answer;
-        void speak(`That one is tricky! The answer is ${ans}.${hint ? ' ' + hint : ''} Let's try an easier one.`);
+        void speak(`${pick(WARM_MISS)} The answer is ${ans}.${hint ? ' ' + hint : ''} Let's try another one.`);
         this.hud.setAnswer(String(ans));
-        this.hud.showHint(`The answer is ${ans} — let's try an easier one!`);
+        this.hud.showHint(`The answer is ${ans} — tough ones teach me how to help you!`);
+        void reportMiss().then((r) => this.onFinalMiss(r));
         setTimeout(() => void this.advance(), 3400);
       } else if (this.wrongCount === 2 && hint) {
         // Second miss: teach a strategy, then let him try again.
@@ -882,17 +884,32 @@ export class Game {
       this.awaitingReward = false;
       this.pendingReward = reward; // applied in applyReward() when the gem lands
     } else {
-      // Miss: reflect the streak/shield outcome right away.
+      // A wrong FIRST try is penalty-free now (he has retries) — just keep the
+      // HUD numbers synced. The counted miss happens in onFinalMiss().
       this.hud.setShields(reward.shields);
       this.hud.setGemsForShop(reward.totalGems);
-      if (reward.shieldUsed) {
-        this.hud.flashShieldSave();
-        this.hud.celebrateShieldSave();
-        void speak('Your shield saved your streak!');
-      } else {
-        this.hud.setStreak(reward.streak, false); // visibly resets to 0
-      }
-      this.applyDurability(reward.durability); // wrong answers don't wear, but keep the meter synced
+      this.applyDurability(reward.durability);
+    }
+  }
+
+  /** The problem moved on unsolved — the miss that actually counts. Shield saves
+   *  the streak; otherwise it resets, and the best streak gets its trophy moment
+   *  so what he BUILT is never lost, only the counter. */
+  private onFinalMiss(reward: Reward | null): void {
+    if (!reward) return;
+    this.totalGems = reward.totalGems;
+    this.hud.setShields(reward.shields);
+    this.hud.setGemsForShop(reward.totalGems);
+    if (reward.shieldUsed) {
+      this.hud.flashShieldSave();
+      this.hud.celebrateShieldSave();
+      void speak('Your shield saved your streak!');
+      return;
+    }
+    this.hud.setStreak(reward.streak, false); // visibly resets to 0
+    if ((reward.streakLost ?? 0) >= 10) {
+      this.hud.celebrateBestStreak(reward.bestStreak);
+      void speak(`Your best streak of ${reward.bestStreak} is yours forever! Let's start a new climb.`);
     }
   }
 
@@ -932,6 +949,12 @@ export class Game {
     for (const q of r.questsCompleted) {
       this.hud.celebrateQuest(q);
       sfxFanfare(false);
+    }
+    if (r.allDailiesShield) {
+      this.hud.celebrateShieldEarned();
+      this.hud.setShields(r.shields);
+      void speak('You finished every quest today — here is a shield to keep your streak safe!');
+      sfxFanfare(true);
     }
     // Wear the pickaxe for this mined gem (may shatter → swap to wooden).
     this.applyDurability(r.durability);
@@ -1293,7 +1316,15 @@ const COUNTER_WORLD = new Vector3(-3.4, 3.0, 2.0);
 // Grimy tone a worn pickaxe head lerps toward as durability drops.
 const GRIME = new Color(0x4a453e);
 const PRAISE = ['Yes! Nice mining!', 'You got it!', 'Sparkly!', 'Great job!', 'Wonderful!'];
-const NUDGE = ['So close, try again!', 'Hmm, not quite — give it another go!', 'Almost! Try once more.'];
+const NUDGE = ['So close, try again!', 'Hmm, not quite — give it another go!', 'Almost! Try once more.', 'Good thinking — check it once more!', 'Brave try! Have another look.'];
+// Spoken when a problem defeats him (3 tries) — growth-mindset framing FIRST,
+// because missing hard ones is exactly how the tutor calibrates. Never scary.
+const WARM_MISS = [
+  'That was a brave try on a tough one!',
+  'Ooh, a tricky gem! Missing these teaches me how to help you.',
+  'Tough one! Even the best miners hit hard rock sometimes.',
+  'Great effort — hard ones like this make you stronger!',
+];
 const pick = (a: string[]): string => a[Math.floor(Math.random() * a.length)];
 
 /** Center an imported model on its base and scale its largest dimension to `target`. */

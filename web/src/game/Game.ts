@@ -1343,7 +1343,7 @@ const sleep = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
 // backfires), long grinds get persistence, retry-wins get the mistake→fix arc.
 // Generic quick wins stay in the mix so it never turns preachy. ≤90 chars each
 // (the TTS cache line).
-const PRAISE = ['You got it!', 'Nice mining!', 'You figured that one out!', 'Sparkly!', 'Another gem — you earned it!'];
+const PRAISE = ['You got it!', 'Nice mining!', 'You figured that one out!', 'Ooh, shiny!', 'Another gem — you earned it!'];
 const PRAISE_FAST = [
   'Lightning fast — your practice is showing!',
   'You just knew that one. That comes from practicing!',

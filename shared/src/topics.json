@@ -47,7 +47,7 @@
     "kind": "add_sub",
     "max": 5
    },
-   "fluentMs": 9000,
+   "fluentMs": 7000,
    "prereqs": [],
    "helpPrereqs": []
   },
@@ -97,7 +97,7 @@
     "kind": "add_sub",
     "max": 10
    },
-   "fluentMs": 8000,
+   "fluentMs": 6000,
    "prereqs": [
     "mt_e8CZ7E5qW7",
     "mt_ghF3Vv6taM"
@@ -155,7 +155,7 @@
     "max": 20,
     "carry": true
    },
-   "fluentMs": 10000,
+   "fluentMs": 8000,
    "prereqs": [
     "mt__we2TDqnJx",
     "mt_m1W6nTQJ2b"
@@ -378,7 +378,7 @@
      10
     ]
    },
-   "fluentMs": 9000,
+   "fluentMs": 7000,
    "prereqs": [
     "mt_PZ909yPrEC",
     "mt_nvdpxAJTBG"
@@ -437,7 +437,7 @@
     "kind": "missing_addend",
     "totalMax": 20
    },
-   "fluentMs": 9000,
+   "fluentMs": 7000,
    "prereqs": [
     "mt_e8CZ7E5qW7",
     "mt_ghF3Vv6taM"
@@ -545,7 +545,7 @@
    "gen": {
     "kind": "add_2d2d"
    },
-   "fluentMs": 12000,
+   "fluentMs": 10000,
    "prereqs": [
     "mt__t4afSyZRm",
     "mt_glPPG-kTQY"
@@ -791,7 +791,7 @@
      8
     ]
    },
-   "fluentMs": 9000,
+   "fluentMs": 7000,
    "prereqs": [
     "mt_HhuSDxwDNM"
    ],

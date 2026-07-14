@@ -715,11 +715,19 @@ export class Game {
     this.mined = false;
     this.wrongCount = 0;
     this.busy = false;
-    this.shownAt = performance.now();
+    this.shownAt = performance.now(); // provisional — rebased when the read-aloud ends
     this.hud.setProblem(p.prompt);
     this.hud.setAnswer('');
     this.hud.clearHint();
-    void speak(p.spoken);
+    // Solve time starts when the tutor FINISHES reading the problem: measuring
+    // from display punished him for listening (speech ate ~2-3s of every
+    // fluency bar). If he starts keying before the speech ends, he's clearly
+    // already solving — keep the earlier clock.
+    void speak(p.spoken).then(() => {
+      if (this.problem?.id === p.id && this.firstAttempt === null && this.entered === '') {
+        this.shownAt = performance.now();
+      }
+    });
     this.resetHero();
     this.branchesPromise = fetchBranches(p).catch(() => null);
   }

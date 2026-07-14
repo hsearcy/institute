@@ -838,7 +838,7 @@ export class Game {
       const praisePool =
         this.wrongCount > 0 ? PRAISE_RETRY :        // recovered after a miss — the growth moment
         solveMs < 4000 ? (Math.random() < 0.5 ? PRAISE_FAST : PRAISE) : // instant recall: automaticity praise (mixed, not every time)
-        solveMs > 12_000 ? PRAISE_GRIT :             // a long grind — persistence praise
+        solveMs > 30_000 ? PRAISE_GRIT :             // a long grind — persistence praise
         PRAISE;
       void Promise.all([
         Promise.race([speak(pick(praisePool)), sleep(6_000)]),

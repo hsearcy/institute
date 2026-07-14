@@ -155,3 +155,24 @@ describe("expansion generators", () => {
     expect(seen.size).toBe(2);
   });
 });
+
+describe("spoken sequences use words (ElevenLabs garbles digit runs)", () => {
+  test("numberWords covers 0-999", async () => {
+    const { numberWords } = await import("./topicgen.ts");
+    expect(numberWords(8)).toBe("eight");
+    expect(numberWords(12)).toBe("twelve");
+    expect(numberWords(40)).toBe("forty");
+    expect(numberWords(56)).toBe("fifty six");
+    expect(numberWords(434)).toBe("four hundred thirty four");
+    expect(numberWords(900)).toBe("nine hundred");
+  });
+  test("skip-counting spoken lines contain no digit runs", () => {
+    for (const steps of [[2], [3], [10], [4, 8, 50, 100], [5, 10, 100]] as number[][]) {
+      for (let i = 0; i < 60; i++) {
+        const p = problemForTopic(t({ kind: "skip", steps, offset: steps.length > 2 }), Math.random());
+        expect(p.spoken).not.toMatch(/\d/);          // fully worded
+        expect(p.spoken.length).toBeLessThanOrEqual(160);
+      }
+    }
+  });
+});

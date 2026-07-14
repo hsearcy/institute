@@ -586,6 +586,7 @@ Rules:
 - Keep him productive: "right" stretches a little harder, "wrong" eases off and rebuilds confidence in the SAME topic.
 - VARY the numbers a lot: consecutive problems must not share the same total and must not be permutations of one another (8+12, 9+11 are bad — repetitive). Never reuse the problem he is on.
 - "prompt" is the short written form; "spoken" is a warm, kid-friendly sentence to read aloud (no emoji/markdown). "answer" is the exact integer.
+- In "spoken", write any SEQUENCE of numbers as words ("eight, ten, twelve" — never "8, 10, 12"): the voice engine garbles digit runs. Single numbers inside a sentence may stay as digits.
 - He is American: money is ALWAYS dollars and cents (penny/nickel/dime/quarter) — never pounds or pence.
 - "hint" teaches a concrete strategy he can act on if he's stuck (make-a-ten, count-on, count-back) — a real method, never just restating the answer.
 Return via the next_problems tool only.`;

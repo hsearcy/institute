@@ -4,6 +4,25 @@ import type { Topic } from "@institute/shared";
 import { addHint, subHint, type ProblemDraft } from "./generate.ts";
 
 const ri = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+// ---- spoken-number helpers ---------------------------------------------------
+// ElevenLabs garbles bare digit runs ("8, 10, 12" comes out mangled), so spoken
+// forms use WORDS for number sequences while the on-screen prompt keeps digits.
+const ONES = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+  "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+export function numberWords(n: number): string {
+  if (n < 0 || n > 999 || !Number.isInteger(n)) return String(n);
+  if (n < 20) return ONES[n];
+  if (n < 100) return TENS[Math.floor(n / 10)] + (n % 10 ? " " + ONES[n % 10] : "");
+  return ONES[Math.floor(n / 100)] + " hundred" + (n % 100 ? " " + numberWords(n % 100) : "");
+}
+/** "counting by twos/fifties/hundreds" — the plural step name, spoken. */
+const STEP_WORDS: Record<number, string> = {
+  2: "twos", 3: "threes", 4: "fours", 5: "fives", 8: "eights",
+  10: "tens", 25: "twenty-fives", 50: "fifties", 100: "hundreds",
+};
+const stepWords = (n: number): string => STEP_WORDS[n] ?? `${numberWords(n)}s`;
 const lerp = (lo: number, hi: number, d: number) => Math.round(lo + (hi - lo) * Math.max(0, Math.min(1, d)));
 
 export type TopicProblemDraft = ProblemDraft & { topicId: string; topicLabel: string };
@@ -53,7 +72,7 @@ export function problemForTopic(topic: Topic, difficulty: number): TopicProblemD
       const dir = back ? -step : step;
       const seq = [start, start + dir, start + 2 * dir];
       return { ...base, prompt: `${seq.join(", ")}, ?`,
-        spoken: `Keep counting ${back ? "back " : ""}by ${step}s. ${seq.join(", ")}… what comes next?`,
+        spoken: `Keep counting ${back ? "back " : ""}by ${stepWords(step)}. ${seq.map(numberWords).join(", ")}. What comes next?`,
         answer: start + 3 * dir,
         hint: `${back ? "Take away" : "Add"} ${step} ${back ? "from" : "to"} the last number: ${seq[2]} ${back ? "minus" : "plus"} ${step}.` };
     }

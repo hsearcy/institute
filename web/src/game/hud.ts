@@ -95,6 +95,7 @@ export class Hud {
       <div class="quests" id="quests">
         <div class="quests-head">📜 Daily Quests</div>
         <div class="quests-list" id="quests-list"></div>
+        <div class="quests-bonus" id="quests-bonus"><span class="qb-icon">🛡</span><span class="qb-text">Finish all 5 → earn a shield!</span></div>
         <div class="quests-head weekly">🏆 Weekly Quest</div>
         <div class="quests-list" id="weekly-quest-list"></div>
       </div>
@@ -468,6 +469,16 @@ export class Hud {
       r.fill.style.width = pct + '%';
       r.prog.textContent = q.done ? '✓ Complete!' : `${q.progress} / ${q.target}`;
       r.row.classList.toggle('done', q.done);
+    }
+    // The all-dailies shield bonus: show what's at stake, celebrate when earned.
+    const bonus = this.root.querySelector('#quests-bonus');
+    if (bonus) {
+      const dailyDone = dailyQuests.filter((q) => q.done).length;
+      const all = dailyQuests.length > 0 && dailyDone === dailyQuests.length;
+      bonus.classList.toggle('earned', all);
+      (bonus.querySelector('.qb-text') as HTMLElement).textContent = all
+        ? 'All quests done — shield earned!'
+        : `Finish all ${dailyQuests.length} → earn a shield! (${dailyDone}/${dailyQuests.length})`;
     }
   }
   toggleQuests(): void {
@@ -939,6 +950,11 @@ function injectStyles(): void {
     transition: opacity .18s ease, transform .18s cubic-bezier(.3,1.5,.5,1), visibility .18s; }
   .quests.open { opacity: 1; visibility: visible; transform: scale(1) translateY(0); }
   .quests-head { color: #ffe9a8; font-weight: 900; font-size: 16px; margin-bottom: 9px; letter-spacing: .3px; }
+  .quests-bonus { display: flex; align-items: center; gap: 8px; margin: 6px 2px 2px; padding: 7px 10px;
+    border-radius: 12px; background: rgba(142, 203, 255, 0.09); border: 1px solid rgba(142, 203, 255, 0.25);
+    color: #bfe0ff; font-weight: 800; font-size: 13px; }
+  .quests-bonus .qb-icon { font-size: 16px; filter: drop-shadow(0 0 6px rgba(142,203,255,0.6)); }
+  .quests-bonus.earned { background: rgba(126, 217, 130, 0.12); border-color: rgba(126, 217, 130, 0.45); color: #b9f0bb; }
   .quests-head.weekly { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255,233,168,0.18); color: #ffd23b; }
   .quest { margin-bottom: 11px; }
   .quest:last-child { margin-bottom: 0; }

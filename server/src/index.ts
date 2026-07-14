@@ -1212,8 +1212,16 @@ app.post("/tutor/explain", async (c) => {
   }
 });
 
+// Short lines (praise/nudges) repeat thousands of times — cache their audio so
+// they play instantly instead of re-synthesizing at ElevenLabs each time.
+const ttsCache = new Map<string, ArrayBuffer>();
+const TTS_CACHE_MAX_LEN = 90;   // only cache short, repeated lines
+const TTS_CACHE_ENTRIES = 150;  // ~30-60KB each → a few MB tops
+
 app.post("/tts", async (c) => {
   const { text } = TtsRequestSchema.parse(await c.req.json());
+  const cached = ttsCache.get(text);
+  if (cached) return new Response(cached.slice(0), { headers: { "Content-Type": "audio/mpeg" } });
   const key = process.env.ELEVENLABS_API_KEY;
   if (!key) return c.json({ error: "no tts key" }, 503);
   const r = await fetch(
@@ -1231,6 +1239,12 @@ app.post("/tts", async (c) => {
     },
   );
   if (!r.ok) return c.json({ error: `tts ${r.status}` }, 502);
+  if (text.length <= TTS_CACHE_MAX_LEN) {
+    const buf = await r.arrayBuffer();
+    ttsCache.set(text, buf);
+    if (ttsCache.size > TTS_CACHE_ENTRIES) ttsCache.delete(ttsCache.keys().next().value!);
+    return new Response(buf.slice(0), { headers: { "Content-Type": "audio/mpeg" } });
+  }
   return new Response(r.body, { headers: { "Content-Type": "audio/mpeg" } });
 });
 

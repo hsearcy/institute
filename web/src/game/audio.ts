@@ -114,7 +114,9 @@ export function startAmbience(): void {
 
 // ---- Tutor voice -----------------------------------------------------------
 let current: HTMLAudioElement | null = null;
-/** Speak `text` with the tutor's ElevenLabs voice. Best-effort; never throws. */
+/** Speak `text` with the tutor's ElevenLabs voice. Best-effort; never throws.
+ *  Resolves when playback FINISHES (or is preempted by a newer speak), so
+ *  callers can sequence speech and hold the game until the tutor is done. */
 export async function speak(text: string): Promise<void> {
   try {
     current?.pause();
@@ -127,8 +129,14 @@ export async function speak(text: string): Promise<void> {
     const url = URL.createObjectURL(new Blob([await r.arrayBuffer()], { type: 'audio/mpeg' }));
     const a = new Audio(url);
     current = a;
-    a.onended = () => URL.revokeObjectURL(url);
     await a.play().catch(() => {});
+    if (a.paused) { URL.revokeObjectURL(url); return; } // autoplay blocked / instantly preempted
+    await new Promise<void>((res) => {
+      const done = () => { URL.revokeObjectURL(url); res(); };
+      a.onended = done;
+      a.onerror = done;
+      a.onpause = done; // a newer speak() preempted us — we're done either way
+    });
   } catch {
     /* best-effort */
   }

@@ -829,10 +829,15 @@ export class Game {
     if (correct) {
       this.mined = true;
       this.busy = true;
-      void speak(pick(PRAISE));
-      // Pickaxe slams down → on impact the gem charges up and bursts.
+      // Pickaxe slams down → on impact the gem charges up and bursts. Advance
+      // when BOTH the animation and the praise line are done — never cut audio.
       this.swing(() => { sfxMine(); this.winT = 0; this.gemLight.intensity = 18; });
-      setTimeout(() => void this.advance(), 1450);
+      // Cap the praise wait tightly: if TTS is having a slow day, keep the game
+      // moving (the praise just overlaps the next problem, as before).
+      void Promise.all([
+        Promise.race([speak(pick(PRAISE)), sleep(6_000)]),
+        sleep(1450),
+      ]).then(() => void this.advance());
     } else {
       this.wrongCount += 1;
       this.hud.flashWrong();
@@ -841,13 +846,22 @@ export class Game {
       if (this.wrongCount >= 3) {
         // Stuck: THIS is the counted miss. Warm growth framing — missing a tough
         // one is how the tutor learns what to teach — then reveal and move on.
+        // Speech is SEQUENCED: reveal+strategy plays fully, then the shield/
+        // trophy line, and only then does the next problem appear.
         this.busy = true;
         const ans = this.problem.answer;
-        void speak(`${pick(WARM_MISS)} The answer is ${ans}.${hint ? ' ' + hint : ''} Let's try another one.`);
+        const reveal = speak(`${pick(WARM_MISS)} The answer is ${ans}.${hint ? ' ' + hint : ''} Let's try another one.`);
         this.hud.setAnswer(String(ans));
         this.hud.showHint(`The answer is ${ans} — tough ones teach me how to help you!`);
-        void reportMiss().then((r) => this.onFinalMiss(r));
-        setTimeout(() => void this.advance(), 3400);
+        const finale = reportMiss().then(async (r) => {
+          const voice = this.onFinalMiss(r); // visuals now; returns the queued voice line
+          await reveal;
+          await voice();
+        });
+        void Promise.all([
+          Promise.race([finale, sleep(30_000)]),
+          sleep(3400),
+        ]).then(() => void this.advance());
       } else if (this.wrongCount === 2 && hint) {
         // Second miss: teach a strategy, then let him try again.
         void speak(hint);
@@ -895,22 +909,22 @@ export class Game {
   /** The problem moved on unsolved — the miss that actually counts. Shield saves
    *  the streak; otherwise it resets, and the best streak gets its trophy moment
    *  so what he BUILT is never lost, only the counter. */
-  private onFinalMiss(reward: Reward | null): void {
-    if (!reward) return;
+  private onFinalMiss(reward: Reward | null): () => Promise<void> {
+    if (!reward) return async () => {};
     this.totalGems = reward.totalGems;
     this.hud.setShields(reward.shields);
     this.hud.setGemsForShop(reward.totalGems);
     if (reward.shieldUsed) {
       this.hud.flashShieldSave();
       this.hud.celebrateShieldSave();
-      void speak('Your shield saved your streak!');
-      return;
+      return () => speak('Your shield saved your streak!');
     }
     this.hud.setStreak(reward.streak, false); // visibly resets to 0
     if ((reward.streakLost ?? 0) >= 10) {
       this.hud.celebrateBestStreak(reward.bestStreak);
-      void speak(`Your best streak of ${reward.bestStreak} is yours forever! Let's start a new climb.`);
+      return () => speak(`Your best streak of ${reward.bestStreak} is yours forever! Let's start a new climb.`);
     }
+    return async () => {};
   }
 
   /** Fired when the prize gem lands in the hoard: commit the deferred reward —
@@ -1315,6 +1329,8 @@ const HERO_ROT = new Vector3(0.4, 3.93, 0);   // geode child rotation → open c
 const COUNTER_WORLD = new Vector3(-3.4, 3.0, 2.0);
 // Grimy tone a worn pickaxe head lerps toward as durability drops.
 const GRIME = new Color(0x4a453e);
+const sleep = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
+
 const PRAISE = ['Yes! Nice mining!', 'You got it!', 'Sparkly!', 'Great job!', 'Wonderful!'];
 const NUDGE = ['So close, try again!', 'Hmm, not quite — give it another go!', 'Almost! Try once more.', 'Good thinking — check it once more!', 'Brave try! Have another look.'];
 // Spoken when a problem defeats him (3 tries) — growth-mindset framing FIRST,

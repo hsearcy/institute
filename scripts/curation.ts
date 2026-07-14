@@ -8,6 +8,10 @@ export type CurationRow = {
   legacySkill: "add_within_20" | "subtraction" | "skip_counting" | "place_value" | "multiplication" | "division";
   gen: GenSpec;
   fluentMs: number | null; // median first-try solve-time bar for mastery (null = accuracy only)
+  /** Replace taxonomy text that doesn't fit this household (e.g. UK-curriculum
+   *  money topics talk pounds/pence — this is an American kid). Feeds the LLM
+   *  prompts AND the parent dashboard. */
+  override?: { description?: string; evidence?: string[]; assessmentPrompt?: string };
 };
 
 export const CURATION: CurationRow[] = [
@@ -44,7 +48,25 @@ export const CURATION: CurationRow[] = [
   { id: "mt_U0waNfD8PB", kidLabel: "Number Battles",    legacySkill: "place_value",    gen: { kind: "compare_pick", max: 99 },                      fluentMs: null },
   { id: "mt_aPBzD28_mT", kidLabel: "Hundreds & More",   legacySkill: "place_value",    gen: { kind: "compose_hundreds" },                           fluentMs: null },
   { id: "mt_izien3ZX51", kidLabel: "Jump 10s & 100s",   legacySkill: "place_value",    gen: { kind: "ten_more_less", max: 900, steps: [10, 100] },  fluentMs: null },
-  { id: "mt_cPZwlUk8Nd", kidLabel: "Coin Counter",      legacySkill: "skip_counting",  gen: { kind: "coins" },                                      fluentMs: null },
-  { id: "mt_AF2BeFQwfX", kidLabel: "Money Maker",       legacySkill: "skip_counting",  gen: { kind: "money_sum" },                                  fluentMs: null },
+  { id: "mt_cPZwlUk8Nd", kidLabel: "Coin Counter",      legacySkill: "skip_counting",  gen: { kind: "coins" },                                      fluentMs: null,
+    override: {
+      description: "Recognize US coins and know their values in cents",
+      evidence: [
+        "Know a penny is 1 cent, a nickel is 5, a dime is 10, and a quarter is 25",
+        "Add up a small handful of coins to a total in cents",
+        "Know a quarter is worth more than a dime even though it is not much bigger",
+      ],
+      assessmentPrompt: "If {{name}} is given a handful of coins, can they name each one — penny, nickel, dime, quarter — and tell you how many cents each is worth?",
+    } },
+  { id: "mt_AF2BeFQwfX", kidLabel: "Money Maker",       legacySkill: "skip_counting",  gen: { kind: "money_sum" },                                  fluentMs: null,
+    override: {
+      description: "Make amounts of money in cents using different combinations of US coins",
+      evidence: [
+        "Show that 50 cents can be made with 2 quarters, or 5 dimes, or 10 nickels",
+        "Work out how many more cents are needed to reach an amount",
+        "Count up by 5s, 10s, and 25s to total mixed coins",
+      ],
+      assessmentPrompt: "If {{name}} needs to make exactly 30 cents, can they find two different ways to do it — like a quarter and a nickel, or three dimes?",
+    } },
   { id: "mt_QaYfeVL-0C", kidLabel: "Rounding Ranger",   legacySkill: "place_value",    gen: { kind: "round_to", bases: [10, 100] },                 fluentMs: null },
 ];

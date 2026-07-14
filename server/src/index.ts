@@ -381,11 +381,12 @@ function getQuests(profileId: string, day = utcDay()): QuestRow[] {
     );
     for (const q of QUEST_DEFS) ins.run(profileId, q.key, day, q.label, q.target, q.reward);
   }
-  // Apply balance changes to unfinished legacy rows without taking away a quest
-  // the kid already completed earlier today.
+  // Apply definition changes to today's persisted rows. `done` is untouched, so
+  // a quest completed before a balance change remains completed while its text,
+  // target, and reward immediately match the current definition.
   const tune = db.query(
     `UPDATE quests SET label = ?, target = ?, reward = ?
-     WHERE profile_id = ? AND quest_key = ? AND day = ? AND done = 0`,
+     WHERE profile_id = ? AND quest_key = ? AND day = ?`,
   );
   for (const q of QUEST_DEFS) tune.run(q.label, q.target, q.reward, profileId, q.key, day);
   return db.query(
@@ -572,6 +573,7 @@ Rules:
 - Keep him productive: "right" stretches a little harder, "wrong" eases off and rebuilds confidence in the SAME topic.
 - VARY the numbers a lot: consecutive problems must not share the same total and must not be permutations of one another (8+12, 9+11 are bad — repetitive). Never reuse the problem he is on.
 - "prompt" is the short written form; "spoken" is a warm, kid-friendly sentence to read aloud (no emoji/markdown). "answer" is the exact integer.
+- He is American: money is ALWAYS dollars and cents (penny/nickel/dime/quarter) — never pounds or pence.
 - "hint" teaches a concrete strategy he can act on if he's stuck (make-a-ten, count-on, count-back) — a real method, never just restating the answer.
 Return via the next_problems tool only.`;
 
@@ -1114,9 +1116,13 @@ export function leaksAnswer(text: string, answer: number): boolean {
   return new RegExp(`(?<!\\d)${answer}(?!\\d)`).test(text);
 }
 
-const EXPLAIN_SYSTEM = `You are the warm tutor voice inside a gem-mine math game, explaining ONE problem to a 6-year-old who tapped "explain". Rules:
+const EXPLAIN_SYSTEM = `You are the warm tutor voice inside a gem-mine math game, explaining ONE problem to a 6-year-old American boy who tapped "explain". Rules:
+- Think through the numbers PRIVATELY first, then speak only the finished explanation. The spoken text must read like you knew the plan all along — never search out loud, never change course (no "hmm", no "actually", no "wait", no "or you could").
+- Pick ONE strategy — the single most natural one for these exact numbers — and teach only that one. Never mention another way, a strategy you are NOT using, or why some other approach doesn't apply. Just teach the one that works.
+- For adding several numbers: if two of them make exactly ten, start with that pair; otherwise just add the two biggest first and then the last one. Don't hunt for tens that aren't there.
 - At most 60 spoken words. Plain sentences a child can follow by ear. No emoji, no markdown, no lists.
-- Teach the concrete STRATEGY using his actual numbers (make-a-ten, count on, count back, think in tens, share one at a time, skip-count...).
+- Walk the strategy with his actual numbers (make-a-ten, count on, count back, think in tens, share one at a time, skip-count...).
+- Money is ALWAYS American: dollars and cents, penny/nickel/dime/quarter. Never pounds, pence, or notes.
 - NEVER say the final answer, and never spell it out in words either. Stop one step short.
 - End with one small, encouraging leading question that points at the last step.`;
 
@@ -1138,7 +1144,11 @@ app.post("/tutor/explain", async (c) => {
     let text = "";
     for (let attempt = 0; attempt < 2; attempt++) {
       const resp = await anthropic.messages.create({
-        model: TUTOR_MODEL, max_tokens: 250, // no temperature — rejected by claude-sonnet-5
+        model: TUTOR_MODEL, max_tokens: 1400, // no temperature — rejected by claude-sonnet-5
+        // Private planning space (Claude 5 adaptive thinking): the model works out
+        // the strategy off-mic, so the spoken text never rambles or self-corrects.
+        thinking: { type: "adaptive" },
+        output_config: { effort: "low" },
         system: EXPLAIN_SYSTEM,
         messages: [{ role: "user", content: userContent }],
       });

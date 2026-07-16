@@ -614,7 +614,7 @@ export class Game {
    *  spontaneously when he wants a pickaxe (450−200 → "I only need 250!").
    *  Ungraded, unrewarded, once per item per session, never nagging. */
   private socraticAsked = new Set<string>();
-  private lastSocraticAt = 0;
+  private lastSocraticAt = -Infinity;
   private onShopOpened(): void {
     const shop = this.lastShop;
     if (!shop || performance.now() - this.lastSocraticAt < 60_000) return;

@@ -785,8 +785,11 @@ async function llmBranches(profileId: string, current: Problem): Promise<{ right
   // The model narrates; the code decides identity: stamp topic + skill authoritatively.
   const stampTopic = (p: Problem, t: Topic | undefined): Problem =>
     t ? { ...p, topicId: t.id, topicLabel: t.kidLabel, skill: t.legacySkill as Problem["skill"] } : p;
-  let right = stampTopic(ProblemSchema.parse(stampId(correctDraft(raw.right as ProblemDraft))), rightTopic);
-  let wrong = stampTopic(ProblemSchema.parse(stampId(correctDraft(raw.wrong as ProblemDraft))), wrongTopic);
+  // Costume the LLM's problems too — real play is almost entirely this path,
+  // so without this the gem-shop framing only ever reached fallback problems.
+  const dress = (p: Problem, t: Topic | undefined): Problem => (t ? maybeCostume(p, t) : p);
+  let right = dress(stampTopic(ProblemSchema.parse(stampId(correctDraft(raw.right as ProblemDraft))), rightTopic), rightTopic);
+  let wrong = dress(stampTopic(ProblemSchema.parse(stampId(correctDraft(raw.wrong as ProblemDraft))), wrongTopic), wrongTopic);
   // Reject repeats (the just-solved problem or anything recently shown); regenerate locally.
   const taken = new Set<string>([current.prompt, ...avoid]);
   if (taken.has(right.prompt)) right = freshLocal(rightTopic, right.skill, right.difficulty, taken);

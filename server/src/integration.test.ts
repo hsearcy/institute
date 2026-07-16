@@ -357,3 +357,35 @@ describe("topic-graph tutor flow", () => {
     expect(leaksAnswer("what do 6 and how many make 10?", 4)).toBe(false);
   });
 });
+
+describe("pad theme shop", () => {
+  const P = "pad-shopper";
+  test("buy deducts gems, records ownership, auto-equips; insufficient rejected", async () => {
+    // fund the profile with correct answers
+    for (let i = 0; i < 5; i++) {
+      await call("POST", "/tutor/attempt", {
+        profileId: P, problemId: `f-${i}`, skill: "add_within_20",
+        topicId: "mt_e8CZ7E5qW7", correct: true, solveMs: 3000, difficulty: 0.5,
+      });
+    }
+    const broke = await call("POST", "/shop/buy-pad-theme", { profileId: P, themeKey: "pad_rainbow" });
+    expect(broke.ok).toBe(false); // 650 > a handful of gems
+    const { grantShieldForTest } = await import("./index.ts"); // reuse pattern: fund via attempts instead
+    void grantShieldForTest;
+    // cheat gems up via hoard bonuses (server-authoritative credit endpoint)
+    for (let i = 0; i < 8; i++) await call("POST", "/reward/hoard-bonus", { profileId: P });
+    const buy = await call("POST", "/shop/buy-pad-theme", { profileId: P, themeKey: "pad_ocean" });
+    expect(buy.ok).toBe(true);
+    expect(buy.equippedPadTheme).toBe("pad_ocean");
+    const shop = await call("GET", `/shop?profileId=${P}`);
+    expect(shop.equippedPadTheme).toBe("pad_ocean");
+    expect(shop.padThemes.find((t: any) => t.key === "pad_ocean").owned).toBe(true);
+    // double-buy rejected
+    expect((await call("POST", "/shop/buy-pad-theme", { profileId: P, themeKey: "pad_ocean" })).ok).toBe(false);
+  });
+  test("equip: classic always; unowned rejected; pad keys can't equip as pickaxes", async () => {
+    expect((await call("POST", "/shop/equip-pad-theme", { profileId: P, themeKey: "pad_classic" })).ok).toBe(true);
+    expect((await call("POST", "/shop/equip-pad-theme", { profileId: P, themeKey: "pad_galaxy" })).ok).toBe(false);
+    expect((await call("POST", "/shop/equip", { profileId: P, itemKey: "pad_ocean" })).ok).toBe(false);
+  });
+});

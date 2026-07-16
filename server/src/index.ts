@@ -114,6 +114,10 @@ try {
 try {
   db.exec(`ALTER TABLE owned_items ADD COLUMN durability INTEGER`);
 } catch { /* column already present */ }
+// Equipped number-pad theme (guarded ALTER; 'pad_classic' = the free default look).
+try {
+  db.exec(`ALTER TABLE profile_state ADD COLUMN equipped_pad_theme TEXT DEFAULT 'pad_classic'`);
+} catch { /* column already present */ }
 // Crazy Coins: a real-world consumable — each coin trades for 15 minutes of
 // shows, redeemed by a parent from the dashboard (guarded ALTER).
 try {
@@ -245,7 +249,7 @@ db.query(`UPDATE topic_mastery SET review_interval_days = 1, review_due_at = ?
 
 // ---- Rewards: gems / streaks / daily quests / shield -----------------------
 
-type ProfileStateRow = { gems: number; streak: number; best_streak: number; shields: number; crazy_coins: number; equipped_pickaxe: string };
+type ProfileStateRow = { gems: number; streak: number; best_streak: number; shields: number; crazy_coins: number; equipped_pickaxe: string; equipped_pad_theme: string };
 type QuestRow = { quest_key: string; label: string; target: number; progress: number; reward: number; done: number };
 
 const utcDay = () => new Date().toISOString().slice(0, 10);
@@ -283,23 +287,24 @@ function streakBonus(streak: number): number {
 
 /** Read (creating if missing) the per-profile reward state. */
 function getProfileState(profileId: string): ProfileStateRow {
-  let row = db.query(`SELECT gems, streak, best_streak, shields, crazy_coins, equipped_pickaxe FROM profile_state WHERE profile_id = ?`)
+  let row = db.query(`SELECT gems, streak, best_streak, shields, crazy_coins, equipped_pickaxe, equipped_pad_theme FROM profile_state WHERE profile_id = ?`)
     .get(profileId) as ProfileStateRow | null;
   if (!row) {
-    db.query(`INSERT OR IGNORE INTO profile_state (profile_id, gems, streak, best_streak, shields, crazy_coins, equipped_pickaxe, updated_at)
-              VALUES (?, 0, 0, 0, 0, 0, 'wooden', ?)`).run(profileId, Date.now());
-    row = { gems: 0, streak: 0, best_streak: 0, shields: 0, crazy_coins: 0, equipped_pickaxe: "wooden" };
+    db.query(`INSERT OR IGNORE INTO profile_state (profile_id, gems, streak, best_streak, shields, crazy_coins, equipped_pickaxe, equipped_pad_theme, updated_at)
+              VALUES (?, 0, 0, 0, 0, 0, 'wooden', 'pad_classic', ?)`).run(profileId, Date.now());
+    row = { gems: 0, streak: 0, best_streak: 0, shields: 0, crazy_coins: 0, equipped_pickaxe: "wooden", equipped_pad_theme: "pad_classic" };
   }
   // Existing rows predating the columns come back with NULL — normalize to the defaults.
   if (!row.equipped_pickaxe) row.equipped_pickaxe = "wooden";
   if (!row.crazy_coins) row.crazy_coins = 0;
+  if (!row.equipped_pad_theme) row.equipped_pad_theme = "pad_classic";
   return row;
 }
 
 function saveProfileState(profileId: string, s: ProfileStateRow): void {
-  db.query(`UPDATE profile_state SET gems = ?, streak = ?, best_streak = ?, shields = ?, crazy_coins = ?, equipped_pickaxe = ?, updated_at = ?
+  db.query(`UPDATE profile_state SET gems = ?, streak = ?, best_streak = ?, shields = ?, crazy_coins = ?, equipped_pickaxe = ?, equipped_pad_theme = ?, updated_at = ?
             WHERE profile_id = ?`)
-    .run(s.gems, s.streak, s.best_streak, s.shields, s.crazy_coins, s.equipped_pickaxe, Date.now(), profileId);
+    .run(s.gems, s.streak, s.best_streak, s.shields, s.crazy_coins, s.equipped_pickaxe, s.equipped_pad_theme, Date.now(), profileId);
 }
 
 // ---- Pickaxe-skin shop -----------------------------------------------------
@@ -318,6 +323,16 @@ const PICKAXE_CATALOG = [
 ] as const;
 
 const catalogEntry = (key: string) => PICKAXE_CATALOG.find((c) => c.key === key) ?? null;
+
+/** Number-pad style themes: pure-cosmetic gem sinks with varied price anchors
+ *  (they double as numbers for the gem-shop math costume + Socratic moments). */
+const PAD_THEME_CATALOG = [
+  { key: "pad_ocean", name: "Ocean Pad", price: 75 },
+  { key: "pad_lava", name: "Lava Pad", price: 160 },
+  { key: "pad_galaxy", name: "Galaxy Pad", price: 340 },
+  { key: "pad_rainbow", name: "Rainbow Pad", price: 650 },
+] as const;
+const padThemeEntry = (key: string) => PAD_THEME_CATALOG.find((c) => c.key === key) ?? null;
 
 // Full durability per tier = how many gems it mines before wearing out. Pricier
 // tiers last much longer (a real reason to climb the ladder, not just looks).
@@ -588,6 +603,7 @@ Rules:
 - "prompt" is the short written form; "spoken" is a warm, kid-friendly sentence to read aloud (no emoji/markdown). "answer" is the exact integer.
 - In "spoken", write any SEQUENCE of numbers as words ("eight, ten, twelve" — never "8, 10, 12"): the voice engine garbles digit runs. Single numbers inside a sentence may stay as digits.
 - He is American: money is ALWAYS dollars and cents (penny/nickel/dime/quarter) — never pounds or pence.
+- About 1 in 3 problems, when it fits naturally, tell the "spoken" story in HIS game's gem economy instead of plain arithmetic. Real prices you may reference: stone pickaxe 50, ocean pad 75, iron pickaxe 120, lava pad 160, crazy coin 200, silver pickaxe 250, galaxy pad 340, gold pickaxe 450, rainbow pad 650, diamond pickaxe 800, shield 40 gems. Use third-person characters (a miner saving up, a shopkeeper) — NEVER "you have N gems" (he compares it against his live gem counter). The numbers you were told to target stay EXACTLY the same; never invent a different price for a named item.
 - "hint" teaches a concrete strategy he can act on if he's stuck (make-a-ten, count-on, count-back) — a real method, never just restating the answer.
 Return via the next_problems tool only.`;
 
@@ -1020,7 +1036,12 @@ app.get("/shop", (c) => {
       repairCost: repairCost(cat.key),
     };
   });
-  return c.json({ gems: s.gems, equipped: s.equipped_pickaxe, items, crazyCoins: s.crazy_coins });
+  const padThemes = PAD_THEME_CATALOG.map((t) => ({
+    key: t.key, name: t.name, price: t.price,
+    owned: ownsItem(profileId, t.key),
+    equipped: s.equipped_pad_theme === t.key,
+  }));
+  return c.json({ gems: s.gems, equipped: s.equipped_pickaxe, items, crazyCoins: s.crazy_coins, padThemes, equippedPadTheme: s.equipped_pad_theme });
 });
 
 // Buy a skin: spend gems, record ownership, and auto-equip it.
@@ -1054,6 +1075,8 @@ app.post("/shop/buy", async (c) => {
 // broken skin (durability 0) — it must be repaired first.
 app.post("/shop/equip", async (c) => {
   const { profileId, itemKey } = await c.req.json();
+  // Pad themes share owned_items — never let one be equipped as a pickaxe.
+  if (padThemeEntry(itemKey)) return c.json({ ok: false, reason: "not a pickaxe" });
   if (itemKey === "wooden" || ownsItem(profileId, itemKey)) {
     if (itemKey !== "wooden" && itemDurability(profileId, itemKey) <= 0) {
       return c.json({ ok: false, reason: "broken" });
@@ -1082,6 +1105,38 @@ app.post("/shop/repair", async (c) => {
   s.equipped_pickaxe = itemKey;
   saveProfileState(profileId, s);
   return c.json({ ok: true, gems: s.gems, equipped: itemKey, durability: equippedDurability(profileId, s, false) });
+});
+
+// Buy a pad theme: spend gems, record ownership, auto-equip. Pure cosmetic —
+// no durability, no repair; switching back to the classic look is always free.
+app.post("/shop/buy-pad-theme", async (c) => {
+  const { profileId, themeKey } = await c.req.json();
+  const s = getProfileState(profileId);
+  const cat = padThemeEntry(themeKey);
+  if (!cat || ownsItem(profileId, themeKey)) {
+    return c.json({ ok: false, reason: "unavailable", gems: s.gems });
+  }
+  if (s.gems < cat.price) {
+    return c.json({ ok: false, reason: "not enough gems", gems: s.gems });
+  }
+  s.gems -= cat.price;
+  s.equipped_pad_theme = themeKey;
+  db.query(`INSERT OR IGNORE INTO owned_items (profile_id, item_key) VALUES (?, ?)`)
+    .run(profileId, themeKey);
+  saveProfileState(profileId, s);
+  return c.json({ ok: true, gems: s.gems, equippedPadTheme: s.equipped_pad_theme, item: { key: cat.key, name: cat.name, price: cat.price } });
+});
+
+// Equip an owned pad theme (or the free classic).
+app.post("/shop/equip-pad-theme", async (c) => {
+  const { profileId, themeKey } = await c.req.json();
+  const s = getProfileState(profileId);
+  if (themeKey === "pad_classic" || (padThemeEntry(themeKey) && ownsItem(profileId, themeKey))) {
+    s.equipped_pad_theme = themeKey;
+    saveProfileState(profileId, s);
+    return c.json({ ok: true, equippedPadTheme: s.equipped_pad_theme });
+  }
+  return c.json({ ok: false, reason: "not owned" });
 });
 
 // Buy a shield: 40 gems → +1 shield. Saves a streak on the next wrong answer.

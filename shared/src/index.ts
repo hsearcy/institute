@@ -176,10 +176,22 @@ export type ShopItem = z.infer<typeof ShopItemSchema>;
 
 /** The shop view returned by GET /shop: balance, equipped skin, full catalog,
  *  and the Crazy Coin count (a real-world reward — 15 minutes of shows each). */
+/** A number-pad style theme in the shop (pure cosmetic gem sink). */
+export const PadThemeSchema = z.object({
+  key: z.string(),
+  name: z.string(),
+  price: z.number().int(),
+  owned: z.boolean(),
+  equipped: z.boolean(),
+});
+export type PadTheme = z.infer<typeof PadThemeSchema>;
+
 export const ShopStateSchema = z.object({
   gems: z.number().int(),
   equipped: z.string(),
   items: z.array(ShopItemSchema),
+  padThemes: z.array(PadThemeSchema).optional(),
+  equippedPadTheme: z.string().optional(),
   crazyCoins: z.number().int(),
 });
 export type ShopState = z.infer<typeof ShopStateSchema>;

@@ -615,6 +615,9 @@ export class Game {
    *  Ungraded, unrewarded, once per item per session, never nagging. */
   private socraticAsked = new Set<string>();
   private lastSocraticAt = -Infinity;
+  /** The live Socratic question, so typing ITS answer never counts against the
+   *  real problem (he WILL get excited and key it in). */
+  private pendingSocratic: { answer: number; name: string; price: number } | null = null;
   private onShopOpened(): void {
     const shop = this.lastShop;
     if (!shop || performance.now() - this.lastSocraticAt < 60_000) return;
@@ -627,6 +630,7 @@ export class Game {
     if (!goal || gems <= 0 || goal.price - gems > 999) return;
     this.socraticAsked.add(goal.key);
     this.lastSocraticAt = performance.now();
+    this.pendingSocratic = { answer: goal.price - gems, name: goal.name, price: goal.price };
     const line = `Ooh — the ${goal.name} costs ${goal.price} gems, and you have ${gems}. How many more do you need?`;
     this.hud.showHint(line);
     void speak(line);
@@ -767,6 +771,7 @@ export class Game {
 
   private showProblem(p: Problem): void {
     this.problem = p;
+    this.pendingSocratic = null; // a new problem replaces the standing shop question
     this.entered = '';
     this.firstAttempt = null;
     this.mined = false;
@@ -868,6 +873,22 @@ export class Game {
     if (!this.problem || this.mined || this.busy || this.entered.length === 0) return;
     const val = parseInt(this.entered, 10);
     const correct = val === this.problem.answer;
+
+    // He answered the SOCRATIC question, not the mine problem: celebrate it and
+    // leave the real problem (and his streak/attempts) completely untouched.
+    // The real problem's answer always takes precedence when they collide.
+    if (!correct && this.pendingSocratic && val === this.pendingSocratic.answer) {
+      const sq = this.pendingSocratic;
+      this.pendingSocratic = null;
+      this.entered = '';
+      this.hud.setAnswer('');
+      const line = `Exactly right — ${sq.answer} more gems and the ${sq.name} is yours!`;
+      this.hud.showHint(line);
+      void speak(line);
+      sfxCollect();
+      for (let i = 0; i < 10; i++) this.spawnSparkle();
+      return;
+    }
 
     // Only the FIRST attempt of each problem counts toward rewards. Capture the
     // authoritative reward delta and drive the HUD from it (server is the source

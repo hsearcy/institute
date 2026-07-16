@@ -15,7 +15,7 @@ import {
 } from "@institute/shared";
 import { localProblem, type ProblemDraft, type SkillStat } from "./generate.ts";
 import { unlockedTopics, frontierTopics } from "./graph.ts";
-import { problemForTopic } from "./topicgen.ts";
+import { problemForTopic, serveProblem, maybeCostume } from "./topicgen.ts";
 import { topicState } from "./mastery.ts";
 import { nextReview } from "./review.ts";
 import { selectNext } from "./select.ts";
@@ -683,11 +683,13 @@ function notePrompt(profileId: string, prompt: string): void {
  *  topic's GenSpec when a topic is known; legacy per-skill generator otherwise. */
 function freshLocal(topic: Topic | undefined, skill: Problem["skill"], difficulty: number, taken: Set<string>): Problem {
   const make = () => stampId(topic ? problemForTopic(topic, difficulty) : localProblem(skill, difficulty));
+  // Costume only the SURVIVOR — never roll dice inside the uniqueness loop.
+  const dress = (p: Problem): Problem => (topic ? maybeCostume(p, topic) : p);
   for (let i = 0; i < 10; i++) {
     const p = make();
-    if (!taken.has(p.prompt)) { taken.add(p.prompt); return p; }
+    if (!taken.has(p.prompt)) { taken.add(p.prompt); return dress(p); }
   }
-  return make();
+  return dress(make());
 }
 
 /** One topic's teaching brief for the model, with a concrete example at the target difficulty. */
@@ -811,7 +813,7 @@ function correctDraft(d: ProblemDraft): ProblemDraft {
 function localBranches(profileId: string, current: Problem): { right: Problem; wrong: Problem } {
   const curTopic = current.topicId ? topicById(current.topicId) : undefined;
   const make = (topic: Topic | undefined, d: number) =>
-    stampId(topic ? problemForTopic(topic, d) : localProblem(current.skill, d));
+    topic ? maybeCostume(stampId(problemForTopic(topic, d)), topic) : stampId(localProblem(current.skill, d));
   const next = curTopic ? selectFor(profileId, curTopic.id) : null;
   const right = next
     ? make(next.topic, next.mode === "review" ? next.difficulty : Math.min(0.95, current.difficulty + 0.12))
@@ -834,7 +836,7 @@ app.post("/tutor/first", async (c) => {
   // Session start = the unified selector with no current topic: a due review
   // first (gentle re-entry), else the interleave rotation over the frontier.
   const { topic, difficulty } = selectFor(profileId, null);
-  const problem = stampId(problemForTopic(topic, difficulty));
+  const problem = stampId(serveProblem(topic, difficulty));
   notePrompt(profileId, problem.prompt);
   return c.json(problem);
 });

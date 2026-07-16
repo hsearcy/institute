@@ -2,6 +2,7 @@
 // the topic's numeric envelope; difficulty (0..1) scales *within* it.
 import type { Topic } from "@institute/shared";
 import { addHint, subHint, type ProblemDraft } from "./generate.ts";
+import { costume } from "./costume.ts";
 
 const ri = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
@@ -26,6 +27,31 @@ const stepWords = (n: number): string => STEP_WORDS[n] ?? `${numberWords(n)}s`;
 const lerp = (lo: number, hi: number, d: number) => Math.round(lo + (hi - lo) * Math.max(0, Math.min(1, d)));
 
 export type TopicProblemDraft = ProblemDraft & { topicId: string; topicLabel: string };
+
+// ---- gem-shop costume (serve sites only) -------------------------------------
+// The dice roll lives HERE, not in problemForTopic: that function is also called
+// to render example prompts for the LLM and inside uniqueness retry loops, which
+// must not consume randomness or the no-repeat state.
+const COSTUME_RATE = 0.4;
+let lastServedCostumed = false;
+
+/** Maybe dress an EXISTING problem in gem-shop clothes (spoken only — prompt,
+ *  answer, and hint untouched), never twice in a row across served problems. */
+export function maybeCostume<T extends ProblemDraft>(p: T, topic: Topic): T {
+  if (lastServedCostumed || Math.random() >= COSTUME_RATE) {
+    lastServedCostumed = false;
+    return p;
+  }
+  const c = costume(p, topic.gen.kind);
+  if (!c) { lastServedCostumed = false; return p; }
+  lastServedCostumed = true;
+  return { ...p, spoken: c.spoken };
+}
+
+/** Generate a problem for serving to the kid, possibly costumed. */
+export function serveProblem(topic: Topic, difficulty: number): TopicProblemDraft {
+  return maybeCostume(problemForTopic(topic, difficulty), topic);
+}
 
 export function problemForTopic(topic: Topic, difficulty: number): TopicProblemDraft {
   const d = Math.max(0, Math.min(1, difficulty));

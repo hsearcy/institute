@@ -15,12 +15,12 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { type Material } from 'three';
-import type { Problem, Branches, Reward, Durability } from '@institute/shared';
+import type { Problem, Branches, Reward, Durability, ShopState } from '@institute/shared';
 import { Hud } from './hud';
 import { PICKAXE_SKINS, isSkinKey, type SkinKey } from './skins';
 import {
   fetchFirst, fetchBranches, fetchExplain, recordAttempt, creditRetrySolve, fetchState, buyShield,
-  fetchShop, buyPickaxe, equipPickaxe, repairPickaxe, creditHoardBonus, reportMiss, fetchMastery,
+  fetchShop, buyPickaxe, equipPickaxe, repairPickaxe, buyPadTheme, equipPadTheme, creditHoardBonus, reportMiss, fetchMastery,
   buyCrazyCoin, redeemCrazyCoin,
 } from './tutor';
 import { speak, sfxChink, sfxMine, sfxFizzle, sfxCollect, sfxFanfare, startAmbience, preloadAudio } from './audio';
@@ -127,7 +127,9 @@ export class Game {
       onExplain: () => void this.onExplain(),
       onBuyShield: () => void this.onBuyShield(),
       onToggleQuests: () => this.hud.toggleQuests(),
-      onToggleShop: () => this.hud.toggleShop(),
+      onToggleShop: () => { if (this.hud.toggleShop()) this.onShopOpened(); },
+      onBuyPadTheme: (key) => void this.onBuyPadTheme(key),
+      onEquipPadTheme: (key) => void this.onEquipPadTheme(key),
       onBuyPickaxe: (key) => void this.onBuyPickaxe(key),
       onEquipPickaxe: (key) => void this.onEquipPickaxe(key),
       onRepairPickaxe: (key) => void this.onRepairPickaxe(key),
@@ -597,9 +599,64 @@ export class Game {
   }
 
   /** Pull the shop catalog and seed the panel (balance + per-tier owned/equipped). */
+  private lastShop: ShopState | null = null;
   private async refreshShop(): Promise<void> {
     const shop = await fetchShop();
-    if (shop) this.hud.setShop(shop);
+    if (shop) {
+      this.lastShop = shop;
+      this.hud.setShop(shop);
+      this.hud.setPadTheme(shop.equippedPadTheme ?? 'pad_classic');
+    }
+  }
+
+  /** The Socratic shop moment: when he opens the shop and is saving toward
+   *  something, the tutor ASKS the gap question — the exact math he does
+   *  spontaneously when he wants a pickaxe (450−200 → "I only need 250!").
+   *  Ungraded, unrewarded, once per item per session, never nagging. */
+  private socraticAsked = new Set<string>();
+  private lastSocraticAt = 0;
+  private onShopOpened(): void {
+    const shop = this.lastShop;
+    if (!shop || performance.now() - this.lastSocraticAt < 60_000) return;
+    const gems = this.totalGems;
+    const goals = [
+      ...shop.items.filter((i) => !i.owned).map((i) => ({ key: i.key, name: i.name, price: i.price })),
+      ...(shop.padThemes ?? []).filter((t) => !t.owned).map((t) => ({ key: t.key, name: t.name, price: t.price })),
+    ].sort((a, b) => a.price - b.price);
+    const goal = goals.find((g) => g.price > gems && !this.socraticAsked.has(g.key));
+    if (!goal || gems <= 0 || goal.price - gems > 999) return;
+    this.socraticAsked.add(goal.key);
+    this.lastSocraticAt = performance.now();
+    const line = `Ooh — the ${goal.name} costs ${goal.price} gems, and you have ${gems}. How many more do you need?`;
+    this.hud.showHint(line);
+    void speak(line);
+  }
+
+  /** Buy a pad theme: debit, apply the new gem tints, small celebration. */
+  private async onBuyPadTheme(key: string): Promise<void> {
+    startAmbience();
+    const res = await buyPadTheme(key);
+    if (!res) return;
+    if (res.ok) {
+      this.totalGems = res.gems ?? this.totalGems;
+      this.hud.rollCollectionTo(this.totalGems);
+      this.hud.setGemsForShop(this.totalGems);
+      this.hud.setPadTheme(res.equippedPadTheme ?? key);
+      void this.refreshShop();
+      sfxFanfare(false);
+      this.hud.equipConfirm(res.item?.name ?? 'New pad style', '#ffd23b');
+    } else {
+      this.hud.shopFeedback('Keep mining — almost there!');
+    }
+  }
+
+  private async onEquipPadTheme(key: string): Promise<void> {
+    startAmbience();
+    const res = await equipPadTheme(key);
+    if (!res || !res.ok) return;
+    this.hud.setPadTheme(res.equippedPadTheme ?? key);
+    void this.refreshShop();
+    sfxCollect();
   }
 
   /** Buy a pickaxe skin: debit (server-authoritative), auto-equip + apply the skin,

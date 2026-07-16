@@ -84,6 +84,24 @@ export async function reportMiss(): Promise<Reward | null> {
   }
 }
 
+/** Buy a number-pad theme (auto-equips). */
+export async function buyPadTheme(themeKey: string): Promise<{ ok: boolean; gems?: number; equippedPadTheme?: string; item?: { key: string; name: string; price: number }; reason?: string } | null> {
+  try {
+    return await post('/shop/buy-pad-theme', { profileId: PROFILE, themeKey });
+  } catch {
+    return null;
+  }
+}
+
+/** Equip an owned pad theme (or pad_classic, always free). */
+export async function equipPadTheme(themeKey: string): Promise<{ ok: boolean; equippedPadTheme?: string } | null> {
+  try {
+    return await post('/shop/equip-pad-theme', { profileId: PROFILE, themeKey });
+  } catch {
+    return null;
+  }
+}
+
 /** Fetch the persisted reward state (gems, streak, shields, daily quests). */
 export async function fetchState(): Promise<State | null> {
   try {

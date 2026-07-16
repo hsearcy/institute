@@ -18,6 +18,8 @@ type Handlers = {
   onToggleShop: () => void;
   onBuyPickaxe: (key: string) => void;
   onEquipPickaxe: (key: string) => void;
+  onBuyPadTheme: (key: string) => void;
+  onEquipPadTheme: (key: string) => void;
   onRepairPickaxe: (key: string) => void;
   onBuyCrazyCoin: () => void;
   onRedeemCrazyCoin: () => void;
@@ -26,6 +28,16 @@ type Handlers = {
 };
 
 const GEM_COLORS = ['#ff6b8a', '#ffa94d', '#ffd43b', '#69db7c', '#3bc9db', '#4dabf7', '#748ffc', '#b197fc', '#f783ac', '#ff8787'];
+/** Number-pad themes: per-digit gem tints. Same saturation/lightness band as the
+ *  classic set — the .key-gem recipe (gradients, glows, 3D shadow) is untouched,
+ *  so every theme keeps the crafted look. */
+const PAD_THEMES: Record<string, { colors: string[]; accent: string; blurb: string }> = {
+  pad_classic: { colors: GEM_COLORS, accent: '#b197fc', blurb: 'The original rainbow gems' },
+  pad_ocean: { colors: ['#4dd4e8', '#3bc9db', '#4dabf7', '#5c9dff', '#69db7c', '#38d9a9', '#66d9e8', '#74c0fc', '#3b95db', '#22b8cf'], accent: '#3bc9db', blurb: 'Cool tides and sea glass' },
+  pad_lava: { colors: ['#ff8787', '#ffa94d', '#ff6b3d', '#ffd43b', '#ff5c5c', '#ff922b', '#ffb84d', '#f76707', '#ff7043', '#e8590c'], accent: '#ff6b3d', blurb: 'Molten rock and embers' },
+  pad_galaxy: { colors: ['#b197fc', '#748ffc', '#9775fa', '#5c7cfa', '#da77f2', '#845ef7', '#7950f2', '#a29bfe', '#c56cf0', '#6c5ce7'], accent: '#845ef7', blurb: 'Deep space shimmer' },
+  pad_rainbow: { colors: ['#ff6b6b', '#ff922b', '#ffd43b', '#94d82d', '#38d9a9', '#3bc9db', '#4dabf7', '#7950f2', '#da77f2', '#f06595'], accent: '#f06595', blurb: 'Every gem a different color' },
+};
 const SHIELD_COST = 40;
 // Crazy Coin: a real-world reward — each coin trades for 15 minutes of shows,
 // redeemed by a parent. Kept in sync with CRAZY_COIN_COST on the server.
@@ -57,6 +69,8 @@ export class Hud {
   private bannerStack!: HTMLDivElement;
   private onBuyPickaxe!: (key: string) => void;
   private onEquipPickaxe!: (key: string) => void;
+  private onBuyPadTheme!: (key: string) => void;
+  private onEquipPadTheme!: (key: string) => void;
   private onRepairPickaxe!: (key: string) => void;
   private onRedeemCrazyCoin!: () => void;
   private buyCoinBtn!: HTMLButtonElement;
@@ -161,6 +175,8 @@ export class Hud {
     this.bannerStack = this.root.querySelector('#banner-stack')!;
     this.onBuyPickaxe = h.onBuyPickaxe;
     this.onEquipPickaxe = h.onEquipPickaxe;
+    this.onBuyPadTheme = h.onBuyPadTheme;
+    this.onEquipPadTheme = h.onEquipPadTheme;
     this.onRepairPickaxe = h.onRepairPickaxe;
     this.onRedeemCrazyCoin = h.onRedeemCrazyCoin;
     this.buyCoinBtn = this.root.querySelector('#buy-coin')!;
@@ -505,9 +521,18 @@ export class Hud {
   }
 
   // ---- pickaxe shop --------------------------------------------------------
-  toggleShop(): void {
+  /** Repaint the number pad's gem tints for the equipped theme. */
+  setPadTheme(themeKey: string): void {
+    const theme = PAD_THEMES[themeKey] ?? PAD_THEMES.pad_classic;
+    this.root.querySelectorAll<HTMLButtonElement>('.pad .key-gem').forEach((b) => {
+      const digit = Number(b.textContent);
+      if (Number.isInteger(digit)) b.style.setProperty('--gem', theme.colors[digit]);
+    });
+  }
+
+  toggleShop(): boolean {
     this.questsPanel.classList.remove('open');
-    this.shopPanel.classList.toggle('open');
+    return this.shopPanel.classList.toggle('open');
   }
   closeShop(): void {
     this.shopPanel.classList.remove('open');
@@ -566,6 +591,42 @@ export class Hud {
       b.addEventListener('click', () => this.onEquipPickaxe(b.dataset.equip!)));
     this.shopList.querySelectorAll<HTMLButtonElement>('[data-repair]').forEach((b) =>
       b.addEventListener('click', () => this.onRepairPickaxe(b.dataset.repair!)));
+
+    // 🎨 Pad Styles shelf — cosmetic themes for the number pad.
+    const themes = state.padThemes ?? [];
+    if (themes.length) {
+      const head = document.createElement('div');
+      head.className = 'shop-section-head';
+      head.textContent = '🎨 Pad Styles';
+      this.shopList.appendChild(head);
+      const classicRow = { key: 'pad_classic', name: 'Classic Pad', price: 0, owned: true,
+        equipped: (state.equippedPadTheme ?? 'pad_classic') === 'pad_classic' };
+      for (const t of [classicRow, ...themes]) {
+        const spec = PAD_THEMES[t.key] ?? PAD_THEMES.pad_classic;
+        const afford = state.gems >= t.price;
+        const row = document.createElement('div');
+        row.className = 'shop-row' + (t.equipped ? ' equipped' : '');
+        const btn = !t.owned
+          ? `<button class="shop-btn is-buy${afford ? ' afford' : ' poor'}" data-buy-pad="${t.key}" data-price="${t.price}"${afford ? '' : ' disabled'}>Buy ${t.price}💎</button>`
+          : t.equipped
+            ? `<button class="shop-btn is-equipped" disabled>Equipped</button>`
+            : `<button class="shop-btn is-equip" data-equip-pad="${t.key}">Equip</button>`;
+        row.innerHTML = `
+          <div class="swatch pad-swatch" style="--tint:${spec.accent}">
+            ${spec.colors.slice(0, 4).map((c) => `<span class="mini-gem" style="--g:${c}"></span>`).join('')}
+          </div>
+          <div class="shop-meta">
+            <div class="shop-name">${t.name}</div>
+            <div class="shop-blurb">${spec.blurb}</div>
+          </div>
+          <div class="shop-btns">${btn}</div>`;
+        this.shopList.appendChild(row);
+      }
+      this.shopList.querySelectorAll<HTMLButtonElement>('[data-buy-pad]').forEach((b) =>
+        b.addEventListener('click', () => this.onBuyPadTheme(b.dataset.buyPad!)));
+      this.shopList.querySelectorAll<HTMLButtonElement>('[data-equip-pad]').forEach((b) =>
+        b.addEventListener('click', () => this.onEquipPadTheme(b.dataset.equipPad!)));
+    }
   }
 
   /** Gentle not-enough-gems toast for a failed pickaxe buy. */
@@ -950,6 +1011,12 @@ function injectStyles(): void {
     transition: opacity .18s ease, transform .18s cubic-bezier(.3,1.5,.5,1), visibility .18s; }
   .quests.open { opacity: 1; visibility: visible; transform: scale(1) translateY(0); }
   .quests-head { color: #ffe9a8; font-weight: 900; font-size: 16px; margin-bottom: 9px; letter-spacing: .3px; }
+  .shop-section-head { margin: 12px 2px 6px; font-weight: 900; font-size: 14px; color: #ffd23b;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+  .pad-swatch { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 3px;
+    background: rgba(20,16,40,0.55); }
+  .pad-swatch .mini-gem { border-radius: 4px;
+    background: linear-gradient(155deg, color-mix(in srgb, var(--g) 60%, white), var(--g)); }
   .quests-bonus { display: flex; align-items: center; gap: 8px; margin: 6px 2px 2px; padding: 7px 10px;
     border-radius: 12px; background: rgba(142, 203, 255, 0.09); border: 1px solid rgba(142, 203, 255, 0.25);
     color: #bfe0ff; font-weight: 800; font-size: 13px; }

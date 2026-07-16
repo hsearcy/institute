@@ -47,12 +47,17 @@ export function costume(draft: ProblemDraft, kind: GenSpec["kind"]): { spoken: s
       if ((m = p.match(/^(\d+) \+ \? = (\d+)$/)) || (m = p.match(/^\? \+ (\d+) = (\d+)$/))) {
         const [have, want] = [Number(m[1]), Number(m[2])];
         const item = priceItem(want);
-        const thing = item ? `the ${item.name}` : `a ${want}-gem ${pick(TREATS)}`;
         const who = pick(MINERS);
-        return { spoken: pick([
-          `${who} saved up ${have} gems and wants ${thing}. How many more gems does he need?`,
-          `${thing[0].toUpperCase()}${thing.slice(1)} costs ${want} gems, and ${who} has ${have}. How many more to go?`,
-        ]) };
+        const treat = pick(TREATS);
+        return { spoken: item
+          ? pick([
+            `${who} saved up ${have} gems and wants the ${item.name}. It costs ${want}. How many more gems does he need?`,
+            `The ${item.name} costs ${want} gems, and ${who} has ${have}. How many more to go?`,
+          ])
+          : pick([
+            `${who} saved up ${have} gems and wants a ${treat} that costs ${want}. How many more does he need?`,
+            `A ${treat} at the shop costs ${want} gems, and ${who} has ${have}. How many more to go?`,
+          ]) };
       }
       return null;
     }

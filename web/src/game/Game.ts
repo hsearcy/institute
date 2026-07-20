@@ -21,7 +21,7 @@ import { PICKAXE_SKINS, isSkinKey, type SkinKey } from './skins';
 import {
   fetchFirst, fetchBranches, fetchExplain, recordAttempt, creditRetrySolve, fetchState, buyShield,
   fetchShop, buyPickaxe, equipPickaxe, repairPickaxe, buyPadTheme, equipPadTheme, creditHoardBonus, reportMiss, fetchMastery,
-  buyCrazyCoin, redeemCrazyCoin,
+  redeemCrazyCoin,
 } from './tutor';
 import { speak, sfxChink, sfxMine, sfxFizzle, sfxCollect, sfxFanfare, startAmbience, preloadAudio } from './audio';
 
@@ -133,7 +133,6 @@ export class Game {
       onBuyPickaxe: (key) => void this.onBuyPickaxe(key),
       onEquipPickaxe: (key) => void this.onEquipPickaxe(key),
       onRepairPickaxe: (key) => void this.onRepairPickaxe(key),
-      onBuyCrazyCoin: () => void this.onBuyCrazyCoin(),
       onRedeemCrazyCoin: () => void this.onRedeemCrazyCoin(),
       onHoardFull: () => void this.onHoardFull(),
       onOpenParent: () => void this.onOpenParent(),
@@ -586,6 +585,7 @@ export class Game {
     if (!st) return;
     this.totalGems = st.gems;
     if (seed) this.hud.setCollection(st.gems);
+    this.hud.setLifetimeGems(st.lifetimeGems);
     this.hud.setStreak(st.streak, false);
     this.hud.setShields(st.shields);
     this.hud.setGemsForShop(st.gems);
@@ -715,27 +715,6 @@ export class Game {
   private beautySwing(): void {
     if (this.busy) return; // don't fight an in-progress mining slam
     this.swing(() => { sfxChink(); this.spawnSparkle(); });
-  }
-
-  /** Buy a Crazy Coin (200 gems → 15 minutes of shows): debit, badge the shop
-   *  row, and fire the biggest celebration in the store — it's the top prize. */
-  private async onBuyCrazyCoin(): Promise<void> {
-    startAmbience();
-    const res = await buyCrazyCoin();
-    if (!res) return;
-    if (res.ok) {
-      this.totalGems = res.gems;
-      this.hud.rollCollectionTo(res.gems);   // gems spent — roll the counter down
-      this.hud.setGemsForShop(res.gems);
-      this.hud.setCrazyCoins(res.crazyCoins, res.gems);
-      this.shake = Math.max(this.shake, 0.7);
-      this.celebrationBurst(8);
-      this.hud.celebrateCrazyCoin(res.crazyCoins);
-      sfxFanfare(true);
-    } else {
-      this.hud.setGemsForShop(res.gems);
-      this.hud.shopFeedback('Need 200 💎 for a Crazy Coin — keep mining!');
-    }
   }
 
   /** Parent redeems one coin from the dashboard (he cashed in his 15 minutes). */
@@ -1042,6 +1021,7 @@ export class Game {
     // quest bonuses are already baked into totalGems, so they make the counter leap.
     this.totalGems = r.totalGems;
     this.hud.rollCollectionTo(r.totalGems);
+    this.hud.setLifetimeGems(r.lifetimeGems);
     this.hud.setStreak(r.streak, true);
     this.hud.setShields(r.shields);
     this.hud.setGemsForShop(r.totalGems);
@@ -1056,10 +1036,9 @@ export class Game {
       this.hud.celebrateQuest(q);
       sfxFanfare(false);
     }
-    if (r.allDailiesShield) {
-      this.hud.celebrateShieldEarned();
-      this.hud.setShields(r.shields);
-      void speak('You finished every quest today — here is a shield to keep your streak safe!');
+    if (r.allDailiesCrazyCoin) {
+      this.hud.celebrateDailyCrazyCoin();
+      void speak('You finished every quest today — you earned a Crazy Coin! Go tell a grown-up!');
       sfxFanfare(true);
     }
     // Wear the pickaxe for this mined gem (may shatter → swap to wooden).
@@ -1081,6 +1060,7 @@ export class Game {
     if (!reward) return;
     this.totalGems = reward.totalGems;
     this.hud.rollCollectionTo(reward.totalGems);
+    this.hud.setLifetimeGems(reward.lifetimeGems);
     this.hud.setGemsForShop(reward.totalGems);
   }
 

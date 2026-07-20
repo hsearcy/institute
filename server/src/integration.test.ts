@@ -23,7 +23,7 @@ describe("topic-graph tutor flow", () => {
   test("weekly quest counts five completed daily boards, awards 250 once, and resets Sunday", async () => {
     const profileId = "weekly-quest";
     const topics = TOPICS.filter((t) => t.prereqs.length === 0).slice(0, 4);
-    let lastReward: any = null;
+    let weeklyAwards = 0;
 
     try {
       // 2026-07-12 is a Sunday. Finish all five daily quests Sunday–Thursday.
@@ -35,15 +35,14 @@ describe("topic-graph tutor flow", () => {
             profileId, problemId: `weekly-${day}-${i}`, skill: "add_within_20", topicId: topic.id,
             correct: true, solveMs: 10_000, difficulty: 0.4,
           });
-          lastReward = result.reward;
+          weeklyAwards += result.reward.questsCompleted
+            .filter((q: any) => q.key === "daily_quests_5_days" && q.reward === 250).length;
         }
         const state = await call("GET", `/state?profileId=${profileId}`);
         expect(state.weeklyQuest.progress).toBe(day + 1);
       }
 
-      expect(lastReward.questsCompleted).toEqual(expect.arrayContaining([
-        expect.objectContaining({ key: "daily_quests_5_days", reward: 250 }),
-      ]));
+      expect(weeklyAwards).toBe(1);
       let state = await call("GET", `/state?profileId=${profileId}`);
       expect(state.weeklyQuest).toMatchObject({ target: 5, progress: 5, reward: 250, done: true });
 
@@ -135,28 +134,31 @@ describe("topic-graph tutor flow", () => {
     expect(miss.reward.streakLost).toBe(0);
   });
 
-  test("finishing the whole daily board awards a shield exactly once", async () => {
-    const profileId = "all-dailies-shield";
-    let sawShieldAward = 0;
-    let shieldsAt = -1;
+  test("finishing the whole daily board awards one Crazy Coin exactly once", async () => {
+    const profileId = "all-dailies-crazy-coin";
+    let sawCoinAward = 0;
     for (let i = 0; i < 30; i++) {
       const r = await call("POST", "/tutor/attempt", {
         profileId, problemId: `q-${i}`, skill: "add_within_20",
         topicId: ["mt_e8CZ7E5qW7", "mt_ghF3Vv6taM", "mt_M5PPDJStGm", "mt_LpSuPgL31x", "mt_THl9GLxwoL"][i % 5],
         correct: true, solveMs: 3_000, difficulty: 0.5,
       });
-      if (r.reward.allDailiesShield) { sawShieldAward++; shieldsAt = r.reward.shields; }
+      if (r.reward.allDailiesCrazyCoin) sawCoinAward++;
     }
-    expect(sawShieldAward).toBe(1);
-    expect(shieldsAt).toBeGreaterThanOrEqual(1);
+    expect(sawCoinAward).toBe(1);
+    expect((await call("GET", `/mastery?profileId=${profileId}`)).crazyCoins).toBe(1);
+    expect((await call("GET", `/state?profileId=${profileId}`)).shields).toBe(0);
+
+    const redeemed = await call("POST", "/shop/redeem-crazy-coin", { profileId });
+    expect(redeemed).toEqual({ ok: true, crazyCoins: 0 });
   });
 
   test("daily quests reward endurance, accuracy, speed, and topic variety", async () => {
     const profileId = "quest-variety";
     let state = await call("GET", `/state?profileId=${profileId}`);
     expect(state.quests.map((q: any) => [q.key, q.target])).toEqual(expect.arrayContaining([
-      ["mine_gems", 60],
-      ["solve_10", 25],
+      ["mine_gems", 50],
+      ["solve_10", 20],
       ["streak_5", 10],
       ["speed_8", 5],
       ["topic_explorer", 4],
@@ -193,6 +195,34 @@ describe("topic-graph tutor flow", () => {
     expect(quests.solve_10.progress).toBe(1);
     expect(quests.speed_8.progress).toBe(0);
     expect(quests.topic_explorer.progress).toBe(0);
+  });
+
+  test("lifetime gems rise with rewards and never fall when gems are spent", async () => {
+    const profileId = "lifetime-gems";
+    for (let i = 0; i < 8; i++) {
+      await call("POST", "/reward/hoard-bonus", { profileId });
+    }
+
+    let state = await call("GET", `/state?profileId=${profileId}`);
+    expect(state).toMatchObject({ gems: 80, lifetimeGems: 80 });
+
+    const purchase = await call("POST", "/shop/buy-pad-theme", {
+      profileId,
+      themeKey: "pad_ocean",
+    });
+    expect(purchase).toMatchObject({ ok: true, gems: 5 });
+    state = await call("GET", `/state?profileId=${profileId}`);
+    expect(state).toMatchObject({ gems: 5, lifetimeGems: 80 });
+
+    const answer = await call("POST", "/tutor/attempt", {
+      profileId,
+      problemId: "lifetime-answer",
+      skill: "add_within_20",
+      correct: true,
+      solveMs: 10_000,
+      difficulty: 0.4,
+    });
+    expect(answer.reward).toMatchObject({ totalGems: 6, lifetimeGems: 81 });
   });
 
   test("first problem comes from a root topic and carries topicId + label", async () => {
@@ -280,30 +310,9 @@ describe("topic-graph tutor flow", () => {
     expect(row.reviewDueAt).toBeLessThan(Date.now() + day + 60_000);
   });
 
-  test("crazy coin: buy debits 200 gems, parent redeem decrements, both guard", async () => {
-    // Broke: buy must refuse.
-    let r = await call("POST", "/shop/buy-crazy-coin", { profileId: "kid8" });
-    expect(r).toEqual({ ok: false, reason: "not enough gems", gems: 0, crazyCoins: 0 });
-    // No coins: redeem must refuse.
-    r = await call("POST", "/shop/redeem-crazy-coin", { profileId: "kid8" });
+  test("crazy coin redemption refuses when no daily reward is available", async () => {
+    const r = await call("POST", "/shop/redeem-crazy-coin", { profileId: "kid8" });
     expect(r).toEqual({ ok: false, reason: "no coins", crazyCoins: 0 });
-
-    // Credit 250 gems via hoard bonuses (10 each), then buy.
-    for (let i = 0; i < 25; i++) await call("POST", "/reward/hoard-bonus", { profileId: "kid8" });
-    r = await call("POST", "/shop/buy-crazy-coin", { profileId: "kid8" });
-    expect(r).toEqual({ ok: true, gems: 50, crazyCoins: 1 });
-
-    // The count flows to the kid's shop AND the parent dashboard.
-    const shop = await call("GET", "/shop?profileId=kid8");
-    expect(shop.crazyCoins).toBe(1);
-    const m = await call("GET", "/mastery?profileId=kid8");
-    expect(m.crazyCoins).toBe(1);
-
-    // Parent redeems it — gems untouched (already spent at purchase).
-    r = await call("POST", "/shop/redeem-crazy-coin", { profileId: "kid8" });
-    expect(r).toEqual({ ok: true, crazyCoins: 0 });
-    const state = await call("GET", "/state?profileId=kid8");
-    expect(state.gems).toBe(50);
   });
 
   test("right branch rotates topic after a 4-run (interleaving)", async () => {

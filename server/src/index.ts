@@ -57,6 +57,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS profile_state (
     profile_id TEXT PRIMARY KEY,
     gems INTEGER DEFAULT 0,
+    lifetime_gems INTEGER DEFAULT 0,
     streak INTEGER DEFAULT 0,
     best_streak INTEGER DEFAULT 0,
     shields INTEGER DEFAULT 0,
@@ -122,6 +123,13 @@ try {
 // shows, redeemed by a parent from the dashboard (guarded ALTER).
 try {
   db.exec(`ALTER TABLE profile_state ADD COLUMN crazy_coins INTEGER DEFAULT 0`);
+} catch { /* column already present */ }
+// Lifetime earnings never fall when gems are spent. Existing profiles are
+// backfilled below once the shop catalogs are available.
+let shouldBackfillLifetimeGems = false;
+try {
+  db.exec(`ALTER TABLE profile_state ADD COLUMN lifetime_gems INTEGER DEFAULT 0`);
+  shouldBackfillLifetimeGems = true;
 } catch { /* column already present */ }
 // Seed the skill ladder (categories + descent order) from the shared schema.
 const seedSkill = db.query(`INSERT OR IGNORE INTO skills (skill, label, ladder) VALUES (?, ?, ?)`);
@@ -249,7 +257,7 @@ db.query(`UPDATE topic_mastery SET review_interval_days = 1, review_due_at = ?
 
 // ---- Rewards: gems / streaks / daily quests / shield -----------------------
 
-type ProfileStateRow = { gems: number; streak: number; best_streak: number; shields: number; crazy_coins: number; equipped_pickaxe: string; equipped_pad_theme: string };
+type ProfileStateRow = { gems: number; lifetime_gems: number; streak: number; best_streak: number; shields: number; crazy_coins: number; equipped_pickaxe: string; equipped_pad_theme: string };
 type QuestRow = { quest_key: string; label: string; target: number; progress: number; reward: number; done: number };
 
 const utcDay = () => new Date().toISOString().slice(0, 10);
@@ -257,12 +265,13 @@ const utcDay = () => new Date().toISOString().slice(0, 10);
 // Bonus gems awarded when the client's hoard meter fills up (kept in sync with
 // HOARD_BONUS on the client, which renders the "+N" banner).
 const HOARD_BONUS = 10;
+const LEGACY_CRAZY_COIN_COST = 200;
 
 /** The five daily quests, regenerated lazily per UTC day. Keep the legacy keys
  *  for the first three so an in-progress day survives deploys. */
 const QUEST_DEFS = [
-  { key: "mine_gems", label: "Mine 60 gems today", target: 60, reward: 25 },
-  { key: "solve_10", label: "Solve 25 problems", target: 25, reward: 20 },
+  { key: "mine_gems", label: "Earn 50 gems today", target: 50, reward: 25 },
+  { key: "solve_10", label: "Solve 20 problems", target: 20, reward: 20 },
   { key: "streak_5", label: "Reach a 10-streak", target: 10, reward: 20 },
   // Keep the legacy key so an in-progress daily board survives this deploy.
   { key: "speed_8", label: "Lightning: 5 under 20 seconds", target: 5, reward: 10 },
@@ -287,12 +296,12 @@ function streakBonus(streak: number): number {
 
 /** Read (creating if missing) the per-profile reward state. */
 function getProfileState(profileId: string): ProfileStateRow {
-  let row = db.query(`SELECT gems, streak, best_streak, shields, crazy_coins, equipped_pickaxe, equipped_pad_theme FROM profile_state WHERE profile_id = ?`)
+  let row = db.query(`SELECT gems, lifetime_gems, streak, best_streak, shields, crazy_coins, equipped_pickaxe, equipped_pad_theme FROM profile_state WHERE profile_id = ?`)
     .get(profileId) as ProfileStateRow | null;
   if (!row) {
-    db.query(`INSERT OR IGNORE INTO profile_state (profile_id, gems, streak, best_streak, shields, crazy_coins, equipped_pickaxe, equipped_pad_theme, updated_at)
-              VALUES (?, 0, 0, 0, 0, 0, 'wooden', 'pad_classic', ?)`).run(profileId, Date.now());
-    row = { gems: 0, streak: 0, best_streak: 0, shields: 0, crazy_coins: 0, equipped_pickaxe: "wooden", equipped_pad_theme: "pad_classic" };
+    db.query(`INSERT OR IGNORE INTO profile_state (profile_id, gems, lifetime_gems, streak, best_streak, shields, crazy_coins, equipped_pickaxe, equipped_pad_theme, updated_at)
+              VALUES (?, 0, 0, 0, 0, 0, 0, 'wooden', 'pad_classic', ?)`).run(profileId, Date.now());
+    row = { gems: 0, lifetime_gems: 0, streak: 0, best_streak: 0, shields: 0, crazy_coins: 0, equipped_pickaxe: "wooden", equipped_pad_theme: "pad_classic" };
   }
   // Existing rows predating the columns come back with NULL — normalize to the defaults.
   if (!row.equipped_pickaxe) row.equipped_pickaxe = "wooden";
@@ -302,9 +311,14 @@ function getProfileState(profileId: string): ProfileStateRow {
 }
 
 function saveProfileState(profileId: string, s: ProfileStateRow): void {
-  db.query(`UPDATE profile_state SET gems = ?, streak = ?, best_streak = ?, shields = ?, crazy_coins = ?, equipped_pickaxe = ?, equipped_pad_theme = ?, updated_at = ?
+  db.query(`UPDATE profile_state SET gems = ?, lifetime_gems = ?, streak = ?, best_streak = ?, shields = ?, crazy_coins = ?, equipped_pickaxe = ?, equipped_pad_theme = ?, updated_at = ?
             WHERE profile_id = ?`)
-    .run(s.gems, s.streak, s.best_streak, s.shields, s.crazy_coins, s.equipped_pickaxe, s.equipped_pad_theme, Date.now(), profileId);
+    .run(s.gems, s.lifetime_gems, s.streak, s.best_streak, s.shields, s.crazy_coins, s.equipped_pickaxe, s.equipped_pad_theme, Date.now(), profileId);
+}
+
+function creditGems(state: ProfileStateRow, amount: number): void {
+  state.gems += amount;
+  state.lifetime_gems += amount;
 }
 
 // ---- Pickaxe-skin shop -----------------------------------------------------
@@ -333,6 +347,26 @@ const PAD_THEME_CATALOG = [
   { key: "pad_rainbow", name: "Rainbow Pad", price: 650 },
 ] as const;
 const padThemeEntry = (key: string) => PAD_THEME_CATALOG.find((c) => c.key === key) ?? null;
+
+// Old data has no transaction ledger, but owned catalog items and unredeemed
+// Crazy Coins preserve a guaranteed portion of past spending. Use that evidence
+// to establish a conservative lifetime floor, then track every award exactly.
+if (shouldBackfillLifetimeGems) {
+  const priceByKey = new Map<string, number>([
+    ...PICKAXE_CATALOG.map((item) => [item.key, item.price] as const),
+    ...PAD_THEME_CATALOG.map((item) => [item.key, item.price] as const),
+  ]);
+  const profiles = db.query(`SELECT profile_id, gems, crazy_coins FROM profile_state`)
+    .all() as { profile_id: string; gems: number; crazy_coins: number }[];
+  for (const profile of profiles) {
+    const owned = db.query(`SELECT item_key FROM owned_items WHERE profile_id = ?`)
+      .all(profile.profile_id) as { item_key: string }[];
+    const recordedSpending = owned.reduce((sum, item) => sum + (priceByKey.get(item.item_key) ?? 0), 0);
+    const lifetimeGems = profile.gems + recordedSpending + profile.crazy_coins * LEGACY_CRAZY_COIN_COST;
+    db.query(`UPDATE profile_state SET lifetime_gems = ? WHERE profile_id = ?`)
+      .run(lifetimeGems, profile.profile_id);
+  }
+}
 
 // Full durability per tier = how many gems it mines before wearing out. Pricier
 // tiers last much longer (a real reason to climb the ladder, not just looks).
@@ -473,7 +507,7 @@ function advanceWeeklyQuest(
      WHERE profile_id = ? AND quest_key = ? AND week_start = ?`,
   ).run(progress, done, profileId, quest.quest_key, weekStart(day));
   if (!done) return [];
-  state.gems += quest.reward;
+  creditGems(state, quest.reward);
   return [{ key: quest.quest_key, label: quest.label, reward: quest.reward }];
 }
 
@@ -490,7 +524,7 @@ function advanceQuests(
   day: string,
   state: ProfileStateRow,
   event: QuestEvent,
-): { completed: { key: string; label: string; reward: number }[]; allDailiesShield: boolean } {
+): { completed: { key: string; label: string; reward: number }[]; allDailiesCrazyCoin: boolean } {
   const completed: { key: string; label: string; reward: number }[] = [];
   const dayStart = Date.parse(`${day}T00:00:00.000Z`);
   const doneBefore = getQuests(profileId, day).filter((r) => r.done).length;
@@ -512,19 +546,18 @@ function advanceQuests(
 
     const done = progress >= r.target ? 1 : 0;
     if (done) {
-      state.gems += r.reward;
+      creditGems(state, r.reward);
       completed.push({ key: r.quest_key, label: r.label, reward: r.reward });
     }
     db.query(`UPDATE quests SET progress = ?, done = ? WHERE profile_id = ? AND quest_key = ? AND day = ?`)
       .run(progress, done, profileId, r.quest_key, day);
   }
   completed.push(...advanceWeeklyQuest(profileId, day, state));
-  // Finishing the whole daily board earns a shield: a free "oops" for tomorrow,
-  // so admitting "I don't know this one" is never scary.
+  // Finishing the whole daily board earns one real-world Crazy Coin.
   const doneAfter = getQuests(profileId, day).filter((r) => r.done).length;
-  const allDailiesShield = doneBefore < QUEST_DEFS.length && doneAfter >= QUEST_DEFS.length;
-  if (allDailiesShield) state.shields += 1;
-  return { completed, allDailiesShield };
+  const allDailiesCrazyCoin = doneBefore < QUEST_DEFS.length && doneAfter >= QUEST_DEFS.length;
+  if (allDailiesCrazyCoin) state.crazy_coins += 1;
+  return { completed, allDailiesCrazyCoin };
 }
 
 /** A daily streak is independent of the profile's cross-day streak. A shield
@@ -603,7 +636,7 @@ Rules:
 - "prompt" is the short written form; "spoken" is a warm, kid-friendly sentence to read aloud (no emoji/markdown). "answer" is the exact integer.
 - In "spoken", write any SEQUENCE of numbers as words ("eight, ten, twelve" — never "8, 10, 12"): the voice engine garbles digit runs. Single numbers inside a sentence may stay as digits.
 - He is American: money is ALWAYS dollars and cents (penny/nickel/dime/quarter) — never pounds or pence.
-- About 1 in 3 problems, when it fits naturally, tell the "spoken" story in HIS game's gem economy instead of plain arithmetic. Real prices you may reference: stone pickaxe 50, ocean pad 75, iron pickaxe 120, lava pad 160, crazy coin 200, silver pickaxe 250, galaxy pad 340, gold pickaxe 450, rainbow pad 650, diamond pickaxe 800, shield 40 gems. Use third-person characters (a miner saving up, a shopkeeper) — NEVER "you have N gems" (he compares it against his live gem counter). The numbers you were told to target stay EXACTLY the same; never invent a different price for a named item.
+- About 1 in 3 problems, when it fits naturally, tell the "spoken" story in HIS game's gem economy instead of plain arithmetic. Real prices you may reference: stone pickaxe 50, ocean pad 75, iron pickaxe 120, lava pad 160, silver pickaxe 250, galaxy pad 340, gold pickaxe 450, rainbow pad 650, diamond pickaxe 800, shield 40 gems. Use third-person characters (a miner saving up, a shopkeeper) — NEVER "you have N gems" (he compares it against his live gem counter). The numbers you were told to target stay EXACTLY the same; never invent a different price for a named item.
 - "hint" teaches a concrete strategy he can act on if he's stuck (make-a-ten, count-on, count-back) — a real method, never just restating the answer.
 Return via the next_problems tool only.`;
 
@@ -892,7 +925,7 @@ app.post("/tutor/attempt", async (c) => {
   let gemsEarned = 0;
   let milestone: number | null = null;
   const shieldUsed = false;
-  let allDailiesShield = false;
+  let allDailiesCrazyCoin = false;
   const questsCompleted: { key: string; label: string; reward: number }[] = [];
 
   if (correct) {
@@ -900,7 +933,7 @@ app.post("/tutor/attempt", async (c) => {
     state.best_streak = Math.max(state.best_streak, state.streak);
     const bonus = streakBonus(state.streak);
     gemsEarned = 1 + bonus;
-    state.gems += gemsEarned;
+    creditGems(state, gemsEarned);
     if (bonus > 0) milestone = state.streak;
 
     const q = advanceQuests(profileId, day, state, {
@@ -909,7 +942,7 @@ app.post("/tutor/attempt", async (c) => {
       solveMs: Math.round(solveMs ?? 0),
     });
     questsCompleted.push(...q.completed);
-    allDailiesShield = q.allDailiesShield;
+    allDailiesCrazyCoin = q.allDailiesCrazyCoin;
   } else {
     // A wrong FIRST try is learning data, not a punishable miss: he still has
     // retries. The streak/shield outcome happens at /reward/miss, which the
@@ -925,13 +958,14 @@ app.post("/tutor/attempt", async (c) => {
     reward: {
       gemsEarned,
       totalGems: state.gems,
+      lifetimeGems: state.lifetime_gems,
       streak: state.streak,
       bestStreak: state.best_streak,
       shields: state.shields,
       milestone,
       shieldUsed,
       questsCompleted,
-      allDailiesShield,
+      allDailiesCrazyCoin,
       durability,
     },
   });
@@ -957,7 +991,7 @@ app.post("/reward/miss", async (c) => {
   return c.json({
     ok: true,
     reward: {
-      gemsEarned: 0, totalGems: state.gems, streak: state.streak, bestStreak: state.best_streak,
+      gemsEarned: 0, totalGems: state.gems, lifetimeGems: state.lifetime_gems, streak: state.streak, bestStreak: state.best_streak,
       shields: state.shields, milestone: null, shieldUsed, streakLost, questsCompleted: [],
     },
   });
@@ -969,8 +1003,8 @@ app.post("/reward/retry-solve", async (c) => {
   const { profileId } = await c.req.json();
   const state = getProfileState(profileId);
   const day = utcDay();
-  state.gems += 1;
-  const { completed: questsCompleted, allDailiesShield } = advanceQuests(profileId, day, state, {
+  creditGems(state, 1);
+  const { completed: questsCompleted, allDailiesCrazyCoin } = advanceQuests(profileId, day, state, {
     firstTry: false,
     gemsEarned: 1,
   });
@@ -979,8 +1013,8 @@ app.post("/reward/retry-solve", async (c) => {
   return c.json({
     ok: true,
     reward: {
-      gemsEarned: 1, totalGems: state.gems, streak: state.streak, bestStreak: state.best_streak,
-      shields: state.shields, milestone: null, shieldUsed: false, questsCompleted, allDailiesShield, durability,
+      gemsEarned: 1, totalGems: state.gems, lifetimeGems: state.lifetime_gems, streak: state.streak, bestStreak: state.best_streak,
+      shields: state.shields, milestone: null, shieldUsed: false, questsCompleted, allDailiesCrazyCoin, durability,
     },
   });
 });
@@ -991,12 +1025,12 @@ app.post("/reward/retry-solve", async (c) => {
 app.post("/reward/hoard-bonus", async (c) => {
   const { profileId } = await c.req.json();
   const state = getProfileState(profileId);
-  state.gems += HOARD_BONUS;
+  creditGems(state, HOARD_BONUS);
   saveProfileState(profileId, state);
   return c.json({
     ok: true,
     reward: {
-      gemsEarned: HOARD_BONUS, totalGems: state.gems, streak: state.streak, bestStreak: state.best_streak,
+      gemsEarned: HOARD_BONUS, totalGems: state.gems, lifetimeGems: state.lifetime_gems, streak: state.streak, bestStreak: state.best_streak,
       shields: state.shields, milestone: null, shieldUsed: false, questsCompleted: [],
     },
   });
@@ -1008,6 +1042,7 @@ app.get("/state", (c) => {
   const s = getProfileState(profileId);
   return c.json({
     gems: s.gems,
+    lifetimeGems: s.lifetime_gems,
     streak: s.streak,
     bestStreak: s.best_streak,
     shields: s.shields,
@@ -1044,7 +1079,7 @@ app.get("/shop", (c) => {
     owned: ownsItem(profileId, t.key),
     equipped: s.equipped_pad_theme === t.key,
   }));
-  return c.json({ gems: s.gems, equipped: s.equipped_pickaxe, items, crazyCoins: s.crazy_coins, padThemes, equippedPadTheme: s.equipped_pad_theme });
+  return c.json({ gems: s.gems, equipped: s.equipped_pickaxe, items, padThemes, equippedPadTheme: s.equipped_pad_theme });
 });
 
 // Buy a skin: spend gems, record ownership, and auto-equip it.
@@ -1155,24 +1190,8 @@ app.post("/shop/buy-shield", async (c) => {
   return c.json({ ok: false, reason: "not enough gems", gems: s.gems, shields: s.shields });
 });
 
-// Crazy Coin: 200 gems → +1 coin. A real-world reward — each coin trades for
-// 15 minutes of shows; a parent redeems it from the dashboard. Kept in sync
-// with CRAZY_COIN_COST on the client (which renders the price tag).
-const CRAZY_COIN_COST = 200;
-app.post("/shop/buy-crazy-coin", async (c) => {
-  const { profileId } = await c.req.json();
-  const s = getProfileState(profileId);
-  if (s.gems >= CRAZY_COIN_COST) {
-    s.gems -= CRAZY_COIN_COST;
-    s.crazy_coins += 1;
-    saveProfileState(profileId, s);
-    return c.json({ ok: true, gems: s.gems, crazyCoins: s.crazy_coins });
-  }
-  return c.json({ ok: false, reason: "not enough gems", gems: s.gems, crazyCoins: s.crazy_coins });
-});
-
 // Parent redeems one Crazy Coin (kid cashes it in for 15 minutes of shows).
-// Only decrements the counter — the gems were already spent at purchase.
+// Only decrements the counter — daily quest rewards do not affect gems.
 app.post("/shop/redeem-crazy-coin", async (c) => {
   const { profileId } = await c.req.json();
   const s = getProfileState(profileId);

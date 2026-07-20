@@ -125,18 +125,6 @@ export async function buyShield(): Promise<
   }
 }
 
-/** Buy a Crazy Coin (200 gems) — a real-world reward worth 15 minutes of shows,
- *  redeemed by a parent from the dashboard. Never throws. */
-export async function buyCrazyCoin(): Promise<
-  { ok: true; gems: number; crazyCoins: number } | { ok: false; reason: string; gems: number; crazyCoins: number } | null
-> {
-  try {
-    return await post('/shop/buy-crazy-coin', { profileId: PROFILE });
-  } catch {
-    return null;
-  }
-}
-
 /** Parent redeems one Crazy Coin (kid cashes it in for his 15 minutes).
  *  Returns the new coin count, or a no-coins failure. Never throws. */
 export async function redeemCrazyCoin(): Promise<

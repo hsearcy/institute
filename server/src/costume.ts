@@ -20,7 +20,6 @@ export const SHOP_PRICES = [
   { name: "gold pickaxe", price: 450 },
   { name: "diamond pickaxe", price: 800 },
   { name: "shield", price: 40 },
-  { name: "crazy coin", price: 200 },
   { name: "ocean pad", price: 75 },
   { name: "lava pad", price: 160 },
   { name: "galaxy pad", price: 340 },

@@ -21,7 +21,6 @@ type Handlers = {
   onBuyPadTheme: (key: string) => void;
   onEquipPadTheme: (key: string) => void;
   onRepairPickaxe: (key: string) => void;
-  onBuyCrazyCoin: () => void;
   onRedeemCrazyCoin: () => void;
   onHoardFull: () => void;
   onOpenParent: () => void;
@@ -39,9 +38,6 @@ const PAD_THEMES: Record<string, { colors: string[]; accent: string; blurb: stri
   pad_rainbow: { colors: ['#ff6b6b', '#ff922b', '#ffd43b', '#94d82d', '#38d9a9', '#3bc9db', '#4dabf7', '#7950f2', '#da77f2', '#f06595'], accent: '#f06595', blurb: 'Every gem a different color' },
 };
 const SHIELD_COST = 40;
-// Crazy Coin: a real-world reward — each coin trades for 15 minutes of shows,
-// redeemed by a parent. Kept in sync with CRAZY_COIN_COST on the server.
-const CRAZY_COIN_COST = 200;
 // Hoard meter: pips needed to fill the bar, and the bonus shown when it overflows
 // (the server credits the same amount via /reward/hoard-bonus → HOARD_BONUS).
 const HOARD_CAP = 15;
@@ -52,6 +48,7 @@ export class Hud {
   private problemEl!: HTMLDivElement;
   private answerEl!: HTMLDivElement;
   private collectionEl!: HTMLSpanElement;
+  private lifetimeGemsEl!: HTMLSpanElement;
   private collectionChip!: HTMLDivElement;
   private hoardEl!: HTMLDivElement;
   private hintEl!: HTMLDivElement;
@@ -73,9 +70,6 @@ export class Hud {
   private onEquipPadTheme!: (key: string) => void;
   private onRepairPickaxe!: (key: string) => void;
   private onRedeemCrazyCoin!: () => void;
-  private buyCoinBtn!: HTMLButtonElement;
-  private coinOwnedEl!: HTMLSpanElement;
-  private coinCountEl!: HTMLElement;
   private onHoardFull!: () => void;
   private duraEl!: HTMLDivElement;
   private duraFill!: HTMLDivElement;
@@ -98,7 +92,10 @@ export class Hud {
       <div class="hud-top">
         <div class="hoard" id="hoard" aria-label="Your gem collection"></div>
         <div class="status">
-          <div class="collection" id="collection-chip">💎 <span id="collection-count">0</span></div>
+          <div class="collection" id="collection-chip" title="Spendable gems and lifetime gems earned">
+            <span class="collection-balance">💎 <span id="collection-count">0</span></span>
+            <span class="lifetime-earned">🏆 <span id="lifetime-gems">0</span> earned</span>
+          </div>
           <div class="flame" id="flame" aria-label="Streak"><span class="flame-emoji">🔥</span><span id="flame-count">0</span></div>
           <div class="shield" id="shield" aria-label="Streak shields">🛡️ <span id="shield-count">0</span></div>
           <button class="buy-shield" id="buy-shield" title="Buy a streak shield">＋🛡️ <b>${SHIELD_COST}</b>💎</button>
@@ -109,21 +106,13 @@ export class Hud {
       <div class="quests" id="quests">
         <div class="quests-head">📜 Daily Quests</div>
         <div class="quests-list" id="quests-list"></div>
-        <div class="quests-bonus" id="quests-bonus"><span class="qb-icon">🛡</span><span class="qb-text">Finish all 5 → earn a shield!</span></div>
+        <div class="quests-bonus" id="quests-bonus"><span class="qb-icon">🪙</span><span class="qb-text">Finish all 5 → earn a Crazy Coin!</span></div>
         <div class="quests-head weekly">🏆 Weekly Quest</div>
         <div class="quests-list" id="weekly-quest-list"></div>
       </div>
       <button class="shop-toggle" id="shop-toggle" title="Shop">🛒</button>
       <div class="shop" id="shop">
         <div class="shop-head">🛒 Shop <span class="shop-gems">💎 <span id="shop-gems">0</span></span></div>
-        <div class="shop-coin" id="shop-coin">
-          <div class="coin-medal">🪙</div>
-          <div class="shop-meta">
-            <div class="shop-name">Crazy Coin <span class="coin-owned" id="coin-owned" hidden>×<b id="coin-count">0</b></span></div>
-            <div class="shop-blurb">Trade with a grown-up!</div>
-          </div>
-          <div class="shop-btns"><button class="shop-btn is-buy poor" id="buy-coin" data-price="${CRAZY_COIN_COST}" disabled>Buy ${CRAZY_COIN_COST}💎</button></div>
-        </div>
         <div class="shop-list" id="shop-list"></div>
       </div>
       <div class="problem-wrap">
@@ -158,6 +147,7 @@ export class Hud {
     this.problemEl = this.root.querySelector('#problem')!;
     this.answerEl = this.root.querySelector('#answer')!;
     this.collectionEl = this.root.querySelector('#collection-count')!;
+    this.lifetimeGemsEl = this.root.querySelector('#lifetime-gems')!;
     this.collectionChip = this.root.querySelector('#collection-chip')!;
     this.hoardEl = this.root.querySelector('#hoard')!;
     this.restoreHoard();
@@ -179,10 +169,6 @@ export class Hud {
     this.onEquipPadTheme = h.onEquipPadTheme;
     this.onRepairPickaxe = h.onRepairPickaxe;
     this.onRedeemCrazyCoin = h.onRedeemCrazyCoin;
-    this.buyCoinBtn = this.root.querySelector('#buy-coin')!;
-    this.coinOwnedEl = this.root.querySelector('#coin-owned')!;
-    this.coinCountEl = this.root.querySelector('#coin-count')!;
-    this.buyCoinBtn.addEventListener('click', () => h.onBuyCrazyCoin());
     this.onHoardFull = h.onHoardFull;
     this.duraEl = this.root.querySelector('#pick-dura')!;
     this.duraFill = this.root.querySelector('#dura-fill')!;
@@ -285,6 +271,9 @@ export class Hud {
     this.shownGems = n;
     this.targetGems = n;
     this.collectionEl.textContent = String(n);
+  }
+  setLifetimeGems(n: number): void {
+    this.lifetimeGemsEl.textContent = String(n);
   }
   /** Roll the counter up (or down) toward `n`, ticking through each integer with a
    *  pop so the change reads as a satisfying climb, not a snap. Returns when armed. */
@@ -429,10 +418,6 @@ export class Hud {
   setGemsForShop(gems: number): void {
     this.buyShieldBtn.classList.toggle('afford', gems >= SHIELD_COST);
     this.shopGemsEl.textContent = String(gems);
-    const coinAfford = gems >= CRAZY_COIN_COST;
-    this.buyCoinBtn.classList.toggle('afford', coinAfford);
-    this.buyCoinBtn.classList.toggle('poor', !coinAfford);
-    this.buyCoinBtn.disabled = !coinAfford;
     this.shopList.querySelectorAll<HTMLButtonElement>('.shop-btn.is-buy').forEach((b) => {
       const afford = gems >= Number(b.dataset.price ?? '0');
       b.classList.toggle('afford', afford);
@@ -486,15 +471,15 @@ export class Hud {
       r.prog.textContent = q.done ? '✓ Complete!' : `${q.progress} / ${q.target}`;
       r.row.classList.toggle('done', q.done);
     }
-    // The all-dailies shield bonus: show what's at stake, celebrate when earned.
+    // The all-dailies Crazy Coin bonus: show what's at stake.
     const bonus = this.root.querySelector('#quests-bonus');
     if (bonus) {
       const dailyDone = dailyQuests.filter((q) => q.done).length;
       const all = dailyQuests.length > 0 && dailyDone === dailyQuests.length;
       bonus.classList.toggle('earned', all);
       (bonus.querySelector('.qb-text') as HTMLElement).textContent = all
-        ? 'All quests done — shield earned!'
-        : `Finish all ${dailyQuests.length} → earn a shield! (${dailyDone}/${dailyQuests.length})`;
+        ? 'All quests done — Crazy Coin earned!'
+        : `Finish all ${dailyQuests.length} → earn a Crazy Coin! (${dailyDone}/${dailyQuests.length})`;
     }
   }
   toggleQuests(): void {
@@ -542,7 +527,6 @@ export class Hud {
    *  Equipped, plus a durability bar + Repair for owned tiers (broken ⇒ Repair only). */
   setShop(state: ShopState): void {
     this.shopGemsEl.textContent = String(state.gems);
-    this.setCrazyCoins(state.crazyCoins ?? 0, state.gems);
     this.shopList.innerHTML = '';
     for (const item of state.items) {
       const key = item.key;
@@ -634,20 +618,10 @@ export class Hud {
     this.toast(msg);
   }
 
-  /** Update the Crazy Coin row: owned count badge + Buy affordability. */
-  setCrazyCoins(count: number, gems: number): void {
-    this.coinCountEl.textContent = String(count);
-    this.coinOwnedEl.hidden = count <= 0;
-    const afford = gems >= CRAZY_COIN_COST;
-    this.buyCoinBtn.classList.toggle('afford', afford);
-    this.buyCoinBtn.classList.toggle('poor', !afford);
-    this.buyCoinBtn.disabled = !afford;
-  }
-
-  /** The big one — he traded 200 gems for real-world show time. */
-  celebrateCrazyCoin(count: number): void {
+  /** The big all-dailies reward: one real-world Crazy Coin. */
+  celebrateDailyCrazyCoin(): void {
     this.screenFlash('#ffd23b');
-    this.banner('🪙 CRAZY COIN! 🪙', 'unlock', `You have ${count} — go tell a grown-up!`, '#ffd23b');
+    this.banner('🪙 CRAZY COIN! 🪙', 'unlock', '+1 earned — go tell a grown-up!', '#ffd23b');
     this.confettiBurst(90, ['#ffd23b', '#ffb01f', '#ffffff', '#ff8fb1', '#7af0ff']);
   }
 
@@ -717,29 +691,27 @@ export class Hud {
     }
   }
 
-  /** Crazy Coin balance for grown-ups: what he's earned (200 gems each) and a
-   *  Redeem button to spend one when he cashes it in for his 15 minutes. */
+  /** Crazy Coin balance for grown-ups and a Redeem button to spend one when he
+   *  cashes in the all-dailies reward for his 15 minutes. */
   private buildCoinPanel(count: number): HTMLElement {
     const panel = document.createElement('section');
     panel.className = 'pd-coins';
     panel.innerHTML = `
       <div class="pd-coins-info">
         <div class="pd-coins-count">🪙 Crazy Coins: <b id="pd-coin-count">${count}</b></div>
-        <div class="pd-coins-sub">Costs him 200 💎 each. Redeem one when he cashes it in.</div>
+        <div class="pd-coins-sub">Earned by finishing all 5 daily quests. Redeem one when he cashes it in.</div>
       </div>
       <button class="pd-redeem" id="pd-redeem"${count > 0 ? '' : ' disabled'}>Redeem 1</button>`;
     panel.querySelector('#pd-redeem')!.addEventListener('click', () => this.onRedeemCrazyCoin());
     return panel;
   }
 
-  /** Reflect a redeem in the open dashboard (and the kid-facing shop badge). */
+  /** Reflect a redeem in the open parent dashboard. */
   setParentCoins(count: number): void {
     const el = this.parentBody.querySelector('#pd-coin-count');
     if (el) el.textContent = String(count);
     const btn = this.parentBody.querySelector<HTMLButtonElement>('#pd-redeem');
     if (btn) btn.disabled = count <= 0;
-    this.coinCountEl.textContent = String(count);
-    this.coinOwnedEl.hidden = count <= 0;
   }
 
   /** One topic on the chain: numbered node + connector rail, then the card. */
@@ -836,11 +808,6 @@ export class Hud {
   celebrateBestStreak(best: number): void {
     this.banner(`Best streak: ${best} ⭐`, 'quest', 'Yours forever!');
   }
-  /** All five dailies done → a free shield for the next tough gem. */
-  celebrateShieldEarned(): void {
-    this.banner('ALL QUESTS DONE!', 'unlock', '+1 🛡 shield earned!', '#8ecbff');
-  }
-
   private banner(title: string, cls: string, sub?: string, accent?: string, lifeMs = 5100): void {
     const el = document.createElement('div');
     el.className = 'banner ' + cls;
@@ -929,10 +896,12 @@ function injectStyles(): void {
     font-family: 'Baloo 2', system-ui, sans-serif; -webkit-user-select: none; user-select: none; }
   .hud-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 12px 14px; }
   .status { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; flex: none; }
-  .collection { pointer-events: auto; background: rgba(20,16,40,0.55); color: #ffe9a8;
-    font-weight: 800; font-size: 22px; padding: 8px 16px; border-radius: 999px; backdrop-filter: blur(6px);
+  .collection { pointer-events: auto; display: flex; flex-direction: column; align-items: center;
+    background: rgba(20,16,40,0.55); color: #ffe9a8;
+    font-weight: 800; font-size: 22px; line-height: 1; padding: 7px 16px 6px; border-radius: 18px; backdrop-filter: blur(6px);
     box-shadow: inset 0 0 0 1px rgba(255,233,168,0.18); transition: transform .1s; min-width: 78px; text-align: center; }
-  #collection-count { font-variant-numeric: tabular-nums; }
+  #collection-count, #lifetime-gems { font-variant-numeric: tabular-nums; }
+  .lifetime-earned { margin-top: 4px; color: #ffd166; font-size: 11px; line-height: 1; letter-spacing: .2px; }
   .collection.pop { animation: pop 0.45s cubic-bezier(.3,1.6,.5,1); }
   @keyframes pop { 0%{transform:scale(1)} 35%{transform:scale(1.45); color:#fff} 100%{transform:scale(1)} }
 
@@ -1058,13 +1027,6 @@ function injectStyles(): void {
   .shop-head .shop-gems { color: #ffe9a8; font-size: 14px; font-weight: 800; flex: none; }
   #shop-gems { font-variant-numeric: tabular-nums; }
   .shop-list { display: flex; flex-direction: column; gap: 8px; }
-  /* Crazy Coin: the featured real-world reward, pinned above the pickaxe list. */
-  .shop-coin { display: flex; align-items: center; gap: 10px; padding: 8px 8px; border-radius: 12px; margin-bottom: 10px;
-    background: linear-gradient(160deg, rgba(255,210,60,0.16), rgba(255,150,30,0.10));
-    box-shadow: inset 0 0 0 1px rgba(255,210,120,0.4); }
-  .coin-medal { flex: none; font-size: 24px; line-height: 1; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
-  .coin-owned { color: #ffe9a8; font-weight: 900; font-size: 12.5px; margin-left: 4px; }
-  .coin-owned[hidden] { display: none; }
   .shop-row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 12px;
     background: rgba(255,255,255,0.05); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06); }
   .shop-row.equipped { background: rgba(120,230,160,0.12); box-shadow: inset 0 0 0 1px rgba(120,230,160,0.45); }
@@ -1329,7 +1291,7 @@ function injectStyles(): void {
 
   @media (max-width: 560px) {
     .status { gap: 6px; }
-    .collection { font-size: 19px; padding: 6px 12px; min-width: 64px; }
+    .collection { font-size: 19px; padding: 6px 12px 5px; min-width: 72px; }
     .buy-shield { font-size: 12px; padding: 6px 9px; }
     .quests { top: 112px; }
     .shop-toggle { top: 64px; right: 66px; }

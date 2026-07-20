@@ -125,6 +125,7 @@ export type Durability = z.infer<typeof DurabilitySchema>;
 export const RewardSchema = z.object({
   gemsEarned: z.number().int(),
   totalGems: z.number().int(),
+  lifetimeGems: z.number().int(),
   streak: z.number().int(),
   bestStreak: z.number().int(),
   shields: z.number().int(),
@@ -133,8 +134,8 @@ export const RewardSchema = z.object({
   questsCompleted: z.array(CompletedQuestSchema),
   /** The streak that was just lost to a counted miss (0 if shielded/none) — drives the best-streak trophy. */
   streakLost: z.number().int().optional(),
-  /** True the moment the LAST daily quest completes: the all-dailies shield was just awarded. */
-  allDailiesShield: z.boolean().optional(),
+  /** True the moment the LAST daily quest completes: a Crazy Coin was just awarded. */
+  allDailiesCrazyCoin: z.boolean().optional(),
   /** Equipped-pickaxe durability after this action (absent when nothing wore). */
   durability: DurabilitySchema.nullable().optional(),
 });
@@ -143,6 +144,7 @@ export type Reward = z.infer<typeof RewardSchema>;
 /** The persisted per-profile reward state returned by GET /state. */
 export const StateSchema = z.object({
   gems: z.number().int(),
+  lifetimeGems: z.number().int(),
   streak: z.number().int(),
   bestStreak: z.number().int(),
   shields: z.number().int(),
@@ -174,8 +176,7 @@ export const ShopItemSchema = z.object({
 });
 export type ShopItem = z.infer<typeof ShopItemSchema>;
 
-/** The shop view returned by GET /shop: balance, equipped skin, full catalog,
- *  and the Crazy Coin count (a real-world reward — 15 minutes of shows each). */
+/** The shop view returned by GET /shop: balance, equipped skin, and full catalog. */
 /** A number-pad style theme in the shop (pure cosmetic gem sink). */
 export const PadThemeSchema = z.object({
   key: z.string(),
@@ -192,7 +193,6 @@ export const ShopStateSchema = z.object({
   items: z.array(ShopItemSchema),
   padThemes: z.array(PadThemeSchema).optional(),
   equippedPadTheme: z.string().optional(),
-  crazyCoins: z.number().int(),
 });
 export type ShopState = z.infer<typeof ShopStateSchema>;
 

@@ -153,6 +153,22 @@ export async function reportSkip(p: Problem): Promise<void> {
   }
 }
 
+export type Demo = {
+  kidLabel: string; name: string;
+  example: { prompt: string; spoken: string; answer: number; hint?: string };
+  script: string;
+};
+
+/** The worked demonstration for a topic he has never met. Never throws — null
+ *  just means we skip straight to the problem rather than blocking play. */
+export async function fetchDemo(topicId: string): Promise<Demo | null> {
+  try {
+    return await post<Demo>('/tutor/demo', { profileId: PROFILE, topicId });
+  } catch {
+    return null;
+  }
+}
+
 /** Fetch the persisted reward state (gems, streak, shields, daily quests). */
 export async function fetchState(): Promise<State | null> {
   try {

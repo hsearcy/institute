@@ -27,7 +27,7 @@ import {
 } from './gemStyles';
 import {
   fetchFirst, fetchBranches, fetchExplain, recordAttempt, creditRetrySolve, fetchState, buyShield,
-  fetchShop, buyPickaxe, equipPickaxe, repairPickaxe, buyPadTheme, equipPadTheme, fetchWalkthrough, reportSkip, buyGemStyle, equipGemStyle, creditHoardBonus, reportMiss, fetchMastery,
+  fetchShop, buyPickaxe, equipPickaxe, repairPickaxe, buyPadTheme, equipPadTheme, fetchWalkthrough, reportSkip, fetchDemo, buyGemStyle, equipGemStyle, creditHoardBonus, reportMiss, fetchMastery,
   redeemCrazyCoin,
 } from './tutor';
 import { speak, sfxChink, sfxMine, sfxFizzle, sfxCollect, sfxFanfare, startAmbience, preloadAudio } from './audio';
@@ -841,7 +841,42 @@ export class Game {
     this.hud.setMastery(await fetchMastery());
   }
 
+  /** A topic he has never met never arrives as a cold graded question: he
+   *  watches one worked example first, then presses the button himself.
+   *  Guarded per TOPIC (not problem id) and BEFORE the await — a failed demo
+   *  fetch writes no server row, so the next problem on this topic would
+   *  otherwise be flagged again. */
+  private demoedTopics = new Set<string>();
   private showProblem(p: Problem): void {
+    if (p.newTopic && p.topicId && !this.demoedTopics.has(p.topicId)) {
+      const topicId = p.topicId;
+      this.demoedTopics.add(topicId);
+      this.busy = true;
+      this.problem = null;              // nothing is answerable during a demo
+      this.hud.setProblem('…');
+      this.hud.clearHint();
+      void (async () => {
+        const d = await fetchDemo(topicId);
+        if (!d) { this.presentProblem(p); return; }   // never block play on a demo
+        let timer: ReturnType<typeof setTimeout> | null = null;
+        const go = () => {
+          if (timer) { clearTimeout(timer); timer = null; }
+          this.hud.hideDemo();
+          this.presentProblem(p);       // NOW the problem starts: fresh timer, fresh clock
+        };
+        this.hud.showDemo({ kidLabel: d.kidLabel, prompt: d.example.prompt, answer: d.example.answer, script: d.script }, go);
+        timer = setTimeout(go, 30_000); // never traps him
+        void speak(d.script);
+      })();
+      return;
+    }
+    this.presentProblem(p);
+  }
+
+  /** Put the problem on screen and start its clock. Split out of showProblem so
+   *  a demonstration can run first WITHOUT its narration preempting the
+   *  read-aloud, inflating solveMs, or burning the 10s fair-try window. */
+  private presentProblem(p: Problem): void {
     this.problem = p;
     this.pendingSocratic = null; // a new problem replaces the standing shop question
     if (this.helpTimer) { clearTimeout(this.helpTimer); this.helpTimer = null; }

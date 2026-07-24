@@ -130,6 +130,15 @@ export class Hud {
         <div class="problem" id="problem">…</div>
       </div>
       <div class="hint" id="hint"></div>
+      <div class="demo" id="demo">
+        <div class="demo-card">
+          <div class="demo-banner">✨ NEW GEM! ✨</div>
+          <div class="demo-label" id="demo-label"></div>
+          <div class="demo-example"><span id="demo-prompt"></span><span class="demo-eq">=</span><span class="demo-answer" id="demo-answer"></span></div>
+          <div class="demo-script" id="demo-script"></div>
+          <button class="demo-go" id="demo-go">Let's try one! ⛏️</button>
+        </div>
+      </div>
       <div class="help-choice" id="help-choice">
         <button class="help-btn go" id="help-go">Got it — my turn! 👍</button>
         <button class="help-btn again" id="help-again">Tell me again 🔁</button>
@@ -267,6 +276,21 @@ export class Hud {
       this.hintScrollRaf = requestAnimationFrame(step);
     });
   }
+  /** A brand-new kind of problem: show him one worked example before he's ever
+   *  asked to answer one. Discovery framing, his button to continue. */
+  showDemo(d: { kidLabel: string; prompt: string; answer: number; script: string }, onGo: () => void): void {
+    (this.root.querySelector('#demo-label') as HTMLElement).textContent = d.kidLabel;
+    (this.root.querySelector('#demo-prompt') as HTMLElement).textContent = d.prompt;
+    (this.root.querySelector('#demo-answer') as HTMLElement).textContent = String(d.answer);
+    (this.root.querySelector('#demo-script') as HTMLElement).textContent = d.script;
+    const go = this.root.querySelector('#demo-go') as HTMLButtonElement;
+    go.onclick = () => { this.hideDemo(); onGo(); };
+    (this.root.querySelector('#demo') as HTMLElement).classList.add('show');
+  }
+  hideDemo(): void {
+    (this.root.querySelector('#demo') as HTMLElement)?.classList.remove('show');
+  }
+
   /** After a walkthrough: let him choose to move on or hear it again. Overlaid,
    *  never in flow — an in-flow row squeezes the number pad on short screens. */
   showHelpChoice(onGo: () => void, onAgain: () => void): void {
@@ -1183,6 +1207,26 @@ function injectStyles(): void {
   .replay.explain.avail, .replay.not-sure.avail { opacity: 1; pointer-events: auto; transform: scale(1); }
   .replay.not-sure { background: rgba(60,44,96,0.62); font-size: 20px; }
   .replay.not-sure.busy { pointer-events: none; animation: thinking 0.9s ease-in-out infinite; }
+  .demo { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center;
+    pointer-events: auto; background: rgba(12,8,24,0.72); backdrop-filter: blur(6px); }
+  .demo.show { display: flex; }
+  .demo-card { width: min(560px, 88vw); padding: 22px 24px 20px; text-align: center;
+    border-radius: 22px; background: linear-gradient(160deg, #2a1f47, #1b1430);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 18px 50px rgba(0,0,0,0.6); }
+  .demo-banner { font-size: clamp(20px, 4.4vw, 28px); font-weight: 900; color: #ffd23b;
+    text-shadow: 0 0 22px rgba(255,210,59,0.55); letter-spacing: .5px; }
+  .demo-label { margin-top: 2px; font-size: clamp(15px, 3vw, 19px); font-weight: 800; color: #cfc6ea; }
+  .demo-example { margin: 14px 0 10px; display: flex; align-items: center; justify-content: center; gap: 10px;
+    font-size: clamp(28px, 6.4vw, 44px); font-weight: 900; color: #fff; text-shadow: 0 3px 14px rgba(0,0,0,0.5); }
+  .demo-eq { color: #9d92c6; }
+  .demo-answer { color: #7ed982; text-shadow: 0 0 20px rgba(126,217,130,0.55); }
+  .demo-script { margin: 6px auto 16px; max-width: 46ch; color: #ffe9a8; font-weight: 700;
+    font-size: clamp(14px, 2.8vw, 18px); line-height: 1.35; }
+  .demo-go { pointer-events: auto; border: none; cursor: pointer; font-family: inherit; font-weight: 900;
+    font-size: clamp(15px, 3.2vw, 20px); color: #10300f; padding: 13px 26px; border-radius: 16px;
+    background: linear-gradient(155deg,#7ed982,#3fae55);
+    box-shadow: 0 6px 0 #2b7c3c, 0 12px 22px rgba(0,0,0,0.4); }
+  .demo-go:active { transform: translateY(4px); box-shadow: 0 2px 0 #2b7c3c; }
   .help-choice { position: absolute; left: 50%; top: clamp(210px, 40vh, 330px); transform: translate(-50%, 6px);
     display: none; gap: 10px; z-index: 6; }
   .help-choice.show { display: flex; }

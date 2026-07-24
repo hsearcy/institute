@@ -32,6 +32,8 @@ export const ProblemSchema = z.object({
   topicId: z.string().optional(),
   /** Short kid-facing topic label for the HUD, e.g. "Number Bonds". */
   topicLabel: z.string().optional(),
+  /** He has never met this topic: show the worked demonstration first. */
+  newTopic: z.boolean().optional(),
   /** Written form shown on the rock, e.g. "8 + 7" or "5, 10, 15, ?". */
   prompt: z.string().min(1).max(40),
   /** Kid-friendly spoken form the tutor reads, e.g. "What is eight plus seven?". */
@@ -76,6 +78,25 @@ export const BranchesRequestSchema = z.object({
   current: ProblemSchema,
 });
 export type BranchesRequest = z.infer<typeof BranchesRequestSchema>;
+
+/** A brand-new topic's demonstration: one worked example he only watches. */
+export const DemoRequestSchema = z.object({
+  profileId: z.string(),
+  topicId: z.string(),
+});
+export type DemoRequest = z.infer<typeof DemoRequestSchema>;
+export const DemoResponseSchema = z.object({
+  kidLabel: z.string(),
+  name: z.string(),
+  example: z.object({
+    prompt: z.string(),
+    spoken: z.string(),
+    answer: z.number().int(),
+    hint: z.string().optional(),
+  }),
+  script: z.string(),
+});
+export type DemoResponse = z.infer<typeof DemoResponseSchema>;
 
 /** Kid taps 🎓 → the tutor explains THIS problem aloud (never stating the answer). */
 export const ExplainRequestSchema = z.object({

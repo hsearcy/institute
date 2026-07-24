@@ -10,7 +10,7 @@ import { Database } from "bun:sqlite";
 import Anthropic from "@anthropic-ai/sdk";
 import {
   SKILLS, SKILL_LABELS, ProblemSchema, type Problem,
-  StartRequestSchema, BranchesRequestSchema, TtsRequestSchema, ExplainRequestSchema,
+  StartRequestSchema, BranchesRequestSchema, TtsRequestSchema, ExplainRequestSchema, DemoRequestSchema,
   TOPICS, topicById, type Topic,
 } from "@institute/shared";
 import { localProblem, type ProblemDraft, type SkillStat } from "./generate.ts";
@@ -106,6 +106,15 @@ try { db.exec(`ALTER TABLE attempts ADD COLUMN topic_id TEXT`); } catch { /* col
 // "I'm not sure yet" presses: honest not-knowing, recorded WITHOUT any streak or
 // shield cost. Counts as a not-correct attempt so the tutor eases up on its own.
 try { db.exec(`ALTER TABLE attempts ADD COLUMN skipped INTEGER DEFAULT 0`); } catch { /* column exists */ }
+// Which topics he has already been shown the worked demonstration for, so a
+// brand-new kind of problem is never a cold graded question — and never
+// demonstrated twice.
+db.exec(`CREATE TABLE IF NOT EXISTS topic_demos (
+  profile_id TEXT NOT NULL,
+  topic_id TEXT NOT NULL,
+  seen_at INTEGER NOT NULL,
+  PRIMARY KEY (profile_id, topic_id)
+)`);
 // Spaced-review schedule per mastered topic (guarded ALTERs).
 try { db.exec(`ALTER TABLE topic_mastery ADD COLUMN review_interval_days REAL`); } catch { /* exists */ }
 try { db.exec(`ALTER TABLE topic_mastery ADD COLUMN review_due_at INTEGER`); } catch { /* exists */ }
@@ -173,6 +182,22 @@ function topicMasteryRows(profileId: string): TopicMasteryRow[] {
 }
 const masteredTopicIds = (profileId: string): Set<string> =>
   new Set(topicMasteryRows(profileId).filter((r) => r.state === "mastered").map((r) => r.topic_id));
+
+/** True when this topic is GENUINELY new to him: no mastery row, no attempts,
+ *  and no demonstration shown yet. (Pre-taxonomy attempt rows carry a NULL
+ *  topic_id, hence the mastery-row check too.) */
+function needsDemo(profileId: string, topicId: string | undefined): boolean {
+  if (!topicId) return false;
+  const seen = db.query(`SELECT 1 FROM topic_demos WHERE profile_id = ? AND topic_id = ?`)
+    .get(profileId, topicId);
+  if (seen) return false;
+  const mastery = db.query(`SELECT 1 FROM topic_mastery WHERE profile_id = ? AND topic_id = ?`)
+    .get(profileId, topicId);
+  if (mastery) return false;
+  const attempt = db.query(`SELECT 1 FROM attempts WHERE profile_id = ? AND topic_id = ? LIMIT 1`)
+    .get(profileId, topicId);
+  return !attempt;
+}
 
 /** Upsert per-topic mastery after an attempt. Accuracy is windowed (last 12
  *  attempts); fluency uses the last 8 correct solves. An attempt on an
@@ -848,6 +873,10 @@ async function llmBranches(profileId: string, current: Problem): Promise<{ right
   if (taken.has(wrong.prompt)) wrong = freshLocal(wrongTopic, wrong.skill, wrong.difficulty, taken);
   notePrompt(profileId, right.prompt);
   notePrompt(profileId, wrong.prompt);
+  // Stamp LAST, off each branch's FINAL topic — a regenerated or costumed branch
+  // must never inherit a stale flag (and an LLM-emitted one must never survive).
+  right = { ...right, newTopic: needsDemo(profileId, right.topicId) || undefined };
+  wrong = { ...wrong, newTopic: needsDemo(profileId, wrong.topicId) || undefined };
   return { right, wrong };
 }
 
@@ -889,9 +918,10 @@ function localBranches(profileId: string, current: Problem): { right: Problem; w
     ? make(next.topic, next.mode === "review" ? next.difficulty : Math.min(0.95, current.difficulty + 0.12))
     : make(undefined, Math.min(0.95, current.difficulty + 0.12));
   const wrongPlan = wrongBranchPlan(profileId, current, recentAttempts(profileId, 3));
+  const wrong = make(wrongPlan.topic, wrongPlan.difficulty);
   return {
-    right,
-    wrong: make(wrongPlan.topic, wrongPlan.difficulty),
+    right: { ...right, newTopic: needsDemo(profileId, right.topicId) || undefined },
+    wrong: { ...wrong, newTopic: needsDemo(profileId, wrong.topicId) || undefined },
   };
 }
 
@@ -908,7 +938,7 @@ app.post("/tutor/first", async (c) => {
   const { topic, difficulty } = selectFor(profileId, null);
   const problem = stampId(serveProblem(topic, difficulty));
   notePrompt(profileId, problem.prompt);
-  return c.json(problem);
+  return c.json({ ...problem, newTopic: needsDemo(profileId, topic.id) || undefined });
 });
 
 // Speculative pre-generation: both "if right" and "if wrong" follow-ups for the
@@ -1372,6 +1402,69 @@ app.post("/tutor/explain", async (c) => {
 const ttsCache = new Map<string, ArrayBuffer>();
 const TTS_CACHE_MAX_LEN = 90;   // only cache short, repeated lines
 const TTS_CACHE_ENTRIES = 150;  // ~30-60KB each → a few MB tops
+
+// ---- New-topic demonstration ------------------------------------------------
+
+const DEMO_SYSTEM = `You are the warm tutor voice inside a gem-mine math game. A 6-year-old American boy has just discovered a BRAND-NEW kind of problem he has never seen before. He is only WATCHING right now — nothing is being tested. Show him how this kind works, start to finish, using the example given. Rules:
+- Think through it PRIVATELY first, then speak only the finished demonstration. Never search out loud or change course (no "hmm", no "actually", no "wait").
+- At most 70 spoken words. Short plain sentences a child can follow by ear. No emoji, no markdown, no lists.
+- Pick ONE strategy and walk it all the way to the end. DO say the answer — this is a demonstration, not a question.
+- Sound excited about the discovery, never like a lesson: "You found a new kind of gem!"
+- Never ask him a question except the final invitation.
+- Money is ALWAYS American: dollars and cents, penny/nickel/dime/quarter.
+- Finish with "Now you try one!"`;
+
+const demoCache = new Map<string, string>();
+
+// He met a topic he has never seen. Show one worked example BEFORE any graded
+// question — the worked-example effect, and the thing his 🤔 usage was asking for.
+app.post("/tutor/demo", async (c) => {
+  const { profileId, topicId } = DemoRequestSchema.parse(await c.req.json());
+  const topic = topicById(topicId);
+  if (!topic) return c.json({ error: "unknown topic" }, 404);
+  // Easiest end of the topic's range, and never costumed — a first look should
+  // be as plain as possible.
+  const example = problemForTopic(topic, 0.2);
+  const fallback = `You found a new kind of gem! Here's how it works.${example.hint ? " " + example.hint : ""} So ${example.prompt} is ${example.answer}. Now you try one!`;
+  const key = `${topicId}::${example.prompt}`;
+  const cached = demoCache.get(key);
+  const reply = (script: string) => {
+    db.query(`INSERT OR IGNORE INTO topic_demos (profile_id, topic_id, seen_at) VALUES (?, ?, ?)`)
+      .run(profileId, topicId, Date.now());
+    return c.json({
+      kidLabel: topic.kidLabel, name: topic.name,
+      example: { prompt: example.prompt, spoken: example.spoken, answer: example.answer, hint: example.hint },
+      script,
+    });
+  };
+  if (cached) return reply(cached);
+  try {
+    const resp = await anthropic.messages.create({
+      model: TUTOR_MODEL, max_tokens: 1400, // no temperature — rejected by claude-sonnet-5
+      thinking: { type: "adaptive" },
+      output_config: { effort: "low" },
+      system: DEMO_SYSTEM,
+      messages: [{ role: "user", content: [
+        `New topic: "${topic.name}" (${topic.kidLabel}) — ${topic.description}`,
+        `Worked example to demonstrate: "${example.prompt}" (read aloud: "${example.spoken}"). The answer is ${example.answer}.`,
+        example.hint ? `A strategy that works: ${example.hint}` : "",
+      ].filter(Boolean).join("\n") }],
+    });
+    const block = resp.content.find((b) => b.type === "text");
+    let text = (block && block.type === "text" ? block.text : "").trim();
+    if (text.length > 550) {
+      const cut = text.slice(0, 550);
+      text = cut.slice(0, Math.max(cut.lastIndexOf("."), cut.lastIndexOf("!"), cut.lastIndexOf("?")) + 1) || cut;
+    }
+    const out = text || fallback;
+    demoCache.set(key, out);
+    if (demoCache.size > 60) demoCache.delete(demoCache.keys().next().value!);
+    return reply(out);
+  } catch (e) {
+    console.warn("[tutor] demo failed; scripted fallback:", (e as Error)?.message);
+    return reply(fallback);
+  }
+});
 
 // ---- "I'm not sure yet" (the escape hatch) ---------------------------------
 

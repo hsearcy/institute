@@ -536,3 +536,50 @@ describe("the 'not sure yet' escape hatch", () => {
     expect(r.text).toContain("Count up from 6");
   });
 });
+
+describe("new-topic demonstration", () => {
+  test("a genuinely new topic is flagged, and the demo clears the flag", async () => {
+    const profileId = "demo-kid";
+    const first = await call("POST", "/tutor/first", { profileId });
+    expect(first.newTopic).toBe(true);   // his very first problem is a first meeting
+
+    const demo = await call("POST", "/tutor/demo", { profileId, topicId: first.topicId });
+    expect(demo.kidLabel).toBeTruthy();
+    expect(typeof demo.example.answer).toBe("number");
+    expect(demo.script).toContain(String(demo.example.answer)); // a demo SHOWS the answer
+    expect(demo.script.length).toBeGreaterThan(10);
+
+    // Same topic again: already demonstrated, so no second demo.
+    const again = await call("POST", "/tutor/first", { profileId });
+    if (again.topicId === first.topicId) expect(again.newTopic).toBeUndefined();
+  });
+
+  test("a topic he has already practiced is never 'new'", async () => {
+    const profileId = "demo-practiced";
+    await call("POST", "/tutor/attempt", {
+      profileId, problemId: "x1", skill: "add_within_20",
+      topicId: "mt_e8CZ7E5qW7", correct: true, solveMs: 4000, difficulty: 0.4,
+    });
+    const b = await call("POST", "/tutor/branches", {
+      profileId,
+      current: { id: "c1", skill: "add_within_20", topicId: "mt_e8CZ7E5qW7", topicLabel: "Number Bonds",
+        prompt: "3 + ? = 8", spoken: "3 plus what makes 8?", answer: 5, difficulty: 0.4 },
+    });
+    if (b.wrong.topicId === "mt_e8CZ7E5qW7") expect(b.wrong.newTopic).toBeUndefined();
+  });
+
+  test("the demo costs nothing — no streak, gems, or mastery effect", async () => {
+    const profileId = "demo-free";
+    await call("POST", "/tutor/attempt", {
+      profileId, problemId: "y1", skill: "add_within_20",
+      topicId: "mt_ghF3Vv6taM", correct: true, solveMs: 3000, difficulty: 0.4,
+    });
+    const before = await call("GET", `/state?profileId=${profileId}`);
+    await call("POST", "/tutor/demo", { profileId, topicId: "mt_M5PPDJStGm" });
+    const after = await call("GET", `/state?profileId=${profileId}`);
+    expect(after.streak).toBe(before.streak);
+    expect(after.gems).toBe(before.gems);
+    const m = await call("GET", `/mastery?profileId=${profileId}`);
+    expect(m.topics.find((t: any) => t.id === "mt_M5PPDJStGm").attempts).toBe(0);
+  });
+});

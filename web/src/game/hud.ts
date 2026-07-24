@@ -5,6 +5,7 @@
 import type { Quest, CompletedQuest, ShopState } from '@institute/shared';
 import type { Mastery, MasteryTopic } from './tutor';
 import { PICKAXE_SKINS, type SkinKey, isSkinKey } from './skins';
+import { GEM_STYLES, type GemStyleKey, isGemStyleKey } from './gemStyles';
 import { PROFILE } from './config';
 
 type Handlers = {
@@ -20,6 +21,8 @@ type Handlers = {
   onEquipPickaxe: (key: string) => void;
   onBuyPadTheme: (key: string) => void;
   onEquipPadTheme: (key: string) => void;
+  onBuyGemStyle: (key: string) => void;
+  onEquipGemStyle: (key: string) => void;
   onRepairPickaxe: (key: string) => void;
   onRedeemCrazyCoin: () => void;
   onHoardFull: () => void;
@@ -68,6 +71,8 @@ export class Hud {
   private onEquipPickaxe!: (key: string) => void;
   private onBuyPadTheme!: (key: string) => void;
   private onEquipPadTheme!: (key: string) => void;
+  private onBuyGemStyle!: (key: string) => void;
+  private onEquipGemStyle!: (key: string) => void;
   private onRepairPickaxe!: (key: string) => void;
   private onRedeemCrazyCoin!: () => void;
   private onHoardFull!: () => void;
@@ -167,6 +172,8 @@ export class Hud {
     this.onEquipPickaxe = h.onEquipPickaxe;
     this.onBuyPadTheme = h.onBuyPadTheme;
     this.onEquipPadTheme = h.onEquipPadTheme;
+    this.onBuyGemStyle = h.onBuyGemStyle;
+    this.onEquipGemStyle = h.onEquipGemStyle;
     this.onRepairPickaxe = h.onRepairPickaxe;
     this.onRedeemCrazyCoin = h.onRedeemCrazyCoin;
     this.onHoardFull = h.onHoardFull;
@@ -575,6 +582,45 @@ export class Hud {
       b.addEventListener('click', () => this.onEquipPickaxe(b.dataset.equip!)));
     this.shopList.querySelectorAll<HTMLButtonElement>('[data-repair]').forEach((b) =>
       b.addEventListener('click', () => this.onRepairPickaxe(b.dataset.repair!)));
+
+    // 💎 Mine Gems shelf — these swap the actual 3D target in the cavern.
+    const gemStyles = state.gemStyles ?? [];
+    if (gemStyles.length) {
+      const head = document.createElement('div');
+      head.className = 'shop-section-head gem-style-head';
+      head.textContent = '💎 Mine Gems';
+      this.shopList.appendChild(head);
+      const classicRow = {
+        key: 'gem_classic', name: 'Classic Geode', price: 0, owned: true,
+        equipped: (state.equippedGemStyle ?? 'gem_classic') === 'gem_classic',
+      };
+      for (const style of [classicRow, ...gemStyles]) {
+        const key = isGemStyleKey(style.key) ? style.key as GemStyleKey : 'gem_classic';
+        const spec = GEM_STYLES[key];
+        const afford = state.gems >= style.price;
+        const row = document.createElement('div');
+        row.className = 'shop-row gem-style-row' + (style.equipped ? ' equipped' : '');
+        const btn = !style.owned
+          ? `<button class="shop-btn is-buy${afford ? ' afford' : ' poor'}" data-buy-gem="${style.key}" data-price="${style.price}"${afford ? '' : ' disabled'}>Buy ${style.price}💎</button>`
+          : style.equipped
+            ? `<button class="shop-btn is-equipped" disabled>Equipped</button>`
+            : `<button class="shop-btn is-equip" data-equip-gem="${style.key}">Equip</button>`;
+        row.innerHTML = `
+          <div class="gem-model-swatch shape-${spec.shape}" style="--tint:${spec.tint}" aria-hidden="true">
+            <span class="gem-model-core"></span><span class="gem-model-accent"></span>
+          </div>
+          <div class="shop-meta">
+            <div class="shop-name">${style.name}</div>
+            <div class="shop-blurb">${spec.blurb}</div>
+          </div>
+          <div class="shop-btns">${btn}</div>`;
+        this.shopList.appendChild(row);
+      }
+      this.shopList.querySelectorAll<HTMLButtonElement>('[data-buy-gem]').forEach((button) =>
+        button.addEventListener('click', () => this.onBuyGemStyle(button.dataset.buyGem!)));
+      this.shopList.querySelectorAll<HTMLButtonElement>('[data-equip-gem]').forEach((button) =>
+        button.addEventListener('click', () => this.onEquipGemStyle(button.dataset.equipGem!)));
+    }
 
     // 🎨 Pad Styles shelf — cosmetic themes for the number pad.
     const themes = state.padThemes ?? [];
@@ -986,6 +1032,26 @@ function injectStyles(): void {
     background: rgba(20,16,40,0.55); }
   .pad-swatch .mini-gem { border-radius: 4px;
     background: linear-gradient(155deg, color-mix(in srgb, var(--g) 60%, white), var(--g)); }
+  .gem-style-head { color: #aeeaff; }
+  .gem-model-swatch { position: relative; width: 36px; height: 36px; flex: none;
+    filter: drop-shadow(0 3px 4px rgba(0,0,0,.5)) drop-shadow(0 0 5px color-mix(in srgb, var(--tint) 55%, transparent)); }
+  .gem-model-core, .gem-model-accent { position: absolute; inset: 5px;
+    background: radial-gradient(circle at 30% 22%, #fff 0 8%, color-mix(in srgb, var(--tint) 55%, white) 22%, var(--tint) 58%, #241331 100%);
+    box-shadow: inset -3px -4px 5px rgba(0,0,0,.32), inset 2px 2px 2px rgba(255,255,255,.55); }
+  .shape-geode .gem-model-core { border-radius: 48% 42% 52% 38%; clip-path: polygon(50% 0,88% 13%,100% 55%,72% 100%,20% 92%,0 48%,16% 15%); }
+  .shape-geode .gem-model-accent { inset: 10px; border-radius: 50%; background: #d7bbff; }
+  .shape-emerald .gem-model-core { inset: 3px 8px; clip-path: polygon(24% 0,76% 0,100% 18%,100% 82%,76% 100%,24% 100%,0 82%,0 18%); }
+  .shape-emerald .gem-model-accent { inset: 8px 13px; clip-path: polygon(22% 0,78% 0,100% 22%,100% 78%,78% 100%,22% 100%,0 78%,0 22%); background:rgba(225,255,239,.72); }
+  .shape-ruby .gem-model-core { inset: 4px; clip-path: polygon(50% 0,82% 10%,100% 38%,89% 78%,50% 100%,11% 78%,0 38%,18% 10%); }
+  .shape-ruby .gem-model-accent { inset: 9px; clip-path: polygon(50% 0,63% 35%,100% 50%,63% 64%,50% 100%,37% 64%,0 50%,37% 35%); background:rgba(255,224,232,.75); }
+  .shape-diamond .gem-model-core { inset: 4px 2px; clip-path: polygon(20% 8%,80% 8%,100% 36%,50% 100%,0 36%); }
+  .shape-diamond .gem-model-accent { inset: 8px 9px 16px; clip-path: polygon(50% 0,100% 45%,50% 100%,0 45%); background:rgba(255,255,255,.85); }
+  .shape-heart .gem-model-core { transform: rotate(45deg); border-radius: 50% 45% 12% 45%; }
+  .shape-heart .gem-model-core::before, .shape-heart .gem-model-core::after { content:''; position:absolute;
+    width:100%; height:100%; border-radius:50%; background:inherit; }
+  .shape-heart .gem-model-core::before { left:-45%; }
+  .shape-heart .gem-model-core::after { top:-45%; }
+  .shape-heart .gem-model-accent { inset: 12px; border-radius: 50%; background:#ffc247; }
   .quests-bonus { display: flex; align-items: center; gap: 8px; margin: 6px 2px 2px; padding: 7px 10px;
     border-radius: 12px; background: rgba(142, 203, 255, 0.09); border: 1px solid rgba(142, 203, 255, 0.25);
     color: #bfe0ff; font-weight: 800; font-size: 13px; }
@@ -1042,6 +1108,7 @@ function injectStyles(): void {
   .shop-btn { flex: none; pointer-events: auto; cursor: pointer; border: none; font-family: inherit; font-weight: 800;
     font-size: 12.5px; padding: 7px 11px; border-radius: 999px; color: #0b1c2e; transition: transform .08s, filter .12s; }
   .shop-btn:active { transform: translateY(2px); }
+  .shop-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
   .shop-btn.is-equipped { background: linear-gradient(160deg,#9bf0bd,#4fd089); color: #0a2417; opacity: .9; cursor: default; }
   .shop-btn.is-equip { background: linear-gradient(160deg,#bfe3ff,#7fb8ff); box-shadow: inset 0 1px 1px rgba(255,255,255,0.6), 0 3px 0 #4f86c6; }
   .shop-btn.is-equip:active { box-shadow: inset 0 1px 1px rgba(255,255,255,0.5), 0 1px 0 #4f86c6; }
@@ -1296,6 +1363,7 @@ function injectStyles(): void {
     .quests { top: 112px; }
     .shop-toggle { top: 64px; right: 66px; }
     .shop { top: 112px; }
+    .shop-btn { min-height: 44px; }
     .pd-frame { width: 100vw; margin: 0; border-radius: 0; }
     .pd-body { padding: 12px 12px 20px; }
   }

@@ -155,6 +155,8 @@ export const StateSchema = z.object({
   equipped: z.string(),
   /** Durability of the equipped pickaxe (null current/max for wooden). */
   durability: DurabilitySchema.nullable().optional(),
+  /** The equipped mine-target model (defaults to "gem_classic"). */
+  equippedGemStyle: z.string().optional(),
 });
 export type State = z.infer<typeof StateSchema>;
 
@@ -187,12 +189,24 @@ export const PadThemeSchema = z.object({
 });
 export type PadTheme = z.infer<typeof PadThemeSchema>;
 
+/** A cosmetic model for the gem/geode being mined. */
+export const GemStyleSchema = z.object({
+  key: z.string(),
+  name: z.string(),
+  price: z.number().int(),
+  owned: z.boolean(),
+  equipped: z.boolean(),
+});
+export type GemStyle = z.infer<typeof GemStyleSchema>;
+
 export const ShopStateSchema = z.object({
   gems: z.number().int(),
   equipped: z.string(),
   items: z.array(ShopItemSchema),
   padThemes: z.array(PadThemeSchema).optional(),
   equippedPadTheme: z.string().optional(),
+  gemStyles: z.array(GemStyleSchema).optional(),
+  equippedGemStyle: z.string().optional(),
 });
 export type ShopState = z.infer<typeof ShopStateSchema>;
 

@@ -19,8 +19,15 @@ import type { Problem, Branches, Reward, Durability, ShopState } from '@institut
 import { Hud } from './hud';
 import { PICKAXE_SKINS, isSkinKey, type SkinKey } from './skins';
 import {
+  buildGemStyle,
+  GENERATED_GEM_STYLE_KEYS,
+  GEM_STYLES,
+  isGemStyleKey,
+  type GemStyleKey,
+} from './gemStyles';
+import {
   fetchFirst, fetchBranches, fetchExplain, recordAttempt, creditRetrySolve, fetchState, buyShield,
-  fetchShop, buyPickaxe, equipPickaxe, repairPickaxe, buyPadTheme, equipPadTheme, creditHoardBonus, reportMiss, fetchMastery,
+  fetchShop, buyPickaxe, equipPickaxe, repairPickaxe, buyPadTheme, equipPadTheme, buyGemStyle, equipGemStyle, creditHoardBonus, reportMiss, fetchMastery,
   redeemCrazyCoin,
 } from './tutor';
 import { speak, sfxChink, sfxMine, sfxFizzle, sfxCollect, sfxFanfare, startAmbience, preloadAudio } from './audio';
@@ -55,6 +62,9 @@ export class Game {
 
   // scene objects
   private hero!: Group;            // the geode being mined
+  private equippedGemStyle: GemStyleKey = 'gem_classic';
+  private classicGeodeModel: Group | null = null;
+  private gemStyleModels = new Map<GemStyleKey, Group>();
   private gemLight!: PointLight;
   private dust!: Points;
   private cracks = 0;              // how chipped the geode is this round (drives the inner glow)
@@ -130,6 +140,8 @@ export class Game {
       onToggleShop: () => { if (this.hud.toggleShop()) this.onShopOpened(); },
       onBuyPadTheme: (key) => void this.onBuyPadTheme(key),
       onEquipPadTheme: (key) => void this.onEquipPadTheme(key),
+      onBuyGemStyle: (key) => void this.onBuyGemStyle(key),
+      onEquipGemStyle: (key) => void this.onEquipGemStyle(key),
       onBuyPickaxe: (key) => void this.onBuyPickaxe(key),
       onEquipPickaxe: (key) => void this.onEquipPickaxe(key),
       onRepairPickaxe: (key) => void this.onRepairPickaxe(key),
@@ -175,7 +187,9 @@ export class Game {
     // Hero gem (the prize being mined).
     this.hero = new Group();
     this.hero.position.set(0, HERO_Y, 0);
-    this.hero.add(this.makeGeodePlaceholder()); // until the GLB swaps in
+    const classicFallback = buildGemStyle('gem_classic');
+    this.gemStyleModels.set('gem_classic', classicFallback);
+    this.hero.add(classicFallback); // authored fallback until the GLB swaps in
     this.scene.add(this.hero);
     this.gemLight = new PointLight(0xcaa6ff, 2, 14, 2); // inner-crystal glow
     this.gemLight.position.set(0, HERO_Y, 1.0);
@@ -267,13 +281,41 @@ export class Game {
         c.rotation.y = Math.random() * Math.PI * 2;
         this.scene.add(c);
       }
-      // The hero geode — the thing being mined — swaps in for the placeholder.
-      const heroGeode = geode.clone(true);
-      fitObject(heroGeode, 2.0);
-      heroGeode.rotation.set(HERO_ROT.x, HERO_ROT.y, HERO_ROT.z); // open face toward the camera
-      this.hero.clear();
-      this.hero.add(heroGeode);
+      // Keep one normalized classic clone; applyGemStyle owns the live target so
+      // an equipped procedural model is never overwritten by a late GLB load.
+      this.classicGeodeModel = geode.clone(true);
+      fitObject(this.classicGeodeModel, 2.0);
+      this.classicGeodeModel.rotation.set(HERO_ROT.x, HERO_ROT.y, HERO_ROT.z);
+      this.gemStyleModels.set('gem_classic', this.classicGeodeModel);
+      this.applyGemStyle(this.equippedGemStyle);
     }
+
+    // The familiar emerald/ruby/diamond targets use generated PBR hero assets.
+    // Their authored procedural models remain instant fallbacks while these load.
+    const generatedGems = await Promise.all(GENERATED_GEM_STYLE_KEYS.map(async (key) => {
+      const url = GEM_STYLES[key].modelUrl;
+      return [key, url ? await tryLoad(url) : null] as const;
+    }));
+    for (const [key, gem] of generatedGems) {
+      if (!gem) continue;
+      gem.name = `${GEM_STYLES[key].name.replace(/\s/g, '')}GeneratedModel`;
+      fitObject(gem, 2.05);
+      gem.rotation.y = GEM_STYLES[key].modelRotationY ?? 0;
+      gem.traverse((object) => {
+        const mesh = object as Mesh;
+        if (!mesh.isMesh) return;
+        mesh.castShadow = false;
+        mesh.receiveShadow = false;
+        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        for (const material of materials) {
+          const pbr = material as MeshStandardMaterial;
+          pbr.envMapIntensity = Math.max(pbr.envMapIntensity ?? 1, 1.65);
+          pbr.needsUpdate = true;
+        }
+      });
+      this.gemStyleModels.set(key, gem);
+    }
+    this.applyGemStyle(this.equippedGemStyle);
 
     // Faceted gem geometry for the crack-open burst (the geode's payload).
     const gemGlb = await tryLoad('/assets/models/hero-gem.glb');
@@ -314,14 +356,25 @@ export class Game {
     this.scene.add(g);
   }
 
-  /** Simple gray geode placeholder shown until the GLB loads. */
-  private makeGeodePlaceholder(): Mesh {
-    const m = new Mesh(
-      new IcosahedronGeometry(0.95, 1),
-      new MeshStandardMaterial({ color: 0x6f6880, roughness: 1, flatShading: true }),
-    );
-    m.scale.set(1, 0.92, 1);
-    return m;
+  /** Swap the mine target while preserving the hero transform and win animation. */
+  private applyGemStyle(key: string): GemStyleKey {
+    const styleKey = isGemStyleKey(key) ? key : 'gem_classic';
+    this.equippedGemStyle = styleKey;
+    let model = this.gemStyleModels.get(styleKey);
+    if (!model) {
+      model = buildGemStyle(styleKey);
+      fitObject(model, 2.05);
+      this.gemStyleModels.set(styleKey, model);
+    }
+    this.hero.clear();
+    this.hero.add(model);
+    this.hero.userData.gemStyle = styleKey;
+    this.hero.visible = true;
+    if (this.gemLight) {
+      this.gemLight.color.set(GEM_STYLES[styleKey].tint);
+      this.gemLight.intensity = styleKey === 'gem_diamond' ? 3.2 : 2.4;
+    }
+    return styleKey;
   }
 
 
@@ -596,6 +649,7 @@ export class Game {
       this.applyDurability(st.durability); // restore the durability meter + visible wear
       void this.refreshShop();            // seed the shop panel catalog
     }
+    if (seed) this.applyGemStyle(st.equippedGemStyle ?? 'gem_classic');
   }
 
   /** Pull the shop catalog and seed the panel (balance + per-tier owned/equipped). */
@@ -606,6 +660,7 @@ export class Game {
       this.lastShop = shop;
       this.hud.setShop(shop);
       this.hud.setPadTheme(shop.equippedPadTheme ?? 'pad_classic');
+      this.applyGemStyle(shop.equippedGemStyle ?? 'gem_classic');
     }
   }
 
@@ -625,6 +680,8 @@ export class Game {
     const goals = [
       ...shop.items.filter((i) => !i.owned).map((i) => ({ key: i.key, name: i.name, price: i.price })),
       ...(shop.padThemes ?? []).filter((t) => !t.owned).map((t) => ({ key: t.key, name: t.name, price: t.price })),
+      ...(shop.gemStyles ?? []).filter((style) => !style.owned)
+        .map((style) => ({ key: style.key, name: style.name, price: style.price })),
     ].sort((a, b) => a.price - b.price);
     const goal = goals.find((g) => g.price > gems && !this.socraticAsked.has(g.key));
     if (!goal || gems <= 0 || goal.price - gems > 999) return;
@@ -661,6 +718,41 @@ export class Game {
     this.hud.setPadTheme(res.equippedPadTheme ?? key);
     void this.refreshShop();
     sfxCollect();
+  }
+
+  /** Buy a mine-target model, swap it into the cavern, and show it off immediately. */
+  private async onBuyGemStyle(key: string): Promise<void> {
+    startAmbience();
+    const res = await buyGemStyle(key);
+    if (!res) return;
+    if (!res.ok) {
+      this.hud.shopFeedback('Keep mining — almost there!');
+      return;
+    }
+    this.totalGems = res.gems ?? this.totalGems;
+    this.hud.rollCollectionTo(this.totalGems);
+    this.hud.setGemsForShop(this.totalGems);
+    const equipped = this.applyGemStyle(res.equippedGemStyle ?? key);
+    void this.refreshShop();
+    this.showOffGem(res.item?.name ?? GEM_STYLES[equipped].name, equipped, true);
+  }
+
+  /** Equip an owned model without spending again. */
+  private async onEquipGemStyle(key: string): Promise<void> {
+    startAmbience();
+    const res = await equipGemStyle(key);
+    if (!res?.ok) return;
+    const equipped = this.applyGemStyle(res.equippedGemStyle ?? key);
+    void this.refreshShop();
+    this.showOffGem(GEM_STYLES[equipped].name, equipped, false);
+  }
+
+  private showOffGem(name: string, key: GemStyleKey, unlocked: boolean): void {
+    const spec = GEM_STYLES[key];
+    this.shake = Math.max(this.shake, unlocked ? 0.58 : 0.28);
+    for (let i = 0; i < (unlocked ? 18 : 8); i += 1) this.spawnSparkle();
+    this.hud.equipConfirm(name, spec.tint);
+    sfxFanfare(unlocked);
   }
 
   /** Buy a pickaxe skin: debit (server-authoritative), auto-equip + apply the skin,

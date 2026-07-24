@@ -398,3 +398,73 @@ describe("pad theme shop", () => {
     expect((await call("POST", "/shop/equip", { profileId: P, itemKey: "pad_ocean" })).ok).toBe(false);
   });
 });
+
+describe("gem style shop", () => {
+  const P = "gem-style-shopper";
+
+  test("buy deducts gems, records ownership, auto-equips, and persists in state", async () => {
+    for (let i = 0; i < 10; i++) {
+      await call("POST", "/reward/hoard-bonus", { profileId: P });
+    }
+
+    const buy = await call("POST", "/shop/buy-gem-style", {
+      profileId: P,
+      styleKey: "gem_emerald",
+    });
+    expect(buy).toMatchObject({
+      ok: true,
+      gems: 10,
+      equippedGemStyle: "gem_emerald",
+      item: { key: "gem_emerald", name: "Mega Emerald", price: 90 },
+    });
+
+    const shop = await call("GET", `/shop?profileId=${P}`);
+    expect(shop.equippedGemStyle).toBe("gem_emerald");
+    expect(shop.gemStyles.find((style: any) => style.key === "gem_emerald"))
+      .toMatchObject({ owned: true, equipped: true });
+
+    const state = await call("GET", `/state?profileId=${P}`);
+    expect(state.equippedGemStyle).toBe("gem_emerald");
+    expect((await call("POST", "/shop/buy-gem-style", {
+      profileId: P,
+      styleKey: "gem_emerald",
+    })).ok).toBe(false);
+  });
+
+  test("classic is always equipable while unowned and cross-category keys are rejected", async () => {
+    expect((await call("POST", "/shop/equip-gem-style", {
+      profileId: P,
+      styleKey: "gem_classic",
+    }))).toMatchObject({ ok: true, equippedGemStyle: "gem_classic" });
+
+    expect((await call("POST", "/shop/equip-gem-style", {
+      profileId: P,
+      styleKey: "gem_dragonheart",
+    })).ok).toBe(false);
+
+    expect((await call("POST", "/shop/equip", {
+      profileId: P,
+      itemKey: "gem_emerald",
+    }))).toMatchObject({ ok: false, reason: "not a pickaxe" });
+
+    expect((await call("POST", "/shop/equip-pad-theme", {
+      profileId: P,
+      themeKey: "gem_emerald",
+    })).ok).toBe(false);
+  });
+
+  test("unaffordable and unknown styles are rejected without changing balance", async () => {
+    const profileId = "gem-style-broke";
+    const expensive = await call("POST", "/shop/buy-gem-style", {
+      profileId,
+      styleKey: "gem_dragonheart",
+    });
+    expect(expensive).toMatchObject({ ok: false, reason: "not enough gems", gems: 0 });
+
+    const unknown = await call("POST", "/shop/buy-gem-style", {
+      profileId,
+      styleKey: "gem_unknown",
+    });
+    expect(unknown).toMatchObject({ ok: false, reason: "unavailable", gems: 0 });
+  });
+});

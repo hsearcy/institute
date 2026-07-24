@@ -6,6 +6,6 @@
   "scripts": {
     "dev:web": "bun run --cwd web dev",
     "dev:server": "bun run --cwd server dev",
-    "test": "bun test server shared scripts"
+    "test": "bun test server shared scripts web/unit-tests"
   }
 }

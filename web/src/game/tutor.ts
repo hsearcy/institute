@@ -102,6 +102,34 @@ export async function equipPadTheme(themeKey: string): Promise<{ ok: boolean; eq
   }
 }
 
+/** Buy a cosmetic model for the gem/geode being mined (auto-equips). */
+export async function buyGemStyle(styleKey: string): Promise<{
+  ok: boolean;
+  gems?: number;
+  equippedGemStyle?: string;
+  item?: { key: string; name: string; price: number };
+  reason?: string;
+} | null> {
+  try {
+    return await post('/shop/buy-gem-style', { profileId: PROFILE, styleKey });
+  } catch {
+    return null;
+  }
+}
+
+/** Equip an owned mine-target model (or the free classic geode). */
+export async function equipGemStyle(styleKey: string): Promise<{
+  ok: boolean;
+  equippedGemStyle?: string;
+  reason?: string;
+} | null> {
+  try {
+    return await post('/shop/equip-gem-style', { profileId: PROFILE, styleKey });
+  } catch {
+    return null;
+  }
+}
+
 /** Fetch the persisted reward state (gems, streak, shields, daily quests). */
 export async function fetchState(): Promise<State | null> {
   try {

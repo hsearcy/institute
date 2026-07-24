@@ -119,6 +119,10 @@ try {
 try {
   db.exec(`ALTER TABLE profile_state ADD COLUMN equipped_pad_theme TEXT DEFAULT 'pad_classic'`);
 } catch { /* column already present */ }
+// Equipped model for the prize embedded in the mine wall.
+try {
+  db.exec(`ALTER TABLE profile_state ADD COLUMN equipped_gem_style TEXT DEFAULT 'gem_classic'`);
+} catch { /* column already present */ }
 // Crazy Coins: a real-world consumable — each coin trades for 15 minutes of
 // shows, redeemed by a parent from the dashboard (guarded ALTER).
 try {
@@ -257,7 +261,7 @@ db.query(`UPDATE topic_mastery SET review_interval_days = 1, review_due_at = ?
 
 // ---- Rewards: gems / streaks / daily quests / shield -----------------------
 
-type ProfileStateRow = { gems: number; lifetime_gems: number; streak: number; best_streak: number; shields: number; crazy_coins: number; equipped_pickaxe: string; equipped_pad_theme: string };
+type ProfileStateRow = { gems: number; lifetime_gems: number; streak: number; best_streak: number; shields: number; crazy_coins: number; equipped_pickaxe: string; equipped_pad_theme: string; equipped_gem_style: string };
 type QuestRow = { quest_key: string; label: string; target: number; progress: number; reward: number; done: number };
 
 const utcDay = () => new Date().toISOString().slice(0, 10);
@@ -296,24 +300,25 @@ function streakBonus(streak: number): number {
 
 /** Read (creating if missing) the per-profile reward state. */
 function getProfileState(profileId: string): ProfileStateRow {
-  let row = db.query(`SELECT gems, lifetime_gems, streak, best_streak, shields, crazy_coins, equipped_pickaxe, equipped_pad_theme FROM profile_state WHERE profile_id = ?`)
+  let row = db.query(`SELECT gems, lifetime_gems, streak, best_streak, shields, crazy_coins, equipped_pickaxe, equipped_pad_theme, equipped_gem_style FROM profile_state WHERE profile_id = ?`)
     .get(profileId) as ProfileStateRow | null;
   if (!row) {
-    db.query(`INSERT OR IGNORE INTO profile_state (profile_id, gems, lifetime_gems, streak, best_streak, shields, crazy_coins, equipped_pickaxe, equipped_pad_theme, updated_at)
-              VALUES (?, 0, 0, 0, 0, 0, 0, 'wooden', 'pad_classic', ?)`).run(profileId, Date.now());
-    row = { gems: 0, lifetime_gems: 0, streak: 0, best_streak: 0, shields: 0, crazy_coins: 0, equipped_pickaxe: "wooden", equipped_pad_theme: "pad_classic" };
+    db.query(`INSERT OR IGNORE INTO profile_state (profile_id, gems, lifetime_gems, streak, best_streak, shields, crazy_coins, equipped_pickaxe, equipped_pad_theme, equipped_gem_style, updated_at)
+              VALUES (?, 0, 0, 0, 0, 0, 0, 'wooden', 'pad_classic', 'gem_classic', ?)`).run(profileId, Date.now());
+    row = { gems: 0, lifetime_gems: 0, streak: 0, best_streak: 0, shields: 0, crazy_coins: 0, equipped_pickaxe: "wooden", equipped_pad_theme: "pad_classic", equipped_gem_style: "gem_classic" };
   }
   // Existing rows predating the columns come back with NULL — normalize to the defaults.
   if (!row.equipped_pickaxe) row.equipped_pickaxe = "wooden";
   if (!row.crazy_coins) row.crazy_coins = 0;
   if (!row.equipped_pad_theme) row.equipped_pad_theme = "pad_classic";
+  if (!row.equipped_gem_style) row.equipped_gem_style = "gem_classic";
   return row;
 }
 
 function saveProfileState(profileId: string, s: ProfileStateRow): void {
-  db.query(`UPDATE profile_state SET gems = ?, lifetime_gems = ?, streak = ?, best_streak = ?, shields = ?, crazy_coins = ?, equipped_pickaxe = ?, equipped_pad_theme = ?, updated_at = ?
+  db.query(`UPDATE profile_state SET gems = ?, lifetime_gems = ?, streak = ?, best_streak = ?, shields = ?, crazy_coins = ?, equipped_pickaxe = ?, equipped_pad_theme = ?, equipped_gem_style = ?, updated_at = ?
             WHERE profile_id = ?`)
-    .run(s.gems, s.lifetime_gems, s.streak, s.best_streak, s.shields, s.crazy_coins, s.equipped_pickaxe, s.equipped_pad_theme, Date.now(), profileId);
+    .run(s.gems, s.lifetime_gems, s.streak, s.best_streak, s.shields, s.crazy_coins, s.equipped_pickaxe, s.equipped_pad_theme, s.equipped_gem_style, Date.now(), profileId);
 }
 
 function creditGems(state: ProfileStateRow, amount: number): void {
@@ -348,6 +353,15 @@ const PAD_THEME_CATALOG = [
 ] as const;
 const padThemeEntry = (key: string) => PAD_THEME_CATALOG.find((c) => c.key === key) ?? null;
 
+/** Authored models for the geode/gem currently embedded in the mine wall. */
+const GEM_STYLE_CATALOG = [
+  { key: "gem_emerald", name: "Mega Emerald", price: 90 },
+  { key: "gem_ruby", name: "Power Ruby", price: 220 },
+  { key: "gem_diamond", name: "Super Diamond", price: 480 },
+  { key: "gem_dragonheart", name: "Dragonheart Gem", price: 900 },
+] as const;
+const gemStyleEntry = (key: string) => GEM_STYLE_CATALOG.find((c) => c.key === key) ?? null;
+
 // Old data has no transaction ledger, but owned catalog items and unredeemed
 // Crazy Coins preserve a guaranteed portion of past spending. Use that evidence
 // to establish a conservative lifetime floor, then track every award exactly.
@@ -355,6 +369,7 @@ if (shouldBackfillLifetimeGems) {
   const priceByKey = new Map<string, number>([
     ...PICKAXE_CATALOG.map((item) => [item.key, item.price] as const),
     ...PAD_THEME_CATALOG.map((item) => [item.key, item.price] as const),
+    ...GEM_STYLE_CATALOG.map((item) => [item.key, item.price] as const),
   ]);
   const profiles = db.query(`SELECT profile_id, gems, crazy_coins FROM profile_state`)
     .all() as { profile_id: string; gems: number; crazy_coins: number }[];
@@ -1050,6 +1065,7 @@ app.get("/state", (c) => {
     weeklyQuest: questView([getWeeklyQuest(profileId)])[0],
     equipped: s.equipped_pickaxe,
     durability: equippedDurability(profileId, s, false),
+    equippedGemStyle: s.equipped_gem_style,
   });
 });
 
@@ -1079,7 +1095,20 @@ app.get("/shop", (c) => {
     owned: ownsItem(profileId, t.key),
     equipped: s.equipped_pad_theme === t.key,
   }));
-  return c.json({ gems: s.gems, equipped: s.equipped_pickaxe, items, padThemes, equippedPadTheme: s.equipped_pad_theme });
+  const gemStyles = GEM_STYLE_CATALOG.map((style) => ({
+    key: style.key, name: style.name, price: style.price,
+    owned: ownsItem(profileId, style.key),
+    equipped: s.equipped_gem_style === style.key,
+  }));
+  return c.json({
+    gems: s.gems,
+    equipped: s.equipped_pickaxe,
+    items,
+    padThemes,
+    equippedPadTheme: s.equipped_pad_theme,
+    gemStyles,
+    equippedGemStyle: s.equipped_gem_style,
+  });
 });
 
 // Buy a skin: spend gems, record ownership, and auto-equip it.
@@ -1114,7 +1143,9 @@ app.post("/shop/buy", async (c) => {
 app.post("/shop/equip", async (c) => {
   const { profileId, itemKey } = await c.req.json();
   // Pad themes share owned_items — never let one be equipped as a pickaxe.
-  if (padThemeEntry(itemKey)) return c.json({ ok: false, reason: "not a pickaxe" });
+  if (padThemeEntry(itemKey) || gemStyleEntry(itemKey)) {
+    return c.json({ ok: false, reason: "not a pickaxe" });
+  }
   if (itemKey === "wooden" || ownsItem(profileId, itemKey)) {
     if (itemKey !== "wooden" && itemDurability(profileId, itemKey) <= 0) {
       return c.json({ ok: false, reason: "broken" });
@@ -1173,6 +1204,42 @@ app.post("/shop/equip-pad-theme", async (c) => {
     s.equipped_pad_theme = themeKey;
     saveProfileState(profileId, s);
     return c.json({ ok: true, equippedPadTheme: s.equipped_pad_theme });
+  }
+  return c.json({ ok: false, reason: "not owned" });
+});
+
+// Buy a mine-target model: spend gems, record ownership, and auto-equip it.
+app.post("/shop/buy-gem-style", async (c) => {
+  const { profileId, styleKey } = await c.req.json();
+  const s = getProfileState(profileId);
+  const cat = gemStyleEntry(styleKey);
+  if (!cat || ownsItem(profileId, styleKey)) {
+    return c.json({ ok: false, reason: "unavailable", gems: s.gems });
+  }
+  if (s.gems < cat.price) {
+    return c.json({ ok: false, reason: "not enough gems", gems: s.gems });
+  }
+  s.gems -= cat.price;
+  s.equipped_gem_style = styleKey;
+  db.query(`INSERT OR IGNORE INTO owned_items (profile_id, item_key) VALUES (?, ?)`)
+    .run(profileId, styleKey);
+  saveProfileState(profileId, s);
+  return c.json({
+    ok: true,
+    gems: s.gems,
+    equippedGemStyle: s.equipped_gem_style,
+    item: { key: cat.key, name: cat.name, price: cat.price },
+  });
+});
+
+// Equip an owned mine-target model (or the free classic geode).
+app.post("/shop/equip-gem-style", async (c) => {
+  const { profileId, styleKey } = await c.req.json();
+  const s = getProfileState(profileId);
+  if (styleKey === "gem_classic" || (gemStyleEntry(styleKey) && ownsItem(profileId, styleKey))) {
+    s.equipped_gem_style = styleKey;
+    saveProfileState(profileId, s);
+    return c.json({ ok: true, equippedGemStyle: s.equipped_gem_style });
   }
   return c.json({ ok: false, reason: "not owned" });
 });

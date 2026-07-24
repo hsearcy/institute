@@ -12,11 +12,36 @@ const t = (id: string, prereqs: string[], domain = "d1", age = 5): Topic => ({
 // a,b roots in different domains; c behind a; d root in a third domain
 const G = [t("a", [], "add"), t("b", [], "count"), t("c", ["a"], "add"), t("d", [], "place")];
 
+const m = (topicId: string, state: string) =>
+  ({ topicId, state, lastDifficulty: 0.5, reviewDueAt: null, reviewIntervalDays: null });
+
 const base: SelectInput = {
   topics: G, now: NOW, currentTopicId: null,
   mastery: [],
   recentTopicIds: [], lastWasReview: false,
 };
+
+describe("familiar-first rotation", () => {
+  // Both candidates share ONE domain and the current topic sits in a THIRD, so
+  // the different-domain key can't decide it — this isolates started-vs-new.
+  const F = [t("cur", [], "current-domain"), t("started", [], "pool"), t("fresh", [], "pool")];
+  test("rotation prefers a topic he has already started over a brand-new one", () => {
+    const r = selectNext({ ...base, topics: F, currentTopicId: "cur",
+      recentTopicIds: ["cur", "cur", "cur", "cur"],
+      mastery: [m("started", "practicing")] });
+    expect(r.topic.id).toBe("started"); // familiar ground, not novelty
+  });
+  test("brand-new topics still get picked when nothing is in progress", () => {
+    const r = selectNext({ ...base, topics: F, currentTopicId: "cur",
+      recentTopicIds: ["cur", "cur", "cur", "cur"], mastery: [] });
+    expect(["started", "fresh"]).toContain(r.topic.id);
+  });
+  test("a never-attempted topic starts gently", () => {
+    const r = selectNext({ ...base, topics: F, currentTopicId: "cur",
+      recentTopicIds: ["cur", "cur", "cur", "cur"], mastery: [] });
+    expect(r.difficulty).toBeCloseTo(0.25); // was 0.4 — a first meeting should be easy
+  });
+});
 
 describe("selectNext", () => {
   test("cold start serves a frontier root", () => {

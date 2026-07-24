@@ -43,7 +43,8 @@ export function selectNext(s: SelectInput): Selection {
   const frontier = frontierTopics(s.topics, mastered);
   const learnDifficulty = (t: Topic): number => {
     const m = byId.get(t.id);
-    return Math.max(0.2, Math.min(0.95, m?.lastDifficulty ?? 0.4));
+    // A topic he has never met starts gentle — a first impression should be a win.
+    return Math.max(0.2, Math.min(0.95, m?.lastDifficulty ?? 0.25));
   };
 
   // (2) stay on the current topic while the run is short
@@ -64,9 +65,14 @@ export function selectNext(s: SelectInput): Selection {
     return i === -1 ? 1e9 : i; // large finite sentinel (Infinity-Infinity = NaN breaks sort)
   };
   const pool = candidates.length ? candidates : frontier;
+  // Topics he has already started beat brand-new ones: novelty is what
+  // intimidates him, and least-recently-attempted alone ranks NEVER-attempted
+  // topics first (Infinity-ago), which fed him a diet of unfamiliar shapes.
+  const started = (id: string) => Number(byId.has(id));
   if (pool.length) {
     const pick = [...pool].sort((a, b) =>
       Number(b.domain !== currentDomain) - Number(a.domain !== currentDomain) ||
+      started(b.id) - started(a.id) ||
       lastSeen(b.id) - lastSeen(a.id) ||
       a.ageRange[0] - b.ageRange[0],
     )[0];

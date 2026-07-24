@@ -103,6 +103,9 @@ db.exec(`
 `);
 // Attempts gain the curated-topic dimension (guarded — ALTER throws if present).
 try { db.exec(`ALTER TABLE attempts ADD COLUMN topic_id TEXT`); } catch { /* column exists */ }
+// "I'm not sure yet" presses: honest not-knowing, recorded WITHOUT any streak or
+// shield cost. Counts as a not-correct attempt so the tutor eases up on its own.
+try { db.exec(`ALTER TABLE attempts ADD COLUMN skipped INTEGER DEFAULT 0`); } catch { /* column exists */ }
 // Spaced-review schedule per mastered topic (guarded ALTERs).
 try { db.exec(`ALTER TABLE topic_mastery ADD COLUMN review_interval_days REAL`); } catch { /* exists */ }
 try { db.exec(`ALTER TABLE topic_mastery ADD COLUMN review_due_at INTEGER`); } catch { /* exists */ }
@@ -1276,6 +1279,10 @@ app.get("/mastery", (c) => {
   const profileId = c.req.query("profileId") ?? "sam";
   const kidName = c.req.query("name") ?? "your child";
   const rows = new Map(topicMasteryRows(profileId).map((r) => [r.topic_id, r]));
+  const skipCounts = new Map((db.query(
+    `SELECT topic_id, COUNT(*) AS n FROM attempts
+     WHERE profile_id = ? AND skipped = 1 AND topic_id IS NOT NULL GROUP BY topic_id`,
+  ).all(profileId) as { topic_id: string; n: number }[]).map((r) => [r.topic_id, r.n]));
   const mastered = masteredTopicIds(profileId);
   const unlocked = new Set(unlockedTopics(TOPICS, mastered).map((t) => t.id));
   const topics = TOPICS.map((t) => {
@@ -1287,6 +1294,7 @@ app.get("/mastery", (c) => {
       state: r?.state ?? "unstarted",
       fluentMs: t.fluentMs,
       assessmentPrompt: t.assessmentPrompt.replaceAll("{{name}}", kidName),
+      skips: skipCounts.get(t.id) ?? 0,
       reviewDueAt: r?.review_due_at ?? null,
       reviewIntervalDays: r?.review_interval_days ?? null,
     };
@@ -1364,6 +1372,76 @@ app.post("/tutor/explain", async (c) => {
 const ttsCache = new Map<string, ArrayBuffer>();
 const TTS_CACHE_MAX_LEN = 90;   // only cache short, repeated lines
 const TTS_CACHE_ENTRIES = 150;  // ~30-60KB each → a few MB tops
+
+// ---- "I'm not sure yet" (the escape hatch) ---------------------------------
+
+// He pressed 🤔. This is the most honest signal the tutor gets: he knows he
+// doesn't know. It records as a not-correct attempt (so difficulty eases and the
+// prereq step-down arms) but touches NO reward state — no streak loss, no shield
+// burned, no gem earned. Being stuck must never be punished.
+app.post("/tutor/skip", async (c) => {
+  const body = await c.req.json();
+  const { profileId, problemId, skill } = body;
+  const topicId = typeof body.topicId === "string" ? body.topicId : null;
+  const difficulty = typeof body.difficulty === "number" ? body.difficulty : 0.5;
+  // Ignore a skip for a problem he already answered — one problem, one row.
+  const seen = db.query(`SELECT 1 FROM attempts WHERE profile_id = ? AND problem_id = ?`)
+    .get(profileId, problemId);
+  if (seen) return c.json({ ok: true, duplicate: true });
+  db.query(
+    `INSERT INTO attempts (profile_id, problem_id, skill, topic_id, correct, solve_ms, difficulty, skipped, created_at)
+     VALUES (?, ?, ?, ?, 0, 0, ?, 1, ?)`,
+  ).run(profileId, problemId, skill, topicId, difficulty, Date.now());
+  recordMastery(profileId, skill, false, difficulty);
+  if (topicId) recordTopicMastery(profileId, topicId, false, difficulty);
+  return c.json({ ok: true });
+});
+
+const WALKTHROUGH_SYSTEM = `You are the warm tutor voice inside a gem-mine math game. A 6-year-old American boy just pressed "I'm not sure how to do this one" — he has told you he is stuck, so this is a WORKED EXAMPLE, not a quiz. Rules:
+- Think through the numbers PRIVATELY first, then speak only the finished walkthrough. Never search out loud, never change course (no "hmm", no "actually", no "wait").
+- Pick ONE strategy and walk it all the way to the end using his actual numbers. DO say the final answer — he needs to see it done.
+- At most 70 spoken words. Short plain sentences a child can follow by ear. No emoji, no markdown, no lists.
+- Be matter-of-fact and kind about not knowing it ("This one's tricky — here's the trick"). Never say he is wrong, slow, or that it's too hard for him. Never ask him a question.
+- Money is ALWAYS American: dollars and cents, penny/nickel/dime/quarter.
+- Finish by inviting the next try, e.g. "Now let's do one like it together!"`;
+
+const walkthroughCache = new Map<string, string>();
+
+app.post("/tutor/walkthrough", async (c) => {
+  const { problem } = ExplainRequestSchema.parse(await c.req.json());
+  const cached = walkthroughCache.get(problem.id);
+  if (cached) return c.json({ text: cached });
+  const fallback = `That one is tricky! The answer is ${problem.answer}.${problem.hint ? " " + problem.hint : ""} Now let's do one like it together!`;
+  const topic = problem.topicId ? topicById(problem.topicId) : undefined;
+  const userContent = [
+    `The problem on screen: "${problem.prompt}" (read aloud as: "${problem.spoken}").`,
+    topic ? `It practices the topic "${topic.name}": ${topic.description}` : "",
+    `The answer is ${problem.answer}. Show him how to get there, and say the answer.`,
+  ].filter(Boolean).join("\n");
+  try {
+    const resp = await anthropic.messages.create({
+      model: TUTOR_MODEL, max_tokens: 1400, // no temperature — rejected by claude-sonnet-5
+      thinking: { type: "adaptive" },
+      output_config: { effort: "low" },
+      system: WALKTHROUGH_SYSTEM,
+      messages: [{ role: "user", content: userContent }],
+    });
+    const block = resp.content.find((b) => b.type === "text");
+    let text = (block && block.type === "text" ? block.text : "").trim();
+    if (text.length > 550) {
+      const cut = text.slice(0, 550);
+      text = cut.slice(0, Math.max(cut.lastIndexOf("."), cut.lastIndexOf("!"), cut.lastIndexOf("?")) + 1) || cut;
+    }
+    const out = text || fallback;
+    walkthroughCache.set(problem.id, out);
+    if (walkthroughCache.size > 50) walkthroughCache.delete(walkthroughCache.keys().next().value!);
+    return c.json({ text: out });
+  } catch (e) {
+    console.warn("[tutor] walkthrough failed; answer+hint fallback:", (e as Error)?.message);
+    walkthroughCache.set(problem.id, fallback);
+    return c.json({ text: fallback });
+  }
+});
 
 app.post("/tts", async (c) => {
   const { text } = TtsRequestSchema.parse(await c.req.json());

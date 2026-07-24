@@ -468,3 +468,71 @@ describe("gem style shop", () => {
     expect(unknown).toMatchObject({ ok: false, reason: "unavailable", gems: 0 });
   });
 });
+
+describe("the 'not sure yet' escape hatch", () => {
+  test("a skip costs nothing: streak, shields, and gems all untouched", async () => {
+    const profileId = "skipper";
+    for (let i = 0; i < 3; i++) {
+      await call("POST", "/tutor/attempt", {
+        profileId, problemId: `ok-${i}`, skill: "add_within_20",
+        topicId: "mt_e8CZ7E5qW7", correct: true, solveMs: 4000, difficulty: 0.5,
+      });
+    }
+    const before = await call("GET", `/state?profileId=${profileId}`);
+    const skip = await call("POST", "/tutor/skip", {
+      profileId, problemId: "skipped-1", skill: "add_within_20",
+      topicId: "mt_e8CZ7E5qW7", difficulty: 0.5,
+    });
+    expect(skip.ok).toBe(true);
+    const after = await call("GET", `/state?profileId=${profileId}`);
+    expect(after.streak).toBe(before.streak);     // the whole point: no streak loss
+    expect(after.shields).toBe(before.shields);   // no shield burned either
+    expect(after.gems).toBe(before.gems);         // and no gem earned for skipping
+  });
+
+  test("a skip is honest learning data: it counts as a not-correct attempt", async () => {
+    const profileId = "skip-data";
+    await call("POST", "/tutor/skip", {
+      profileId, problemId: "s-1", skill: "add_within_20",
+      topicId: "mt_e8CZ7E5qW7", difficulty: 0.5,
+    });
+    const m = await call("GET", `/mastery?profileId=${profileId}`);
+    const row = m.topics.find((t: any) => t.id === "mt_e8CZ7E5qW7");
+    expect(row.attempts).toBe(1);
+    expect(row.correct).toBe(0);
+    expect(row.skips).toBe(1);   // surfaced for the parent dashboard
+  });
+
+  test("skipping arms the prereq step-down, exactly like a miss", async () => {
+    const profileId = "skip-rescue";
+    const topicId = "mt__we2TDqnJx"; // Add & Take to 10: prereqs Number Bonds + Add & Take to 5
+    await call("POST", "/tutor/skip", { profileId, problemId: "s0", skill: "add_within_20", topicId, difficulty: 0.5 });
+    const current = { id: "p1", skill: "add_within_20", topicId, topicLabel: "Add & Take to 10",
+      prompt: "6 + 3", spoken: "What is 6 plus 3?", answer: 9, difficulty: 0.5 };
+    const b = await call("POST", "/tutor/branches", { profileId, current });
+    expect(["mt_e8CZ7E5qW7", "mt_ghF3Vv6taM"]).toContain(b.wrong.topicId);
+  });
+
+  test("a skip for an already-answered problem is ignored (no double-count)", async () => {
+    const profileId = "skip-dupe";
+    await call("POST", "/tutor/attempt", {
+      profileId, problemId: "dupe-1", skill: "add_within_20",
+      topicId: "mt_e8CZ7E5qW7", correct: false, solveMs: 8000, difficulty: 0.5,
+    });
+    await call("POST", "/tutor/skip", {
+      profileId, problemId: "dupe-1", skill: "add_within_20",
+      topicId: "mt_e8CZ7E5qW7", difficulty: 0.5,
+    });
+    const m = await call("GET", `/mastery?profileId=${profileId}`);
+    expect(m.topics.find((t: any) => t.id === "mt_e8CZ7E5qW7").attempts).toBe(1);
+  });
+
+  test("walkthrough falls back to the answer + hint when the LLM is unreachable", async () => {
+    const problem = { id: "wt-1", skill: "add_within_20", topicId: "mt_e8CZ7E5qW7",
+      prompt: "6 + ? = 10", spoken: "6 plus what makes 10?", answer: 4,
+      difficulty: 0.4, hint: "Count up from 6 until you reach 10." };
+    const r = await call("POST", "/tutor/walkthrough", { profileId: "wt", problem });
+    expect(r.text).toContain("4");                       // the answer IS the point here
+    expect(r.text).toContain("Count up from 6");
+  });
+});

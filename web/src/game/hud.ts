@@ -134,7 +134,7 @@ export class Hud {
         <div class="demo-card">
           <div class="demo-banner">✨ NEW GEM! ✨</div>
           <div class="demo-label" id="demo-label"></div>
-          <div class="demo-example"><span id="demo-prompt"></span><span class="demo-eq">=</span><span class="demo-answer" id="demo-answer"></span></div>
+          <div class="demo-example"><span id="demo-pre"></span><span class="demo-answer" id="demo-answer"></span><span id="demo-post"></span></div>
           <div class="demo-script" id="demo-script"></div>
           <button class="demo-go" id="demo-go">Let's try one! ⛏️</button>
         </div>
@@ -280,8 +280,16 @@ export class Hud {
    *  asked to answer one. Discovery framing, his button to continue. */
   showDemo(d: { kidLabel: string; prompt: string; answer: number; script: string }, onGo: () => void): void {
     (this.root.querySelector('#demo-label') as HTMLElement).textContent = d.kidLabel;
-    (this.root.querySelector('#demo-prompt') as HTMLElement).textContent = d.prompt;
+    // Show the worked example with its blank FILLED IN — "1 + 4 = 5" teaches far
+    // better than "1 + ? = 5 = 4". Prompts come in three shapes: a blank to fill,
+    // a worded question, or plain arithmetic.
+    const blank = d.prompt.match(/^(.*?)(?:\?)(.*)$/s);
+    const isBlank = !!blank && /[=,]/.test(d.prompt);
+    const pre = isBlank ? blank![1] : d.prompt + (/\?$/.test(d.prompt) ? '  →  ' : '  =  ');
+    const post = isBlank ? blank![2] : '';
+    (this.root.querySelector('#demo-pre') as HTMLElement).textContent = pre;
     (this.root.querySelector('#demo-answer') as HTMLElement).textContent = String(d.answer);
+    (this.root.querySelector('#demo-post') as HTMLElement).textContent = post;
     (this.root.querySelector('#demo-script') as HTMLElement).textContent = d.script;
     const go = this.root.querySelector('#demo-go') as HTMLButtonElement;
     go.onclick = () => { this.hideDemo(); onGo(); };
@@ -1218,7 +1226,6 @@ function injectStyles(): void {
   .demo-label { margin-top: 2px; font-size: clamp(15px, 3vw, 19px); font-weight: 800; color: #cfc6ea; }
   .demo-example { margin: 14px 0 10px; display: flex; align-items: center; justify-content: center; gap: 10px;
     font-size: clamp(28px, 6.4vw, 44px); font-weight: 900; color: #fff; text-shadow: 0 3px 14px rgba(0,0,0,0.5); }
-  .demo-eq { color: #9d92c6; }
   .demo-answer { color: #7ed982; text-shadow: 0 0 20px rgba(126,217,130,0.55); }
   .demo-script { margin: 6px auto 16px; max-width: 46ch; color: #ffe9a8; font-weight: 700;
     font-size: clamp(14px, 2.8vw, 18px); line-height: 1.35; }

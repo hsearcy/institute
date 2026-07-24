@@ -14,6 +14,7 @@ type Handlers = {
   onMine: () => void;
   onReplay: () => void;
   onExplain: () => void;
+  onNotSure: () => void;
   onBuyShield: () => void;
   onToggleQuests: () => void;
   onToggleShop: () => void;
@@ -122,12 +123,17 @@ export class Hud {
       </div>
       <div class="problem-wrap">
         <div class="voice-stack">
-          <button class="replay" title="Hear it again">🔊</button>
+          <button class="replay speak-again" title="Hear it again">🔊</button>
           <button class="replay explain" title="Teach me" aria-label="Explain this problem">🎓</button>
+          <button class="replay not-sure" title="I'm not sure yet" aria-label="I'm not sure how to do this one">🤔</button>
         </div>
         <div class="problem" id="problem">…</div>
       </div>
       <div class="hint" id="hint"></div>
+      <div class="help-choice" id="help-choice">
+        <button class="help-btn go" id="help-go">Got it — my turn! 👍</button>
+        <button class="help-btn again" id="help-again">Tell me again 🔁</button>
+      </div>
       <div class="hud-bottom">
         <div class="answer" id="answer"></div>
         <div class="pad" id="pad"></div>
@@ -200,8 +206,9 @@ export class Hud {
       }
       pad.appendChild(b);
     }
-    this.root.querySelector('.replay:not(.explain)')!.addEventListener('click', () => h.onReplay());
+    this.root.querySelector('.replay.speak-again')!.addEventListener('click', () => h.onReplay());
     this.root.querySelector('.explain')!.addEventListener('click', () => h.onExplain());
+    this.root.querySelector('.not-sure')!.addEventListener('click', () => h.onNotSure());
     this.buyShieldBtn.addEventListener('click', () => h.onBuyShield());
     this.root.querySelector('#quests-toggle')!.addEventListener('click', () => h.onToggleQuests());
     this.root.querySelector('#shop-toggle')!.addEventListener('click', () => h.onToggleShop());
@@ -229,10 +236,11 @@ export class Hud {
   setProblem(text: string): void {
     this.problemEl.textContent = text;
     // The 🎓 helper only appears after he's had a fair try (~10s) at the problem.
-    const explain = this.root.querySelector('.explain');
+    const helpers = [...this.root.querySelectorAll('.explain, .not-sure')];
     if (this.explainTimer) clearTimeout(this.explainTimer);
-    explain?.classList.remove('avail');
-    this.explainTimer = setTimeout(() => explain?.classList.add('avail'), 10_000);
+    helpers.forEach((el) => el.classList.remove('avail'));
+    this.explainTimer = setTimeout(() => helpers.forEach((el) => el.classList.add('avail')), 10_000);
+    this.hideHelpChoice();
   }
   /** Show a strategy hint / answer reveal banner. */
   private hintScrollRaf = 0;
@@ -258,6 +266,19 @@ export class Hud {
       };
       this.hintScrollRaf = requestAnimationFrame(step);
     });
+  }
+  /** After a walkthrough: let him choose to move on or hear it again. Overlaid,
+   *  never in flow — an in-flow row squeezes the number pad on short screens. */
+  showHelpChoice(onGo: () => void, onAgain: () => void): void {
+    const row = this.root.querySelector('#help-choice') as HTMLElement;
+    const go = this.root.querySelector('#help-go') as HTMLButtonElement;
+    const again = this.root.querySelector('#help-again') as HTMLButtonElement;
+    go.onclick = () => { this.hideHelpChoice(); onGo(); };
+    again.onclick = () => onAgain();
+    row.classList.add('show');
+  }
+  hideHelpChoice(): void {
+    (this.root.querySelector('#help-choice') as HTMLElement)?.classList.remove('show');
   }
   clearHint(): void {
     cancelAnimationFrame(this.hintScrollRaf);
@@ -797,6 +818,13 @@ export class Hud {
       acc.textContent = `${t.correct}/${t.attempts} correct`;
       top.appendChild(acc);
     }
+    if ((t.skips ?? 0) > 0) {
+      // Visibility, not judgment: how often he reached for "I'm not sure yet".
+      const sk = document.createElement('span');
+      sk.className = 'pd-tag pd-skips';
+      sk.textContent = `🤔 asked for help ${t.skips}×`;
+      top.appendChild(sk);
+    }
     if (t.fluentMs != null) {
       const flu = document.createElement('span');
       flu.className = 'pd-tag pd-fluent';
@@ -1150,8 +1178,20 @@ function injectStyles(): void {
 
   .problem-wrap { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 6px; }
   .voice-stack { display: flex; flex-direction: column; gap: 10px; align-items: center; }
-  .replay.explain { opacity: 0; pointer-events: none; transform: scale(0.7); transition: opacity .5s ease, transform .5s cubic-bezier(.2,1.4,.4,1); }
-  .replay.explain.avail { opacity: 1; pointer-events: auto; transform: scale(1); }
+  .replay.explain, .replay.not-sure { opacity: 0; pointer-events: none; transform: scale(0.7);
+    transition: opacity .5s ease, transform .5s cubic-bezier(.2,1.4,.4,1); }
+  .replay.explain.avail, .replay.not-sure.avail { opacity: 1; pointer-events: auto; transform: scale(1); }
+  .replay.not-sure { background: rgba(60,44,96,0.62); font-size: 20px; }
+  .replay.not-sure.busy { pointer-events: none; animation: thinking 0.9s ease-in-out infinite; }
+  .help-choice { position: absolute; left: 50%; top: clamp(210px, 40vh, 330px); transform: translate(-50%, 6px);
+    display: none; gap: 10px; z-index: 6; }
+  .help-choice.show { display: flex; }
+  .help-btn { pointer-events: auto; border: none; cursor: pointer; font-family: inherit; font-weight: 800;
+    font-size: clamp(13px, 2.6vw, 16px); color: #fff; padding: 10px 16px; border-radius: 14px;
+    box-shadow: 0 5px 0 rgba(0,0,0,0.35), 0 10px 18px rgba(0,0,0,0.35); }
+  .help-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.35); }
+  .help-btn.go { background: linear-gradient(155deg,#7ed982,#3fae55); color: #10300f; }
+  .help-btn.again { background: linear-gradient(155deg,#6a5f8e,#463c68); }
   .replay { pointer-events: auto; border: none; background: rgba(20,16,40,0.5); color: #fff; font-size: 22px;
     width: 46px; height: 46px; border-radius: 50%; cursor: pointer; }
   .replay.explain.busy { pointer-events: none; animation: thinking 0.9s ease-in-out infinite; }

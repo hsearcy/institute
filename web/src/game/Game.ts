@@ -27,7 +27,7 @@ import {
 } from './gemStyles';
 import {
   fetchFirst, fetchBranches, fetchExplain, recordAttempt, creditRetrySolve, fetchState, buyShield,
-  fetchShop, buyPickaxe, equipPickaxe, repairPickaxe, buyPadTheme, equipPadTheme, buyGemStyle, equipGemStyle, creditHoardBonus, reportMiss, fetchMastery,
+  fetchShop, buyPickaxe, equipPickaxe, repairPickaxe, buyPadTheme, equipPadTheme, fetchWalkthrough, reportSkip, buyGemStyle, equipGemStyle, creditHoardBonus, reportMiss, fetchMastery,
   redeemCrazyCoin,
 } from './tutor';
 import { speak, sfxChink, sfxMine, sfxFizzle, sfxCollect, sfxFanfare, startAmbience, preloadAudio } from './audio';
@@ -135,6 +135,7 @@ export class Game {
       onMine: () => this.onMine(),
       onReplay: () => this.problem && speak(this.problem.spoken),
       onExplain: () => void this.onExplain(),
+      onNotSure: () => void this.onNotSure(),
       onBuyShield: () => void this.onBuyShield(),
       onToggleQuests: () => this.hud.toggleQuests(),
       onToggleShop: () => { if (this.hud.toggleShop()) this.onShopOpened(); },
@@ -843,6 +844,8 @@ export class Game {
   private showProblem(p: Problem): void {
     this.problem = p;
     this.pendingSocratic = null; // a new problem replaces the standing shop question
+    if (this.helpTimer) { clearTimeout(this.helpTimer); this.helpTimer = null; }
+    this.hud.hideHelpChoice();
     this.entered = '';
     this.firstAttempt = null;
     this.mined = false;
@@ -912,6 +915,47 @@ export class Game {
     if (this.mined || this.busy) return;
     this.entered = this.entered.slice(0, -1);
     this.hud.setAnswer(this.entered);
+  }
+
+  /** 🤔 "I'm not sure yet" — the escape hatch he asked for. Being stuck must
+   *  never feel like a trap: the tutor works the whole problem (answer and all),
+   *  he chooses when to move on, and it costs him NOTHING — no streak, no
+   *  shield, no shame. The skip is recorded as honest data so the next problems
+   *  get gentler on their own. */
+  private notSureBusy = false;
+  private helpTimer: ReturnType<typeof setTimeout> | null = null;
+  private async onNotSure(): Promise<void> {
+    if (!this.problem || this.notSureBusy || this.mined) return;
+    this.notSureBusy = true;
+    this.busy = true; // no keying while the walkthrough plays
+    const btn = document.querySelector('.replay.not-sure');
+    btn?.classList.add('busy');
+    if (btn) btn.textContent = '💭';
+    const p = this.problem;
+    // Record BEFORE fetching: no race with the next problem, and the skip lands
+    // even if the walkthrough call fails. Only when he never answered — a skip
+    // after a wrong try would double-count the same problem.
+    if (this.firstAttempt === null) void reportSkip(p);
+    try {
+      const text = (await fetchWalkthrough(p))
+        ?? `That one is tricky! The answer is ${p.answer}.${p.hint ? ' ' + p.hint : ''}`;
+      if (this.problem?.id !== p.id) return; // moved on already
+      this.hud.setAnswer(String(p.answer));  // he SEES the answer, not just hears it
+      this.hud.showHint(text);
+      await speak(text);
+      if (this.problem?.id !== p.id) return;
+      // His call when to move on — agency is the whole point of this button.
+      const go = () => {
+        if (this.helpTimer) { clearTimeout(this.helpTimer); this.helpTimer = null; }
+        void this.advance();
+      };
+      this.hud.showHelpChoice(go, () => void speak(text));
+      this.helpTimer = setTimeout(() => { this.hud.hideHelpChoice(); go(); }, 25_000);
+    } finally {
+      btn?.classList.remove('busy');
+      if (btn) btn.textContent = '🤔';
+      this.notSureBusy = false;
+    }
   }
 
   /** 🎓: the tutor explains the current problem's strategy aloud (never the

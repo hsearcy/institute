@@ -130,6 +130,29 @@ export async function equipGemStyle(styleKey: string): Promise<{
   }
 }
 
+/** 🤔 "I'm not sure yet": the full worked solution, answer included. Never
+ *  throws — null lets the caller fall back to the local hint. */
+export async function fetchWalkthrough(problem: Problem): Promise<string | null> {
+  try {
+    const r = await post<{ text: string }>('/tutor/walkthrough', { profileId: PROFILE, problem });
+    return r.text || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Record an honest "I don't know this one" — no streak, shield, or gem effect. */
+export async function reportSkip(p: Problem): Promise<void> {
+  try {
+    await post('/tutor/skip', {
+      profileId: PROFILE, problemId: p.id, skill: p.skill,
+      topicId: p.topicId, difficulty: p.difficulty,
+    });
+  } catch {
+    /* best-effort — never block the escape hatch on telemetry */
+  }
+}
+
 /** Fetch the persisted reward state (gems, streak, shields, daily quests). */
 export async function fetchState(): Promise<State | null> {
   try {
@@ -179,6 +202,7 @@ export type MasteryTopic = {
   state: 'unstarted' | 'practicing' | 'mastered';
   fluentMs: number | null;
   assessmentPrompt: string;
+  skips?: number;
 };
 
 export type Mastery = { profileId: string; topics: MasteryTopic[]; crazyCoins: number };

@@ -1549,9 +1549,13 @@ app.post("/tts", async (c) => {
       headers: { "xi-api-key": key, "Content-Type": "application/json" },
       // Warm + expressive for an encouraging kid tutor; slower so a 6-year-old can follow.
       // stability lower = more emotional range; style adds warmth; speed 0.7–1.2 (1.0 default).
+      // turbo_v2_5 is multilingual: short punctuation-heavy lines (em dashes
+      // especially) can flip it into another language — pin English and swap
+      // dashes for commas before synthesis.
       body: JSON.stringify({
-        text,
+        text: text.replace(/\s*[—–]\s*/g, ", "),
         model_id: "eleven_turbo_v2_5",
+        language_code: "en",
         voice_settings: { stability: 0.4, similarity_boost: 0.8, style: 0.35, use_speaker_boost: true, speed: 0.82 },
       }),
     },

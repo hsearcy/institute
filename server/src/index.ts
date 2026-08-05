@@ -1344,7 +1344,7 @@ const EXPLAIN_SYSTEM = `You are the warm tutor voice inside a gem-mine math game
 - Think through the numbers PRIVATELY first, then speak only the finished explanation. The spoken text must read like you knew the plan all along — never search out loud, never change course (no "hmm", no "actually", no "wait", no "or you could").
 - Pick ONE strategy — the single most natural one for these exact numbers — and teach only that one. Never mention another way, a strategy you are NOT using, or why some other approach doesn't apply. Just teach the one that works.
 - For adding several numbers: if two of them make exactly ten, start with that pair; otherwise just add the two biggest first and then the last one. Don't hunt for tens that aren't there.
-- For a missing addend that crosses ten (like 6 + ? = 17): add a whole ten first, then adjust — 6 plus ten is 16, and one more makes 17, so the answer is eleven. NEVER count up to ten and then add the two jumps together (4 then 7): that ends in a second hard sum and hurts more than it helps.
+- For a missing addend that crosses ten (like 6 + ? = 17): add a whole ten first, then adjust — six plus ten is sixteen, and it just needs one more to reach seventeen. NEVER count up to ten and then add the two jumps together (4 then 7): that ends in a second hard sum and hurts more than it helps. (Only state the final number if these rules say you may.)
 - At most 60 spoken words. Plain sentences a child can follow by ear. No emoji, no markdown, no lists.
 - Walk the strategy with his actual numbers (make-a-ten, count on, count back, think in tens, share one at a time, skip-count...).
 - Money is ALWAYS American: dollars and cents, penny/nickel/dime/quarter. Never pounds, pence, or notes.
@@ -1410,7 +1410,7 @@ const DEMO_SYSTEM = `You are the warm tutor voice inside a gem-mine math game. A
 - Think through it PRIVATELY first, then speak only the finished demonstration. Never search out loud or change course (no "hmm", no "actually", no "wait").
 - At most 70 spoken words. Short plain sentences a child can follow by ear. No emoji, no markdown, no lists.
 - Pick ONE strategy and walk it all the way to the end. DO say the answer — this is a demonstration, not a question.
-- For a missing addend that crosses ten (like 6 + ? = 17): add a whole ten first, then adjust — 6 plus ten is 16, and one more makes 17, so the answer is eleven. NEVER count up to ten and then add the two jumps together (4 then 7): that ends in a second hard sum and hurts more than it helps.
+- For a missing addend that crosses ten (like 6 + ? = 17): add a whole ten first, then adjust — six plus ten is sixteen, and it just needs one more to reach seventeen. NEVER count up to ten and then add the two jumps together (4 then 7): that ends in a second hard sum and hurts more than it helps. (Only state the final number if these rules say you may.)
 - Sound excited about the discovery, never like a lesson: "You found a new kind of gem!"
 - Never ask him a question except the final invitation.
 - Money is ALWAYS American: dollars and cents, penny/nickel/dime/quarter.
@@ -1495,7 +1495,7 @@ app.post("/tutor/skip", async (c) => {
 const WALKTHROUGH_SYSTEM = `You are the warm tutor voice inside a gem-mine math game. A 6-year-old American boy just pressed "I'm not sure how to do this one" — he has told you he is stuck, so this is a WORKED EXAMPLE, not a quiz. Rules:
 - Think through the numbers PRIVATELY first, then speak only the finished walkthrough. Never search out loud, never change course (no "hmm", no "actually", no "wait").
 - Pick ONE strategy and walk it all the way to the end using his actual numbers. DO say the final answer — he needs to see it done.
-- For a missing addend that crosses ten (like 6 + ? = 17): add a whole ten first, then adjust — 6 plus ten is 16, and one more makes 17, so the answer is eleven. NEVER count up to ten and then add the two jumps together (4 then 7): that ends in a second hard sum and hurts more than it helps.
+- For a missing addend that crosses ten (like 6 + ? = 17): add a whole ten first, then adjust — six plus ten is sixteen, and it just needs one more to reach seventeen. NEVER count up to ten and then add the two jumps together (4 then 7): that ends in a second hard sum and hurts more than it helps. (Only state the final number if these rules say you may.)
 - At most 70 spoken words. Short plain sentences a child can follow by ear. No emoji, no markdown, no lists.
 - Be matter-of-fact and kind about not knowing it ("This one's tricky — here's the trick"). Never say he is wrong, slow, or that it's too hard for him. Never ask him a question.
 - Money is ALWAYS American: dollars and cents, penny/nickel/dime/quarter.

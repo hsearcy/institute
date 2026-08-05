@@ -6,6 +6,16 @@ import { costume } from "./costume.ts";
 
 const ri = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
+/** "Add a ten first, then adjust" for a missing addend `a + ? = total`. Builds
+ *  place-value sense and skips the second hard sum the count-to-ten method ends
+ *  in. Falls back to counting on when the answer doesn't cross ten. */
+function missingAddendHint(a: number, total: number): string {
+  const ans = total - a;
+  if (ans < 10) return `Count up from ${a} to ${total}. How many more?`;
+  if (ans === 10) return `Add a ten! ${a} plus 10 lands right on ${total}.`;
+  return `Add a ten first: ${a} plus 10 is ${a + 10}. How many more to reach ${total}?`;
+}
+
 // ---- spoken-number helpers ---------------------------------------------------
 // ElevenLabs garbles bare digit runs ("8, 10, 12" comes out mangled), so spoken
 // forms use WORDS for number sequences while the on-screen prompt keeps digits.
@@ -75,7 +85,7 @@ export function problemForTopic(topic: Topic, difficulty: number): TopicProblemD
       const total = ri(Math.max(4, lerp(4, g.totalMax, d) - 3), lerp(5, g.totalMax, d));
       const a = ri(1, total - 1);
       return { ...base, prompt: `${a} + ? = ${total}`, spoken: `${a} plus what makes ${total}?`, answer: total - a,
-        hint: `Count up from ${a} until you reach ${total}. How many hops?` };
+        hint: missingAddendHint(a, total) };
     }
     case "add3": {
       const cap = lerp(9, g.sumMax, d);
@@ -187,7 +197,7 @@ export function problemForTopic(topic: Topic, difficulty: number): TopicProblemD
       const part = ri(1, whole - 1);
       const form = ri(0, 3);
       if (form === 0) return { ...base, prompt: `${part} + ? = ${whole}`, spoken: `${part} plus what makes ${whole}?`,
-        answer: whole - part, hint: `Count up from ${part} to ${whole}.` };
+        answer: whole - part, hint: missingAddendHint(part, whole) };
       if (form === 1) return { ...base, prompt: `? + ${part} = ${whole}`, spoken: `What plus ${part} makes ${whole}?`,
         answer: whole - part, hint: `It's the other part of ${whole}: take ${part} away from ${whole}.` };
       if (form === 2) return { ...base, prompt: `${whole} − ? = ${part}`, spoken: `${whole} minus what leaves ${part}?`,

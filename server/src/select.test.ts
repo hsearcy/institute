@@ -21,25 +21,41 @@ const base: SelectInput = {
   recentTopicIds: [], lastWasReview: false,
 };
 
-describe("familiar-first rotation", () => {
+describe("rut-breaking rotation", () => {
   // Both candidates share ONE domain and the current topic sits in a THIRD, so
-  // the different-domain key can't decide it — this isolates started-vs-new.
+  // the different-domain key can't decide it — this isolates the new-vs-started
+  // choice.
   const F = [t("cur", [], "current-domain"), t("started", [], "pool"), t("fresh", [], "pool")];
-  test("rotation prefers a topic he has already started over a brand-new one", () => {
+
+  test("breaks out of a rut: when he's circled ≤2 topics, introduce a NEW one", () => {
+    // He's been ping-ponging cur + started; a never-attempted topic must appear
+    // so the curriculum keeps moving (and the explore-topics quest can progress).
     const r = selectNext({ ...base, topics: F, currentTopicId: "cur",
-      recentTopicIds: ["cur", "cur", "cur", "cur"],
+      recentTopicIds: ["cur", "cur", "cur", "cur", "started", "started"],
       mastery: [m("started", "practicing")] });
-    expect(r.topic.id).toBe("started"); // familiar ground, not novelty
+    expect(r.topic.id).toBe("fresh"); // the new topic, not the same two forever
   });
-  test("brand-new topics still get picked when nothing is in progress", () => {
+
+  test("with real variety, prefers finishing started work over piling on new topics", () => {
+    // Recent history already spans 3+ topics, so there's no rut to break — return
+    // to the in-progress topic rather than opening yet another.
+    const G = [t("cur", [], "d-cur"), t("started", [], "pool"), t("fresh", [], "pool")];
+    const r = selectNext({ ...base, topics: G, currentTopicId: "cur",
+      recentTopicIds: ["cur", "cur", "cur", "cur", "x1", "x2", "x3"],
+      mastery: [m("started", "practicing")] });
+    expect(r.topic.id).toBe("started"); // in-progress work, not novelty
+  });
+
+  test("brand-new topics get picked when nothing is in progress", () => {
     const r = selectNext({ ...base, topics: F, currentTopicId: "cur",
       recentTopicIds: ["cur", "cur", "cur", "cur"], mastery: [] });
     expect(["started", "fresh"]).toContain(r.topic.id);
   });
+
   test("a never-attempted topic starts gently", () => {
     const r = selectNext({ ...base, topics: F, currentTopicId: "cur",
       recentTopicIds: ["cur", "cur", "cur", "cur"], mastery: [] });
-    expect(r.difficulty).toBeCloseTo(0.25); // was 0.4 — a first meeting should be easy
+    expect(r.difficulty).toBeCloseTo(0.25); // a first meeting should be a win
   });
 });
 

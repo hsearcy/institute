@@ -747,7 +747,7 @@ function adaptivePlan(
 
 /** Assemble selectNext inputs from the DB. `currentTopicId` null ⇒ session start. */
 function selectFor(profileId: string, currentTopicId: string | null) {
-  const recent = recentAttempts(profileId, 12);
+  const recent = recentAttempts(profileId, 20);
   const rows = topicMasteryRows(profileId);
   const masteredNow = new Set(rows.filter((r) => r.state === "mastered").map((r) => r.topic_id));
   // "last was review" ≈ the most recent attempt hit a topic that is currently mastered

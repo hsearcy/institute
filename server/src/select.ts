@@ -65,16 +65,25 @@ export function selectNext(s: SelectInput): Selection {
     return i === -1 ? 1e9 : i; // large finite sentinel (Infinity-Infinity = NaN breaks sort)
   };
   const pool = candidates.length ? candidates : frontier;
-  // Topics he has already started beat brand-new ones: novelty is what
-  // intimidates him, and least-recently-attempted alone ranks NEVER-attempted
-  // topics first (Infinity-ago), which fed him a diet of unfamiliar shapes.
-  const started = (id: string) => Number(byId.has(id));
-  if (pool.length) {
-    const pick = [...pool].sort((a, b) =>
-      Number(b.domain !== currentDomain) - Number(a.domain !== currentDomain) ||
-      started(b.id) - started(a.id) ||
-      lastSeen(b.id) - lastSeen(a.id) ||
-      a.ageRange[0] - b.ageRange[0],
+  // Within the frontier, a topic has a mastery row IFF he has attempted it.
+  const isStarted = (id: string) => byId.has(id);
+  const newTopics = pool.filter((t) => !isStarted(t.id));
+  const inProgress = pool.filter((t) => isStarted(t.id));
+  // Has he been circling a tiny set of topics? With only a couple of unfinished
+  // topics he'd ping-pong between them forever (each looks "due to return to" the
+  // instant the other is current). When the recent history shows ≤2 distinct
+  // topics, break the rut by introducing a NEW one — gentle now that new topics
+  // arrive with a worked demo, and it's what keeps the curriculum moving.
+  const recentDistinct = new Set(s.recentTopicIds.filter(Boolean)).size;
+  const ranked =
+    recentDistinct <= 2 && newTopics.length ? newTopics :   // stuck → meet something new
+    inProgress.length ? inProgress :                        // else finish started work
+    pool;                                                   // early game: only new topics exist
+  if (ranked.length) {
+    const pick = [...ranked].sort((a, b) =>
+      Number(b.domain !== currentDomain) - Number(a.domain !== currentDomain) || // non-interference
+      a.ageRange[0] - b.ageRange[0] ||                                            // easiest first
+      lastSeen(b.id) - lastSeen(a.id),                                            // least-recently
     )[0];
     return { topic: pick, difficulty: learnDifficulty(pick), mode: "learn" };
   }

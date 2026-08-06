@@ -1,5 +1,8 @@
 import './styles.css';
 import { Game } from './game/Game';
+import { installStaleReload } from './utils/staleReload';
+
+installStaleReload();
 
 const canvas = document.querySelector<HTMLCanvasElement>('#game-canvas');
 

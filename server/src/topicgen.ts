@@ -154,7 +154,7 @@ export function problemForTopic(topic: Topic, difficulty: number): TopicProblemD
       const b = g.divisors[ri(0, g.divisors.length - 1)];
       const q = ri(2, Math.max(2, lerp(2, g.quotientMax, d)));
       return { ...base, prompt: `${b * q} ÷ ${b}`, spoken: `If you share ${b * q} gems between ${b} friends, how many does each get?`,
-        answer: q, hint: `Deal them out one at a time to ${b} friends, or count by ${b}s up to ${b * q}.` };
+        answer: q, hint: `Count by ${b}s up to ${b * q}: how many jumps did that take?` };
     }
 
     // ---- expansion batch (2026-07-10) ----------------------------------------

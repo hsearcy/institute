@@ -44,6 +44,7 @@ export const CURATION: CurationRow[] = [
   { id: "mt_M2v1A9OEuM", kidLabel: "Counting to 1000",  legacySkill: "skip_counting",  gen: { kind: "skip", steps: [5, 10, 100], offset: true },    fluentMs: null },
   { id: "mt_wh3UqnWsa7", kidLabel: "Groups Galore",     legacySkill: "multiplication", gen: { kind: "mul_div", tables: [2, 3, 4, 5, 10] },          fluentMs: null },
   { id: "mt_wQ89AEXhz3", kidLabel: "Times Tables II",   legacySkill: "multiplication", gen: { kind: "mul_div", tables: [3, 4, 8] },                 fluentMs: 7000 },
+  { id: "mt_K5jM7vlVhA", kidLabel: "Times Tables Master", legacySkill: "multiplication", gen: { kind: "mul_div", tables: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], maxFactor: 12 }, fluentMs: 8000 },
   { id: "mt_0u4KLbvBa1", kidLabel: "Odd One Out",       legacySkill: "division",       gen: { kind: "odd_pick" },                                   fluentMs: null },
   { id: "mt_U0waNfD8PB", kidLabel: "Number Battles",    legacySkill: "place_value",    gen: { kind: "compare_pick", max: 99 },                      fluentMs: null },
   { id: "mt_aPBzD28_mT", kidLabel: "Hundreds & More",   legacySkill: "place_value",    gen: { kind: "compose_hundreds" },                           fluentMs: null },

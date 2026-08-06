@@ -23,8 +23,8 @@ export const GenSpecSchema = z.discriminatedUnion("kind", [
   }),
   z.object({ kind: z.literal("compose_tens"), tensMax: z.number().int() }),
   z.object({ kind: z.literal("add_sub_tens") }),
-  z.object({ kind: z.literal("mul"), tables: z.array(z.number().int()).min(1) }),
-  z.object({ kind: z.literal("mul_div"), tables: z.array(z.number().int()).min(1) }),
+  z.object({ kind: z.literal("mul"), tables: z.array(z.number().int()).min(1), maxFactor: z.number().int().optional() }),
+  z.object({ kind: z.literal("mul_div"), tables: z.array(z.number().int()).min(1), maxFactor: z.number().int().optional() }),
   z.object({ kind: z.literal("div"), divisors: z.array(z.number().int()).min(1), quotientMax: z.number().int() }),
   // ---- expansion batch (2026-07-10) ----
   z.object({ kind: z.literal("two_digit_ones") }),          // 34 + 5 / 62 − 4

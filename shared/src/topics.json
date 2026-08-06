@@ -800,6 +800,48 @@
    ]
   },
   {
+   "id": "mt_K5jM7vlVhA",
+   "name": "All times tables to 12×12",
+   "kidLabel": "Times Tables Master",
+   "domain": "Multiplication & Division",
+   "ageRange": [
+    8,
+    9
+   ],
+   "description": "Recall multiplication and division facts for multiplication tables up to 12 × 12",
+   "evidence": [
+    "Recall any fact from the 1–12 times tables rapidly",
+    "Recall the corresponding division fact for any multiplication fact",
+    "Use known facts to check or derive answers in calculations"
+   ],
+   "assessmentPrompt": "Can {{name}} recall any multiplication or division fact from all the times tables up to 12 — like '9 × 8 = 72' or '132 ÷ 12 = 11' — quickly and accurately?",
+   "legacySkill": "multiplication",
+   "gen": {
+    "kind": "mul_div",
+    "tables": [
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12
+    ],
+    "maxFactor": 12
+   },
+   "fluentMs": 8000,
+   "prereqs": [
+    "mt_wQ89AEXhz3"
+   ],
+   "helpPrereqs": [
+    "mt_IzQvs7k_sE"
+   ]
+  },
+  {
    "id": "mt_0u4KLbvBa1",
    "name": "Odd and even numbers",
    "kidLabel": "Odd One Out",

@@ -142,7 +142,10 @@ export function problemForTopic(topic: Topic, difficulty: number): TopicProblemD
     }
     case "mul": case "mul_div": {
       const t = g.tables[ri(0, g.tables.length - 1)];
-      const k = ri(2, lerp(3, 9, d));
+      // The multiplier's FLOOR rises with difficulty, so a hard problem is
+      // actually a big product (he was mastering on 2×3 while 5×7 never showed).
+      const top = g.maxFactor ?? 9;
+      const k = ri(lerp(2, Math.max(2, top - 3), d), lerp(3, top, d));
       if (g.kind === "mul_div" && Math.random() < 0.4) {
         return { ...base, prompt: `${t * k} ÷ ${t}`, spoken: `What is ${t * k} divided by ${t}?`, answer: k,
           hint: `How many ${t}s make ${t * k}? Count by ${t}s.` };
@@ -152,7 +155,7 @@ export function problemForTopic(topic: Topic, difficulty: number): TopicProblemD
     }
     case "div": {
       const b = g.divisors[ri(0, g.divisors.length - 1)];
-      const q = ri(2, Math.max(2, lerp(2, g.quotientMax, d)));
+      const q = ri(lerp(2, Math.max(2, g.quotientMax - 2), d), Math.max(2, lerp(2, g.quotientMax, d)));
       return { ...base, prompt: `${b * q} ÷ ${b}`, spoken: `If you share ${b * q} gems between ${b} friends, how many does each get?`,
         answer: q, hint: `Count by ${b}s up to ${b * q}: how many jumps did that take?` };
     }

@@ -37,13 +37,14 @@ describe("rut-breaking rotation", () => {
   });
 
   test("just after meeting a NEW topic, consolidate it instead of piling on another", () => {
-    // A freshly-met topic (few attempts) is in recent history → let him work his
-    // in-progress topics rather than opening yet another new one.
+    // His CURRENT run was a freshly-met NEW topic (few attempts) → let him work an
+    // in-progress topic rather than opening yet another brand-new one. Discovery
+    // is keyed off the current run, so the freshly-met topic must BE that run.
     const G = [t("cur", [], "d-cur"), t("started", [], "pool"), t("fresh", [], "pool")];
     const r = selectNext({ ...base, topics: G, currentTopicId: "cur",
       recentTopicIds: ["cur", "cur", "cur", "cur", "started", "started"],
-      mastery: [m("started", "practicing", 4)] }); // 4 attempts = freshly met
-    expect(r.topic.id).toBe("started"); // consolidate the new one, don't pile on
+      mastery: [m("cur", "practicing", 4), m("started", "practicing", 30)] }); // cur just met
+    expect(r.topic.id).toBe("started"); // consolidate via in-progress, don't open "fresh"
   });
 
   test("breaks out even with several long-worked topics (the real ares bug)", () => {

@@ -69,24 +69,25 @@ export function selectNext(s: SelectInput): Selection {
   const isStarted = (id: string) => byId.has(id);
   const newTopics = pool.filter((t) => !isStarted(t.id));
   const inProgress = pool.filter((t) => isStarted(t.id));
-  // Keep meeting NEW topics on a steady cadence — even while several older topics
-  // are still unfinished. The signal is whether he's met a NEW topic RECENTLY: a
-  // "freshly-met" topic is one he's only just started (few attempts). If none of
-  // his recent problems were on a freshly-met topic, it's time to discover one;
-  // otherwise let him consolidate the new one alongside his in-progress work.
-  // (Earlier this keyed off "≤2 distinct recent topics", which never fired once
-  // he had 3+ long-worked topics — trapping him on his started set.)
-  const FRESHLY_MET = 12; // ~3 short runs before a new topic stops being "new"
-  const recentlyMetNew = s.recentTopicIds.some((id) => {
+  // Meet a NEW topic on a steady cadence — roughly every other rotation — while
+  // still working what's in progress. The signal is simply whether his CURRENT
+  // run was on a freshly-met topic: if he just met/worked a new one, spend this
+  // rotation on in-progress work; otherwise introduce a new one. Keying off the
+  // current run (not a wide window) keeps discovery flowing even when he has
+  // several long-worked topics AND avoids a freshly-mastered topic wedging it.
+  // (History: "≤2 distinct recent topics" never fired with 3+ started topics;
+  // "any freshly-met in the last 20" was too sticky — a new topic he never
+  // consolidated blocked discovery for ~20 problems.)
+  const FRESH = RUN_CAP * 2; // ≤ ~2 runs in ⇒ still a "new" topic to him
+  const freshlyMet = (id: string): boolean => {
     const m = byId.get(id);
-    // A freshly-MASTERED topic doesn't count — he's done with it, so it must not
-    // suppress discovering the next new one. Only an in-progress fresh topic does.
-    return m !== undefined && m.state !== "mastered" && m.attempts > 0 && m.attempts <= FRESHLY_MET;
-  });
+    return m !== undefined && m.state !== "mastered" && m.attempts > 0 && m.attempts <= FRESH;
+  };
+  const currentRunWasNew = s.recentTopicIds.slice(0, RUN_CAP).some(freshlyMet);
   const ranked =
-    !recentlyMetNew && newTopics.length ? newTopics :  // no new topic lately → discover one
-    inProgress.length ? inProgress :                   // else finish started work
-    pool;                                              // early game: only new topics exist
+    !currentRunWasNew && newTopics.length ? newTopics :  // just did an old topic → discover one
+    inProgress.length ? inProgress :                     // just met a new one → work in-progress
+    pool;                                                // early game: only new topics exist
   if (ranked.length) {
     const pick = [...ranked].sort((a, b) =>
       Number(b.domain !== currentDomain) - Number(a.domain !== currentDomain) || // non-interference

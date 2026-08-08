@@ -131,6 +131,115 @@ export const CompletedQuestSchema = z.object({
 });
 export type CompletedQuest = z.infer<typeof CompletedQuestSchema>;
 
+// ---- Daily correct-answer count + the all-time daily record ----------------
+//
+// "Day" everywhere below is the PLAYER's calendar day in an explicitly
+// configured IANA timezone (server env PLAYER_TZ, default America/New_York) —
+// never the machine's ambient TZ. The zone travels with the payload so the UI
+// can say which clock it means.
+
+/** One calendar day's tally of problems he got right. */
+export const DailyCountSchema = z.object({
+  /** Player-timezone calendar day, YYYY-MM-DD. */
+  day: z.string(),
+  count: z.number().int(),
+});
+export type DailyCount = z.infer<typeof DailyCountSchema>;
+
+/** How far back the count can be trusted. The pre-feature database recorded no
+ *  problem id for a "solved on a retry" answer, so those are gone for good and
+ *  cannot be reconstructed. Rather than pretend otherwise, the server publishes
+ *  the first day it knows is fully counted, and the UI says so. */
+export const DailyTrackingSchema = z.object({
+  /** First day counted completely (null only if migration hasn't run). */
+  completeSince: z.string().nullable(),
+  /** True when history before `completeSince` was reconstructed from the attempt
+   *  log and may under-count (legacy retry solves were never recorded). */
+  backfilled: z.boolean(),
+});
+export type DailyTracking = z.infer<typeof DailyTrackingSchema>;
+
+/** A record-breaking moment, persisted server-side so a lost response or a
+ *  reload can still deliver the celebration. `id` is stable, which is what lets
+ *  the client show it exactly once. */
+export const DailyRecordEventSchema = z.object({
+  /** Stable id: `${profileId}:${day}:${count}`. */
+  id: z.string(),
+  day: z.string(),
+  /** Today's count at the moment the record fell. */
+  count: z.number().int(),
+  /** The record it beat. */
+  previousRecord: z.number().int(),
+});
+export type DailyRecordEvent = z.infer<typeof DailyRecordEventSchema>;
+
+/** Summary numbers for the stats panel — cheap to compute, all server-side. */
+export const DailyStatsSchema = z.object({
+  /** Problems right over the last 7 days (today included). */
+  last7Total: z.number().int(),
+  /** last7Total / 7, rounded to one decimal. */
+  last7Average: z.number(),
+  /** The all-time best day (null before he has ever solved one). */
+  bestDay: DailyCountSchema.nullable(),
+  /** Distinct days with at least one tracked correct answer. */
+  daysPlayed: z.number().int(),
+  /** Every problem counted, each exactly once. Named for what it really is:
+   *  the total we TRACKED, which pre-dates-the-feature retries can undercount. */
+  trackedSolves: z.number().int(),
+  /** Consecutive days with at least one solve, ending today (or yesterday if
+   *  today is still empty, so an unplayed morning doesn't read as a broken run). */
+  currentStreakDays: z.number().int(),
+});
+export type DailyStats = z.infer<typeof DailyStatsSchema>;
+
+/** Everything the HUD record chip and the stats panel need, in one payload. */
+export const DailyRecordSchema = z.object({
+  /** Today's calendar day, YYYY-MM-DD, in `timeZone`. */
+  day: z.string(),
+  /** The IANA zone that defines "today" for this player. */
+  timeZone: z.string(),
+  /** Problems he has got right today. */
+  today: z.number().int(),
+  /** The best single-day count ever, today included. */
+  record: z.number().int(),
+  /** The day that set `record` (null before any solve). */
+  recordDay: z.string().nullable(),
+  /** Today IS the record (or ties it) — the chip celebrates quietly. */
+  isRecord: z.boolean(),
+  /** Recent days oldest → newest, zero-filled, for the graph. */
+  history: z.array(DailyCountSchema),
+  stats: DailyStatsSchema,
+  tracking: DailyTrackingSchema,
+  /** Record moments the client has not acknowledged yet. Delivery is durable and
+   *  at-least-once; the client de-dupes on `id` to present each exactly once. */
+  pendingEvents: z.array(DailyRecordEventSchema),
+});
+export type DailyRecord = z.infer<typeof DailyRecordSchema>;
+
+/** The daily-count delta returned alongside one solved problem. */
+export const DailyProgressSchema = z.object({
+  day: z.string(),
+  today: z.number().int(),
+  /** Best day ever, today included (so the HUD can render today vs record). */
+  record: z.number().int(),
+  /** Best day EXCLUDING today — the bar he had to clear. */
+  previousRecord: z.number().int(),
+  /** True on exactly the answer that beat an existing record. Requires a real
+   *  earlier benchmark (`previousRecord > 0`), so the first-ever day — which has
+   *  nothing to beat — never fires it. */
+  newRecord: z.boolean(),
+  /** The persisted record event's id when `newRecord` is true; null otherwise. */
+  eventId: z.string().nullable(),
+});
+export type DailyProgress = z.infer<typeof DailyProgressSchema>;
+
+/** Client → server: "I have shown this record celebration." Idempotent. */
+export const DailyRecordAckSchema = z.object({
+  profileId: z.string(),
+  eventId: z.string(),
+});
+export type DailyRecordAck = z.infer<typeof DailyRecordAckSchema>;
+
 /** Live durability of the equipped pickaxe. `current`/`max` are null for wooden
  *  (the free starter never wears). `broke` = it just hit 0 this action and the
  *  equip auto-reverted to wooden. */
@@ -159,6 +268,9 @@ export const RewardSchema = z.object({
   allDailiesCrazyCoin: z.boolean().optional(),
   /** Equipped-pickaxe durability after this action (absent when nothing wore). */
   durability: DurabilitySchema.nullable().optional(),
+  /** Today's correct-answer count + record after this answer (absent when the
+   *  action didn't solve a problem, e.g. a miss or the hoard bonus). */
+  daily: DailyProgressSchema.optional(),
 });
 export type Reward = z.infer<typeof RewardSchema>;
 
@@ -178,6 +290,9 @@ export const StateSchema = z.object({
   durability: DurabilitySchema.nullable().optional(),
   /** The equipped mine-target model (defaults to "gem_classic"). */
   equippedGemStyle: z.string().optional(),
+  /** Today vs his all-time daily record, plus history for the stats graph.
+   *  Optional so a client running against an older server still parses. */
+  daily: DailyRecordSchema.optional(),
 });
 export type State = z.infer<typeof StateSchema>;
 

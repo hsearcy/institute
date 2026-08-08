@@ -15,8 +15,10 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { type Material } from 'three';
-import type { Problem, Branches, Reward, Durability, ShopState } from '@institute/shared';
-import { Hud } from './hud';
+import type { Problem, Branches, Reward, Durability, DailyRecordEvent, ShopState } from '@institute/shared';
+import { Hud, prefersReducedMotion } from './hud';
+import { rememberPresented, unpresentedEvents } from './dailyStats';
+import { PROFILE } from './config';
 import { PICKAXE_SKINS, isSkinKey, type SkinKey } from './skins';
 import {
   buildGemStyle,
@@ -28,12 +30,28 @@ import {
 import {
   fetchFirst, fetchBranches, fetchExplain, recordAttempt, creditRetrySolve, fetchState, buyShield,
   fetchShop, buyPickaxe, equipPickaxe, repairPickaxe, buyPadTheme, equipPadTheme, fetchWalkthrough, reportSkip, fetchDemo, buyGemStyle, equipGemStyle, creditHoardBonus, reportMiss, fetchMastery,
-  redeemCrazyCoin,
+  redeemCrazyCoin, ackRecordEvent,
 } from './tutor';
 import { speak, sfxChink, sfxMine, sfxFizzle, sfxCollect, sfxFanfare, startAmbience, preloadAudio } from './audio';
 
 // Saturated jewel tones — vivid against the dark cavern (muddy mid-tones removed).
 const GEM_PALETTE = [0x2ee6a0, 0x4d8cff, 0xff4d7e, 0xffd23b, 0xb15cff, 0x32e0e0, 0xff7eb6];
+
+// Record celebrations already shown on this device, by event id. Losing this
+// list (cleared storage, a different browser) at worst replays a party that the
+// server has not been told about yet — the trade we chose over losing it.
+const RECORD_EVENTS_KEY = 'institute:record-events:' + PROFILE;
+function loadPresentedRecordIds(): string[] {
+  try {
+    const saved: unknown = JSON.parse(localStorage.getItem(RECORD_EVENTS_KEY) ?? '[]');
+    return Array.isArray(saved) ? saved.filter((id): id is string => typeof id === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+function savePresentedRecordIds(ids: string[]): void {
+  try { localStorage.setItem(RECORD_EVENTS_KEY, JSON.stringify(ids)); } catch { /* ignore */ }
+}
 
 export class Game {
   private renderer: WebGLRenderer;
@@ -59,6 +77,11 @@ export class Game {
   private totalGems = 0;        // mirror of the server gem total (offline fallback only)
   private pendingReward: Reward | null = null; // applied to the HUD when the prize gem lands
   private awaitingReward = false;              // a correct attempt's reward is still in flight
+  // Record celebrations already shown on this device. The server re-offers an
+  // event until it is acknowledged (so a lost response or a reload still gets
+  // the party); this list is what turns that at-least-once delivery into a
+  // single visible celebration.
+  private presentedRecordIds: string[] = loadPresentedRecordIds();
 
   // scene objects
   private hero!: Group;            // the geode being mined
@@ -149,6 +172,7 @@ export class Game {
       onRedeemCrazyCoin: () => void this.onRedeemCrazyCoin(),
       onHoardFull: () => void this.onHoardFull(),
       onOpenParent: () => void this.onOpenParent(),
+      onOpenStats: () => void this.onOpenStats(),
     });
 
     this.onResize();
@@ -644,6 +668,10 @@ export class Game {
     this.hud.setShields(st.shields);
     this.hud.setGemsForShop(st.gems);
     this.hud.setQuests(st.quests, st.weeklyQuest);
+    this.hud.setDailyRecord(st.daily ?? null);
+    // Any record moment whose response never made it back (or that landed while
+    // the tab was closed) is waiting here.
+    if (st.daily) this.presentRecordEvents(st.daily.pendingEvents);
     if (seed && st.equipped) {
       this.pickDurability = st.durability ?? null;
       this.applyPickaxeSkin(st.equipped); // wear the saved skin on startup
@@ -839,6 +867,42 @@ export class Game {
   private async onOpenParent(): Promise<void> {
     this.hud.openParentDash();
     this.hud.setMastery(await fetchMastery());
+  }
+
+  /** Celebrate each record moment we have not shown yet, then tell the server it
+   *  can stop offering them. Ids already shown are skipped, so the attempt
+   *  response and the /state queue can both deliver the same event safely.
+   *  Acknowledging even a skipped one is deliberate: it clears the queue. */
+  private presentRecordEvents(events: DailyRecordEvent[]): void {
+    for (const event of unpresentedEvents(events, this.presentedRecordIds)) {
+      this.presentedRecordIds = rememberPresented(this.presentedRecordIds, event.id);
+      savePresentedRecordIds(this.presentedRecordIds);
+      this.celebrateDailyRecord(event.count);
+    }
+    for (const event of events) void ackRecordEvent(event.id);
+  }
+
+  /** The record party itself. Motion (camera punch + the 3D gem rain) is skipped
+   *  entirely when he has asked his device for reduced motion; the banner and
+   *  the spoken congratulation still happen, so the moment is never silent. */
+  private celebrateDailyRecord(count: number): void {
+    if (!prefersReducedMotion()) {
+      this.shake = Math.max(this.shake, 0.6);
+      this.celebrationBurst(Math.max(10, count));
+    }
+    this.hud.celebrateDailyRecord(count);
+    sfxFanfare(true);
+    void speak(`A new record! ${count} right today. That is your best day ever!`);
+  }
+
+  /** He tapped his record chip: open the stats panel on the numbers we already
+   *  have (instant), then refresh it from the server. */
+  private async onOpenStats(): Promise<void> {
+    this.hud.openStats();
+    const st = await fetchState();
+    // setDailyRecord refreshes the chip AND re-renders the open panel.
+    if (st?.daily) this.hud.setDailyRecord(st.daily);
+    else this.hud.setStats(null); // nothing fresh — a notice only if nothing is shown yet
   }
 
   /** A topic he has never met never arrives as a cold graded question: he
@@ -1059,7 +1123,7 @@ export class Game {
     } else if (correct) {
       // Solved on a retry — still earns a gem (no streak); flows through the same reward path.
       this.awaitingReward = true;
-      void creditRetrySolve().then((reward) => this.onReward(reward, true));
+      void creditRetrySolve(this.problem.id).then((reward) => this.onReward(reward, true));
     }
 
     if (correct) {
@@ -1211,6 +1275,20 @@ export class Game {
       this.hud.celebrateDailyCrazyCoin();
       void speak('You finished every quest today — you earned a Crazy Coin! Go tell a grown-up!');
       sfxFanfare(true);
+    }
+    // Today's count, and the rarest moment in the game: a brand-new daily record.
+    // The server fires newRecord on exactly the answer that beats an existing
+    // record, so his first-ever correct answer is never dressed up as one. This
+    // is the FAST path; the same event also sits in /state until acknowledged,
+    // and both paths funnel through the same shown-once gate.
+    if (r.daily) {
+      this.hud.setDailyProgress(r.daily);
+      if (r.daily.newRecord && r.daily.eventId) {
+        this.presentRecordEvents([{
+          id: r.daily.eventId, day: r.daily.day,
+          count: r.daily.today, previousRecord: r.daily.previousRecord,
+        }]);
+      }
     }
     // Wear the pickaxe for this mined gem (may shatter → swap to wooden).
     this.applyDurability(r.durability);

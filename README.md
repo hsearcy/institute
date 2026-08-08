@@ -12,8 +12,14 @@ Solving a math problem mines a gem; mastering topics unlocks deeper tunnels.
 bun install
 bun run dev:server   # tutor server on :8787
 bun run dev:web      # game on :5173
-bun test server shared scripts
+bun test server shared scripts web/unit-tests
 ```
+
+## Configuration
+
+| env var | default | what it does |
+| --- | --- | --- |
+| `PLAYER_TZ` | `America/New_York` | IANA zone for US Eastern Time (EST/EDT) that defines "today" for the daily correct-answer count and its record. Set it to where the child actually lives — an unknown zone falls back to US Eastern rather than to the machine clock. |
 
 ## Curriculum data
 

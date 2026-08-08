@@ -79,7 +79,9 @@ export function selectNext(s: SelectInput): Selection {
   const FRESHLY_MET = 12; // ~3 short runs before a new topic stops being "new"
   const recentlyMetNew = s.recentTopicIds.some((id) => {
     const m = byId.get(id);
-    return m !== undefined && m.attempts > 0 && m.attempts <= FRESHLY_MET;
+    // A freshly-MASTERED topic doesn't count — he's done with it, so it must not
+    // suppress discovering the next new one. Only an in-progress fresh topic does.
+    return m !== undefined && m.state !== "mastered" && m.attempts > 0 && m.attempts <= FRESHLY_MET;
   });
   const ranked =
     !recentlyMetNew && newTopics.length ? newTopics :  // no new topic lately → discover one

@@ -187,6 +187,35 @@ describe("topic-graph tutor flow", () => {
     expect(quests.streak_5).toMatchObject({ progress: 6, done: false });
   });
 
+  test("exploring counts a topic he ATTEMPTED, even if he missed it first try", async () => {
+    const profileId = "quest-explore-attempted";
+    const topics = TOPICS.filter((t) => t.prereqs.length === 0).slice(0, 4);
+    // Three topics right, one topic he only ever misses first-try — all four are
+    // "explored" (he encountered them). The old rule (correct=1) counted 3.
+    for (let i = 0; i < 3; i++) {
+      await call("POST", "/tutor/attempt", {
+        profileId, problemId: `ok-${i}`, skill: "add_within_20", topicId: topics[i].id,
+        correct: true, solveMs: 5000, difficulty: 0.4,
+      });
+    }
+    // He bravely tries the 4th topic and misses first try — its attempt row now
+    // exists with a topic_id.
+    await call("POST", "/tutor/attempt", {
+      profileId, problemId: "missed", skill: "add_within_20", topicId: topics[3].id,
+      correct: false, solveMs: 8000, difficulty: 0.4,
+    });
+    // His NEXT win recomputes the explore count over all topics ATTEMPTED today
+    // (4), completing the quest on a celebrating answer — not silently on the miss.
+    const r = await call("POST", "/tutor/attempt", {
+      profileId, problemId: "next-win", skill: "add_within_20", topicId: topics[0].id,
+      correct: true, solveMs: 5000, difficulty: 0.4,
+    });
+    expect(r.reward.questsCompleted.some((q: any) => q.key === "topic_explorer")).toBe(true);
+    const state = await call("GET", `/state?profileId=${profileId}`);
+    const quests = Object.fromEntries(state.quests.map((q: any) => [q.key, q]));
+    expect(quests.topic_explorer).toMatchObject({ progress: 4, done: true });
+  });
+
   test("retry solves count for endurance but not speed or topic variety", async () => {
     const profileId = "quest-retry";
     await call("POST", "/reward/retry-solve", { profileId });

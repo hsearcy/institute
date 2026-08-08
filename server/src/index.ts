@@ -582,12 +582,14 @@ function advanceQuests(
   const completed: { key: string; label: string; reward: number }[] = [];
   const dayStart = Date.parse(`${day}T00:00:00.000Z`);
   const doneBefore = getQuests(profileId, day).filter((r) => r.done).length;
-  const distinctTopics = event.firstTry
-    ? (db.query(
-      `SELECT COUNT(DISTINCT topic_id) AS count FROM attempts
-       WHERE profile_id = ? AND correct = 1 AND topic_id IS NOT NULL AND created_at >= ?`,
-    ).get(profileId, dayStart) as { count: number }).count
-    : 0;
+  // "Explore" means ENCOUNTER, not master: count every distinct topic he has
+  // ATTEMPTED today, right or wrong. Requiring a first-try-correct answer denied
+  // credit for the topics he bravely tried and struggled with — exactly the
+  // exploring we want to reward (and recomputed on any attempt, not just wins).
+  const distinctTopics = (db.query(
+    `SELECT COUNT(DISTINCT topic_id) AS count FROM attempts
+     WHERE profile_id = ? AND topic_id IS NOT NULL AND created_at >= ?`,
+  ).get(profileId, dayStart) as { count: number }).count;
 
   for (const r of getQuests(profileId, day)) {
     if (r.done) continue;
@@ -596,7 +598,7 @@ function advanceQuests(
     else if (r.quest_key === "solve_10") progress += 1;
     else if (r.quest_key === "streak_5" && event.firstTry) progress += 1;
     else if (r.quest_key === "speed_8" && event.firstTry && (event.solveMs ?? Infinity) < 20_000) progress += 1;
-    else if (r.quest_key === "topic_explorer" && event.firstTry) progress = distinctTopics;
+    else if (r.quest_key === "topic_explorer") progress = Math.max(progress, distinctTopics);
 
     const done = progress >= r.target ? 1 : 0;
     if (done) {

@@ -238,20 +238,27 @@ function recordTopicMastery(profileId: string, topicId: string, correct: boolean
   });
   // Review schedule: any attempt while mastered is a review outcome; the moment
   // of first mastery schedules the first review.
-  let schedule: { intervalDays: number; dueAt: number } | null = null;
-  if (wasMastered) schedule = nextReview(row?.review_interval_days ?? null, correct, Date.now());
-  else if (state === "mastered") schedule = nextReview(null, correct, Date.now());
+  // Foundational (age-start ≤ 5) skills can graduate out of review once durable.
+  let schedule: { intervalDays: number; dueAt: number | null } | null = null;
+  const foundational = topic.ageRange[0] <= 5;
+  if (wasMastered) schedule = nextReview(row?.review_interval_days ?? null, correct, Date.now(), foundational);
+  else if (state === "mastered") schedule = nextReview(null, correct, Date.now(), foundational);
+  // When there's a schedule we WRITE it (incl. a null due-date = retired); when
+  // there isn't (an ordinary non-mastered attempt) we leave the schedule intact.
+  // COALESCE can't express "set null on retire", so gate the write with a flag.
+  const hasSchedule = schedule ? 1 : 0;
   db.query(
     `INSERT INTO topic_mastery (profile_id, topic_id, attempts, correct, last_difficulty, state, review_interval_days, review_due_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(profile_id, topic_id) DO UPDATE SET
        attempts = excluded.attempts, correct = excluded.correct,
        last_difficulty = excluded.last_difficulty, state = excluded.state,
-       review_interval_days = COALESCE(excluded.review_interval_days, topic_mastery.review_interval_days),
-       review_due_at = COALESCE(excluded.review_due_at, topic_mastery.review_due_at),
+       review_interval_days = CASE WHEN ? THEN excluded.review_interval_days ELSE topic_mastery.review_interval_days END,
+       review_due_at = CASE WHEN ? THEN excluded.review_due_at ELSE topic_mastery.review_due_at END,
        updated_at = excluded.updated_at`,
   ).run(profileId, topicId, attempts, corr, difficulty, state,
-    schedule?.intervalDays ?? null, schedule?.dueAt ?? null, Date.now());
+    schedule?.intervalDays ?? null, schedule?.dueAt ?? null, Date.now(),
+    hasSchedule, hasSchedule);
 }
 
 /** Map an old-model mastered skill onto curated-topic grants (synthetic 8/8). */

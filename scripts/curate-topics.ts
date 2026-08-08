@@ -14,6 +14,9 @@ const byId = new Map(topics.map((t) => [t.id, t]));
 
 const curatedIds = new Set(CURATION.map((c) => c.id));
 for (const c of CURATION) if (!byId.has(c.id)) throw new Error(`unknown taxonomy id ${c.id}`);
+for (const c of CURATION)
+  for (const id of c.extraHelpPrereqs ?? [])
+    if (!curatedIds.has(id)) throw new Error(`${c.id} extraHelpPrereq ${id} not in curation`);
 const prereqs = contractEdges(deps, curatedIds);
 // Soft edges become the remediation safety net: contract over hard+soft, then
 // subtract the hard prereqs — advisory "step down to this if he struggles".
@@ -34,9 +37,9 @@ const out = CURATION.map((c) => {
     gen: c.gen,
     fluentMs: c.fluentMs,
     prereqs: prereqs.get(c.id) ?? [],
-    helpPrereqs: (unionPrereqs.get(c.id) ?? []).filter(
-      (id) => id !== c.id && !(prereqs.get(c.id) ?? []).includes(id),
-    ),
+    helpPrereqs: [
+      ...new Set([...(unionPrereqs.get(c.id) ?? []), ...(c.extraHelpPrereqs ?? [])]),
+    ].filter((id) => id !== c.id && !(prereqs.get(c.id) ?? []).includes(id)),
   };
 });
 

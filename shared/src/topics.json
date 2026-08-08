@@ -414,7 +414,11 @@
    },
    "fluentMs": null,
    "prereqs": [],
-   "helpPrereqs": []
+   "helpPrereqs": [
+    "mt_nvdpxAJTBG",
+    "mt_aHAM29nidj",
+    "mt_OkSJfrmFb_"
+   ]
   },
   {
    "id": "mt_s2mfRBoTal",
@@ -442,7 +446,9 @@
     "mt_e8CZ7E5qW7",
     "mt_ghF3Vv6taM"
    ],
-   "helpPrereqs": []
+   "helpPrereqs": [
+    "mt__we2TDqnJx"
+   ]
   },
   {
    "id": "mt_AKAtWEwpcj",

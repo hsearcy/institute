@@ -12,6 +12,12 @@ export type CurationRow = {
    *  money topics talk pounds/pence — this is an American kid). Feeds the LLM
    *  prompts AND the parent dashboard. */
   override?: { description?: string; evidence?: string[]; assessmentPrompt?: string };
+  /** Hand-authored remediation edges the Marble taxonomy is missing. When he's
+   *  stuck on this topic, these are the underlying skills to interleave (and the
+   *  ladder `rescueTopic` steps down to). Merged into `helpPrereqs`. e.g. Fair
+   *  Shares — division — has NO taxonomy prereqs, but skip-counting is what it
+   *  actually leans on. Soft only: they never gate/lock the topic. */
+  extraHelpPrereqs?: string[];
 };
 
 export const CURATION: CurationRow[] = [
@@ -29,9 +35,15 @@ export const CURATION: CurationRow[] = [
   { id: "mt_I5j1ZWo2cn", kidLabel: "Tens Math",        legacySkill: "place_value",    gen: { kind: "add_sub_tens" },                                fluentMs: null },
   { id: "mt_PZ909yPrEC", kidLabel: "Groups Of",        legacySkill: "multiplication", gen: { kind: "mul", tables: [2, 5, 10] },                     fluentMs: null },
   { id: "mt_HhuSDxwDNM", kidLabel: "Times Tables",     legacySkill: "multiplication", gen: { kind: "mul_div", tables: [2, 5, 10] },                 fluentMs: 7000 },
-  { id: "mt_LpSuPgL31x", kidLabel: "Fair Shares",      legacySkill: "division",       gen: { kind: "div", divisors: [2, 3, 4, 5], quotientMax: 5 }, fluentMs: null },
+  { id: "mt_LpSuPgL31x", kidLabel: "Fair Shares",      legacySkill: "division",       gen: { kind: "div", divisors: [2, 3, 4, 5], quotientMax: 5 }, fluentMs: null,
+    // Division IS skip-counting by the divisor — his actual solving strategy — but
+    // Marble gives this topic no prereqs, so he had no ladder down. Wire it in.
+    extraHelpPrereqs: ["mt_nvdpxAJTBG", "mt_aHAM29nidj", "mt_OkSJfrmFb_"] }, // Counting by 2s / 3s / Ten Hops
   // ---- expansion batch (2026-07-10): 20 topics, ages 5-8 ----------------------
-  { id: "mt_s2mfRBoTal", kidLabel: "Bond Master",       legacySkill: "add_within_20",  gen: { kind: "missing_addend", totalMax: 20 },               fluentMs: 7000 },
+  { id: "mt_s2mfRBoTal", kidLabel: "Bond Master",       legacySkill: "add_within_20",  gen: { kind: "missing_addend", totalMax: 20 },               fluentMs: 7000,
+    // He stalls crossing ten (4 + ? = 18). The make-a-ten skill is the scaffold;
+    // his mastered single-digit bonds don't cover it. Interleave Add & Take to 10.
+    extraHelpPrereqs: ["mt__we2TDqnJx"] }, // Add & Take to 10
   { id: "mt_AKAtWEwpcj", kidLabel: "Big Number Add",    legacySkill: "add_within_20",  gen: { kind: "two_digit_ones" },                             fluentMs: null },
   { id: "mt_glPPG-kTQY", kidLabel: "Climb to 100",      legacySkill: "add_within_20",  gen: { kind: "add_within_100" },                             fluentMs: null },
   { id: "mt_UQnAFPs83F", kidLabel: "Double Digits",     legacySkill: "add_within_20",  gen: { kind: "add_2d2d" },                                   fluentMs: null },

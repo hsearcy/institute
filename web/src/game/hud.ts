@@ -1170,9 +1170,16 @@ export class Hud {
     if (!calm) {
       this.screenFlash('#ffd23b');
       this.confettiBurst(110, ['#ffd23b', '#ffb01f', '#fff3b0', '#ffffff', '#7af0ff', '#ff7eb6']);
-      this.recordChip.classList.remove('celebrate');
+      // The class is `rc-pop`, NOT `celebrate`: `.celebrate` is the full-screen
+      // celebration layer, so putting it on the chip turned the chip into a
+      // fixed, full-screen, blurred panel that never went away.
+      this.recordChip.classList.remove('rc-pop');
       void this.recordChip.offsetWidth; // restart the animation
-      this.recordChip.classList.add('celebrate');
+      this.recordChip.classList.add('rc-pop');
+      // Drop the class when the pop ends, so nothing is left behind on the chip.
+      this.recordChip.addEventListener(
+        'animationend', () => this.recordChip.classList.remove('rc-pop'), { once: true },
+      );
     }
     // Matches the .banner.record animation length so it never vanishes mid-bounce.
     this.banner('⭐ NEW RECORD! ⭐', 'record', `${count} right today — your best day EVER!`, '#ffd23b', 5500);
@@ -1311,7 +1318,7 @@ function injectStyles(): void {
   .record-chip.holding { background: linear-gradient(160deg, rgba(255,210,59,0.22), rgba(255,150,30,0.12));
     box-shadow: inset 0 0 0 1.5px rgba(255,210,59,0.75), 0 6px 20px rgba(255,170,30,0.25); }
   .record-chip.holding .rc-best { color: #fff3b0; }
-  .record-chip.celebrate { animation: recordChipPop 1.4s cubic-bezier(.3,1.5,.5,1); }
+  .record-chip.rc-pop { animation: recordChipPop 1.4s cubic-bezier(.3,1.5,.5,1); }
   @keyframes recordChipPop {
     0%{ transform: scale(1) } 20%{ transform: scale(1.28);
       box-shadow: inset 0 0 0 2px #fff3b0, 0 0 34px rgba(255,210,59,0.95) }
@@ -1609,7 +1616,9 @@ function injectStyles(): void {
   .key-mine:active { box-shadow: inset 0 2px 2px rgba(255,255,255,0.7), 0 2px 0 #b96a00; }
 
   /* ---- Celebration layer (over the top!) ---- */
-  .celebrate { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 50; }
+  /* Keyed on the id, not the class: a stray "celebrate" class elsewhere must
+     never turn some little chip into a full-screen overlay. */
+  #celebrate { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 50; }
   .screen-flash { position: absolute; inset: -10%; opacity: 0; animation: flashAnim 0.65s ease-out forwards; mix-blend-mode: screen; }
   @keyframes flashAnim { 0%{opacity:0} 12%{opacity:0.9} 100%{opacity:0} }
   /* Centered column so simultaneous banners stack instead of overlapping. */
@@ -1639,12 +1648,16 @@ function injectStyles(): void {
   .banner.unlock .b-sub { color: var(--accent,#ffe9a8); font-size: clamp(22px,5vw,38px);
     text-shadow: 0 0 14px var(--accent,#ffd23b), 0 2px 10px rgba(0,0,0,0.8); }
   .banner.unlock { animation: bannerPop 5s cubic-bezier(.2,1.4,.4,1) forwards; }
-  /* New daily record — the quest celebration's big brother, in record gold. */
-  .banner.record .b-title { font-size: clamp(38px,10vw,88px); color: #fff;
+  /* New daily record — the quest celebration's big brother, in record gold.
+     The headline is long (two stars and 11 letters) and the whole banner is
+     nowrap, so the title tracks the viewport at a gentler rate than the shorter
+     headlines do, and the sub-line may wrap. Otherwise both ran off the edges
+     of a phone or a tablet. */
+  .banner.record .b-title { font-size: clamp(26px,7.4vw,88px); color: #fff;
     text-shadow: 0 0 20px var(--accent,#ffd23b), 0 0 46px var(--accent,#ffd23b),
       0 4px 0 rgba(150,80,0,0.85), 0 8px 24px rgba(0,0,0,0.65); }
-  .banner.record .b-sub { color: var(--accent,#ffe9a8); font-size: clamp(19px,4.4vw,32px);
-    text-shadow: 0 0 14px rgba(255,210,59,0.7), 0 2px 10px rgba(0,0,0,0.8); }
+  .banner.record .b-sub { color: var(--accent,#ffe9a8); font-size: clamp(17px,3.6vw,32px);
+    white-space: normal; text-shadow: 0 0 14px rgba(255,210,59,0.7), 0 2px 10px rgba(0,0,0,0.8); }
   .banner.record { animation: bannerPop 5.4s cubic-bezier(.2,1.4,.4,1) forwards; }
   .banner.equipped-msg .b-title { font-size: clamp(26px,6vw,52px); color: #eafff1;
     text-shadow: 0 0 16px var(--accent,#9bf0bd), 0 4px 0 rgba(10,60,30,0.7), 0 8px 22px rgba(0,0,0,0.6); }
@@ -1860,7 +1873,7 @@ function injectStyles(): void {
     .screen-flash { display: none; }
     .confetti { display: none; }
     .banner { animation: none !important; opacity: 1; transform: none; }
-    .record-chip.celebrate { animation: none; }
+    .record-chip.rc-pop { animation: none; }
     .hoard.shake, .hoard.burst { animation: none; }
     .quest.q-celebrate { animation: none; }
     .sd-fill { transition: none; }

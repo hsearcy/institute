@@ -4,6 +4,7 @@ process.env.ANTHROPIC_API_KEY = "test-key-no-network";
 process.env.ANTHROPIC_BASE_URL = "http://127.0.0.1:9"; // refused connection → LLM fails → local fallback (no network dependency)
 process.env.TUTOR_MAX_RETRIES = "0"; // no retry backoff — fall back immediately
 process.env.TUTOR_TIMEOUT_MS = "300"; // the dead endpoint hangs (WSL2); time out fast instead
+process.env.PLAYER_TZ = "America/New_York"; // daily-record days are HIS days, never the machine's
 const { default: server } = await import("./index.ts");
 import { describe, expect, setSystemTime, test } from "bun:test";
 import { TOPICS } from "@institute/shared";
@@ -581,5 +582,199 @@ describe("new-topic demonstration", () => {
     expect(after.gems).toBe(before.gems);
     const m = await call("GET", `/mastery?profileId=${profileId}`);
     expect(m.topics.find((t: any) => t.id === "mt_M5PPDJStGm").attempts).toBe(0);
+  });
+});
+
+describe("daily correct-answer count and the all-time record", () => {
+  /** An absolute instant. Days are asserted in the PLAYER's zone (PLAYER_TZ is
+   *  pinned to America/New_York at the top of this file), so these assertions
+   *  hold whatever timezone the machine running them is set to. */
+  const at = (y: number, m: number, d: number, h = 17, min = 0) =>
+    new Date(Date.UTC(y, m - 1, d, h, min));
+
+  const solve = (profileId: string, problemId: string) => call("POST", "/tutor/attempt", {
+    profileId, problemId, skill: "add_within_20", topicId: "mt_e8CZ7E5qW7",
+    correct: true, solveMs: 5_000, difficulty: 0.4,
+  });
+
+  test("/state reports today, the record, graph history, and summary stats", async () => {
+    const profileId = "daily-state";
+    try {
+      setSystemTime(at(2029, 5, 14)); // 13:00 in New York
+      for (let i = 0; i < 3; i++) await solve(profileId, `d1-${i}`);
+      setSystemTime(at(2029, 5, 15));
+      for (let i = 0; i < 7; i++) await solve(profileId, `d2-${i}`);
+
+      const { daily } = await call("GET", `/state?profileId=${profileId}`);
+      expect(daily).toMatchObject({
+        day: "2029-05-15", timeZone: "America/New_York",
+        today: 7, record: 7, recordDay: "2029-05-15", isRecord: true,
+      });
+      expect(daily.history.at(-1)).toEqual({ day: "2029-05-15", count: 7 });
+      expect(daily.history.at(-2)).toEqual({ day: "2029-05-14", count: 3 });
+      expect(daily.history.length).toBeGreaterThanOrEqual(7);
+      expect(daily.stats).toMatchObject({
+        last7Total: 10, bestDay: { day: "2029-05-15", count: 7 },
+        daysPlayed: 2, trackedSolves: 10, currentStreakDays: 2,
+      });
+    } finally {
+      setSystemTime();
+    }
+  });
+
+  test("an evening answer belongs to his day, not to UTC's next one", async () => {
+    const profileId = "daily-evening";
+    try {
+      // 01:00 UTC on 16 May is 21:00 on the 15th in New York: still the same
+      // school night, and it must land on the 15th.
+      setSystemTime(at(2029, 5, 16, 1));
+      await solve(profileId, "bedtime");
+      const { daily } = await call("GET", `/state?profileId=${profileId}`);
+      expect(daily.day).toBe("2029-05-15");
+      expect(daily.today).toBe(1);
+    } finally {
+      setSystemTime();
+    }
+  });
+
+  test("/state discloses how far back the count is actually complete", async () => {
+    const { daily } = await call("GET", `/state?profileId=daily-tracking`);
+    // This test database started empty, so nothing was ever lost.
+    expect(daily.tracking.backfilled).toBe(false);
+    expect(daily.tracking.completeSince).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  test("one problem counts once, however many times the client reports it", async () => {
+    const profileId = "daily-dedupe";
+    try {
+      setSystemTime(at(2029, 6, 1));
+      expect((await solve(profileId, "same")).reward.daily.today).toBe(1);
+      expect((await solve(profileId, "same")).reward.daily.today).toBe(1);
+      // A wrong first try followed by a retry solve is ONE problem got right.
+      await call("POST", "/tutor/attempt", {
+        profileId, problemId: "retried", skill: "add_within_20",
+        correct: false, solveMs: 9_000, difficulty: 0.4,
+      });
+      const retry = await call("POST", "/reward/retry-solve", { profileId, problemId: "retried" });
+      expect(retry.reward.daily.today).toBe(2);
+      const again = await call("POST", "/reward/retry-solve", { profileId, problemId: "retried" });
+      expect(again.reward.daily.today).toBe(2);
+
+      expect((await call("GET", `/state?profileId=${profileId}`)).daily.today).toBe(2);
+    } finally {
+      setSystemTime();
+    }
+  });
+
+  test("a miss never counts, and reports the day's total unchanged", async () => {
+    const profileId = "daily-miss";
+    try {
+      setSystemTime(at(2029, 6, 2));
+      await solve(profileId, "got-it");
+      const wrong = await call("POST", "/tutor/attempt", {
+        profileId, problemId: "missed", skill: "add_within_20",
+        correct: false, solveMs: 12_000, difficulty: 0.4,
+      });
+      expect(wrong.reward.daily).toMatchObject({ today: 1, newRecord: false });
+      await call("POST", "/reward/miss", { profileId });
+      expect((await call("GET", `/state?profileId=${profileId}`)).daily.today).toBe(1);
+    } finally {
+      setSystemTime();
+    }
+  });
+
+  test("the first day never fires a record; beating a real one fires exactly once", async () => {
+    const profileId = "daily-record-moment";
+    try {
+      // Day one: eight right, and not a single "NEW RECORD!" — nothing to beat.
+      setSystemTime(at(2029, 7, 3));
+      for (let i = 0; i < 8; i++) {
+        const { daily } = (await solve(profileId, `first-${i}`)).reward;
+        expect(daily.newRecord).toBe(false);
+        expect(daily.eventId).toBeNull();
+      }
+
+      // Day two: the 9th answer clears it, and only that one celebrates.
+      setSystemTime(at(2029, 7, 4));
+      const fired: { count: number; eventId: string }[] = [];
+      for (let i = 0; i < 12; i++) {
+        const { daily } = (await solve(profileId, `second-${i}`)).reward;
+        if (daily.newRecord) fired.push({ count: daily.today, eventId: daily.eventId });
+      }
+      expect(fired).toEqual([{ count: 9, eventId: `${profileId}:2029-07-04:9` }]);
+
+      const { daily } = await call("GET", `/state?profileId=${profileId}`);
+      expect(daily).toMatchObject({ today: 12, record: 12, recordDay: "2029-07-04", isRecord: true });
+      expect(daily.stats.bestDay).toEqual({ day: "2029-07-04", count: 12 });
+    } finally {
+      setSystemTime();
+    }
+  });
+
+  test("the record party is durable: /state keeps offering it until acknowledged", async () => {
+    const profileId = "daily-record-durable";
+    try {
+      setSystemTime(at(2029, 9, 1));
+      for (let i = 0; i < 3; i++) await solve(profileId, `d1-${i}`);
+      setSystemTime(at(2029, 9, 2));
+      for (let i = 0; i < 4; i++) await solve(profileId, `d2-${i}`); // the 4th breaks 3
+
+      // Pretend the attempt response never reached the game. A reload asks for
+      // state, and the celebration is still waiting there.
+      const first = await call("GET", `/state?profileId=${profileId}`);
+      expect(first.daily.pendingEvents).toEqual([
+        { id: `${profileId}:2029-09-02:4`, day: "2029-09-02", count: 4, previousRecord: 3 },
+      ]);
+      // Re-reading state (another reload, a retry) offers the SAME id — which is
+      // what lets the client de-dupe it down to one visible party.
+      const second = await call("GET", `/state?profileId=${profileId}`);
+      expect(second.daily.pendingEvents).toEqual(first.daily.pendingEvents);
+
+      const eventId = first.daily.pendingEvents[0].id;
+      expect(await call("POST", "/daily-record/ack", { profileId, eventId })).toEqual({ ok: true });
+      const acked = await call("GET", `/state?profileId=${profileId}`);
+      expect(acked.daily.pendingEvents).toEqual([]);
+
+      // Acknowledging twice, or an id that never existed, is harmless.
+      expect(await call("POST", "/daily-record/ack", { profileId, eventId })).toEqual({ ok: true });
+      expect(await call("POST", "/daily-record/ack", { profileId, eventId: "nope" })).toEqual({ ok: true });
+      expect((await call("GET", `/state?profileId=${profileId}`)).daily.pendingEvents).toEqual([]);
+    } finally {
+      setSystemTime();
+    }
+  });
+
+  test("another profile's acknowledgement cannot steal his celebration", async () => {
+    const profileId = "daily-record-owner";
+    try {
+      setSystemTime(at(2029, 9, 5));
+      await solve(profileId, "seed");
+      setSystemTime(at(2029, 9, 6));
+      await solve(profileId, "beat-1");
+      await solve(profileId, "beat-2"); // 2 beats yesterday's 1
+
+      const eventId = `${profileId}:2029-09-06:2`;
+      await call("POST", "/daily-record/ack", { profileId: "someone-else", eventId });
+      const state = await call("GET", `/state?profileId=${profileId}`);
+      expect(state.daily.pendingEvents.map((e: any) => e.id)).toEqual([eventId]);
+    } finally {
+      setSystemTime();
+    }
+  });
+
+  test("today's count resets with his calendar day while the record carries over", async () => {
+    const profileId = "daily-rollover";
+    try {
+      setSystemTime(at(2029, 8, 9));
+      for (let i = 0; i < 6; i++) await solve(profileId, `mon-${i}`);
+      setSystemTime(at(2029, 8, 10, 4, 30)); // 00:30 in New York — a brand-new day
+      const state = await call("GET", `/state?profileId=${profileId}`);
+      expect(state.daily).toMatchObject({
+        day: "2029-08-10", today: 0, record: 6, recordDay: "2029-08-09", isRecord: false,
+      });
+      expect(state.daily.stats.currentStreakDays).toBe(1); // yesterday's run still stands
+    } finally {
+      setSystemTime();
+    }
   });
 });

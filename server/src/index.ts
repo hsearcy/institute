@@ -11,6 +11,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import {
   SKILLS, SKILL_LABELS, ProblemSchema, type Problem,
   StartRequestSchema, BranchesRequestSchema, TtsRequestSchema, ExplainRequestSchema, DemoRequestSchema,
+  DailyRecordAckSchema,
   TOPICS, topicById, type Topic,
 } from "@institute/shared";
 import { localProblem, type ProblemDraft, type SkillStat } from "./generate.ts";
@@ -20,6 +21,10 @@ import { topicState } from "./mastery.ts";
 import { nextReview } from "./review.ts";
 import { selectNext } from "./select.ts";
 import { rescueTopic } from "./rescue.ts";
+import {
+  PLAYER_TIME_ZONE, acknowledgeRecordEvent, dailyProgress, dailyRecordState,
+  ensureDailyRecordSchema, playerDay, recordDailySolve,
+} from "./dailyRecord.ts";
 
 const PORT = Number(process.env.PORT ?? 8787);
 const TUTOR_MODEL = process.env.TUTOR_MODEL ?? "claude-sonnet-5";
@@ -147,6 +152,12 @@ try {
   db.exec(`ALTER TABLE profile_state ADD COLUMN lifetime_gems INTEGER DEFAULT 0`);
   shouldBackfillLifetimeGems = true;
 } catch { /* column already present */ }
+// Per-player-day tally of problems he got right, and the record he is chasing.
+// Creates the tables and, on an existing database, backfills what the attempt
+// log can prove — recording how far back that count is actually complete.
+// Restart-safe: an interrupted backfill simply runs again next boot.
+ensureDailyRecordSchema(db);
+console.log(`[institute] daily record days are ${PLAYER_TIME_ZONE} calendar days`);
 // Seed the skill ladder (categories + descent order) from the shared schema.
 const seedSkill = db.query(`INSERT OR IGNORE INTO skills (skill, label, ladder) VALUES (?, ?, ?)`);
 SKILLS.forEach((s, i) => seedSkill.run(s, SKILL_LABELS[s], i));
@@ -975,6 +986,12 @@ app.post("/tutor/attempt", async (c) => {
   const shieldUsed = false;
   let allDailiesCrazyCoin = false;
   const questsCompleted: { key: string; label: string; reward: number }[] = [];
+  // Today's correct-answer count, on HIS calendar day (PLAYER_TZ). Keyed by
+  // problem id, so a re-posted attempt cannot inflate it — or re-fire the
+  // record celebration.
+  const daily = correct && typeof problemId === "string" && problemId
+    ? recordDailySolve(db, profileId, problemId, Date.now())
+    : dailyProgress(db, profileId, playerDay(Date.now()), false);
 
   if (correct) {
     state.streak += 1;
@@ -1015,6 +1032,7 @@ app.post("/tutor/attempt", async (c) => {
       questsCompleted,
       allDailiesCrazyCoin,
       durability,
+      daily,
     },
   });
 });
@@ -1048,9 +1066,15 @@ app.post("/reward/miss", async (c) => {
 // A correct answer that wasn't his FIRST try: still earns a gem and counts toward
 // the gem/solve quests, but NOT the streak (a streak needs a clean first-try win).
 app.post("/reward/retry-solve", async (c) => {
-  const { profileId } = await c.req.json();
+  const { profileId, problemId } = await c.req.json();
   const state = getProfileState(profileId);
   const day = utcDay();
+  // He got it right in the end, so it counts toward today's total — once. An
+  // older client that doesn't send problemId simply isn't counted (a missing
+  // count is recoverable; a double count would fake a record).
+  const daily = typeof problemId === "string" && problemId
+    ? recordDailySolve(db, profileId, problemId, Date.now())
+    : dailyProgress(db, profileId, playerDay(Date.now()), false);
   creditGems(state, 1);
   const { completed: questsCompleted, allDailiesCrazyCoin } = advanceQuests(profileId, day, state, {
     firstTry: false,
@@ -1063,6 +1087,7 @@ app.post("/reward/retry-solve", async (c) => {
     reward: {
       gemsEarned: 1, totalGems: state.gems, lifetimeGems: state.lifetime_gems, streak: state.streak, bestStreak: state.best_streak,
       shields: state.shields, milestone: null, shieldUsed: false, questsCompleted, allDailiesCrazyCoin, durability,
+      daily,
     },
   });
 });
@@ -1099,7 +1124,19 @@ app.get("/state", (c) => {
     equipped: s.equipped_pickaxe,
     durability: equippedDurability(profileId, s, false),
     equippedGemStyle: s.equipped_gem_style,
+    daily: dailyRecordState(db, profileId, Date.now()),
   });
+});
+
+// The client has SHOWN a record celebration. Until this lands, /state keeps
+// handing the event back — durable at-least-once delivery, so a dropped attempt
+// response or a mid-party reload still gets its moment. The client de-dupes on
+// the event id, which makes the visible result exactly-once in practice.
+// Idempotent, and a no-op for an id that never existed.
+app.post("/daily-record/ack", async (c) => {
+  const { profileId, eventId } = DailyRecordAckSchema.parse(await c.req.json());
+  acknowledgeRecordEvent(db, profileId, eventId, Date.now());
+  return c.json({ ok: true });
 });
 
 // ---- Pickaxe-skin shop endpoints -------------------------------------------

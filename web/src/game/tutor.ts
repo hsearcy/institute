@@ -52,10 +52,11 @@ export async function recordAttempt(a: {
 }
 
 /** Credit a gem for a correct answer that wasn't his first try (no streak).
+ *  `problemId` lets the server count it toward today's total exactly once.
  *  Returns the reward delta, or null on failure. Never throws. */
-export async function creditRetrySolve(): Promise<Reward | null> {
+export async function creditRetrySolve(problemId: string): Promise<Reward | null> {
   try {
-    const res = await post<{ ok: boolean; reward: Reward }>('/reward/retry-solve', { profileId: PROFILE });
+    const res = await post<{ ok: boolean; reward: Reward }>('/reward/retry-solve', { profileId: PROFILE, problemId });
     return res.reward ?? null;
   } catch {
     return null;
@@ -189,6 +190,17 @@ export async function buyShield(): Promise<
     return await post('/shop/buy-shield', { profileId: PROFILE });
   } catch {
     return null;
+  }
+}
+
+/** Tell the server a record celebration has been shown, so /state stops offering
+ *  it. Best-effort: if it never lands, the event stays pending and the client's
+ *  own shown-id memory keeps it from being celebrated twice. Never throws. */
+export async function ackRecordEvent(eventId: string): Promise<void> {
+  try {
+    await post('/daily-record/ack', { profileId: PROFILE, eventId });
+  } catch {
+    /* the event simply stays queued — dedupe is client-side anyway */
   }
 }
 

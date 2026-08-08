@@ -2,10 +2,11 @@
 // MINE (pickaxe) button, the animated gem counter, the streak flame, the daily
 // quests panel, the shield slot, and the over-the-top celebration layer. DOM (not
 // canvas) so text is crisp and the pad is touch-friendly on mobile.
-import type { Quest, CompletedQuest, ShopState } from '@institute/shared';
+import type { Quest, CompletedQuest, DailyProgress, DailyRecord, ShopState } from '@institute/shared';
 import type { Mastery, MasteryTopic } from './tutor';
 import { PICKAXE_SKINS, type SkinKey, isSkinKey } from './skins';
 import { GEM_STYLES, type GemStyleKey, isGemStyleKey } from './gemStyles';
+import { chartBars, chipLabel, encouragement, focusTrapIndex, statTiles, trackingNote } from './dailyStats';
 import { PROFILE } from './config';
 
 type Handlers = {
@@ -28,6 +29,7 @@ type Handlers = {
   onRedeemCrazyCoin: () => void;
   onHoardFull: () => void;
   onOpenParent: () => void;
+  onOpenStats: () => void;
 };
 
 const GEM_COLORS = ['#ff6b8a', '#ffa94d', '#ffd43b', '#69db7c', '#3bc9db', '#4dabf7', '#748ffc', '#b197fc', '#f783ac', '#ff8787'];
@@ -42,6 +44,14 @@ const PAD_THEMES: Record<string, { colors: string[]; accent: string; blurb: stri
   pad_rainbow: { colors: ['#ff6b6b', '#ff922b', '#ffd43b', '#94d82d', '#38d9a9', '#3bc9db', '#4dabf7', '#7950f2', '#da77f2', '#f06595'], accent: '#f06595', blurb: 'Every gem a different color' },
 };
 const SHIELD_COST = 40;
+
+/** True when the player's system asks for less animation. Read live (not cached)
+ *  so flipping the OS setting takes effect without a reload. */
+export function prefersReducedMotion(): boolean {
+  return typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 // Hoard meter: pips needed to fill the bar, and the bonus shown when it overflows
 // (the server credits the same amount via /reward/hoard-bonus → HOARD_BONUS).
 const HOARD_CAP = 15;
@@ -81,6 +91,17 @@ export class Hud {
   private duraFill!: HTMLDivElement;
   private parentDash!: HTMLDivElement;
   private parentBody!: HTMLDivElement;
+  private recordChip!: HTMLButtonElement;
+  private recordTodayEl!: HTMLElement;
+  private recordBestEl!: HTMLElement;
+  private recordBestLabel!: HTMLElement;
+  private statsDash!: HTMLDivElement;
+  private statsBody!: HTMLDivElement;
+  private statsSub!: HTMLElement;
+  private statsClose!: HTMLButtonElement;
+  private statsOpener: HTMLElement | null = null;  // focus goes back here on close
+  private inerted: { el: HTMLElement; inert: boolean; ariaHidden: string | null }[] = [];
+  private lastDaily: DailyRecord | null = null;
   private hoardColors: number[] = [];     // persisted pip colors so the bar survives reloads
   private hoardOverflowing = false;       // guard so a full bar fires the bonus once
   private readonly hoardKey = 'institute:hoard:' + PROFILE;
@@ -96,7 +117,17 @@ export class Hud {
     this.root.className = 'hud';
     this.root.innerHTML = `
       <div class="hud-top">
-        <div class="hoard" id="hoard" aria-label="Your gem collection"></div>
+        <div class="hud-top-left">
+          <div class="hoard" id="hoard" aria-label="Your gem collection"></div>
+          <button class="record-chip" id="record-chip" type="button" aria-haspopup="dialog">
+            <span class="rc-star" aria-hidden="true">⭐</span>
+            <span class="rc-nums">
+              <span class="rc-today"><b id="record-today">0</b> right today</span>
+              <span class="rc-best"><span id="record-best-label">best day</span> <b id="record-best">0</b></span>
+            </span>
+            <span class="rc-go" aria-hidden="true">📊</span>
+          </button>
+        </div>
         <div class="status">
           <div class="collection" id="collection-chip" title="Spendable gems and lifetime gems earned">
             <span class="collection-balance">💎 <span id="collection-count">0</span></span>
@@ -159,6 +190,18 @@ export class Hud {
             <button class="pd-close" id="pd-close" aria-label="Close">✕</button>
           </div>
           <div class="pd-body" id="pd-body"></div>
+        </div>
+      </div>
+      <div class="stats-dash" id="stats-dash" role="dialog" aria-modal="true" aria-labelledby="sd-title">
+        <div class="sd-frame">
+          <div class="sd-head">
+            <div class="sd-titles">
+              <div class="sd-title" id="sd-title">⭐ Your Math Records</div>
+              <div class="sd-sub" id="sd-sub">How many you get right each day</div>
+            </div>
+            <button class="sd-close" id="sd-close" type="button" aria-label="Close records">✕</button>
+          </div>
+          <div class="sd-body" id="sd-body"></div>
         </div>
       </div>
     `;
@@ -234,11 +277,229 @@ export class Hud {
     this.parentDash.addEventListener('click', (e) => {
       if (e.target === this.parentDash) this.closeParentDash();
     });
+    // The record chip: his own scoreboard, and the door to the stats panel. Same
+    // close contract as the parent overlay — ✕, Escape, or the dimmed backdrop.
+    this.recordChip = this.root.querySelector('#record-chip')!;
+    this.recordTodayEl = this.root.querySelector('#record-today')!;
+    this.recordBestEl = this.root.querySelector('#record-best')!;
+    this.recordBestLabel = this.root.querySelector('#record-best-label')!;
+    this.statsDash = this.root.querySelector('#stats-dash')!;
+    this.statsBody = this.root.querySelector('#sd-body')!;
+    this.statsSub = this.root.querySelector('#sd-sub')!;
+    this.statsClose = this.root.querySelector('#sd-close')!;
+    this.recordChip.setAttribute('aria-label', chipLabel(null));
+    this.recordChip.addEventListener('click', () => h.onOpenStats());
+    this.statsClose.addEventListener('click', () => this.closeStats());
+    this.statsDash.addEventListener('click', (e) => {
+      if (e.target === this.statsDash) this.closeStats();
+    });
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.parentDash.classList.contains('open')) this.closeParentDash();
+      const statsOpen = this.statsDash.classList.contains('open');
+      if (e.key === 'Escape') {
+        if (statsOpen) this.closeStats();
+        else if (this.parentDash.classList.contains('open')) this.closeParentDash();
+        return;
+      }
+      // Keep Tab inside the dialog: behind it is a game he can't see or use, and
+      // tabbing into it silently is how a modal loses a keyboard user. `inert`
+      // already does this where it's supported; this covers the rest, and the
+      // case where a click on the panel dropped focus back to <body>.
+      if (e.key !== 'Tab' || !statsOpen) return;
+      const focusables = this.statsFocusables();
+      const next = focusTrapIndex(
+        focusables.length, focusables.indexOf(document.activeElement as HTMLElement), e.shiftKey,
+      );
+      if (next < 0) return;
+      e.preventDefault();
+      focusables[next].focus();
     });
 
     this.flameEl.style.display = 'none'; // hidden until there's a streak
+  }
+
+  // ---- daily correct-answer record ------------------------------------------
+  /** The chip itself: today's count vs the all-time daily record. */
+  private renderRecordChip(today: number, record: number): void {
+    const holding = today > 0 && today >= record;
+    this.recordTodayEl.textContent = String(today);
+    this.recordBestEl.textContent = String(record);
+    // Never colour-only: on a record day the chip SAYS so.
+    this.recordBestLabel.textContent = holding ? 'best day EVER!' : 'best day';
+    this.recordChip.classList.toggle('holding', holding);
+    this.recordChip.setAttribute('aria-label', chipLabel({ today, record }));
+  }
+
+  /** One answer's delta (no history rides along) — moves the chip only. */
+  setDailyProgress(p: DailyProgress): void {
+    this.renderRecordChip(p.today, p.record);
+    // Keep the cached panel data roughly live until the next /state sync.
+    if (this.lastDaily && this.lastDaily.day === p.day) {
+      this.lastDaily = {
+        ...this.lastDaily, today: p.today, record: p.record,
+        isRecord: p.today > 0 && p.today >= p.record,
+      };
+    }
+  }
+
+  /** The full picture from /state. Null (server unreachable) leaves the last
+   *  known numbers on screen rather than blanking his score. */
+  setDailyRecord(daily: DailyRecord | null): void {
+    if (!daily) return;
+    this.lastDaily = daily;
+    this.renderRecordChip(daily.today, daily.record);
+    // Keep an open panel live while he keeps answering.
+    if (this.statsDash.classList.contains('open')) this.setStats(daily);
+  }
+
+  /** Everything inside the dialog a keyboard can reach, in document order. */
+  private statsFocusables(): HTMLElement[] {
+    const selector = 'button:not([disabled]), a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    return [...this.statsDash.querySelectorAll<HTMLElement>(selector)];
+  }
+
+  /** Hide the rest of the page from assistive tech and the tab order while the
+   *  dialog owns the screen. `inert` is set as an attribute so it works whatever
+   *  the TS DOM lib knows about; aria-hidden covers browsers without inert. */
+  private setBackgroundInert(on: boolean): void {
+    if (on) {
+      const targets = [
+        ...Array.from(document.body.children).filter((el) => el !== this.root),
+        ...Array.from(this.root.children).filter((el) => el !== this.statsDash),
+      ] as HTMLElement[];
+      for (const el of targets) {
+        this.inerted.push({
+          el,
+          inert: el.hasAttribute('inert'),
+          ariaHidden: el.getAttribute('aria-hidden'),
+        });
+        el.toggleAttribute('inert', true);
+        el.setAttribute('aria-hidden', 'true');
+      }
+    } else {
+      for (const { el, inert, ariaHidden } of this.inerted) {
+        el.toggleAttribute('inert', inert);
+        if (ariaHidden == null) el.removeAttribute('aria-hidden');
+        else el.setAttribute('aria-hidden', ariaHidden);
+      }
+      this.inerted = [];
+    }
+  }
+
+  /** Open the stats panel in its loading state (Game then fetches fresh numbers).
+   *  Renders the last known figures immediately so it is never blank. */
+  openStats(): void {
+    if (this.statsDash.classList.contains('open')) return;
+    this.questsPanel.classList.remove('open');
+    this.shopPanel.classList.remove('open');
+    this.parentDash.classList.remove('open');
+    const opener = document.activeElement;
+    this.statsOpener = opener instanceof HTMLElement && opener !== document.body ? opener : this.recordChip;
+    this.statsDash.classList.add('open');
+    if (this.lastDaily) this.setStats(this.lastDaily);
+    else this.statsBody.innerHTML = '<div class="sd-note">Adding up your best days…</div>';
+    this.setBackgroundInert(true);
+    // Focus the way out first: it is the one control here, and it tells a screen
+    // reader immediately that a dialog opened and how to leave it.
+    this.statsClose.focus();
+  }
+  closeStats(): void {
+    if (!this.statsDash.classList.contains('open')) return;
+    this.statsDash.classList.remove('open');
+    this.setBackgroundInert(false); // must come first, or the target can't take focus
+    const back = this.statsOpener && this.statsOpener.isConnected ? this.statsOpener : this.recordChip;
+    this.statsOpener = null;
+    back.focus();
+  }
+
+  /** Render the record panel: the encouraging line, the day-by-day graph, and the
+   *  summary tiles. Null = no fresh numbers: keep whatever is already on screen,
+   *  and only show a notice when there is nothing to show. */
+  setStats(daily: DailyRecord | null): void {
+    if (!daily && this.lastDaily) return;
+    this.statsBody.innerHTML = '';
+    if (!daily) {
+      const note = document.createElement('div');
+      note.className = 'sd-note';
+      note.textContent = 'Can’t reach the tutor right now — try again in a moment.';
+      this.statsBody.appendChild(note);
+      return;
+    }
+    this.lastDaily = daily;
+    this.statsSub.textContent = encouragement(daily);
+
+    const bars = chartBars(daily.history, daily.day, daily.recordDay);
+    const chartSection = document.createElement('section');
+    chartSection.className = 'sd-section';
+    const chartHead = document.createElement('div');
+    chartHead.className = 'sd-section-head';
+    chartHead.textContent = `Problems right each day (last ${bars.length} days)`;
+    const chart = document.createElement('div');
+    chart.className = 'sd-chart';
+    chart.setAttribute('role', 'list');
+    chart.setAttribute('aria-label', `Problems right on each of the last ${bars.length} days`);
+    for (const bar of bars) {
+      const col = document.createElement('div');
+      col.className = 'sd-col' + (bar.isToday ? ' today' : '') + (bar.isRecord ? ' best' : '');
+      col.setAttribute('role', 'listitem');
+      col.setAttribute('aria-label', bar.label);
+      col.title = bar.label;
+      const count = document.createElement('span');
+      count.className = 'sd-count';
+      count.textContent = bar.count > 0 ? String(bar.count) : '·';
+      const track = document.createElement('div');
+      track.className = 'sd-track';
+      const fill = document.createElement('div');
+      fill.className = 'sd-fill';
+      fill.style.height = bar.heightPct + '%';
+      track.appendChild(fill);
+      const tick = document.createElement('span');
+      tick.className = 'sd-tick';
+      tick.textContent = bar.tick;
+      col.append(count, track, tick);
+      if (bar.isToday || bar.isRecord) {
+        const tag = document.createElement('span');
+        tag.className = 'sd-tag';
+        tag.textContent = bar.isRecord ? '★ best' : 'today';
+        col.appendChild(tag);
+      }
+      chart.appendChild(col);
+    }
+    chartSection.append(chartHead, chart);
+    this.statsBody.appendChild(chartSection);
+
+    const tilesSection = document.createElement('section');
+    tilesSection.className = 'sd-section';
+    const tilesHead = document.createElement('div');
+    tilesHead.className = 'sd-section-head';
+    tilesHead.textContent = 'Your numbers';
+    const grid = document.createElement('div');
+    grid.className = 'sd-tiles';
+    for (const t of statTiles(daily)) {
+      const tile = document.createElement('div');
+      tile.className = 'sd-tile sd-tile-' + t.key;
+      const value = document.createElement('div');
+      value.className = 'sd-tile-value';
+      value.textContent = t.value;
+      const label = document.createElement('div');
+      label.className = 'sd-tile-label';
+      label.textContent = t.label;
+      const hint = document.createElement('div');
+      hint.className = 'sd-tile-hint';
+      hint.textContent = t.hint;
+      tile.append(value, label, hint);
+      grid.appendChild(tile);
+    }
+    tilesSection.append(tilesHead, grid);
+    this.statsBody.appendChild(tilesSection);
+
+    // Say plainly what the numbers can and cannot know.
+    const note = trackingNote(daily.tracking);
+    if (note) {
+      const fine = document.createElement('p');
+      fine.className = 'sd-fineprint';
+      fine.textContent = note;
+      this.statsBody.appendChild(fine);
+    }
   }
 
   private explainTimer: ReturnType<typeof setTimeout> | null = null;
@@ -741,6 +1002,7 @@ export class Hud {
   openParentDash(): void {
     this.questsPanel.classList.remove('open');
     this.shopPanel.classList.remove('open');
+    this.closeStats(); // never just drop the class: that would strand the inert background
     this.parentBody.innerHTML = '<div class="pd-note">Loading his progress…</div>';
     this.parentDash.classList.add('open');
   }
@@ -895,6 +1157,27 @@ export class Hud {
     this.confettiBurst(70, ['#ffd23b', '#ffb01f', '#fff3b0', '#ffe27a', '#ffffff']);
     this.highlightQuest(q.key);
   }
+  /** He just beat his all-time daily record. Built from the same pieces as the
+   *  quest/Crazy Coin celebrations (flash → stacked banner → confetti) so it
+   *  belongs to the family, but gold-and-star themed and a notch bigger — it is
+   *  the rarest thing he can do. The chip pulses so he sees WHERE the number is.
+   *
+   *  If he has asked his system for reduced motion, the flash, the confetti and
+   *  the pulse are skipped outright (not merely hidden by CSS — nothing is even
+   *  built), and the banner stays put as plain, readable congratulation. */
+  celebrateDailyRecord(count: number): void {
+    const calm = prefersReducedMotion();
+    if (!calm) {
+      this.screenFlash('#ffd23b');
+      this.confettiBurst(110, ['#ffd23b', '#ffb01f', '#fff3b0', '#ffffff', '#7af0ff', '#ff7eb6']);
+      this.recordChip.classList.remove('celebrate');
+      void this.recordChip.offsetWidth; // restart the animation
+      this.recordChip.classList.add('celebrate');
+    }
+    // Matches the .banner.record animation length so it never vanishes mid-bounce.
+    this.banner('⭐ NEW RECORD! ⭐', 'record', `${count} right today — your best day EVER!`, '#ffd23b', 5500);
+  }
+
   /** A shield absorbed a miss — celebrate that the streak survived. */
   celebrateShieldSave(): void {
     this.screenFlash('#7fc7ff');
@@ -1001,6 +1284,38 @@ function injectStyles(): void {
   .hud { position: fixed; inset: 0; pointer-events: none; display: flex; flex-direction: column;
     font-family: 'Baloo 2', system-ui, sans-serif; -webkit-user-select: none; user-select: none; }
   .hud-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 12px 14px; }
+  .hud-top-left { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; }
+
+  /* ---- Daily record chip: today vs his all-time best, and the way in to the
+     stats panel. Sits under the hoard bar, well clear of the problem text. ---- */
+  .record-chip { pointer-events: auto; cursor: pointer; border: none; font-family: inherit;
+    display: flex; align-items: center; gap: 9px; min-height: 44px; padding: 6px 12px 6px 11px;
+    border-radius: 14px; text-align: left; color: #ffe9a8;
+    background: rgba(20,16,40,0.55); backdrop-filter: blur(6px);
+    box-shadow: inset 0 0 0 1px rgba(255,233,168,0.28), 0 4px 14px rgba(0,0,0,0.35);
+    transition: transform .1s ease, box-shadow .2s ease, background .2s ease; }
+  .record-chip:hover, .record-chip:focus-visible { background: rgba(34,26,62,0.72);
+    box-shadow: inset 0 0 0 1px rgba(255,233,168,0.55), 0 6px 18px rgba(0,0,0,0.45); }
+  .record-chip:focus-visible { outline: 3px solid #ffe9a8; outline-offset: 2px; }
+  .record-chip:active { transform: translateY(2px); }
+  .record-chip .rc-star { font-size: 19px; line-height: 1;
+    filter: drop-shadow(0 0 6px rgba(255,210,59,0.7)); }
+  .record-chip .rc-nums { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .record-chip .rc-today { font-weight: 900; font-size: 15px; line-height: 1.1; color: #fff; }
+  .record-chip .rc-today b { font-size: 19px; font-variant-numeric: tabular-nums; color: #ffe9a8; }
+  .record-chip .rc-best { font-weight: 700; font-size: 11.5px; line-height: 1.1; color: #ffd166;
+    white-space: nowrap; }
+  .record-chip .rc-best b { font-variant-numeric: tabular-nums; }
+  .record-chip .rc-go { font-size: 15px; opacity: .8; }
+  /* Holding the record: gold rim + the words say so (never colour alone). */
+  .record-chip.holding { background: linear-gradient(160deg, rgba(255,210,59,0.22), rgba(255,150,30,0.12));
+    box-shadow: inset 0 0 0 1.5px rgba(255,210,59,0.75), 0 6px 20px rgba(255,170,30,0.25); }
+  .record-chip.holding .rc-best { color: #fff3b0; }
+  .record-chip.celebrate { animation: recordChipPop 1.4s cubic-bezier(.3,1.5,.5,1); }
+  @keyframes recordChipPop {
+    0%{ transform: scale(1) } 20%{ transform: scale(1.28);
+      box-shadow: inset 0 0 0 2px #fff3b0, 0 0 34px rgba(255,210,59,0.95) }
+    55%{ transform: scale(1.06) } 100%{ transform: scale(1) } }
   .status { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; flex: none; }
   .collection { pointer-events: auto; display: flex; flex-direction: column; align-items: center;
     background: rgba(20,16,40,0.55); color: #ffe9a8;
@@ -1324,6 +1639,13 @@ function injectStyles(): void {
   .banner.unlock .b-sub { color: var(--accent,#ffe9a8); font-size: clamp(22px,5vw,38px);
     text-shadow: 0 0 14px var(--accent,#ffd23b), 0 2px 10px rgba(0,0,0,0.8); }
   .banner.unlock { animation: bannerPop 5s cubic-bezier(.2,1.4,.4,1) forwards; }
+  /* New daily record — the quest celebration's big brother, in record gold. */
+  .banner.record .b-title { font-size: clamp(38px,10vw,88px); color: #fff;
+    text-shadow: 0 0 20px var(--accent,#ffd23b), 0 0 46px var(--accent,#ffd23b),
+      0 4px 0 rgba(150,80,0,0.85), 0 8px 24px rgba(0,0,0,0.65); }
+  .banner.record .b-sub { color: var(--accent,#ffe9a8); font-size: clamp(19px,4.4vw,32px);
+    text-shadow: 0 0 14px rgba(255,210,59,0.7), 0 2px 10px rgba(0,0,0,0.8); }
+  .banner.record { animation: bannerPop 5.4s cubic-bezier(.2,1.4,.4,1) forwards; }
   .banner.equipped-msg .b-title { font-size: clamp(26px,6vw,52px); color: #eafff1;
     text-shadow: 0 0 16px var(--accent,#9bf0bd), 0 4px 0 rgba(10,60,30,0.7), 0 8px 22px rgba(0,0,0,0.6); }
   .banner.equipped-msg .b-sub { color: var(--accent,#bff0d4); }
@@ -1447,7 +1769,77 @@ function injectStyles(): void {
   .pd-topic.locked .pd-node { font-size: 12px; background: rgba(255,255,255,0.06); }
   .pd-topic.locked .pd-kid { color: #cfc6e8; }
 
+  /* ---- Daily record stats panel ---- */
+  .stats-dash { position: fixed; inset: 0; z-index: 60; pointer-events: none;
+    background: rgba(10,7,22,0.78); backdrop-filter: blur(10px);
+    display: flex; align-items: stretch; justify-content: center;
+    opacity: 0; visibility: hidden; transition: opacity .22s ease, visibility .22s; }
+  .stats-dash.open { pointer-events: auto; opacity: 1; visibility: visible; }
+  .sd-frame { width: min(720px, 94vw); margin: clamp(10px, 3vh, 28px) auto;
+    display: flex; flex-direction: column; min-height: 0;
+    background: rgba(18,14,34,0.94); border-radius: 20px; overflow: hidden;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,210,59,0.24); }
+  .sd-head { flex: none; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    padding: 16px 18px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .sd-titles { min-width: 0; }
+  .sd-title { color: #ffe9a8; font-weight: 900; font-size: clamp(20px, 4.4vw, 27px); letter-spacing: .3px; }
+  .sd-sub { color: #ffd166; font-weight: 700; font-size: clamp(13px, 2.8vw, 15px); margin-top: 3px; line-height: 1.3; }
+  .sd-close { flex: none; pointer-events: auto; cursor: pointer; border: none; width: 44px; height: 44px;
+    border-radius: 50%; font-size: 17px; color: #cfc6e8; background: rgba(255,255,255,0.08);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); transition: background .15s ease, color .15s ease; }
+  .sd-close:hover { background: rgba(255,255,255,0.16); color: #fff; }
+  .sd-close:focus-visible { outline: 3px solid #ffe9a8; outline-offset: 2px; }
+  .sd-body { overflow-y: auto; padding: 16px 18px 24px; }
+  .sd-note { color: #cfc6e8; font-weight: 700; font-size: 15px; text-align: center; padding: 34px 12px; }
+  .sd-section { margin-bottom: 20px; }
+  .sd-section:last-child { margin-bottom: 0; }
+  .sd-section-head { color: #ffd9a0; font-weight: 900; font-size: 14.5px; letter-spacing: .3px;
+    margin-bottom: 10px; }
+
+  /* The graph: one column per day. Height carries the shape, but every column
+     also prints its count, its date, and (for today / the best day) a word — so
+     it reads without relying on colour. */
+  .sd-chart { display: flex; align-items: flex-end; justify-content: space-between; gap: clamp(2px, 1vw, 7px);
+    padding: 8px 8px 6px; border-radius: 14px; background: rgba(255,255,255,0.04);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06); }
+  .sd-col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .sd-count { font-weight: 800; font-size: clamp(9px, 2.2vw, 12px); color: #cfc6e8;
+    font-variant-numeric: tabular-nums; line-height: 1; }
+  .sd-track { width: 100%; height: clamp(80px, 20vh, 140px); display: flex; align-items: flex-end;
+    border-radius: 5px; background: rgba(255,255,255,0.05); }
+  .sd-fill { width: 100%; border-radius: 5px;
+    background: linear-gradient(180deg,#8be9ff,#4dabf7); box-shadow: 0 0 8px rgba(77,171,247,0.4);
+    transition: height .45s cubic-bezier(.3,1,.5,1); }
+  .sd-tick { font-weight: 700; font-size: clamp(8px, 2vw, 11px); color: #9d94bd;
+    font-variant-numeric: tabular-nums; line-height: 1; }
+  .sd-tag { font-weight: 900; font-size: clamp(7px, 1.8vw, 9.5px); letter-spacing: .2px; line-height: 1;
+    padding: 2px 4px; border-radius: 5px; white-space: nowrap;
+    background: rgba(255,255,255,0.12); color: #e6dfff; }
+  .sd-col.today .sd-fill { background: linear-gradient(180deg,#9bf0bd,#2ee6a0); box-shadow: 0 0 10px rgba(46,230,160,0.55); }
+  .sd-col.today .sd-count, .sd-col.today .sd-tick { color: #9bf0bd; }
+  .sd-col.today .sd-tag { background: rgba(46,230,160,0.25); color: #d6ffe9; }
+  .sd-col.best .sd-fill { background: linear-gradient(180deg,#fff3b0,#ffb01f); box-shadow: 0 0 12px rgba(255,190,50,0.6); }
+  .sd-col.best .sd-count, .sd-col.best .sd-tick { color: #ffd23b; }
+  .sd-col.best .sd-tag { background: rgba(255,210,59,0.28); color: #fff3b0; }
+
+  .sd-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 9px; }
+  .sd-tile { padding: 10px 12px 11px; border-radius: 13px; background: rgba(255,255,255,0.05);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.07); }
+  .sd-tile-value { color: #fff; font-weight: 900; font-size: 26px; line-height: 1;
+    font-variant-numeric: tabular-nums; }
+  .sd-tile-label { color: #ffe9a8; font-weight: 800; font-size: 12.5px; margin-top: 4px; }
+  .sd-tile-hint { color: #b9b0d4; font-weight: 600; font-size: 11.5px; line-height: 1.3; margin-top: 2px; }
+  .sd-tile-record .sd-tile-value { color: #ffd23b; }
+  .sd-tile-today .sd-tile-value { color: #9bf0bd; }
+  .sd-fineprint { margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08);
+    color: #9d94bd; font-weight: 600; font-size: 11.5px; line-height: 1.45; }
+
   @media (max-width: 560px) {
+    .record-chip { padding: 5px 10px; gap: 7px; }
+    .record-chip .rc-today { font-size: 13.5px; }
+    .record-chip .rc-today b { font-size: 17px; }
+    .sd-frame { width: 100vw; margin: 0; border-radius: 0; }
+    .sd-body { padding: 12px 12px 20px; }
     .status { gap: 6px; }
     .collection { font-size: 19px; padding: 6px 12px 5px; min-width: 72px; }
     .buy-shield { font-size: 12px; padding: 6px 9px; }
@@ -1458,8 +1850,21 @@ function injectStyles(): void {
     .pd-frame { width: 100vw; margin: 0; border-radius: 0; }
     .pd-body { padding: 12px 12px 20px; }
   }
+  /* He asked his device for less motion — so no flashing, no falling confetti,
+     no bouncing headlines. The celebrations still HAPPEN; they just hold still
+     and stay readable. !important because the per-kind banner rules
+     (.banner.milestone, .banner.record, …) are more specific than this one, and
+     an accessibility preference has to win. */
   @media (prefers-reduced-motion: reduce) {
     .flame .flame-emoji, .flame.mega { animation: none; }
+    .screen-flash { display: none; }
+    .confetti { display: none; }
+    .banner { animation: none !important; opacity: 1; transform: none; }
+    .record-chip.celebrate { animation: none; }
+    .hoard.shake, .hoard.burst { animation: none; }
+    .quest.q-celebrate { animation: none; }
+    .sd-fill { transition: none; }
+    .stats-dash, .parent-dash { transition: none; }
   }
   `;
   document.head.appendChild(s);

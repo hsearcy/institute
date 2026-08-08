@@ -768,7 +768,7 @@ function selectFor(profileId: string, currentTopicId: string | null) {
   return selectNext({
     topics: TOPICS, now: Date.now(), currentTopicId,
     mastery: rows.map((r) => ({
-      topicId: r.topic_id, state: r.state, lastDifficulty: r.last_difficulty,
+      topicId: r.topic_id, state: r.state, lastDifficulty: r.last_difficulty, attempts: r.attempts,
       reviewDueAt: r.review_due_at, reviewIntervalDays: r.review_interval_days,
     })),
     recentTopicIds: recent.map((r) => r.topic_id ?? "").filter(Boolean),
@@ -822,7 +822,7 @@ function wrongBranchPlan(
   if (!lastMissedHere) return fallback;
   const rows = topicMasteryRows(profileId);
   const rescue = rescueTopic(curTopic, rows.map((r) => ({
-    topicId: r.topic_id, state: r.state, lastDifficulty: r.last_difficulty,
+    topicId: r.topic_id, state: r.state, lastDifficulty: r.last_difficulty, attempts: r.attempts,
     reviewDueAt: r.review_due_at, reviewIntervalDays: r.review_interval_days,
   })), TOPICS);
   if (!rescue) return fallback;

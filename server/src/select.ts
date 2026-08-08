@@ -8,7 +8,7 @@ import type { Topic } from "@institute/shared";
 import { frontierTopics } from "./graph.ts";
 
 export type MasteryLite = {
-  topicId: string; state: string; lastDifficulty: number;
+  topicId: string; state: string; lastDifficulty: number; attempts: number;
   reviewDueAt: number | null; reviewIntervalDays: number | null;
 };
 export type SelectInput = {
@@ -69,16 +69,22 @@ export function selectNext(s: SelectInput): Selection {
   const isStarted = (id: string) => byId.has(id);
   const newTopics = pool.filter((t) => !isStarted(t.id));
   const inProgress = pool.filter((t) => isStarted(t.id));
-  // Has he been circling a tiny set of topics? With only a couple of unfinished
-  // topics he'd ping-pong between them forever (each looks "due to return to" the
-  // instant the other is current). When the recent history shows ≤2 distinct
-  // topics, break the rut by introducing a NEW one — gentle now that new topics
-  // arrive with a worked demo, and it's what keeps the curriculum moving.
-  const recentDistinct = new Set(s.recentTopicIds.filter(Boolean)).size;
+  // Keep meeting NEW topics on a steady cadence — even while several older topics
+  // are still unfinished. The signal is whether he's met a NEW topic RECENTLY: a
+  // "freshly-met" topic is one he's only just started (few attempts). If none of
+  // his recent problems were on a freshly-met topic, it's time to discover one;
+  // otherwise let him consolidate the new one alongside his in-progress work.
+  // (Earlier this keyed off "≤2 distinct recent topics", which never fired once
+  // he had 3+ long-worked topics — trapping him on his started set.)
+  const FRESHLY_MET = 12; // ~3 short runs before a new topic stops being "new"
+  const recentlyMetNew = s.recentTopicIds.some((id) => {
+    const m = byId.get(id);
+    return m !== undefined && m.attempts > 0 && m.attempts <= FRESHLY_MET;
+  });
   const ranked =
-    recentDistinct <= 2 && newTopics.length ? newTopics :   // stuck → meet something new
-    inProgress.length ? inProgress :                        // else finish started work
-    pool;                                                   // early game: only new topics exist
+    !recentlyMetNew && newTopics.length ? newTopics :  // no new topic lately → discover one
+    inProgress.length ? inProgress :                   // else finish started work
+    pool;                                              // early game: only new topics exist
   if (ranked.length) {
     const pick = [...ranked].sort((a, b) =>
       Number(b.domain !== currentDomain) - Number(a.domain !== currentDomain) || // non-interference

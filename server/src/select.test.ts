@@ -12,8 +12,8 @@ const t = (id: string, prereqs: string[], domain = "d1", age = 5): Topic => ({
 // a,b roots in different domains; c behind a; d root in a third domain
 const G = [t("a", [], "add"), t("b", [], "count"), t("c", ["a"], "add"), t("d", [], "place")];
 
-const m = (topicId: string, state: string) =>
-  ({ topicId, state, lastDifficulty: 0.5, reviewDueAt: null, reviewIntervalDays: null });
+const m = (topicId: string, state: string, attempts = 20) =>
+  ({ topicId, state, lastDifficulty: 0.5, attempts, reviewDueAt: null, reviewIntervalDays: null });
 
 const base: SelectInput = {
   topics: G, now: NOW, currentTopicId: null,
@@ -36,14 +36,24 @@ describe("rut-breaking rotation", () => {
     expect(r.topic.id).toBe("fresh"); // the new topic, not the same two forever
   });
 
-  test("with real variety, prefers finishing started work over piling on new topics", () => {
-    // Recent history already spans 3+ topics, so there's no rut to break — return
-    // to the in-progress topic rather than opening yet another.
+  test("just after meeting a NEW topic, consolidate it instead of piling on another", () => {
+    // A freshly-met topic (few attempts) is in recent history → let him work his
+    // in-progress topics rather than opening yet another new one.
     const G = [t("cur", [], "d-cur"), t("started", [], "pool"), t("fresh", [], "pool")];
     const r = selectNext({ ...base, topics: G, currentTopicId: "cur",
-      recentTopicIds: ["cur", "cur", "cur", "cur", "x1", "x2", "x3"],
-      mastery: [m("started", "practicing")] });
-    expect(r.topic.id).toBe("started"); // in-progress work, not novelty
+      recentTopicIds: ["cur", "cur", "cur", "cur", "started", "started"],
+      mastery: [m("started", "practicing", 4)] }); // 4 attempts = freshly met
+    expect(r.topic.id).toBe("started"); // consolidate the new one, don't pile on
+  });
+
+  test("breaks out even with several long-worked topics (the real ares bug)", () => {
+    // He's cycled 3+ long-worked topics — none freshly met — so a NEW one appears
+    // instead of trapping him on his started set.
+    const G = [t("cur", [], "d-cur"), t("old-a", [], "pool"), t("old-b", [], "pool"), t("new1", [], "pool")];
+    const r = selectNext({ ...base, topics: G, currentTopicId: "cur",
+      recentTopicIds: ["cur", "cur", "cur", "cur", "old-a", "old-a", "old-b", "old-b"],
+      mastery: [m("cur", "practicing", 40), m("old-a", "practicing", 42), m("old-b", "practicing", 73)] });
+    expect(r.topic.id).toBe("new1");
   });
 
   test("brand-new topics get picked when nothing is in progress", () => {

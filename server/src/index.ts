@@ -21,6 +21,7 @@ import { topicState } from "./mastery.ts";
 import { nextReview } from "./review.ts";
 import { selectNext } from "./select.ts";
 import { rescueTopic } from "./rescue.ts";
+import { ttsText, speechSimilarity, transcribe, GARBLE_FLOOR } from "./tts.ts";
 import {
   PLAYER_TIME_ZONE, acknowledgeRecordEvent, dailyProgress, dailyRecordState,
   ensureDailyRecordSchema, playerDay, recordDailySolve,
@@ -1451,6 +1452,19 @@ const ttsCache = new Map<string, ArrayBuffer>();
 const TTS_CACHE_MAX_LEN = 90;   // only cache short, repeated lines
 const TTS_CACHE_ENTRIES = 150;  // ~30-60KB each → a few MB tops
 
+/** Listen back to a cached take and drop it if the voice did not say the line.
+ *  Runs after the audio has already gone out, so it costs the child no wait: a
+ *  garbled take plays once, then the cache entry goes and the next miss gets a
+ *  fresh take. Without this, one bad take repeats for the life of the server. */
+async function keepOnlyIfIntelligible(text: string, mp3: ArrayBuffer): Promise<void> {
+  const heard = await transcribe(mp3.slice(0));
+  if (heard === null) return; // no transcriber — keep the take, as before
+  const score = speechSimilarity(text, heard);
+  if (score >= GARBLE_FLOOR) return;
+  if (ttsCache.get(text) === mp3) ttsCache.delete(text);
+  console.warn(`[tts] garbled take dropped (${score.toFixed(2)}): sent "${text}" / heard "${heard}"`);
+}
+
 // ---- New-topic demonstration ------------------------------------------------
 
 const DEMO_SYSTEM = `You are the warm tutor voice inside a gem-mine math game. A 6-year-old American boy has just discovered a BRAND-NEW kind of problem he has never seen before. He is only WATCHING right now — nothing is being tested. Show him how this kind works, start to finish, using the example given. Rules:
@@ -1605,7 +1619,7 @@ app.post("/tts", async (c) => {
       // especially) can flip it into another language — pin English and swap
       // dashes for commas before synthesis.
       body: JSON.stringify({
-        text: text.replace(/\s*[—–]\s*/g, ", "),
+        text: ttsText(text),
         model_id: "eleven_turbo_v2_5",
         language_code: "en",
         voice_settings: { stability: 0.4, similarity_boost: 0.8, style: 0.35, use_speaker_boost: true, speed: 0.82 },
@@ -1617,6 +1631,7 @@ app.post("/tts", async (c) => {
     const buf = await r.arrayBuffer();
     ttsCache.set(text, buf);
     if (ttsCache.size > TTS_CACHE_ENTRIES) ttsCache.delete(ttsCache.keys().next().value!);
+    void keepOnlyIfIntelligible(text, buf); // after the response — a bad take never repeats
     return new Response(buf.slice(0), { headers: { "Content-Type": "audio/mpeg" } });
   }
   return new Response(r.body, { headers: { "Content-Type": "audio/mpeg" } });

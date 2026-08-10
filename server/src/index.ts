@@ -693,12 +693,13 @@ const SYSTEM = `You are the adaptive tutor inside "Institute", a gem-mine math g
 You are given his LIVE per-skill mastery and concrete difficulty targets computed from his real attempts. Follow that data and those targets. Do NOT assume fixed strengths or weaknesses — they change as he learns.
 
 Rules:
-- You will be told the exact TOPIC each branch must exercise, with its teaching goal, what mastery looks like, and an example problem of the right shape. Stay inside that topic's numeric envelope — match the example's FORM (operation, number sizes, prompt shape) with different numbers.
+- You will be told the exact TOPIC each branch must exercise, with its teaching goal, what mastery looks like, and an example problem of the right shape. Stay inside that topic's numeric envelope, match the example's FORM (operation, number sizes, prompt shape) with different numbers.
 - "difficulty" (0..1) must match the target you are given.
 - Keep him productive: "right" stretches a little harder, "wrong" eases off and rebuilds confidence in the SAME topic.
 - VARY the numbers a lot: consecutive problems must not share the same total and must not be permutations of one another (8+12, 9+11 are bad — repetitive). Never reuse the problem he is on.
 - "prompt" is the short written form; "spoken" is a warm, kid-friendly sentence to read aloud (no emoji/markdown). "answer" is the exact integer.
 - In "spoken", write any SEQUENCE of numbers as words ("eight, ten, twelve" — never "8, 10, 12"): the voice engine garbles digit runs. Single numbers inside a sentence may stay as digits.
+- No dashes of any kind in "prompt", "spoken", or "hint". Use a comma or start a new sentence: the voice engine mangles dashes and can even switch language on them.
 - He is American: money is ALWAYS dollars and cents (penny/nickel/dime/quarter) — never pounds or pence.
 - About 1 in 3 problems, when it fits naturally, tell the "spoken" story in HIS game's gem economy instead of plain arithmetic. Real prices you may reference: stone pickaxe 50, ocean pad 75, iron pickaxe 120, lava pad 160, silver pickaxe 250, galaxy pad 340, gold pickaxe 450, rainbow pad 650, diamond pickaxe 800, shield 40 gems. Use third-person characters (a miner saving up, a shopkeeper) — NEVER "you have N gems" (he compares it against his live gem counter). The numbers you were told to target stay EXACTLY the same; never invent a different price for a named item.
 - "hint" teaches a concrete strategy he can act on if he's stuck (make-a-ten, count-on, count-back) — a real method, never just restating the answer. For a missing addend that crosses ten, the strategy is "add a ten first, then adjust the ones" — never "count up to ten then add the two jumps". For division, the strategy is "skip-count by the divisor" (count by 3s up to 12 → four jumps → 4) — not dealing items out to friends one at a time.
@@ -853,16 +854,16 @@ async function llmBranches(profileId: string, current: Problem): Promise<{ right
     "",
     `He is solving now: "${current.prompt}"  (topic: ${curTopic?.name ?? current.skill}, difficulty: ${current.difficulty.toFixed(2)}).`,
     `His last problem was answered ${plan.solveTag}; his recent accuracy here is ${plan.recentAccuracyPct}%.`,
-    avoid.length ? `Recently shown already — do NOT repeat any of these: ${avoid.join("; ")}.` : "",
+    avoid.length ? `Recently shown already, do NOT repeat any of these: ${avoid.join("; ")}.` : "",
     "",
     "Produce the two follow-ups, matching difficulty to these targets:",
     `- "right" (he answers correctly): difficulty ≈ ${plan.rightTarget}` +
       (plan.rightMode === "review"
-        ? `, as a REVIEW of an earlier skill — a friendly confidence check on this topic:`
+        ? `, as a REVIEW of an earlier skill, a friendly confidence check on this topic:`
         : plan.advanceTopic ? `, moving on to this topic:` : `, staying on this topic:`),
     rightTopic ? topicBlock(rightTopic, plan.rightTarget) : "",
     wrongPlan.rescuing
-      ? `- "wrong" (he misses it): that would be his SECOND miss in a row here, so step down to a warm-up he already knows — difficulty ≈ ${wrongTarget}, on this easier prerequisite topic:`
+      ? `- "wrong" (he misses it): that would be his SECOND miss in a row here, so step down to a warm-up he already knows, difficulty ≈ ${wrongTarget}, on this easier prerequisite topic:`
       : `- "wrong" (he misses it): rebuild confidence at difficulty ≈ ${wrongTarget} with friendlier numbers, on this topic:`,
     wrongTopic ? topicBlock(wrongTopic, wrongTarget) : "",
     `Vary the numbers; do not reuse "${current.prompt}".`,
@@ -1394,6 +1395,7 @@ const EXPLAIN_SYSTEM = `You are the warm tutor voice inside a gem-mine math game
 - For a missing addend that crosses ten (like 6 + ? = 17): add a whole ten first, then adjust — six plus ten is sixteen, and it just needs one more to reach seventeen. NEVER count up to ten and then add the two jumps together (4 then 7): that ends in a second hard sum and hurts more than it helps. (Only state the final number if these rules say you may.)
 - For division (like 12 ÷ 3): teach SKIP-COUNTING by the divisor — count by threes up to twelve (three, six, nine, twelve) and count the jumps. Do NOT narrate dealing items out one at a time to a group of friends; that's slow and rambly.
 - At most 60 spoken words. Plain sentences a child can follow by ear. No emoji, no markdown, no lists.
+- No dashes of any kind. Use a comma or start a new sentence: the voice engine mangles dashes and can even switch language on them.
 - Walk the strategy with his actual numbers (make-a-ten, count on, count back, think in tens, share one at a time, skip-count...).
 - Money is ALWAYS American: dollars and cents, penny/nickel/dime/quarter. Never pounds, pence, or notes.
 - NEVER say the final answer, and never spell it out in words either. Stop one step short.
@@ -1405,13 +1407,13 @@ app.post("/tutor/explain", async (c) => {
   const { problem } = ExplainRequestSchema.parse(await c.req.json());
   const cached = explainCache.get(problem.id);
   if (cached) return c.json({ text: cached });
-  const fallback = problem.hint ?? "Read it again slowly — what is it asking you to find?";
+  const fallback = problem.hint ?? "Read it again slowly. What is it asking you to find?";
   const topic = problem.topicId ? topicById(problem.topicId) : undefined;
   const userContent = [
     `The problem on screen: "${problem.prompt}" (read aloud as: "${problem.spoken}").`,
     topic ? `It practices the topic "${topic.name}": ${topic.description}` : "",
     topic?.evidence.length ? `Mastery of this topic looks like: ${topic.evidence.join("; ")}` : "",
-    `Explain how to work it out. Do NOT reveal that the answer is ${problem.answer} — never say that number.`,
+    `Explain how to work it out. Do NOT reveal that the answer is ${problem.answer}, never say that number.`,
   ].filter(Boolean).join("\n");
   try {
     let text = "";
@@ -1470,6 +1472,7 @@ async function keepOnlyIfIntelligible(text: string, mp3: ArrayBuffer): Promise<v
 const DEMO_SYSTEM = `You are the warm tutor voice inside a gem-mine math game. A 6-year-old American boy has just discovered a BRAND-NEW kind of problem he has never seen before. He is only WATCHING right now — nothing is being tested. Show him how this kind works, start to finish, using the example given. Rules:
 - Think through it PRIVATELY first, then speak only the finished demonstration. Never search out loud or change course (no "hmm", no "actually", no "wait").
 - At most 70 spoken words. Short plain sentences a child can follow by ear. No emoji, no markdown, no lists.
+- No dashes of any kind. Use a comma or start a new sentence: the voice engine mangles dashes and can even switch language on them.
 - Pick ONE strategy and walk it all the way to the end. DO say the answer — this is a demonstration, not a question.
 - For a missing addend that crosses ten (like 6 + ? = 17): add a whole ten first, then adjust — six plus ten is sixteen, and it just needs one more to reach seventeen. NEVER count up to ten and then add the two jumps together (4 then 7): that ends in a second hard sum and hurts more than it helps. (Only state the final number if these rules say you may.)
 - For division (like 12 ÷ 3): teach SKIP-COUNTING by the divisor — count by threes up to twelve (three, six, nine, twelve) and count the jumps. Do NOT narrate dealing items out one at a time to a group of friends; that's slow and rambly.
@@ -1509,7 +1512,7 @@ app.post("/tutor/demo", async (c) => {
       output_config: { effort: "low" },
       system: DEMO_SYSTEM,
       messages: [{ role: "user", content: [
-        `New topic: "${topic.name}" (${topic.kidLabel}) — ${topic.description}`,
+        `New topic: "${topic.name}" (${topic.kidLabel}), ${topic.description}`,
         `Worked example to demonstrate: "${example.prompt}" (read aloud: "${example.spoken}"). The answer is ${example.answer}.`,
         example.hint ? `A strategy that works: ${example.hint}` : "",
       ].filter(Boolean).join("\n") }],
@@ -1560,7 +1563,8 @@ const WALKTHROUGH_SYSTEM = `You are the warm tutor voice inside a gem-mine math 
 - For a missing addend that crosses ten (like 6 + ? = 17): add a whole ten first, then adjust — six plus ten is sixteen, and it just needs one more to reach seventeen. NEVER count up to ten and then add the two jumps together (4 then 7): that ends in a second hard sum and hurts more than it helps. (Only state the final number if these rules say you may.)
 - For division (like 12 ÷ 3): teach SKIP-COUNTING by the divisor — count by threes up to twelve (three, six, nine, twelve) and count the jumps. Do NOT narrate dealing items out one at a time to a group of friends; that's slow and rambly.
 - At most 70 spoken words. Short plain sentences a child can follow by ear. No emoji, no markdown, no lists.
-- Be matter-of-fact and kind about not knowing it ("This one's tricky — here's the trick"). Never say he is wrong, slow, or that it's too hard for him. Never ask him a question.
+- No dashes of any kind. Use a comma or start a new sentence: the voice engine mangles dashes and can even switch language on them.
+- Be matter-of-fact and kind about not knowing it ("This one's tricky, here's the trick"). Never say he is wrong, slow, or that it's too hard for him. Never ask him a question.
 - Money is ALWAYS American: dollars and cents, penny/nickel/dime/quarter.
 - Finish by inviting the next try, e.g. "Now let's do one like it together!"`;
 

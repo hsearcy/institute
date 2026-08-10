@@ -133,7 +133,7 @@ export function trackingNote(tracking: DailyTracking): string | null {
 export function encouragement(daily: DailyRecord): string {
   if (daily.record === 0) return 'Mine your first gem to start the record!';
   if (daily.today === 0) return `Your record is ${daily.record} in one day. Ready to chase it?`;
-  if (daily.isRecord) return `${daily.today} today — that is your best day EVER!`;
+  if (daily.isRecord) return `${daily.today} today, that is your best day EVER!`;
   const togo = daily.record - daily.today + 1;
   return `${daily.today} today. ${togo} more beats your record of ${daily.record}!`;
 }

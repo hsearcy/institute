@@ -133,7 +133,7 @@ describe("the encouraging line", () => {
 
   test("celebrates while he is on a record day", () => {
     expect(encouragement(record({ today: 15, record: 15, isRecord: true })))
-      .toBe("15 today — that is your best day EVER!");
+      .toBe("15 today, that is your best day EVER!");
   });
 
   test("a fresh morning points at the record to chase", () => {

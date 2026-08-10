@@ -214,11 +214,11 @@ export function problemForTopic(topic: Topic, difficulty: number): TopicProblemD
       const bigger = Math.random() < 0.5;
       const [x, y] = Math.random() < 0.5 ? [lo, hi] : [hi, lo];
       return { ...base, prompt: `${bigger ? "Bigger" : "Smaller"}: ${x} or ${y}?`,
-        spoken: `Which number is ${bigger ? "bigger" : "smaller"} — ${x} or ${y}? Type it!`,
+        spoken: `Which number is ${bigger ? "bigger" : "smaller"}, ${x} or ${y}? Type it!`,
         answer: bigger ? Math.max(x, y) : Math.min(x, y),
         hint: g.max > 10
           ? `Look at the tens first: more tens means a bigger number.`
-          : `Count up — the number you say later is bigger.` };
+          : `Count up, the number you say later is bigger.` };
     }
     case "compose_hundreds": {
       const h = ri(1, lerp(3, 9, d)), t = ri(0, 9), o = ri(0, 9);
@@ -256,7 +256,7 @@ export function problemForTopic(topic: Topic, difficulty: number): TopicProblemD
       const have = 5 * ri(1, need / 5 - 1);
       return { ...base, prompt: `${have}¢ + ?¢ = ${need}¢`,
         spoken: `You have ${have} cents and need ${need} cents. How many more cents?`,
-        answer: need - have, hint: `Count up from ${have} to ${need} — try jumps of 5 or 10.` };
+        answer: need - have, hint: `Count up from ${have} to ${need}, try jumps of 5 or 10.` };
     }
     case "round_to": {
       const base10 = g.bases[d > 0.55 && g.bases.length > 1 ? 1 : 0];
@@ -266,7 +266,7 @@ export function problemForTopic(topic: Topic, difficulty: number): TopicProblemD
       return { ...base, prompt: `Round ${n} to nearest ${base10}`,
         spoken: `Round ${n} to the nearest ${base10 === 10 ? "ten" : "hundred"}.`,
         answer,
-        hint: `Which ${base10 === 10 ? "ten" : "hundred"} is ${n} closest to — ${Math.floor(n / base10) * base10} or ${Math.ceil(n / base10) * base10}?` };
+        hint: `Which ${base10 === 10 ? "ten" : "hundred"} is ${n} closest to, ${Math.floor(n / base10) * base10} or ${Math.ceil(n / base10) * base10}?` };
     }
     case "odd_pick": {
       const wantOdd = Math.random() < 0.5;
@@ -281,7 +281,7 @@ export function problemForTopic(topic: Topic, difficulty: number): TopicProblemD
       return { ...base, prompt: `${wantOdd ? "Odd" : "Even"} one: ${nums.join(", ")}`,
         spoken: `Which of these is ${wantOdd ? "odd" : "even"}: ${nums.join(", ")}? Type it!`,
         answer: target,
-        hint: `Even numbers can be split into two equal teams — ${wantOdd ? "the odd one always has one left over" : "no leftovers"}. Check the last digit: 0, 2, 4, 6, 8 are even.` };
+        hint: `Even numbers can be split into two equal teams, ${wantOdd ? "the odd one always has one left over" : "no leftovers"}. Check the last digit: 0, 2, 4, 6, 8 are even.` };
     }
   }
 }

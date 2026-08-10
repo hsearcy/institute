@@ -66,7 +66,7 @@ export const PICKAXE_SKINS: Record<SkinKey, SkinSpec> = {
   },
   legendary: {
     tint: '#ff5bd1',
-    blurb: 'Iridescent — the showpiece',
+    blurb: 'Iridescent, the showpiece',
     animated: true,
     make: (o) => new MeshPhysicalMaterial({
       // Colorful iridescent metal: high metalness keeps real specular highlights

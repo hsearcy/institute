@@ -717,7 +717,7 @@ export class Game {
     this.socraticAsked.add(goal.key);
     this.lastSocraticAt = performance.now();
     this.pendingSocratic = { answer: goal.price - gems, name: goal.name, price: goal.price };
-    const line = `Ooh — the ${goal.name} costs ${goal.price} gems, and you have ${gems}. How many more do you need?`;
+    const line = `Ooh, the ${goal.name} costs ${goal.price} gems, and you have ${gems}. How many more do you need?`;
     this.hud.showHint(line);
     void speak(line);
   }
@@ -736,7 +736,7 @@ export class Game {
       sfxFanfare(false);
       this.hud.equipConfirm(res.item?.name ?? 'New pad style', '#ffd23b');
     } else {
-      this.hud.shopFeedback('Keep mining — almost there!');
+      this.hud.shopFeedback('Keep mining, almost there!');
     }
   }
 
@@ -755,7 +755,7 @@ export class Game {
     const res = await buyGemStyle(key);
     if (!res) return;
     if (!res.ok) {
-      this.hud.shopFeedback('Keep mining — almost there!');
+      this.hud.shopFeedback('Keep mining, almost there!');
       return;
     }
     this.totalGems = res.gems ?? this.totalGems;
@@ -801,7 +801,7 @@ export class Game {
       this.unlockCelebration(res.item.name, res.item.key);
     } else {
       this.hud.setGemsForShop(res.gems);
-      this.hud.shopFeedback(`Need ${'?'} 💎 — keep mining!`);
+      this.hud.shopFeedback(`Need ${'?'} 💎, keep mining!`);
     }
   }
 
@@ -1071,7 +1071,7 @@ export class Game {
     if (btn) btn.textContent = '💭';
     try {
       const p = this.problem;
-      const text = (await fetchExplain(p)) ?? p.hint ?? 'Read it again slowly — what is it asking?';
+      const text = (await fetchExplain(p)) ?? p.hint ?? 'Read it again slowly. What is it asking?';
       if (this.problem?.id === p.id) {           // still the same problem
         this.hud.showHint(text);                 // always visible — even if audio fails
         await speak(text);
@@ -1096,7 +1096,7 @@ export class Game {
       this.pendingSocratic = null;
       this.entered = '';
       this.hud.setAnswer('');
-      const line = `Exactly right — ${sq.answer} more gems and the ${sq.name} is yours!`;
+      const line = `Exactly right, ${sq.answer} more gems and the ${sq.name} is yours!`;
       this.hud.showHint(line);
       void speak(line);
       sfxCollect();
@@ -1158,7 +1158,7 @@ export class Game {
         const ans = this.problem.answer;
         const reveal = speak(`${pick(WARM_MISS)} The answer is ${ans}.${hint ? ' ' + hint : ''} Let's try another one.`);
         this.hud.setAnswer(String(ans));
-        this.hud.showHint(`The answer is ${ans} — tough ones teach me how to help you!`);
+        this.hud.showHint(`The answer is ${ans}, tough ones teach me how to help you!`);
         const finale = reportMiss().then(async (r) => {
           const voice = this.onFinalMiss(r); // visuals now; returns the queued voice line
           await reveal;
@@ -1273,7 +1273,7 @@ export class Game {
     }
     if (r.allDailiesCrazyCoin) {
       this.hud.celebrateDailyCrazyCoin();
-      void speak('You finished every quest today — you earned a Crazy Coin! Go tell a grown-up!');
+      void speak('You finished every quest today, you earned a Crazy Coin! Go tell a grown-up!');
       sfxFanfare(true);
     }
     // Today's count, and the rarest moment in the game: a brand-new daily record.
@@ -1658,25 +1658,25 @@ const sleep = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
 // backfires), long grinds get persistence, retry-wins get the mistake→fix arc.
 // Generic quick wins stay in the mix so it never turns preachy. ≤90 chars each
 // (the TTS cache line).
-const PRAISE = ['You got it!', 'Nice mining!', 'You figured that one out!', 'Ooh, shiny!', 'Another gem — you earned it!'];
+const PRAISE = ['You got it!', 'Nice mining!', 'You figured that one out!', 'Ooh, shiny!', 'Another gem, you earned it!'];
 const PRAISE_FAST = [
-  'Lightning fast — your practice is showing!',
+  'Lightning fast, your practice is showing!',
   'You just knew that one. That comes from practicing!',
   'Zip! Your brain is getting quicker every day.',
 ];
 const PRAISE_GRIT = [
-  'You stuck with it and cracked it — that is real mining!',
+  'You stuck with it and cracked it, that is real mining!',
   'That took some thinking, and you did not give up!',
   'Big think, big gem! Nice sticking with it.',
 ];
 const PRAISE_RETRY = [
-  'You fixed it yourself — that is how learning works!',
+  'You fixed it yourself, that is how learning works!',
   'See? A second look and you cracked it!',
-  'A miss, then a fix — that is how miners get stronger!',
+  'A miss, then a fix, that is how miners get stronger!',
 ];
 // Retries: "not yet" is the growth-mindset word — and nudge toward a STRATEGY.
 const NUDGE = [
-  'Not yet — take another look!',
+  'Not yet, take another look!',
   'Hmm, not quite. Try it a different way!',
   'So close! Check your counting once more.',
   'Not yet! Slow down and give it another go.',
@@ -1688,7 +1688,7 @@ const WARM_MISS = [
   'That was a brave try on a tough one!',
   'Ooh, a tricky gem! Missing these teaches me how to help you.',
   'Tough one! Even the best miners hit hard rock sometimes.',
-  'Great effort — hard ones like this make you stronger!',
+  'Great effort, hard ones like this make you stronger!',
 ];
 const pick = (a: string[]): string => a[Math.floor(Math.random() * a.length)];
 

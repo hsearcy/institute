@@ -420,7 +420,7 @@ export class Hud {
     if (!daily) {
       const note = document.createElement('div');
       note.className = 'sd-note';
-      note.textContent = 'Can’t reach the tutor right now — try again in a moment.';
+      note.textContent = 'Can’t reach the tutor right now, try again in a moment.';
       this.statsBody.appendChild(note);
       return;
     }
@@ -799,7 +799,7 @@ export class Hud {
       const all = dailyQuests.length > 0 && dailyDone === dailyQuests.length;
       bonus.classList.toggle('earned', all);
       (bonus.querySelector('.qb-text') as HTMLElement).textContent = all
-        ? 'All quests done — Crazy Coin earned!'
+        ? 'All quests done, Crazy Coin earned!'
         : `Finish all ${dailyQuests.length} → earn a Crazy Coin! (${dailyDone}/${dailyQuests.length})`;
     }
   }
@@ -822,7 +822,7 @@ export class Hud {
   /** Dramatic (not scary) notice that the equipped pickaxe just broke. */
   breakBanner(name: string): void {
     this.screenFlash('#ff9d6b');
-    this.banner('💥 SNAP!', 'broke', `${name} broke — repair it in the 🛒 shop`);
+    this.banner('💥 SNAP!', 'broke', `${name} broke, repair it in the 🛒 shop`);
     this.confettiBurst(40, ['#c9c2b6', '#8a8276', '#e8e2d6', '#b0a894']);
   }
 
@@ -883,7 +883,7 @@ export class Hud {
         <div class="swatch" style="--tint:${tint}"></div>
         <div class="shop-meta">
           <div class="shop-name">${item.name}</div>
-          <div class="shop-blurb">${broken ? 'Broken — repair to use' : blurb}</div>
+          <div class="shop-blurb">${broken ? 'Broken, repair to use' : blurb}</div>
           ${duraHtml}
         </div>
         <div class="shop-btns">${btns.join('')}</div>`;
@@ -981,7 +981,7 @@ export class Hud {
   /** The big all-dailies reward: one real-world Crazy Coin. */
   celebrateDailyCrazyCoin(): void {
     this.screenFlash('#ffd23b');
-    this.banner('🪙 CRAZY COIN! 🪙', 'unlock', '+1 earned — go tell a grown-up!', '#ffd23b');
+    this.banner('🪙 CRAZY COIN! 🪙', 'unlock', '+1 earned, go tell a grown-up!', '#ffd23b');
     this.confettiBurst(90, ['#ffd23b', '#ffb01f', '#ffffff', '#ff8fb1', '#7af0ff']);
   }
 
@@ -1018,7 +1018,7 @@ export class Hud {
     if (!m) {
       const note = document.createElement('div');
       note.className = 'pd-note';
-      note.textContent = 'Can’t reach the tutor right now — check that the tutor server is running, then try again.';
+      note.textContent = 'Can’t reach the tutor right now, check that the tutor server is running, then try again.';
       this.parentBody.appendChild(note);
       return;
     }
@@ -1182,7 +1182,7 @@ export class Hud {
       );
     }
     // Matches the .banner.record animation length so it never vanishes mid-bounce.
-    this.banner('⭐ NEW RECORD! ⭐', 'record', `${count} right today — your best day EVER!`, '#ffd23b', 5500);
+    this.banner('⭐ NEW RECORD! ⭐', 'record', `${count} right today, your best day EVER!`, '#ffd23b', 5500);
   }
 
   /** A shield absorbed a miss — celebrate that the streak survived. */

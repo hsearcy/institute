@@ -88,7 +88,7 @@ export function costume(draft: ProblemDraft, kind: GenSpec["kind"]): { spoken: s
       const [x, y] = [Number(m[2]), Number(m[3])];
       const ix = priceItem(x), iy = priceItem(y);
       if (ix && iy && ix.name !== iy.name) {
-        return { spoken: `Which costs ${wantBig ? "more" : "less"} — the ${ix.name} at ${x} gems, or the ${iy.name} at ${y} gems? Type that price!` };
+        return { spoken: `Which costs ${wantBig ? "more" : "less"}, the ${ix.name} at ${x} gems, or the ${iy.name} at ${y} gems? Type that price!` };
       }
       return { spoken: `Two treasure chests hold ${x} and ${y} gems. Type the ${wantBig ? "bigger" : "smaller"} number!` };
     }

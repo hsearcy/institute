@@ -921,7 +921,9 @@ export class Hud {
             : `<button class="shop-btn is-equip" data-equip-gem="${style.key}">Equip</button>`;
         row.innerHTML = `
           <div class="gem-model-swatch shape-${spec.shape}" style="--tint:${spec.tint}" aria-hidden="true">
-            <span class="gem-model-core"></span><span class="gem-model-accent"></span>
+            ${spec.previewUrl
+              ? `<img class="gem-model-shot" src="${spec.previewUrl}" alt="" loading="lazy">`
+              : `<span class="gem-model-core"></span><span class="gem-model-accent"></span>`}
           </div>
           <div class="shop-meta">
             <div class="shop-name">${style.name}</div>
@@ -1417,6 +1419,8 @@ function injectStyles(): void {
   .gem-style-head { color: #aeeaff; }
   .gem-model-swatch { position: relative; width: 36px; height: 36px; flex: none;
     filter: drop-shadow(0 3px 4px rgba(0,0,0,.5)) drop-shadow(0 0 5px color-mix(in srgb, var(--tint) 55%, transparent)); }
+  /* A render of the real GLB — it fills the plate, so it skips the CSS facets below. */
+  .gem-model-shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
   .gem-model-core, .gem-model-accent { position: absolute; inset: 5px;
     background: radial-gradient(circle at 30% 22%, #fff 0 8%, color-mix(in srgb, var(--tint) 55%, white) 22%, var(--tint) 58%, #241331 100%);
     box-shadow: inset -3px -4px 5px rgba(0,0,0,.32), inset 2px 2px 2px rgba(255,255,255,.55); }

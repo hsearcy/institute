@@ -28,6 +28,8 @@ export type GemStyleSpec = {
   shape: "geode" | "emerald" | "ruby" | "diamond" | "heart";
   modelUrl?: string;
   modelRotationY?: number;
+  /** Shop thumbnail rendered from modelUrl, for gems whose CSS swatch can't do them justice. */
+  previewUrl?: string;
 };
 
 export const GEM_STYLES: Record<GemStyleKey, GemStyleSpec> = {
@@ -59,15 +61,20 @@ export const GEM_STYLES: Record<GemStyleKey, GemStyleSpec> = {
   },
   gem_dragonheart: {
     name: "Dragonheart Gem",
-    blurb: "A fiery heart guarded by obsidian horns",
-    tint: "#ff5b4d",
+    blurb: "A huge ruby heart hugged by a baby dragon",
+    tint: "#ff2f4d",
     shape: "heart",
+    modelUrl: "/assets/models/gems/dragonheart/model.glb",
+    // The medallion is authored facing -X, so it needs a quarter turn to face the camera.
+    modelRotationY: -Math.PI / 2,
+    previewUrl: "/assets/models/gems/dragonheart/preview.webp",
   },
 };
 
 export const GEM_STYLE_KEYS = Object.keys(GEM_STYLES) as GemStyleKey[];
 export const GENERATED_GEM_STYLE_KEYS = [
   "gem_emerald",
+  "gem_dragonheart",
 ] as const satisfies readonly GemStyleKey[];
 
 export function isGemStyleKey(key: string): key is GemStyleKey {

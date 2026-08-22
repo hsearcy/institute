@@ -22,7 +22,7 @@ describe("gem style model kit", () => {
   });
 
   test("offers recognizable real gemstones with generated hero-model sources", () => {
-    expect(GENERATED_GEM_STYLE_KEYS).toEqual(["gem_emerald"]);
+    expect(GENERATED_GEM_STYLE_KEYS).toEqual(["gem_emerald", "gem_dragonheart"]);
     expect(GEM_STYLES.gem_emerald).toMatchObject({
       name: "Mega Emerald",
       shape: "emerald",
@@ -39,7 +39,22 @@ describe("gem style model kit", () => {
       shape: "diamond",
     });
     expect(GEM_STYLES.gem_diamond.modelUrl).toBeUndefined();
-    expect(GEM_STYLES.gem_dragonheart.modelUrl).toBeUndefined();
+    expect(GEM_STYLES.gem_dragonheart).toMatchObject({
+      name: "Dragonheart Gem",
+      shape: "heart",
+      modelUrl: "/assets/models/gems/dragonheart/model.glb",
+      modelRotationY: -Math.PI / 2,
+      previewUrl: "/assets/models/gems/dragonheart/preview.webp",
+    });
+  });
+
+  test("every generated gem still keeps a procedural fallback for a failed load", () => {
+    // loadAssets() only swaps in a GLB when it parses; buildGemStyle has to stand
+    // alone for every key or a network hiccup leaves the mine target empty.
+    for (const key of GENERATED_GEM_STYLE_KEYS) {
+      expect(GEM_STYLES[key].modelUrl).toBeString();
+      expect(buildGemStyle(key).children.length).toBeGreaterThan(0);
+    }
   });
 
   test("every style builds a layered, centered mine target with authored materials", () => {

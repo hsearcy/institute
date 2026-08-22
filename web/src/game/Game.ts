@@ -13,6 +13,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { type Material } from 'three';
 import type { Problem, Branches, Reward, Durability, DailyRecordEvent, ShopState } from '@institute/shared';
@@ -245,7 +246,9 @@ export class Game {
 
   /** Swap procedural placeholders for generated GLBs when they're present. */
   private async loadAssets(): Promise<void> {
-    const loader = new GLTFLoader();
+    // The Dragonheart ships meshopt-compressed (3 MB instead of 55 MB); without the
+    // decoder that GLB fails to parse and the gem silently falls back to primitives.
+    const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
     const tryLoad = (url: string) => new Promise<Group | null>((res) => {
       loader.load(url, (g) => res(g.scene), undefined, () => res(null));
     });

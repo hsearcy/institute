@@ -239,7 +239,12 @@ export class Game {
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     // Bloom only on bright emissive (gems, crystals, lantern) — high threshold.
-    this.bloom = new UnrealBloomPass(new Vector2(1, 1), 0.12, 0.4, 0.92);
+    // Strength is deliberately low: the Dragonheart's baseColor bakes a near-white
+    // starburst at the heart's centre, which sails past any threshold we can set and
+    // smears into a halo that pulses with the hero's idle bob — glare, not glow.
+    // (Raising `threshold` at runtime does nothing; UnrealBloomPass only reads it in
+    // the constructor. Strength is the live knob.)
+    this.bloom = new UnrealBloomPass(new Vector2(1, 1), 0.05, 0.4, 0.92);
     this.composer.addPass(this.bloom);
     this.composer.addPass(new OutputPass());
   }
@@ -250,7 +255,7 @@ export class Game {
     // decoder that GLB fails to parse and the gem silently falls back to primitives.
     const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
     const tryLoad = (url: string) => new Promise<Group | null>((res) => {
-      loader.load(url, (g) => res(g.scene), undefined, () => res(null));
+      loader.load(url, (g) => res(g.scene), undefined, (e) => { console.warn('[asset] failed', url, e); res(null); });
     });
 
     const pick = await tryLoad('/assets/models/pickaxe-seg.glb');
@@ -337,7 +342,12 @@ export class Game {
         const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
         for (const material of materials) {
           const pbr = material as MeshStandardMaterial;
-          pbr.envMapIntensity = Math.max(pbr.envMapIntensity ?? 1, 1.65);
+          // The Dragonheart's baseColor already paints its own starburst, so the
+          // usual envMap boost stacked a blown-out specular on top of it — and the
+          // hero's idle bob made that hotspot flicker. Keep it near neutral.
+          pbr.envMapIntensity = key === 'gem_dragonheart'
+            ? Math.min(pbr.envMapIntensity ?? 1, 1)
+            : Math.max(pbr.envMapIntensity ?? 1, 1.65);
           pbr.needsUpdate = true;
         }
       });
@@ -400,7 +410,11 @@ export class Game {
     this.hero.visible = true;
     if (this.gemLight) {
       this.gemLight.color.set(GEM_STYLES[styleKey].tint);
-      this.gemLight.intensity = styleKey === 'gem_diamond' ? 3.2 : 2.4;
+      // The Dragonheart is a big glossy face pointed straight at camera, so the
+      // practical gem light reads as glare on it rather than inner glow.
+      this.gemLight.intensity = styleKey === 'gem_diamond' ? 3.2
+        : styleKey === 'gem_dragonheart' ? 0.9
+        : 2.4;
     }
     return styleKey;
   }

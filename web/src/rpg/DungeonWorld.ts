@@ -11,6 +11,7 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { EnemyAnimator } from './world/EnemyAnimator';
 import { createVaultScenery } from './world/scenery';
 import { masonryGeometry, projectStoneUV } from './world/masonry';
+import { getRoomLayout, enemyPositions, isCrossingChasm, roomFloorPatches } from './world/roomLayout';
 import { stoneMaterial, floorRelief, flameMaterial, fireSheetMaterial, novaMaterial, stormMaterial, glowTexture, waveTexture } from './world/materials';
 
 type Enemy = { root: THREE.Group; visual: THREE.Object3D; origin: THREE.Vector3; phase: number; brute: boolean; dead: boolean; modelId: string; deathAt: number; animator: EnemyAnimator };
@@ -42,10 +43,11 @@ export class DungeonWorld {
   private readonly floatingRunes: THREE.Object3D[] = [];
   private readonly cameraTarget = new THREE.Vector3();
   private readonly destination = new THREE.Vector3();
-  private readonly heroLight = new THREE.PointLight(0x48e6db, 12, 8, 1.8);
+  private readonly heroLight = new THREE.PointLight(0x48e6db, 18, 8, 1.8);
   private readonly burstLight = new THREE.PointLight(0xffae40, 0, 20, 1.5);
-  private readonly warmLights = [new THREE.PointLight(0xff9c45, 150, 20, 2), new THREE.PointLight(0xff822b, 125, 19, 2)];
-  private readonly recessLights = [new THREE.PointLight(0x0c7bb1, 68, 15, 2), new THREE.PointLight(0x0b749f, 56, 15, 2)];
+  private readonly warmLights = [new THREE.PointLight(0xff9c45, 70, 14, 2), new THREE.PointLight(0xff822b, 60, 14, 2)];
+  private readonly recessLights = [new THREE.PointLight(0x0c7bb1, 56, 12, 2), new THREE.PointLight(0x0b749f, 50, 12, 2)];
+  private readonly lightAnchors = Array.from({ length: 4 }, () => new THREE.Vector3());
   private readonly rune: THREE.Mesh;
   private readonly materials: Record<string, THREE.MeshStandardMaterial>;
   private readonly models = new Map<string, THREE.Group>();
@@ -126,14 +128,14 @@ export class DungeonWorld {
       flame: new THREE.MeshStandardMaterial({ color: 0xff9218, emissive: 0xff6500, emissiveIntensity: 2, transparent: true, opacity: .94, toneMapped: false }),
     };
     if (this.softwareRenderer) for (const name of ['floor', 'wall', 'trim']) this.materials[name].bumpMap = null;
-    this.scene.add(new THREE.HemisphereLight(0x7394aa, 0x15120f, .48));
+    this.scene.add(new THREE.HemisphereLight(0x7394aa, 0x15120f, .38));
     const moon = new THREE.DirectionalLight(0x6d8da5, 1.5);
     moon.position.set(-12, 24, -10); moon.castShadow = true;
     moon.shadow.mapSize.set(this.softwareRenderer ? 1024 : 2048, this.softwareRenderer ? 1024 : 2048); moon.shadow.camera.left = moon.shadow.camera.bottom = -23;
     moon.shadow.camera.right = moon.shadow.camera.top = 23; moon.shadow.camera.far = 80;
     moon.shadow.normalBias = .045; moon.shadow.bias = -.00015;
     this.scene.add(moon, moon.target);
-    const fill = new THREE.DirectionalLight(0xc6d3cf, .7); fill.position.set(15, 12, 18); this.scene.add(fill);
+    const fill = new THREE.DirectionalLight(0xc6d3cf, .32); fill.position.set(15, 12, 18); this.scene.add(fill);
     moon.name = 'moon';
     this.scene.add(this.floorGroup, this.enemyGroup, this.effectsGroup, this.propGroup, this.biomeGroup, this.hero);
     for (const fragments of [this.stoneFragments, this.hotFragments]) { fragments.count = 0; fragments.setColorAt(0, new THREE.Color()); fragments.frustumCulled = false; fragments.instanceMatrix.setUsage(THREE.DynamicDrawUsage); this.scene.add(fragments); }
@@ -165,7 +167,7 @@ export class DungeonWorld {
 
   async load(): Promise<void> {
     const loader = new GLTFLoader();
-    await Promise.all(['hero', 'imp', 'guardian', 'arch', 'pillar', 'brazier', 'crystal', 'chest', 'wall-bay', 'broken-wall', 'skeleton', 'wraith'].map(async name => {
+    await Promise.all(['hero', 'imp', 'guardian', 'arch', 'pillar', 'brazier', 'crystal', 'chest', 'wall-bay', 'broken-wall', 'skeleton', 'wraith', 'furnace', 'reliquary'].map(async name => {
       try {
         const gltf = await loader.loadAsync(`/assets/rpg/${name}.glb`);
         if (this.disposed) return;
@@ -174,7 +176,7 @@ export class DungeonWorld {
           if (object instanceof THREE.Mesh) {
             object.castShadow = true; object.receiveShadow = !['hero', 'skeleton', 'wraith', 'guardian', 'imp'].includes(name);
             if (object.material instanceof THREE.MeshStandardMaterial && /glow_flame|glow_amber/.test(object.material.name)) {
-              object.material.emissive.setHex(0xff780c); object.material.emissiveIntensity = 1.4; object.material.toneMapped = false;
+              object.material.emissive.setHex(0xff780c); object.material.emissiveIntensity = name === 'furnace' ? .9 : 1.4; object.material.toneMapped = false;
             }
             if (name === 'hero' && object.material instanceof THREE.MeshStandardMaterial && /glow_/.test(object.material.name)) {
               object.material.emissiveIntensity = .3; object.material.toneMapped = true;
@@ -303,8 +305,10 @@ export class DungeonWorld {
   private buildDungeon(): void {
     let state = 932184;
     const random = () => { state = (state * 1664525 + 1013904223) >>> 0; return state / 4294967296; };
-    const batches = new Map<string, { material: THREE.Material; geometries: THREE.BufferGeometry[]; room: number }>();
+    const batches = new Map<string, { material: THREE.Material; geometries: THREE.BufferGeometry[]; room: number; occluder: boolean }>();
     const add = (geometry: THREE.BufferGeometry, material: THREE.Material, x: number, y: number, z: number, turn = 0) => {
+      const roomIndex = Math.round(-z / 20);
+      if (y > -.1 && isCrossingChasm(roomIndex, x, z + roomIndex * 20)) { geometry.dispose(); return; }
       if (material === this.materials.wall || material === this.materials.trim) {
         const shade = .76 + random() * .46;
         const colors = new Float32Array(geometry.getAttribute('position').count * 3);
@@ -321,8 +325,10 @@ export class DungeonWorld {
       geometry.rotateY(turn); geometry.translate(x, y, z);
       const normalized = geometry.index ? geometry.toNonIndexed() : geometry;
       if (normalized !== geometry) geometry.dispose();
-      const room = Math.round(-z / 20), key = `${material.uuid}:${room}`;
-      if (!batches.has(key)) batches.set(key, { material, geometries: [], room });
+      normalized.computeBoundingBox();
+      const occluder = normalized.boundingBox!.max.y > .6;
+      const room = Math.round(-z / 20), key = `${material.uuid}:${room}:${occluder}`;
+      if (!batches.has(key)) batches.set(key, { material, geometries: [], room, occluder });
       batches.get(key)!.geometries.push(normalized);
     };
     const block = (w: number, h: number, d: number, material: THREE.Material, x: number, y: number, z: number, turn = 0, bevel = .065) => {
@@ -346,35 +352,42 @@ export class DungeonWorld {
       block(1.32, .14, 1.32, this.materials.wall, x, height + .82, z);
     };
     for (let room = 0; room < 6; room++) {
-      const center = -room * 20;
+      const center = -room * 20, layout = getRoomLayout(room);
+      const sideOffset = layout.sideWallX - 12.2;
       // Texture coordinates remain in world space: neighbouring worn floor pieces
       // share their photographically detailed surface instead of a board-game grid.
-      const floorDepth = room === 0 ? 40 : 20, floorCenter = center + (room === 0 ? 10 : 0);
-      const floor = new THREE.PlaneGeometry(46, floorDepth, 12, 8); floor.rotateX(-Math.PI / 2);
-      const uv = floor.getAttribute('uv'), position = floor.getAttribute('position');
-      for (let i = 0; i < uv.count; i++) uv.setXY(i, position.getX(i) / 4.8, (position.getZ(i) + floorCenter) / 4.8);
-      add(floor, this.materials.floor, 0, -.05, floorCenter);
-      block(47, .55, floorDepth, this.materials.dark, 0, -.38, floorCenter, 0, .015);
+      for (const patch of roomFloorPatches(room)) {
+        const floor = new THREE.PlaneGeometry(patch.width, patch.depth, 8, 4); floor.rotateX(-Math.PI / 2);
+        const uv = floor.getAttribute('uv'), position = floor.getAttribute('position');
+        for (let i = 0; i < uv.count; i++) uv.setXY(i, (position.getX(i) + patch.x) / 4.8, (position.getZ(i) + center + patch.z) / 4.8);
+        add(floor, this.materials.floor, patch.x, -.05, center + patch.z);
+        block(patch.width, .55, patch.depth, this.materials.dark, patch.x, -.38, center + patch.z, 0, .015);
+      }
+      if (room === 3) for (const side of [-1, 1]) {
+        const darkFloor = new THREE.PlaneGeometry(6.2, 8); darkFloor.rotateX(-Math.PI / 2);
+        add(darkFloor, this.materials.dark, side * 7.9, -3.8, center);
+        for (const edge of [4.8, 11]) for (let row = 0; row < 6; row++) for (let n = 0; n < 8; n++)
+          block(.44, .56, .97, this.materials.wall, side * edge, -.5 - row * .56, center - 3.5 + n);
+        for (const z of [-5, 5]) { pillar(side * 5.5, center + z, 1.05); this.addTorch(side * 5.5, 1.96, center + z, false); }
+      }
       // Thick walls and stepped side aisles replace the old sparse perimeter.
       for (const side of [-1, 1]) {
-        const wallHeight = side === -1 ? 5.4 : 1.1;
+        const wallHeight = side < 0 ? layout.wallHeights.left : layout.wallHeights.right;
         for (let row = 0; row < Math.ceil(wallHeight / .57); row++) for (let n = 0; n < 17; n++) {
           const z = center - 9.7 + n * 1.16 + (row % 2) * .5;
           // The frontmost western vault collapsed: staggered upper courses
           // expose an irregular silhouette instead of a continuous square box.
-          const brokenHeight = n > 11 ? 1.5 + Math.sin(n * 2.4 + room) * .55 : 5.4;
+          const brokenHeight = n > 11 ? 1.5 + Math.sin(n * 2.4 + room) * .55 : wallHeight;
           if (side < 0 && row * .57 > brokenHeight) continue;
           if (row > 5 && (n * 13 + row * 7 + room) % 17 === 0) continue;
-          block(.95, .53, 1.11, this.materials.wall, side * 12.2 + (random() - .5) * .07, .26 + row * .57, z, (random() - .5) * .023);
+          block(layout.sideWallWidth, .53, 1.11, this.materials.wall, side * layout.sideWallX + (random() - .5) * .07, .26 + row * .57, z, (random() - .5) * .023);
         }
-        for (let step = 0; step < 3; step++) block(2.0 - step * .38, .2, 19.9, this.materials.wall, side * (11.25 + step * .19), .05 + step * .19, center, 0, .045);
+        for (let step = 0; step < 3; step++) block(2.0 - step * .38, .2, 19.9, this.materials.wall, side * (11.25 + sideOffset + step * .19), .05 + step * .19, center, 0, .045);
         for (let bay = 0; bay < 4; bay++) {
           const z = center - 7.4 + bay * 5;
-          pillar(side * 11.7, z, side < 0 ? (bay === 3 ? 2.2 : 4.7 + Math.sin(bay * 2.3 + room) * .45) : (bay === 0 || bay === 3 ? 3.9 : 1.25));
-          this.addTorch(side * 10.55, 2.1, z + .7, false);
-          // Deep black alcove and cool crystal recess under a carved arch.
-          if (side < 0) block(.15, 3.8, 2.55, this.materials.dark, -11.62, 2.8, z + 2.25);
-          const x = side * (9.7 + random() * .55);
+          pillar(side * (11.7 + sideOffset), z, side < 0 ? (bay === 3 ? 2.2 : wallHeight - .7 + Math.sin(bay * 2.3 + room) * .35) : (bay === 0 || bay === 3 ? 3.3 : wallHeight));
+          this.addTorch(side * (10.55 + sideOffset), 2.1, z + .7, false);
+          const x = side * (9.7 + sideOffset + random() * .55);
           for (let n = 0; n < 3; n++) {
             const crystal = new THREE.ConeGeometry(.1 + random() * .13, .6 + random() * 1.0, 5);
             crystal.rotateZ((random() - .5) * .35);
@@ -384,7 +397,7 @@ export class DungeonWorld {
         // Ruined tombs lie partly buried along the raised aisles, never centred
         // like furniture placed on a grid. Trim catches the torchlight.
         for (let n = 0; n < 3; n++) {
-          const x = side * (8.6 + random() * 1.1), z = center - 7 + n * 6.3;
+          const x = side * (8.6 + sideOffset + random() * 1.1), z = center - 7 + n * 6.3;
           const turn = (random() - .5) * .55;
           block(1.1, .63, 2.05, this.materials.wall, x, .32, z, turn);
           block(1.22, .15, 2.22, this.materials.trim, x + .12, .71, z - .04, turn + .09);
@@ -393,17 +406,17 @@ export class DungeonWorld {
       }
       // The far wall is a layered cathedral facade with a central route opening.
       for (const side of [-1, 1]) {
-        for (let row = 0; row < 9; row++) for (let n = 0; n < 7; n++) {
-          const x = side * (4.1 + n * 1.13 + (row % 2) * .3);
+        for (let row = 0; row < Math.ceil(layout.wallHeights.back / .57); row++) for (let n = 0; n < 7; n++) {
+          const x = layout.doorX + side * (4.1 + n * 1.13 + (row % 2) * .3);
           if (side < 0 && row > 3 + Math.floor(1.4 + Math.sin(n * 1.8 + room) * 1.4)) continue;
           if (row > 6 && (n + room) % 3 === 0) continue;
           block(1.08, .54, .95, this.materials.wall, x, .27 + row * .57, center - 9.7, (random() - .5) * .02);
         }
-        pillar(side * 3.4, center - 9.35, 5.5);
-        for (let step = 0; step < 4; step++) block(6.8 - step * .28, .18, 2.6 - step * .38, this.materials.wall, 0, .05 + step * .17, center - 8.55 - step * .15);
+        pillar(layout.doorX + side * 3.4, center - 9.35, layout.wallHeights.back - .5);
+        if (side < 0) for (let step = 0; step < 4; step++) block(6.8 - step * .28, .18, 2.6 - step * .38, this.materials.wall, layout.doorX, .05 + step * .17, center - 8.55 - step * .15);
         // Foreground remnants frame the action; high pieces sit at the edges.
-        pillar(side * 8.7, center + 7.1, side < 0 ? 3.7 : 2.7);
-        for (let n = 0; n < 4; n++) block(1.05, .53, .84, this.materials.wall, side * (9.3 + n * .92), .25, center + 7.2, (random() - .5) * .1);
+        pillar(side * (8.7 + sideOffset), center + 7.1, room === 3 ? 1.1 : side < 0 ? 3.7 : 2.7);
+        for (let n = 0; n < 4; n++) block(1.05, .53, .84, this.materials.wall, side * (9.3 + sideOffset + n * .92), .25, center + 7.2, (random() - .5) * .1);
       }
       // Dense rubble has multiple scales: fallen voussoirs, hand-sized stones,
       // chips and grit. Irregular clusters leave a navigable central lane.
@@ -446,18 +459,21 @@ export class DungeonWorld {
         }
       }
     }
-    for (const { material, geometries, room } of batches.values()) {
+    for (const { material, geometries, room, occluder } of batches.values()) {
       const merged = mergeGeometries(geometries, false);
       if (merged) {
         const mesh = this.mesh(merged, material); mesh.castShadow = material !== this.materials.floor && material !== this.materials.dark;
-        mesh.userData.room = room; mesh.matrixAutoUpdate = false; mesh.updateMatrix(); this.floorGroup.add(mesh);
+        mesh.userData.room = room; mesh.userData.occluder = occluder; mesh.matrixAutoUpdate = false; mesh.updateMatrix(); this.floorGroup.add(mesh);
       }
       geometries.forEach(geometry => geometry.dispose());
     }
   }
 
   private addTorch(x: number, y: number, z: number, withLight: boolean): void {
+    const room = Math.round(-z / 20);
+    if (isCrossingChasm(room, x, z + room * 20)) return;
     const group = new THREE.Group(); group.position.set(x, y, z);
+    group.userData.room = room; group.userData.occluder = y > .8;
     group.add(this.mesh(new THREE.CylinderGeometry(.2, .12, .36, 8), this.materials.gold));
     const flame = this.mesh(new THREE.PlaneGeometry(.55, .95), this.livingFlame, 0, .55); flame.rotation.y = .7; flame.castShadow = false; group.add(flame);
     const halo = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xff942b, map: this.glowMap, transparent: true, opacity: .35, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
@@ -469,33 +485,49 @@ export class DungeonWorld {
 
   private addModelProps(): void {
     for (let room = 0; room < 6; room++) {
-      const center = -room * 20;
+      const center = -room * 20, layout = getRoomLayout(room), sideOffset = layout.sideWallX - 12.2;
+      const nearLandmark = (x: number, z: number, radius = 1) => layout.landmarks.some(landmark => Math.hypot(x - landmark.x, z - center - landmark.z) < radius + landmark.radius);
       const add = (name: string, height: number, x: number, z: number, turn = 0) => {
+        if (isCrossingChasm(room, x, z - center)) return;
         const object = this.model(name, height); if (!object) return;
         object.position.x = x; object.position.z = z; object.rotation.y = turn;
         if (name === 'wall-bay' || name === 'arch') { object.rotation.z = Math.sin(x * 1.7 + z * .3) * .022; object.scale.x *= .94 + Math.sin(x + room) * .045; }
-        object.userData.room = room; this.propGroup.add(object);
+        object.userData.room = room; object.userData.occluder = true; this.propGroup.add(object);
         return object;
       };
       for (let bay = 0; bay < 4; bay++) {
-        if (bay < 2) add('wall-bay', 5.6 + Math.sin(bay * 2 + room) * .4, -11.3, center - 4.9 + bay * 5, Math.PI / 2);
+        if (bay < 2) add(room === 3 ? 'broken-wall' : 'wall-bay', room === 3 ? 2.2 : layout.wallHeights.left + .2 + Math.sin(bay * 2 + room) * .3, -11.3 - sideOffset, center - 4.9 + bay * 5, Math.PI / 2);
         if (bay === 2) {
-          add('broken-wall', 2.4, -11.35, center + 5, Math.PI / 2);
-          const fallen = add('arch', 3.9, -9.9, center + 5.1, .4);
+          add('broken-wall', 2.4, -11.35 - sideOffset, center + 5, Math.PI / 2);
+          const fallen = add('arch', 3.9, -9.9 - sideOffset, center + 5.1, .4);
           if (fallen) { fallen.rotation.x = -Math.PI / 2 + .14; fallen.rotation.z = .18; fallen.position.y = .25; }
         }
-        add('broken-wall', 1.5 + bay % 2, 11.5, center - 7.3 + bay * 5, -Math.PI / 2);
+        add('broken-wall', 1.5 + bay % 2, 11.5 + sideOffset, center - 7.3 + bay * 5, -Math.PI / 2);
       }
       for (const side of [-1, 1]) {
-        add(side < 0 ? 'broken-wall' : 'wall-bay', side < 0 ? 3.3 : 5.3 + Math.sin(room * 1.8) * .4, side * 7.5, center - 9.4);
-        if (side < 0) add('pillar', 4.1, -10.2, center - 9.2, .12);
-        add('brazier', 1.45, side * 7.1, center + (side < 0 ? -3.8 : 3.2));
-        this.addTorch(side * 7.1, 1.02, center + (side < 0 ? -3.8 : 3.2), false);
-        add('crystal', 1.25, side * 10.2, center - 6.2);
-        add('pillar', 4.4, side * 8.7, center + 7.1);
+        add(side < 0 || room === 3 ? 'broken-wall' : 'wall-bay', side < 0 || room === 3 ? Math.min(3.3, layout.wallHeights.back - 1) : layout.wallHeights.back, layout.doorX + side * 7.5, center - 9.4);
+        if (side < 0) add('pillar', 4.1, -10.2 - sideOffset, center - 9.2, .12);
+        const brazierX = side * (layout.walkable.maxX + 1.1), brazierZ = center + (side < 0 ? -3.8 : 3.2);
+        if (!nearLandmark(brazierX, brazierZ)) {
+          add('brazier', 1.45, brazierX, brazierZ); this.addTorch(brazierX, 1.02, brazierZ, false);
+        }
+        add('crystal', 1.25, side * (10.2 + sideOffset), center - 6.2);
+        add(room === 3 ? 'broken-wall' : 'pillar', room === 3 ? 1.0 : room === 2 ? 3.3 : 4.4, side * (8.7 + sideOffset), center + 7.1);
       }
-      add('arch', 6.8, 0, center - 9.4);
-      add('chest', .82, 6.8, center - 5.1, -.9);
+      add('arch', layout.wallHeights.back + .8, layout.doorX, center - 9.4);
+      const chestX = layout.walkable.maxX + 1.1;
+      if ([0,2,5].includes(room) && !nearLandmark(chestX, center - 5.1)) add('chest', .82, chestX, center - 5.1, -.9);
+      for (const landmark of layout.landmarks) {
+        const z = center + landmark.z;
+        if (landmark.id === 'furnace') { add('furnace', 3.2, landmark.x, z, .15); this.addTorch(landmark.x, .35, z + .25, false); }
+        else if (landmark.id === 'reliquary') add('reliquary', 3.0, landmark.x, z, .25);
+        else if (landmark.id.includes('crystals')) {
+          add('crystal', 3.1, landmark.x, z, .5);
+          add('crystal', 1.5, landmark.x + .75, z + .5, -1);
+          add('crystal', 1.15, landmark.x - .75, z + .7, .8);
+        }
+        else if (landmark.id === 'altar') add('reliquary', 2.1, landmark.x, z, 0);
+      }
       if (room === 5) {
         const portal = new THREE.Mesh(new THREE.CircleGeometry(2, 48), new THREE.MeshBasicMaterial({ color: 0x128bb8, map: this.glowMap, transparent: true, opacity: .5, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
         portal.position.set(0, 2.8, center - 9.8); portal.userData.room = room; this.propGroup.add(portal);
@@ -510,20 +542,15 @@ export class DungeonWorld {
     this.enemies.forEach(enemy => this.releaseProcedural(enemy.visual));
     this.enemyInstances.forEach(instance => instance.mesh.dispose()); this.enemyInstances.length = 0;
     this.enemies.length = 0; this.enemyGroup.clear();
-    this.destination.set(Math.sin(this.encounter * 2) * 1.3, 0, -this.encounter * 20 + 1.4);
+    const layout = getRoomLayout(this.encounter);
+    this.destination.set(layout.heroX, 0, -this.encounter * 20 + layout.heroZ);
     if (!this.frame || Math.abs(was - this.encounter) > 1) { this.hero.position.copy(this.destination); this.cameraTarget.copy(this.destination); }
     const count = Math.max(1, Math.min(96, enemyCount ?? (this.encounter === 5 ? 36 : 24 + this.encounter * 2)));
+    const formation = enemyPositions(this.encounter, count);
     for (let i = 0; i < count; i++) {
       const brute = (i % 7 === 0), boss = this.encounter === 5 && i === 0;
-      const angle = i * 2.39996 + this.encounter * .7;
-      const radius = 1 + ((i * 7) % 9) * .23;
-      const approach = Math.floor(i / 5) % 3;
-      const anchors = [[-4.5, -3.6], [4.4, -2.1], [-.8, 5.5]];
-      const anchor = anchors[approach];
       const root = new THREE.Group();
-      const origin = this.destination.clone().add(new THREE.Vector3(anchor[0] + Math.sin(angle) * radius, 0, anchor[1] + Math.cos(angle) * radius));
-      if (i === 2 || i === 8) origin.copy(this.destination).add(new THREE.Vector3(i === 2 ? -2.3 : 2.4, 0, i === 2 ? .4 : -.6));
-      if (boss) origin.set(0, 0, -this.encounter * 20 - 4);
+      const origin = new THREE.Vector3(formation[i].x, 0, -this.encounter * 20 + formation[i].z);
       root.position.copy(origin); root.rotation.y = Math.atan2(this.destination.x - origin.x, this.destination.z - origin.z);
       const modelId = brute ? 'guardian' : i % 6 === 4 ? 'wraith' : 'skeleton';
       const visual = this.makeEnemy(brute, boss, modelId); root.add(visual); this.enemyGroup.add(root);
@@ -538,7 +565,24 @@ export class DungeonWorld {
     this.materials.floor.color.setHex(ember ? 0xb5a896 : frost ? 0x919fa7 : 0x9c96a3);
     this.updateStoneTint();
     this.scene.fog = new THREE.Fog(frost ? 0x06101a : 0x03090c, 38, 72);
-    this.warmLights.forEach(light => light.color.setHex(ember ? 0xff963f : frost ? 0xb8cdda : 0xad7cd1));
+    this.warmLights.forEach(light => light.color.setHex(0xff963f));
+    const roomZ = -this.encounter * 20, sideOffset = layout.sideWallX - 12.2;
+    const west = layout.landmarks.find(landmark => landmark.id === 'furnace' || landmark.id === 'reliquary');
+    const crystal = (side: number) => layout.landmarks.find(landmark => landmark.id === (side < 0 ? 'west-crystals' : 'east-crystals'));
+    this.warmLights[0].intensity = west ? 28 : 70; this.warmLights[1].intensity = 60;
+    this.warmLights[0].color.setHex(west?.id === 'reliquary' ? 0x59bfdd : 0xff963f);
+    this.lightAnchors[0].set(west ? west.x + .4 : -(layout.walkable.maxX + 1.1), west ? 1.8 : 2.3, roomZ + (west ? west.z + 1.2 : -3.8));
+    this.lightAnchors[1].set(layout.walkable.maxX + 1.1, 2.3, roomZ + 3.2);
+    if (this.encounter === 3) {
+      this.warmLights[0].intensity = 32; this.warmLights[1].intensity = 28;
+      this.lightAnchors[0].set(-5.5, 2.6, roomZ - 5);
+      this.lightAnchors[1].set(5.5, 2.6, roomZ + 5);
+    }
+    for (const [index, side] of [-1, 1].entries()) {
+      const cluster = crystal(side);
+      this.lightAnchors[index + 2].set(cluster?.x ?? side * (10.2 + sideOffset), 1.9, roomZ + (cluster?.z ?? -6.2));
+    }
+    if (!this.frame) [...this.warmLights, ...this.recessLights].forEach((light, index) => light.position.copy(this.lightAnchors[index]));
     this.buildBiome(); this.biomeGroup.position.z = -this.encounter * 20;
     this.batchEnemies();
     this.renderer.shadowMap.needsUpdate = true;
@@ -552,8 +596,9 @@ export class DungeonWorld {
   }
 
   private buildBiome(): void {
-    if (this.biomeBuilt === this.regionId) return;
-    this.biomeBuilt = this.regionId;
+    const key = `${this.regionId}:${this.encounter === 3 ? 'crossing' : 'hall'}`;
+    if (this.biomeBuilt === key) return;
+    this.biomeBuilt = key;
     const oldTextures = new Set<THREE.Texture>();
     this.biomeGroup.traverse(object => { if (object instanceof THREE.Mesh) {
       object.geometry.dispose();
@@ -568,11 +613,13 @@ export class DungeonWorld {
       const snow = stoneMaterial(0x87999d, 85); ice.name = "frost-spires"; snow.name = "frost-snow";
       for (const side of [-1, 1]) {
         for (let i = 0; i < 10; i++) {
+          if (this.encounter === 3 && Math.abs(-7.6 + i * 1.65) < 4.9) continue;
           const height = 1.2 + (i * 7 % 9) * .42;
           const spire = this.mesh(new THREE.ConeGeometry(.28 + i % 3 * .14, height, 5), ice.clone(), side * (8.6 + i % 3 * .6), height * .45, -7.6 + i * 1.65);
           spire.rotation.z = side * (.13 + i % 3 * .08); this.biomeGroup.add(spire);
           const drift = this.mesh(new THREE.SphereGeometry(.9, 10, 5), snow.clone(), side * 9, .02, -7 + i * 1.65); drift.scale.set(1.5, .17, .75); this.biomeGroup.add(drift);
         }
+        if (this.encounter === 3) continue;
         const poolGeometry = new THREE.CircleGeometry(2.7, 45), edges = poolGeometry.getAttribute('position');
         for (let n = 1; n < edges.count; n++) { const shape = .84 + Math.sin(n * 1.7) * .06 + Math.sin(n * .7) * .09; edges.setXY(n, edges.getX(n) * shape, edges.getY(n) * shape); }
         const frozen = ice.clone(); frozen.name = "frozen-pool"; frozen.opacity = .48; frozen.roughness = .56; frozen.color.setHex(0x385263); frozen.map = this.materials.floor.map;
@@ -587,15 +634,16 @@ export class DungeonWorld {
     } else if (this.regionId.includes('storm')) {
       const stone = stoneMaterial(0x5a5367, 61); stone.name = "storm-platform";
       for (const side of [-1, 1]) {
-        const platform = this.mesh(new RoundedBoxGeometry(2.65, .58, 12.5, 1, .08), stone.clone(), side * 7.9, .25, -.9); this.biomeGroup.add(platform);
+        if (this.encounter !== 3) { const platform = this.mesh(new RoundedBoxGeometry(2.65, .58, 12.5, 1, .08), stone.clone(), side * 7.9, .25, -.9); this.biomeGroup.add(platform); }
         for (let i = 0; i < 4; i++) {
           const z = -6.4 + i * 3.8;
-          const pedestal = this.mesh(new THREE.CylinderGeometry(.62, .86, .65, 6), stone.clone(), side * 7.9, .9, z); this.biomeGroup.add(pedestal);
+          if (isCrossingChasm(this.encounter, side * 7.9, z)) continue;
+          const pedestal = this.mesh(new THREE.CylinderGeometry(.62, .86, .65, 6), stone.clone(), side * 7.9, this.encounter === 3 ? .33 : .9, z); this.biomeGroup.add(pedestal);
           const rune = new THREE.Group(); rune.position.set(side * 7.9, 2.4, z); rune.userData.baseY = 2.4;
           const core = this.mesh(new THREE.OctahedronGeometry(.7, 0), stone.clone()); core.scale.y = 1.5; rune.add(core);
           for (let band = 0; band < 3; band++) { const ring = new THREE.Mesh(new THREE.TorusGeometry(.49 + band * .025, .023, 4, 6), new THREE.MeshBasicMaterial({ color: 0x8d99fc })); ring.rotation.x = Math.PI / 2; ring.position.y = (band - 1) * .27; rune.add(ring); }
           this.biomeGroup.add(rune); this.floatingRunes.push(rune);
-          if (i < 3) {
+          if (i < 3 && this.encounter !== 3) {
             const points = Array.from({length:12}, (_, n) => new THREE.Vector3(side * 7.9 + Math.sin(n * 3.1) * .12, 1.2 + Math.sin(n * 2.6) * .16, z + n / 11 * 3.8));
             const conduit = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 22, .025, 3, false), new THREE.MeshBasicMaterial({color:0x8aaafa,transparent:true,opacity:.62,blending:THREE.AdditiveBlending})); this.biomeGroup.add(conduit);
           }
@@ -1212,12 +1260,15 @@ export class DungeonWorld {
     this.camera.lookAt(this.cameraTarget.x, .2, this.cameraTarget.z - 1.8);
     const moon = this.scene.getObjectByName('moon') as THREE.DirectionalLight;
     moon.position.set(this.cameraTarget.x - 12, 24, this.cameraTarget.z - 10); moon.target.position.copy(this.cameraTarget);
-    this.warmLights[0].position.set(-8, 3.3, this.cameraTarget.z - 5);
-    this.warmLights[1].position.set(8, 2.8, this.cameraTarget.z + 4);
-    this.recessLights[0].position.set(-10, 2.6, this.cameraTarget.z - 6.5);
-    this.recessLights[1].position.set(5.5, 2.8, this.cameraTarget.z - 9.2);
+    [...this.warmLights, ...this.recessLights].forEach((light, index) => light.position.lerp(this.lightAnchors[index], 1 - Math.exp(-delta * 3)));
     for (const object of [...this.floorGroup.children, ...this.propGroup.children]) {
-      if (typeof object.userData.room === 'number') object.visible = Math.abs(object.userData.room * -20 - this.cameraTarget.z) < 37;
+      if (typeof object.userData.room === 'number') {
+        const center = object.userData.room * -20;
+        // Cut away the room behind the camera once its doorway is crossed;
+        // keep its ground so the viewport still has a continuous dungeon floor.
+        object.visible = Math.abs(center - this.cameraTarget.z) < 37
+          && !(object.userData.occluder && this.cameraTarget.z < center - 10);
+      }
     }
     this.renderer.info.reset();
     if (this.softwareRenderer) this.renderer.render(this.scene, this.camera); else this.composer.render(delta);

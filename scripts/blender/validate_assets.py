@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/'web/public/assets/rpg'
-expected=('hero','imp','guardian','pillar','arch','brazier','crystal','chest','wall','wall-bay','broken-wall','skeleton','wraith')
+expected=('hero','imp','guardian','pillar','arch','brazier','crystal','chest','wall','wall-bay','broken-wall','skeleton','wraith','furnace','reliquary')
 stats={}
 for name in expected:
     path=OUT/(name+'.glb');data=path.read_bytes()

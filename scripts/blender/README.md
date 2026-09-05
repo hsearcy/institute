@@ -15,7 +15,7 @@ the painted concept lighting or detail.
 ## Surfaces and runtime files
 
 `web/public/assets/rpg/manifest.json` records current triangles, draw calls, nodes,
-file sizes, and hero clips. All thirteen GLBs are self-contained: embedded albedo,
+file sizes, and hero clips. All fifteen GLBs are self-contained: embedded albedo,
 tangent normal, and occlusion/roughness/metallic textures; no external URLs or
 compression decoder dependency. `imp.glb` aliases the skeleton for compatibility.
 
@@ -43,6 +43,8 @@ blade edges retain their own materials.
 | `brazier.glb` | Sooty pedestal, hammered bowl, curled cage, glowing coals; runtime adds animated fire |
 | `crystal.glb` | Irregular quartz growing through fractured host rock |
 | `chest.glb` | Weathered oak, corroded iron straps, carrying rings, hinged lid and glowing lock |
+| `furnace.glb` | Open soot-lined kiln, radial stone lintel, cracked chimney, iron grate and banked coals |
+| `reliquary.glb` | Carved octagonal plinth, four open Gothic arches, bronze cradle and crystal heart |
 
 Coordinates are **+Y up, +Z front, meters, ground-centered origin**. The renderer
 normalizes the model height for placement. Prefixes `Body_`, `Head_`, `Cape_`,
@@ -131,3 +133,16 @@ The [exported creature review](previews/v2/creatures-rebuilt.png) was rendered a
 re-importing the final optimized GLBs. Rebuilds retain the newly created
 collection reference through baking and articulation, even when older workshop
 scenes contain similarly named collections.
+
+## Room landmarks
+
+`detailed/landmarks.py` authors the Ember Hall furnace and Lost Reliquary shrine.
+Both use seed 312 and the same bake/export/optimization pipeline as the existing
+library. Their retained source atlases are under `textures/`. The final production
+exports add 11,092 triangles and about 2 MB together.
+
+![Optimized furnace and reliquary re-imported into Blender](previews/v2/room-landmarks.png)
+
+The renderer places these outside the hero travel lane and enemy footprints, using
+`web/src/rpg/world/roomLayout.ts`. Room widths, entrances, floor openings, and
+formations are renderer metadata; they do not modify learning or saved expeditions.

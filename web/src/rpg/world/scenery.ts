@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { isCrossingChasm, boundsIntersectCrossingChasm, getRoomLayout } from './roomLayout';
 
 /** Low relief and remnants of the old vault. All meshes are static, grouped by
  * room/material, and have no collision or connection to learning state. */
@@ -34,7 +35,14 @@ export function createVaultScenery(base: Record<string, THREE.MeshStandardMateri
   const wet = new THREE.MeshStandardMaterial({ color: 0x29312c, roughness: .17, metalness: .3, alphaMap: mask, transparent: true, opacity: .65, depthWrite: false, vertexColors: true });
 
   const add = (room: number, geometry: THREE.BufferGeometry, material: THREE.Material, position: THREE.Vector3, rotation = new THREE.Euler(), scale = new THREE.Vector3(1, 1, 1), shadow = true) => {
+    if (isCrossingChasm(room, position.x, position.z + room * 20)) { geometry.dispose(); return; }
     geometry.applyMatrix4(new THREE.Matrix4().compose(position, new THREE.Quaternion().setFromEuler(rotation), scale));
+    // A rotated stain can cover a pit even when its center lies on solid floor.
+    if (room === 3 && (material === grime || material === wet)) {
+      geometry.computeBoundingBox();
+      const bounds = geometry.boundingBox!;
+      if (boundsIntersectCrossingChasm(room, { minX: bounds.min.x, maxX: bounds.max.x, minZ: bounds.min.z + room * 20, maxZ: bounds.max.z + room * 20 })) { geometry.dispose(); return; }
+    }
     const shade = .72 + random() * .45, colors = new Float32Array(geometry.getAttribute('position').count * 3);
     for (let i = 0; i < colors.length; i += 3) { colors[i] = shade; colors[i + 1] = shade * .98; colors[i + 2] = shade * .93; }
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
@@ -118,10 +126,10 @@ export function createVaultScenery(base: Record<string, THREE.MeshStandardMateri
     }
     // Fragments of iron portcullis remain attached to the high side of the vault.
     for (let chain = 0; chain < 2; chain++) {
-      const x = -11.55, z = center - 6.2 + chain * 9.7;
+      const layout = getRoomLayout(room), x = -11.55 - (layout.sideWallX - 12.2), z = center - 6.2 + chain * 9.7;
       for (let n = 0; n < 12; n++) {
         const g = new THREE.TorusGeometry(.105, .019, 4, 8); g.scale(.65, 1, 1);
-        add(room, g, iron, new THREE.Vector3(x + Math.sin(n * .23 + room) * .12, 3.5 - n * .15, z), new THREE.Euler(0, n % 2 ? Math.PI / 2 : 0, .08 * Math.sin(n)), undefined, false);
+        add(room, g, iron, new THREE.Vector3(x + Math.sin(n * .23 + room) * .12, Math.min(3.5, layout.wallHeights.left - .3) - n * .15, z), new THREE.Euler(0, n % 2 ? Math.PI / 2 : 0, .08 * Math.sin(n)), undefined, false);
       }
     }
   }

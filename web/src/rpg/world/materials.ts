@@ -88,7 +88,7 @@ export function flameMaterial(): THREE.ShaderMaterial {
   });
 }
 
-/** Relief and roughness are derived once from the scanned albedo, then remain
+/** Relief and roughness are derived once from the bundled albedo, then remain
  * ordinary GPU textures. Crevices stay matte while worn stone catches light. */
 export function floorRelief(image: TexImageSource): { bump: THREE.CanvasTexture; roughness: THREE.CanvasTexture } {
   const canvas = document.createElement('canvas'); canvas.width = canvas.height = 1024;
@@ -100,7 +100,15 @@ export function floorRelief(image: TexImageSource): { bump: THREE.CanvasTexture;
     const value = pixels.data[offset] * .25 + pixels.data[offset + 1] * .6 + pixels.data[offset + 2] * .15;
     const height = Math.min(255, Math.max(0, (value - 22) * 3));
     pixels.data[offset] = pixels.data[offset + 1] = pixels.data[offset + 2] = height;
-    const finish = 224 - height * .27;
+    // Periodic broad patches remain seamless at the tile edges. Restrict damp
+    // highlights to raised stone tops; dark joints stay rough and absorb light.
+    const x = (offset / 4) % 1024 / 1024 * Math.PI * 2;
+    const y = Math.floor(offset / 4 / 1024) / 1024 * Math.PI * 2;
+    const patch = (Math.sin(x * 3 + Math.cos(y * 2)) + Math.cos(y * 2 + Math.sin(x)) + .5 * Math.sin(x * 5 - y * 3)) / 2.5;
+    const coverage = Math.max(0, Math.min(1, (patch - .03) / .6));
+    const top = Math.max(0, Math.min(1, (height - 70) / 100));
+    const damp = coverage * coverage * (3 - 2 * coverage) * top;
+    const finish = (224 - height * .18) * (1 - damp) + 80 * damp;
     roughPixels.data[offset] = roughPixels.data[offset + 1] = roughPixels.data[offset + 2] = finish;
     roughPixels.data[offset + 3] = 255;
   }

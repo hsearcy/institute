@@ -10,6 +10,7 @@ import { icon, spellArt, relicArt, escapeHtml as esc } from './icons';
 import './rpg.css';
 import './ui-v2.css';
 import { nextSpellGoal } from './nextSpell';
+import { getRoomLayout } from './world/roomLayout';
 
 type Session = {
   expeditionId: string; encounterIndex: number; problem: Problem; firstAttempt: boolean | null;
@@ -18,7 +19,7 @@ type Session = {
   pending?: { correct: boolean; assisted: boolean; solveMs: number; spellId?: RpgSpellId };
 };
 const sessionKey = `institute:rpg:problem:v1:${API}:${PROFILE}`;
-const roomNames = ['The Broken Gate', 'Hall of Embers', 'The Lost Reliquary', 'The Crystal Bridge', 'The Inner Sanctum', 'The Guardian'];
+const roomNames = Array.from({length:6}, (_, index) => getRoomLayout(index).name);
 
 /** The adventure is a client of the existing tutor; it never chooses math topics. */
 export class RpgGame {

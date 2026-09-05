@@ -1,8 +1,68 @@
 # The Sunken Vault playtest record
 
-Verified September 5, 2026 on `concept/math-dungeon-rpg`. The second and third revisions address the gap between the first prototype and the approved concept: textured Gothic architecture, denser hordes, animated characters, illustrated controls, and substantially more magic and loot. Images below are captured from the implementation, not generated concept art.
+Verified September 5, 2026 on `concept/math-dungeon-rpg`. Successive revisions address the gap between the first prototype and the approved concept: textured Gothic architecture, denser hordes, animated characters, illustrated controls, and substantially more magic and loot. Images below are captured from the implementation, not generated concept art.
 
-![Implemented dungeon and illustrated controls](rpg-playtest/v5/encounter.png)
+![Implemented guardian sanctum](rpg-playtest/v6/sanctum.png)
+
+## Sixth room and composition pass
+
+The six encounters now have distinct widths, wall heights, offset entrances, and
+landmarks: the Broken Gate, Ember Hall, Lost Reliquary, Collapsed Crossing,
+Crystal Gallery, and Guardian Sanctum. The furnace and reliquary were authored,
+baked, and exported through Blender MCP. The crossing removes two actual floor
+rectangles beside the bridge, with masonry extending down into the openings.
+Floor stains, snow, and storm scenery respect those openings.
+
+Enemy formations now fill clear spaces progressively. A normal 24–36-enemy horde
+spreads across the room; later additions fill the gaps without rearranging the
+existing formation. All rooms retain 96-enemy capacity. Placement excludes the
+hero arrival area, incoming travel lane, room boundaries, and major landmarks.
+This is floor-footprint clearance; large animated guardian arms may extend beyond it.
+
+Tall architecture behind the hero cuts away after crossing the doorway, while the
+floor stays visible. Torches and crystal landmarks anchor the four existing room
+lights; restrained fill and irregular damp stone highlights improve separation.
+The new models and runtime lighting are still checked against the approved
+concept, rather than treating a passing regression as visual parity.
+
+Live local play preserved the pending question across reload. Solving the bridge
+and gallery advanced XP 596→628→660, reached level 5, and entered the larger
+sanctum. Solving `4 + ? = 8` then completed the expedition, saved XP 660→750,
+and awarded the legendary Phoenix Scepter. These were normal textbox/button
+interactions in the user's Chromium profile on port 9222, using only the local
+fixture learner. The final idle/cast lighting settings were first compared in
+that renderer, then applied to the source.
+
+![Actual boss cast in the new sanctum](rpg-playtest/v6/boss-cleave.png)
+
+The room checks include all 96 enemy footprints, progressive normal-pack spacing,
+exact bridge floor coverage, transformed decal bounds, and sampled room-to-room
+travel. The production library now contains 15 validated GLBs: 196,141 triangles
+and 20,790,160 bytes, with 14 models loaded by gameplay (the retained wall asset
+is not loaded). The unit suite passes 235 tests and the production build passes.
+The two desktop/touch gameplay scenarios passed in 58.4 seconds. All 15 spell
+abilities passed across three expeditions in 1.5 minutes, including equipment
+modifiers, school effects, and persistent progression. The last changes after the
+browser runs only remove duplicate doorway steps and reposition bridge torch
+sockets; the final build/unit checks and renderer bridge inspection cover those. Landmark
+light intensities were then reduced after their final renderer inspection; the
+production build also passes with those adjustments.
+
+The furnace, reliquary, and bridge images below are **renderer-only inspections**
+at the normal camera with the HUD hidden; they are not additional recorded solves.
+Another local tab advanced the fixture during testing, so these checks deliberately
+left its learning and RPG save intact. The two new models were also re-imported
+from their optimized GLBs and [inspected in Blender](../scripts/blender/previews/v2/room-landmarks.png).
+
+![Furnace hall — renderer inspection](rpg-playtest/v6/furnace-renderer.png)
+![Lost reliquary — renderer inspection](rpg-playtest/v6/reliquary-renderer.png)
+![Collapsed crossing — renderer inspection](rpg-playtest/v6/crossing-renderer.png)
+
+Remaining visual work includes stronger fractured planes on the guardian bodies
+and more grounded, textured spell impacts. The current revision improves room
+variety and readability; it does not establish concept-art parity, sustained
+child play appeal, or compatibility with the actual Ares deployment. Ares data
+and services have not been modified.
 
 ## Fifth creature pass
 
@@ -100,7 +160,7 @@ new Ashsplitter loot. The actual Ares deployment is still not verified.
 - **33 skill nodes** with prerequisite branches, multiple ranks, and visible modifiers such as repeated meteors, wider sweeps, orbiting lightning, and summoned guardians.
 - **23 collectible relics**, including school-wide and spell-specific bonuses. Real drops have a rarity beam, a name label, and an illustrated discovery card with an Equip action.
 - Three replayable regions with different scenery. Enemies wait while the learner thinks; animation and elapsed time never cause damage or submit learning outcomes.
-- Thirteen self-contained Blender GLBs with baked PBR materials. The hero has an eight-bone rig and idle, walk, cleave, and cast clips. Authoring files and retained bake atlases live under `scripts/blender`; production GLBs embed their textures.
+- Fifteen self-contained Blender GLBs with baked PBR materials. The hero has an eight-bone rig and idle, walk, cleave, and cast clips. Authoring files and retained bake atlases live under `scripts/blender`; production GLBs embed their textures.
 - Illustrated spellbook and equipment art, a connected skill-tree view, saved favorite abilities for the three hotbar slots, and keyboard controls: Q/W/E, B for spellbook, K for skills.
 
 ![The expanded spellbook](rpg-playtest/v2-spellbook.png)

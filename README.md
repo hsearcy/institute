@@ -2,7 +2,7 @@
 
 **The Sunken Vault** is a browser dungeon RPG powered by Institute's existing adaptive math tutor. Solve a problem to unleash a spell through a horde, collect rare equipment, gain experience, and grow three branching skill trees with 33 nodes and 23 relics across three expeditions.
 
-The world keeps moving while you think, but combat waits for your answer. Travel and targeting are automatic. Fifteen abilities span Flame, Frost, and Storm, including Flame Cleave, Meteor, Phoenix Dive, Blizzard, Frost Guardian, and Ball Lightning; each six-encounter expedition ends with a guardian and loot.
+The world keeps moving while you think, but combat waits for your answer. Travel and targeting are automatic. Fifteen abilities span Flame, Frost, and Storm, including Flame Cleave, Meteor, Phoenix Dive, Blizzard, Frost Guardian, and Ball Lightning; each six-encounter expedition ends with a guardian and loot. Distinct rooms include a furnace hall, a lost reliquary, a broken bridge, and a crystal gallery, with automatic travel and progressively denser hordes.
 
 The learning graph, mastery rules, spaced review, prerequisite rescue, demonstrations, spoken hints, and original reward system remain in place. Existing learners start a new RPG hero while keeping their learning progress and gem collection. The original mine and shops remain available at `?mode=mine`.
 

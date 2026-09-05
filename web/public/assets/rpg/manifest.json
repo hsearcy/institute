@@ -244,6 +244,28 @@
         "Head_Baked.002",
         "Cape_Baked.002"
       ]
+    },
+    "furnace": {
+      "url": "/assets/rpg/furnace.glb",
+      "bytes": 1105636,
+      "triangles": 8140,
+      "drawCalls": 3,
+      "embeddedTextures": 3,
+      "nodes": [
+        "Body_Glow",
+        "Body_Glow.014",
+        "Body_Baked.040"
+      ]
+    },
+    "reliquary": {
+      "url": "/assets/rpg/reliquary.glb",
+      "bytes": 930080,
+      "triangles": 2952,
+      "drawCalls": 1,
+      "embeddedTextures": 3,
+      "nodes": [
+        "Body_Baked.041"
+      ]
     }
   }
 }

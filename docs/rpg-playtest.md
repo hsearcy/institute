@@ -2,7 +2,35 @@
 
 Verified September 5, 2026 on `concept/math-dungeon-rpg`. The second and third revisions address the gap between the first prototype and the approved concept: textured Gothic architecture, denser hordes, animated characters, illustrated controls, and substantially more magic and loot. Images below are captured from the implementation, not generated concept art.
 
-![Implemented dungeon and illustrated controls](rpg-playtest/v3/encounter.png)
+![Implemented dungeon and illustrated controls](rpg-playtest/v4/encounter.png)
+
+## Fourth masonry pass
+
+The rendered walls now combine chipped convex stones with a seamless limestone
+surface baked through Blender MCP. Albedo, relief, and roughness use separate
+maps; texture scale stays consistent across blocks, tombs, and stairs. Low courses
+have damp darkening. Blender wall bays and broken-wall sections were rebuilt with
+less regular courses, deeper edge wear, and mineral staining. The retained wall
+asset was refreshed too, although the renderer does not currently load it.
+
+Review caught and fixed collapsed UVs on some upper facets and encounter changes
+restoring the old dark fallback tint. A geometry probe checked 4,400 chipped-stone
+triangles and representative stair/slab geometry without collapsed UV triangles.
+Live presentation checks confirmed the loaded surface and correct tint in all
+three regions. The real local solve `7 + 10 + 1 = 18` cast Fire Nova, advanced to
+the next encounter, and saved XP from 532 to 564.
+
+![Fire Nova against rebuilt masonry](rpg-playtest/v4/fire-nova.png)
+
+The production build, 210 unit tests, and thirteen GLB validators pass. The two
+desktop/touch gameplay regression scenarios passed in 57.5 seconds; the final UV
+and tint fixes were then checked with a fresh build, geometry review, and live
+Chromium play. The exported GLBs total 181,575 triangles and 19,003,348 bytes,
+excluding the three new seamless maps. A warmed 120-frame observation at
+1440 × 900 took 3.39 seconds (about 35 FPS); the cast diagnostic sampled 40 FPS.
+Individual screenshot/cold-load samples were slower. This pass improves visible
+stonework, but creature silhouettes and the overall composition still trail the
+approved concept. Ares resume verification and a child's playtest remain pending.
 
 ## Third visual and progression pass
 
@@ -69,6 +97,6 @@ Fixtures begin with existing mastered and practicing topics, reviews, demonstrat
 
 ## Visual assessment and remaining work
 
-Compare the [approved Fire Nova concept](concepts/math-dungeon-rpg/05-fire-nova.png) with the [implemented combat view](rpg-playtest/v3/fire-nova.png), and the [original prototype](rpg-playtest/encounter.png). The second and third revisions add substantial surface detail, creature animation, richer effects, and matching interface art. The largest remaining visual gaps are the angular creature silhouettes and the regular, clean stonework compared with the concept's weathered surfaces. Passing tests does not establish concept-art parity or whether a child will choose to keep playing.
+Compare the [approved Fire Nova concept](concepts/math-dungeon-rpg/05-fire-nova.png) with the [implemented combat view](rpg-playtest/v4/fire-nova.png), and the [original prototype](rpg-playtest/encounter.png). Subsequent revisions add surface detail, creature animation, richer effects, and matching interface art. The largest remaining visual gaps are the angular creature silhouettes and the orderly architecture compared with the concept's more varied ruins. Passing tests does not establish concept-art parity or whether a child will choose to keep playing.
 
 The next visual/content assessment should use the playable build, especially creature motion, repeated expeditions, spell impact, and the time between desirable unlocks. Remaining production acceptance includes the actual Ares upgrade/resume check and the child's playtest. Hardware acceleration is needed for the intended presentation; software-rendered fault tests lower framebuffer resolution and disable shadows.

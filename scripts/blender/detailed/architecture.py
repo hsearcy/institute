@@ -92,15 +92,15 @@ def wall_courses(width=4.2,height=3.0,y=0,broken=False):
     # Staggered variable-width and variable-height beds of stone with real joints.
     z=0;row=0
     while z<height:
-        h=min(.32+random.random()*.17,height-z)
+        h=min(.30+random.random()*.28,height-z)
         x=-width/2
         while x<width/2-.05:
-            w=min(.45+random.random()*.54,width/2-x)
+            w=min(.40+random.random()*.68,width/2-x)
             maxh=height-(.3+.6*(sin(x*1.7)**2)) if broken else height
             if z+h<maxh or not broken:
-                surface='stoneLight' if random.random()<.12 else 'stoneDark' if random.random()<.18 else 'stone'
+                surface='stoneOldLight' if random.random()<.14 else 'stoneOldDark' if random.random()<.18 else 'stoneOld'
                 depth=.70+random.uniform(-.07,.06)
-                o=worn_block('Old irregular wall ashlar',(x+w/2,y+random.uniform(-.024,.024),z+h/2),(w-.023,depth,h-.024),surface,.013,.02)
+                o=worn_block('Old irregular wall ashlar',(x+w/2,y+random.uniform(-.04,.04),z+h/2),(w-.035,depth,h-.036),surface,.035,.05)
                 if random.random()<.19:crack('Split limestone grain',(x+w*.64,y-depth/2-.018,z+h*.47),w*.15,h*.75,.004)
             x+=w
         z+=h;row+=1

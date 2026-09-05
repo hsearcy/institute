@@ -110,7 +110,7 @@ export function floorRelief(image: TexImageSource): { bump: THREE.CanvasTexture;
   return { bump, roughness };
 }
 
-/** Hand-painted stone maps keep the dungeon readable without downloading textures. */
+/** Small procedural fallback while the bundled stone surfaces load. */
 export function stoneMaterial(color: number, seed = 7): THREE.MeshStandardMaterial {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = 256;

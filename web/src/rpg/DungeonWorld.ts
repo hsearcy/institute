@@ -10,6 +10,7 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { EnemyAnimator } from './world/EnemyAnimator';
 import { createVaultScenery } from './world/scenery';
+import { masonryGeometry, projectStoneUV } from './world/masonry';
 import { stoneMaterial, floorRelief, flameMaterial, fireSheetMaterial, novaMaterial, stormMaterial, glowTexture, waveTexture } from './world/materials';
 
 type Enemy = { root: THREE.Group; visual: THREE.Object3D; origin: THREE.Vector3; phase: number; brute: boolean; dead: boolean; modelId: string; deathAt: number; animator: EnemyAnimator };
@@ -37,6 +38,7 @@ export class DungeonWorld {
   private readonly propGroup = new THREE.Group();
   private readonly biomeGroup = new THREE.Group();
   private biomeBuilt = "";
+  private stoneSurfaceLoaded = false;
   private readonly floatingRunes: THREE.Object3D[] = [];
   private readonly cameraTarget = new THREE.Vector3();
   private readonly destination = new THREE.Vector3();
@@ -191,6 +193,19 @@ export class DungeonWorld {
       floor.bumpScale = .13; floor.roughnessMap = relief.roughness; floor.roughness = .91; floor.metalness = .08; floor.needsUpdate = true;
       if (this.softwareRenderer) relief.bump.dispose();
     } catch { /* The procedural relief remains available if an asset is missing. */ }
+    try {
+      const loader = new THREE.TextureLoader();
+      const [map, height, roughness] = await Promise.all(['albedo', 'height', 'roughness'].map(name => loader.loadAsync(`/assets/rpg/stone/${name}.png`)));
+      map.colorSpace = THREE.SRGBColorSpace;
+      for (const texture of [map, height, roughness]) { texture.wrapS = texture.wrapT = THREE.RepeatWrapping; texture.anisotropy = 8; }
+      for (const [material, tint] of [[this.materials.wall, 0xb2b5ad], [this.materials.trim, 0xc9c7bc]] as const) {
+        material.map = map; material.bumpMap = this.softwareRenderer ? null : height;
+        material.bumpScale = .16; material.roughnessMap = roughness; material.roughness = 1;
+        material.color.setHex(tint); material.needsUpdate = true;
+      }
+      this.stoneSurfaceLoaded = true; this.updateStoneTint();
+      if (this.softwareRenderer) height.dispose();
+    } catch { /* Missing optional surface maps retain the fallback stone. */ }
     if (this.disposed) return;
     if (this.models.has('hero')) {
       this.hero.remove(this.heroVisual); this.releaseProcedural(this.heroVisual); this.heroVisual = new THREE.Group();
@@ -293,7 +308,13 @@ export class DungeonWorld {
       if (material === this.materials.wall || material === this.materials.trim) {
         const shade = .76 + random() * .46;
         const colors = new Float32Array(geometry.getAttribute('position').count * 3);
-        for (let i = 0; i < colors.length; i += 3) { colors[i] = shade; colors[i + 1] = shade * (.97 + random() * .035); colors[i + 2] = shade * .96; }
+        const positions = geometry.getAttribute('position');
+        for (let i = 0; i < colors.length; i += 3) {
+          // Damp mortar accumulates at the base instead of tinting every stone alike.
+          const height = positions.getY(i / 3) + y;
+          const damp = .67 + .33 * Math.min(1, Math.max(0, height / 1.35));
+          colors[i] = shade * damp; colors[i + 1] = shade * damp * .99; colors[i + 2] = shade * damp * .94;
+        }
         geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
         (material as THREE.MeshStandardMaterial).vertexColors = true;
       }
@@ -305,15 +326,11 @@ export class DungeonWorld {
       batches.get(key)!.geometries.push(normalized);
     };
     const block = (w: number, h: number, d: number, material: THREE.Material, x: number, y: number, z: number, turn = 0, bevel = .065) => {
-      const geometry = new RoundedBoxGeometry(w, h, d, 1, Math.min(bevel, Math.min(w, h, d) * .2));
-      if (material === this.materials.wall && w < 3 && d < 3) {
-        const vertices = geometry.getAttribute('position'), phase = random() * 30;
-        for (let i = 0; i < vertices.count; i++) {
-          const px = vertices.getX(i), py = vertices.getY(i), pz = vertices.getZ(i);
-          vertices.setXYZ(i, px + Math.sin(py * 9 + pz * 7 + phase) * .034, py + Math.sin(px * 6 + pz * 5 + phase) * .035, pz + Math.sin(px * 8 + py * 11 + phase) * .034);
-        }
-        geometry.computeVertexNormals();
-      }
+      const chipped = material === this.materials.wall && w < 3 && d < 3;
+      const geometry = chipped
+        ? masonryGeometry(w, h, d, random)
+        : new RoundedBoxGeometry(w, h, d, 1, Math.min(bevel, Math.min(w, h, d) * .2));
+      if (!chipped && (material === this.materials.wall || material === this.materials.trim)) projectStoneUV(geometry, random() * 3, random() * 3);
       add(geometry, material, x, y, z, turn);
     };
     const pillar = (x: number, z: number, height: number) => {
@@ -519,12 +536,19 @@ export class DungeonWorld {
     this.materials.crystal.color.setHex(color);
     this.heroLight.color.setHex(0x4adfcf);
     this.materials.floor.color.setHex(ember ? 0xb5a896 : frost ? 0x919fa7 : 0x9c96a3);
-    this.materials.wall.color.setHex(ember ? 0x69665d : frost ? 0x5b6871 : 0x625d6b);
+    this.updateStoneTint();
     this.scene.fog = new THREE.Fog(frost ? 0x06101a : 0x03090c, 38, 72);
     this.warmLights.forEach(light => light.color.setHex(ember ? 0xff963f : frost ? 0xb8cdda : 0xad7cd1));
     this.buildBiome(); this.biomeGroup.position.z = -this.encounter * 20;
     this.batchEnemies();
     this.renderer.shadowMap.needsUpdate = true;
+  }
+
+  private updateStoneTint(): void {
+    const frost = this.regionId.includes('frost'), storm = this.regionId.includes('storm');
+    this.materials.wall.color.setHex(this.stoneSurfaceLoaded
+      ? frost ? 0xa1b7c4 : storm ? 0xb2a7bf : 0xb2b5ad
+      : frost ? 0x5b6871 : storm ? 0x625d6b : 0x69665d);
   }
 
   private buildBiome(): void {

@@ -166,32 +166,32 @@
     },
     "wall": {
       "url": "/assets/rpg/wall.glb",
-      "bytes": 1348244,
-      "triangles": 15072,
+      "bytes": 1418816,
+      "triangles": 16608,
       "drawCalls": 1,
       "embeddedTextures": 3,
       "nodes": [
-        "Body_Baked.004"
+        "Body_Baked.029"
       ]
     },
     "wall-bay": {
       "url": "/assets/rpg/wall-bay.glb",
-      "bytes": 2831856,
-      "triangles": 46985,
+      "bytes": 2757156,
+      "triangles": 44975,
       "drawCalls": 1,
       "embeddedTextures": 3,
       "nodes": [
-        "Body_Baked.003"
+        "Body_Baked.012"
       ]
     },
     "broken-wall": {
       "url": "/assets/rpg/broken-wall.glb",
-      "bytes": 1303360,
-      "triangles": 14134,
+      "bytes": 1205832,
+      "triangles": 11198,
       "drawCalls": 1,
       "embeddedTextures": 3,
       "nodes": [
-        "Body_Baked.005"
+        "Body_Baked.028"
       ]
     },
     "skeleton": {

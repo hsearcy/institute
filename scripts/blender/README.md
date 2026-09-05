@@ -105,6 +105,15 @@ copies the skeleton compatibility alias. It requires no network. Validation chec
 GLB structure, buffer bounds, embedded images, UV/material contracts, skin joints,
 and the four animation names, then refreshes the manifest.
 
+The masonry pass also bakes `detailed/bake_stone_surface.py` into
+`web/public/assets/rpg/stone/`: seamless albedo, relief, and roughness maps made
+with periodic four-dimensional noise. Runtime chipped blocks project these maps
+at a consistent world scale; model atlases stay on their original UVs. The wall,
+wall bay, and broken-wall exports use the wider stone courses and mineral-stained
+materials in `detailed/architecture.py`. The full build refreshes both types of
+surface. To rebake just the seamless maps, run Blender with
+`--background --factory-startup --python scripts/blender/detailed/bake_stone_surface.py`.
+
 For MCP execution, bind `__file__` to the absolute `build_assets.py` path before
 executing it. The production MCP session used a dedicated virtual display and
 `--factory-startup`; existing user scenes, settings, and learning data were preserved.

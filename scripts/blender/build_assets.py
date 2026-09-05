@@ -29,3 +29,6 @@ for name in ('pillar','arch','wall','wall-bay','broken-wall','hero','skeleton','
 subprocess.run(['python',str(source/'detailed/optimize_assets.py')],check=True)
 # Preserve the legacy load path as a compatible skeletal minion, not the old toy imp.
 shutil.copyfile(OUT/'skeleton.glb',OUT/'imp.glb')
+# Runtime masonry uses a seamless surface, separate from the model UV atlases.
+surface_script=source/'detailed/bake_stone_surface.py'
+exec(compile(surface_script.read_text(),str(surface_script),'exec'),{'__file__':str(surface_script)})

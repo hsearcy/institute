@@ -10,13 +10,15 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { iceShardGeometry, iceShardMaterial } from './world/ice';
+import { enemyRoster } from './world/enemyRoster';
 import { EnemyAnimator } from './world/EnemyAnimator';
 import { createVaultScenery } from './world/scenery';
+import { createArchitecturalRemnant, ruinGeometry, isRuinFootprintClear, type RuinKind } from './world/ruins';
 import { masonryGeometry, projectStoneUV } from './world/masonry';
 import { getRoomLayout, enemyPositions, isCrossingChasm, roomFloorPatches } from './world/roomLayout';
 import { stoneMaterial, floorRelief, flameMaterial, fireSheetMaterial, firePlumeMaterial, bladeWakeMaterial, ashMaterial, novaMaterial, stormMaterial, glowTexture, waveTexture } from './world/materials';
 
-type Enemy = { root: THREE.Group; visual: THREE.Object3D; origin: THREE.Vector3; phase: number; brute: boolean; dead: boolean; modelId: string; deathAt: number; animator: EnemyAnimator };
+type Enemy = { root: THREE.Group; visual: THREE.Object3D; origin: THREE.Vector3; phase: number; brute: boolean; dead: boolean; modelId: string; height: number; deathAt: number; animator: EnemyAnimator };
 type Fragment = { position: THREE.Vector3; velocity: THREE.Vector3; rotation: THREE.Vector3; spin: THREE.Vector3; scale: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; hot: boolean; bounced: boolean };
 type Particle = { position: THREE.Vector3; velocity: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; size: number };
 type AttackOptions = { echo?: boolean; wide?: boolean; burning?: boolean; shards?: boolean; chains?: boolean; pierce?: boolean; orbit?: boolean; summon?: boolean; itemId?: string; kills?: number; drop?: { name: string; rarity: string }; xp?: number };
@@ -181,15 +183,15 @@ export class DungeonWorld {
 
   async load(): Promise<void> {
     const loader = new GLTFLoader();
-    await Promise.all(['hero', 'hero-cinder', 'hero-glacier', 'hero-tempest', 'imp', 'guardian', 'arch', 'pillar', 'brazier', 'crystal', 'chest', 'wall-bay', 'broken-wall', 'skeleton', 'wraith', 'furnace', 'reliquary', 'ice_cluster'].map(async name => {
+    await Promise.all(['hero', 'hero-cinder', 'hero-glacier', 'hero-tempest', 'imp', 'guardian', 'arch', 'pillar', 'brazier', 'crystal', 'chest', 'wall-bay', 'broken-wall', 'skeleton', 'revenant', 'wraith', 'furnace', 'reliquary', 'ice_cluster'].map(async name => {
       try {
         const gltf = await loader.loadAsync(`/assets/rpg/${name}.glb`);
         if (this.disposed) return;
         if (name === 'hero' || name.startsWith('hero-')) this.heroClipSets.set(name, gltf.animations);
         gltf.scene.traverse(object => {
           if (object instanceof THREE.Mesh) {
-            object.castShadow = true; object.receiveShadow = !name.startsWith('hero') && !['skeleton', 'wraith', 'guardian', 'imp'].includes(name);
-            if (name.startsWith('hero') || ['skeleton', 'guardian', 'imp', 'wraith'].includes(name)) {
+            object.castShadow = true; object.receiveShadow = !name.startsWith('hero') && !['skeleton', 'revenant', 'wraith', 'guardian', 'imp'].includes(name);
+            if (name.startsWith('hero') || ['skeleton', 'revenant', 'guardian', 'imp', 'wraith'].includes(name)) {
               for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
                 if (material instanceof THREE.MeshStandardMaterial) { material.envMap = this.environment.texture; material.envMapIntensity = name.startsWith('hero') ? .55 : .225; }
               }
@@ -234,7 +236,7 @@ export class DungeonWorld {
     replacedStoneTextures.forEach(texture => texture.dispose());
     this.setAppearance(this.desiredAppearance);
     this.enemies.forEach(enemy => {
-      const visual = this.model(enemy.modelId, enemy.brute ? (this.encounter === 5 && enemy === this.enemies[0] ? 3.8 : 2.5) : 1.65);
+      const visual = this.model(enemy.modelId, enemy.height) ?? (enemy.modelId === 'revenant' ? this.model('skeleton', enemy.height) : undefined);
       if (visual) { enemy.root.remove(enemy.visual); this.releaseProcedural(enemy.visual); enemy.visual = visual; enemy.root.add(visual); enemy.animator = new EnemyAnimator(visual, {kind: enemy.modelId, phase: enemy.phase}); }
     });
     this.batchEnemies();
@@ -295,8 +297,8 @@ export class DungeonWorld {
     return group;
   }
 
-  private makeEnemy(brute: boolean, boss: boolean, modelId = 'skeleton'): THREE.Group {
-    const model = this.model(brute ? 'guardian' : modelId, brute ? (boss ? 3.8 : 2.5) : 1.65); if (model) return model;
+  private makeEnemy(brute: boolean, boss: boolean, modelId = 'skeleton', height = brute ? (boss ? 3.8 : 2.5) : 1.65): THREE.Group {
+    const model = this.model(modelId, height) ?? (modelId === 'revenant' ? this.model('skeleton', height) : undefined); if (model) return model;
     const group = new THREE.Group(), material = brute ? this.materials.wall : this.materials.bone;
     group.userData.procedural = true;
     group.add(this.mesh(new THREE.IcosahedronGeometry(.34, 0), material, 0, .7));
@@ -344,12 +346,12 @@ export class DungeonWorld {
       if (material === this.materials.wall || material === this.materials.trim) {
         const shade = .76 + random() * .46;
         const colors = new Float32Array(geometry.getAttribute('position').count * 3);
-        const positions = geometry.getAttribute('position');
+        const positions = geometry.getAttribute('position'), authoredColors = geometry.getAttribute('color');
         for (let i = 0; i < colors.length; i += 3) {
           // Damp mortar accumulates at the base instead of tinting every stone alike.
           const height = positions.getY(i / 3) + y;
           const damp = .67 + .33 * Math.min(1, Math.max(0, height / 1.35));
-          colors[i] = shade * damp; colors[i + 1] = shade * damp * .99; colors[i + 2] = shade * damp * .94;
+          colors[i] = shade * damp * (authoredColors?.getX(i / 3) ?? 1); colors[i + 1] = shade * damp * .99 * (authoredColors?.getY(i / 3) ?? 1); colors[i + 2] = shade * damp * .94 * (authoredColors?.getZ(i / 3) ?? 1);
         }
         geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
         (material as THREE.MeshStandardMaterial).vertexColors = true;
@@ -371,7 +373,15 @@ export class DungeonWorld {
       if (!chipped && (material === this.materials.wall || material === this.materials.trim)) projectStoneUV(geometry, random() * 3, random() * 3);
       add(geometry, material, x, y, z, turn);
     };
-    const pillar = (x: number, z: number, height: number) => {
+    const pillar = (x: number, z: number, height: number, broken = false) => {
+      if (broken) {
+        const geometry = ruinGeometry('column-stump', Math.round(x * 31 + z * 17));
+        const size = geometry.boundingBox!.getSize(new THREE.Vector3());
+        // Existing pier footprint is retained. A fractured crown replaces the
+        // repeated intact capitals and full-height attached shafts.
+        geometry.scale(1.45 / size.x, height / size.y, 1.45 / size.z);
+        add(geometry, this.materials.trim, x, 0, z); return;
+      }
       for (let tier = 0; tier < 3; tier++) block(1.8 - tier * .18, .19, 1.8 - tier * .18, this.materials.trim, x, .1 + tier * .18, z);
       for (let layer = 0; layer < Math.ceil(height / .49); layer++) {
         const spread = layer % 3 === 0 ? 1.17 : 1.04;
@@ -417,7 +427,9 @@ export class DungeonWorld {
         for (let step = 0; step < 3; step++) block(2.0 - step * .38, .2, 19.9, this.materials.wall, side * (11.25 + sideOffset + step * .19), .05 + step * .19, center, 0, .045);
         for (let bay = 0; bay < 4; bay++) {
           const z = center - 7.4 + bay * 5;
-          pillar(side * (11.7 + sideOffset), z, side < 0 ? (bay === 3 ? 2.2 : wallHeight - .7 + Math.sin(bay * 2.3 + room) * .35) : (bay === 0 || bay === 3 ? 3.3 : wallHeight));
+          const brokenPier = (side < 0 && (bay + room) % 3 === 0) || (side > 0 && bay === 3);
+          const pierHeight = side < 0 ? (bay === 3 ? 2.2 : wallHeight - .7 + Math.sin(bay * 2.3 + room) * .35) : (bay === 0 || bay === 3 ? 3.3 : wallHeight);
+          pillar(side * (11.7 + sideOffset), z, brokenPier ? Math.min(pierHeight, 1.7 + bay * .3) : pierHeight, brokenPier);
           this.addTorch(side * (10.55 + sideOffset), 2.1, z + .7, false);
           const x = side * (9.7 + sideOffset + random() * .55);
           for (let n = 0; n < 3; n++) {
@@ -447,7 +459,8 @@ export class DungeonWorld {
         pillar(layout.doorX + side * 3.4, center - 9.35, layout.wallHeights.back - .5);
         if (side < 0) for (let step = 0; step < 4; step++) block(6.8 - step * .28, .18, 2.6 - step * .38, this.materials.wall, layout.doorX, .05 + step * .17, center - 8.55 - step * .15);
         // Foreground remnants frame the action; high pieces sit at the edges.
-        pillar(side * (8.7 + sideOffset), center + 7.1, room === 3 ? 1.1 : side < 0 ? 3.7 : 2.7);
+        const brokenFront = room !== 3 && (side > 0 ? room % 2 === 0 : room % 2 === 1);
+        pillar(side * (8.7 + sideOffset), center + 7.1, room === 3 ? 1.1 : brokenFront ? 1.5 + room % 3 * .2 : side < 0 ? 3.7 : 2.7, brokenFront);
         for (let n = 0; n < 4; n++) block(1.05, .53, .84, this.materials.wall, side * (9.3 + sideOffset + n * .92), .25, center + 7.2, (random() - .5) * .1);
       }
       // Dense rubble has multiple scales: fallen voussoirs, hand-sized stones,
@@ -527,12 +540,24 @@ export class DungeonWorld {
         object.userData.room = room; object.userData.occluder = true; this.propGroup.add(object);
         return object;
       };
+      const remnant = (kind: RuinKind, height: number, x: number, z: number, turn = 0) => {
+        const object = createArchitecturalRemnant(kind, this.materials.trim, room * 71 + Math.round(x * 13 + z * 17));
+        object.geometry.computeBoundingBox();
+        object.scale.setScalar(height / Math.max(.01, object.geometry.boundingBox!.max.y));
+        object.position.set(x, 0, z); object.rotation.y = turn; object.updateMatrixWorld(true);
+        const bounds = new THREE.Box3().setFromObject(object);
+        if (!isRuinFootprintClear(room, { minX: bounds.min.x, maxX: bounds.max.x, minZ: bounds.min.z - center, maxZ: bounds.max.z - center })) { object.geometry.dispose(); return false; }
+        object.userData.room = room; object.userData.occluder = true; this.propGroup.add(object); return true;
+      };
       for (let bay = 0; bay < 4; bay++) {
-        if (bay < 2) add(room === 3 ? 'broken-wall' : 'wall-bay', room === 3 ? 2.2 : layout.wallHeights.left + .2 + Math.sin(bay * 2 + room) * .3, -11.3 - sideOffset, center - 4.9 + bay * 5, Math.PI / 2);
+        if (bay < 2) {
+          const x = -11.3 - sideOffset, z = center - 4.9 + bay * 5;
+          const fractured = room !== 3 && (room + bay) % 2 === 0 && remnant('arch-remnant', 3.2 + room % 3 * .25, x - .18, z, Math.PI / 2);
+          if (!fractured) add(room === 3 ? 'broken-wall' : 'wall-bay', room === 3 ? 2.2 : layout.wallHeights.left + .2 + Math.sin(bay * 2 + room) * .3, x, z, Math.PI / 2);
+        }
         if (bay === 2) {
           add('broken-wall', 2.4, -11.35 - sideOffset, center + 5, Math.PI / 2);
-          const fallen = add('arch', 3.9, -9.9 - sideOffset, center + 5.1, .4);
-          if (fallen) { fallen.rotation.x = -Math.PI / 2 + .14; fallen.rotation.z = .18; fallen.position.y = .25; }
+          remnant('fallen-column', .7, -11.7 - sideOffset, center + 4.4, .16 + room * .17);
         }
         add('broken-wall', 1.5 + bay % 2, 11.5 + sideOffset, center - 7.3 + bay * 5, -Math.PI / 2);
       }
@@ -544,7 +569,8 @@ export class DungeonWorld {
           add('brazier', 1.45, brazierX, brazierZ); this.addTorch(brazierX, 1.02, brazierZ, false);
         }
         add('crystal', 1.25, side * (10.2 + sideOffset), center - 6.2);
-        add(room === 3 ? 'broken-wall' : 'pillar', room === 3 ? 1.0 : room === 2 ? 3.3 : 4.4, side * (8.7 + sideOffset), center + 7.1);
+        const brokenFront = room !== 3 && (side > 0 ? room % 2 === 0 : room % 2 === 1);
+        if (!brokenFront) add(room === 3 ? 'broken-wall' : 'pillar', room === 3 ? 1.0 : room === 2 ? 3.3 : 4.4, side * (8.7 + sideOffset), center + 7.1);
       }
       add('arch', layout.wallHeights.back + .8, layout.doorX, center - 9.4);
       const chestX = layout.walkable.maxX + 1.1;
@@ -578,15 +604,14 @@ export class DungeonWorld {
     this.destination.set(layout.heroX, 0, -this.encounter * 20 + layout.heroZ);
     if (!this.frame || Math.abs(was - this.encounter) > 1) { this.hero.position.copy(this.destination); this.cameraTarget.copy(this.destination); }
     const count = Math.max(1, Math.min(96, enemyCount ?? (this.encounter === 5 ? 36 : 24 + this.encounter * 2)));
-    const formation = enemyPositions(this.encounter, count);
+    const formation = enemyPositions(this.encounter, count), roster = enemyRoster(this.encounter, count);
     for (let i = 0; i < count; i++) {
-      const brute = (i % 7 === 0), boss = this.encounter === 5 && i === 0;
+      const { brute, boss, modelId, height } = roster[i];
       const root = new THREE.Group();
       const origin = new THREE.Vector3(formation[i].x, 0, -this.encounter * 20 + formation[i].z);
       root.position.copy(origin); root.rotation.y = Math.atan2(this.destination.x - origin.x, this.destination.z - origin.z);
-      const modelId = brute ? 'guardian' : i % 6 === 4 ? 'wraith' : 'skeleton';
-      const visual = this.makeEnemy(brute, boss, modelId); root.add(visual); this.enemyGroup.add(root);
-      this.enemies.push({ root, visual, origin, phase: i * 1.77, brute, dead: false, modelId, deathAt: 0, animator: new EnemyAnimator(visual, { kind: modelId, phase: i * 1.77 }) });
+      const visual = this.makeEnemy(brute, boss, modelId, height); root.add(visual); this.enemyGroup.add(root);
+      this.enemies.push({ root, visual, origin, phase: i * 1.77, brute, dead: false, modelId, height, deathAt: 0, animator: new EnemyAnimator(visual, { kind: modelId, phase: i * 1.77 }) });
     }
     const ember = this.regionId.includes('ember') || this.regionId.includes('forge');
     const frost = this.regionId.includes('frost');
@@ -1064,8 +1089,21 @@ export class DungeonWorld {
   }
 
   private impact(at: THREE.Vector3, color: number, scale: number): void {
-    this.emit(at.clone().setY(.4), color, Math.floor(18 + scale * 9), scale * 1.7, .85);
-    for (let i = 0; i < 7; i++) { const end = at.clone().add(new THREE.Vector3(Math.sin(i * 2.4) * scale, .25 + (i % 3) * scale * .4, Math.cos(i * 2.4) * scale)); this.stroke([at.clone().setY(.15), end], color, .03, .38); }
+    this.emit(at.clone().setY(.4), color, Math.floor(12 + scale * 6), scale * 1.25, .65);
+    // Short separated ballistic streaks read as hot fragments at contact. Their
+    // origins and curved paths vary, instead of outlining a large seven-spoke star.
+    const reach = Math.sqrt(scale) * .65;
+    for (let i = 0; i < 5; i++) {
+      const angle = i * 2.4 + at.x * .7 + at.z * .3;
+      const outward = new THREE.Vector3(Math.sin(angle), 0, Math.cos(angle));
+      const start = at.clone().addScaledVector(outward, .10 + i * .025).setY(.12 + i % 3 * .09);
+      const points = [start, start.clone().addScaledVector(outward, reach * .27).add(new THREE.Vector3(0, reach * .22, 0)), start.clone().addScaledVector(outward, reach * .55).add(new THREE.Vector3(0, reach * .16, 0))];
+      const mesh = this.stroke(points, color, .012 + i % 2 * .005, .32 + i * .018);
+      this.effects[this.effects.length - 1].update = t => {
+        mesh.position.copy(outward).multiplyScalar(t * reach * .65); mesh.position.y = t * reach * .22 - t * t * .7;
+        (mesh.material as THREE.Material).opacity = Math.pow(1 - t, 1.5) * .8;
+      };
+    }
   }
 
   private targetMark(at: THREE.Vector3, color: number, radius: number): void { this.ring(at, color, radius, .95, 'ground'); }
@@ -1409,10 +1447,10 @@ export class DungeonWorld {
         if (t === 1) enemy.root.visible = false;
       } else {
         const approach = this.hero.position.clone().sub(enemy.origin).setY(0).normalize();
-        const feint = (.5 + Math.sin(this.elapsed * .8 + enemy.phase) * .5) * (enemy.brute ? .55 : .9);
+        const feint = (.5 + Math.sin(this.elapsed * .8 + enemy.phase) * .5) * (enemy.brute ? .55 : enemy.modelId === 'revenant' ? .62 : .9);
         enemy.root.position.x = enemy.origin.x + approach.x * feint + Math.sin(this.elapsed * .65 + enemy.phase) * .16;
         enemy.root.position.z = enemy.origin.z + approach.z * feint + Math.cos(this.elapsed * .72 + enemy.phase) * .16;
-        enemy.visual.position.y = enemy.modelId === 'wraith' ? .14 + Math.sin(this.elapsed * 2 + enemy.phase) * .09 : Math.abs(Math.sin(this.elapsed * 4.7 + enemy.phase)) * (enemy.brute ? .035 : .075);
+        enemy.visual.position.y = enemy.modelId === 'wraith' ? .14 + Math.sin(this.elapsed * 2 + enemy.phase) * .09 : Math.abs(Math.sin(this.elapsed * 4.7 + enemy.phase)) * (enemy.brute || enemy.modelId === 'revenant' ? .035 : .075);
         enemy.visual.rotation.z = Math.sin(this.elapsed * 1.5 + enemy.phase) * .035;
       }
       enemy.animator.update(this.elapsed, { moving: .35 + Math.abs(Math.cos(this.elapsed * .8 + enemy.phase)) * .4, threat: this.paused ? .25 : .8, deathAge: enemy.dead ? this.elapsed - enemy.deathAt : undefined });
@@ -1501,7 +1539,7 @@ export class DungeonWorld {
   }
 
   get diagnostics(): Record<string, unknown> {
-    return { appearance: this.appearance, lastAttack: this.lastAttack, lastSpellId: this.lastAttack?.spellId, lastSpellEffect: this.lastAttack?.effect, heroAnimation: this.heroAnimation || 'procedural', heroClips: [...this.heroActions.keys()], encounter: this.encounter, region: this.regionId, enemies: this.enemies.filter(enemy => !enemy.dead).length, articulatedEnemies: this.enemies.filter(enemy => enemy.animator.articulated).length, attacking: this.attacking, paused: this.paused, modelsLoaded: this.loadedModels, drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, particles: this.particles.length, fragments: this.fragments.length, hero: this.hero.position.toArray(), softwareRenderer: this.softwareRenderer, fps: Math.round(this.framesPerSecond), quality: ['full', 'balanced', 'performance'][this.quality], renderer: this.renderer.getContext().getParameter(this.renderer.getContext().VERSION) };
+    return { appearance: this.appearance, lastAttack: this.lastAttack, lastSpellId: this.lastAttack?.spellId, lastSpellEffect: this.lastAttack?.effect, heroAnimation: this.heroAnimation || 'procedural', heroClips: [...this.heroActions.keys()], encounter: this.encounter, region: this.regionId, enemies: this.enemies.filter(enemy => !enemy.dead).length, articulatedEnemies: this.enemies.filter(enemy => enemy.animator.articulated).length, enemyRoster: this.enemies.reduce<Record<string, number>>((counts, enemy) => { counts[enemy.modelId] = (counts[enemy.modelId] ?? 0) + 1; return counts; }, {}), attacking: this.attacking, paused: this.paused, modelsLoaded: this.loadedModels, drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, particles: this.particles.length, fragments: this.fragments.length, hero: this.hero.position.toArray(), softwareRenderer: this.softwareRenderer, fps: Math.round(this.framesPerSecond), quality: ['full', 'balanced', 'performance'][this.quality], renderer: this.renderer.getContext().getParameter(this.renderer.getContext().VERSION) };
   }
 
   dispose(): void {

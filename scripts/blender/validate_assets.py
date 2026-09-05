@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/'web/public/assets/rpg'
-expected=('hero','hero-cinder','hero-glacier','hero-tempest','imp','guardian','pillar','arch','brazier','crystal','chest','wall','wall-bay','broken-wall','skeleton','wraith','furnace','reliquary','ice_cluster')
+expected=('hero','hero-cinder','hero-glacier','hero-tempest','imp','guardian','pillar','arch','brazier','crystal','chest','wall','wall-bay','broken-wall','skeleton','revenant','wraith','furnace','reliquary','ice_cluster')
 stats={}
 for name in expected:
     path=OUT/(name+'.glb');data=path.read_bytes()
@@ -44,7 +44,7 @@ for name in expected:
             if 'max' in indices:assert indices['max'][0]<accessor['count']
             triangles+=indices['count']//3
     stats[name]={'url':'/assets/rpg/'+name+'.glb','bytes':len(data),'triangles':triangles,'drawCalls':primitives,'embeddedTextures':len(doc.get('images',[])),'nodes':[n['name'] for n in doc['nodes'] if 'mesh' in n]}
-    if name in ('skeleton','imp','guardian'):
+    if name in ('skeleton','imp','revenant','guardian'):
         joints=[node.get('extras',{}).get('enemyJoint') for node in doc['nodes']]
         assert all(key in joints for key in ('Head','Body','ArmUpperL','ArmUpperR','ArmLowerL','ArmLowerR','LegUpperL','LegUpperR','LegLowerL','LegLowerR'))
         assert not doc.get('skins'), 'Enemies must remain rigid for shared instancing'
@@ -62,6 +62,11 @@ for name in expected:
         portrait=OUT/'appearances'/(name.removeprefix('hero-')+'.png')
         assert portrait.read_bytes()[:8]==b'\x89PNG\r\n\x1a\n'
         stats[name]['portrait']='/assets/rpg/appearances/'+portrait.name
+    if name=='revenant':
+        assert len(data)<3_000_000 and triangles<25_000
+        sword=next(i for i,n in enumerate(doc['nodes']) if n.get('extras',{}).get('enemyJoint')=='Sword')
+        right_forearm=next(n for n in doc['nodes'] if n.get('extras',{}).get('enemyJoint')=='ArmLowerR')
+        assert sword in right_forearm['children']
     if name=='ice_cluster':assert len(data)<600_000 and triangles<5000
 relief_walls=[stats[name] for name in ('wall-bay','broken-wall')]
 assert sum(asset['bytes'] for asset in relief_walls)<5_000_000

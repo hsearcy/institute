@@ -21,10 +21,11 @@ export class EnemyAnimator {
   private readonly euler = new Euler();
   private readonly offset = new Quaternion();
   private readonly brute: boolean;
+  private readonly armored: boolean;
   private readonly phase: number;
 
   constructor(visual: Object3D, options: { kind: string; phase: number }) {
-    this.brute = options.kind === 'guardian'; this.phase = options.phase;
+    this.brute = options.kind === 'guardian'; this.armored = options.kind === 'revenant'; this.phase = options.phase;
     visual.traverse(object => {
       const name = typeof object.userData.enemyJoint === 'string'
         ? object.userData.enemyJoint : /^Joint_(\w+)/.exec(object.name)?.[1];
@@ -39,10 +40,10 @@ export class EnemyAnimator {
     for (const joint of this.joints.values()) {
       joint.object.position.copy(joint.position); joint.object.quaternion.copy(joint.rotation);
     }
-    const t = seconds + this.phase, pace = this.brute ? 2.2 : 3.3;
+    const t = seconds + this.phase, pace = this.brute ? 2.2 : this.armored ? 2.65 : 3.3;
     const step = Math.sin(t * pace), stride = clamp(state.moving ?? .35);
     const breathe = Math.sin(t * 1.35), bodyTwist = Math.sin(t * .83);
-    const weight = this.brute ? .65 : 1;
+    const weight = this.brute ? .65 : this.armored ? .82 : 1;
     this.rotate('Body', .025 + breathe * .015, bodyTwist * .045, step * .025);
     this.rotate('Head', -.025 + Math.sin(t * 1.1) * .025, -bodyTwist * .08, 0);
     for (const [side, sign] of [['L', -1], ['R', 1]] as const) {
@@ -51,6 +52,12 @@ export class EnemyAnimator {
       this.rotate(`LegLower${side}`, Math.max(0, -leg) * .31 * stride, 0, 0);
       this.rotate(`ArmUpper${side}`, -.08 - leg * .14 * stride, sign * .035, sign * .07);
       this.rotate(`ArmLower${side}`, -.13 - Math.max(0, leg) * .10, 0, sign * .025);
+    }
+    if (this.armored) {
+      // Keep the broken shield braced in front of the heavy soldier while the
+      // sword arm retains its independent windup. This is a cosmetic pose only.
+      this.rotate('ArmUpperL', -.34 - Math.max(0, step) * .045, -.08, -.12);
+      this.rotate('ArmLowerL', -.48, -.06, -.04);
     }
     this.rotate('Cape', .06 + Math.sin(t * 1.7) * .05, Math.sin(t * 1.1) * .035, -bodyTwist * .05);
     // A readable windup, sweep, and recover. This never produces a gameplay hit.
@@ -61,7 +68,7 @@ export class EnemyAnimator {
     if (threat > 0 && windup + sweep > 0) {
       this.rotate('ArmUpperR', (-.75 * windup + .25 * sweep) * threat, (-.30 * windup + .62 * sweep) * threat, (-.55 * windup + .22 * sweep) * threat);
       this.rotate('ArmLowerR', (-.75 * windup - .15 * sweep) * threat, 0, 0);
-      this.rotate('ArmUpperL', -.12 - .27 * sweep * threat, 0, -.18 * windup * threat);
+      this.rotate('ArmUpperL', (this.armored ? -.34 : -.12) - .27 * sweep * threat, this.armored ? -.08 : 0, -.18 * windup * threat);
       this.rotate('Body', .02, (-.16 * windup + .19 * sweep) * threat, -.045 * sweep);
       this.rotate('Head', -.025, (.13 * windup - .14 * sweep) * threat, 0);
     }

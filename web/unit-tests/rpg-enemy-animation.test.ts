@@ -3,7 +3,7 @@ import { test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { Object3D } from 'three';
 import { EnemyAnimator } from '../src/rpg/world/EnemyAnimator';
-for (const kind of ['skeleton','guardian']) test(`${kind} exported joints animate shared instance sources independently`, () => {
+for (const kind of ['skeleton','guardian','revenant']) test(`${kind} exported joints animate shared instance sources independently`, () => {
  const bytes = readFileSync(new URL(`../public/assets/rpg/${kind}.glb`, import.meta.url));
  const gltf = JSON.parse(bytes.subarray(20,20 + bytes.readUInt32LE(12)).toString());
  const nodes=gltf.nodes.map((n:any)=> {const o=new Object3D();o.name=n.name;o.userData=n.extras??{};if(n.translation)o.position.fromArray(n.translation);if(n.rotation)o.quaternion.fromArray(n.rotation);if(n.scale)o.scale.fromArray(n.scale);if(n.matrix){o.matrix.fromArray(n.matrix);o.matrix.decompose(o.position,o.quaternion,o.scale);}return o;});

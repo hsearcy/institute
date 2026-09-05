@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { isCrossingChasm, boundsIntersectCrossingChasm, getRoomLayout } from './roomLayout';
+import { isRuinFootprintClear, ruinGeometry } from './ruins';
 
 /** Low relief and remnants of the old vault. All meshes are static, grouped by
  * room/material, and have no collision or connection to learning state. */
@@ -35,45 +36,49 @@ export function createVaultScenery(base: Record<string, THREE.MeshStandardMateri
   const grime = new THREE.MeshStandardMaterial({ color: 0x292419, roughness: 1, alphaMap: mask, transparent: true, opacity: .72, depthWrite: false, vertexColors: true });
   const wet = new THREE.MeshStandardMaterial({ color: 0x29312c, roughness: .17, metalness: .3, alphaMap: mask, transparent: true, opacity: .65, depthWrite: false, vertexColors: true });
 
-  group.userData.ownedMaterials = [stone, paleStone, clay, cloth, wax, iron, wick, grime, wet];
-
-  // Tomb x positions vary in buildDungeon. Reserve the full possible extent,
-  // including their turned lids, rather than guessing the current random seed.
-  const propClearances = Array.from({ length: 6 }, (_, room) => {
-    const layout = getRoomLayout(room), offset = layout.sideWallX - 12.2;
-    const rectangles: { minX: number; maxX: number; minZ: number; maxZ: number }[] = [];
-    for (const side of [-1, 1]) {
-      for (let tomb = 0; tomb < 3; tomb++) {
-        const xs = [side * (8.6 + offset), side * (9.7 + offset)], z = -7 + tomb * 6.3;
-        rectangles.push({ minX: Math.min(...xs) - 1.05, maxX: Math.max(...xs) + 1.05, minZ: z - 1.45, maxZ: z + 1.45 });
-      }
-      const x = side * (layout.walkable.maxX + 1.1), z = side < 0 ? -3.8 : 3.2;
-      rectangles.push({ minX: x - .8, maxX: x + .8, minZ: z - .8, maxZ: z + .8 });
-    }
-    if ([0, 2, 5].includes(room)) {
-      const x = layout.walkable.maxX + 1.1;
-      rectangles.push({ minX: x - .95, maxX: x + .95, minZ: -6.05, maxZ: -4.15 });
-    }
-    return rectangles;
-  });
+  // A separate mask UV channel lets weathering change the color/roughness of
+  // the existing cobbles while their map and normal detail remain registered.
+  const maskSize = 128, wearPixels = new Uint8Array(maskSize * maskSize * 4);
+  const hash = (x: number, y: number) => { const value = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return value - Math.floor(value); };
+  const noise = (x: number, y: number) => {
+    const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
+    const u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
+    return THREE.MathUtils.lerp(THREE.MathUtils.lerp(hash(ix, iy), hash(ix + 1, iy), u), THREE.MathUtils.lerp(hash(ix, iy + 1), hash(ix + 1, iy + 1), u), v);
+  };
+  for (let y = 0; y < maskSize; y++) for (let x = 0; x < maskSize; x++) {
+    const u = x / (maskSize - 1) * 2 - 1, v = y / (maskSize - 1) * 2 - 1;
+    const radius = Math.hypot((u + Math.sin(v * 4) * .14) * 1.05, (v + Math.sin(u * 5) * .12) * .98);
+    const edge = THREE.MathUtils.clamp((.83 - radius + noise(x / 13, y / 13) * .19) * 8, 0, 1);
+    const deposits = THREE.MathUtils.clamp((noise(x / 12, y / 18) * .65 + noise(x / 3, y / 4) * .35 - .29) * 2.1, 0, 1);
+    const border = THREE.MathUtils.clamp(Math.min(x, y, maskSize - 1 - x, maskSize - 1 - y) / 9, 0, 1);
+    const value = Math.round(edge * deposits * border * 255), index = (y * maskSize + x) * 4;
+    wearPixels.set([value, value, value, 255], index);
+  }
+  const wearMask = new THREE.DataTexture(wearPixels, maskSize, maskSize); wearMask.channel = 1; wearMask.minFilter = THREE.LinearMipmapLinearFilter; wearMask.magFilter = THREE.LinearFilter; wearMask.generateMipmaps = true; wearMask.needsUpdate = true;
+  const dust = (base.floor ?? base.wall).clone(), worn = (base.floor ?? base.wall).clone();
+  for (const material of [dust, worn]) { material.alphaMap = wearMask; material.transparent = true; material.depthWrite = false; material.vertexColors = true; material.polygonOffset = true; material.polygonOffsetFactor = -1; material.polygonOffsetUnits = -1; }
+  dust.color.setHex(0xa49577); dust.roughness = 1; dust.opacity = .52;
+  worn.color.setHex(0x58605b); worn.roughness = .29; worn.metalness = .04; worn.opacity = .58;
+  group.userData.ownedTextures.push(wearMask);
+  group.userData.ownedMaterials = [stone, paleStone, clay, cloth, wax, iron, wick, grime, wet, dust, worn];
 
   const add = (room: number, geometry: THREE.BufferGeometry, material: THREE.Material, position: THREE.Vector3, rotation = new THREE.Euler(), scale = new THREE.Vector3(1, 1, 1), shadow = true, keepCombatClear = false) => {
     if (isCrossingChasm(room, position.x, position.z + room * 20)) { geometry.dispose(); return; }
     geometry.applyMatrix4(new THREE.Matrix4().compose(position, new THREE.Quaternion().setFromEuler(rotation), scale));
+    if (material === dust || material === worn) {
+      const vertices = geometry.getAttribute('position'), uv = geometry.getAttribute('uv');
+      for (let i = 0; i < vertices.count; i++) uv.setXY(i, vertices.getX(i) / 4.8, vertices.getZ(i) / 4.8);
+    }
     // Test the whole transformed footprint, including tilted raised rubble:
     // center-only tests allow long blocks to hang visibly over the crossing.
     geometry.computeBoundingBox();
     const worldBounds = geometry.boundingBox!;
     const bounds = { minX: worldBounds.min.x, maxX: worldBounds.max.x, minZ: worldBounds.min.z + room * 20, maxZ: worldBounds.max.z + room * 20 };
     if (boundsIntersectCrossingChasm(room, bounds)) { geometry.dispose(); return; }
-    if (keepCombatClear) {
-      const layout = getRoomLayout(room);
-      const overlaps = (other: { minX: number; maxX: number; minZ: number; maxZ: number }, gap = .12) => bounds.maxX > other.minX - gap && bounds.minX < other.maxX + gap && bounds.maxZ > other.minZ - gap && bounds.minZ < other.maxZ + gap;
-      const touchesLandmark = layout.landmarks.some(mark => Math.hypot(Math.max(bounds.minX - mark.x, 0, mark.x - bounds.maxX), Math.max(bounds.minZ - mark.z, 0, mark.z - bounds.maxZ)) < mark.radius + .22);
-      if (overlaps(layout.walkable) || overlaps(layout.heroPath, .3) || touchesLandmark || propClearances[room].some(prop => overlaps(prop, .12))) { geometry.dispose(); return; }
-    }
+    if (keepCombatClear && !isRuinFootprintClear(room, bounds)) { geometry.dispose(); return; }
     const shade = .72 + random() * .45, colors = new Float32Array(geometry.getAttribute('position').count * 3);
-    for (let i = 0; i < colors.length; i += 3) { colors[i] = shade; colors[i + 1] = shade * .98; colors[i + 2] = shade * .93; }
+    const authoredColor = geometry.getAttribute('color');
+    for (let i = 0; i < colors.length; i += 3) { colors[i] = shade * (authoredColor?.getX(i / 3) ?? 1); colors[i + 1] = shade * .98 * (authoredColor?.getY(i / 3) ?? 1); colors[i + 2] = shade * .93 * (authoredColor?.getZ(i / 3) ?? 1); }
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     const flat = geometry.index ? geometry.toNonIndexed() : geometry;
     if (flat !== geometry) geometry.dispose();
@@ -106,6 +111,15 @@ export function createVaultScenery(base: Record<string, THREE.MeshStandardMateri
 
   for (let room = 0; room < 6; room++) {
     const center = -room * 20;
+    // Broad deposits and polished damp lanes follow the same cobbles beneath.
+    // These are flat surface changes: neither enemies nor the hero gain obstacles.
+    const weatherPatches = room === 3
+      ? [[-1.9, -3.5, 2.3, 3.6, .05, 0], [1.7, 4.8, 2.6, 2.5, .15, 1]]
+      : [[-3.9, -3.7, 5.6, 3.6, .38, 0], [4.4, 2.6, 5.1, 3.1, -.65, 0], [-4.9, 6.3, 4.3, 2.4, .25, 0], [3.3, -6.1, 4.5, 2.2, -.35, 0], [-4.6, 1.3, 3.2, 2.5, 1.15, 1], [3.7, -2, 3.0, 2.6, .15, 1]];
+    for (const [x, z, width, depth, angle, wetness] of weatherPatches) {
+      const geometry = new THREE.PlaneGeometry(width, depth); geometry.setAttribute('uv1', geometry.getAttribute('uv').clone());
+      add(room, geometry, wetness ? worn : dust, new THREE.Vector3(x, -.032 + wetness * .001, center + z), new THREE.Euler(-Math.PI / 2, 0, angle + room * .37), undefined, false);
+    }
     // A worn procession aisle: chipped corners rise only centimetres above the
     // original floor, with cracks and missing pieces outside the walking line.
     for (let n = 0; n < 8; n++) {
@@ -127,8 +141,13 @@ export function createVaultScenery(base: Record<string, THREE.MeshStandardMateri
         stain(room, x + side * .65, z + .7, 2.9, 2.1, grime);
         // A few recognizable broken courses anchor each pile. The smaller
         // pieces spill inward in an uneven fan, rather than a uniform scatter.
-        fallenBlock(room, x, z, 1.25 + random() * .45, .28 + random() * .18, .65 + random() * .3, collapseAngle, stone, .35);
-        fallenBlock(room, x + side * .38, z + .47, .62 + random() * .32, .38 + random() * .32, .5 + random() * .25, collapseAngle + .7, paleStone, .8);
+        if (onApron) {
+          const geometry = ruinGeometry(side < 0 ? 'fallen-column' : 'column-stump', room * 53 + cluster + 3);
+          add(room, geometry, paleStone, new THREE.Vector3(x, .015, z), new THREE.Euler(0, side < 0 ? .1 : collapseAngle, 0), undefined, true, true);
+        } else {
+          fallenBlock(room, x, z, 1.25 + random() * .45, .28 + random() * .18, .65 + random() * .3, collapseAngle, stone, .35);
+          fallenBlock(room, x + side * .38, z + .47, .62 + random() * .32, .38 + random() * .32, .5 + random() * .25, collapseAngle + .7, paleStone, .8);
+        }
         for (let chunk = 0; chunk < 9; chunk++) {
           const angle = random() * Math.PI * 2, spread = Math.sqrt(random());
           const px = x + Math.cos(angle) * spread * 1.45, pz = z + Math.sin(angle) * spread * 1.65;

@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import type { Problem, RpgState } from '../../shared/src/index';
+import { rpgEncounterKills } from '../../shared/src/rpg';
 
 const profile = 'rpg-playtest';
 // Fault tests use the real renderer/simulation at a small software framebuffer;
@@ -101,7 +102,31 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
   await page.waitForTimeout(1200);
   expect(await state(page)).toEqual(waiting); // Thinking never damages or advances the encounter.
 
-  await expect.poll(() => page.evaluate(() => Number((window as any).__game.world.diagnostics.articulatedEnemies))).toBeGreaterThan(0);
+  // Requested roster labels alone would also pass when a missing knight GLB
+  // silently falls back to skeletons. Require its geometry in the live batches.
+  await expect.poll(() => page.evaluate(() => Number((window as any).__game.world.diagnostics.modelsLoaded)), { timeout: 30_000 }).toBeGreaterThanOrEqual(19);
+  await expect.poll(() => page.evaluate(() => {
+    const world = (window as any).__game.world;
+    const source = world.models.get('revenant');
+    if (!source) return false;
+    const geometries = new Set<unknown>();
+    source.traverse((node: any) => { if (node.isMesh) geometries.add(node.geometry); });
+    const knights = world.enemies.filter((enemy: any) => enemy.modelId === 'revenant');
+    return knights.length > 0 && knights.every((enemy: any) => {
+      let authored = false;
+      enemy.visual.traverse((node: any) => {
+        if (node.isMesh && geometries.has(node.geometry) && world.enemyInstances.some((batch: any) => batch.mesh.parent === world.enemyGroup && batch.mesh.visible && batch.sources.includes(node))) authored = true;
+      });
+      return authored && enemy.animator.articulated;
+    });
+  }), { timeout: 30_000 }).toBe(true);
+  const roster = await page.evaluate(() => {
+    const world = (window as any).__game.world;
+    return { counts: world.diagnostics.enemyRoster as Record<string, number>, articulated: Number(world.diagnostics.articulatedEnemies) };
+  });
+  expect(roster.counts.revenant).toBeGreaterThan(0);
+  expect(Object.values(roster.counts).reduce((sum, count) => sum + count, 0)).toBe(rpgEncounterKills(waiting, waiting.expedition!.encounterIndex));
+  expect(roster.articulated).toBe((roster.counts.guardian ?? 0) + (roster.counts.skeleton ?? 0) + roster.counts.revenant!);
   const masteryBeforeTarget = await (await page.request.get(`/mastery?profileId=${profile}`)).json();
   const targetProblem = await page.locator('#rpg-answer-form').getAttribute('data-problem-id');
   await page.getByRole('button', {name:'Open spellbook',exact:true}).click();

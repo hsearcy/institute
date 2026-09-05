@@ -71,7 +71,7 @@ def forged_sword(grip,tip,material='steel',glowing=False):
 def make_skeleton_v2():
     global PART
     c=begin('skeleton')
-    def soldier_bone(name,a,b,radius):bone_segment(name,a,b,radius*1.28)
+    def soldier_bone(name,a,b,radius):bone_segment(name,a,b,radius*(1.28 if name=='Metatarsal' else 1.52))
     # A leaning seven-head-tall skeleton: visible spine, rib arcs, paired forearms.
     for j in range(7):
         z=.92+j*.064
@@ -81,7 +81,7 @@ def make_skeleton_v2():
         for j in range(6):
             z=1.35-j*.067;w=.185-j*.017
             pts=[(side*.027,.05,z),(side*w,.023,z-.016),(side*(w+.010),-.068,z-.046),(side*w*.59,-.135,z-.051),(side*.033,-.136,z-.038)]
-            line('Curved rib',pts,.019 if j<4 else .015,'bone',8)
+            line('Curved rib',pts,.024 if j<4 else .020,'bone',8)
         soldier_bone('Clavicle',(side*.018,-.047,1.395),(side*.22,-.015,1.39),.026)
         plate('Pelvic ilium',[(side*.04,.03,.91),(side*.16,.01,.93),(side*.19,-.02,.82),(side*.095,-.09,.765),(side*.028,-.06,.82)],.023,'bone',.007)
         hip=(side*.105,.0,.80);knee=(side*.145,-.05,.45);ankle=(side*.15,.025,.12)
@@ -106,6 +106,10 @@ def make_skeleton_v2():
         line('Pauldron rolled border',[(x+.15*cos(pi+j*pi/12),-.025+.13*sin(pi+j*pi/12),1.334) for j in range(13)],.007,'bronze',6)
         for j in range(3):rivet((x+side*(-.045+j*.064),-.152,1.335),.011,'bronze')
         ringmesh('Ancient bracer',[(side*.38,-.11,.91,.045,.042),(side*.36,-.072,1.04,.057,.052)],'iron',10)
+    for side in (-1,1):
+        x=side*.27
+        plate('Skeleton chipped shoulder fragment',[(x-side*.075,-.143,1.36),(x+side*.09,-.13,1.39),(x+side*.155,-.081,1.31),(x+side*.11,-.13,1.24),(x+side*.073,-.152,1.263),(x+side*.052,-.16,1.236),(x-side*.045,-.173,1.29)],.023,'oldArmor',.007)
+    plate('Skeleton exposed sternum',[(-.023,-.156,1.371),(.026,-.156,1.371),(.022,-.158,1.17),(0,-.164,1.105),(-.023,-.158,1.17)],.009,'bone',.004)
     line('Leather baldric',[(-.20,-.17,1.38),(-.10,-.18,1.20),(.12,-.09,.97)],.019,'leather',6)
     # Rear armor keeps a readable soldier silhouette when the horde faces inward.
     plate('Weathered rear cuirass',[(-.18,.09,1.36),(.18,.09,1.36),(.17,.115,1.18),(0,.15,1.10),(-.17,.115,1.18)],-.03,'oldArmor',.016)

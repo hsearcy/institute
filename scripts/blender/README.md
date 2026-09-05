@@ -15,7 +15,7 @@ the painted concept lighting or detail.
 ## Surfaces and runtime files
 
 `web/public/assets/rpg/manifest.json` records current triangles, draw calls, nodes,
-file sizes, and hero clips. All nineteen GLBs are self-contained: embedded albedo,
+file sizes, and hero clips. All twenty GLBs are self-contained: embedded albedo,
 tangent normal, and occlusion/roughness/metallic textures; no external URLs or
 compression decoder dependency. `imp.glb` aliases the skeleton for compatibility.
 
@@ -37,6 +37,7 @@ blade edges retain their own materials.
 | `hero.glb` | Teal hood and folded cape, layered bronze armor, runeblade; eight-bone rig |
 | `hero-cinder.glb`, `hero-glacier.glb`, `hero-tempest.glb` | Progression armor silhouettes, matching rig and clips; transparent appearance portraits |
 | `skeleton.glb`, `imp.glb` | Socketed skull, jaw and teeth, ribs, spine, paired limb bones, rusted armor |
+| `revenant.glb` | Broad armored undead knight, broken left shield and long right blade; twelve rigid joints |
 | `wraith.glb` | Hollow hood, torn hanging robe, curved sleeves and skeletal casting hands |
 | `guardian.glb` | Hunched granite body, oblique cleavage planes, sparse faults, sharp quartz clusters |
 | `pillar.glb`, `arch.glb` | Chipped masonry, clustered columns, carved leaf capitals and pointed ribs |
@@ -201,8 +202,8 @@ All four heroes share their ground and head bounds. New armor is posed before
 baking and weighted as connected rigid pieces to avoid stretching armor panels.
 
 The optimized variants contain 12,842 / 13,212 / 13,202 triangles, respectively,
-and stay below 2.11 MB each. The complete library contains 19 GLBs, 260,209
-triangles, and 29,026,312 bytes. The validator checks variant skins, clips,
+and stay below 2.11 MB each. The complete library contains 20 GLBs, 282,913
+triangles, and 31,176,536 bytes. The validator checks variant skins, clips,
 embedded materials, portrait presence, and the 25,000-triangle / 4 MB budgets.
 
 `detailed/render_appearances.py` reimports the final optimized GLBs into separate
@@ -210,3 +211,28 @@ Blender scenes and renders transparent 512 × 640 PNG portraits to
 `web/public/assets/rpg/appearances/{cinder,glacier,tempest}.png`. Both model builds
 and these final-file portraits run in the full `build_assets.py` pipeline. Source
 atlases remain under `scripts/blender/textures/hero-{appearance}-*.png`.
+
+
+## Revenant and reinforced skeleton
+
+`detailed/revenant.py` builds a substantial undead knight from the common skeletal
+anatomy: a dented enclosing cuirass, unequal layered pauldrons, a chipped iron-and-
+oak shield, a long battered blade, an open broken helm, and ragged oxblood cloth.
+Its exposed face stays recognizable and nongory. The source declares explicit
+limb ownership and twelve ordinary joint pivots. The shield belongs to
+`ArmLowerL`; `Sword` is parented under `ArmLowerR`. There are no skins, so all
+thirteen mesh parts remain compatible with the shared instanced renderer.
+
+The optimized revenant has 21,528 triangles and stays below 2.05 MB. This is
+slightly above the initial 20,000-triangle target to retain the exposed anatomy,
+layered shield, and cloth. Skeleton ribs and limb bones have more mass, with an
+exposed sternum and chipped shoulder fragments; their foot size, ground height,
+and head height are preserved. The skeleton now has 19,808 triangles. The `imp`
+legacy path remains an exact copy of the updated skeleton GLB.
+
+Both use padded embedded albedo, normal, and ORM maps. Full rebuilding includes
+the revenant and its articulation; validation checks joint metadata, embedded
+textures, its right-hand sword parent, and the export budget. Source maps remain
+in `scripts/blender/textures/` rather than the runtime public tree.
+
+![Reimported final skeleton and revenant GLBs](previews/v2/revenant-exported.png)

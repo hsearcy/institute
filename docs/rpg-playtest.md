@@ -2,6 +2,81 @@
 
 Verified September 5, 2026 on `concept/math-dungeon-rpg`. Successive revisions address the gap between the first prototype and the approved concept: textured Gothic architecture, denser hordes, animated characters, illustrated controls, and substantially more magic and loot. Images below are captured from the implementation, not generated concept art.
 
+![Actual Flame Cleave against the mixed armored horde](rpg-playtest/v11/cleave.png)
+
+## Eleventh enemies and ruins pass
+
+A new **armored revenant** adds a substantial shield-bearing silhouette between
+lean skeletons and large guardians. Its dented asymmetric cuirass, layered
+pauldrons, broken helm, ragged cloth, left shield and right sword were authored
+through Blender MCP. It has 12 rigid joints, 13 mesh parts, 21,528 triangles and
+a 2,041,016-byte self-contained GLB. The existing skeleton gained thicker ribs
+and limb bones plus chipped armor; its height and foot grounding are unchanged.
+Both final GLBs were reimported and rendered for review. The revenant sword tip
+is 3.15cm above its lowest foot geometry, so normalization does not float it.
+
+A deterministic presentation roster assigns about 35% of ordinary enemies to
+revenants, with room-specific placement and varied stature. Guardian slots,
+boss placement, authoritative enemy counts, reward calculations, XP and learning
+rules are unchanged. Revenants have a slower gait, less bounce and a braced
+shield pose. All enemy geometry remains instanced; individual joint transforms
+still animate independently. The first 24-enemy pack contains 4 guardians,
+7 revenants, 10 skeletons and 3 wraiths, with 21 articulated actors.
+
+![Normal-camera horde and broken architecture — renderer inspection](rpg-playtest/v11/horde-renderer.png)
+
+Partial arches, fallen fluted drums and jagged column stumps replace selected
+intact wall details and the former full arch laid flat. Alternating foreground
+pillars are lower fractured remnants, exposing more of the fight. New remnant
+geometry has closed fracture caps, real fluting and individually closed arch
+wedges. Transformed footprint checks preserve combat space, the travel lane,
+landmarks, tombs, braziers, chests and crossing openings. Existing-pier replacements
+retain their original footprint. Changing these constructions also changes
+subsequent cosmetic masonry/rubble samples from the dungeon's deterministic
+random stream; no save or learning data uses that stream.
+
+The floor now has broad irregular dry deposits and damp worn patches. Their
+cobble map, bump and roughness stay aligned to the original floor using world
+UVs; a separate UV channel masks their broken edges and gaps. These flat surface
+changes introduce no obstacles. Scenery adds two material batches per room
+(14–15 total), retaining shared baked floor/stone textures and owning only its
+two generated masks and 11 cloned/local materials.
+
+![Supported bridge with open pits — renderer inspection](rpg-playtest/v11/bridge-renderer.png)
+
+Short, separated moving sparks replace the conspicuous seven-spoke impact stars.
+The actual Phoenix Dive capture below shows the revised contact effect while
+retaining the spell's wing sweep, enemy defeat sequence and existing reward.
+
+![Actual Phoenix Dive with the revised contact sparks](rpg-playtest/v11/phoenix.png)
+
+Validation: **255 unit tests pass** and the production build passes. Tests cover
+roster count/determinism, the exported revenant's independent joint animation,
+24 closed/wound remnant cases, footprint guards, registered floor UVs, mask
+boundaries, texture ownership, and absence of scenery triangles spanning pits.
+All 20 GLBs validate at 282,913 triangles and 31,176,536 bytes; 19 load at runtime.
+The all-15-spell scenario passed in 2.2 minutes across three expeditions,
+including armor/favorites/question reloads and relic effects.
+Both desktop/touch regression scenarios passed in 1.2 minutes, including actual
+revenant geometry in the renderer, legacy progress, full expedition rewards,
+worked help, and lost-response recovery.
+
+In Chromium on 9222, blocking only `revenant.glb` confirmed all seven first-room
+knights fall back to animated skeletons. The block was then removed and normal
+asset loading restored. The first implementation missed that fallback during
+initial asset replacement; this is fixed. Review also fixed discarded authored
+fracture colors on merged stumps. The new browser assertion requires actual
+revenant geometry in attached instance batches, so a roster label alone cannot
+pass the rendering check.
+
+The horde and broken-architecture views were compared directly with the approved
+viewport concept. Silhouette variety and fight visibility are stronger, while
+the concept still has richer natural stone/creature detail and less geometric
+effects. The normal-camera room and bridge captures are renderer inspections;
+the Cleave/Phoenix captures come from real submitted test answers. No Ares service
+or child profile was modified. Concept-art parity and the child's sustained
+interest remain unproven.
+
 ![Three new armor appearances in Equipment](rpg-playtest/v10/armor-menu.png)
 
 ## Tenth armor and lighting pass
@@ -375,7 +450,7 @@ new Ashsplitter loot. The actual Ares deployment is still not verified.
 - **23 collectible relics**, including school-wide and spell-specific bonuses. Real drops have a rarity beam, a name label, and an illustrated discovery card with an Equip action.
 - Four hero appearances, including armor milestones at levels 12, 15, and 18, with persistent cosmetic selection.
 - Three replayable regions with different scenery. Enemies wait while the learner thinks; animation and elapsed time never cause damage or submit learning outcomes.
-- Nineteen self-contained Blender GLBs with baked PBR materials. The hero has an eight-bone rig and idle, walk, cleave, and cast clips. Authoring files and retained bake atlases live under `scripts/blender`; production GLBs embed their textures.
+- Twenty self-contained Blender GLBs with baked PBR materials. The hero has an eight-bone rig and idle, walk, cleave, and cast clips. Authoring files and retained bake atlases live under `scripts/blender`; production GLBs embed their textures.
 - Illustrated spellbook and equipment art, a connected skill-tree view, saved favorite abilities for the three hotbar slots, and keyboard controls: Q/W/E, B for spellbook, K for skills.
 
 ![The expanded spellbook](rpg-playtest/v2-spellbook.png)
@@ -402,6 +477,6 @@ Fixtures begin with existing mastered and practicing topics, reviews, demonstrat
 
 ## Visual assessment and remaining work
 
-Compare the [approved Fire Nova concept](concepts/math-dungeon-rpg/05-fire-nova.png) with the [implemented combat view](rpg-playtest/v7/meteor.png), and the [original prototype](rpg-playtest/encounter.png). Subsequent revisions add surface detail, creature animation, richer effects, distinct room layouts, and matching interface art. Remaining visual gaps include thin enemy silhouettes, repetitive intact architectural trim, geometric effects, and the concept's more natural creature and material detail. Passing tests does not establish concept-art parity or whether a child will choose to keep playing.
+Compare the [approved Fire Nova concept](concepts/math-dungeon-rpg/05-fire-nova.png) with the [implemented combat view](rpg-playtest/v7/meteor.png), and the [original prototype](rpg-playtest/encounter.png). Subsequent revisions add surface detail, creature animation, richer effects, distinct room layouts, and matching interface art. Remaining visual gaps include geometric effects, repeated wall surfaces, and the concept's more natural creature anatomy and material detail. Passing tests does not establish concept-art parity or whether a child will choose to keep playing.
 
 The next visual/content assessment should use the playable build, especially creature motion, repeated expeditions, spell impact, and the time between desirable unlocks. Remaining production acceptance includes the actual Ares upgrade/resume check and the child's playtest. Hardware acceleration is needed for the intended presentation; software-rendered fault tests lower framebuffer resolution and disable shadows.

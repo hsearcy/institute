@@ -17,16 +17,16 @@ bpy.context.window.scene=scene
 for script in ('common.py','detailed/materials.py'):
     exec(compile((source/script).read_text(),str(source/script),'exec'))
 MATS.update(detailed_materials())
-for script in ('detailed/geometry.py','detailed/architecture.py','detailed/characters.py','detailed/hero_variants.py','props.py','detailed/props.py','detailed/landmarks.py','detailed/ice_cluster.py','detailed/bake.py','detailed/rig_hero.py','detailed/articulate_enemies.py'):
+for script in ('detailed/geometry.py','detailed/architecture.py','detailed/characters.py','detailed/revenant.py','detailed/hero_variants.py','props.py','detailed/props.py','detailed/landmarks.py','detailed/ice_cluster.py','detailed/bake.py','detailed/rig_hero.py','detailed/articulate_enemies.py'):
     exec(compile((source/script).read_text(),str(source/script),'exec'))
 OUT.mkdir(parents=True,exist_ok=True)
-for name in ('pillar','arch','wall','wall-bay','broken-wall','hero','hero-cinder','hero-glacier','hero-tempest','skeleton','wraith','guardian','brazier','crystal','chest','furnace','reliquary','ice_cluster'):
+for name in ('pillar','arch','wall','wall-bay','broken-wall','hero','hero-cinder','hero-glacier','hero-tempest','skeleton','revenant','wraith','guardian','brazier','crystal','chest','furnace','reliquary','ice_cluster'):
     random.seed(312 if name in ('furnace','reliquary') else 214)
     function=globals()['make_'+name.replace('-','_')+'_v2']
     collection=function()
     print(bake_asset(name,collection,512 if name in ('pillar','brazier','crystal','chest','ice_cluster') else 1024))
     if name=='hero' or name.startswith('hero-'):rig_hero(collection,name)
-    if name in ('skeleton','guardian'):articulate_enemy(name,collection)
+    if name in ('skeleton','revenant','guardian'):articulate_enemy(name,collection)
 subprocess.run(['python',str(source/'detailed/optimize_assets.py')],check=True)
 # Preserve the legacy load path as a compatible skeletal minion, not the old toy imp.
 shutil.copyfile(OUT/'skeleton.glb',OUT/'imp.glb')

@@ -20,3 +20,8 @@ server/data/
 
 # git worktrees
 .worktrees/
+
+# Browser test artifacts and asset-generator caches
+web/test-results/
+web/playwright-report/
+__pycache__/

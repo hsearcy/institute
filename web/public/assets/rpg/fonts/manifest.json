@@ -1,0 +1,19 @@
+{
+  "retrieved": "2026-09-05",
+  "subset": "latin",
+  "cssWeightRange": "400 700",
+  "fonts": [
+    {
+      "file": "cinzel-latin-400-700.woff2",
+      "source": "https://fonts.gstatic.com/s/cinzel/v26/8vIJ7ww63mVu7gt79mT7.woff2",
+      "bytes": 25904,
+      "sha256": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370"
+    },
+    {
+      "file": "dm-sans-latin-400-700.woff2",
+      "source": "https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu0-K4.woff2",
+      "bytes": 36932,
+      "sha256": "9fea608a947e67020c33cad9a6fe3d60c54119dfb8cff87768a8117a15ed7543"
+    }
+  ]
+}

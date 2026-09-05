@@ -1,0 +1,56 @@
+{
+  "sampleRate": 22050,
+  "format": "mono 16-bit PCM WAV",
+  "source": "scripts/audio/generate_rpg_audio.py",
+  "license": "Original synthesized audio, no third-party samples",
+  "clips": {
+    "fire-nova": {
+      "seconds": 1.9,
+      "peakDbFS": -1.72,
+      "rmsDbFS": -17.33,
+      "bytes": 83834
+    },
+    "frost-shatter": {
+      "seconds": 1.8,
+      "peakDbFS": -1.72,
+      "rmsDbFS": -21.65,
+      "bytes": 79424
+    },
+    "chain-lightning": {
+      "seconds": 1.85,
+      "peakDbFS": -1.72,
+      "rmsDbFS": -17.0,
+      "bytes": 81628
+    },
+    "loot": {
+      "seconds": 1.1,
+      "peakDbFS": -1.72,
+      "rmsDbFS": -14.2,
+      "bytes": 48554
+    },
+    "level-up": {
+      "seconds": 2.5,
+      "peakDbFS": -1.72,
+      "rmsDbFS": -14.92,
+      "bytes": 110294
+    },
+    "boss-defeat": {
+      "seconds": 2.65,
+      "peakDbFS": -1.72,
+      "rmsDbFS": -15.36,
+      "bytes": 116908
+    },
+    "footstep": {
+      "seconds": 0.28,
+      "peakDbFS": -5.02,
+      "rmsDbFS": -21.87,
+      "bytes": 12392
+    },
+    "dungeon-ambience": {
+      "seconds": 12.0,
+      "peakDbFS": -12.49,
+      "rmsDbFS": -25.77,
+      "bytes": 529244
+    }
+  }
+}

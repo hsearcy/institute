@@ -1,0 +1,122 @@
+{
+  "generator": "Blender 4.5.13 via Blender MCP 1.6 / protocol 5",
+  "source": "scripts/blender/build_assets.py",
+  "userPrompt": "use blender mcp to create high quality models.",
+  "coordinateSystem": {
+    "up": "+Y",
+    "forward": "+Z",
+    "origin": "ground center",
+    "unit": "meter"
+  },
+  "assets": {
+    "hero": {
+      "url": "/assets/rpg/hero.glb",
+      "bytes": 447660,
+      "triangles": 4500,
+      "drawCalls": 11,
+      "nodes": [
+        "Body_matte",
+        "Body_metal",
+        "Body_glow_cyan",
+        "Head_matte",
+        "Head_metal",
+        "Head_glow_flame",
+        "Cape_matte",
+        "Cape_metal",
+        "Sword_matte",
+        "Sword_metal",
+        "Sword_glow_amber"
+      ]
+    },
+    "imp": {
+      "url": "/assets/rpg/imp.glb",
+      "bytes": 119688,
+      "triangles": 1036,
+      "drawCalls": 5,
+      "nodes": [
+        "Body_matte.001",
+        "Body_metal.001",
+        "Head_matte.001",
+        "Head_glow_cyan",
+        "Head_crystal"
+      ]
+    },
+    "guardian": {
+      "url": "/assets/rpg/guardian.glb",
+      "bytes": 211552,
+      "triangles": 1936,
+      "drawCalls": 5,
+      "nodes": [
+        "Body_matte.002",
+        "Body_crystal",
+        "Head_matte.002",
+        "Head_glow_cyan.001",
+        "Head_crystal.001"
+      ]
+    },
+    "pillar": {
+      "url": "/assets/rpg/pillar.glb",
+      "bytes": 100204,
+      "triangles": 1080,
+      "drawCalls": 2,
+      "nodes": [
+        "Body_matte.003",
+        "Body_metal.002"
+      ]
+    },
+    "arch": {
+      "url": "/assets/rpg/arch.glb",
+      "bytes": 323972,
+      "triangles": 3344,
+      "drawCalls": 2,
+      "nodes": [
+        "Body_matte.004",
+        "Body_glow_cyan.001"
+      ]
+    },
+    "brazier": {
+      "url": "/assets/rpg/brazier.glb",
+      "bytes": 86960,
+      "triangles": 956,
+      "drawCalls": 4,
+      "nodes": [
+        "Body_matte.005",
+        "Body_metal.003",
+        "Flame_glow_amber",
+        "Flame_glow_flame"
+      ]
+    },
+    "crystal": {
+      "url": "/assets/rpg/crystal.glb",
+      "bytes": 47560,
+      "triangles": 468,
+      "drawCalls": 2,
+      "nodes": [
+        "Body_matte.006",
+        "Body_crystal.001"
+      ]
+    },
+    "chest": {
+      "url": "/assets/rpg/chest.glb",
+      "bytes": 205132,
+      "triangles": 2090,
+      "drawCalls": 5,
+      "nodes": [
+        "Body_metal.004",
+        "Body_matte.007",
+        "Lid_matte",
+        "Lid_metal",
+        "Body_glow_cyan.002"
+      ]
+    },
+    "wall": {
+      "url": "/assets/rpg/wall.glb",
+      "bytes": 295788,
+      "triangles": 3132,
+      "drawCalls": 1,
+      "nodes": [
+        "Body_matte.008"
+      ]
+    }
+  }
+}

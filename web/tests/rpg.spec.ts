@@ -1,0 +1,159 @@
+import { test, expect, type Page } from '@playwright/test';
+import type { Problem, RpgState } from '../../shared/src/index';
+
+const profile = 'rpg-playtest';
+// Fault tests use the real renderer/simulation at a small software framebuffer;
+// full-quality visuals and frame rate are inspected separately in live Chromium.
+test.beforeEach(async ({page}) => {
+  page.on('load', () => { void (async () => {
+    await page.waitForFunction(() => !!(window as any).__game?.world, {timeout:20000});
+    await page.evaluate(() => {
+      const world = (window as any).__game.world;
+      if (world.diagnostics.softwareRenderer) { world.renderer.setPixelRatio(.3); world.renderer.shadowMap.enabled = false; }
+    });
+  })().catch(() => {}); });
+});
+async function state(page: Page): Promise<RpgState> {
+  return (await page.request.get(`/rpg/state?profileId=${profile}`)).json();
+}
+async function ready(page: Page): Promise<void> {
+  await expect.poll(async () => {
+    const demo = page.getByRole('button', { name: 'Let me try', exact: true });
+    if (await demo.isVisible()) await demo.click();
+    return await page.locator('#rpg-ui').getAttribute('data-busy') === 'false' && await page.locator('#rpg-cast').isEnabled() && await page.locator('#rpg-overlay').isHidden();
+  }, { timeout: 45_000 }).toBe(true);
+}
+function captureProblems(page: Page): Map<string, Problem> {
+  const problems = new Map<string, Problem>();
+  page.on('response', async response => {
+    if (!/\/tutor\/(first|branches)$/.test(response.url()) || !response.ok()) return;
+    const json = await response.json().catch(() => null);
+    for (const p of [json, json?.right, json?.wrong]) if (p?.prompt && typeof p.answer === 'number') problems.set(p.id, p);
+  });
+  return problems;
+}
+async function currentProblem(page: Page, problems: Map<string, Problem>): Promise<Problem> {
+  const id = (await page.locator('#rpg-answer-form').getAttribute('data-problem-id'))!;
+  await expect.poll(() => problems.has(id)).toBe(true);
+  return problems.get(id)!;
+}
+async function solve(page: Page, problems: Map<string, Problem>): Promise<void> {
+  await ready(page);
+  const before = await state(page);
+  const p = await currentProblem(page, problems);
+  await page.getByRole('textbox', {name:'Your answer'}).fill(String(p.answer));
+  await page.getByRole('button', {name:/Unleash/}).click();
+  await expect.poll(async () => (await state(page)).xp).toBeGreaterThan(before.xp);
+  await expect.poll(async () => await page.getByRole('button', {name:'Next adventure →',exact:true}).isVisible() || (await page.locator('#rpg-cast').isEnabled() && await page.locator('#rpg-answer-form').getAttribute('data-problem-id') !== p.id) || await page.getByRole('button',{name:'Let me try',exact:true}).isVisible(), {timeout:45_000}).toBe(true);
+}
+
+test('legacy learner plays an expedition, gets loot and unlocks a spell without changing learning rules', async ({ page }, info) => {
+  const errors: string[] = []; page.on('pageerror', e => errors.push(e.message));
+  const problems = captureProblems(page);
+  const originalMastery = await (await page.request.get(`/mastery?profileId=${profile}`)).json();
+  const originalLegacy = await (await page.request.get(`/state?profileId=${profile}`)).json();
+  expect(originalMastery.topics.filter((t: {state:string}) => t.state === 'mastered').length).toBeGreaterThan(0);
+  expect(originalLegacy.gems).toBe(482);
+  await page.goto('/');
+  await page.getByRole('button',{name:/Enter the dungeon/}).click();
+  await ready(page);
+  await page.screenshot({path:info.outputPath('01-encounter.png')});
+  const waiting = await state(page);
+  await page.waitForTimeout(1200);
+  expect(await state(page)).toEqual(waiting); // Thinking never damages or advances the encounter.
+
+  const first = await currentProblem(page, problems);
+  await page.getByRole('textbox',{name:'Your answer'}).fill(String((first.answer + 1) % 1000));
+  await page.getByRole('button',{name:/Unleash/}).click();
+  await expect(page.locator('#rpg-hint')).toContainText('Almost');
+  expect((await state(page)).xp).toBe(waiting.xp);
+  await solve(page, problems);
+  const status = await (await page.request.get(`/rpg/attempt-status?profileId=${profile}&problemId=${encodeURIComponent(first.id)}`)).json();
+  expect(status).toMatchObject({recorded:true,correct:false,solved:true});
+
+  await ready(page);
+  const resumePrompt = await page.locator('#rpg-problem').innerText();
+  const resumeState = await state(page);
+  await page.reload();
+  await page.getByRole('button',{name:/Continue adventure/}).click();
+  await ready(page);
+  expect(await page.locator('#rpg-problem').innerText()).toBe(resumePrompt);
+  expect((await state(page)).xp).toBe(resumeState.xp);
+  for (let i = 0; i < 6 && !(await state(page)).expedition?.cleared; i++) await solve(page, problems);
+  await expect(page.getByRole('button',{name:'Next adventure →',exact:true})).toBeVisible();
+  const completed = await state(page);
+  expect(completed.expeditionsCompleted).toBe(1);
+  expect(completed.level).toBeGreaterThanOrEqual(2);
+  expect(completed.inventory.length).toBeGreaterThan(1);
+  await page.screenshot({path:info.outputPath('02-victory.png')});
+
+  await page.locator('#rpg-dialog-content [data-action="skills"]').click();
+  await page.locator('[data-skill="frost"]').click();
+  await expect.poll(async () => (await state(page)).skills.frost).toBe(1);
+  await page.screenshot({path:info.outputPath('03-skills.png')});
+  await page.getByRole('button',{name:'Return to dungeon',exact:true}).click();
+  await page.locator('#rpg-dialog-content [data-action="inventory"]').click();
+  const ownedItem = completed.inventory.find(id => id !== 'apprentice')!;
+  await page.locator(`[data-item="${ownedItem}"]`).click();
+  await expect.poll(async () => (await state(page)).equippedItemId).toBe(ownedItem);
+  await page.getByRole('button',{name:'Back to camp',exact:true}).click();
+  await page.getByRole('button',{name:'Choose an expedition',exact:true}).click();
+  await page.locator('[data-region="frostvault"]').click();
+  await ready(page);
+  await page.locator('[data-spell="frost"]').click();
+  await expect.poll(async () => (await state(page)).selectedSpellId).toBe('frost');
+  await solve(page, problems);
+  expect((await state(page)).expedition?.regionId).toBe('frostvault');
+  await page.screenshot({path:info.outputPath('04-frost-vault.png')});
+  expect(errors).toEqual([]);
+});
+
+test('saved response recovery, worked help, and touch layout remain playable', async ({page}, info) => {
+  const problems = captureProblems(page);
+  await page.setViewportSize({width:768,height:1024});
+  await page.goto('/');
+  await page.getByRole('button',{name:/Continue adventure|Enter the dungeon/}).click();
+  await ready(page);
+  const p = await currentProblem(page, problems);
+  const before = await state(page);
+  let dropped = false;
+  await page.route('**/rpg/resolve', async route => {
+    if (dropped) { await route.continue(); return; }
+    dropped = true;
+    await route.fetch(); // server saves, but the response never reaches the game.
+    await route.abort('failed');
+  });
+  await page.getByRole('textbox',{name:'Your answer'}).fill(String(p.answer));
+  await page.getByRole('button',{name:/Unleash/}).click();
+  await expect(page.getByRole('button',{name:'Try again',exact:true})).toBeVisible();
+  const saved = await state(page);
+  expect(saved.xp).toBeGreaterThan(before.xp);
+  await page.getByRole('button',{name:'Try again',exact:true}).click();
+  await ready(page);
+  expect((await state(page)).xp).toBe(saved.xp);
+  await page.unroute('**/rpg/resolve');
+
+  await page.getByRole('button',{name:'Help me',exact:true}).click();
+  await page.getByRole('button',{name:/I'm not sure yet/}).click();
+  await expect(page.getByRole('button',{name:'Cast together & continue',exact:true})).toBeVisible();
+  const assistedBefore = await state(page);
+  await page.screenshot({path:info.outputPath('05-worked-help.png')});
+  await page.getByRole('button',{name:'Cast together & continue',exact:true}).click();
+  await expect.poll(async () => (await state(page)).xp).toBeGreaterThan(assistedBefore.xp);
+  await ready(page);
+  await page.getByRole('button',{name:'Toggle number pad',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Delete digit',exact:true})).toBeVisible();
+  const touch = await currentProblem(page,problems);
+  for (const digit of String(touch.answer)) await page.locator(`#rpg-keypad [data-digit="${digit}"]`).click();
+  await expect(page.getByRole('textbox',{name:'Your answer'})).toHaveValue(String(touch.answer));
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:info.outputPath('06-phone.png')});
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const formBox = await page.locator('#rpg-answer-form').boundingBox();
+  expect(formBox!.x).toBeGreaterThanOrEqual(0);
+  expect(formBox!.x+formBox!.width).toBeLessThanOrEqual(390);
+  await page.getByRole('button',{name:'Pause and save',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Adventure saved'})).toBeVisible();
+  await page.getByRole('button',{name:'Save & leave',exact:true}).click();
+  await expect(page.getByRole('button',{name:'Continue adventure'})).toBeVisible();
+});

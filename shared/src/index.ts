@@ -348,3 +348,5 @@ export type ShopState = z.infer<typeof ShopStateSchema>;
 
 // ---- Curated skill graph (Marble taxonomy) ---------------------------------
 export * from "./topics.ts";
+
+export * from "./rpg";

@@ -16,6 +16,10 @@ export default defineConfig({
     port: 5188,
     strictPort: true,
     fs: { allow: [resolve(here, '..')] }, // allow importing ../shared
+    proxy: Object.fromEntries(
+      ['/tutor', '/reward', '/state', '/shop', '/mastery', '/tts', '/daily-record', '/rpg'].map((path) =>
+        [path, { target: process.env.TUTOR_PROXY_TARGET ?? 'http://127.0.0.1:8787', changeOrigin: true }]),
+    ),
   },
   preview: {
     host: '127.0.0.1',

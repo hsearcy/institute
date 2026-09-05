@@ -5,6 +5,7 @@
 //  - POST /tutor/attempt  → record an answer (drives mastery + adaptivity)
 //  - POST /tts            → ElevenLabs reads text aloud
 import { Hono, type Context } from "hono";
+import { ensureRpgSchema, createRpgRoutes } from "./rpg.ts";
 import { cors } from "hono/cors";
 import { Database } from "bun:sqlite";
 import Anthropic from "@anthropic-ai/sdk";
@@ -158,6 +159,7 @@ try {
 // log can prove — recording how far back that count is actually complete.
 // Restart-safe: an interrupted backfill simply runs again next boot.
 ensureDailyRecordSchema(db);
+ensureRpgSchema(db);
 console.log(`[institute] daily record days are ${PLAYER_TIME_ZONE} calendar days`);
 // Seed the skill ladder (categories + descent order) from the shared schema.
 const seedSkill = db.query(`INSERT OR IGNORE INTO skills (skill, label, ladder) VALUES (?, ?, ?)`);
@@ -950,6 +952,7 @@ function localBranches(profileId: string, current: Problem): { right: Problem; w
 // ---- App -------------------------------------------------------------------
 const app = new Hono();
 app.use("*", cors());
+app.route("/rpg", createRpgRoutes(db, applyMiss));
 
 app.get("/health", (c) => c.json({ ok: true, model: TUTOR_MODEL, voice: ELEVEN_VOICE }));
 
@@ -1051,8 +1054,7 @@ app.post("/tutor/attempt", async (c) => {
 // The problem gave up and moved on (3 tries exhausted) — THIS is the miss that
 // counts: consume a shield if he has one, else the streak resets. bestStreak is
 // untouched either way (it's his forever).
-app.post("/reward/miss", async (c) => {
-  const { profileId } = await c.req.json();
+function applyMiss(profileId: string) {
   const state = getProfileState(profileId);
   let shieldUsed = false;
   let streakLost = 0;
@@ -1065,13 +1067,18 @@ app.post("/reward/miss", async (c) => {
     resetDailyStreakQuest(profileId, utcDay());
   }
   saveProfileState(profileId, state);
-  return c.json({
+  return {
     ok: true,
     reward: {
       gemsEarned: 0, totalGems: state.gems, lifetimeGems: state.lifetime_gems, streak: state.streak, bestStreak: state.best_streak,
       shields: state.shields, milestone: null, shieldUsed, streakLost, questsCompleted: [],
     },
-  });
+  };
+}
+
+app.post("/reward/miss", async (c) => {
+  const { profileId } = await c.req.json();
+  return c.json(applyMiss(profileId));
 });
 
 // A correct answer that wasn't his FIRST try: still earns a gem and counts toward

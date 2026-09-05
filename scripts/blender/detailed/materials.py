@@ -66,6 +66,7 @@ def detailed_materials():
       'bronze':source_material('oxidized bronze',(.31,.16,.052),'metal',.78,.49),
       'gold':source_material('old brass',(.43,.235,.069),'metal',.82,.38),
       'iron':source_material('blackened steel',(.075,.085,.085),'metal',.72,.56),
+      'oldArmor':source_material('pitted soldier armor',(.12,.135,.12),'metal',.38,.74),
       'steel':source_material('worn blade steel',(.29,.31,.29),'metal',.85,.33),
       'bone':source_material('stained old ivory',(.52,.45,.33),'bone',0,.79),
       'leather':source_material('cracked dark leather',(.055,.025,.012),'leather',0,.81),

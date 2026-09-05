@@ -120,3 +120,14 @@ executing it. The production MCP session used a dedicated virtual display and
 The `detailed/` helpers contain geometry, materials, baking, animation, optimization,
 and review tools. The original helpers remain for reusable primitive construction
 and chest topology.
+
+The creature revision replaces the guardian's thin armor plates with closed,
+rounded fracture masses, a hunched body, heavy forearms, and shoulder crystal
+growths. Guardian construction assigns explicit limb parts and stores authored
+joint pivots on the collection; these survive baking and avoid centroid-based
+misattachment. Older skeletal sources still use the centroid fallback. Soldier
+limbs are thicker, with cupped shoulder caps, rounded helmets, and pitted armor.
+The [exported creature review](previews/v2/creatures-rebuilt.png) was rendered after
+re-importing the final optimized GLBs. Rebuilds retain the newly created
+collection reference through baking and articulation, even when older workshop
+scenes contain similarly named collections.

@@ -9,6 +9,8 @@ from mathutils import Vector
 def articulate_enemy(name,collection):
     brute=name=='guardian'
     def classify(part,p):
+        if part in ('Body','ArmUpperL','ArmUpperR','ArmLowerL','ArmLowerR','LegUpperL','LegUpperR','LegLowerL','LegLowerR') and collection.get('enemyPivots'):
+            return part
         if part in ('Head','Sword','Cape'):return part
         x,y,z=p;side='R' if x>0 else 'L'
         if abs(x)>(.50 if brute else .205) and z>(.72 if brute else .80):
@@ -53,6 +55,7 @@ def articulate_enemy(name,collection):
         pivots={'Body':(0,0,1.04),'Head':(0,-.015,1.43),'Cape':(0,.11,1.32),'Sword':(.40,-.145,.89)}
         for side,sign in [('L',-1),('R',1)]:
             pivots.update({'ArmUpper'+side:(sign*.245,0,1.36),'ArmLower'+side:(sign*.335,-.028,1.095),'LegUpper'+side:(sign*.105,0,.80),'LegLower'+side:(sign*.145,-.05,.45)})
+    for key,pivot in collection.get('enemyPivots',{}).items():pivots[key]=tuple(pivot)
     used={obj['joint'] for obj in collection.objects if obj.type=='MESH'}
     joints={}
     for key,pivot in pivots.items():

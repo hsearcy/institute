@@ -71,6 +71,7 @@ def forged_sword(grip,tip,material='steel',glowing=False):
 def make_skeleton_v2():
     global PART
     c=begin('skeleton')
+    def soldier_bone(name,a,b,radius):bone_segment(name,a,b,radius*1.28)
     # A leaning seven-head-tall skeleton: visible spine, rib arcs, paired forearms.
     for j in range(7):
         z=.92+j*.064
@@ -80,19 +81,19 @@ def make_skeleton_v2():
         for j in range(6):
             z=1.35-j*.067;w=.185-j*.017
             pts=[(side*.027,.05,z),(side*w,.023,z-.016),(side*(w+.010),-.068,z-.046),(side*w*.59,-.135,z-.051),(side*.033,-.136,z-.038)]
-            line('Curved rib',pts,.015 if j<4 else .012,'bone',8)
-        bone_segment('Clavicle',(side*.018,-.047,1.395),(side*.22,-.015,1.39),.026)
+            line('Curved rib',pts,.019 if j<4 else .015,'bone',8)
+        soldier_bone('Clavicle',(side*.018,-.047,1.395),(side*.22,-.015,1.39),.026)
         plate('Pelvic ilium',[(side*.04,.03,.91),(side*.16,.01,.93),(side*.19,-.02,.82),(side*.095,-.09,.765),(side*.028,-.06,.82)],.023,'bone',.007)
         hip=(side*.105,.0,.80);knee=(side*.145,-.05,.45);ankle=(side*.15,.025,.12)
-        bone_segment('Femur',hip,knee,.034)
-        bone_segment('Tibia',knee,ankle,.027)
-        bone_segment('Fibula',(knee[0]+side*.035,knee[1]+.015,knee[2]-.028),(ankle[0]+side*.028,ankle[1],ankle[2]+.016),.018)
+        soldier_bone('Femur',hip,knee,.034)
+        soldier_bone('Tibia',knee,ankle,.027)
+        soldier_bone('Fibula',(knee[0]+side*.035,knee[1]+.015,knee[2]-.028),(ankle[0]+side*.028,ankle[1],ankle[2]+.016),.018)
         for j in range(4):
             xx=side*.15+(j-1.5)*.023
-            bone_segment('Metatarsal',(xx,.025,.084),(xx,-.14,.045),.014)
+            soldier_bone('Metatarsal',(xx,.025,.084),(xx,-.14,.045),.014)
         shoulder=(side*.245,.0,1.36);elbow=(side*.335,-.028,1.095);wrist=(side*.39,-.13,.885)
-        bone_segment('Humerus',shoulder,elbow,.033)
-        for dx in (-.018,.018):bone_segment('Paired forearm',(elbow[0]+dx,elbow[1],elbow[2]),(wrist[0]+dx,wrist[1],wrist[2]),.020)
+        soldier_bone('Humerus',shoulder,elbow,.033)
+        for dx in (-.018,.018):soldier_bone('Paired forearm',(elbow[0]+dx,elbow[1],elbow[2]),(wrist[0]+dx,wrist[1],wrist[2]),.020)
         sphere('Wrist bones',wrist,(.045,.032,.065),'bone',12,8)
         for j in range(4):
             xx=wrist[0]+(j-1.5)*.02
@@ -101,16 +102,23 @@ def make_skeleton_v2():
     plate('Left cuirass fragment',[(-.22,-.13,1.365),(-.04,-.165,1.38),(-.035,-.166,1.22),(-.18,-.135,1.13),(-.24,-.09,1.22)],.035,'iron')
     for side in (-1,1):
         x=side*.255
-        plate('Old angular pauldron',[(x-side*.12,-.045,1.415),(x+side*.065,-.015,1.445),(x+side*.155,-.04,1.35),(x+side*.10,-.15,1.27),(x-side*.07,-.18,1.30)],.035,'iron')
-        line('Pauldron rolled border',[(x-side*.07,-.182,1.30),(x+side*.10,-.153,1.27),(x+side*.155,-.042,1.35)],.009,'bronze',6)
+        smooth(ringmesh('Hammered shoulder cap',[(x,-.025,1.30,.13,.112),(x,-.025,1.335,.15,.13),(x,-.015,1.40,.125,.109),(x,-.005,1.43,.07,.06),(x,0,1.44,.015,.012)],'oldArmor',20))
+        line('Pauldron rolled border',[(x+.15*cos(pi+j*pi/12),-.025+.13*sin(pi+j*pi/12),1.334) for j in range(13)],.007,'bronze',6)
         for j in range(3):rivet((x+side*(-.045+j*.064),-.152,1.335),.011,'bronze')
         ringmesh('Ancient bracer',[(side*.38,-.11,.91,.045,.042),(side*.36,-.072,1.04,.057,.052)],'iron',10)
     line('Leather baldric',[(-.20,-.17,1.38),(-.10,-.18,1.20),(.12,-.09,.97)],.019,'leather',6)
+    # Rear armor keeps a readable soldier silhouette when the horde faces inward.
+    plate('Weathered rear cuirass',[(-.18,.09,1.36),(.18,.09,1.36),(.17,.115,1.18),(0,.15,1.10),(-.17,.115,1.18)],-.03,'oldArmor',.016)
+    ringmesh('Torn leather war belt',[(0,0,.90,.156,.095),(0,0,.955,.15,.098)],'leather',16)
+    for side in (-1,1):
+        x=side*.15
+        plate('Pitted shin guard',[(x-.041,-.04,.18),(x+.047,-.04,.18),(x+.061,-.068,.40),(x,-.10,.455),(x-.061,-.068,.40)],.032,'oldArmor',.009)
+        line('Greave worn ridge',[(x,-.079,.19),(x,-.128,.405)],.007,'bronze',5)
     PART='Head'
     skull((0,-.015,1.59))
     # A fractured iron half-helm follows the skull rather than hiding it.
-    plate('Broken nasal helm',[(-.12,.02,1.76),(0,-.01,1.815),(.12,.02,1.76),(.108,-.09,1.69),(0,-.145,1.72),(-.108,-.09,1.69)],.013,'iron')
-    line('Helm brow band',[(-.117,-.087,1.70),(0,-.139,1.72),(.117,-.087,1.70)],.012,'bronze',6)
+    smooth(ringmesh('Rounded corroded half helm',[(0,-.015,1.69,.148,.125),(0,-.012,1.735,.15,.13),(0,.0,1.795,.105,.085),(0,.005,1.82,.025,.022)],'oldArmor',20))
+    line('Helm brow band',[(-.13,-.074,1.693),(-.07,-.128,1.695),(0,-.142,1.695),(.07,-.128,1.695),(.13,-.074,1.693)],.009,'bronze',6)
     PART='Cape'
     cloth_panel('Rotten soldier tabard',(0,.11,1.32),.16,.57,'tealDark',.12,.08,3)
     PART='Body';forged_sword((.40,-.145,.89),(.49,-.51,.16),'steel')
@@ -225,66 +233,78 @@ def make_wraith_v2():
     PART='Cape';cloth_panel('Long wraith mantle',(0,.14,1.48),.31,1.34,'tealDark',.30,.14,5)
     return c
 
+def guardian_rock(name,loc,size,material='stoneOld',turn=(0,0,0)):
+    # A closed, softened fracture mass rather than a thin polygon armor plate.
+    o=ico(name,loc,size,material,2,.10)
+    # A broken front face gives the boulder a stone plane while retaining its
+    # curved silhouette. The chipped face rotates with each individual mass.
+    for v in o.data.vertices:v.co.y=max(v.co.y,-size[1]*.76)
+    o.rotation_euler=turn
+    bevel(o,min(size)*.10,1)
+    smooth(o)
+    normal=o.modifiers.new('Broad rock plane normals','WEIGHTED_NORMAL');normal.keep_sharp=True;normal.weight=30
+    bpy.context.view_layer.objects.active=o;bpy.ops.object.modifier_apply(modifier=normal.name)
+    return o
+
 def make_guardian_v2():
     global PART
     c=begin('guardian')
-    # An anatomical dark core supports asymmetric rough armor slabs.
-    ico('Fractured dark stone torso',(0,.07,1.39),(.405,.25,.55),'stoneDark',2,.095)
-    # The camera often sees the back. Cover it with actual projecting slabs,
-    # rather than leaving the smooth anatomical core as the dominant silhouette.
+    # Preserve named joint ownership through atlas baking. This allows overlapping
+    # shoulder/back masses without guessing their attachments from centroids.
+    c['enemyPivots']={'Body':(0,.08,1.18),'Head':(0,-.13,1.83)}
+    for label,side in [('L',-1),('R',1)]:
+        c['enemyPivots']['ArmUpper'+label]=(side*.60,.04,1.70)
+        c['enemyPivots']['ArmLower'+label]=(side*.80,-.06,1.15)
+        c['enemyPivots']['LegUpper'+label]=(side*.27,.04,.86)
+        c['enemyPivots']['LegLower'+label]=(side*.36,-.08,.46)
+    PART='Body'
+    guardian_rock('Hunched granite torso',(0,.11,1.36),(.43,.30,.52),'stoneOldDark')
+    guardian_rock('Broad curved back',(0,.23,1.64),(.45,.28,.32),'stoneOld')
+    guardian_rock('Compact stone pelvis',(0,.05,.89),(.34,.25,.23),'stoneOldDark')
     for side in (-1,1):
-        plate('Rear scapular monolith',[(side*.035,.22,1.90),(side*.38,.18,1.87),(side*.52,.18,1.67),(side*.40,.34,1.43),(side*.095,.38,1.47)],-.115,'stone',.014)
-        for j in range(3):
-            z=1.13+j*.145
-            plate('Overlapping dorsal bedrock',[(side*.025,.30,z+.15),(side*.30,.25,z+.12),(side*.41,.20,z-.05),(side*.22,.36,z-.095),(side*.015,.39,z-.015)],-.07,'stoneDark' if j==0 else 'stone',.011)
-        plate('Rear shoulder cliff',[(side*.43,.11,1.91),(side*.66,.06,1.90),(side*.85,.09,1.69),(side*.73,.31,1.48),(side*.48,.29,1.65)],-.11,'stoneLight',.013)
-        plate('Rear forearm split slab',[(side*.65,.06,1.39),(side*.86,.055,1.39),(side*.995,.03,1.10),(side*.93,.11,.94),(side*.72,.13,1.03)],-.085,'stone',.012)
-    for side in (-1,1):
-        hip=(side*.28,.035,.90);knee=(side*.34,-.02,.51);ankle=(side*.34,.03,.17)
-        smooth(rod('Massive leg core',hip,knee,.165,.13,'stoneDark',14))
-        smooth(rod('Lower leg core',knee,ankle,.135,.12,'stoneDark',12))
-        for j in range(3):
-            z=.64+j*.105
-            plate('Thigh overlapping bedrock',[(side*.16,-.13,z+.08),(side*.39,-.12,z+.09),(side*.46,-.12,z-.06),(side*.24,-.18,z-.10)],.07,'stone',.02)
-        plate('Shin monolith',[(side*.21,-.07,.18),(side*.48,-.07,.18),(side*.46,-.10,.49),(side*.30,-.18,.56),(side*.19,-.10,.46)],.10,'stone',.025)
-        for j in range(3):
-            x=side*.34+(j-1)*.085
-            worn_block('Broad chiselled toe',(x,-.18,.095),(.094,.33,.16),'stoneDark',.012,.024)
-        shoulder=(side*.57,.055,1.74);elbow=(side*.76,-.012,1.26);wrist=(side*.80,-.15,.92)
-        smooth(rod('Upper arm stone tendon',shoulder,elbow,.17,.12,'stoneDark',14))
-        smooth(rod('Forearm stone tendon',elbow,wrist,.13,.17,'stoneDark',12))
-        for j in range(3):
-            x=side*(.48+j*.115);z=1.88-j*.065
-            plate('Layered shoulder bedrock',[(x-side*.13,.05,z),(x+side*.13,.05,z-.03),(x+side*.21,-.02,z-.19),(x+side*.07,-.23,z-.26),(x-side*.15,-.22,z-.15)],.08,'stone' if j%2 else 'stoneLight',.027)
+        guardian_rock('Curved pectoral mass',(side*.22,-.16,1.53),(.28,.21,.29),'stoneOldLight' if side<0 else 'stoneOld',(.08,side*.15,side*.12))
+        guardian_rock('Scapular bedrock',(side*.27,.31,1.63),(.26,.17,.28),'stoneOld',(.1,side*.2,side*.18))
+        guardian_rock('Lower dorsal rock',(side*.22,.29,1.29),(.22,.17,.21),'stoneOldDark')
+        line('Exposed breast fault',[(side*.04,-.348,1.72),(side*.12,-.375,1.62),(side*.12,-.379,1.51),(side*.23,-.355,1.43)],.006,'cyan',5)
         for j in range(2):
-            z=1.06+j*.16
-            plate('Forearm fractured armor',[(side*.65,-.12,z+.13),(side*.83,-.08,z+.17),(side*.98,-.12,z-.03),(side*.89,-.29,z-.11),(side*.68,-.28,z-.07)],.06,'stone',.022)
-        sphere('Knuckle core',wrist,(.18,.17,.16),'stoneDark',16,10)
-        for j in range(4):
-            x=side*.80+(j-1.5)*.072
-            worn_block('Stone clenched finger',(x,-.24,.875),(.080,.17,.22),'stone',.018,.023)
-        # Unbalanced angular crystals grow between plates, rather than a toy crown.
-        for j in range(4):detailed_crystal('Embedded shoulder shard',(side*(.44+j*.10),.04+j*.035,1.93-j*.046),.053+random.random()*.028,.18+random.random()*.36,(random.uniform(-.25,.31),side*(.08+j*.15),random.random()*2))
-        detailed_crystal('Ulna crystal',(side*.9,-.015,1.23),.070,.37,(.2,side*.72,0))
-        line('Thin breast fracture',[(side*.045,-.29,1.64),(side*.15,-.35,1.55),(side*.26,-.29,1.51),(side*.31,-.23,1.35)],.008,'cyan',6)
-    plate('Left fractured breastplate',[(-.47,-.16,1.79),(-.06,-.29,1.82),(-.05,-.35,1.52),(-.17,-.35,1.29),(-.40,-.21,1.40)],.05,'stoneLight',.025)
-    plate('Right fractured breastplate',[(.04,-.29,1.82),(.44,-.14,1.76),(.44,-.22,1.42),(.12,-.36,1.29),(.075,-.36,1.54)],.06,'stone',.021)
+            detailed_crystal('Crystals between shoulder blades',(side*(.13+j*.13),.38,1.79-j*.12),.064,.24+j*.08,(-.35,side*.45,.2))
     for j in range(3):
-        z=1.07+j*.115
-        plate('Layered abdominal slab',[(-.23,-.17,z+.06),(.22,-.17,z+.06),(.19,-.23,z-.045),(0,-.29,z-.09),(-.20,-.23,z-.045)],.026,'stoneDark',.014)
+        guardian_rock('Rounded abdominal course',(0,-.20,1.06+j*.15),(.25-j*.012,.15,.115),'stoneOld' if j%2 else 'stoneOldDark')
+    for label,side in [('L',-1),('R',1)]:
+        PART='LegUpper'+label
+        guardian_rock('Heavy upper leg',(side*.29,.045,.75),(.185,.21,.25),'stoneOldDark')
+        guardian_rock('Outer thigh shield',(side*.34,-.09,.76),(.19,.19,.22),'stoneOld',(.12,side*.12,0))
+        PART='LegLower'+label
+        guardian_rock('Rounded knee',(side*.36,-.095,.47),(.18,.19,.16),'stoneOldLight')
+        guardian_rock('Short planted shin',(side*.365,-.015,.29),(.17,.17,.235),'stoneOld')
+        guardian_rock('Broad heel',(side*.36,-.07,.12),(.205,.245,.12),'stoneOldDark')
+        for j in range(3):
+            guardian_rock('Separated worn stone toe',(side*.36+(j-1)*.12,-.255,.10),(.078,.145,.085),'stoneOld',(.08,0,(j-1)*.08))
+        PART='ArmUpper'+label
+        guardian_rock('Massive shoulder',(side*.60,.035,1.71),(.31,.29,.33),'stoneOld',(.12,side*.18,side*.17))
+        guardian_rock('Exposed shoulder shelf',(side*.66,-.065,1.85),(.29,.24,.17),'stoneOldLight',(.04,side*.22,0))
+        guardian_rock('Upper arm hanging boulder',(side*.72,.015,1.40),(.205,.20,.30),'stoneOldDark',(0,side*.17,0))
+        for j in range(3):
+            detailed_crystal('Shoulder crystal growth',(side*(.48+j*.14),.08+j*.035,1.94-j*.055),.075-j*.008,.40-j*.07+(.07 if side<0 else 0),(.12,side*(.2+j*.29),.15*j))
+        PART='ArmLower'+label
+        guardian_rock('Deep elbow joint',(side*.80,-.04,1.16),(.19,.185,.18),'stoneOldDark')
+        guardian_rock('Oversized forearm',(side*.845,-.115,1.035),(.25,.255,.31),'stoneOld',(0,side*.08,side*.08))
+        guardian_rock('Outer forearm crag',(side*.97,-.075,1.10),(.155,.18,.235),'stoneOldLight',(0,side*.20,0))
+        guardian_rock('Heavy clenched fist',(side*.865,-.235,.81),(.25,.24,.195),'stoneOldDark')
+        for j in range(3):
+            guardian_rock('Rounded granite knuckle',(side*.865+(j-1)*.13,-.405,.835),(.088,.095,.12),'stoneOld')
+        guardian_rock('Curled stone thumb',(side*.68,-.295,.79),(.10,.12,.14),'stoneOld',(0,side*.4,0))
+        detailed_crystal('Forearm mineral seam',(side*1.015,-.04,1.10),.062,.31,(.3,side*.70,0))
+        line('Glowing forearm fault',[(side*.89,-.37,1.23),(side*.84,-.38,1.12),(side*.88,-.39,1.02)],.006,'cyan',5)
     PART='Head'
-    ico('Sculpted stone cranium',(0,-.040,2.045),(.235,.185,.245),'stoneDark',2,.10)
-    ico('Heavy fractured jaw',(0,-.164,1.906),(.195,.149,.119),'stone',1,.09)
-    plate('Massive broken chin',[(-.17,-.205,1.96),(-.11,-.296,1.925),(.10,-.299,1.931),(.18,-.22,1.95),(.10,-.254,1.82),(-.115,-.244,1.835)],.035,'stone',.012)
-    plate('Rear skull crest',[(-.16,.069,2.22),(.095,.099,2.27),(.225,.088,2.08),(.13,.165,1.973),(-.13,.166,1.991),(-.22,.068,2.08)],-.045,'stone',.012)
-    plate('Left jagged brow',[(-.225,-.143,2.17),(-.129,-.218,2.205),(-.022,-.229,2.141),(-.03,-.273,2.093),(-.149,-.258,2.12),(-.206,-.20,2.07)],.024,'stoneLight',.014)
-    plate('Right broken brow',[(.014,-.217,2.164),(.12,-.192,2.195),(.222,-.118,2.134),(.199,-.201,2.071),(.087,-.269,2.09),(.022,-.265,2.065)],.032,'stone',.015)
+    guardian_rock('Low stone cranium',(0,-.13,2.01),(.23,.205,.235),'stoneOld',(0,.08,0))
+    guardian_rock('Heavy broad jaw',(0,-.235,1.84),(.205,.15,.125),'stoneOldLight')
+    guardian_rock('Recessed face bridge',(0,-.303,1.975),(.05,.078,.115),'stoneOld')
     for side in (-1,1):
-        sphere('Deep set stone eye hollow',(side*.094,-.211,2.066),(.072,.026,.041),'shadow',16,10)
-        line('Guardian cyan eye',[(side*.051,-.247,2.061),(side*.127,-.234,2.083)],.008,'cyan',7)
-        plate('Sculpted cheekbone',[(side*.18,-.161,2.087),(side*.22,-.12,2.028),(side*.142,-.237,1.93),(side*.049,-.242,1.972),(side*.055,-.225,2.02)],.020,'stone',.015)
-    line('Broken jaw crevice',[(-.132,-.242,1.935),(-.064,-.267,1.926),(-.027,-.278,1.947),(.047,-.273,1.932),(.121,-.242,1.948)],.009,'shadow',5)
-    for j in range(3):
-        x=(j-1)*.107
-        detailed_crystal('Broken crown growth',(x,.075,2.23),.043+.019*(j%2),.20+.11*(j%2),(.30-j*.19,x*2.3,random.random()*2))
+        guardian_rock('Heavy arched brow',(side*.115,-.265,2.075),(.135,.105,.072),'stoneOldLight',(0,side*.16,side*.16))
+        sphere('Recessed guardian eye socket',(side*.097,-.301,2.014),(.069,.025,.04),'shadow',12,8)
+        sphere('Blue mineral eye',(side*.092,-.326,2.014),(.025,.009,.016),'cyan',12,8)
+        guardian_rock('Cheek and temple',(side*.169,-.248,1.952),(.091,.103,.122),'stoneOld',(0,side*.3,0))
+    line('Jagged dark mouth seam',[(-.12,-.353,1.867),(-.04,-.377,1.859),(0,-.38,1.873),(.07,-.37,1.858),(.13,-.344,1.875)],.009,'shadow',5)
+    PART='Body'
     return c

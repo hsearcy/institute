@@ -2,7 +2,37 @@
 
 Verified September 5, 2026 on `concept/math-dungeon-rpg`. The second and third revisions address the gap between the first prototype and the approved concept: textured Gothic architecture, denser hordes, animated characters, illustrated controls, and substantially more magic and loot. Images below are captured from the implementation, not generated concept art.
 
-![Implemented dungeon and illustrated controls](rpg-playtest/v4/encounter.png)
+![Implemented dungeon and illustrated controls](rpg-playtest/v5/encounter.png)
+
+## Fifth creature pass
+
+Guardians now have closed, rounded fracture masses, a hunched silhouette, heavy
+forearms, and crystals growing through their shoulders and backs. Skeletal
+soldiers have thicker limbs, curved helmets, cupped shoulder caps, and pitted
+armor. Close-up review prompted a second revision of overly rounded stone faces
+and overly glossy shoulder shapes. See the [final exported creature review](../scripts/blender/previews/v2/creatures-rebuilt.png),
+rendered in Blender after re-importing the optimized production GLBs.
+
+The guardian's parts have explicit joint ownership and authored pivots. A
+subagent reviewed their attachments, including shoulder crystals and forearm
+glow. Chromium checks inspected the enlarged windup pose and normal horde view.
+Both summoned guardians appeared and their effect completed; this renderer-only
+check did not mutate learning or saved RPG progress.
+
+![Actual Flame Cleave against the rebuilt horde](rpg-playtest/v5/flame-cleave.png)
+
+A real local solve of `3 + 14 + 2 = 19` cast Flame Cleave, saved XP from 564 to
+596, and dropped the epic Starfall Edge. The next problem remained `14 + 3 + 1`
+after reload. All 210 unit tests pass against the final exported models,
+including joint transforms and independent actor poses; all thirteen GLBs pass
+validation (185,049 triangles, 18,754,444 bytes). The production build passes.
+The all-fifteen-spell scenario passed over three expeditions in 2.0 minutes with
+the new creature shapes; final surface/armor adjustments were followed by the
+live Cleave, windup, summon, and exported-geometry checks described above.
+
+The silhouettes are closer to the intended chunky dungeon creatures. Overall
+scene variety, composition, and sustained play appeal still need assessment;
+this pass does not establish concept-art parity or verify the Ares deployment.
 
 ## Fourth masonry pass
 
@@ -97,6 +127,6 @@ Fixtures begin with existing mastered and practicing topics, reviews, demonstrat
 
 ## Visual assessment and remaining work
 
-Compare the [approved Fire Nova concept](concepts/math-dungeon-rpg/05-fire-nova.png) with the [implemented combat view](rpg-playtest/v4/fire-nova.png), and the [original prototype](rpg-playtest/encounter.png). Subsequent revisions add surface detail, creature animation, richer effects, and matching interface art. The largest remaining visual gaps are the angular creature silhouettes and the orderly architecture compared with the concept's more varied ruins. Passing tests does not establish concept-art parity or whether a child will choose to keep playing.
+Compare the [approved Fire Nova concept](concepts/math-dungeon-rpg/05-fire-nova.png) with the [implemented combat view](rpg-playtest/v5/flame-cleave.png), and the [original prototype](rpg-playtest/encounter.png). Subsequent revisions add surface detail, creature animation, richer effects, and matching interface art. Remaining visual gaps include the orderly architecture and repeated encounter staging compared with the concept's more varied ruins. Passing tests does not establish concept-art parity or whether a child will choose to keep playing.
 
 The next visual/content assessment should use the playable build, especially creature motion, repeated expeditions, spell impact, and the time between desirable unlocks. Remaining production acceptance includes the actual Ares upgrade/resume check and the child's playtest. Hardware acceleration is needed for the intended presentation; software-rendered fault tests lower framebuffer resolution and disable shadows.

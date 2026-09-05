@@ -23,9 +23,10 @@ OUT.mkdir(parents=True,exist_ok=True)
 for name in ('pillar','arch','wall','wall-bay','broken-wall','hero','skeleton','wraith','guardian','brazier','crystal','chest'):
     random.seed(214)
     function=globals()['make_'+name.replace('-','_')+'_v2']
-    print(bake_asset(name,function(),512 if name in ('pillar','brazier','crystal','chest') else 1024))
-    if name=='hero':rig_hero(bpy.data.collections['Vault_hero'])
-    if name in ('skeleton','guardian'):articulate_enemy(name,bpy.data.collections['Vault_'+name])
+    collection=function()
+    print(bake_asset(name,collection,512 if name in ('pillar','brazier','crystal','chest') else 1024))
+    if name=='hero':rig_hero(collection)
+    if name in ('skeleton','guardian'):articulate_enemy(name,collection)
 subprocess.run(['python',str(source/'detailed/optimize_assets.py')],check=True)
 # Preserve the legacy load path as a compatible skeletal minion, not the old toy imp.
 shutil.copyfile(OUT/'skeleton.glb',OUT/'imp.glb')

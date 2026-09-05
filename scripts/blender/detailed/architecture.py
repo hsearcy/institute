@@ -112,13 +112,64 @@ def make_wall_v2():
     for i in range(6):worn_block('Damaged wall coping',(-1.75+i*.7,0,3.26),(.69,.85,.17),'stone',.018,.026)
     return c
 
+def erode_wall_faces(collection):
+    """Wall-only coarse cleavage relief, retaining each stone's outer perimeter.
+
+    An irregular inset ring and a displaced center break broad planar faces into
+    shallow worn planes without multiplying entire bevel meshes with subdivision.
+    Material copies add low-frequency weathering without changing other assets.
+    """
+    import bmesh
+    rng=random.Random(4817);materials={}
+    for obj in collection.objects:
+        if obj.type!='MESH':continue
+        stone_slots={i for i,material in enumerate(obj.data.materials)if material and material.get('surface')=='stone'}
+        if not stone_slots:continue
+        for index in stone_slots:
+            original=obj.data.materials[index]
+            if original not in materials:
+                material=original.copy();material.name='Vault_WallRelief_'+original.name
+                nodes=material.node_tree.nodes;links=material.node_tree.links
+                shader=next(n for n in nodes if n.type=='BSDF_PRINCIPLED')
+                position=next(n for n in nodes if n.type=='NEW_GEOMETRY')
+                weather=nodes.new('ShaderNodeTexNoise');weather.inputs['Scale'].default_value=2.8;weather.inputs['Detail'].default_value=3;weather.inputs['Roughness'].default_value=.72
+                links.new(position.outputs['Position'],weather.inputs['Vector'])
+                bump=nodes.new('ShaderNodeBump');bump.inputs['Strength'].default_value=.64;bump.inputs['Distance'].default_value=.075
+                links.new(weather.outputs['Fac'],bump.inputs['Height'])
+                if shader.inputs['Normal'].links:links.new(shader.inputs['Normal'].links[0].from_socket,bump.inputs['Normal'])
+                links.new(bump.outputs['Normal'],shader.inputs['Normal']);materials[original]=material
+            obj.data.materials[index]=materials[original]
+        bm=bmesh.new();bm.from_mesh(obj.data);bm.normal_update()
+        minimum=Vector(tuple(min(v.co[i]for v in bm.verts)for i in range(3)));maximum=Vector(tuple(max(v.co[i]for v in bm.verts)for i in range(3)))
+        candidates=[face for face in bm.faces if face.material_index in stone_slots and face.calc_area()>.027 and face.normal.z>-.48]
+        for face in candidates:
+            perimeter=list(face.verts);normal=face.normal.copy();area=face.calc_area();center=face.calc_center_median()
+            tangent=(perimeter[1].co-perimeter[0].co).normalized();center+=tangent*rng.uniform(-.08,.08)*math.sqrt(area)
+            depth=min(.066,math.sqrt(area)*.10);material_index=face.material_index
+            inner=[]
+            for vertex in perimeter:
+                inset=center+(vertex.co-center)*rng.uniform(.52,.67)
+                inset-=normal*depth*rng.uniform(.18,.83)
+                inner.append(bm.verts.new(inset))
+            core_position=center-normal*depth*rng.uniform(-.10,.90)
+            for axis in range(3):core_position[axis]=max(minimum[axis],min(maximum[axis],core_position[axis]))
+            core=bm.verts.new(core_position)
+            bm.faces.remove(face)
+            for i in range(len(perimeter)):
+                j=(i+1)%len(perimeter)
+                for vertices in [(perimeter[i],perimeter[j],inner[j],inner[i]),(inner[i],inner[j],core)]:
+                    new=bm.faces.new(vertices);new.material_index=material_index;new.smooth=True
+        bm.normal_update();bm.to_mesh(obj.data);bm.free()
+        if obj.data.has_custom_normals:obj.data.normals_split_custom_set([(0,0,0)]*len(obj.data.loops))
+    return collection
+
 def make_broken_wall_v2():
     c=begin('broken-wall');wall_courses(4.2,2.55,broken=True)
     for i in range(24):
         x=random.uniform(-2.15,2.15);y=random.uniform(-.95,.65)
         o=worn_block('Collapsed rubble fragment',(x,y,.06+random.random()*.06),(.13+random.random()*.29,.12+random.random()*.24,.09+random.random()*.14),'stoneDark' if i%3==0 else 'stone',.02,.025)
         o.rotation_euler=(random.uniform(-.2,.2),random.uniform(-.3,.3),random.random()*pi)
-    return c
+    return erode_wall_faces(c)
 
 def make_wall_bay_v2():
     c=begin('wall-bay')
@@ -140,4 +191,4 @@ def make_wall_bay_v2():
     for z in (.46,1.54,2.54):rod('Grille horizontal strap',(-1.22,-.019,z),(1.22,-.019,z),.020,.020,'iron',6)
     for x in (-1.04,-.5,0,.5,1.04):
         for z in (1.54,2.54):rivet((x,-.045,z),.018,'iron')
-    return c
+    return erode_wall_faces(c)

@@ -167,3 +167,18 @@ albedo and roughness files byte-for-byte.
 The renderer places these outside the hero travel lane and enemy footprints, using
 `web/src/rpg/world/roomLayout.ts`. Room widths, entrances, floor openings, and
 formations are renderer metadata; they do not modify learning or saved expeditions.
+
+## Baked wall relief
+
+`erode_wall_faces` runs only on `wall-bay` and `broken-wall`. Existing stone
+perimeters and ground bounds stay intact while irregular interior relief breaks
+up large side and top faces. Copied wall materials add broad weathered normals;
+other models and shared source materials are unaffected. Internal relief faces
+share smooth vertex normals, preserving compact instanced geometry.
+
+The two optimized GLBs total 68,621 triangles (12,448 above the previous revision)
+and 4,496,120 bytes, with one draw call each. Full 1024-pixel albedo and 512-pixel
+normal/ORM maps are retained. The validator enforces their combined size and
+triangle budgets. Exported bounds match the prior models exactly.
+
+![Optimized wall relief reimport review](previews/v2/masonry-relief-exported.png)

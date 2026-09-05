@@ -2,7 +2,61 @@
 
 Verified September 5, 2026 on `concept/math-dungeon-rpg`. Successive revisions address the gap between the first prototype and the approved concept: textured Gothic architecture, denser hordes, animated characters, illustrated controls, and substantially more magic and loot. Images below are captured from the implementation, not generated concept art.
 
-![Actual Blizzard with fractured ice and Blender scenery](rpg-playtest/v8/blizzard.png)
+![Actual Arc Fang release with its additional split bolts](rpg-playtest/v9/arc-fang.png)
+
+## Ninth stonework and relic pass
+
+Broad faces of the runtime masonry now have real shallow depressions, while
+their shared perimeter vertices remain closed. The Blender wall bay and broken
+wall also gained coarse face/top relief and broader weathered normals. Their
+original dimensions and grounding are unchanged; only those two GLBs were
+rebuilt. They total 68,621 triangles and 4,496,120 bytes. The full 16-model library
+validates at 220,953 triangles and 22,884,452 bytes.
+
+Wall-foot rubble now forms asymmetric collapse piles with recognizable fallen
+blocks, smaller fragments, grit and dirt. Two clusters per ordinary room sit
+farther inward, between tomb rows. Transformed bounds exclude combat space,
+travel lanes, landmarks, tombs, braziers, chests, and bridge openings for these
+new substantial pieces. Scenery remains merged into 12–13 draws per room.
+
+Scenery is rebuilt after bundled stone textures load, fixing clones that kept
+the initial procedural fallback surfaces. Replacement disposes owned geometry,
+materials, masks, and superseded procedural maps while retaining shared baked
+textures. The room and bridge inspections in Chromium confirmed the new relief
+and clear openings; these were **renderer-only checks** without submitted answers.
+
+![Stonework and rubble at the normal camera — renderer inspection](rpg-playtest/v9/stonework-renderer.png)
+
+The item audit found and fixed two presentation bugs: Arc Fang's `pierce`
+modifier was ignored by Arc Lance; it now adds two visible forward splinters.
+The Staff of Endless Winter promised larger falling ice but only added an ice
+wave; Frostfall's shard modifier now also enlarges its projectiles. The existing
+damage counts, spell timing, XP, and loot rules are preserved.
+
+![Actual Endless Winter release](rpg-playtest/v9/endless-winter.png)
+
+Duplicate boss relics now explicitly show their conversion into **16 bonus XP**
+and the authoritative total XP for that guardian. Server behavior is unchanged:
+the pre-existing literal 16 was extracted into a shared RPG constant so the
+receipt explanation and reward calculation use the same value. There are no
+learning-rule or save-format changes.
+
+The production build and 241 unit tests pass, including masonry manifold checks
+over 80 seeded size combinations. The all-15-spell browser scenario passed in
+2.0 minutes with Arc Fang and Endless Winter equipped, three complete expeditions,
+saved question/favorites reloads, and duplicate boss receipt/inventory assertions.
+Both normal desktop/touch browser scenarios also passed in 1.1 minutes, covering
+the legacy learner fixture, expedition rewards, retries, question resume,
+worked help, and saved-response recovery.
+
+For normal unassisted completions, the pacing audit found early spell opportunities at 3, 6, 11, 17, 23, and 30
+answers, with final-school abilities first eligible at 60. Those are individual
+earliest choices with prerequisite points reserved. All 15 abilities together
+need at least 17 skill points (about 171 normal answers). The 22 nonstarter relics
+are all discovered by answer 63, leaving a later gap in new item discoveries.
+Potential follow-up is visible armor appearances at existing level milestones;
+no new cosmetic system or pacing change is included here. Natural creature
+surfaces, richer lighting, and the actual Ares resume check also remain open.
 
 ## Eighth fire, ice, and surface pass
 

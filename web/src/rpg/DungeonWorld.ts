@@ -35,6 +35,8 @@ export class DungeonWorld {
   private readonly heroActions = new Map<string, THREE.AnimationAction>();
   private heroAnimation = '';
   private readonly floorGroup = new THREE.Group();
+  private vaultScenery?: THREE.Group;
+  private sceneryMeshes: THREE.Object3D[] = [];
   private readonly enemyGroup = new THREE.Group();
   private readonly effectsGroup = new THREE.Group();
   private readonly propGroup = new THREE.Group();
@@ -163,7 +165,7 @@ export class DungeonWorld {
     this.bloom = new UnrealBloomPass(new THREE.Vector2(800, 500), .36, .5, 1.25);
     this.bloom.enabled = !this.softwareRenderer;
     this.composer.addPass(this.bloom); this.composer.addPass(new OutputPass());
-    this.buildDungeon(); this.floorGroup.add(...createVaultScenery(this.materials).children); this.setEncounter(0); this.resize();
+    this.buildDungeon(); this.installScenery(); this.setEncounter(0); this.resize();
   }
 
   async load(): Promise<void> {
@@ -196,12 +198,14 @@ export class DungeonWorld {
       floor.bumpScale = .13; floor.roughnessMap = relief.roughness; floor.roughness = .91; floor.metalness = .08; floor.needsUpdate = true;
       if (this.softwareRenderer) relief.bump.dispose();
     } catch { /* The procedural relief remains available if an asset is missing. */ }
+    const replacedStoneTextures = new Set<THREE.Texture>();
     try {
       const loader = new THREE.TextureLoader();
       const [map, height, roughness] = await Promise.all(['albedo', 'height', 'roughness'].map(name => loader.loadAsync(`/assets/rpg/stone/${name}.png`)));
       map.colorSpace = THREE.SRGBColorSpace;
       for (const texture of [map, height, roughness]) { texture.wrapS = texture.wrapT = THREE.RepeatWrapping; texture.anisotropy = 8; }
       for (const [material, tint] of [[this.materials.wall, 0xb2b5ad], [this.materials.trim, 0xc9c7bc]] as const) {
+        for (const texture of [material.map, material.bumpMap, material.roughnessMap]) if (texture) replacedStoneTextures.add(texture);
         material.map = map; material.bumpMap = this.softwareRenderer ? null : height;
         material.bumpScale = .16; material.roughnessMap = roughness; material.roughness = 1;
         material.color.setHex(tint); material.needsUpdate = true;
@@ -210,6 +214,8 @@ export class DungeonWorld {
       if (this.softwareRenderer) height.dispose();
     } catch { /* Missing optional surface maps retain the fallback stone. */ }
     if (this.disposed) return;
+    this.installScenery();
+    replacedStoneTextures.forEach(texture => texture.dispose());
     if (this.models.has('hero')) {
       this.hero.remove(this.heroVisual); this.releaseProcedural(this.heroVisual); this.heroVisual = new THREE.Group();
       this.heroVisual.add(this.model('hero', 1.8)!); this.hero.add(this.heroVisual); this.setEquipment(this.equipment);
@@ -302,6 +308,22 @@ export class DungeonWorld {
 
   private releaseProcedural(object: THREE.Object3D): void {
     if (object.userData.procedural) object.traverse(child => { if (child instanceof THREE.Mesh) child.geometry.dispose(); });
+  }
+
+  private installScenery(): void {
+    if (this.vaultScenery) {
+      this.floorGroup.remove(...this.sceneryMeshes);
+      for (const object of this.sceneryMeshes) object.traverse(child => {
+        if (child instanceof THREE.Mesh) child.geometry.dispose();
+      });
+      for (const material of this.vaultScenery.userData.ownedMaterials ?? []) material.dispose();
+      for (const texture of this.vaultScenery.userData.ownedTextures ?? []) texture.dispose();
+    }
+    // Scenery clones the base stone materials. Recreate it after bundled maps
+    // load so rubble uses those surfaces instead of retaining the fallback.
+    this.vaultScenery = createVaultScenery(this.materials);
+    this.sceneryMeshes = [...this.vaultScenery.children];
+    this.floorGroup.add(...this.sceneryMeshes);
   }
 
   private buildDungeon(): void {
@@ -798,7 +820,7 @@ export class DungeonWorld {
           resolveHorde(.55); break;
         }
         case 'frostfall': {
-          this.enemies.forEach((enemy, i) => this.schedule(i * .018, () => this.projectile(enemy.origin.clone().add(new THREE.Vector3(-.6, 7 + i % 3, 0)), enemy.origin, 0xabedff, .23, .42, () => this.impact(enemy.origin, 0xb0efff, .7), true)));
+          this.enemies.forEach((enemy, i) => this.schedule(i * .018, () => this.projectile(enemy.origin.clone().add(new THREE.Vector3(-.6, 7 + i % 3, 0)), enemy.origin, 0xabedff, options.shards ? .36 : .23, .42, () => this.impact(enemy.origin, 0xb0efff, .7), true)));
           if (options.shards) this.schedule(.7, () => this.iceWave(origin, true));
           resolveHorde(.5); break;
         }
@@ -839,6 +861,14 @@ export class DungeonWorld {
           const end = origin.clone().add(new THREE.Vector3(0, .8, -13));
           for (let i = 0; i < 3; i++) this.schedule(i * .16, () => {
             this.bolt(origin.clone().setY(1.2), end, 0x91bcff, .1, .5);
+            if (options.pierce) {
+              const split = origin.clone().lerp(end, .58).setY(1.1);
+              for (const side of [-1, 1]) {
+                const splinter = end.clone().add(new THREE.Vector3(side * 4.2, .2, 2.1));
+                this.bolt(split, splinter, 0xd5edff, .075, .48);
+                this.emit(splinter, 0x9fcdff, 7, 1.5, .45);
+              }
+            }
             this.enemies.forEach((enemy, n) => { if (n % 3 === i) this.bolt(end.clone().lerp(origin, .45), enemy.origin.clone().setY(1), 0xb8daff, .035, .4); });
           });
           resolveHorde(.22); this.shake = .2; break;

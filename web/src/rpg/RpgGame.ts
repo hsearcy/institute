@@ -1,5 +1,5 @@
 import type { Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgReward, Reward } from '@institute/shared';
-import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgEncounterKills, ProblemSchema } from '@institute/shared';
+import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, RPG_DUPLICATE_ITEM_XP, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgEncounterKills, ProblemSchema } from '@institute/shared';
 import { fetchState, fetchMastery, redeemCrazyCoin, type Demo } from '../game/tutor';
 import { speak } from '../game/audio';
 import * as dungeonSound from './sound';
@@ -412,7 +412,13 @@ export class RpgGame {
   }
   private showVictory(reward: RpgReward): void {
     const s = this.state!; const region = RPG_REGIONS.find(r => r.id === s.expedition?.regionId)!;
-    this.showDialog('victory', `<div class="rpg-seal">${icon('crown')}</div><p class="rpg-eyebrow">EXPEDITION COMPLETE</p><h2 id="rpg-dialog-title">${esc(region.bossName)}<br><em>defeated.</em></h2><p>The halls are yours. Your next adventure awaits.</p><div class="rpg-victory-reward">${reward.item ? relicArt(reward.item.id) : icon('crown')}<div><small>${reward.item ? esc(reward.item.rarity.toUpperCase() + ' RELIC') : 'GUARDIAN REWARD'}</small><strong>${esc(reward.item?.name ?? `+${reward.xp} experience`)}</strong><span>${esc(reward.item?.description ?? 'One step closer to your next spell.')}</span></div></div><div class="rpg-button-row"><button class="rpg-primary" data-action="map">Next adventure →</button><button data-action="inventory">Inspect loot</button><button data-action="camp">Save & leave</button></div>${s.skillPoints ? `<button class="rpg-text-button" data-action="skills">Spend ${s.skillPoints} skill point${s.skillPoints > 1 ? 's' : ''}</button>` : ''}`);
+    // The receipt decides whether this was a discovery or a conversion. Never
+    // infer it from inventory, which already includes newly awarded relics.
+    const converted = reward.duplicateItem && !!reward.item;
+    const rewardLabel = converted ? 'DUPLICATE RELIC' : reward.item ? `${reward.item.rarity.toUpperCase()} RELIC` : 'GUARDIAN REWARD';
+    const rewardDescription = converted ? `Already in your collection. Converted into +${RPG_DUPLICATE_ITEM_XP} bonus XP. +${reward.xp} XP total from this guardian.`
+      : reward.item?.description ?? 'One step closer to your next spell.';
+    this.showDialog('victory', `<div class="rpg-seal">${icon('crown')}</div><p class="rpg-eyebrow">EXPEDITION COMPLETE</p><h2 id="rpg-dialog-title">${esc(region.bossName)}<br><em>defeated.</em></h2><p>The halls are yours. Your next adventure awaits.</p><div class="rpg-victory-reward">${reward.item ? relicArt(reward.item.id) : icon('crown')}<div><small>${esc(rewardLabel)}</small><strong>${esc(reward.item?.name ?? `+${reward.xp} experience`)}</strong><span>${esc(rewardDescription)}</span></div></div><div class="rpg-button-row"><button class="rpg-primary" data-action="map">Next adventure →</button><button data-action="inventory">Inspect loot</button><button data-action="camp">Save & leave</button></div>${s.skillPoints ? `<button class="rpg-text-button" data-action="skills">Spend ${s.skillPoints} skill point${s.skillPoints > 1 ? 's' : ''}</button>` : ''}`);
   }
   private hint(text: string): void { this.el('rpg-hint').textContent = text; this.el('rpg-hint').hidden = false; }
   private async help(): Promise<void> {

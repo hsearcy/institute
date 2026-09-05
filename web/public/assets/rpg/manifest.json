@@ -180,22 +180,22 @@
     },
     "wall-bay": {
       "url": "/assets/rpg/wall-bay.glb",
-      "bytes": 2757156,
-      "triangles": 44975,
+      "bytes": 3091172,
+      "triangles": 54547,
       "drawCalls": 1,
       "embeddedTextures": 3,
       "nodes": [
-        "Body_Baked.012"
+        "Body_Baked.057"
       ]
     },
     "broken-wall": {
       "url": "/assets/rpg/broken-wall.glb",
-      "bytes": 1205832,
-      "triangles": 11198,
+      "bytes": 1404948,
+      "triangles": 14074,
       "drawCalls": 1,
       "embeddedTextures": 3,
       "nodes": [
-        "Body_Baked.028"
+        "Body_Baked.058"
       ]
     },
     "skeleton": {

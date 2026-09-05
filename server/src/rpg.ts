@@ -2,7 +2,7 @@ import type { Database } from 'bun:sqlite';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
-  RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, rpgLevel, rpgSpellUnlocked, rpgEncounterKills,
+  RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, rpgLevel, rpgSpellUnlocked, rpgEncounterKills,
   type RpgState, type RpgReward, type RpgResolveResult,
 } from '@institute/shared';
 
@@ -128,7 +128,7 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
     }
     const duplicateItem = !!item && state.inventory.includes(item.id);
     if (item && !duplicateItem) state.inventory.push(item.id);
-    if (duplicateItem) xp += 16;
+    if (duplicateItem) xp += RPG_DUPLICATE_ITEM_XP;
     state.xp += xp;
     Object.assign(state, rpgLevel(state.xp));
     const levelsGained = state.level - oldLevel;

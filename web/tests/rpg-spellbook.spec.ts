@@ -87,6 +87,8 @@ test('all fifteen spellbook abilities cast distinct effects, honor equipment, an
     }
     await choose(page, spellId);
     if (spellId === 'meteor') await equip(page, 'starfall');
+    if (spellId === 'frost') await equip(page, 'wintercrown');
+    if (spellId === 'arc_lance') await equip(page, 'arcfang');
     if (spellId === 'frost_guardian') await equip(page, 'wardenheart');
     if (spellId === 'ball_lightning') await equip(page, 'stormorbit');
 
@@ -156,8 +158,19 @@ test('all fifteen spellbook abilities cast distinct effects, honor equipment, an
     } else if (['meteor', 'frost_guardian', 'ball_lightning'].includes(spellId)) {
       await page.screenshot({ path: info.outputPath(`cast-${spellId}.png`) });
     }
-    if (result.reward.bossDefeated) await expect(page.getByRole('button', { name: 'Next adventure →', exact: true })).toBeVisible();
-    else await ready(page);
+    if (result.reward.bossDefeated) {
+      await expect(page.getByRole('button', { name: 'Next adventure →', exact: true })).toBeVisible();
+      const rewardCard = page.locator('.rpg-victory-reward');
+      if (result.reward.duplicateItem) {
+        await expect(rewardCard).toContainText('DUPLICATE RELIC');
+        await expect(rewardCard).toContainText(result.reward.item!.name);
+        await expect(rewardCard).toContainText('Converted into +16 bonus XP');
+        await expect(rewardCard).toContainText(`+${result.reward.xp} XP total from this guardian`);
+        expect((await state(page)).inventory).toEqual(current.inventory);
+      } else {
+        await expect(rewardCard).not.toContainText('DUPLICATE RELIC');
+      }
+    } else await ready(page);
     });
   }
   expect(seenSpells.size).toBe(15); expect(seenEffects.size).toBe(15);

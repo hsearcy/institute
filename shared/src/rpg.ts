@@ -1,4 +1,5 @@
 /** Adventure content only. Never used by tutor selection, mastery, or review. */
+export const RPG_DUPLICATE_ITEM_XP = 16;
 export const RPG_SPELL_IDS = ['ember', 'cleave', 'meteor', 'phoenix_dive', 'firestorm', 'frost', 'ice_lance', 'glacial_surge', 'blizzard', 'frost_guardian', 'storm', 'arc_lance', 'thunderclap', 'ball_lightning', 'tempest'] as const;
 export type RpgSpellId = typeof RPG_SPELL_IDS[number];
 export type RpgSchoolId = 'ember' | 'frost' | 'storm';

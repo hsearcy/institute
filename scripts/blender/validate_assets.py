@@ -58,6 +58,9 @@ for name in expected:
         stats[name]['joints']=[doc['nodes'][i]['name'] for i in doc['skins'][0]['joints']]
     assert len(data)<8_000_000,(name,len(data))
     if name=='ice_cluster':assert len(data)<600_000 and triangles<5000
+relief_walls=[stats[name] for name in ('wall-bay','broken-wall')]
+assert sum(asset['bytes'] for asset in relief_walls)<5_000_000
+assert sum(asset['triangles'] for asset in relief_walls)<71_173
 manifest={'revision':2,'generator':'Blender 4.5.13 via Blender MCP 1.6 / protocol 5; UV-baked PBR surface atlases','source':'scripts/blender/build_assets.py','userPrompt':'use blender mcp to create high quality models.','coordinateSystem':{'up':'+Y','forward':'+Z','origin':'ground center','unit':'meter'},'assets':stats}
 (OUT/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
 print(f'Validated {len(stats)} GLBs: {sum(x["triangles"] for x in stats.values()):,} triangles, {sum(x["bytes"] for x in stats.values()):,} bytes total.')

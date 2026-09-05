@@ -31,17 +31,46 @@ export function createVaultScenery(base: Record<string, THREE.MeshStandardMateri
     ctx.fillStyle = gradient; ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
   }
   const mask = new THREE.CanvasTexture(canvas);
+  group.userData.ownedTextures = [mask];
   const grime = new THREE.MeshStandardMaterial({ color: 0x292419, roughness: 1, alphaMap: mask, transparent: true, opacity: .72, depthWrite: false, vertexColors: true });
   const wet = new THREE.MeshStandardMaterial({ color: 0x29312c, roughness: .17, metalness: .3, alphaMap: mask, transparent: true, opacity: .65, depthWrite: false, vertexColors: true });
 
-  const add = (room: number, geometry: THREE.BufferGeometry, material: THREE.Material, position: THREE.Vector3, rotation = new THREE.Euler(), scale = new THREE.Vector3(1, 1, 1), shadow = true) => {
+  group.userData.ownedMaterials = [stone, paleStone, clay, cloth, wax, iron, wick, grime, wet];
+
+  // Tomb x positions vary in buildDungeon. Reserve the full possible extent,
+  // including their turned lids, rather than guessing the current random seed.
+  const propClearances = Array.from({ length: 6 }, (_, room) => {
+    const layout = getRoomLayout(room), offset = layout.sideWallX - 12.2;
+    const rectangles: { minX: number; maxX: number; minZ: number; maxZ: number }[] = [];
+    for (const side of [-1, 1]) {
+      for (let tomb = 0; tomb < 3; tomb++) {
+        const xs = [side * (8.6 + offset), side * (9.7 + offset)], z = -7 + tomb * 6.3;
+        rectangles.push({ minX: Math.min(...xs) - 1.05, maxX: Math.max(...xs) + 1.05, minZ: z - 1.45, maxZ: z + 1.45 });
+      }
+      const x = side * (layout.walkable.maxX + 1.1), z = side < 0 ? -3.8 : 3.2;
+      rectangles.push({ minX: x - .8, maxX: x + .8, minZ: z - .8, maxZ: z + .8 });
+    }
+    if ([0, 2, 5].includes(room)) {
+      const x = layout.walkable.maxX + 1.1;
+      rectangles.push({ minX: x - .95, maxX: x + .95, minZ: -6.05, maxZ: -4.15 });
+    }
+    return rectangles;
+  });
+
+  const add = (room: number, geometry: THREE.BufferGeometry, material: THREE.Material, position: THREE.Vector3, rotation = new THREE.Euler(), scale = new THREE.Vector3(1, 1, 1), shadow = true, keepCombatClear = false) => {
     if (isCrossingChasm(room, position.x, position.z + room * 20)) { geometry.dispose(); return; }
     geometry.applyMatrix4(new THREE.Matrix4().compose(position, new THREE.Quaternion().setFromEuler(rotation), scale));
-    // A rotated stain can cover a pit even when its center lies on solid floor.
-    if (room === 3 && (material === grime || material === wet)) {
-      geometry.computeBoundingBox();
-      const bounds = geometry.boundingBox!;
-      if (boundsIntersectCrossingChasm(room, { minX: bounds.min.x, maxX: bounds.max.x, minZ: bounds.min.z + room * 20, maxZ: bounds.max.z + room * 20 })) { geometry.dispose(); return; }
+    // Test the whole transformed footprint, including tilted raised rubble:
+    // center-only tests allow long blocks to hang visibly over the crossing.
+    geometry.computeBoundingBox();
+    const worldBounds = geometry.boundingBox!;
+    const bounds = { minX: worldBounds.min.x, maxX: worldBounds.max.x, minZ: worldBounds.min.z + room * 20, maxZ: worldBounds.max.z + room * 20 };
+    if (boundsIntersectCrossingChasm(room, bounds)) { geometry.dispose(); return; }
+    if (keepCombatClear) {
+      const layout = getRoomLayout(room);
+      const overlaps = (other: { minX: number; maxX: number; minZ: number; maxZ: number }, gap = .12) => bounds.maxX > other.minX - gap && bounds.minX < other.maxX + gap && bounds.maxZ > other.minZ - gap && bounds.minZ < other.maxZ + gap;
+      const touchesLandmark = layout.landmarks.some(mark => Math.hypot(Math.max(bounds.minX - mark.x, 0, mark.x - bounds.maxX), Math.max(bounds.minZ - mark.z, 0, mark.z - bounds.maxZ)) < mark.radius + .22);
+      if (overlaps(layout.walkable) || overlaps(layout.heroPath, .3) || touchesLandmark || propClearances[room].some(prop => overlaps(prop, .12))) { geometry.dispose(); return; }
     }
     const shade = .72 + random() * .45, colors = new Float32Array(geometry.getAttribute('position').count * 3);
     for (let i = 0; i < colors.length; i += 3) { colors[i] = shade; colors[i + 1] = shade * .98; colors[i + 2] = shade * .93; }
@@ -64,18 +93,54 @@ export function createVaultScenery(base: Record<string, THREE.MeshStandardMateri
     const g = new THREE.ExtrudeGeometry(shape, { depth: height, bevelEnabled: true, bevelSegments: 1, steps: 1, bevelSize: .018, bevelThickness: .012 });
     add(room, g, material, new THREE.Vector3(x, -.025, z), new THREE.Euler(-Math.PI / 2, 0, random() * Math.PI * 2), new THREE.Vector3(1.3, 1, 1));
   };
+  const fallenBlock = (room: number, x: number, z: number, w: number, h: number, d: number, angle: number, material = stone, lean = .15) => {
+    const shape = new THREE.Shape(), cut = Math.min(w, d) * (.1 + random() * .16);
+    const corners = [[-w / 2 + cut, -d / 2], [w / 2 - cut, -d / 2], [w / 2, -d / 2 + cut], [w / 2, d / 2 - cut], [w / 2 - cut, d / 2], [-w / 2 + cut, d / 2], [-w / 2, d / 2 - cut], [-w / 2, -d / 2 + cut]];
+    corners.forEach(([px, pz], index) => { if (index) shape.lineTo(px, pz); else shape.moveTo(px, pz); }); shape.closePath();
+    const geometry = new THREE.ExtrudeGeometry(shape, { depth: h, bevelEnabled: true, bevelSegments: 1, steps: 1, bevelSize: Math.min(.045, h * .18), bevelThickness: Math.min(.035, h * .14) });
+    geometry.rotateX(-Math.PI / 2); geometry.rotateZ((random() - .5) * lean); geometry.rotateX((random() - .5) * lean); geometry.rotateY(angle);
+    geometry.computeBoundingBox(); geometry.translate(0, .008 - geometry.boundingBox!.min.y, 0);
+    add(room, geometry, material, new THREE.Vector3(x, 0, z), undefined, undefined, h > .08, true);
+  };
   const stain = (room: number, x: number, z: number, w: number, d: number, material: THREE.Material) => add(room, new THREE.PlaneGeometry(w, d), material, new THREE.Vector3(x, -.035 + random() * .005, z), new THREE.Euler(-Math.PI / 2, 0, random() * Math.PI * 2), undefined, false);
 
   for (let room = 0; room < 6; room++) {
     const center = -room * 20;
     // A worn procession aisle: chipped corners rise only centimetres above the
     // original floor, with cracks and missing pieces outside the walking line.
-    for (let n = 0; n < 18; n++) {
+    for (let n = 0; n < 8; n++) {
       const side = n % 2 ? 1 : -1, x = side * (3.2 + random() * 3.3), z = center - 8.2 + random() * 17;
-      shard(room, x, z, .12 + random() * .28, .045 + random() * .055, n % 4 ? stone : paleStone);
+      shard(room, x, z, .07 + random() * .13, .012 + random() * .018, n % 4 ? stone : paleStone);
       if (n % 4 === 0) stain(room, x + .4, z, 2.2, 1.4, grime);
     }
     for (const side of [-1, 1]) {
+      const layout = getRoomLayout(room), clusters = side < 0 ? 3 : 2;
+      for (let cluster = 0; cluster < clusters; cluster++) {
+        const onApron = room !== 3 && ((side < 0 && cluster === 1) || (side > 0 && cluster === 0));
+        const x = side * (layout.sideWallX - layout.sideWallWidth * .5 - 1.05 - (onApron ? .9 : 0) + (random() - .5) * .35);
+        const sampledZ = -6.1 + cluster * (12.2 / (clusters - 1)) + (random() - .5) * 1.3;
+        // Two deliberate gaps between the tomb rows reveal the collapse piles.
+        // The crossing keeps its original shore placements beside the pits.
+        const z = center + (onApron ? (side < 0 ? 2.25 : -3.25) : sampledZ);
+        const collapseAngle = side * (.45 + random() * .9);
+        stain(room, x - side * .15, z, 4.8, 3.6, grime);
+        stain(room, x + side * .65, z + .7, 2.9, 2.1, grime);
+        // A few recognizable broken courses anchor each pile. The smaller
+        // pieces spill inward in an uneven fan, rather than a uniform scatter.
+        fallenBlock(room, x, z, 1.25 + random() * .45, .28 + random() * .18, .65 + random() * .3, collapseAngle, stone, .35);
+        fallenBlock(room, x + side * .38, z + .47, .62 + random() * .32, .38 + random() * .32, .5 + random() * .25, collapseAngle + .7, paleStone, .8);
+        for (let chunk = 0; chunk < 9; chunk++) {
+          const angle = random() * Math.PI * 2, spread = Math.sqrt(random());
+          const px = x + Math.cos(angle) * spread * 1.45, pz = z + Math.sin(angle) * spread * 1.65;
+          fallenBlock(room, px, pz, .24 + random() * .56, .09 + random() * .24, .2 + random() * .4, collapseAngle + (random() - .5) * 2.4, chunk % 5 ? stone : paleStone, .55);
+        }
+        for (let grit = 0; grit < 30; grit++) {
+          const angle = random() * Math.PI * 2, spread = .3 + Math.sqrt(random()) * 1.9;
+          const px = x + Math.cos(angle) * spread, pz = z + Math.sin(angle) * spread * .9;
+          const size = .035 + random() * .11;
+          fallenBlock(room, px, pz, size * 1.8, size * .43, size, random() * Math.PI * 2, grit % 7 ? stone : paleStone, .45);
+        }
+      }
       for (let n = 0; n < 6; n++) {
         const x = side * (8.1 + random() * 4.8), z = center - 8.5 + n * 3.2;
         stain(room, x, z, 5.5, 3.4, grime);

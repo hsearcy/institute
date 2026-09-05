@@ -12,7 +12,7 @@ import { EnemyAnimator } from './world/EnemyAnimator';
 import { createVaultScenery } from './world/scenery';
 import { masonryGeometry, projectStoneUV } from './world/masonry';
 import { getRoomLayout, enemyPositions, isCrossingChasm, roomFloorPatches } from './world/roomLayout';
-import { stoneMaterial, floorRelief, flameMaterial, fireSheetMaterial, novaMaterial, stormMaterial, glowTexture, waveTexture } from './world/materials';
+import { stoneMaterial, floorRelief, flameMaterial, fireSheetMaterial, bladeWakeMaterial, ashMaterial, novaMaterial, stormMaterial, glowTexture, waveTexture } from './world/materials';
 
 type Enemy = { root: THREE.Group; visual: THREE.Object3D; origin: THREE.Vector3; phase: number; brute: boolean; dead: boolean; modelId: string; deathAt: number; animator: EnemyAnimator };
 type Fragment = { position: THREE.Vector3; velocity: THREE.Vector3; rotation: THREE.Vector3; spin: THREE.Vector3; scale: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; hot: boolean; bounced: boolean };
@@ -228,7 +228,7 @@ export class DungeonWorld {
     // Compile authored actors and uncommon effect programs during loading,
     // before a child's first cast would otherwise pay the shader setup cost.
     const warmup = new THREE.Group(); warmup.position.y = -1000;
-    const warmMaterials: THREE.Material[] = [novaMaterial(), fireSheetMaterial(), stormMaterial(0xa9bdff)];
+    const warmMaterials: THREE.Material[] = [novaMaterial(), fireSheetMaterial(), bladeWakeMaterial(), ashMaterial(), stormMaterial(0xa9bdff)];
     for (const material of warmMaterials) warmup.add(new THREE.Mesh(new THREE.PlaneGeometry(.01, .01), material));
     const summon = this.model('guardian', 4.5);
     summon?.traverse(object => { if (object instanceof THREE.Mesh && object.material instanceof THREE.MeshStandardMaterial) { object.material = object.material.clone(); object.material.transparent = true; warmMaterials.push(object.material); } });
@@ -751,9 +751,9 @@ export class DungeonWorld {
         case 'meteor': {
           this.targetMark(target, 0xff7534, 3.2);
           this.projectile(target.clone().add(new THREE.Vector3(-5, 11, -3)), target, 0xff751c, 1.15, .65, () => {
-            this.fireNova(target, 10); this.firePillar(target, 3.9, .95); this.debris(target, 35, false, 1.4); this.debris(target, 60, true, 1.6); this.shake = .55;
+            this.meteorImpact(target, new THREE.Vector3(5, -11, 3), 1);
           });
-          if (options.echo) this.schedule(.35, () => this.projectile(target.clone().add(new THREE.Vector3(6, 10, 2)), origin.clone().add(new THREE.Vector3(3, 0, 1)), 0xffb74c, .7, .6, () => this.fireNova(origin, 6)));
+          if (options.echo) this.schedule(.35, () => this.projectile(target.clone().add(new THREE.Vector3(6, 10, 2)), origin.clone().add(new THREE.Vector3(3, 0, 1)), 0xffb74c, .7, .6, () => this.meteorImpact(origin.clone().add(new THREE.Vector3(3, 0, 1)), new THREE.Vector3(-3, -10, -1), .6)));
           resolveHorde(.72); break;
         }
         case 'phoenix-dive': {
@@ -881,18 +881,30 @@ export class DungeonWorld {
   }
 
   private weaponSweep(origin: THREE.Vector3, color: number, radius: number, phase: number): void {
-    const vertices: number[] = [], uv: number[] = [], indices: number[] = [], count = 28;
-    for (let i = 0; i <= count; i++) {
-      const angle = i / count * Math.PI * .9;
-      for (const edge of [0, 1]) { const r = radius * (edge ? 1 : .59); vertices.push(Math.sin(angle) * r, .45 + Math.sin(i / count * Math.PI) * .5, Math.cos(angle) * r); uv.push(i / count, 1 - edge); }
-      if (i < count) { const k = i * 2; indices.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); }
+    // The physical blade trace stays close to the hero. Its narrow curved edge
+    // reads independently of the farther enemy contact bursts.
+    const reach = radius * .6, span = Math.PI * .84, turn = Math.PI * 1.3;
+    const arc = (angle: number, r = reach) => new THREE.Vector3(Math.sin(angle) * r, .62 + Math.sin(angle * 1.3) * .38 + Math.cos(angle) * .17, Math.cos(angle) * r);
+    const points = Array.from({ length: 34 }, (_, i) => arc(i / 33 * span));
+    for (const [width, tint, intensity, opacity] of [[.026, 0xffdda0, 1.35, .92], [.058, color, 2.2, .72], [.105, color, 1.4, .19]] as const) {
+      const edge = this.stroke(points, tint, width, .57); edge.position.copy(origin);
+      (edge.material as THREE.MeshBasicMaterial).color.multiplyScalar(intensity);
+      this.effects[this.effects.length - 1].update = t => { edge.rotation.y = phase + t * turn; (edge.material as THREE.MeshBasicMaterial).opacity = Math.sin(t * Math.PI) * opacity; };
     }
-    const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3)); geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geometry.setIndex(indices); geometry.computeVertexNormals();
-    const material = fireSheetMaterial(phase * 7), sweep = new THREE.Mesh(geometry, material); sweep.position.copy(origin);
-    this.effect(sweep, .67, t => { sweep.rotation.y = phase + t * Math.PI * 1.3; material.uniforms.time.value = this.elapsed * 1.6; material.uniforms.opacity.value = Math.sin(t * Math.PI) * .78; });
-    const tip = origin.clone().add(new THREE.Vector3(Math.sin(phase + 1.7) * radius, .5, Math.cos(phase + 1.7) * radius));
-    this.debris(tip, 14, true, .8);
-    this.emit(origin.clone().setY(.7), color, 18, 5, .65);
+    const vertices: number[] = [], uv: number[] = [], indices: number[] = [];
+    for (let i = 0; i <= 32; i++) {
+      const angle = i / 32 * span;
+      for (const side of [0, 1]) { const point = arc(angle, reach - (1 - side) * (.25 + Math.sin(angle) * .17)); vertices.push(point.x, point.y - (1 - side) * .1, point.z); uv.push(i / 32, side); }
+      if (i < 32) { const k = i * 2; indices.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); }
+    }
+    const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3)); geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geometry.setIndex(indices);
+    const material = bladeWakeMaterial(), wake = new THREE.Mesh(geometry, material); wake.position.copy(origin);
+    this.effect(wake, .67, t => { wake.rotation.y = phase + t * turn - .045; material.uniforms.time.value = this.elapsed; material.uniforms.opacity.value = Math.sin(t * Math.PI) * .88; });
+    for (let step = 0; step < 7; step++) this.schedule(step * .055, () => {
+      const angle = phase + span + step * .055 / .57 * turn;
+      const tip = arc(span).applyAxisAngle(new THREE.Vector3(0, 1, 0), phase + step * .055 / .57 * turn).add(origin);
+      this.debris(tip, 3, true, .7, { direction: new THREE.Vector3(Math.cos(angle), 0, -Math.sin(angle)), spread: .8, lift: .3, grounded: true });
+    });
   }
 
   private fireNova(origin: THREE.Vector3, radius: number): void {
@@ -918,14 +930,42 @@ export class DungeonWorld {
   }
 
   private fireContact(at: THREE.Vector3, scale: number): void {
-    const flash = new THREE.Mesh(new THREE.PlaneGeometry(scale * 1.5, scale * 1.5), new THREE.MeshBasicMaterial({ color: 0xffefc2, map: this.glowMap, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
-    flash.position.copy(at).y += .8; flash.quaternion.copy(this.camera.quaternion);
-    this.effect(flash, .19, t => { flash.scale.setScalar(.65 + t); flash.material.opacity = Math.pow(1 - t, 2) * .9; });
-    const material = fireSheetMaterial(at.x * 7 + at.z), sheet = new THREE.Mesh(new THREE.PlaneGeometry(scale * 1.1, scale * 1.05, 4, 3), material);
-    sheet.position.copy(at).y += scale * .43; sheet.rotation.y = .7;
+    // One brief hot point and actual tumbling fragments replace the repeated
+    // upright flame cards that used to obscure every struck enemy.
+    const flash = new THREE.Mesh(new THREE.PlaneGeometry(scale * .65, scale * .65), new THREE.MeshBasicMaterial({ color: 0xffebbd, map: this.glowMap, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+    flash.position.copy(at).y += .72; flash.quaternion.copy(this.camera.quaternion);
+    this.effect(flash, .13, t => { flash.scale.setScalar(.6 + t * .35); flash.material.opacity = Math.pow(1 - t, 2) * .8; });
     const outward = at.clone().sub(this.hero.position).setY(0).normalize();
-    this.effect(sheet, .48, t => { sheet.position.x = at.x + outward.x * t * .75; sheet.position.z = at.z + outward.z * t * .75; material.uniforms.time.value = this.elapsed; material.uniforms.opacity.value = Math.sin(t * Math.PI) * .58; });
-    this.debris(at, Math.round(7 * scale), true, .9); this.debris(at, Math.round(3 * scale));
+    this.debris(at, Math.round(9 * scale), true, .8, { direction: outward, spread: 1.9, lift: .4, grounded: true });
+    this.debris(at, Math.round(4 * scale), false, .8, { direction: outward, spread: 2.6, lift: .42, grounded: true });
+    if (scale > 1.1) this.groundAsh(at, scale * .85, outward, .65);
+  }
+
+  private groundAsh(at: THREE.Vector3, radius: number, direction: THREE.Vector3, duration: number): void {
+    const material = ashMaterial();
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius * .32, .38, 26, 3, true), material);
+    this.effect(mesh, duration, t => {
+      mesh.position.copy(at).addScaledVector(direction, t * radius * .65); mesh.position.y = .13 + t * .12;
+      mesh.scale.set(.28 + t * 1.05, 1 - t * .55, .28 + t * 1.05);
+      material.uniforms.time.value = this.elapsed; material.uniforms.opacity.value = Math.sin(t * Math.PI) * .7;
+    });
+  }
+
+  private meteorImpact(at: THREE.Vector3, incoming: THREE.Vector3, scale: number): void {
+    const direction = incoming.clone().setY(0).normalize();
+    this.fireNova(at, 10 * scale);
+    this.debris(at, Math.round(44 * scale), false, 1.4, { direction, spread: Math.PI * 1.6, lift: .3, grounded: true });
+    this.debris(at, Math.round(48 * scale), true, 1.5, { direction, spread: Math.PI * .95, lift: .36, grounded: true });
+    this.groundAsh(at, 3.3 * scale, direction, 1.25);
+    // A shallow expanding crown has real volume, but leaves the struck pack
+    // visible above the blast instead of covering it with a tall flat fire card.
+    const material = fireSheetMaterial(at.x + at.z), crown = new THREE.Mesh(new THREE.CylinderGeometry(1.3 * scale, .5 * scale, .8 * scale, 30, 4, true), material);
+    this.effect(crown, .48, t => {
+      crown.position.copy(at).addScaledVector(direction, t * .65); crown.position.y = .15 + scale * .22;
+      crown.scale.set(.6 + t * 2.2, 1 - t * .65, .6 + t * 2.2);
+      material.uniforms.time.value = this.elapsed * 1.4; material.uniforms.opacity.value = Math.sin(t * Math.PI) * .48;
+    });
+    this.shake = .55 * scale;
   }
 
   private impact(at: THREE.Vector3, color: number, scale: number): void {
@@ -949,7 +989,34 @@ export class DungeonWorld {
     const geometry = ice ? new THREE.ConeGeometry(size, size * 5.8, 5) : new THREE.IcosahedronGeometry(size, 1);
     const material = new THREE.MeshStandardMaterial({ color: ice ? 0x82bfda : 0x533522, emissive: color, emissiveIntensity: ice ? .7 : 2, roughness: ice ? .15 : .68, metalness: ice ? .2 : 0, transparent: true });
     const mesh = new THREE.Mesh(geometry, material); if (ice) mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), to.clone().sub(from).normalize());
-    this.effect(mesh, duration + .08, t => { mesh.position.copy(from).lerp(to, Math.min(1, t * 1.1)); if (!ice) mesh.rotation.x += .12; this.emit(mesh.position, color, ice ? 2 : 5, size * .8, .6); });
+    if (!ice) {
+      material.color.setHex(0x817365); material.map = this.materials.wall.map;
+      material.emissiveIntensity = .045; material.roughness = .94; material.flatShading = true;
+      // Coherent deformation keeps shared triangle corners together while
+      // breaking the round silhouette into uneven, sharply lit stone facets.
+      const vertices = geometry.getAttribute('position');
+      for (let i = 0; i < vertices.count; i++) {
+        const x = vertices.getX(i), y = vertices.getY(i), z = vertices.getZ(i);
+        const roughness = .87 + Math.sin(x / size * 4.7 + z / size * 2.3) * .13 + Math.cos(y / size * 5.1 - x / size * 1.9) * .09;
+        vertices.setXYZ(i, x * roughness * 1.08, y * roughness, z * roughness * .91);
+      }
+      vertices.needsUpdate = true; geometry.computeVertexNormals();
+      // A tapered, three-dimensional flame envelope trails the moving rock.
+      const tailLength = size * 3.8, tailGeometry = new THREE.CylinderGeometry(size * .08, size * .75, tailLength, 18, 6, true);
+      tailGeometry.translate(0, tailLength * .5, 0);
+      const tailMaterial = fireSheetMaterial(size * 9), tail = new THREE.Mesh(tailGeometry, tailMaterial);
+      tail.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), from.clone().sub(to).normalize());
+      this.effect(tail, duration + .08, t => {
+        tail.position.copy(from).lerp(to, Math.min(1, t * 1.1));
+        tailMaterial.uniforms.time.value = this.elapsed * 1.5; tailMaterial.uniforms.opacity.value = Math.min(1, t * 8) * (1 - Math.max(0, t - .85) / .15) * .66;
+      });
+    }
+    this.effect(mesh, duration + .08, t => { mesh.position.copy(from).lerp(to, Math.min(1, t * 1.1)); if (!ice) {
+      mesh.rotation.x += .12;
+      // Override the generic effect fade: solid rock throughout its flight,
+      // disappearing only in the brief contact window beside the blast.
+      material.opacity = 1 - THREE.MathUtils.smoothstep(t, .87, 1);
+    } this.emit(mesh.position, color, ice ? 2 : 3, size * .8, .6); });
     this.schedule(duration, hit);
   }
 
@@ -987,14 +1054,15 @@ export class DungeonWorld {
     }
   }
 
-  private debris(at: THREE.Vector3, count: number, hot = false, force = 1): void {
-    const outward = at.clone().sub(this.hero.position).setY(0).normalize();
+  private debris(at: THREE.Vector3, count: number, hot = false, force = 1, motion?: { direction: THREE.Vector3; spread: number; lift: number; grounded: boolean }): void {
+    const outward = motion ? motion.direction.clone().setY(0).normalize() : at.clone().sub(this.hero.position).setY(0).normalize();
     for (let i = 0; i < count && this.fragments.length < 420; i++) {
-      const angle = Math.random() * Math.PI * 2, speed = (1.7 + Math.random() * 4.1) * force;
+      const angle = motion ? Math.atan2(outward.x, outward.z) + (Math.random() - .5) * motion.spread : Math.random() * Math.PI * 2;
+      const speed = (1.7 + Math.random() * 4.1) * force;
       const size = hot ? .025 + Math.random() * .04 : .065 + Math.random() * .14;
       const life = hot ? .3 + Math.random() * .55 : .75 + Math.random() * .65;
-      this.fragments.push({ position: at.clone().add(new THREE.Vector3((Math.random() - .5) * .35, .35 + Math.random() * .65, (Math.random() - .5) * .35)),
-        velocity: new THREE.Vector3(Math.sin(angle) * speed + outward.x * force * 1.6, (2 + Math.random() * 4) * force, Math.cos(angle) * speed + outward.z * force * 1.6),
+      this.fragments.push({ position: at.clone().add(new THREE.Vector3((Math.random() - .5) * .35, (motion?.grounded ? .08 + Math.random() * .17 : .35 + Math.random() * .65), (Math.random() - .5) * .35)),
+        velocity: new THREE.Vector3(Math.sin(angle) * speed + outward.x * force * 1.6, (2 + Math.random() * 4) * force * (motion?.lift ?? 1), Math.cos(angle) * speed + outward.z * force * 1.6),
         rotation: new THREE.Vector3(Math.random() * 6, Math.random() * 6, Math.random() * 6), spin: new THREE.Vector3((Math.random() - .5) * 12, (Math.random() - .5) * 12, (Math.random() - .5) * 12),
         scale: new THREE.Vector3(size * (hot ? .5 : 1.4), size * (hot ? 3.8 : .65), size),
         color: hot ? new THREE.Color().setRGB(2.3, .62 + Math.random() * .65, .05 + Math.random() * .25) : new THREE.Color().setScalar(.18 + Math.random() * .25),

@@ -233,21 +233,82 @@ def make_wraith_v2():
     PART='Cape';cloth_panel('Long wraith mantle',(0,.14,1.48),.31,1.34,'tealDark',.30,.14,5)
     return c
 
+def guardian_granite_materials():
+    # Granite uses broad uncracked cleavage faces and patchy grain. Major faults
+    # are sparse authored geometry on selected masses, never a closed-cell grid.
+    for key,label,base in [('stoneOld','fractured grey granite',(.17,.185,.175)),('stoneOldLight','fresh granite cleavage',(.28,.30,.28)),('stoneOldDark','deep granite recess',(.085,.097,.090))]:
+        m=source_material(label,base,'stone',0,.90)
+        nodes=m.node_tree.nodes;links=m.node_tree.links
+        p=next(n for n in nodes if n.type=='BSDF_PRINCIPLED')
+        position=next(n for n in nodes if n.type=='NEW_GEOMETRY')
+        pits=nodes.new('ShaderNodeTexNoise');pits.inputs['Scale'].default_value=43;pits.inputs['Detail'].default_value=2
+        links.new(position.outputs['Position'],pits.inputs['Vector'])
+        ramp=nodes.new('ShaderNodeValToRGB');ramp.color_ramp.elements[0].position=.30;ramp.color_ramp.elements[0].color=(.22,.22,.22,1)
+        ramp.color_ramp.elements[1].position=.43;ramp.color_ramp.elements[1].color=(1,1,1,1)
+        links.new(pits.outputs['Fac'],ramp.inputs[0])
+        mix=nodes.new('ShaderNodeMixRGB');mix.blend_type='MULTIPLY';mix.inputs[0].default_value=.32
+        links.new(p.inputs['Base Color'].links[0].from_socket,mix.inputs[1]);links.new(ramp.outputs[0],mix.inputs[2]);links.new(mix.outputs[0],p.inputs['Base Color'])
+        bump=nodes.new('ShaderNodeBump');bump.inputs['Strength'].default_value=.45;bump.inputs['Distance'].default_value=.009
+        links.new(ramp.outputs[0],bump.inputs['Height']);links.new(p.inputs['Normal'].links[0].from_socket,bump.inputs['Normal']);links.new(bump.outputs['Normal'],p.inputs['Normal'])
+        MATS[key]=m
+
 def guardian_rock(name,loc,size,material='stoneOld',turn=(0,0,0)):
-    # A closed, softened fracture mass rather than a thin polygon armor plate.
-    o=ico(name,loc,size,material,2,.10)
-    # A broken front face gives the boulder a stone plane while retaining its
-    # curved silhouette. The chipped face rotates with each individual mass.
-    for v in o.data.vertices:v.co.y=max(v.co.y,-size[1]*.76)
-    o.rotation_euler=turn
-    bevel(o,min(size)*.10,1)
-    smooth(o)
-    normal=o.modifiers.new('Broad rock plane normals','WEIGHTED_NORMAL');normal.keep_sharp=True;normal.weight=30
-    bpy.context.view_layer.objects.active=o;bpy.ops.object.modifier_apply(modifier=normal.name)
+    # A thick, closed granite chunk: several true oblique cuts expose broad
+    # cleavage planes on front, back and silhouette. No smooth rounded normals.
+    import bmesh
+    o=ico(name,loc,(1,1,1),material,2,.13)
+    bm=bmesh.new();bm.from_mesh(o.data)
+    cuts=[((.13,-1,.18),.66),((-.19,1,.11),.72),((.21,.13,1),.78),((1,.23,-.11),.82),((-1,-.17,.22),.79)]
+    for _ in range(3):
+        normal=Vector((random.uniform(-1,1),random.uniform(-1,1),random.uniform(-.8,1))).normalized()
+        cuts.append((normal,random.uniform(.67,.88)))
+    for normal,distance in cuts:
+        n=Vector(normal).normalized()
+        result=bmesh.ops.bisect_plane(bm,geom=list(bm.verts)+list(bm.edges)+list(bm.faces),dist=.00001,plane_co=n*distance,plane_no=n,clear_outer=True,clear_inner=False)
+        edge_loop=[edge for edge in result['geom_cut'] if isinstance(edge,bmesh.types.BMEdge) and edge.is_boundary]
+        if edge_loop:bmesh.ops.holes_fill(bm,edges=edge_loop,sides=0)
+    bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces))
+    for v in bm.verts:v.co=Vector((v.co.x*size[0],v.co.y*size[1],v.co.z*size[2]))
+    bm.to_mesh(o.data);bm.free();o.rotation_euler=turn
+    # Narrow edge wear catches firelight while broad faces stay substantial.
+    bevel(o,min(size)*.026,1)
+    for face in o.data.polygons:face.use_smooth=False
+    # A few interrupted directional faults on true cleavage faces. Most of each
+    # boulder remains uncracked. These inherit the same articulated joint.
+    selected=any(word in name.lower() for word in ('shoulder','pectoral','forearm','back','scapular','cranium'))
+    if selected and min(size)>.14:
+        from mathutils import Euler
+        rear=any(word in name.lower() for word in ('back','scapular'))
+        rotation=Euler(turn).to_matrix();origin=Vector(loc)
+        def on_face(x,z):
+            yy=(.72*Vector((-.19,1,.11)).length+.19*x-.11*z+.006) if rear else (-.66*Vector((.13,-1,.18)).length+.13*x+.18*z-.006)
+            return tuple(origin+rotation@Vector((x*size[0],yy*size[1],z*size[2])))
+        direction=-1 if random.random()<.5 else 1
+        paths=[[(-.45,-.30*direction),(-.19,-.17*direction),(-.08,.08*direction),(.13,.12*direction)],[(.20,.16*direction),(.34,.29*direction),(.43,.45*direction)]]
+        for points in paths:line('Broken granite fault',[on_face(x,z) for x,z in points],min(size)*.022,'shadow',5)
+        if random.random()<.55:line('Branching mineral fracture',[on_face(-.08,.08*direction),on_face(-.22,.32*direction),on_face(-.19,.46*direction)],min(size)*.014,'shadow',5)
+    return o
+
+def guardian_crystal(name,loc,radius,height,tilt=(0,0,0)):
+    # Opaque quartz facets get mineral color, not full-face emissive white stripes.
+    # A single thin fissure carries the cyan light through the stone.
+    from mathutils import Euler
+    if 'guardianQuartz' not in MATS:
+        mat('guardianQuartz',(.020,.145,.20),.22,.34)
+        mat('guardianQuartzEdge',(.045,.285,.34),.18,.39)
+    o=ringmesh(name,[(0,0,0,radius*.65,radius*.65),(0,0,height*.16,radius,radius),(0,0,height*.75,radius*.80,radius*.80),(radius*.20,0,height,0,0)],'guardianQuartz',5)
+    o.location=loc;o.rotation_euler=tilt;o.data.materials.append(MATS['guardianQuartzEdge'])
+    for face in o.data.polygons:
+        if face.index%5==1:face.material_index=1
+    bevel(o,min(radius*.024,.002),1)
+    if height>.40:
+        transform=Euler(tilt).to_matrix();origin=Vector(loc)
+        line(name+' mineral glint',[tuple(origin+transform@Vector((radius*.78,-radius*.55,height*.19))),tuple(origin+transform@Vector((radius*.64,-radius*.44,height*.70))),tuple(origin+transform@Vector((radius*.20,0,height*.97)))],.0025,'cyan',4)
     return o
 
 def make_guardian_v2():
     global PART
+    guardian_granite_materials()
     c=begin('guardian')
     # Preserve named joint ownership through atlas baking. This allows overlapping
     # shoulder/back masses without guessing their attachments from centroids.
@@ -267,7 +328,7 @@ def make_guardian_v2():
         guardian_rock('Lower dorsal rock',(side*.22,.29,1.29),(.22,.17,.21),'stoneOldDark')
         line('Exposed breast fault',[(side*.04,-.348,1.72),(side*.12,-.375,1.62),(side*.12,-.379,1.51),(side*.23,-.355,1.43)],.006,'cyan',5)
         for j in range(2):
-            detailed_crystal('Crystals between shoulder blades',(side*(.13+j*.13),.38,1.79-j*.12),.064,.24+j*.08,(-.35,side*.45,.2))
+            guardian_crystal('Crystals between shoulder blades',(side*(.13+j*.13),.38,1.79-j*.12),.067,.36+j*.11,(-.35,side*.45,.2))
     for j in range(3):
         guardian_rock('Rounded abdominal course',(0,-.20,1.06+j*.15),(.25-j*.012,.15,.115),'stoneOld' if j%2 else 'stoneOldDark')
     for label,side in [('L',-1),('R',1)]:
@@ -285,7 +346,9 @@ def make_guardian_v2():
         guardian_rock('Exposed shoulder shelf',(side*.66,-.065,1.85),(.29,.24,.17),'stoneOldLight',(.04,side*.22,0))
         guardian_rock('Upper arm hanging boulder',(side*.72,.015,1.40),(.205,.20,.30),'stoneOldDark',(0,side*.17,0))
         for j in range(3):
-            detailed_crystal('Shoulder crystal growth',(side*(.48+j*.14),.08+j*.035,1.94-j*.055),.075-j*.008,.40-j*.07+(.07 if side<0 else 0),(.12,side*(.2+j*.29),.15*j))
+            guardian_crystal('Shoulder crystal growth',(side*(.48+j*.14),.08+j*.035,1.94-j*.055),.092-j*.012,.60-j*.11+(.10 if side<0 else 0),(.12,side*(.2+j*.29),.15*j))
+        for j in range(2):
+            guardian_crystal('Split companion shoulder shard',(side*(.54+j*.23),-.025+j*.13,1.93-j*.10),.039+j*.012,.18+j*.12+(.035 if side>0 else 0),(-.28+j*.53,side*(.75-j*.39),side*(.43+j*.36)))
         PART='ArmLower'+label
         guardian_rock('Deep elbow joint',(side*.80,-.04,1.16),(.19,.185,.18),'stoneOldDark')
         guardian_rock('Oversized forearm',(side*.845,-.115,1.035),(.25,.255,.31),'stoneOld',(0,side*.08,side*.08))
@@ -294,7 +357,7 @@ def make_guardian_v2():
         for j in range(3):
             guardian_rock('Rounded granite knuckle',(side*.865+(j-1)*.13,-.405,.835),(.088,.095,.12),'stoneOld')
         guardian_rock('Curled stone thumb',(side*.68,-.295,.79),(.10,.12,.14),'stoneOld',(0,side*.4,0))
-        detailed_crystal('Forearm mineral seam',(side*1.015,-.04,1.10),.062,.31,(.3,side*.70,0))
+        guardian_crystal('Forearm mineral seam',(side*1.015,-.04,1.10),.079,.42,(.3,side*.70,0))
         line('Glowing forearm fault',[(side*.89,-.37,1.23),(side*.84,-.38,1.12),(side*.88,-.39,1.02)],.006,'cyan',5)
     PART='Head'
     guardian_rock('Low stone cranium',(0,-.13,2.01),(.23,.205,.235),'stoneOld',(0,.08,0))

@@ -2,7 +2,60 @@
 
 Verified September 5, 2026 on `concept/math-dungeon-rpg`. Successive revisions address the gap between the first prototype and the approved concept: textured Gothic architecture, denser hordes, animated characters, illustrated controls, and substantially more magic and loot. Images below are captured from the implementation, not generated concept art.
 
-![Implemented guardian sanctum](rpg-playtest/v6/sanctum.png)
+![Actual Meteor and its equipment-granted second impact](rpg-playtest/v7/meteor.png)
+
+## Seventh creature and spell-impact pass
+
+The guardian now has cut granite planes, sparse faults, and opaque quartz growths.
+Blender MCP rebuilt and baked the asset, then re-imported the optimized production
+GLB for inspection. Its ten animation joints and pivots match the previous model.
+The library validates at 15 GLBs, 207,125 triangles and 21,982,020 bytes; the guardian
+accounts for 24,570 triangles and 2,664,696 bytes.
+
+Cleave now draws a curved blade trace with a narrow amber wake and tumbling sparks.
+Fire contact bursts use short flashes and ground-skipping fragments. Meteor has
+an irregular, opaque rock core, a tapered flame tail, directional debris, and low
+ash and flame at impact. Its equipment-granted second impact is centered on the
+second meteor's landing point. These changes preserve spell IDs, unlocks, rewards,
+and answer timing.
+
+![Actual Flame Cleave](rpg-playtest/v7/cleave.png)
+![Both equipment-enhanced Frost Guardians during a real cast](rpg-playtest/v7/frost-guardian.png)
+
+The screenshots above come from actual answers in an isolated local fixture.
+The close-up below is a **renderer-only inspection** in the existing Chromium
+9222 task tab, with the HUD hidden and camera zoomed. It does not represent an
+additional solve or saved reward. The other local game tab and its save were left
+alone.
+
+![Guardian under dungeon lighting — renderer inspection](rpg-playtest/v7/guardian-renderer.png)
+
+The spellbook test now requires a new attached effect during each cast; ambient
+particles alone no longer satisfy it. Frost Guardian also checks the actual
+number of attached summoned models. `RPG_CAPTURE_SPELLS=1` captures each spell
+during release for manual review. Effect existence and dispatch assertions alone
+do not establish that a spell looks distinctive or meets the concept's quality.
+
+The production build and 235 unit tests pass. The all-spell browser scenario
+passed in 1.9 minutes: all 33 nodes learned through the UI, all 15 abilities cast
+over three completed expeditions, equipment modifiers applied, and favorites
+plus the exact pending question preserved across reloads. All 18 cast captures
+were visually reviewed, including the three repeated school finales. The offline
+fixture intentionally uses the existing tutor's local fallback. Learning and
+server source files were unchanged by this pass.
+Both desktop/touch gameplay scenarios also passed in 1.0 minute, including
+expedition completion, pending-question resume, retries, loot, skill learning,
+worked help, and saved-response recovery.
+
+Comparing these captures with the approved Fire Nova concept still reveals visual
+gaps: Firestorm's upright flames, simple ice cones and regular spike rows, flat
+wall surfaces, and the concept's denser rubble and more natural creature detail.
+Those remain concrete follow-up work. Save compatibility with the actual Ares
+deployment and sustained child play appeal are still unverified. No Ares data or
+services were modified.
+
+Issue tracking is unavailable in this checkout (`bd sync`: no beads database);
+remaining work is recorded here.
 
 ## Sixth room and composition pass
 
@@ -187,6 +240,6 @@ Fixtures begin with existing mastered and practicing topics, reviews, demonstrat
 
 ## Visual assessment and remaining work
 
-Compare the [approved Fire Nova concept](concepts/math-dungeon-rpg/05-fire-nova.png) with the [implemented combat view](rpg-playtest/v5/flame-cleave.png), and the [original prototype](rpg-playtest/encounter.png). Subsequent revisions add surface detail, creature animation, richer effects, and matching interface art. Remaining visual gaps include the orderly architecture and repeated encounter staging compared with the concept's more varied ruins. Passing tests does not establish concept-art parity or whether a child will choose to keep playing.
+Compare the [approved Fire Nova concept](concepts/math-dungeon-rpg/05-fire-nova.png) with the [implemented combat view](rpg-playtest/v7/meteor.png), and the [original prototype](rpg-playtest/encounter.png). Subsequent revisions add surface detail, creature animation, richer effects, distinct room layouts, and matching interface art. Remaining visual gaps include flat masonry, geometric ice effects, and the concept's more natural creature detail and varied rubble. Passing tests does not establish concept-art parity or whether a child will choose to keep playing.
 
 The next visual/content assessment should use the playable build, especially creature motion, repeated expeditions, spell impact, and the time between desirable unlocks. Remaining production acceptance includes the actual Ares upgrade/resume check and the child's playtest. Hardware acceleration is needed for the intended presentation; software-rendered fault tests lower framebuffer resolution and disable shadows.

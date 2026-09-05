@@ -108,6 +108,21 @@ test('all fifteen spellbook abilities cast distinct effects, honor equipment, an
     const problem = await page.evaluate(() => (window as any).__game.session.problem) as Problem;
     const effect = RPG_SPELLS.find(spell => spell.id === spellId)!.effect;
     const resultPromise = page.waitForResponse(response => new URL(response.url()).pathname === '/rpg/resolve' && response.request().postDataJSON()?.problemId === problem.id);
+    const captureAge: Partial<Record<RpgSpellId, number>> = {
+      cleave: .42, meteor: .85, ember: .6, phoenix_dive: .55,
+      firestorm: .95, frost_guardian: .85, blizzard: .9, tempest: .9,
+    };
+    // Observe before the click: API/assertion round trips must not delay the
+    // requested animation beat. Screenshots remain evidence for manual review.
+    const captureReady = process.env.RPG_CAPTURE_SPELLS === '1'
+      ? page.waitForFunction(({ spellId, age }) => {
+        const world = (window as any).__game.world;
+        return world.diagnostics.attacking && world.diagnostics.lastAttack?.spellId === spellId && world.attackAge >= age;
+      }, { spellId, age: captureAge[spellId] ?? .55 }, { timeout: 15000, polling: 'raf' }) : null;
+    const capturePromise = captureReady?.then(() => page.screenshot({ path: info.outputPath(`cast-${index + 1}-${spellId}.png`) }));
+    // Preserve the failure for the explicit await below without an unhandled
+    // rejection if an earlier gameplay assertion fails first.
+    void capturePromise?.catch(() => {});
     await page.getByRole('textbox', { name: 'Your answer' }).fill(String(problem.answer));
     await page.getByRole('button', { name: /Unleash/ }).click();
     const result = await (await resultPromise).json() as RpgResolveResult;
@@ -123,11 +138,24 @@ test('all fifteen spellbook abilities cast distinct effects, honor equipment, an
     const optionFor = { burn: 'burning', 'ice-shards': 'shards', chain: 'chains', echo: 'echo', pierce: 'pierce', wide: 'wide', orbit: 'orbit', summon: 'summon' } as const;
     for (const [modifier, option] of Object.entries(optionFor)) expect(!!dispatched.options[option]).toBe(expectedModifiers.includes(modifier as keyof typeof optionFor));
     seenEffects.add(dispatched.effect); seenSpells.add(spellId);
+    // Ambient particles and an older loot beam do not prove this spell rendered.
+    // Require a mesh created during the current release, attached to the scene.
     await expect.poll(() => page.evaluate(() => {
       const world = (window as any).__game.world;
-      return world.diagnostics.particles > 0 || world.effectsGroup.children.length > 0;
+      return world.diagnostics.attacking && world.effects.some((effect: any) =>
+        effect.mesh.parent === world.effectsGroup && effect.age <= world.attackAge + .01);
     })).toBe(true);
-    if (['meteor', 'frost_guardian', 'ball_lightning'].includes(spellId)) await page.screenshot({ path: info.outputPath(`cast-${spellId}.png`) });
+    if (spellId === 'frost_guardian') {
+      await expect.poll(() => page.evaluate(() => {
+        const world = (window as any).__game.world;
+        return world.summoned.filter((summon: any) => summon.root.parent === world.effectsGroup && summon.root.visible).length;
+      })).toBe(expectedModifiers.includes('summon') ? 2 : 1);
+    }
+    if (capturePromise) {
+      await info.attach(`cast-${index + 1}-${spellId}`, { body: await capturePromise, contentType: 'image/png' });
+    } else if (['meteor', 'frost_guardian', 'ball_lightning'].includes(spellId)) {
+      await page.screenshot({ path: info.outputPath(`cast-${spellId}.png`) });
+    }
     if (result.reward.bossDefeated) await expect(page.getByRole('button', { name: 'Next adventure →', exact: true })).toBeVisible();
     else await ready(page);
     });

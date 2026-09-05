@@ -1,5 +1,42 @@
 import * as THREE from 'three';
 
+/** Fine broken heat strands behind a blade, with the broad area mostly empty. */
+export function bladeWakeMaterial(): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    uniforms: { time: { value: 0 }, opacity: { value: 1 } },
+    vertexShader: `varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+    fragmentShader: `varying vec2 vUv;uniform float time;uniform float opacity;
+      float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+      float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);}
+      void main(){float u=vUv.x,v=vUv.y;
+        float n=noise(vec2(u*31.-time*2.,v*5.));
+        float strand=exp(-abs(v-.8-sin(u*29.-time*4.)*.07)*24.);
+        float wisps=pow(noise(vec2(u*47.-time*3.,v*9.)),4.)*(1.-v)*.9;
+        float ends=smoothstep(0.,.18,u)*(1.-smoothstep(.83,1.,u));
+        float body=exp(-abs(v-.78)*7.)*(.18+n*.16);
+        float a=(strand*.5+wisps+body)*ends*opacity*smoothstep(.08,.6,n);
+        gl_FragColor=vec4(vec3(1.65,.42,.035),a);}`,
+    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false,
+  });
+}
+
+/** Low, translucent ash; the noisy edge prevents a visible sprite rectangle. */
+export function ashMaterial(): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    uniforms: { time: { value: 0 }, opacity: { value: 1 } },
+    vertexShader: `varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+    fragmentShader: `varying vec2 vUv;uniform float time;uniform float opacity;
+      float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+      float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);}
+      void main(){vec2 p=vUv*vec2(15.,4.)-vec2(time*.4,time*.7);
+        float n=noise(p)*.65+noise(p*2.3)*.35;
+        float edge=smoothstep(0.,.13,vUv.y)*(1.-smoothstep(.65,1.,vUv.y));
+        float a=smoothstep(.35,.7,n)*edge*opacity*.3;
+        gl_FragColor=vec4(mix(vec3(.065,.056,.045),vec3(.18,.14,.095),n),a);}`,
+    transparent: true, depthWrite: false, side: THREE.DoubleSide,
+  });
+}
+
 /** A wide ragged sheet of combustion; unlike torch fire it has no candle silhouette. */
 export function fireSheetMaterial(seed = 0): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({

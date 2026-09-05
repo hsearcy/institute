@@ -37,7 +37,7 @@ blade edges retain their own materials.
 | `hero.glb` | Teal hood and folded cape, layered bronze armor, runeblade; eight-bone rig |
 | `skeleton.glb`, `imp.glb` | Socketed skull, jaw and teeth, ribs, spine, paired limb bones, rusted armor |
 | `wraith.glb` | Hollow hood, torn hanging robe, curved sleeves and skeletal casting hands |
-| `guardian.glb` | Rough stone cranium, recessed eyes, asymmetric slabs and crystal growths |
+| `guardian.glb` | Hunched granite body, oblique cleavage planes, sparse faults, sharp quartz clusters |
 | `pillar.glb`, `arch.glb` | Chipped masonry, clustered columns, carved leaf capitals and pointed ribs |
 | `wall.glb`, `wall-bay.glb`, `broken-wall.glb` | Irregular masonry, Gothic recess and grille, broken coping and rubble |
 | `brazier.glb` | Sooty pedestal, hammered bowl, curled cage, glowing coals; runtime adds animated fire |
@@ -50,7 +50,7 @@ Coordinates are **+Y up, +Z front, meters, ground-centered origin**. The rendere
 normalizes the model height for placement. Prefixes `Body_`, `Head_`, `Cape_`,
 `Sword_`, `Lid_`, and `Embers_` identify meaningful parts; ignore numeric suffixes.
 The hero/wraith use four to six meshes. Articulated skeleton/guardian use thirteen
-and twelve respectively, shared in instanced batches. Major architecture generally
+and sixteen respectively, shared in instanced batches. Major architecture generally
 uses one.
 
 ## Hero animation
@@ -67,7 +67,7 @@ stays zero; the game owns movement. Use `SkeletonUtils.clone` for the hero,
 instancing. This is a small authored rig, not a full anatomical animation system.
 
 ![Hero animation poses](previews/v2/hero-animation.png)
-![Final guardian from front and back](previews/v2/guardian-final.png)
+![Final guardian GLB reimported, front and back](previews/v2/guardian-granite-exported.png)
 
 ## Enemy articulation
 
@@ -123,9 +123,13 @@ The `detailed/` helpers contain geometry, materials, baking, animation, optimiza
 and review tools. The original helpers remain for reusable primitive construction
 and chest topology.
 
-The creature revision replaces the guardian's thin armor plates with closed,
-rounded fracture masses, a hunched body, heavy forearms, and shoulder crystal
-growths. Guardian construction assigns explicit limb parts and stores authored
+The final guardian revision uses closed granite volumes with several real oblique
+cuts per mass, narrow chipped edges, sparse branching faults, and subtle pitting.
+Large uncracked faces retain its hunched body and heavy forearms. Uneven quartz
+clusters use opaque mineral facets and narrow glints rather than emissive stripes.
+The optimized GLB contains 24,570 triangles, sixteen rigid mesh parts, and three
+embedded textures in 2,664,696 bytes. All ten joint pivots match the previous
+articulated asset exactly. Guardian construction assigns explicit limb parts and stores authored
 joint pivots on the collection; these survive baking and avoid centroid-based
 misattachment. Older skeletal sources still use the centroid fallback. Soldier
 limbs are thicker, with cupped shoulder caps, rounded helmets, and pitted armor.

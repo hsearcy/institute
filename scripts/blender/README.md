@@ -15,7 +15,7 @@ the painted concept lighting or detail.
 ## Surfaces and runtime files
 
 `web/public/assets/rpg/manifest.json` records current triangles, draw calls, nodes,
-file sizes, and hero clips. All sixteen GLBs are self-contained: embedded albedo,
+file sizes, and hero clips. All nineteen GLBs are self-contained: embedded albedo,
 tangent normal, and occlusion/roughness/metallic textures; no external URLs or
 compression decoder dependency. `imp.glb` aliases the skeleton for compatibility.
 
@@ -35,6 +35,7 @@ blade edges retain their own materials.
 | Files | Authored content |
 | --- | --- |
 | `hero.glb` | Teal hood and folded cape, layered bronze armor, runeblade; eight-bone rig |
+| `hero-cinder.glb`, `hero-glacier.glb`, `hero-tempest.glb` | Progression armor silhouettes, matching rig and clips; transparent appearance portraits |
 | `skeleton.glb`, `imp.glb` | Socketed skull, jaw and teeth, ribs, spine, paired limb bones, rusted armor |
 | `wraith.glb` | Hollow hood, torn hanging robe, curved sleeves and skeletal casting hands |
 | `guardian.glb` | Hunched granite body, oblique cleavage planes, sparse faults, sharp quartz clusters |
@@ -182,3 +183,30 @@ normal/ORM maps are retained. The validator enforces their combined size and
 triangle budgets. Exported bounds match the prior models exactly.
 
 ![Optimized wall relief reimport review](previews/v2/masonry-relief-exported.png)
+
+
+## Progression armor appearances
+
+`detailed/hero_variants.py` builds three complete heroes on the original proportions:
+Cinder (level 12) has forged angular pauldrons, amber fissures, and a shortened red
+cloak; Glacier (level 15) adds layered frost plates, a cold steel cuirass, and a
+navy cloak; Tempest (level 18) adds swept pauldrons, a hood crown, ornate chest
+plates, and violet inlays. These are additional geometry and tailored cloth cuts,
+not palette swaps. The default appearance remains the original `hero.glb`.
+
+Each variant uses the same eight bones (`root`, `chest`, `head`, `arm.L`, `arm.R`,
+`leg.L`, `leg.R`, `cape`) and authored `idle`, `walk`, `cleave`, and `cast` clips.
+The renderer retains control of travel; the clips have no root translation.
+All four heroes share their ground and head bounds. New armor is posed before
+baking and weighted as connected rigid pieces to avoid stretching armor panels.
+
+The optimized variants contain 12,842 / 13,212 / 13,202 triangles, respectively,
+and stay below 2.11 MB each. The complete library contains 19 GLBs, 260,209
+triangles, and 29,026,312 bytes. The validator checks variant skins, clips,
+embedded materials, portrait presence, and the 25,000-triangle / 4 MB budgets.
+
+`detailed/render_appearances.py` reimports the final optimized GLBs into separate
+Blender scenes and renders transparent 512 × 640 PNG portraits to
+`web/public/assets/rpg/appearances/{cinder,glacier,tempest}.png`. Both model builds
+and these final-file portraits run in the full `build_assets.py` pipeline. Source
+atlases remain under `scripts/blender/textures/hero-{appearance}-*.png`.

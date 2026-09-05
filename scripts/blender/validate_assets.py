@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/'web/public/assets/rpg'
-expected=('hero','imp','guardian','pillar','arch','brazier','crystal','chest','wall','wall-bay','broken-wall','skeleton','wraith','furnace','reliquary','ice_cluster')
+expected=('hero','hero-cinder','hero-glacier','hero-tempest','imp','guardian','pillar','arch','brazier','crystal','chest','wall','wall-bay','broken-wall','skeleton','wraith','furnace','reliquary','ice_cluster')
 stats={}
 for name in expected:
     path=OUT/(name+'.glb');data=path.read_bytes()
@@ -49,7 +49,7 @@ for name in expected:
         assert all(key in joints for key in ('Head','Body','ArmUpperL','ArmUpperR','ArmLowerL','ArmLowerR','LegUpperL','LegUpperR','LegLowerL','LegLowerR'))
         assert not doc.get('skins'), 'Enemies must remain rigid for shared instancing'
         stats[name]['rigidJoints']=[key for key in joints if key]
-    if name=='hero':
+    if name=='hero' or name.startswith('hero-'):
         clips=doc.get('animations',[])
         assert {a['name'] for a in clips}=={'idle','walk','cleave','cast'}
         assert len(doc.get('skins',[]))==1 and len(doc['skins'][0]['joints'])==8
@@ -57,6 +57,11 @@ for name in expected:
         stats[name]['animations']={a['name']:max(doc['accessors'][s['input']]['max'][0] for s in a['samplers']) for a in clips}
         stats[name]['joints']=[doc['nodes'][i]['name'] for i in doc['skins'][0]['joints']]
     assert len(data)<8_000_000,(name,len(data))
+    if name.startswith('hero-'):
+        assert len(data)<4_000_000 and triangles<25_000
+        portrait=OUT/'appearances'/(name.removeprefix('hero-')+'.png')
+        assert portrait.read_bytes()[:8]==b'\x89PNG\r\n\x1a\n'
+        stats[name]['portrait']='/assets/rpg/appearances/'+portrait.name
     if name=='ice_cluster':assert len(data)<600_000 and triangles<5000
 relief_walls=[stats[name] for name in ('wall-bay','broken-wall')]
 assert sum(asset['bytes'] for asset in relief_walls)<5_000_000

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { RPG_SPELLS, RPG_SCHOOLS, RPG_SKILLS, rpgSpellUnlocked, rpgEncounterKills, rpgSpellModifiers, type RpgResolveResult, type RpgSpellId, type RpgState } from '../../shared/src/rpg';
+import { RPG_SPELLS, RPG_SCHOOLS, RPG_SKILLS, rpgSpellUnlocked, rpgEncounterKills, rpgSpellModifiers, type RpgResolveResult, type RpgSpellId, type RpgAppearanceId, type RpgState } from '../../shared/src/rpg';
 import type { Problem } from '../../shared/src/index';
 
 const profile = 'rpg-archmage';
@@ -36,9 +36,34 @@ async function choose(page: Page, spellId: RpgSpellId): Promise<void> {
   await expect(page.locator(`#rpg-spellbar [data-spell="${spellId}"]`)).toHaveAttribute('aria-pressed', 'true');
 }
 async function equip(page: Page, itemId: string): Promise<void> {
-  await page.locator('button[data-action="inventory"]:visible').first().click();
+  await page.getByRole('navigation', { name: 'Adventure menu' }).getByRole('button', { name: 'Equipment', exact: true }).click();
   await page.locator(`#rpg-dialog-content [data-item="${itemId}"]`).click();
   await expect.poll(async () => (await state(page)).equippedItemId).toBe(itemId);
+  await page.getByRole('button', { name: 'Return to dungeon', exact: true }).click();
+  await ready(page);
+}
+
+async function wear(page: Page, appearanceId: RpgAppearanceId): Promise<void> {
+  const before = await state(page);
+  const learning = await (await page.request.get(`/mastery?profileId=${profile}`)).json();
+  const problem = await page.evaluate(() => (window as any).__game.session.problem);
+  await page.getByRole('navigation', { name: 'Adventure menu' }).getByRole('button', { name: 'Equipment', exact: true }).click();
+  await expect(page.locator('.rpg-armor-card')).toHaveCount(4);
+  await expect(page.locator(`[data-appearance="${before.appearanceId}"]`)).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator(`[data-appearance="${appearanceId}"]`)).toBeEnabled();
+  await expect.poll(() => page.locator(`[data-armor="${appearanceId}"] img`).evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
+  expect(await page.locator(`[data-armor="${appearanceId}"] img`).evaluate(image => {
+    const imageBounds = image.getBoundingClientRect(), preview = image.parentElement!.getBoundingClientRect();
+    return imageBounds.left >= preview.left - 1 && imageBounds.right <= preview.right + 1 && imageBounds.top >= preview.top - 1 && imageBounds.bottom <= preview.bottom + 1;
+  })).toBe(true);
+  await page.locator(`[data-appearance="${appearanceId}"]`).click();
+  await expect.poll(async () => (await state(page)).appearanceId).toBe(appearanceId);
+  await expect(page.locator(`[data-appearance="${appearanceId}"]`)).toHaveAttribute('aria-pressed', 'true');
+  await expect.poll(() => page.evaluate(() => (window as any).__game.world.diagnostics.appearance)).toBe(appearanceId);
+  await expect.poll(() => page.evaluate(() => [...(window as any).__game.world.diagnostics.heroClips].sort())).toEqual(['cast', 'cleave', 'idle', 'walk']);
+  expect(await state(page)).toEqual({ ...before, appearanceId });
+  expect(await (await page.request.get(`/mastery?profileId=${profile}`)).json()).toEqual(learning);
+  expect(await page.evaluate(() => (window as any).__game.session.problem)).toEqual(problem);
   await page.getByRole('button', { name: 'Return to dungeon', exact: true }).click();
   await ready(page);
 }
@@ -94,6 +119,10 @@ test('all fifteen spellbook abilities cast distinct effects, honor equipment, an
 
     // Selection and the unsolved problem both survive a full reload.
     if (index === 2 || index === 8 || index === 13) {
+      const appearanceId: RpgAppearanceId = index === 2 ? 'cinder' : index === 8 ? 'glacier' : 'tempest';
+      await wear(page, appearanceId);
+      const learning = await (await page.request.get(`/mastery?profileId=${profile}`)).json();
+      const exactProblem = await page.evaluate(() => (window as any).__game.session.problem);
       const problemId = await page.locator('#rpg-answer-form').getAttribute('data-problem-id');
       const saved = await state(page);
       const favorites = await page.locator('#rpg-spellbar [data-spell]').evaluateAll(elements => elements.map(element => element.getAttribute('data-spell')));
@@ -101,6 +130,11 @@ test('all fifteen spellbook abilities cast distinct effects, honor equipment, an
       await page.locator('#rpg-dialog-content [data-action="begin"]').click(); await ready(page);
       expect((await state(page)).selectedSpellId).toBe(spellId);
       expect((await state(page)).xp).toBe(saved.xp);
+      expect((await state(page)).appearanceId).toBe(appearanceId);
+      await expect.poll(() => page.evaluate(() => (window as any).__game.world.diagnostics.appearance)).toBe(appearanceId);
+      await expect.poll(() => page.evaluate(() => [...(window as any).__game.world.diagnostics.heroClips].sort())).toEqual(['cast', 'cleave', 'idle', 'walk']);
+      expect(await page.evaluate(() => (window as any).__game.session.problem)).toEqual(exactProblem);
+      expect(await (await page.request.get(`/mastery?profileId=${profile}`)).json()).toEqual(learning);
       await expect(page.locator('#rpg-answer-form')).toHaveAttribute('data-problem-id', problemId!);
       await expect(page.locator(`#rpg-spellbar [data-spell="${spellId}"]`)).toHaveAttribute('aria-pressed', 'true');
       expect(await page.locator('#rpg-spellbar [data-spell]').evaluateAll(elements => elements.map(element => element.getAttribute('data-spell')))).toEqual(favorites);

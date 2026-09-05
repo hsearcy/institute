@@ -2,7 +2,7 @@ import type { Database } from 'bun:sqlite';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
-  RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, rpgLevel, rpgSpellUnlocked, rpgEncounterKills,
+  RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellUnlocked, rpgEncounterKills,
   type RpgState, type RpgReward, type RpgResolveResult,
 } from '@institute/shared';
 
@@ -45,10 +45,16 @@ class RpgError extends Error {
 
 export function getRpgState(db: Database, profileId: string): RpgState {
   const row = db.query('SELECT state_json FROM rpg_profiles WHERE profile_id = ?').get(profileId) as { state_json: string } | null;
-  if (row) return JSON.parse(row.state_json);
+  if (row) {
+    const state = JSON.parse(row.state_json) as RpgState;
+    // Existing JSON saves gain a default only in the response. Reading never
+    // rewrites the profile or changes any earned learning/adventure progress.
+    state.appearanceId = rpgAppearanceUnlocked(state.appearanceId, rpgLevel(state.xp).level) ? state.appearanceId : 'wayfarer';
+    return state;
+  }
   return {
     profileId, xp: 0, ...rpgLevel(0), skillPoints: 0, skills: {}, inventory: ['apprentice'],
-    equippedItemId: 'apprentice', selectedSpellId: 'ember', totalKills: 0, expeditionsCompleted: 0, expedition: null,
+    equippedItemId: 'apprentice', selectedSpellId: 'ember', appearanceId: 'wayfarer', totalKills: 0, expeditionsCompleted: 0, expedition: null,
   };
 }
 
@@ -228,6 +234,19 @@ export function createRpgRoutes(db: Database, applyMiss?: (profileId: string) =>
     if (!rpgSpellUnlocked(spellId, state.skills)) throw new RpgError('Unlock this spell in your skill tree first.');
     state.selectedSpellId = spellId;
     save(db, state);
+    return c.json(state);
+  });
+  app.post('/appearance', async (c) => {
+    const { profileId, appearanceId } = ProfileSchema.extend({ appearanceId: z.enum(RPG_APPEARANCE_IDS) }).parse(await c.req.json());
+    const state = db.transaction(() => {
+      const state = getRpgState(db, profileId);
+      if (!rpgAppearanceUnlocked(appearanceId, rpgLevel(state.xp).level)) {
+        const appearance = RPG_APPEARANCES.find(entry => entry.id === appearanceId)!;
+        throw new RpgError(`Reach level ${appearance.requiredLevel} to wear ${appearance.name}.`);
+      }
+      if (state.appearanceId !== appearanceId) { state.appearanceId = appearanceId; save(db, state); }
+      return state;
+    })();
     return c.json(state);
   });
   app.post('/respec', async (c) => {

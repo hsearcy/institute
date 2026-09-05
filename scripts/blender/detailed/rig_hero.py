@@ -3,7 +3,7 @@ import bpy,math
 from mathutils import Vector
 from pathlib import Path
 
-def rig_hero(collection):
+def rig_hero(collection,asset_name='hero'):
     scene=bpy.context.scene;scene.render.fps=30
     bpy.ops.object.select_all(action='DESELECT')
     data=bpy.data.armatures.new('VaultHeroSkeleton');rig=bpy.data.objects.new('HeroRig',data)
@@ -112,7 +112,7 @@ def rig_hero(collection):
     bpy.ops.object.select_all(action='DESELECT')
     for o in collection.objects:o.select_set(True);o.hide_render=False
     bpy.context.view_layer.objects.active=rig
-    path=Path('/home/houston/git/institute/web/public/assets/rpg/hero.glb')
+    path=Path(globals().get('OUT','/home/houston/git/institute/web/public/assets/rpg'))/(asset_name+'.glb')
     bpy.ops.export_scene.gltf(filepath=str(path),export_format='GLB',use_selection=True,use_active_scene=True,export_yup=True,export_apply=True,export_animations=True,export_skins=True,export_animation_mode='NLA_TRACKS',export_nla_strips=True,export_extras=True)
     for track in rig.animation_data.nla_tracks:track.mute=True
     rig.animation_data.action=actions['idle']

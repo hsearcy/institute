@@ -106,3 +106,30 @@
 .rpg-goal-card .rpg-painted-art{width:58px;flex:none}.rpg-goal-card small{font-size:8px;letter-spacing:1.5px;color:#b39b6f}.rpg-goal-card strong{font:17px 'Cinzel',Georgia,serif;color:#e6cc94}.rpg-goal-card span>span{font-size:12px;color:#bac8c0}.rpg-goal-card em{font:10px 'Nunito',sans-serif;color:#8f9f96}.rpg-learned-goal{border-color:#64a296!important}
 @media(max-width:760px){#rpg-ui .rpg-next-spell{display:none}#rpg-ui .rpg-goal-card{padding:10px 12px;gap:12px}.rpg-goal-card .rpg-painted-art{width:45px}.rpg-goal-card strong{font-size:15px}.rpg-goal-card span>span{font-size:11px}}
 .rpg-starter-spells{display:flex;gap:10px;justify-content:center;margin:0 auto 17px;max-width:390px}#rpg-ui .rpg-starter-spells button{display:flex;align-items:center;gap:9px;padding:7px 11px;flex:1;background:#0b1212;border:1px solid #4f4939;border-radius:0;color:#bdb394;font-size:11px}.rpg-starter-spells .rpg-painted-art{width:35px;flex:none}#rpg-ui .rpg-starter-spells .selected{border-color:#c4a261;box-shadow:inset 0 0 12px #b2832530;color:#e6ca8d}
+
+/* Cosmetic armor stays separate from the relic loadout and its spell effects. */
+.rpg-armor-section{margin:26px 0 30px;padding:22px 0;border-top:1px solid #5b513b;border-bottom:1px solid #5b513b;text-align:left}
+.rpg-armor-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.rpg-armor-heading h3,.rpg-relics-title{font:20px 'Cinzel',Georgia,serif;color:#ebd5ac;margin:0}
+.rpg-armor-heading>span{font-size:10px;color:#a4b5ad;white-space:nowrap}
+.rpg-dialog .rpg-armor-section>p{font-size:12px;margin:9px 0 18px;color:#a5b2a9}
+.rpg-armor-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.rpg-armor-card{display:flex;flex-direction:column;min-width:0;overflow:hidden;background:#101514;border:1px solid #44493d;text-align:center;padding:0 10px 12px}
+.rpg-armor-card.selected{border-color:#d1a75d;box-shadow:inset 0 0 20px #b8892620}
+.rpg-armor-preview{position:relative;--armor-preview-height:170px;height:var(--armor-preview-height);flex:0 0 var(--armor-preview-height);min-height:0;overflow:hidden;margin:0 -10px 12px;background:radial-gradient(ellipse at 50% 65%,#34463d55,transparent 70%),#0a100f;display:grid;place-items:center}
+.rpg-armor-preview img{position:absolute;inset:0;display:block;width:100%;height:100%;min-width:0;min-height:0;max-width:100%;max-height:100%;object-fit:contain}
+.rpg-armor-card.locked .rpg-armor-preview img{filter:saturate(.45);opacity:.7}
+.rpg-armor-card h4{font:14px 'Cinzel',Georgia,serif;color:#ebd9b5;margin:0 0 8px}
+.rpg-dialog .rpg-armor-card p{font-size:11px;line-height:1.5;margin:0 0 12px;color:#a8b7ab;flex:1}
+#rpg-ui .rpg-armor-card button{width:100%;min-height:44px;padding:9px 6px;font-size:11px;color:#e6cf9e;border-color:#716044;background:#27251a}
+#rpg-ui .rpg-armor-card.selected button:disabled{opacity:1;color:#dec18a;background:#332c1b}
+.rpg-armor-lock{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:5px;padding:6px;background:#08100fdd;font-size:10px;color:#d2c2a2}
+.rpg-armor-lock .rpg-icon{width:13px;height:13px}
+.rpg-wayfarer-crest{position:relative;display:grid;place-items:center;width:96px;height:115px;color:#7ba99a;filter:drop-shadow(0 0 13px #51796355)}
+.rpg-wayfarer-crest>.rpg-icon:first-child{width:90px;height:110px;opacity:.6}
+.rpg-wayfarer-crest>.rpg-icon:last-child{position:absolute;width:48px;height:62px;color:#d9bc7b}
+.rpg-dialog .rpg-armor-section .rpg-armor-next{margin:16px 0 0;color:#cfb783;font-size:11px}
+#rpg-ui .rpg-armor-progress{display:flex;justify-content:center;align-items:center;gap:7px;margin:16px auto 0;padding:8px 10px;background:transparent;border:0;color:#bca776;font-size:11px;line-height:1.5}
+.rpg-armor-progress .rpg-icon{width:17px;height:17px;flex:none}
+@media(max-width:760px){.rpg-armor-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.rpg-armor-preview{--armor-preview-height:155px}.rpg-armor-card h4{font-size:12px}.rpg-armor-section{margin-top:20px}.rpg-armor-heading h3{font-size:18px}}
+@media(max-width:380px){.rpg-armor-preview{--armor-preview-height:130px}.rpg-armor-card{padding:0 7px 9px}.rpg-armor-preview{margin-left:-7px;margin-right:-7px}.rpg-dialog .rpg-armor-card p{font-size:10px}.rpg-armor-heading{align-items:flex-start;flex-direction:column;gap:4px}}

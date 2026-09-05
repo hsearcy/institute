@@ -1,5 +1,22 @@
 /** Adventure content only. Never used by tutor selection, mastery, or review. */
 export const RPG_DUPLICATE_ITEM_XP = 16;
+export const RPG_APPEARANCE_IDS = ['wayfarer', 'cinder', 'glacier', 'tempest'] as const;
+export type RpgAppearanceId = typeof RPG_APPEARANCE_IDS[number];
+export interface RpgAppearance {
+  id: RpgAppearanceId; name: string; description: string; requiredLevel: number;
+  modelId: string; thumbnail: string | null;
+}
+/** Cosmetic milestones use existing experience; they never alter combat or learning. */
+export const RPG_APPEARANCES: readonly RpgAppearance[] = [
+  { id: 'wayfarer', name: 'Wayfarer', description: 'Your familiar hood and runeblade, ready for another adventure.', requiredLevel: 1, modelId: 'hero', thumbnail: null },
+  { id: 'cinder', name: 'Cinder Knight', description: 'Wear ember-forged armor and the colors of a seasoned Flame adventurer.', requiredLevel: 12, modelId: 'hero-cinder', thumbnail: '/assets/rpg/appearances/cinder.png' },
+  { id: 'glacier', name: 'Glacier Warden', description: 'Wear crystal-trimmed armor and the mantle of a Frost guardian.', requiredLevel: 15, modelId: 'hero-glacier', thumbnail: '/assets/rpg/appearances/glacier.png' },
+  { id: 'tempest', name: 'Tempest Weaver', description: 'Wear storm-marked armor and the mantle of a master of lightning.', requiredLevel: 18, modelId: 'hero-tempest', thumbnail: '/assets/rpg/appearances/tempest.png' },
+];
+export function rpgAppearanceUnlocked(appearanceId: string, level: number): boolean {
+  const appearance = RPG_APPEARANCES.find(entry => entry.id === appearanceId);
+  return !!appearance && Number.isFinite(level) && level >= appearance.requiredLevel;
+}
 export const RPG_SPELL_IDS = ['ember', 'cleave', 'meteor', 'phoenix_dive', 'firestorm', 'frost', 'ice_lance', 'glacial_surge', 'blizzard', 'frost_guardian', 'storm', 'arc_lance', 'thunderclap', 'ball_lightning', 'tempest'] as const;
 export type RpgSpellId = typeof RPG_SPELL_IDS[number];
 export type RpgSchoolId = 'ember' | 'frost' | 'storm';
@@ -109,7 +126,7 @@ export const RPG_ITEMS: readonly RpgItem[] = [
 export interface RpgExpedition { id: string; regionId: string; encounterIndex: number; encountersTotal: number; cleared: boolean; startedAt: number }
 export interface RpgState {
   profileId: string; xp: number; level: number; xpIntoLevel: number; xpForNextLevel: number; skillPoints: number;
-  skills: Record<string, number>; inventory: string[]; equippedItemId: string; selectedSpellId: RpgSpellId;
+  skills: Record<string, number>; inventory: string[]; equippedItemId: string; selectedSpellId: RpgSpellId; appearanceId: RpgAppearanceId;
   totalKills: number; expeditionsCompleted: number; expedition: RpgExpedition | null;
 }
 export interface RpgReward { xp: number; kills: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; bossDefeated: boolean; spellId: RpgSpellId }

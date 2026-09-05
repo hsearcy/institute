@@ -1,5 +1,5 @@
 import { API, PROFILE } from '../game/config';
-import type { RpgState, RpgResolveResult } from '@institute/shared';
+import type { RpgState, RpgResolveResult, RpgAppearanceId } from '@institute/shared';
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); }
@@ -19,6 +19,7 @@ export async function request<T>(path: string, body?: Record<string, unknown>): 
 }
 export const getRpgState = () => request<RpgState>(`/rpg/state?profileId=${encodeURIComponent(PROFILE)}`);
 export const mutateRpg = (action: string, body: Record<string, unknown> = {}) => request<RpgState>(`/rpg/${action}`, body);
+export const setRpgAppearance = (appearanceId: RpgAppearanceId) => request<RpgState>('/rpg/appearance', { appearanceId });
 export const resolveEncounter = (body: Record<string, unknown>) => request<RpgResolveResult>('/rpg/resolve', body);
 export type AttemptStatus = { recorded: boolean; correct: boolean | null; solved: boolean; skipped: boolean };
 export const attemptStatus = (problemId: string) => request<AttemptStatus>(`/rpg/attempt-status?profileId=${encodeURIComponent(PROFILE)}&problemId=${encodeURIComponent(problemId)}`);

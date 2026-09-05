@@ -2,6 +2,64 @@
 
 Verified September 5, 2026 on `concept/math-dungeon-rpg`. Successive revisions address the gap between the first prototype and the approved concept: textured Gothic architecture, denser hordes, animated characters, illustrated controls, and substantially more magic and loot. Images below are captured from the implementation, not generated concept art.
 
+![Three new armor appearances in Equipment](rpg-playtest/v10/armor-menu.png)
+
+## Tenth armor and lighting pass
+
+Three new Blender armor sets give later levels visible rewards: **Cinder Knight
+at level 12, Glacier Warden at 15, and Tempest Weaver at 18**. Each changes the
+hero's shoulder, chest, head and cape silhouette as well as color. They share
+the original eight-bone rig, grounded dimensions, and idle/walk/cleave/cast clips.
+Portraits are transparent renders of the final optimized runtime GLBs. Each
+variant is 12,842–13,212 triangles and 2.00–2.11 MB. All 19 GLBs validate at
+260,209 triangles and 29,026,312 bytes; the game loads 18 (the retained legacy
+wall asset is not loaded).
+
+Appearance selection is free and cosmetic. The additive `appearanceId` defaults
+to Wayfarer for existing saves. `/rpg/appearance` validates the unlock against
+persisted XP, preserves all other RPG state, and does not touch learning rows.
+Reselecting the current armor does not rewrite the record. Unknown and locked
+saved values safely normalize on read without rewriting old saves. There is no
+schema migration, new currency, or change to the XP/learning curves.
+
+The renderer clones each selected skeleton, restores the current transform and
+animation time, reapplies the equipped weapon tint, and releases only the old
+instance's skeleton and owned tint materials. Cached geometry and textures remain
+available for later swaps. Missing optional appearance assets fall back to the
+original animated hero. A dim prefiltered reflection environment and neutral
+hero light reveal armor surfaces and reduce the former turquoise floor cast;
+torches and moonlight still establish the room lighting.
+
+![Cinder Knight casting Phoenix Dive through a real answered encounter](rpg-playtest/v10/cinder-phoenix.png)
+
+![Tempest Weaver casting Tempest through a real answered encounter](rpg-playtest/v10/tempest.png)
+
+Validation: **248 unit tests pass**, the production build passes, and all asset
+validators pass. The all-15-spell browser scenario passed in 2.3 minutes, wearing
+all three variants at its reload checkpoints and verifying exact question,
+mastery, XP, inventory, appearance, and four animation clips. Both desktop/touch
+regression scenarios passed in 1.3 minutes, including legacy appearance defaults,
+level locks, 390px equipment layout, retries, rewards, and response recovery.
+The first browser pass caught portrait images overlapping Wear buttons; images
+now stay within fixed responsive preview bounds, with an explicit regression
+assertion. An ambiguous Equipment selector caused the other initial test failure
+and was replaced with the exact accessible button name.
+
+Chromium on port 9222 also verified real Wear-button persistence. A separate
+renderer-only inspection sampled actual bone movement for all four clips on all
+four appearances: each had eight bones, with 5–7 changing rotations in each
+sample. These checks used isolated test profiles/databases; the son's progress
+and Ares service were not changed.
+
+![Normal camera with the revised hero lighting — renderer inspection](rpg-playtest/v10/armor-lighting-renderer.png)
+
+Comparing this view directly with the approved horde concept still shows thin
+skeleton silhouettes, repetitive intact architectural trim, and less natural
+material detail. The concept uses an active attack while this lighting sample is
+idle, so spell quality is assessed separately in the actual answered-encounter
+captures. This pass improves readability and late-level rewards; it does not
+establish concept-art parity, long-term child engagement, or an Ares upgrade.
+
 ![Actual Arc Fang release with its additional split bolts](rpg-playtest/v9/arc-fang.png)
 
 ## Ninth stonework and relic pass
@@ -315,8 +373,9 @@ new Ashsplitter loot. The actual Ares deployment is still not verified.
 - **15 abilities** across Flame, Frost, and Storm, with distinct attack choreography and sound signatures. Fire Nova and Flame Cleave are available immediately; further spells unlock through the skill trees.
 - **33 skill nodes** with prerequisite branches, multiple ranks, and visible modifiers such as repeated meteors, wider sweeps, orbiting lightning, and summoned guardians.
 - **23 collectible relics**, including school-wide and spell-specific bonuses. Real drops have a rarity beam, a name label, and an illustrated discovery card with an Equip action.
+- Four hero appearances, including armor milestones at levels 12, 15, and 18, with persistent cosmetic selection.
 - Three replayable regions with different scenery. Enemies wait while the learner thinks; animation and elapsed time never cause damage or submit learning outcomes.
-- Sixteen self-contained Blender GLBs with baked PBR materials. The hero has an eight-bone rig and idle, walk, cleave, and cast clips. Authoring files and retained bake atlases live under `scripts/blender`; production GLBs embed their textures.
+- Nineteen self-contained Blender GLBs with baked PBR materials. The hero has an eight-bone rig and idle, walk, cleave, and cast clips. Authoring files and retained bake atlases live under `scripts/blender`; production GLBs embed their textures.
 - Illustrated spellbook and equipment art, a connected skill-tree view, saved favorite abilities for the three hotbar slots, and keyboard controls: Q/W/E, B for spellbook, K for skills.
 
 ![The expanded spellbook](rpg-playtest/v2-spellbook.png)
@@ -343,6 +402,6 @@ Fixtures begin with existing mastered and practicing topics, reviews, demonstrat
 
 ## Visual assessment and remaining work
 
-Compare the [approved Fire Nova concept](concepts/math-dungeon-rpg/05-fire-nova.png) with the [implemented combat view](rpg-playtest/v7/meteor.png), and the [original prototype](rpg-playtest/encounter.png). Subsequent revisions add surface detail, creature animation, richer effects, distinct room layouts, and matching interface art. Remaining visual gaps include flat masonry, geometric ice effects, and the concept's more natural creature detail and varied rubble. Passing tests does not establish concept-art parity or whether a child will choose to keep playing.
+Compare the [approved Fire Nova concept](concepts/math-dungeon-rpg/05-fire-nova.png) with the [implemented combat view](rpg-playtest/v7/meteor.png), and the [original prototype](rpg-playtest/encounter.png). Subsequent revisions add surface detail, creature animation, richer effects, distinct room layouts, and matching interface art. Remaining visual gaps include thin enemy silhouettes, repetitive intact architectural trim, geometric effects, and the concept's more natural creature and material detail. Passing tests does not establish concept-art parity or whether a child will choose to keep playing.
 
 The next visual/content assessment should use the playable build, especially creature motion, repeated expeditions, spell impact, and the time between desirable unlocks. Remaining production acceptance includes the actual Ares upgrade/resume check and the child's playtest. Hardware acceleration is needed for the intended presentation; software-rendered fault tests lower framebuffer resolution and disable shadows.

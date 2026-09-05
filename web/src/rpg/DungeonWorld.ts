@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { RPG_SPELLS } from '@institute/shared';
+import { RPG_SPELLS, RPG_APPEARANCES, type RpgAppearanceId } from '@institute/shared';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js';
@@ -7,6 +7,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { iceShardGeometry, iceShardMaterial } from './world/ice';
 import { EnemyAnimator } from './world/EnemyAnimator';
@@ -28,9 +29,13 @@ export class DungeonWorld {
   readonly renderer: THREE.WebGLRenderer;
   private readonly composer: EffectComposer;
   private readonly bloom: UnrealBloomPass;
+  private readonly environment: THREE.WebGLRenderTarget;
   private readonly hero = new THREE.Group();
   private heroVisual = new THREE.Group();
-  private heroClips: THREE.AnimationClip[] = [];
+  private readonly heroClipSets = new Map<string, THREE.AnimationClip[]>();
+  private desiredAppearance: RpgAppearanceId = 'wayfarer';
+  private appearance: RpgAppearanceId = 'wayfarer';
+  private heroModelId = '';
   private heroMixer?: THREE.AnimationMixer;
   private readonly heroActions = new Map<string, THREE.AnimationAction>();
   private heroAnimation = '';
@@ -46,7 +51,7 @@ export class DungeonWorld {
   private readonly floatingRunes: THREE.Object3D[] = [];
   private readonly cameraTarget = new THREE.Vector3();
   private readonly destination = new THREE.Vector3();
-  private readonly heroLight = new THREE.PointLight(0x48e6db, 18, 8, 1.8);
+  private readonly heroLight = new THREE.PointLight(0xd6e3f0, 32, 7, 1.8);
   private readonly burstLight = new THREE.PointLight(0xffae40, 0, 20, 1.5);
   private readonly warmLights = [new THREE.PointLight(0xff9c45, 70, 14, 2), new THREE.PointLight(0xff822b, 60, 14, 2)];
   private readonly recessLights = [new THREE.PointLight(0x0c7bb1, 56, 12, 2), new THREE.PointLight(0x0b749f, 50, 12, 2)];
@@ -117,6 +122,12 @@ export class DungeonWorld {
     this.renderer.shadowMap.autoUpdate = false;
     this.renderer.shadowMap.needsUpdate = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    // A dim, prefiltered environment gives metal a readable reflection without
+    // replacing the directional torch/moon lighting with flat ambient light.
+    const environmentScene = new RoomEnvironment(), pmrem = new THREE.PMREMGenerator(this.renderer);
+    this.environment = pmrem.fromScene(environmentScene, .04);
+    this.scene.environment = this.environment.texture; this.scene.environmentIntensity = .075;
+    environmentScene.dispose(); pmrem.dispose();
     this.scene.background = new THREE.Color(0x080f16);
     this.scene.fog = new THREE.Fog(0x0a1520, 30, 76);
     this.materials = {
@@ -138,12 +149,12 @@ export class DungeonWorld {
     moon.shadow.camera.right = moon.shadow.camera.top = 23; moon.shadow.camera.far = 80;
     moon.shadow.normalBias = .045; moon.shadow.bias = -.00015;
     this.scene.add(moon, moon.target);
-    const fill = new THREE.DirectionalLight(0xc6d3cf, .32); fill.position.set(15, 12, 18); this.scene.add(fill);
+    const fill = new THREE.DirectionalLight(0xc6d3cf, .48); fill.position.set(15, 12, 18); this.scene.add(fill);
     moon.name = 'moon';
     this.scene.add(this.floorGroup, this.enemyGroup, this.effectsGroup, this.propGroup, this.biomeGroup, this.hero);
     for (const fragments of [this.stoneFragments, this.hotFragments]) { fragments.count = 0; fragments.setColorAt(0, new THREE.Color()); fragments.frustumCulled = false; fragments.instanceMatrix.setUsage(THREE.DynamicDrawUsage); this.scene.add(fragments); }
     this.heroVisual = this.makeHero(); this.hero.add(this.heroVisual);
-    this.heroLight.position.set(0, 3.5, 1); this.hero.add(this.heroLight);
+    this.heroLight.position.set(1.2, 3.1, 1.5); this.hero.add(this.heroLight);
     this.scene.add(this.burstLight);
     this.scene.add(...this.warmLights);
     this.scene.add(...this.recessLights);
@@ -170,18 +181,23 @@ export class DungeonWorld {
 
   async load(): Promise<void> {
     const loader = new GLTFLoader();
-    await Promise.all(['hero', 'imp', 'guardian', 'arch', 'pillar', 'brazier', 'crystal', 'chest', 'wall-bay', 'broken-wall', 'skeleton', 'wraith', 'furnace', 'reliquary', 'ice_cluster'].map(async name => {
+    await Promise.all(['hero', 'hero-cinder', 'hero-glacier', 'hero-tempest', 'imp', 'guardian', 'arch', 'pillar', 'brazier', 'crystal', 'chest', 'wall-bay', 'broken-wall', 'skeleton', 'wraith', 'furnace', 'reliquary', 'ice_cluster'].map(async name => {
       try {
         const gltf = await loader.loadAsync(`/assets/rpg/${name}.glb`);
         if (this.disposed) return;
-        if (name === 'hero') this.heroClips = gltf.animations;
+        if (name === 'hero' || name.startsWith('hero-')) this.heroClipSets.set(name, gltf.animations);
         gltf.scene.traverse(object => {
           if (object instanceof THREE.Mesh) {
-            object.castShadow = true; object.receiveShadow = !['hero', 'skeleton', 'wraith', 'guardian', 'imp'].includes(name);
+            object.castShadow = true; object.receiveShadow = !name.startsWith('hero') && !['skeleton', 'wraith', 'guardian', 'imp'].includes(name);
+            if (name.startsWith('hero') || ['skeleton', 'guardian', 'imp', 'wraith'].includes(name)) {
+              for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+                if (material instanceof THREE.MeshStandardMaterial) { material.envMap = this.environment.texture; material.envMapIntensity = name.startsWith('hero') ? .55 : .225; }
+              }
+            }
             if (object.material instanceof THREE.MeshStandardMaterial && /glow_flame|glow_amber/.test(object.material.name)) {
               object.material.emissive.setHex(0xff780c); object.material.emissiveIntensity = name === 'furnace' ? .9 : 1.4; object.material.toneMapped = false;
             }
-            if (name === 'hero' && object.material instanceof THREE.MeshStandardMaterial && /glow_/.test(object.material.name)) {
+            if (name.startsWith('hero') && object.material instanceof THREE.MeshStandardMaterial && /glow_/.test(object.material.name)) {
               object.material.emissiveIntensity = .3; object.material.toneMapped = true;
             }
           }
@@ -216,15 +232,7 @@ export class DungeonWorld {
     if (this.disposed) return;
     this.installScenery();
     replacedStoneTextures.forEach(texture => texture.dispose());
-    if (this.models.has('hero')) {
-      this.hero.remove(this.heroVisual); this.releaseProcedural(this.heroVisual); this.heroVisual = new THREE.Group();
-      this.heroVisual.add(this.model('hero', 1.8)!); this.hero.add(this.heroVisual); this.setEquipment(this.equipment);
-      if (this.heroClips.length) {
-        this.heroMixer = new THREE.AnimationMixer(this.heroVisual);
-        for (const clip of this.heroClips) this.heroActions.set(clip.name.toLowerCase(), this.heroMixer.clipAction(clip));
-        this.playHeroAnimation('idle');
-      }
-    }
+    this.setAppearance(this.desiredAppearance);
     this.enemies.forEach(enemy => {
       const visual = this.model(enemy.modelId, enemy.brute ? (this.encounter === 5 && enemy === this.enemies[0] ? 3.8 : 2.5) : 1.65);
       if (visual) { enemy.root.remove(enemy.visual); this.releaseProcedural(enemy.visual); enemy.visual = visual; enemy.root.add(visual); enemy.animator = new EnemyAnimator(visual, {kind: enemy.modelId, phase: enemy.phase}); }
@@ -250,7 +258,7 @@ export class DungeonWorld {
 
   private model(name: string, height: number): THREE.Group | undefined {
     const original = this.models.get(name); if (!original) return undefined;
-    const clone = (name === 'hero' ? cloneSkeleton(original) : original.clone(true)) as THREE.Group;
+    const clone = (name === 'hero' || name.startsWith('hero-') ? cloneSkeleton(original) : original.clone(true)) as THREE.Group;
     const bounds = new THREE.Box3().setFromObject(clone);
     const size = bounds.getSize(new THREE.Vector3());
     const scale = height / Math.max(size.y, .01); clone.scale.multiplyScalar(scale);
@@ -585,7 +593,7 @@ export class DungeonWorld {
     const color = frost ? 0x49a4d2 : this.regionId.includes('storm') ? 0x7562c2 : 0x138cb6;
     this.materials.crystal.emissive.setHex(color);
     this.materials.crystal.color.setHex(color);
-    this.heroLight.color.setHex(0x4adfcf);
+    this.heroLight.color.setHex(0xd6e3f0);
     this.materials.floor.color.setHex(ember ? 0xb5a896 : frost ? 0x919fa7 : 0x9c96a3);
     this.updateStoneTint();
     this.scene.fog = new THREE.Fog(frost ? 0x06101a : 0x03090c, 38, 72);
@@ -733,6 +741,40 @@ export class DungeonWorld {
       mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       this.enemyInstances.push({ mesh, sources }); this.enemyGroup.add(mesh);
     }
+  }
+
+  setAppearance(appearanceId: RpgAppearanceId): void {
+    if (this.disposed) return;
+    const appearance = RPG_APPEARANCES.find(entry => entry.id === appearanceId) ?? RPG_APPEARANCES[0];
+    this.desiredAppearance = appearance.id;
+    const modelId = this.models.has(appearance.modelId) ? appearance.modelId : 'hero';
+    if (this.heroModelId === modelId) return;
+    const model = this.model(modelId, 1.8);
+    if (!model) return; // Keep the procedural hero until authored models arrive.
+    const previousVisual = this.heroVisual;
+    const previousAnimation = this.heroAnimation || 'idle';
+    const previousTime = this.heroActions.get(previousAnimation)?.time ?? 0;
+    this.heroMixer?.stopAllAction(); this.heroMixer?.uncacheRoot(this.heroVisual);
+    this.heroActions.clear(); this.heroAnimation = '';
+    this.hero.remove(this.heroVisual); this.releaseProcedural(this.heroVisual);
+    // Skeletons and weapon tint materials belong to this instance. Geometry and
+    // baked textures remain owned by the model cache for subsequent armor swaps.
+    this.heroVisual.traverse(object => {
+      if (object instanceof THREE.SkinnedMesh) object.skeleton.dispose();
+      if (object instanceof THREE.Mesh && object.userData.equipmentMaterial) {
+        for (const material of Array.isArray(object.material) ? object.material : [object.material]) material.dispose();
+      }
+    });
+    this.heroVisual = new THREE.Group();
+    this.heroVisual.position.copy(previousVisual.position); this.heroVisual.quaternion.copy(previousVisual.quaternion); this.heroVisual.scale.copy(previousVisual.scale);
+    this.heroVisual.add(model); this.hero.add(this.heroVisual);
+    this.heroModelId = modelId; this.appearance = modelId === appearance.modelId ? appearance.id : 'wayfarer';
+    this.heroMixer = new THREE.AnimationMixer(this.heroVisual);
+    for (const clip of this.heroClipSets.get(modelId) ?? []) this.heroActions.set(clip.name.toLowerCase(), this.heroMixer.clipAction(clip));
+    this.playHeroAnimation(previousAnimation);
+    const action = this.heroActions.get(previousAnimation);
+    if (action) { action.time = previousTime; this.heroMixer.update(0); }
+    this.setEquipment(this.equipment); this.renderer.shadowMap.needsUpdate = true;
   }
 
   setEquipment(itemId: string): void {
@@ -1459,21 +1501,23 @@ export class DungeonWorld {
   }
 
   get diagnostics(): Record<string, unknown> {
-    return { lastAttack: this.lastAttack, lastSpellId: this.lastAttack?.spellId, lastSpellEffect: this.lastAttack?.effect, heroAnimation: this.heroAnimation || 'procedural', heroClips: [...this.heroActions.keys()], encounter: this.encounter, region: this.regionId, enemies: this.enemies.filter(enemy => !enemy.dead).length, articulatedEnemies: this.enemies.filter(enemy => enemy.animator.articulated).length, attacking: this.attacking, paused: this.paused, modelsLoaded: this.loadedModels, drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, particles: this.particles.length, fragments: this.fragments.length, hero: this.hero.position.toArray(), softwareRenderer: this.softwareRenderer, fps: Math.round(this.framesPerSecond), quality: ['full', 'balanced', 'performance'][this.quality], renderer: this.renderer.getContext().getParameter(this.renderer.getContext().VERSION) };
+    return { appearance: this.appearance, lastAttack: this.lastAttack, lastSpellId: this.lastAttack?.spellId, lastSpellEffect: this.lastAttack?.effect, heroAnimation: this.heroAnimation || 'procedural', heroClips: [...this.heroActions.keys()], encounter: this.encounter, region: this.regionId, enemies: this.enemies.filter(enemy => !enemy.dead).length, articulatedEnemies: this.enemies.filter(enemy => enemy.animator.articulated).length, attacking: this.attacking, paused: this.paused, modelsLoaded: this.loadedModels, drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, particles: this.particles.length, fragments: this.fragments.length, hero: this.hero.position.toArray(), softwareRenderer: this.softwareRenderer, fps: Math.round(this.framesPerSecond), quality: ['full', 'balanced', 'performance'][this.quality], renderer: this.renderer.getContext().getParameter(this.renderer.getContext().VERSION) };
   }
 
   dispose(): void {
     if (this.disposed) return; this.disposed = true; cancelAnimationFrame(this.frame); this.attackResolve?.(); this.scheduled.length = 0;
     const geometries = new Set<THREE.BufferGeometry>(), materials = new Set<THREE.Material>(), textures = new Set<THREE.Texture>();
-    this.scene.traverse(object => {
-      if (object instanceof THREE.Mesh || object instanceof THREE.Points || object instanceof THREE.Sprite) { geometries.add(object.geometry); for (const material of Array.isArray(object.material) ? object.material : [object.material]) { materials.add(material); for (const value of Object.values(material)) if (value instanceof THREE.Texture) textures.add(value); } }
-    });
+    const collect = (object: THREE.Object3D) => {
+      if (object instanceof THREE.SkinnedMesh) object.skeleton.dispose();
+      if (object instanceof THREE.Mesh || object instanceof THREE.Points || object instanceof THREE.Sprite) { geometries.add(object.geometry); for (const material of Array.isArray(object.material) ? object.material : [object.material]) { materials.add(material); for (const value of Object.values(material)) if (value instanceof THREE.Texture && value !== this.environment.texture) textures.add(value); } }
+    };
+    this.scene.traverse(collect); this.models.forEach(model => model.traverse(collect));
     geometries.forEach(geometry => geometry.dispose()); materials.forEach(material => material.dispose()); textures.forEach(texture => texture.dispose());
     this.heroMixer?.stopAllAction(); this.heroMixer?.uncacheRoot(this.heroVisual);
     this.preparedMaterials.forEach(material => material.dispose());
     this.waveMap.dispose(); this.glowMap.dispose();
     this.enemyInstances.forEach(instance => instance.mesh.dispose());
     this.stoneFragments.dispose(); this.hotFragments.dispose();
-    this.bloom.dispose(); this.composer.dispose(); this.renderer.dispose();
+    this.environment.dispose(); this.bloom.dispose(); this.composer.dispose(); this.renderer.dispose();
   }
 }

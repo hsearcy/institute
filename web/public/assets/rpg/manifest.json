@@ -41,6 +41,106 @@
         "leg.R"
       ]
     },
+    "hero-cinder": {
+      "url": "/assets/rpg/hero-cinder.glb",
+      "bytes": 2000676,
+      "triangles": 12842,
+      "drawCalls": 7,
+      "embeddedTextures": 3,
+      "nodes": [
+        "Body_Baked.063",
+        "Body_Glow.022",
+        "Cape_Baked",
+        "Head_Baked.028",
+        "Head_Glow.028",
+        "Sword_Baked",
+        "Sword_Glow.003"
+      ],
+      "animations": {
+        "idle": 3.2333333333333334,
+        "walk": 0.8333333333333334,
+        "cleave": 1.1666666666666667,
+        "cast": 1.1666666666666667
+      },
+      "joints": [
+        "root",
+        "chest",
+        "head",
+        "arm.L",
+        "arm.R",
+        "cape",
+        "leg.L",
+        "leg.R"
+      ],
+      "portrait": "/assets/rpg/appearances/cinder.png"
+    },
+    "hero-glacier": {
+      "url": "/assets/rpg/hero-glacier.glb",
+      "bytes": 2104212,
+      "triangles": 13212,
+      "drawCalls": 7,
+      "embeddedTextures": 3,
+      "nodes": [
+        "Body_Baked.064",
+        "Body_Glow.023",
+        "Cape_Baked.015",
+        "Head_Baked.029",
+        "Head_Glow.029",
+        "Sword_Baked.012",
+        "Sword_Glow.004"
+      ],
+      "animations": {
+        "idle": 3.2333333333333334,
+        "walk": 0.8333333333333334,
+        "cleave": 1.1666666666666667,
+        "cast": 1.1666666666666667
+      },
+      "joints": [
+        "root",
+        "chest",
+        "head",
+        "arm.L",
+        "arm.R",
+        "cape",
+        "leg.L",
+        "leg.R"
+      ],
+      "portrait": "/assets/rpg/appearances/glacier.png"
+    },
+    "hero-tempest": {
+      "url": "/assets/rpg/hero-tempest.glb",
+      "bytes": 2036972,
+      "triangles": 13202,
+      "drawCalls": 8,
+      "embeddedTextures": 3,
+      "nodes": [
+        "Body_Baked.065",
+        "Body_Glow.024",
+        "Cape_Baked.016",
+        "Head_Baked.030",
+        "Head_Glow.030",
+        "Head_Glow.031",
+        "Sword_Baked.013",
+        "Sword_Glow.005"
+      ],
+      "animations": {
+        "idle": 3.2333333333333334,
+        "walk": 0.8333333333333334,
+        "cleave": 1.1666666666666667,
+        "cast": 1.1666666666666667
+      },
+      "joints": [
+        "root",
+        "chest",
+        "head",
+        "arm.L",
+        "arm.R",
+        "cape",
+        "leg.L",
+        "leg.R"
+      ],
+      "portrait": "/assets/rpg/appearances/tempest.png"
+    },
     "imp": {
       "url": "/assets/rpg/imp.glb",
       "bytes": 1874388,

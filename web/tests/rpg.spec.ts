@@ -73,6 +73,27 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
   await expect(page.locator('.rpg-starter-spells [data-spell="cleave"]')).toHaveAttribute('aria-pressed','true');
   await page.locator('.rpg-starter-spells [data-spell="ember"]').click();
   await expect.poll(async () => (await state(page)).selectedSpellId).toBe('ember');
+  // Cosmetic milestones are visible to a legacy level-one learner, but cannot
+  // be worn early; the two-column phone layout keeps every control reachable.
+  const originalViewport = page.viewportSize()!;
+  await page.locator('.rpg-camp-menu').getByRole('button', { name: 'Equipment', exact: true }).click();
+  await expect(page.locator('.rpg-armor-card')).toHaveCount(4);
+  await expect(page.locator('[data-appearance="wayfarer"]')).toHaveAttribute('aria-pressed', 'true');
+  for (const [appearance, level] of [['cinder', 12], ['glacier', 15], ['tempest', 18]] as const) {
+    await expect(page.locator(`[data-appearance="${appearance}"]`)).toBeDisabled();
+    await expect(page.locator(`[data-armor="${appearance}"]`)).toContainText(`Level ${level}`);
+  }
+  await expect(page.locator('.rpg-armor-next')).toContainText('Level 12');
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.locator('.rpg-armor-grid').evaluate(grid => grid.scrollWidth <= grid.clientWidth + 1)).toBe(true);
+  const armorBounds = await page.locator('.rpg-armor-card').evaluateAll(cards => cards.map(card => ({ x: card.getBoundingClientRect().x, y: card.getBoundingClientRect().y })));
+  expect(armorBounds[0]!.y).toBe(armorBounds[1]!.y);
+  expect(armorBounds[2]!.y).toBeGreaterThan(armorBounds[0]!.y);
+  expect((await page.locator('[data-appearance="cinder"]').boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await page.setViewportSize(originalViewport);
+  await page.getByRole('button', { name: 'Back to camp', exact: true }).click();
+  expect((await state(page)).appearanceId).toBe('wayfarer');
+  expect(await (await page.request.get(`/mastery?profileId=${profile}`)).json()).toEqual(originalMastery);
   await page.getByRole('button',{name:/Enter the dungeon/}).click();
   await ready(page);
   await page.screenshot({path:info.outputPath('01-encounter.png')});
@@ -141,7 +162,7 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
   await expect(page.locator('.rpg-learned-goal')).toContainText('Frostfall');
   await page.locator('.rpg-learned-goal').click();
   await expect.poll(async () => (await state(page)).selectedSpellId).toBe('frost');
-  await page.locator('#rpg-dialog-content [data-action="inventory"]').click();
+  await page.locator('#rpg-dialog-content').getByRole('button', { name: 'Equipment', exact: true }).click();
   const ownedItem = completed.inventory.find(id => id !== 'apprentice')!;
   await page.locator(`[data-item="${ownedItem}"]`).click();
   await expect.poll(async () => (await state(page)).equippedItemId).toBe(ownedItem);

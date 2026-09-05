@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/'web/public/assets/rpg'
-expected=('hero','imp','guardian','pillar','arch','brazier','crystal','chest','wall','wall-bay','broken-wall','skeleton','wraith','furnace','reliquary')
+expected=('hero','imp','guardian','pillar','arch','brazier','crystal','chest','wall','wall-bay','broken-wall','skeleton','wraith','furnace','reliquary','ice_cluster')
 stats={}
 for name in expected:
     path=OUT/(name+'.glb');data=path.read_bytes()
@@ -57,6 +57,7 @@ for name in expected:
         stats[name]['animations']={a['name']:max(doc['accessors'][s['input']]['max'][0] for s in a['samplers']) for a in clips}
         stats[name]['joints']=[doc['nodes'][i]['name'] for i in doc['skins'][0]['joints']]
     assert len(data)<8_000_000,(name,len(data))
+    if name=='ice_cluster':assert len(data)<600_000 and triangles<5000
 manifest={'revision':2,'generator':'Blender 4.5.13 via Blender MCP 1.6 / protocol 5; UV-baked PBR surface atlases','source':'scripts/blender/build_assets.py','userPrompt':'use blender mcp to create high quality models.','coordinateSystem':{'up':'+Y','forward':'+Z','origin':'ground center','unit':'meter'},'assets':stats}
 (OUT/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
 print(f'Validated {len(stats)} GLBs: {sum(x["triangles"] for x in stats.values()):,} triangles, {sum(x["bytes"] for x in stats.values()):,} bytes total.')

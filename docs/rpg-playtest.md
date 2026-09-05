@@ -2,7 +2,56 @@
 
 Verified September 5, 2026 on `concept/math-dungeon-rpg`. Successive revisions address the gap between the first prototype and the approved concept: textured Gothic architecture, denser hordes, animated characters, illustrated controls, and substantially more magic and loot. Images below are captured from the implementation, not generated concept art.
 
-![Actual Meteor and its equipment-granted second impact](rpg-playtest/v7/meteor.png)
+![Actual Blizzard with fractured ice and Blender scenery](rpg-playtest/v8/blizzard.png)
+
+## Eighth fire, ice, and surface pass
+
+Firestorm replaces intersecting flame cards with three unequal, bending volumes
+per eruption. A first revision looked like solid orange leaves in Chromium;
+the second adds transparent gaps, smaller hot veins, and rippling silhouettes.
+Ember beds and ash remain close to the ground, leaving the enemies readable.
+
+Ice projectiles now have closed fractured faces, asymmetric tips, contrasting
+mineral facets, and fine trails. Glacial Surge grows leaning shards along
+branching cracks rather than a regular grid of cones. Its placement respects
+the room's usable floor and the bridge's openings when choosing shard centers. The same revised shards
+also appear in Frostfall, Ice Lance, Blizzard upgrades, and Frost Guardian.
+
+![Actual Firestorm](rpg-playtest/v8/firestorm.png)
+![Actual Glacial Surge](rpg-playtest/v8/glacial-surge.png)
+
+Blender MCP authored, baked, exported, and re-imported a five-shard ice cluster
+for the frost region. The model has 1,380 triangles, one mesh, three embedded
+maps, and a 369,300-byte GLB. Runtime scenery copies geometry and materials and
+shares one set of copied textures within each biome; changing regions never
+disposes the cached model's resources. Repeated ice meshes merge into a static
+draw batch. The full library validates at 16 GLBs, 208,505 triangles, and
+22,351,320 bytes; gameplay loads 15 of them.
+
+The stone height bake now includes broader variation; albedo and roughness are
+byte-identical to the prior version. An identical-camera Chromium A/B showed
+only a subtle improvement at normal zoom, including a temporary stronger bump
+experiment. Runtime bump strength remains unchanged. Broad wall-face relief,
+more natural ruin detail, and more convincing creature surfaces remain visual
+work; the surface rebake does not establish concept-art parity.
+
+The production build and 239 unit tests pass. Four new geometry tests exercise
+closed topology, outward winding, positive volume, finite normals, grounding,
+and varying silhouettes across different seeds and dimensions. The screenshots
+above use real tutor answers in a disposable fixture; the separate Chromium
+9222 checks manually sampled the renderer and did not submit learning outcomes.
+Learning rules, skill IDs, spell unlocks, XP, loot, and persisted save formats
+were not changed. Ares remains untouched and unverified.
+
+The all-spell browser scenario passed in 1.9 minutes, including all 33 skill
+nodes learned through the UI, 15 distinct spell dispatches, equipment modifiers,
+three completed expeditions, and exact pending-question/favorite reloads. The
+changed fire and frost releases and the repeated school finales were visually
+reviewed from the captured answers. These checks also cross from frost scenery
+into the storm region after disposing the old biome.
+Both normal desktop/touch gameplay scenarios passed in 1.0 minute, covering
+expedition completion, pending-question resume, misses and retries, rewards,
+skill learning, worked help, and saved-response recovery.
 
 ## Seventh creature and spell-impact pass
 
@@ -213,7 +262,7 @@ new Ashsplitter loot. The actual Ares deployment is still not verified.
 - **33 skill nodes** with prerequisite branches, multiple ranks, and visible modifiers such as repeated meteors, wider sweeps, orbiting lightning, and summoned guardians.
 - **23 collectible relics**, including school-wide and spell-specific bonuses. Real drops have a rarity beam, a name label, and an illustrated discovery card with an Equip action.
 - Three replayable regions with different scenery. Enemies wait while the learner thinks; animation and elapsed time never cause damage or submit learning outcomes.
-- Fifteen self-contained Blender GLBs with baked PBR materials. The hero has an eight-bone rig and idle, walk, cleave, and cast clips. Authoring files and retained bake atlases live under `scripts/blender`; production GLBs embed their textures.
+- Sixteen self-contained Blender GLBs with baked PBR materials. The hero has an eight-bone rig and idle, walk, cleave, and cast clips. Authoring files and retained bake atlases live under `scripts/blender`; production GLBs embed their textures.
 - Illustrated spellbook and equipment art, a connected skill-tree view, saved favorite abilities for the three hotbar slots, and keyboard controls: Q/W/E, B for spellbook, K for skills.
 
 ![The expanded spellbook](rpg-playtest/v2-spellbook.png)

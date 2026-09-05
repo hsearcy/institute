@@ -15,7 +15,7 @@ the painted concept lighting or detail.
 ## Surfaces and runtime files
 
 `web/public/assets/rpg/manifest.json` records current triangles, draw calls, nodes,
-file sizes, and hero clips. All fifteen GLBs are self-contained: embedded albedo,
+file sizes, and hero clips. All sixteen GLBs are self-contained: embedded albedo,
 tangent normal, and occlusion/roughness/metallic textures; no external URLs or
 compression decoder dependency. `imp.glb` aliases the skeleton for compatibility.
 
@@ -42,6 +42,7 @@ blade edges retain their own materials.
 | `wall.glb`, `wall-bay.glb`, `broken-wall.glb` | Irregular masonry, Gothic recess and grille, broken coping and rubble |
 | `brazier.glb` | Sooty pedestal, hammered bowl, curled cage, glowing coals; runtime adds animated fire |
 | `crystal.glb` | Irregular quartz growing through fractured host rock |
+| `ice_cluster.glb` | Five irregular blue ice prisms, frosted fracture faces, and frozen footing |
 | `chest.glb` | Weathered oak, corroded iron straps, carrying rings, hinged lid and glowing lock |
 | `furnace.glb` | Open soot-lined kiln, radial stone lintel, cracked chimney, iron grate and banked coals |
 | `reliquary.glb` | Carved octagonal plinth, four open Gothic arches, bronze cradle and crystal heart |
@@ -146,6 +147,22 @@ library. Their retained source atlases are under `textures/`. The final producti
 exports add 11,092 triangles and about 2 MB together.
 
 ![Optimized furnace and reliquary re-imported into Blender](previews/v2/room-landmarks.png)
+
+## Ice scenery and stone relief
+
+`detailed/ice_cluster.py` builds a reusable scenery cluster with opaque dark blue
+ice, oblique closed facets, limited frost, and sparse pale seams. It needs no
+transparency sorting or emissive flood fill. The centered base is at ground level;
+dimensions are 1.735 × 2.529 × 1.325 meters (width × height × depth). The optimized
+GLB is 369,300 bytes, 1,380 triangles, one mesh, and three embedded 512-pixel maps.
+
+![Final ice GLB reimport review](previews/v2/ice-cluster-exported.png)
+
+Seamless stone height combines .45 broad, .40 middle, and .15 fine noise, allowing
+relief to remain visible at the gameplay camera distance. The stone bake helper
+accepts `STONE_SURFACE_MAPS=('height',)` for a height-only MCP execution; its full
+build default still creates all three maps. This pass preserved the existing stone
+albedo and roughness files byte-for-byte.
 
 The renderer places these outside the hero travel lane and enemy footprints, using
 `web/src/rpg/world/roomLayout.ts`. Room widths, entrances, floor openings, and

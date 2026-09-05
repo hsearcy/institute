@@ -37,6 +37,42 @@ export function ashMaterial(): THREE.ShaderMaterial {
   });
 }
 
+/** Wrapped combustion on a tapered volume; local noise has no billboard edges. */
+export function firePlumeMaterial(seed: number, height: number): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    uniforms: { time: { value: 0 }, opacity: { value: 1 }, seed: { value: seed }, height: { value: height } },
+    vertexShader: `varying vec3 vLocal; varying float vHeight; uniform float time; uniform float seed; uniform float height;
+      void main(){vec3 p=position;float h=clamp(p.y/height,0.,1.);vLocal=p/height;vHeight=h;
+        p.x+=sin(h*7.-time*4.+seed)*h*h*height*.09;
+        p.z+=cos(h*6.-time*3.3+seed)*h*h*height*.07;
+        float flutter=sin(h*31.-time*7.+uv.x*12.566+seed)*height*.023*h;
+        p.x+=cos(uv.x*6.283)*flutter;p.z+=sin(uv.x*6.283)*flutter;
+        gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}`,
+    fragmentShader: `varying vec3 vLocal;varying float vHeight;uniform float time;uniform float opacity;uniform float seed;
+      float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+      float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);}
+      void main(){float h=vHeight;
+        vec2 p=vec2(vLocal.x*24.+vLocal.z*15.+seed,h*6.-time*2.2);
+        float warp=noise(p*.61+vec2(0.,time*.3));
+        float broad=noise(p+vec2((warp-.5)*2.8,0.));
+        float fine=noise(vec2(vLocal.z*47.-vLocal.x*31.+seed,h*15.-time*4.2));
+        float fuel=broad*.68+fine*.32;
+        // Zero alpha between fuel filaments cuts holes through the volume and
+        // its silhouette instead of retaining a translucent solid leaf.
+        float threshold=.43+h*.17;
+        float tears=smoothstep(threshold,threshold+.13,fuel);
+        float strands=smoothstep(.53,.77,fine)*smoothstep(threshold-.04,threshold+.05,fuel);
+        float ends=smoothstep(0.,.055,h)*(1.-smoothstep(.77,1.,h));
+        float hot=exp(-abs(fuel-threshold-.11)*33.)*smoothstep(.44,.76,fine);
+        vec3 ember=mix(vec3(.21,.022,.004),vec3(1.75,.29,.014),smoothstep(.025,.25,h));
+        vec3 c=mix(ember,vec3(2.25,.72,.1),hot*.82);
+        float alpha=ends*max(tears*.74,strands*.62)*opacity;
+        if(alpha<.015)discard;
+        gl_FragColor=vec4(c,alpha);}`,
+    transparent: true, depthWrite: false, side: THREE.FrontSide, toneMapped: false,
+  });
+}
+
 /** A wide ragged sheet of combustion; unlike torch fire it has no candle silhouette. */
 export function fireSheetMaterial(seed = 0): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({

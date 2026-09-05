@@ -65,12 +65,13 @@ color = ramp(strata, [(.25,(.042,.045,.037)),(.73,(.31,.285,.23)),(.45,(.115,.12
 pores = ramp(fine, [(.29,(.28,.28,.28)),(.49,(1,1,1))])
 multiply = n.new('ShaderNodeMixRGB'); multiply.blend_type = 'MULTIPLY'; multiply.inputs[0].default_value = .65
 l.new(color,multiply.inputs[1]); l.new(pores,multiply.inputs[2])
-height = math_node('ADD', math_node('MULTIPLY',mid,.72), math_node('MULTIPLY',fine,.28))
+height = math_node('ADD', math_node('ADD',math_node('MULTIPLY',broad,.45),math_node('MULTIPLY',mid,.40)),math_node('MULTIPLY',fine,.15))
 roughness = ramp(strata, [(.25,(.97,.97,.97)),(.72,(.65,.65,.65))])
 scene.render.engine = 'CYCLES'; scene.cycles.samples = 1
 scene.render.bake.margin = 0; scene.render.bake.use_clear = True
 scene.view_settings.view_transform = 'Standard'
 for name, source in [('albedo',multiply.outputs[0]),('height',height),('roughness',roughness)]:
+    if name not in globals().get('STONE_SURFACE_MAPS',('albedo','height','roughness')):continue
     image = bpy.data.images.new('Vault stone '+name, width=1024,height=1024,alpha=False)
     if name != 'albedo': image.colorspace_settings.name = 'Non-Color'
     target = n.new('ShaderNodeTexImage'); target.image=image

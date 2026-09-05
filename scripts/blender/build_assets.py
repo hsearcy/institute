@@ -17,14 +17,14 @@ bpy.context.window.scene=scene
 for script in ('common.py','detailed/materials.py'):
     exec(compile((source/script).read_text(),str(source/script),'exec'))
 MATS.update(detailed_materials())
-for script in ('detailed/geometry.py','detailed/architecture.py','detailed/characters.py','props.py','detailed/props.py','detailed/landmarks.py','detailed/bake.py','detailed/rig_hero.py','detailed/articulate_enemies.py'):
+for script in ('detailed/geometry.py','detailed/architecture.py','detailed/characters.py','props.py','detailed/props.py','detailed/landmarks.py','detailed/ice_cluster.py','detailed/bake.py','detailed/rig_hero.py','detailed/articulate_enemies.py'):
     exec(compile((source/script).read_text(),str(source/script),'exec'))
 OUT.mkdir(parents=True,exist_ok=True)
-for name in ('pillar','arch','wall','wall-bay','broken-wall','hero','skeleton','wraith','guardian','brazier','crystal','chest','furnace','reliquary'):
+for name in ('pillar','arch','wall','wall-bay','broken-wall','hero','skeleton','wraith','guardian','brazier','crystal','chest','furnace','reliquary','ice_cluster'):
     random.seed(312 if name in ('furnace','reliquary') else 214)
     function=globals()['make_'+name.replace('-','_')+'_v2']
     collection=function()
-    print(bake_asset(name,collection,512 if name in ('pillar','brazier','crystal','chest') else 1024))
+    print(bake_asset(name,collection,512 if name in ('pillar','brazier','crystal','chest','ice_cluster') else 1024))
     if name=='hero':rig_hero(collection)
     if name in ('skeleton','guardian'):articulate_enemy(name,collection)
 subprocess.run(['python',str(source/'detailed/optimize_assets.py')],check=True)

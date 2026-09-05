@@ -8,11 +8,12 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { iceShardGeometry, iceShardMaterial } from './world/ice';
 import { EnemyAnimator } from './world/EnemyAnimator';
 import { createVaultScenery } from './world/scenery';
 import { masonryGeometry, projectStoneUV } from './world/masonry';
 import { getRoomLayout, enemyPositions, isCrossingChasm, roomFloorPatches } from './world/roomLayout';
-import { stoneMaterial, floorRelief, flameMaterial, fireSheetMaterial, bladeWakeMaterial, ashMaterial, novaMaterial, stormMaterial, glowTexture, waveTexture } from './world/materials';
+import { stoneMaterial, floorRelief, flameMaterial, fireSheetMaterial, firePlumeMaterial, bladeWakeMaterial, ashMaterial, novaMaterial, stormMaterial, glowTexture, waveTexture } from './world/materials';
 
 type Enemy = { root: THREE.Group; visual: THREE.Object3D; origin: THREE.Vector3; phase: number; brute: boolean; dead: boolean; modelId: string; deathAt: number; animator: EnemyAnimator };
 type Fragment = { position: THREE.Vector3; velocity: THREE.Vector3; rotation: THREE.Vector3; spin: THREE.Vector3; scale: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; hot: boolean; bounced: boolean };
@@ -167,7 +168,7 @@ export class DungeonWorld {
 
   async load(): Promise<void> {
     const loader = new GLTFLoader();
-    await Promise.all(['hero', 'imp', 'guardian', 'arch', 'pillar', 'brazier', 'crystal', 'chest', 'wall-bay', 'broken-wall', 'skeleton', 'wraith', 'furnace', 'reliquary'].map(async name => {
+    await Promise.all(['hero', 'imp', 'guardian', 'arch', 'pillar', 'brazier', 'crystal', 'chest', 'wall-bay', 'broken-wall', 'skeleton', 'wraith', 'furnace', 'reliquary', 'ice_cluster'].map(async name => {
       try {
         const gltf = await loader.loadAsync(`/assets/rpg/${name}.glb`);
         if (this.disposed) return;
@@ -224,11 +225,12 @@ export class DungeonWorld {
     });
     this.batchEnemies();
     this.addModelProps();
+    this.biomeBuilt = ""; this.buildBiome();
     this.renderer.shadowMap.needsUpdate = true;
     // Compile authored actors and uncommon effect programs during loading,
     // before a child's first cast would otherwise pay the shader setup cost.
     const warmup = new THREE.Group(); warmup.position.y = -1000;
-    const warmMaterials: THREE.Material[] = [novaMaterial(), fireSheetMaterial(), bladeWakeMaterial(), ashMaterial(), stormMaterial(0xa9bdff)];
+    const warmMaterials: THREE.Material[] = [novaMaterial(), fireSheetMaterial(), firePlumeMaterial(0, 1), bladeWakeMaterial(), ashMaterial(), stormMaterial(0xa9bdff)];
     for (const material of warmMaterials) warmup.add(new THREE.Mesh(new THREE.PlaneGeometry(.01, .01), material));
     const summon = this.model('guardian', 4.5);
     summon?.traverse(object => { if (object instanceof THREE.Mesh && object.material instanceof THREE.MeshStandardMaterial) { object.material = object.material.clone(); object.material.transparent = true; warmMaterials.push(object.material); } });
@@ -609,14 +611,35 @@ export class DungeonWorld {
     } });
     oldTextures.forEach(texture => texture.dispose()); this.biomeGroup.clear(); this.floatingRunes.length = 0;
     if (this.regionId.includes('frost')) {
+      const clonedTextures = new Map<THREE.Texture, THREE.Texture>();
       const ice = new THREE.MeshStandardMaterial({ color: 0x426d83, emissive: 0x102f42, emissiveIntensity: .12, metalness: .18, roughness: .4, transparent: true, opacity: .83 });
       const snow = stoneMaterial(0x87999d, 85); ice.name = "frost-spires"; snow.name = "frost-snow";
       for (const side of [-1, 1]) {
         for (let i = 0; i < 10; i++) {
           if (this.encounter === 3 && Math.abs(-7.6 + i * 1.65) < 4.9) continue;
           const height = 1.2 + (i * 7 % 9) * .42;
-          const spire = this.mesh(new THREE.ConeGeometry(.28 + i % 3 * .14, height, 5), ice.clone(), side * (8.6 + i % 3 * .6), height * .45, -7.6 + i * 1.65);
-          spire.rotation.z = side * (.13 + i % 3 * .08); this.biomeGroup.add(spire);
+          const cluster = this.model('ice_cluster', height * .82);
+          if (cluster) {
+            cluster.position.x = side * (8.6 + i % 3 * .6); cluster.position.z = -7.6 + i * 1.65;
+            cluster.rotation.y = side * .7 + i * 2.31;
+            cluster.updateMatrixWorld(true);
+            cluster.traverse(child => { if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
+              // Biome cleanup owns these baked meshes and materials. Copy maps
+              // once per biome so cleanup never disposes the cached GLB maps.
+              const material = child.material.clone(); material.name = `frost-cluster-${material.name}`;
+              material.emissive.setHex(0x123348); material.emissiveIntensity = .2;
+              for (const slot of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap'] as const) {
+                const source = material[slot]; if (!source) continue;
+                if (!clonedTextures.has(source)) { const copy = source.clone(); copy.needsUpdate = true; clonedTextures.set(source, copy); }
+                material[slot] = clonedTextures.get(source)!;
+              }
+              const spire = new THREE.Mesh(child.geometry.clone().applyMatrix4(child.matrixWorld), material);
+              spire.castShadow = spire.receiveShadow = true; this.biomeGroup.add(spire);
+            } });
+          } else {
+            const spire = this.mesh(iceShardGeometry(.28 + i % 3 * .14, height, i), iceShardMaterial(), side * (8.6 + i % 3 * .6), 0, -7.6 + i * 1.65);
+            spire.rotation.z = side * (.13 + i % 3 * .08); this.biomeGroup.add(spire);
+          }
           const drift = this.mesh(new THREE.SphereGeometry(.9, 10, 5), snow.clone(), side * 9, .02, -7 + i * 1.65); drift.scale.set(1.5, .17, .75); this.biomeGroup.add(drift);
         }
         if (this.encounter === 3) continue;
@@ -976,19 +999,53 @@ export class DungeonWorld {
   private targetMark(at: THREE.Vector3, color: number, radius: number): void { this.ring(at, color, radius, .95, 'ground'); }
 
   private firePillar(at: THREE.Vector3, height: number, duration: number): void {
-    for (let side = 0; side < 3; side++) {
-      const width = height * (.42 + side * .09), tall = height * (1 - side * .17);
-      const material = fireSheetMaterial(side * 8 + at.x), mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, tall, 6, 5), material);
-      mesh.position.copy(at).y = tall * .5; mesh.rotation.y = .7 + side * 1.7;
-      this.effect(mesh, duration, t => { material.uniforms.time.value = this.elapsed + side; material.uniforms.opacity.value = Math.pow(1 - t, .75) * Math.min(1, t * 9) * .86; mesh.scale.y = Math.min(1, t * 7); mesh.position.y = at.y + tall * .5 * mesh.scale.y; mesh.position.x = at.x + Math.sin(side * 2.1) * t * .65; });
+    const seed = at.x * 2.7 + at.z * 1.3;
+    // Three unequal, bent tongues share a low ember bed. Ring sections narrow
+    // to real tips, so every view sees curved fire rather than intersecting cards.
+    for (let tongue = 0; tongue < 3; tongue++) {
+      const angle = seed + tongue * 2.4;
+      const tall = height * (tongue === 0 ? 1 : .48 + tongue * .14);
+      const radius = height * (tongue === 0 ? .145 : .09);
+      const vertices: number[] = [], uv: number[] = [], indices: number[] = [];
+      const rings = 18, sides = 14;
+      for (let ring = 0; ring <= rings; ring++) {
+        const h = ring / rings, taper = Math.pow(1 - h, .9);
+        const bend = h * h * tall * (.18 + tongue * .035);
+        const width = radius * taper * (.8 + Math.sin(h * Math.PI) * .34) + .006;
+        for (let side = 0; side <= sides; side++) {
+          const a = side / sides * Math.PI * 2;
+          const ripple = 1 + Math.sin(a * 3 + h * 13 + angle) * .26;
+          vertices.push(Math.cos(a) * width * ripple + Math.sin(angle) * bend, h * tall, Math.sin(a) * width * ripple + Math.cos(angle) * bend);
+          uv.push(side / sides, h);
+          if (ring < rings && side < sides) { const k = ring * (sides + 1) + side; indices.push(k, k + sides + 1, k + 1, k + 1, k + sides + 1, k + sides + 2); }
+        }
+      }
+      const geometry = new THREE.BufferGeometry(); geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3)); geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geometry.setIndex(indices);
+      const material = firePlumeMaterial(angle, tall), plume = new THREE.Mesh(geometry, material);
+      const offset = tongue === 0 ? 0 : radius * 1.4;
+      plume.position.copy(at).add(new THREE.Vector3(Math.sin(angle) * offset, .025, Math.cos(angle) * offset));
+      this.effect(plume, duration, t => {
+        material.uniforms.time.value = this.elapsed; material.uniforms.opacity.value = Math.min(1, t * 9) * Math.pow(1 - t, .65) * .9;
+        plume.scale.y = Math.min(1, t * 7) * (1 + Math.sin(t * 9 + angle) * .055);
+        plume.position.x = at.x + Math.sin(angle) * (offset + t * .32); plume.position.z = at.z + Math.cos(angle) * (offset + t * .32);
+      });
     }
+    const bed = new THREE.Mesh(new THREE.PlaneGeometry(height * .85, height * .85), new THREE.MeshBasicMaterial({ color: 0x35120a, map: this.glowMap, transparent: true, depthWrite: false }));
+    bed.rotation.x = -Math.PI / 2; bed.position.copy(at).y += .035;
+    this.effect(bed, duration, t => { bed.material.opacity = Math.sin(t * Math.PI) * .68; bed.scale.setScalar(.6 + t * .5); });
+    this.groundAsh(at, height * .36, new THREE.Vector3(Math.sin(seed), 0, Math.cos(seed)), duration);
     this.debris(at, 21, true, 1); this.debris(at, 9, false, .8);
   }
 
   private projectile(from: THREE.Vector3, to: THREE.Vector3, color: number, size: number, duration: number, hit: () => void, ice = false): void {
-    const geometry = ice ? new THREE.ConeGeometry(size, size * 5.8, 5) : new THREE.IcosahedronGeometry(size, 1);
-    const material = new THREE.MeshStandardMaterial({ color: ice ? 0x82bfda : 0x533522, emissive: color, emissiveIntensity: ice ? .7 : 2, roughness: ice ? .15 : .68, metalness: ice ? .2 : 0, transparent: true });
+    const geometry = ice ? iceShardGeometry(size * .7, size * 4.8, from.x + from.z).translate(0, -size * 2.4, 0) : new THREE.IcosahedronGeometry(size, 1);
+    const material = ice ? iceShardMaterial() : new THREE.MeshStandardMaterial({ color: 0x533522, emissive: color, emissiveIntensity: 2, roughness: .68, transparent: true });
     const mesh = new THREE.Mesh(geometry, material); if (ice) mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), to.clone().sub(from).normalize());
+    if (ice) {
+      const direction = from.clone().sub(to).normalize();
+      const trail = this.stroke([new THREE.Vector3(), direction.clone().multiplyScalar(size * 2), direction.clone().multiplyScalar(size * 5)], 0x8fcee1, size * .055, duration + .08);
+      this.effects[this.effects.length - 1].update = t => { trail.position.copy(from).lerp(to, Math.min(1, t * 1.1)); (trail.material as THREE.Material).opacity = Math.sin(t * Math.PI) * .42; };
+    }
     if (!ice) {
       material.color.setHex(0x817365); material.map = this.materials.wall.map;
       material.emissiveIntensity = .045; material.roughness = .94; material.flatShading = true;
@@ -1016,20 +1073,38 @@ export class DungeonWorld {
       // Override the generic effect fade: solid rock throughout its flight,
       // disappearing only in the brief contact window beside the blast.
       material.opacity = 1 - THREE.MathUtils.smoothstep(t, .87, 1);
-    } this.emit(mesh.position, color, ice ? 2 : 3, size * .8, .6); });
+    } else material.opacity = .94 * (1 - THREE.MathUtils.smoothstep(t, .78, 1)); this.emit(mesh.position, color, ice ? 2 : 3, size * .8, .6); });
     this.schedule(duration, hit);
   }
 
   private iceWave(origin: THREE.Vector3, wide: boolean): void {
-    const columns = wide ? 13 : 9;
-    for (let row = 0; row < 6; row++) for (let column = 0; column < columns; column++) this.schedule(row * .095 + Math.abs(column - columns / 2) * .012, () => {
-      const at = origin.clone().add(new THREE.Vector3((column - columns / 2) * .8, 0, -row * 1.3 + 2));
-      const height = 1.1 + Math.sin(column * 2 + row) * .45 + row * .12;
-      const mesh = new THREE.Mesh(new THREE.ConeGeometry(.35, height, 5), new THREE.MeshStandardMaterial({ color: 0x5895b6, emissive: 0x387a9a, emissiveIntensity: .7, roughness: .17, metalness: .25, transparent: true }));
-      mesh.position.copy(at).y = height * .5;
-      this.effect(mesh, 1.1, t => { mesh.scale.y = Math.min(1, t * 6) * (1 - Math.max(0, t - .7)); mesh.position.y = height * .5 * mesh.scale.y; mesh.rotation.z = -.18; });
-    });
-    this.emit(origin, 0xb9efff, 45, 5, .85);
+    const branches = wide ? 7 : 5;
+    const layout = getRoomLayout(this.encounter);
+    // Branching pressure fractures spread ahead of the hero. Offset, leaning
+    // shards grow along those cracks instead of forming a regular cone grid.
+    for (let branch = 0; branch < branches; branch++) {
+      const lane = branch - (branches - 1) / 2;
+      for (let step = 0; step < 8; step++) {
+        const phase = branch * 5.31 + step * 2.17;
+        const at = origin.clone().add(new THREE.Vector3(lane * (.46 + step * .16) + Math.sin(phase) * .32, 0, 1.3 - step * .94 + Math.cos(phase) * .25));
+        const localZ = at.z + this.encounter * 20;
+        if (Math.abs(at.x) > layout.walkable.maxX - .55 || localZ < layout.walkable.minZ + .6 || localZ > layout.walkable.maxZ - .6 || isCrossingChasm(this.encounter, at.x, localZ)) continue;
+        this.schedule(step * .07 + Math.abs(lane) * .022, () => {
+          const height = .64 + (Math.sin(phase * 1.7) + 1) * .48 + step * .07;
+          const mesh = new THREE.Mesh(iceShardGeometry(.19 + height * .08, height, phase), iceShardMaterial());
+          mesh.position.copy(at); mesh.rotation.set(-.18 - step * .025, phase, -lane * .055);
+          this.effect(mesh, 1.1, t => {
+            mesh.scale.y = THREE.MathUtils.smoothstep(t, 0, .2);
+            mesh.position.y = at.y - Math.max(0, t - .65) * height * 1.5;
+            mesh.material.opacity = (1 - THREE.MathUtils.smoothstep(t, .68, 1)) * .94;
+          });
+          const fissure = this.stroke([new THREE.Vector3(-.16, .04, .46), new THREE.Vector3(.09, .04, .08), new THREE.Vector3(.22, .04, -.39)], 0x8cc3d5, .014, .65);
+          fissure.position.copy(at); fissure.rotation.y = lane * -.1;
+          this.emit(at.clone().setY(.18), 0xafd9e2, 3, .9, .45);
+        });
+      }
+    }
+    this.emit(origin, 0xb9efff, 22, 3, .65);
   }
 
   private cyclone(at: THREE.Vector3, color: number, radius: number, height: number, duration: number, horizontal = false): void {

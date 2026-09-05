@@ -1,0 +1,147 @@
+import { expect, test, type Page } from '@playwright/test';
+import { RPG_SPELLS, RPG_SCHOOLS, RPG_SKILLS, rpgSpellUnlocked, rpgEncounterKills, rpgSpellModifiers, type RpgResolveResult, type RpgSpellId, type RpgState } from '../../shared/src/rpg';
+import type { Problem } from '../../shared/src/index';
+
+const profile = 'rpg-archmage';
+const state = async (page: Page): Promise<RpgState> => (await page.request.get(`/rpg/state?profileId=${profile}`)).json();
+async function configureRenderer(page: Page): Promise<void> {
+  await expect.poll(() => page.evaluate(() => !!(window as any).__game?.world)).toBe(true);
+  await page.evaluate(() => {
+    const world = (window as any).__game.world;
+    // Full-quality screenshots have their own visual suite. Exercise the actual
+    // animations cheaply in software Chromium; game timing is never replaced.
+    if (world.diagnostics.softwareRenderer) { world.renderer.setPixelRatio(.3); world.renderer.shadowMap.enabled = false; }
+  });
+}
+async function ready(page: Page): Promise<void> {
+  await expect.poll(async () => {
+    const demo = page.getByRole('button', { name: 'Let me try', exact: true });
+    if (await demo.isVisible()) await demo.click();
+    return page.evaluate(() => {
+      const game = (window as any).__game;
+      return !!game?.session && !game.busy && !game.panel;
+    });
+  }, { timeout: 60_000 }).toBe(true);
+}
+async function choose(page: Page, spellId: RpgSpellId): Promise<void> {
+  const spell = RPG_SPELLS.find(entry => entry.id === spellId)!;
+  await page.locator('button[data-action="spellbook"]:visible').first().click();
+  await page.locator(`[data-school="${spell.school}"][data-view="spellbook"]`).click();
+  await expect(page.locator('#rpg-dialog-content .rpg-spell-card')).toHaveCount(5);
+  await page.locator(`#rpg-dialog-content [data-spell="${spellId}"]`).click();
+  await expect.poll(async () => (await state(page)).selectedSpellId).toBe(spellId);
+  await expect(page.locator(`#rpg-dialog-content [data-spell="${spellId}"]`)).toHaveClass(/selected/);
+  await page.getByRole('button', { name: 'Return to dungeon', exact: true }).click();
+  await ready(page);
+  await expect(page.locator(`#rpg-spellbar [data-spell="${spellId}"]`)).toHaveAttribute('aria-pressed', 'true');
+}
+async function equip(page: Page, itemId: string): Promise<void> {
+  await page.locator('button[data-action="inventory"]:visible').first().click();
+  await page.locator(`#rpg-dialog-content [data-item="${itemId}"]`).click();
+  await expect.poll(async () => (await state(page)).equippedItemId).toBe(itemId);
+  await page.getByRole('button', { name: 'Return to dungeon', exact: true }).click();
+  await ready(page);
+}
+
+test('all fifteen spellbook abilities cast distinct effects, honor equipment, and persist across three expeditions', async ({ page }, info) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.addInitScript(() => localStorage.setItem('institute:rpg:muted', 'true'));
+  await page.goto('/'); await configureRenderer(page);
+  const before = await state(page);
+  expect(before.inventory.length).toBeGreaterThanOrEqual(20);
+  const learningBefore = await (await page.request.get(`/mastery?profileId=${profile}`)).json();
+  // Respec only RPG points, then learn every branch through the actual skill UI.
+  // This proves the expanded abilities are earnable, not merely fixture grants.
+  await page.locator('#rpg-dialog-content [data-action="skills"]').click();
+  await page.locator('#rpg-dialog-content [data-action="respec"]').click();
+  await expect.poll(async () => Object.keys((await state(page)).skills).length).toBe(0);
+  for (const school of RPG_SCHOOLS) {
+    await page.locator(`[data-school="${school.id}"][data-view="skills"]`).click();
+    for (const skill of RPG_SKILLS.filter(skill => skill.school === school.id)) {
+      await page.locator(`[data-skill="${skill.id}"]`).click();
+      await expect.poll(async () => (await state(page)).skills[skill.id]).toBe(1);
+      await expect.poll(() => page.evaluate(() => !(window as any).__game.busy)).toBe(true);
+    }
+  }
+  const learned = await state(page);
+  expect(RPG_SPELLS.filter(spell => rpgSpellUnlocked(spell.id, learned.skills))).toHaveLength(15);
+  expect(learned.skillPoints).toBe(learned.level - 1 - RPG_SKILLS.length);
+  expect(await (await page.request.get(`/mastery?profileId=${profile}`)).json()).toEqual(learningBefore);
+  await page.getByRole('button', { name: 'Back to camp', exact: true }).click();
+  await page.locator('#rpg-dialog-content [data-action="begin"]').click(); await ready(page);
+
+  const seenEffects = new Set<string>();
+  const seenSpells = new Set<string>();
+  // Three complete runs, covering every ability plus a repeat of each school's
+  // finale. Every solve uses the actual tutor and transactional RPG endpoint.
+  const rotation: RpgSpellId[] = [...RPG_SPELLS.map(spell => spell.id), 'firestorm', 'blizzard', 'tempest'];
+  const regions = ['embercrypt', 'frostvault', 'stormspire'];
+  for (let index = 0; index < rotation.length; index++) {
+    const spellId = rotation[index]!;
+    await test.step(`Encounter ${index + 1}: ${spellId}`, async () => {
+    if (index > 0 && index % 6 === 0) {
+      await expect(page.getByRole('button', { name: 'Next adventure →', exact: true })).toBeVisible();
+      await page.getByRole('button', { name: 'Next adventure →', exact: true }).click();
+      await page.locator(`[data-region="${regions[index / 6]}"]`).click(); await ready(page);
+    }
+    await choose(page, spellId);
+    if (spellId === 'meteor') await equip(page, 'starfall');
+    if (spellId === 'frost_guardian') await equip(page, 'wardenheart');
+    if (spellId === 'ball_lightning') await equip(page, 'stormorbit');
+
+    // Selection and the unsolved problem both survive a full reload.
+    if (index === 2 || index === 8 || index === 13) {
+      const problemId = await page.locator('#rpg-answer-form').getAttribute('data-problem-id');
+      const saved = await state(page);
+      const favorites = await page.locator('#rpg-spellbar [data-spell]').evaluateAll(elements => elements.map(element => element.getAttribute('data-spell')));
+      await page.reload(); await configureRenderer(page);
+      await page.locator('#rpg-dialog-content [data-action="begin"]').click(); await ready(page);
+      expect((await state(page)).selectedSpellId).toBe(spellId);
+      expect((await state(page)).xp).toBe(saved.xp);
+      await expect(page.locator('#rpg-answer-form')).toHaveAttribute('data-problem-id', problemId!);
+      await expect(page.locator(`#rpg-spellbar [data-spell="${spellId}"]`)).toHaveAttribute('aria-pressed', 'true');
+      expect(await page.locator('#rpg-spellbar [data-spell]').evaluateAll(elements => elements.map(element => element.getAttribute('data-spell')))).toEqual(favorites);
+    }
+
+    const current = await state(page);
+    const problem = await page.evaluate(() => (window as any).__game.session.problem) as Problem;
+    const effect = RPG_SPELLS.find(spell => spell.id === spellId)!.effect;
+    const resultPromise = page.waitForResponse(response => new URL(response.url()).pathname === '/rpg/resolve' && response.request().postDataJSON()?.problemId === problem.id);
+    await page.getByRole('textbox', { name: 'Your answer' }).fill(String(problem.answer));
+    await page.getByRole('button', { name: /Unleash/ }).click();
+    const result = await (await resultPromise).json() as RpgResolveResult;
+    expect(result.duplicate).toBe(false);
+    expect(result.reward.spellId).toBe(spellId);
+    expect(result.reward.kills).toBe(rpgEncounterKills(current, current.expedition!.encounterIndex));
+    await expect.poll(() => page.evaluate(() => (window as any).__game.world.diagnostics.lastAttack?.spellId)).toBe(spellId);
+    const dispatched = await page.evaluate(() => (window as any).__game.world.diagnostics.lastAttack);
+    await info.attach(`encounter-${index + 1}-${spellId}`, { body: JSON.stringify({ reward: result.reward, attack: dispatched }, null, 2), contentType: 'application/json' });
+    expect(dispatched.effect).toBe(effect);
+    expect(dispatched.options.kills).toBe(result.reward.kills);
+    const expectedModifiers = rpgSpellModifiers(current);
+    const optionFor = { burn: 'burning', 'ice-shards': 'shards', chain: 'chains', echo: 'echo', pierce: 'pierce', wide: 'wide', orbit: 'orbit', summon: 'summon' } as const;
+    for (const [modifier, option] of Object.entries(optionFor)) expect(!!dispatched.options[option]).toBe(expectedModifiers.includes(modifier as keyof typeof optionFor));
+    seenEffects.add(dispatched.effect); seenSpells.add(spellId);
+    await expect.poll(() => page.evaluate(() => {
+      const world = (window as any).__game.world;
+      return world.diagnostics.particles > 0 || world.effectsGroup.children.length > 0;
+    })).toBe(true);
+    if (['meteor', 'frost_guardian', 'ball_lightning'].includes(spellId)) await page.screenshot({ path: info.outputPath(`cast-${spellId}.png`) });
+    if (result.reward.bossDefeated) await expect(page.getByRole('button', { name: 'Next adventure →', exact: true })).toBeVisible();
+    else await ready(page);
+    });
+  }
+  expect(seenSpells.size).toBe(15); expect(seenEffects.size).toBe(15);
+  const after = await state(page);
+  expect(after.expeditionsCompleted).toBe(before.expeditionsCompleted + 3);
+  expect(after.expedition).toMatchObject({ regionId: 'stormspire', cleared: true });
+  expect(after.xp).toBeGreaterThan(before.xp);
+  expect(errors).toEqual([]);
+  // All three school tabs remain available after the larger content set.
+  await page.locator('#rpg-dialog-content [data-action="skills"]').click();
+  for (const school of RPG_SCHOOLS) {
+    await page.locator(`[data-school="${school.id}"][data-view="skills"]`).click();
+    await expect(page.locator('#rpg-dialog-content .rpg-skill-node')).toHaveCount(11);
+  }
+});

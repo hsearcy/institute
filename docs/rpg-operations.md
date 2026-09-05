@@ -17,7 +17,7 @@ In a second terminal:
 TUTOR_PROXY_TARGET=http://127.0.0.1:8799 VITE_PROFILE_ID=rpg-playtest bun --no-env-file run --cwd web dev
 ```
 
-Open `http://127.0.0.1:5188`. The server binds localhost and uses `/tmp/institute-rpg-playtest.db`; it explicitly overrides inherited tutor credentials with an offline local endpoint and disables ElevenLabs. Deterministic fallback problems and written demonstrations remain playable. `rpg-playtest` starts a new hero with existing mastered/practicing topics, overdue reviews, demonstrations, and legacy equipment. To inspect all spells and regions, restart Vite with `VITE_PROFILE_ID=rpg-veteran`. Profile overrides apply only in development; production retains `sam`.
+Open `http://127.0.0.1:5188`. The server binds localhost and uses `/tmp/institute-rpg-playtest.db`; it explicitly overrides inherited tutor credentials with an offline local endpoint and disables ElevenLabs. Deterministic fallback problems and written demonstrations remain playable. `rpg-playtest` starts a new hero with existing mastered/practicing topics, overdue reviews, demonstrations, and legacy equipment. To inspect all fifteen spells and regions, restart Vite with `VITE_PROFILE_ID=rpg-archmage`. Newly seeded `rpg-veteran` profiles also have all spells and relics, with room to upgrade their skill trees. Seeding preserves existing fixture profiles; it never replaces their saved progress. Profile overrides apply only in development; production retains `sam`.
 
 The fixture seeder is restart-safe and preserves subsequent play. `bun --no-env-file scripts/seed-rpg-demo.ts` creates the fixtures without listening on a port. Choose a fresh scratch database with `RPG_TEST_DB=/tmp/institute-rpg-another.db`; only paths inside the system temporary directory are accepted. `RPG_TEST_PORT` can change the local tutor port. No real profile database or Ares service is touched.
 
@@ -48,9 +48,15 @@ The RPG preserves the legacy three-wrong-answer shield/streak outcome through `/
 An isolated browser recovery suite starts its own offline tutor on `8819`, Vite on `5209`, and a fresh temporary database:
 
 ```sh
-bun --cwd web x playwright test --config playwright.recovery.config.ts
+bun --no-env-file --cwd web x playwright test --config playwright.recovery.config.ts
 ```
 
-Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an existing Chromium executable if using a locally installed browser instead of Playwright's bundled one. The suite deliberately drops committed HTTP responses and reloads the page to test pending answers, adaptive branches, elapsed thinking time, worked help, shields, skill points, and next-question failures.
+Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an existing Chromium executable if using a locally installed browser instead of Playwright's bundled one. Set `RPG_TEST_GPU=1` on a Linux machine with working OpenGL to use hardware rendering in the isolated headless test browser; the default uses software rendering for CI portability. The suite deliberately drops committed HTTP responses and reloads the page to test pending answers, adaptive branches, elapsed thinking time, worked help, shields, skill points, and next-question failures.
+
+The expanded spellbook suite uses a separate temporary archmage profile, tutor on `8829`, and Vite on `5219`. It learns every skill branch through the UI, casts all fifteen abilities through the real tutor and reward endpoints, checks equipment modifiers, and reloads saved spell selections during three expeditions:
+
+```sh
+bun --no-env-file --cwd web x playwright test --config playwright.spellbook.config.ts
+```
 
 See the [playtest record](rpg-playtest.md) for the completed checks and actual game screenshots.

@@ -21,3 +21,16 @@ export function icon(name: string, cls = ''): string {
 export function escapeHtml(value: unknown): string {
   return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 }
+
+/** Hand-painted production atlas: five abilities per school, three rows. */
+const spellAtlas = ['ember','cleave','meteor','phoenix_dive','firestorm','frost','ice_lance','glacial_surge','blizzard','frost_guardian','storm','arc_lance','thunderclap','ball_lightning','tempest'];
+export function spellArt(id: string): string {
+  const index = Math.max(0,spellAtlas.indexOf(id));
+  return `<span class="rpg-spell-art rpg-painted-art" aria-hidden="true" style="--art-x:${(index % 5)*25}%;--art-y:${Math.floor(index/5)*50}%"></span>`;
+}
+
+const relicAtlas = ['apprentice','cinderwand','glacier','thunderrod','moonstaff','phoenix','wintercrown','tempest','cleaver','starfall','phoenix_talon','inferno','sunforged','icespear','tideglass','hailcaller','wardenheart','winterbranch','arcfang','thunderbell','stormorbit','skybreaker','stormsilver'];
+export function relicArt(id: string): string {
+  const index = Math.max(0,relicAtlas.indexOf(id));
+  return `<span class="rpg-relic-art" aria-hidden="true" style="--art-x:${(index % 6)*20}%;--art-y:${Math.floor(index/6)*100/3}%"></span>`;
+}

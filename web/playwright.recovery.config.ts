@@ -12,7 +12,7 @@ export default defineConfig({
     trace: 'retain-on-failure', screenshot: 'only-on-failure',
     launchOptions: {
       executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ?? process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
-      args: ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+      args: process.env.RPG_TEST_GPU === '1' ? ['--no-sandbox', '--use-gl=angle', '--use-angle=gl'] : ['--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
     },
   },
   webServer: [

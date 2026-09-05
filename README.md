@@ -1,8 +1,8 @@
 # Institute
 
-**The Sunken Vault** is a browser dungeon RPG powered by Institute's existing adaptive math tutor. Solve a problem to unleash a spell through a horde, collect rare equipment, gain experience, and grow three skill trees across three expeditions.
+**The Sunken Vault** is a browser dungeon RPG powered by Institute's existing adaptive math tutor. Solve a problem to unleash a spell through a horde, collect rare equipment, gain experience, and grow three branching skill trees with 33 nodes and 23 relics across three expeditions.
 
-The world keeps moving while you think, but combat waits for your answer. Travel and targeting are automatic. Fire Nova, Frostfall, and Chain Lightning have distinct effects and upgrades; each six-encounter expedition ends with a guardian and loot.
+The world keeps moving while you think, but combat waits for your answer. Travel and targeting are automatic. Fifteen abilities span Flame, Frost, and Storm, including Flame Cleave, Meteor, Phoenix Dive, Blizzard, Frost Guardian, and Ball Lightning; each six-encounter expedition ends with a guardian and loot.
 
 The learning graph, mastery rules, spaced review, prerequisite rescue, demonstrations, spoken hints, and original reward system remain in place. Existing learners start a new RPG hero while keeping their learning progress and gem collection. The original mine and shops remain available at `?mode=mine`.
 
@@ -24,11 +24,11 @@ For a safe local preview with seeded existing learning progress, run `bun --no-e
 TUTOR_PROXY_TARGET=http://127.0.0.1:8799 VITE_PROFILE_ID=rpg-playtest bun --no-env-file run --cwd web dev
 ```
 
-Open `http://127.0.0.1:5188`. This uses a disposable database in `/tmp`; it does not touch Ares or a real learner's records. Use `rpg-veteran` instead of `rpg-playtest` to inspect unlocked spells, equipment, and regions. See [operations and Ares upgrade instructions](docs/rpg-operations.md) before switching a live deployment.
+Open `http://127.0.0.1:5188`. This uses a disposable database in `/tmp`; it does not touch Ares or a real learner's records. Use `rpg-archmage` instead of `rpg-playtest` to inspect all 15 spells, skill upgrades, equipment, and regions. See [operations and Ares upgrade instructions](docs/rpg-operations.md) before switching a live deployment.
 
 ## Playing
 
-Type an answer and press Enter or **Unleash**. Use Q/W/E to select spells, K for skill trees, I for equipment, and Escape to pause. A number pad is available for touch devices. **Help me** offers a hint or the existing worked walkthrough. Pausing, closing the tab, and leaving at checkpoints preserve adventure progress.
+Type an answer and press Enter or **Unleash**. Use Q/W/E for your three school favorites, B for the full spellbook, K for skill trees, I for equipment, and Escape to pause. Choosing a spell in the spellbook updates its school slot; favorites persist on this device. A number pad is available for touch devices. **Help me** offers a hint or the existing worked walkthrough. Pausing, closing the tab, and leaving at checkpoints preserve adventure progress.
 
 ## Verification and assets
 
@@ -36,6 +36,7 @@ Type an answer and press Enter or **Unleash**. Use Q/W/E to select spells, K for
 bun run --cwd web build
 bun run --cwd web verify:rpg
 bun run --cwd web verify:recovery
+bun run --cwd web verify:spellbook
 python scripts/blender/validate_assets.py
 ```
 

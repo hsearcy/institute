@@ -4,13 +4,14 @@ import { defineConfig } from '@playwright/test';
 const dbPath = `/tmp/institute-rpg-browser-${process.pid}.db`;
 export default defineConfig({
   testDir: './tests', testMatch: 'rpg.spec.ts', workers: 1, fullyParallel: false,
-  timeout: 180_000, expect: { timeout: 20_000 },
+  outputDir: './test-results/regression',
+  timeout: 300_000, expect: { timeout: 20_000 },
   use: {
     baseURL: 'http://127.0.0.1:5199', viewport: { width: 1440, height: 1000 },
     screenshot: 'only-on-failure', trace: 'retain-on-failure',
     launchOptions: {
       executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined,
-      args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+      args: process.env.RPG_TEST_GPU === '1' ? ['--no-sandbox', '--use-gl=angle', '--use-angle=gl'] : ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
     },
   },
   webServer: [

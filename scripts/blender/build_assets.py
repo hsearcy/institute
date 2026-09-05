@@ -1,4 +1,4 @@
-"""Rebuild the original game models in Blender 4.5+.
+"""Rebuild the detailed game models and UV-baked PBR maps in Blender 4.5+.
 
   blender --background --factory-startup --python scripts/blender/build_assets.py
 
@@ -8,13 +8,23 @@ rebuilds without an MCP server. It creates a fresh scene and preserves prior sce
 """
 import bpy
 from pathlib import Path
+import random,shutil,subprocess
 
 RPG_REPO_ROOT=Path(__file__).resolve().parents[2]
 source=RPG_REPO_ROOT/'scripts/blender'
-scene=bpy.data.scenes.new('Sunken Vault asset workshop')
+scene=bpy.data.scenes.new('Vault detailed workshop')
 bpy.context.window.scene=scene
-for script in ('common.py','characters.py','props.py'):
+for script in ('common.py','detailed/materials.py'):
+    exec(compile((source/script).read_text(),str(source/script),'exec'))
+MATS.update(detailed_materials())
+for script in ('detailed/geometry.py','detailed/architecture.py','detailed/characters.py','props.py','detailed/props.py','detailed/bake.py','detailed/rig_hero.py'):
     exec(compile((source/script).read_text(),str(source/script),'exec'))
 OUT.mkdir(parents=True,exist_ok=True)
-for name in ('hero','imp','guardian','pillar','arch','brazier','crystal','chest','wall'):
-    print(export_asset(name,globals()['make_'+name]()))
+for name in ('pillar','arch','wall','wall-bay','broken-wall','hero','skeleton','wraith','guardian','brazier','crystal','chest'):
+    random.seed(214)
+    function=globals()['make_'+name.replace('-','_')+'_v2']
+    print(bake_asset(name,function(),512 if name in ('pillar','brazier','crystal','chest') else 1024))
+    if name=='hero':rig_hero(bpy.data.collections['Vault_hero'])
+subprocess.run(['python',str(source/'detailed/optimize_assets.py')],check=True)
+# Preserve the legacy load path as a compatible skeletal minion, not the old toy imp.
+shutil.copyfile(OUT/'skeleton.glb',OUT/'imp.glb')

@@ -1,13 +1,14 @@
-import type { Problem, Branches, RpgState, RpgSpellId, RpgReward, Reward } from '@institute/shared';
-import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, rpgSpellUnlocked, rpgEncounterKills, ProblemSchema } from '@institute/shared';
+import type { Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgReward, Reward } from '@institute/shared';
+import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgEncounterKills, ProblemSchema } from '@institute/shared';
 import { fetchState, fetchMastery, redeemCrazyCoin, type Demo } from '../game/tutor';
 import { speak } from '../game/audio';
 import * as dungeonSound from './sound';
 import { API, PROFILE } from '../game/config';
 import { getRpgState, mutateRpg, resolveEncounter, attemptStatus, request, ApiError } from './api';
 import { DungeonWorld } from './DungeonWorld';
-import { icon, escapeHtml as esc } from './icons';
+import { icon, spellArt, relicArt, escapeHtml as esc } from './icons';
 import './rpg.css';
+import './ui-v2.css';
 
 type Session = {
   expeditionId: string; encounterIndex: number; problem: Problem; firstAttempt: boolean | null;
@@ -36,6 +37,8 @@ export class RpgGame {
     const input = this.root.querySelector<HTMLInputElement>('#rpg-answer');
     if (cast) { cast.disabled = value; cast.setAttribute('aria-busy', String(value)); }
     if (input) input.disabled = value;
+    const discoveryEquip = this.root.querySelector<HTMLButtonElement>('[data-discovery-item]');
+    if (discoveryEquip) discoveryEquip.disabled = value;
   }
   private disposed = false;
   private playing = false;
@@ -50,6 +53,11 @@ export class RpgGame {
   private retrying = false;
   private storageReady = false;
   private speechDepth = 0;
+  private discovery: string | null = null;
+  private lootLabelFrame: number | null = null;
+  private lootLabelUntil = 0;
+  private school: RpgSchoolId = 'ember';
+  private favoriteSpells: Record<RpgSchoolId, RpgSpellId> = { ember: 'ember', frost: 'frost', storm: 'storm' };
 
   constructor(canvas: HTMLCanvasElement) {
     document.body.classList.add('rpg-mode');
@@ -60,12 +68,12 @@ export class RpgGame {
       <nav aria-label="Adventure menu"><button data-action="map" title="Expeditions" aria-label="Expeditions">${icon('map')}</button><button data-action="skills" title="Skill trees" aria-label="Skill trees">${icon('tree')}<i id="rpg-points" hidden></i></button><button data-action="inventory" title="Equipment" aria-label="Equipment">${icon('bag')}</button><button data-action="sound" title="Toggle tutor voice" aria-label="Mute tutor voice">${icon('sound')}</button><button data-action="pause" title="Pause and save" aria-label="Pause and save">Ⅱ</button></nav></header>
       <div class="rpg-route" aria-label="Expedition progress" id="rpg-route"></div>
       <div id="rpg-boss" class="rpg-boss" hidden><span>GUARDIAN OF THE VAULT</span><strong></strong><div></div></div>
-      <div id="rpg-toast" class="rpg-toast" role="status" aria-live="polite" hidden></div>
+      <div id="rpg-toast" class="rpg-toast" role="status" aria-live="polite" hidden></div><aside id="rpg-discovery" class="rpg-discovery" aria-label="New relic" aria-live="polite" hidden></aside><div id="rpg-floating-xp" class="rpg-floating-xp" aria-hidden="true"></div><div id="rpg-world-loot" class="rpg-world-loot" aria-hidden="true" hidden></div>
       <section class="rpg-controls" id="rpg-controls" hidden aria-label="Spell controls">
         <div class="rpg-hint" id="rpg-hint" role="status" hidden></div>
         <form id="rpg-answer-form" class="rpg-answer-panel" autocomplete="off"><div class="rpg-question"><span id="rpg-topic" class="rpg-eyebrow">POWER YOUR SPELL</span><label for="rpg-answer" id="rpg-problem">Preparing your next spell…</label></div><input id="rpg-answer" aria-label="Your answer" inputmode="none" autocomplete="off" maxlength="3" pattern="[0-9]*" type="text"><button class="rpg-primary" id="rpg-cast" type="submit">Unleash <span>↵</span></button><div class="rpg-help-buttons"><button type="button" data-action="hear" aria-label="Read problem aloud" title="Hear the problem">${icon('sound')}</button><button type="button" data-action="help" aria-label="Help me" title="Help me">${icon('help')}</button><button type="button" data-action="keypad" aria-label="Toggle number pad" title="Number pad">⌨</button></div></form>
         <div id="rpg-keypad" class="rpg-keypad" hidden>${[1,2,3,4,5,6,7,8,9,'⌫',0,'✓'].map(n => `<button type="button" data-digit="${n}" aria-label="${n === '⌫' ? 'Delete digit' : n === '✓' ? 'Submit answer' : n}">${n}</button>`).join('')}</div>
-        <footer class="rpg-hotbar"><div class="rpg-level-orb"><span>LEVEL</span><strong id="rpg-level">1</strong></div><div class="rpg-spellbar" id="rpg-spellbar"></div><button class="rpg-gear-button" data-action="inventory" aria-label="Open equipment">${icon('sword')}<span id="rpg-equipped">Equipment</span></button></footer>
+        <footer class="rpg-hotbar"><div class="rpg-hud-art" aria-hidden="true"></div><div class="rpg-level-orb"><span>LEVEL</span><strong id="rpg-level">1</strong></div><div class="rpg-spellbar" id="rpg-spellbar"></div><button class="rpg-gear-button" data-action="inventory" aria-label="Open equipment">${icon('sword')}<span id="rpg-equipped">Equipment</span></button><button class="rpg-magic-orb" data-action="spellbook" aria-label="Open spellbook"><span>SPELLS</span><strong id="rpg-spell-count">2</strong><small>Spellbook · B</small></button></footer>
         <div class="rpg-xp"><div><i id="rpg-xp-fill"></i></div><span id="rpg-xp-label">0 / 90 XP</span></div>
       </section>
       <div class="rpg-connection" id="rpg-connection" hidden role="alert"><span>Reconnecting to your adventure…</span><button data-action="retry">Try again</button></div>
@@ -86,18 +94,26 @@ export class RpgGame {
       } else this.startClock();
     }, { signal: this.abort.signal });
     window.addEventListener('pagehide', () => { this.stopClock(); this.saveSession(); }, { signal: this.abort.signal });
-    window.addEventListener('resize', () => this.world.resize(), { signal: this.abort.signal });
+    window.addEventListener('resize', () => { this.world.resize(); this.drawSkillLinks(); }, { signal: this.abort.signal });
     this.muted = localStorage.getItem('institute:rpg:muted') === 'true';
+    try {
+      const favorites = JSON.parse(localStorage.getItem(`${sessionKey}:favorites`) ?? '{}');
+      for (const school of RPG_SCHOOLS) {
+        const spell = RPG_SPELLS.find(spell => spell.id === favorites[school.id] && spell.school === school.id);
+        if (spell) this.favoriteSpells[school.id] = spell.id;
+      }
+    } catch { /* Cosmetic favorites can safely use their defaults. */ }
     this.updateSound();
   }
 
   private el<T extends HTMLElement = HTMLElement>(id: string): T { return this.root.querySelector<T>(`#${id}`)!; }
   async start(): Promise<void> {
     this.world.start();
-    void this.world.load().catch(() => this.toast('The dungeon is ready. Some details are still loading.'));
+    const modelsReady = this.world.load().catch(() => this.toast('The dungeon is ready. Some details are still loading.'));
     this.showDialog('loading', '<div class="rpg-seal">◆</div><p class="rpg-eyebrow">THE SUNKEN VAULT</p><h2 id="rpg-dialog-title">Opening the gates</h2><p>Finding your adventure…</p>');
     await this.runSafely(async () => {
       this.state = await getRpgState();
+      await modelsReady;
       this.restoreSession(); this.renderState(); this.busy = false; this.showCamp();
     });
   }
@@ -161,12 +177,21 @@ export class RpgGame {
     this.el('rpg-xp-label').textContent = `${s.xpIntoLevel} / ${s.xpForNextLevel} XP`;
     this.el('rpg-points').hidden = s.skillPoints === 0;
     this.el('rpg-points').textContent = String(s.skillPoints);
-    this.el('rpg-spellbar').innerHTML = RPG_SPELLS.map((spell, i) => {
+    this.favoriteSpells[rpgSpellSchool(s.selectedSpellId)] = s.selectedSpellId;
+    for (const school of RPG_SCHOOLS) if (!rpgSpellUnlocked(this.favoriteSpells[school.id],s.skills)) this.favoriteSpells[school.id] = school.id;
+    localStorage.setItem(`${sessionKey}:favorites`,JSON.stringify(this.favoriteSpells));
+    this.el('rpg-spell-count').textContent = String(RPG_SPELLS.filter(spell => rpgSpellUnlocked(spell.id, s.skills)).length);
+    this.el('rpg-spellbar').innerHTML = (['ember','frost','storm'] as RpgSchoolId[]).map((school, i) => {
+      const favorite = this.favoriteSpells[school];
+      const spell = RPG_SPELLS.find(entry => entry.id === favorite && rpgSpellUnlocked(entry.id,s.skills)) ?? RPG_SPELLS.find(entry => entry.id === school)!;
       const unlocked = rpgSpellUnlocked(spell.id, s.skills);
-      return `<button data-spell="${spell.id}" class="rpg-spell ${s.selectedSpellId === spell.id ? 'selected' : ''} ${!unlocked ? 'locked' : ''}" style="--spell-color:${spell.color}" aria-label="${spell.name}${!unlocked ? ', unlock in skill tree' : ''}" aria-pressed="${s.selectedSpellId === spell.id}"><span class="rpg-spell-art">${icon(unlocked ? spell.id : 'lock')}</span><span>${spell.name}</span><kbd>${['Q','W','E'][i]}</kbd></button>`;
+      return `<button data-spell="${spell.id}" class="rpg-spell ${s.selectedSpellId === spell.id ? 'selected' : ''} ${!unlocked ? 'locked' : ''}" style="--spell-color:${spell.color}" aria-label="${spell.name}${!unlocked ? ', unlock in skill tree' : ''}" aria-pressed="${s.selectedSpellId === spell.id}">${spellArt(spell.id)}<span>${spell.name}</span>${!unlocked ? `<i class="rpg-spell-lock">${icon('lock')}</i>` : ''}<kbd>${['Q','W','E'][i]}</kbd></button>`;
     }).join('') + `<button class="rpg-spell rpg-tree-button" data-action="skills">${icon('tree')}<span>Skill trees</span>${s.skillPoints ? `<i>${s.skillPoints} new</i>` : '<kbd>K</kbd>'}</button>`;
     const item = RPG_ITEMS.find(i => i.id === s.equippedItemId)!;
     this.el('rpg-equipped').textContent = item.name;
+    const gear = this.root.querySelector('.rpg-gear-button')!;
+    gear.querySelector('.rpg-icon,.rpg-relic-art')?.remove();
+    gear.insertAdjacentHTML('afterbegin',relicArt(item.id));
     this.world.setEquipment(s.equippedItemId);
     const boss = !!expedition && !expedition.cleared && expedition.encounterIndex === 5;
     this.el('rpg-boss').hidden = !boss || !this.playing;
@@ -178,7 +203,7 @@ export class RpgGame {
     this.stopClock(); this.saveSession(); this.playing = false; this.el('rpg-controls').hidden = true;
     const resume = s.expedition && !s.expedition.cleared;
     if (resume) this.setEncounter();
-    this.showDialog('camp', `<div class="rpg-seal">${icon('sword')}</div><p class="rpg-eyebrow">INSTITUTE PRESENTS</p><h2 id="rpg-dialog-title" class="rpg-title">The Sunken<br><em>Vault</em></h2><p class="rpg-camp-story">Ancient halls. Hidden relics.<br>A little magic goes a long way.</p><div class="rpg-camp-stats"><span>LEVEL <b>${s.level}</b></span><span>RELICS <b>${s.inventory.length}</b></span><span>GUARDIANS <b>${s.expeditionsCompleted}</b></span></div><button class="rpg-primary rpg-large" data-action="begin">${resume ? 'Continue adventure' : 'Enter the dungeon'} <span>→</span></button><button class="rpg-text-button" data-action="map">Choose an expedition</button><div class="rpg-camp-menu"><button data-action="skills">${icon('tree')} Skill trees${s.skillPoints ? ` · ${s.skillPoints} new` : ''}</button><button data-action="inventory">${icon('bag')} Equipment</button><button data-action="parent">Parent journal</button></div><p class="rpg-camp-note">Solve to unleash your spells. Take all the time you need.</p>`);
+    this.showDialog('camp', `<div class="rpg-seal">${icon('sword')}</div><p class="rpg-eyebrow">INSTITUTE PRESENTS</p><h2 id="rpg-dialog-title" class="rpg-title">The Sunken<br><em>Vault</em></h2><p class="rpg-camp-story">Ancient halls. Hidden relics.<br>A little magic goes a long way.</p><div class="rpg-camp-stats"><span>LEVEL <b>${s.level}</b></span><span>RELICS <b>${s.inventory.length}</b></span><span>GUARDIANS <b>${s.expeditionsCompleted}</b></span></div><button class="rpg-primary rpg-large" data-action="begin">${resume ? 'Continue adventure' : 'Enter the dungeon'} <span>→</span></button><button class="rpg-text-button" data-action="map">Choose an expedition</button><div class="rpg-camp-menu"><button data-action="spellbook">${icon('storm')} Spellbook</button><button data-action="skills">${icon('tree')} Skill trees${s.skillPoints ? ` · ${s.skillPoints} new` : ''}</button><button data-action="inventory">${icon('bag')} Equipment</button><button data-action="parent">Parent journal</button></div><p class="rpg-camp-note">Solve to unleash your spells. Take all the time you need.</p>`);
   }
   private async begin(regionId?: string): Promise<void> {
     if (!this.state || this.busy) return;
@@ -270,20 +295,20 @@ export class RpgGame {
       const spellId = pending.spellId ?? this.state!.selectedSpellId;
       const result = await resolveEncounter({ problemId: p.id, expeditionId: session.expeditionId, encounterIndex: session.encounterIndex, spellId, assisted: pending.assisted });
       const item = RPG_ITEMS.find(i => i.id === this.state!.equippedItemId)!;
-      const applies = !item.spellId || item.spellId === result.reward.spellId;
-      const skills = this.state!.skills;
+      const applies = rpgItemApplies(item, result.reward.spellId);
+      const modifiers = rpgSpellModifiers(this.state!,result.reward.spellId);
       this.el<HTMLButtonElement>('rpg-cast').disabled = true;
       this.el<HTMLInputElement>('rpg-answer').disabled = true;
       this.el('rpg-answer-form').classList.add('correct');
       if (!session.rewardShown) {
         if (!this.muted) dungeonSound.cast(result.reward.spellId);
         await this.world.attack(result.reward.spellId, {
-          echo: result.reward.spellId === 'ember' && ((skills.ember_echo ?? 0) > 0 || (applies && item.effect === 'echo')),
-          wide: result.reward.spellId === 'ember' ? (skills.ember_power ?? 0) > 0 : result.reward.spellId === 'frost' ? (skills.frost_master ?? 0) > 0 : (skills.storm_master ?? 0) > 0,
-          burning: result.reward.spellId === 'ember' && applies && item.effect === 'burn',
-          shards: result.reward.spellId === 'frost' && ((skills.frost_shards ?? 0) > 0 || (applies && item.effect === 'ice-shards')),
-          chains: result.reward.spellId === 'storm' && ((skills.storm_chain ?? 0) > 0 || (applies && item.effect === 'chain')),
+          echo: modifiers.includes('echo'), wide: modifiers.includes('wide'),
+          burning: modifiers.includes('burn'), shards: modifiers.includes('ice-shards'),
+          chains: modifiers.includes('chain'), pierce: modifiers.includes('pierce'),
+          orbit: modifiers.includes('orbit'), summon: modifiers.includes('summon'),
           itemId: applies ? item.id : undefined, kills: result.reward.kills,
+          drop: result.reward.item && !result.reward.duplicateItem ? {name:result.reward.item.name,rarity:result.reward.item.rarity} : undefined, xp:result.reward.xp,
         });
         session.rewardShown = true; this.saveSession();
       }
@@ -309,6 +334,20 @@ export class RpgGame {
     }
   }
   private showReward(reward: RpgReward): void {
+    if (reward.item && !reward.duplicateItem) {
+      this.discovery = reward.item.id; this.renderDiscovery();
+      const label = this.el('rpg-world-loot');
+      label.textContent = reward.item.name; label.dataset.rarity = reward.item.rarity;
+      this.lootLabelUntil = performance.now() + 4000;
+      if (this.lootLabelFrame !== null) cancelAnimationFrame(this.lootLabelFrame);
+      this.updateLootLabel();
+    }
+    const floating = this.el('rpg-floating-xp');
+    floating.textContent = `+${reward.xp} XP`;
+    const position = this.world.heroScreenPosition;
+    floating.style.left = `${position.x}px`; floating.style.top = `${Math.max(100,position.y-45)}px`;
+    floating.classList.remove('rpg-xp-rise');
+    void floating.offsetWidth; floating.classList.add('rpg-xp-rise');
     const item = reward.item && !reward.duplicateItem ? ` · Found ${reward.item.name}` : '';
     const level = reward.levelUp ? ` · Level ${this.state!.level}! +${reward.levelsGained} skill point${reward.levelsGained > 1 ? 's' : ''}` : '';
     this.toast(`+${reward.xp} XP · ${reward.kills} monsters defeated${item}${level}`, reward.levelUp || !!item ? 6500 : 2600);
@@ -318,9 +357,25 @@ export class RpgGame {
       else dungeonSound.loot();
     }
   }
+  private updateLootLabel = (): void => {
+    const label = this.el('rpg-world-loot');
+    if (this.disposed || performance.now() > this.lootLabelUntil) { label.hidden = true; this.lootLabelFrame = null; return; }
+    const position = this.world.lootScreenPosition;
+    label.hidden = !position || position.y < 80 || position.y > innerHeight - 180 || position.x < 20 || position.x > innerWidth - 20;
+    if (position) { label.style.left = `${position.x}px`; label.style.top = `${position.y-30}px`; }
+    this.lootLabelFrame = requestAnimationFrame(this.updateLootLabel);
+  };
+  private renderDiscovery(): void {
+    const item = RPG_ITEMS.find(item => item.id === this.discovery);
+    const panel = this.el('rpg-discovery');
+    panel.hidden = !item;
+    if (!item) return;
+    panel.dataset.rarity = item.rarity;
+    panel.innerHTML = `<button data-action="dismiss-loot" class="rpg-discovery-close" aria-label="Dismiss new relic">×</button><p class="rpg-eyebrow">${item.rarity.toUpperCase()} RELIC DISCOVERED</p><div class="rpg-discovery-body">${relicArt(item.id)}<div><h3>${item.name}</h3><p>${item.description}</p></div></div><button class="rpg-discovery-equip" data-discovery-item="${item.id}" ${this.busy ? 'disabled' : ''}>${this.state?.equippedItemId === item.id ? '✓ Equipped' : 'Equip this relic'}</button><small>Already saved in your equipment</small>`;
+  }
   private showVictory(reward: RpgReward): void {
     const s = this.state!; const region = RPG_REGIONS.find(r => r.id === s.expedition?.regionId)!;
-    this.showDialog('victory', `<div class="rpg-seal">${icon('crown')}</div><p class="rpg-eyebrow">EXPEDITION COMPLETE</p><h2 id="rpg-dialog-title">${esc(region.bossName)}<br><em>defeated.</em></h2><p>The halls are yours. Your next adventure awaits.</p><div class="rpg-victory-reward">${icon(reward.item?.spellId ?? 'sword')}<div><small>${reward.item ? esc(reward.item.rarity.toUpperCase() + ' RELIC') : 'GUARDIAN REWARD'}</small><strong>${esc(reward.item?.name ?? `+${reward.xp} experience`)}</strong><span>${esc(reward.item?.description ?? 'One step closer to your next spell.')}</span></div></div><div class="rpg-button-row"><button class="rpg-primary" data-action="map">Next adventure →</button><button data-action="inventory">Inspect loot</button><button data-action="camp">Save & leave</button></div>${s.skillPoints ? `<button class="rpg-text-button" data-action="skills">Spend ${s.skillPoints} skill point${s.skillPoints > 1 ? 's' : ''}</button>` : ''}`);
+    this.showDialog('victory', `<div class="rpg-seal">${icon('crown')}</div><p class="rpg-eyebrow">EXPEDITION COMPLETE</p><h2 id="rpg-dialog-title">${esc(region.bossName)}<br><em>defeated.</em></h2><p>The halls are yours. Your next adventure awaits.</p><div class="rpg-victory-reward">${reward.item ? relicArt(reward.item.id) : icon('crown')}<div><small>${reward.item ? esc(reward.item.rarity.toUpperCase() + ' RELIC') : 'GUARDIAN REWARD'}</small><strong>${esc(reward.item?.name ?? `+${reward.xp} experience`)}</strong><span>${esc(reward.item?.description ?? 'One step closer to your next spell.')}</span></div></div><div class="rpg-button-row"><button class="rpg-primary" data-action="map">Next adventure →</button><button data-action="inventory">Inspect loot</button><button data-action="camp">Save & leave</button></div>${s.skillPoints ? `<button class="rpg-text-button" data-action="skills">Spend ${s.skillPoints} skill point${s.skillPoints > 1 ? 's' : ''}</button>` : ''}`);
   }
   private hint(text: string): void { this.el('rpg-hint').textContent = text; this.el('rpg-hint').hidden = false; }
   private async help(): Promise<void> {
@@ -355,20 +410,56 @@ export class RpgGame {
     this.busy = false; void this.say(text);
   }
 
+  private schoolTabs(action: string): string {
+    return `<div class="rpg-school-tabs" role="group" aria-label="Magic school">${RPG_SCHOOLS.map(school => `<button data-school="${school.id}" data-view="${action}" class="${this.school === school.id ? 'active' : ''}" style="--spell-color:${school.color}" aria-pressed="${this.school === school.id}">${spellArt(school.id)}<span>${school.name}</span></button>`).join('')}</div>`;
+  }
+  private showSpellbook(): void {
+    if (!this.state) return; const s = this.state;
+    this.showDialog('spellbook', `<p class="rpg-eyebrow">THE GRIMOIRE</p><h2 id="rpg-dialog-title">Your spells <small>${RPG_SPELLS.filter(spell => rpgSpellUnlocked(spell.id,s.skills)).length} / ${RPG_SPELLS.length} learned</small></h2><p>Choose your magic. Each school remembers your last selected spell.</p>${this.schoolTabs('spellbook')}<div class="rpg-spell-library">${RPG_SPELLS.filter(spell => spell.school === this.school).map(spell => {
+      const learned = rpgSpellUnlocked(spell.id,s.skills);
+      const skill = RPG_SKILLS.find(skill => skill.id === spell.skillId);
+      return `<button class="rpg-spell-card ${learned ? 'learned' : 'locked'} ${s.selectedSpellId === spell.id ? 'selected' : ''}" data-spell="${spell.id}" style="--spell-color:${spell.color}">${spellArt(spell.id)}<div><small>${learned ? 'LEARNED SPELL' : `UNLOCK · LEVEL ${skill?.level ?? 1}`}</small><strong>${spell.name}</strong><p>${spell.description}</p><b>${s.selectedSpellId === spell.id ? '✓ Selected' : learned ? 'Select spell →' : 'Find in skill tree →'}</b></div></button>`;
+    }).join('')}</div><div class="rpg-button-row"><button class="rpg-primary" data-action="close">${this.playing ? 'Return to dungeon' : 'Back to camp'}</button><button data-action="skills">Learn new spells</button></div>`, true);
+  }
   private showSkills(): void {
     if (!this.state) return; const s = this.state;
-    this.showDialog('skills', `<p class="rpg-eyebrow">CHOOSE YOUR MAGIC</p><h2 id="rpg-dialog-title">Skill trees <small>${s.skillPoints} skill point${s.skillPoints === 1 ? '' : 's'}</small></h2><p>Level up to learn spells and make them your own.</p><div class="rpg-skill-trees">${RPG_SPELLS.map(spell => `<section class="rpg-skill-tree" style="--spell-color:${spell.color}"><header>${icon(spell.id)}<h3>${spell.name}</h3></header>${RPG_SKILLS.filter(k => k.spellId === spell.id).map(skill => {
+    const skills = RPG_SKILLS.filter(skill => skill.school === this.school);
+    const depth = (id: string): number => { const parent = skills.find(skill => skill.id === id)?.parentId; return parent ? 1 + depth(parent) : 0; };
+    const order = (id: string): string => { const skill = skills.find(skill => skill.id === id)!; return (skill.parentId ? order(skill.parentId) : '') + String(skills.indexOf(skill)).padStart(2,'0'); };
+    const tiers = Array.from({length:Math.max(...skills.map(skill=>depth(skill.id)))+1},(_,tier)=>skills.filter(skill=>depth(skill.id)===tier).sort((a,b)=>order(a.id).localeCompare(order(b.id))));
+    const columns = Math.max(...tiers.map(tier=>tier.length));
+
+    this.showDialog('skills', `<p class="rpg-eyebrow">SHAPE YOUR MAGIC</p><h2 id="rpg-dialog-title">Skill trees <small>${s.skillPoints} skill point${s.skillPoints === 1 ? '' : 's'}</small></h2><p>Follow a branch to learn new spells, or strengthen your favorites.</p>${this.schoolTabs('skills')}<div class="rpg-skill-trees"><section class="rpg-skill-tree rpg-skill-graph" style="--graph-columns:${columns};--spell-color:${RPG_SCHOOLS.find(school => school.id === this.school)!.color}"><svg class="rpg-skill-links" aria-hidden="true"></svg>${tiers.flat().map(skill => {
       const rank = s.skills[skill.id] ?? 0;
       const available = s.skillPoints > 0 && s.level >= skill.level && (!skill.parentId || !!s.skills[skill.parentId]) && rank < skill.maxRank;
-      const reason = rank >= skill.maxRank ? 'Mastered' : s.level < skill.level ? `Level ${skill.level}` : skill.parentId && !s.skills[skill.parentId] ? `Learn ${RPG_SKILLS.find(k => k.id === skill.parentId)!.name}` : s.skillPoints < 1 ? 'Earn a skill point' : 'Learn · 1 point';
-      return `<button class="rpg-skill-node ${rank ? 'learned' : ''} ${available ? 'available' : ''}" data-skill="${skill.id}" ${!available ? 'disabled' : ''}><span class="rpg-node-icon">${icon(rank || available ? spell.id : 'lock')}</span><strong>${skill.name}</strong><span>${skill.description}</span><small>${rank}/${skill.maxRank} <b>${reason}</b></small></button>`;
-    }).join('')}</section>`).join('')}</div><div class="rpg-button-row"><button class="rpg-primary" data-action="close">${this.playing ? 'Return to dungeon' : 'Back to camp'}</button><button data-action="respec" ${s.expedition && !s.expedition.cleared ? 'disabled title="Available after this expedition"' : ''}>Reset points at camp · Free</button></div>`, true);
+      const parent = RPG_SKILLS.find(k => k.id === skill.parentId);
+      const reason = rank >= skill.maxRank ? 'Mastered' : s.level < skill.level ? `Level ${skill.level}` : parent && !s.skills[parent.id] ? `Learn ${parent.name}` : s.skillPoints < 1 ? 'Earn a skill point' : 'Learn · 1 point';
+      return `<button class="rpg-skill-node ${rank ? 'learned' : ''} ${available ? 'available' : ''}" data-skill="${skill.id}" data-parent="${skill.parentId ?? ''}" style="--node-row:${depth(skill.id)+1};--node-col:${tiers[depth(skill.id)].indexOf(skill)+1};--node-columns:${tiers[depth(skill.id)].length}" ${!available ? 'disabled' : ''}>${spellArt(skill.spellId)}<div><small>${skill.kind === 'unlock' ? 'NEW SPELL' : 'SPELL UPGRADE'}${parent ? ` · ${parent.name}` : ' · Starting branch'}</small><strong>${skill.name}</strong><span>${skill.description}</span><small class="rpg-skill-status">${rank}/${skill.maxRank} <b>${reason}</b></small></div></button>`;
+    }).join('')}</section></div><div class="rpg-button-row"><button class="rpg-primary" data-action="close">${this.playing ? 'Return to dungeon' : 'Back to camp'}</button><button data-action="spellbook">Open spellbook</button><button data-action="respec" ${s.expedition && !s.expedition.cleared ? 'disabled title="Available after this expedition"' : ''}>Reset points at camp · Free</button></div>`, true);
+    requestAnimationFrame(() => this.drawSkillLinks());
+  }
+  private drawSkillLinks(): void {
+    if (this.panel !== 'skills') return;
+    const graph = this.root.querySelector<HTMLElement>('.rpg-skill-graph');
+    const svg = graph?.querySelector('svg');
+    if (!graph || !svg) return;
+    const box = graph.getBoundingClientRect();
+    svg.setAttribute('viewBox',`0 0 ${box.width} ${box.height}`);
+    svg.innerHTML = [...graph.querySelectorAll<HTMLElement>('[data-parent]')].map(node => {
+      const parent = [...graph.querySelectorAll<HTMLElement>('[data-skill]')].find(other => other.dataset.skill === node.dataset.parent);
+      if (!parent) return '';
+      const from = parent.getBoundingClientRect(), to = node.getBoundingClientRect();
+      const x1 = from.x + from.width/2-box.x, y1=from.bottom-box.y;
+      const x2 = to.x + to.width/2-box.x, y2=to.y-box.y;
+      const mid = (y1+y2)/2;
+      return `<path d="M${x1} ${y1} C${x1} ${mid} ${x2} ${mid} ${x2} ${y2}" class="${parent.classList.contains('learned') ? 'learned' : ''}"/><circle cx="${x2}" cy="${y2}" r="3"/>`;
+    }).join('');
   }
   private showInventory(): void {
     if (!this.state) return; const s = this.state;
     this.showDialog('inventory', `<p class="rpg-eyebrow">RELICS OF THE VAULT</p><h2 id="rpg-dialog-title">Your equipment <small>${s.inventory.length} / ${RPG_ITEMS.length} found</small></h2><p>Find rare weapons. Change the way your magic looks and strikes.</p><div class="rpg-inventory">${RPG_ITEMS.map(item => {
       const owned = s.inventory.includes(item.id); const equipped = s.equippedItemId === item.id;
-      return `<button class="rpg-item ${item.rarity} ${!owned ? 'undiscovered' : ''} ${equipped ? 'equipped' : ''}" data-item="${item.id}" ${!owned ? 'disabled' : ''}><span class="rpg-item-art">${icon(owned ? item.spellId ?? 'sword' : 'lock')}</span><small>${owned ? item.rarity : 'UNDISCOVERED'}</small><strong>${owned ? item.name : 'Hidden relic'}</strong><span>${owned ? item.description : 'Keep exploring the vaults.'}</span><b>${equipped ? '✓ Equipped' : owned ? 'Equip' : item.rarity + ' treasure'}</b></button>`;
+      return `<button class="rpg-item ${item.rarity} ${!owned ? 'undiscovered' : ''} ${equipped ? 'equipped' : ''}" data-item="${item.id}" ${!owned ? 'disabled' : ''}>${owned ? relicArt(item.id) : `<span class="rpg-item-art">${icon('lock')}</span>`}<small>${owned ? item.rarity : 'UNDISCOVERED'}</small><strong>${owned ? item.name : 'Hidden relic'}</strong><span>${owned ? item.description : 'Keep exploring the vaults.'}</span><b>${equipped ? '✓ Equipped' : owned ? 'Equip' : item.rarity + ' treasure'}</b></button>`;
     }).join('')}</div><div class="rpg-button-row"><button class="rpg-primary" data-action="close">${this.playing ? 'Return to dungeon' : 'Back to camp'}</button><a href="?mode=mine" class="rpg-text-button">Visit your gem collection & original shop</a></div>`, true);
   }
   private showMap(): void {
@@ -395,7 +486,7 @@ export class RpgGame {
 
   private showDialog(name: string, html: string, wide = false): void {
     if (!this.panel) { this.stopClock(); this.saveSession(); }
-    this.panel = name; this.world.setPaused(true);
+    this.panel = name; this.root.dataset.panel = name; this.world.setPaused(true);
     this.el('rpg-overlay').hidden = false;
     this.el('rpg-dialog-content').innerHTML = html;
     this.root.querySelector('.rpg-dialog')!.classList.toggle('wide', wide);
@@ -405,7 +496,7 @@ export class RpgGame {
   private closeDialog(force = false): void {
     if (!force && ['demo','walkthrough','loading'].includes(this.panel)) return;
     if (!force && (!this.playing || this.state?.expedition?.cleared)) { this.showCamp(); return; }
-    this.panel = ''; this.el('rpg-overlay').hidden = true; this.world.setPaused(false); this.startClock();
+    this.panel = ''; this.root.dataset.panel = ''; this.el('rpg-overlay').hidden = true; this.world.setPaused(false); this.startClock();
     if (this.playing && !this.busy) this.el<HTMLInputElement>('rpg-answer').focus({ preventScroll: true });
   }
   private toast(text: string, ms = 3500): void {
@@ -471,14 +562,31 @@ export class RpgGame {
       if (digit === '✓') { void this.submit(); return; }
       this.entered = digit === '⌫' ? this.entered.slice(0,-1) : (this.entered + digit).slice(0,3); this.updateAnswer(); return;
     }
+    if (button.dataset.school) {
+      this.school = button.dataset.school as RpgSchoolId;
+      button.dataset.view === 'spellbook' ? this.showSpellbook() : this.showSkills(); return;
+    }
     if (button.dataset.spell) {
       if (this.busy || !this.state) return;
       const spellId = button.dataset.spell as RpgSpellId;
-      if (!rpgSpellUnlocked(spellId, this.state.skills)) { this.showSkills(); return; }
-      void this.changeLoadout('spell', { spellId }, () => {}); return;
+      this.school = rpgSpellSchool(spellId);
+      if (!rpgSpellUnlocked(spellId, this.state.skills)) {
+        this.showSkills();
+        const skillId = RPG_SPELLS.find(spell => spell.id === spellId)?.skillId;
+        requestAnimationFrame(() => {
+          const node = this.root.querySelector<HTMLElement>(`[data-skill="${skillId}"]`);
+          node?.classList.add('rpg-target-skill');
+          node?.scrollIntoView({block:'center',behavior:'smooth'});
+        });
+        return;
+      }
+      void this.changeLoadout('spell', { spellId }, () => { if (this.panel === 'spellbook') this.showSpellbook(); }); return;
     }
     if (button.dataset.skill) {
       void this.changeLoadout('upgrade', { skillId: button.dataset.skill }, () => { this.showSkills(); if (!this.muted) dungeonSound.levelUp(); }); return;
+    }
+    if (button.dataset.discoveryItem) {
+      void this.changeLoadout('equip', {itemId:button.dataset.discoveryItem}, () => { this.discovery = null; this.renderDiscovery(); this.toast('Relic equipped. Unleash its magic!'); }); return;
     }
     if (button.dataset.item) {
       void this.changeLoadout('equip', { itemId: button.dataset.item }, () => { this.showInventory(); this.toast('Equipped. Try your new magic!'); }); return;
@@ -491,6 +599,8 @@ export class RpgGame {
       case 'close': this.closeDialog(); break;
       case 'map': this.showMap(); break;
       case 'skills': this.showSkills(); break;
+      case 'spellbook': this.showSpellbook(); break;
+      case 'dismiss-loot': this.discovery = null; this.renderDiscovery(); break;
       case 'inventory': this.showInventory(); break;
       case 'pause': this.showPause(); break;
       case 'camp': this.showCamp(); break;
@@ -528,8 +638,9 @@ export class RpgGame {
     if (this.busy) return;
     if (event.key === 'Escape') { this.showPause(); return; }
     if (event.ctrlKey || event.metaKey || event.altKey) return;
-    const hotkeys: Record<string,string> = {q:'ember',w:'frost',e:'storm'};
+    const hotkeys: Record<string,string> = {q:this.favoriteSpells.ember,w:this.favoriteSpells.frost,e:this.favoriteSpells.storm};
     if (hotkeys[event.key.toLowerCase()]) { this.root.querySelector<HTMLButtonElement>(`[data-spell="${hotkeys[event.key.toLowerCase()]}"]`)?.click(); return; }
+    if (event.key.toLowerCase() === 'b') { this.showSpellbook(); return; }
     if (event.key.toLowerCase() === 'k') { this.showSkills(); return; }
     if (event.key.toLowerCase() === 'i') { this.showInventory(); return; }
     if (document.activeElement === this.el('rpg-answer')) return;
@@ -540,6 +651,7 @@ export class RpgGame {
   dispose(): void {
     this.stopClock(); this.saveSession(); this.disposed = true; this.abort.abort(); this.panelResolve?.();
     if (this.toastTimer) clearTimeout(this.toastTimer);
+    if (this.lootLabelFrame !== null) cancelAnimationFrame(this.lootLabelFrame);
     dungeonSound.dispose(); this.world.dispose(); this.root.remove(); document.body.classList.remove('rpg-mode');
   }
 }

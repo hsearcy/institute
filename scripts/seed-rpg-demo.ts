@@ -2,7 +2,7 @@
 import { Database } from 'bun:sqlite';
 import { resolve, sep } from 'node:path';
 import { tmpdir } from 'node:os';
-import { TOPICS, RPG_ITEMS, rpgLevel } from '../shared/src/index';
+import { TOPICS, RPG_ITEMS, RPG_SKILLS, rpgLevel } from '../shared/src/index';
 import { getRpgState } from '../server/src/rpg';
 
 export async function seedRpgDemo() {
@@ -22,7 +22,7 @@ export async function seedRpgDemo() {
   try {
     db.transaction(() => {
       const roots = TOPICS.filter((topic) => topic.prereqs.length === 0);
-      for (const profileId of ['rpg-playtest', 'rpg-veteran']) {
+      for (const profileId of ['rpg-playtest', 'rpg-veteran', 'rpg-archmage']) {
         // Restarting the local server preserves everything played so far.
         if (db.query('SELECT 1 FROM profile_state WHERE profile_id = ?').get(profileId)) continue;
         const now = Date.now();
@@ -45,14 +45,17 @@ export async function seedRpgDemo() {
             if (correct) db.query(`INSERT INTO daily_solves (profile_id,problem_id,day,solved_at) VALUES (?, ?, ?, ?)`).run(profileId, problemId, new Date(created).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }), created);
           }
         }
-        if (profileId === 'rpg-veteran') {
+        if (profileId !== 'rpg-playtest') {
           const state = getRpgState(db, profileId);
-          state.xp = 2250;
+          const targetLevel = profileId === 'rpg-archmage' ? 60 : 24;
+          state.xp = (targetLevel - 1) * 90 + 45 * (targetLevel - 2) * (targetLevel - 1) / 2;
           Object.assign(state, rpgLevel(state.xp));
-          state.skills = { ember_power: 1, ember_echo: 1, frost: 1, frost_shards: 1, storm: 1, storm_chain: 1 };
+          state.skills = Object.fromEntries(RPG_SKILLS
+            .filter(skill => profileId === 'rpg-archmage' || skill.kind === 'unlock' || ['ember_power', 'ember_echo', 'cleave', 'frost_shards', 'storm_chain'].includes(skill.id))
+            .map(skill => [skill.id, profileId === 'rpg-archmage' ? skill.maxRank : 1]));
           state.skillPoints = state.level - 1 - Object.values(state.skills).reduce((sum, value) => sum + value, 0);
           state.inventory = RPG_ITEMS.map((item) => item.id);
-          state.equippedItemId = 'phoenix';
+          state.equippedItemId = profileId === 'rpg-archmage' ? 'moonstaff' : 'phoenix';
           state.totalKills = 740;
           state.expeditionsCompleted = 5;
           db.query('INSERT INTO rpg_profiles (profile_id,state_json,updated_at) VALUES (?, ?, ?)').run(profileId, JSON.stringify(state), now);
@@ -65,5 +68,5 @@ export async function seedRpgDemo() {
 
 if (import.meta.main) {
   const { path } = await seedRpgDemo();
-  console.log(`Local fixtures ready in ${path}: rpg-playtest (existing learning, new hero), rpg-veteran (all regions and spells). Existing fixtures were preserved.`);
+  console.log(`Local fixtures ready in ${path}: rpg-playtest (existing learning, new hero), rpg-veteran (all regions and abilities), rpg-archmage (every skill and relic). Existing fixtures were preserved.`);
 }

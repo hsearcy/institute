@@ -1,5 +1,6 @@
 {
-  "generator": "Blender 4.5.13 via Blender MCP 1.6 / protocol 5",
+  "revision": 2,
+  "generator": "Blender 4.5.13 via Blender MCP 1.6 / protocol 5; UV-baked PBR surface atlases",
   "source": "scripts/blender/build_assets.py",
   "userPrompt": "use blender mcp to create high quality models.",
   "coordinateSystem": {
@@ -11,111 +12,171 @@
   "assets": {
     "hero": {
       "url": "/assets/rpg/hero.glb",
-      "bytes": 447660,
-      "triangles": 4500,
-      "drawCalls": 11,
+      "bytes": 1845900,
+      "triangles": 11330,
+      "drawCalls": 6,
+      "embeddedTextures": 3,
       "nodes": [
-        "Body_matte",
-        "Body_metal",
-        "Body_glow_cyan",
-        "Head_matte",
-        "Head_metal",
-        "Head_glow_flame",
-        "Cape_matte",
-        "Cape_metal",
-        "Sword_matte",
-        "Sword_metal",
-        "Sword_glow_amber"
+        "Body_Baked.010",
+        "Cape_Baked.001",
+        "Head_Baked.001",
+        "Head_Glow.001",
+        "Sword_Baked.001",
+        "Sword_Glow"
+      ],
+      "animations": {
+        "idle": 3.2333333333333334,
+        "walk": 0.8333333333333334,
+        "cleave": 1.1666666666666667,
+        "cast": 1.1666666666666667
+      },
+      "joints": [
+        "root",
+        "chest",
+        "head",
+        "arm.L",
+        "arm.R",
+        "cape",
+        "leg.L",
+        "leg.R"
       ]
     },
     "imp": {
       "url": "/assets/rpg/imp.glb",
-      "bytes": 119688,
-      "triangles": 1036,
+      "bytes": 1848072,
+      "triangles": 18276,
       "drawCalls": 5,
+      "embeddedTextures": 3,
       "nodes": [
-        "Body_matte.001",
-        "Body_metal.001",
-        "Head_matte.001",
-        "Head_glow_cyan",
-        "Head_crystal"
+        "Head_Glow",
+        "Body_Baked.009",
+        "Head_Baked",
+        "Cape_Baked",
+        "Sword_Baked"
       ]
     },
     "guardian": {
       "url": "/assets/rpg/guardian.glb",
-      "bytes": 211552,
-      "triangles": 1936,
-      "drawCalls": 5,
+      "bytes": 1745936,
+      "triangles": 12000,
+      "drawCalls": 4,
+      "embeddedTextures": 3,
       "nodes": [
-        "Body_matte.002",
-        "Body_crystal",
-        "Head_matte.002",
-        "Head_glow_cyan.001",
-        "Head_crystal.001"
+        "Body_Glow",
+        "Head_Glow.003",
+        "Body_Baked.012",
+        "Head_Baked.003"
       ]
     },
     "pillar": {
       "url": "/assets/rpg/pillar.glb",
-      "bytes": 100204,
-      "triangles": 1080,
-      "drawCalls": 2,
+      "bytes": 994352,
+      "triangles": 7044,
+      "drawCalls": 1,
+      "embeddedTextures": 3,
       "nodes": [
-        "Body_matte.003",
-        "Body_metal.002"
+        "Body_Baked"
       ]
     },
     "arch": {
       "url": "/assets/rpg/arch.glb",
-      "bytes": 323972,
-      "triangles": 3344,
-      "drawCalls": 2,
+      "bytes": 1851608,
+      "triangles": 19094,
+      "drawCalls": 1,
+      "embeddedTextures": 3,
       "nodes": [
-        "Body_matte.004",
-        "Body_glow_cyan.001"
+        "Body_Baked.002"
       ]
     },
     "brazier": {
       "url": "/assets/rpg/brazier.glb",
-      "bytes": 86960,
-      "triangles": 956,
-      "drawCalls": 4,
+      "bytes": 753172,
+      "triangles": 3844,
+      "drawCalls": 2,
+      "embeddedTextures": 3,
       "nodes": [
-        "Body_matte.005",
-        "Body_metal.003",
-        "Flame_glow_amber",
-        "Flame_glow_flame"
+        "Embers_Glow",
+        "Body_Baked.017"
       ]
     },
     "crystal": {
       "url": "/assets/rpg/crystal.glb",
-      "bytes": 47560,
-      "triangles": 468,
+      "bytes": 576824,
+      "triangles": 2106,
       "drawCalls": 2,
+      "embeddedTextures": 3,
       "nodes": [
-        "Body_matte.006",
-        "Body_crystal.001"
+        "Body_Glow.002",
+        "Body_Baked.018"
       ]
     },
     "chest": {
       "url": "/assets/rpg/chest.glb",
-      "bytes": 205132,
-      "triangles": 2090,
-      "drawCalls": 5,
+      "bytes": 859968,
+      "triangles": 4026,
+      "drawCalls": 3,
+      "embeddedTextures": 3,
       "nodes": [
-        "Body_metal.004",
-        "Body_matte.007",
-        "Lid_matte",
-        "Lid_metal",
-        "Body_glow_cyan.002"
+        "Body_Glow.003",
+        "Body_Baked.019",
+        "Lid_Baked"
       ]
     },
     "wall": {
       "url": "/assets/rpg/wall.glb",
-      "bytes": 295788,
-      "triangles": 3132,
+      "bytes": 1348244,
+      "triangles": 15072,
       "drawCalls": 1,
+      "embeddedTextures": 3,
       "nodes": [
-        "Body_matte.008"
+        "Body_Baked.004"
+      ]
+    },
+    "wall-bay": {
+      "url": "/assets/rpg/wall-bay.glb",
+      "bytes": 2831856,
+      "triangles": 46985,
+      "drawCalls": 1,
+      "embeddedTextures": 3,
+      "nodes": [
+        "Body_Baked.003"
+      ]
+    },
+    "broken-wall": {
+      "url": "/assets/rpg/broken-wall.glb",
+      "bytes": 1303360,
+      "triangles": 14134,
+      "drawCalls": 1,
+      "embeddedTextures": 3,
+      "nodes": [
+        "Body_Baked.005"
+      ]
+    },
+    "skeleton": {
+      "url": "/assets/rpg/skeleton.glb",
+      "bytes": 1848072,
+      "triangles": 18276,
+      "drawCalls": 5,
+      "embeddedTextures": 3,
+      "nodes": [
+        "Head_Glow",
+        "Body_Baked.009",
+        "Head_Baked",
+        "Cape_Baked",
+        "Sword_Baked"
+      ]
+    },
+    "wraith": {
+      "url": "/assets/rpg/wraith.glb",
+      "bytes": 1269204,
+      "triangles": 12798,
+      "drawCalls": 4,
+      "embeddedTextures": 3,
+      "nodes": [
+        "Head_Glow.002",
+        "Body_Baked.011",
+        "Head_Baked.002",
+        "Cape_Baked.002"
       ]
     }
   }

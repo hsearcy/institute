@@ -17,11 +17,24 @@ async function state(page: Page): Promise<RpgState> {
   return (await page.request.get(`/rpg/state?profileId=${profile}`)).json();
 }
 async function ready(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const world = (window as any).__game.world;
+    if (world.diagnostics.softwareRenderer) { world.renderer.setPixelRatio(.3); world.renderer.shadowMap.enabled = false; }
+  });
   await expect.poll(async () => {
     const demo = page.getByRole('button', { name: 'Let me try', exact: true });
     if (await demo.isVisible()) await demo.click();
-    return await page.locator('#rpg-ui').getAttribute('data-busy') === 'false' && await page.locator('#rpg-cast').isEnabled() && await page.locator('#rpg-overlay').isHidden();
-  }, { timeout: 45_000 }).toBe(true);
+    return page.evaluate(() => {
+      const game = (window as any).__game;
+      return {
+        busy: game.busy,
+        attribute: document.querySelector<HTMLElement>('#rpg-ui')!.dataset.busy,
+        castDisabled: document.querySelector<HTMLButtonElement>('#rpg-cast')!.disabled,
+        overlayHidden: document.querySelector<HTMLElement>('#rpg-overlay')!.hidden,
+        panel: game.panel,
+      };
+    });
+  }, { timeout: 60_000 }).toEqual({ busy: false, attribute: 'false', castDisabled: false, overlayHidden: true, panel: '' });
 }
 function captureProblems(page: Page): Map<string, Problem> {
   const problems = new Map<string, Problem>();
@@ -72,6 +85,16 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
   expect(status).toMatchObject({recorded:true,correct:false,solved:true});
 
   await ready(page);
+  const masteryBeforeEquip = await (await page.request.get(`/mastery?profileId=${profile}`)).json();
+  const rewardBeforeEquip = await state(page);
+  await expect(page.getByRole('complementary',{name:'New relic'})).toBeVisible();
+  await page.getByRole('button',{name:'Equip this relic',exact:true}).click();
+  await expect.poll(async () => (await state(page)).equippedItemId).toBe('cinderwand');
+  await expect(page.getByRole('complementary',{name:'New relic'})).toBeHidden();
+  expect((await state(page)).xp).toBe(rewardBeforeEquip.xp);
+  expect(await (await page.request.get(`/mastery?profileId=${profile}`)).json()).toEqual(masteryBeforeEquip);
+
+  await ready(page);
   const resumePrompt = await page.locator('#rpg-problem').innerText();
   const resumeState = await state(page);
   await page.reload();
@@ -88,6 +111,7 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
   await page.screenshot({path:info.outputPath('02-victory.png')});
 
   await page.locator('#rpg-dialog-content [data-action="skills"]').click();
+  await page.locator('[data-school="frost"][data-view="skills"]').click();
   await page.locator('[data-skill="frost"]').click();
   await expect.poll(async () => (await state(page)).skills.frost).toBe(1);
   await page.screenshot({path:info.outputPath('03-skills.png')});

@@ -25,7 +25,7 @@ class Node {
   connect(node: Node) { return node; }
   disconnect() {}
   start() { started++; }
-  stop() { stopped++; this.onended?.(); }
+  stop(when?: number) { if (when !== undefined && when > clock) return; stopped++; this.onended?.(); }
 }
 class Context {
   state = 'suspended'; destination = new Node();
@@ -116,4 +116,27 @@ test('leaving while clips load cannot restart ambience or play a delayed effect'
   await loading;
   await Promise.resolve();
   expect(started).toBe(before);
+});
+
+test('expanded ability signatures are gesture-gated, deduplicated, and cancelled by mute', async () => {
+  const document = new Document();
+  globalThis.window = { AudioContext: Context } as unknown as Window & typeof globalThis;
+  globalThis.document = document as unknown as globalThis.Document;
+  globalThis.fetch = (async () => ({ok:true,arrayBuffer:async()=>new ArrayBuffer(4)} as Response)) as typeof fetch;
+  sound.setMuted(false);
+  const before = started;
+  sound.cast('meteor');
+  expect(started).toBe(before);
+  await sound.unlock();
+  clock += 1;
+  sound.cast('meteor');
+  expect(started - before).toBe(3); // Recorded impact plus two authored bass pulses.
+  sound.cast('meteor');
+  expect(started - before).toBe(3);
+  const beforeMute = stopped;
+  sound.setMuted(true);
+  expect(stopped - beforeMute).toBe(3);
+  clock += 1;
+  sound.cast('frost_guardian'); sound.cast('tempest');
+  expect(started - before).toBe(3);
 });

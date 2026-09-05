@@ -1,16 +1,19 @@
 import * as THREE from 'three';
+import { RPG_SPELLS } from '@institute/shared';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
-import { stoneMaterial, glowTexture, waveTexture } from './world/materials';
+import { stoneMaterial, floorRelief, flameMaterial, novaMaterial, stormMaterial, glowTexture, waveTexture } from './world/materials';
 
-type Enemy = { root: THREE.Group; visual: THREE.Object3D; origin: THREE.Vector3; phase: number; brute: boolean; dead: boolean };
+type Enemy = { root: THREE.Group; visual: THREE.Object3D; origin: THREE.Vector3; phase: number; brute: boolean; dead: boolean; modelId: string; deathAt: number };
 type Particle = { position: THREE.Vector3; velocity: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; size: number };
-type AttackOptions = { echo?: boolean; wide?: boolean; burning?: boolean; shards?: boolean; chains?: boolean; itemId?: string; kills?: number };
-type Effect = { mesh: THREE.Mesh; age: number; duration: number; kind: 'ring' | 'slash' | 'beam' | 'ground' | 'shard'; radius: number };
+type AttackOptions = { echo?: boolean; wide?: boolean; burning?: boolean; shards?: boolean; chains?: boolean; pierce?: boolean; orbit?: boolean; summon?: boolean; itemId?: string; kills?: number; drop?: { name: string; rarity: string }; xp?: number };
+type Effect = { mesh: THREE.Mesh; age: number; duration: number; kind: 'ring' | 'slash' | 'beam' | 'ground' | 'shard' | 'custom'; radius: number; update?: (t: number, delta: number) => void };
 
 /** Presentation only. Time, animations and damage never decide learning or rewards. */
 export class DungeonWorld {
@@ -21,18 +24,27 @@ export class DungeonWorld {
   private readonly bloom: UnrealBloomPass;
   private readonly hero = new THREE.Group();
   private heroVisual = new THREE.Group();
+  private heroClips: THREE.AnimationClip[] = [];
+  private heroMixer?: THREE.AnimationMixer;
+  private readonly heroActions = new Map<string, THREE.AnimationAction>();
+  private heroAnimation = '';
   private readonly floorGroup = new THREE.Group();
   private readonly enemyGroup = new THREE.Group();
   private readonly effectsGroup = new THREE.Group();
   private readonly propGroup = new THREE.Group();
+  private readonly biomeGroup = new THREE.Group();
+  private biomeBuilt = "";
+  private readonly floatingRunes: THREE.Object3D[] = [];
   private readonly cameraTarget = new THREE.Vector3();
   private readonly destination = new THREE.Vector3();
   private readonly heroLight = new THREE.PointLight(0x48e6db, 12, 8, 1.8);
   private readonly burstLight = new THREE.PointLight(0xffae40, 0, 20, 1.5);
-  private readonly warmLights = [new THREE.PointLight(0xffb365, 88, 22, 2), new THREE.PointLight(0xff9c46, 82, 21, 2)];
+  private readonly warmLights = [new THREE.PointLight(0xff9c45, 150, 20, 2), new THREE.PointLight(0xff822b, 125, 19, 2)];
+  private readonly recessLights = [new THREE.PointLight(0x0c7bb1, 68, 15, 2), new THREE.PointLight(0x0b749f, 56, 15, 2)];
   private readonly rune: THREE.Mesh;
   private readonly materials: Record<string, THREE.MeshStandardMaterial>;
   private readonly models = new Map<string, THREE.Group>();
+  private readonly preparedMaterials: THREE.Material[] = [];
   private readonly particles: Particle[] = [];
   private readonly particleGeometry = new THREE.BufferGeometry();
   private readonly particlePositions = new Float32Array(900 * 3);
@@ -41,21 +53,27 @@ export class DungeonWorld {
   private readonly particleMaterial: THREE.PointsMaterial;
   private readonly waveMap = waveTexture();
   private readonly glowMap = glowTexture();
+  private readonly livingFlame = flameMaterial();
   private readonly torches: { flame: THREE.Mesh; light?: THREE.PointLight; position: THREE.Vector3; phase: number }[] = [];
   private readonly effects: Effect[] = [];
   private readonly enemies: Enemy[] = [];
   private readonly enemyInstances: { mesh: THREE.InstancedMesh; sources: THREE.Mesh[] }[] = [];
-  private floorVariants: THREE.MeshStandardMaterial[] = [];
   private lastFrameAt = performance.now();
   private frame = 0;
   private elapsed = 0;
   private encounter = 0;
   private regionId = 'sunken-vault';
   private equipment = '';
+  private lootPosition: THREE.Vector3 | null = null;
+  private lootExpiresAt = 0;
   private disposed = false;
   private paused = false;
   private attacking = false;
   private attackAge = 0;
+  private attackDuration = 2.65;
+  private lastAttack: { spellId: string; effect: string; options: AttackOptions } | null = null;
+  private heroMotion?: (age: number) => THREE.Vector3;
+  private readonly summoned: { root: THREE.Group; age: number; duration: number; update: (t: number) => void }[] = [];
   private shake = 0;
   private attackResolve?: () => void;
   private readonly scheduled: { at: number; callback: () => void }[] = [];
@@ -80,7 +98,7 @@ export class DungeonWorld {
     this.renderer.info.autoReset = false;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.3;
+    this.renderer.toneMappingExposure = 1.12;
     this.renderer.shadowMap.enabled = !this.softwareRenderer;
     this.renderer.shadowMap.autoUpdate = false;
     this.renderer.shadowMap.needsUpdate = true;
@@ -88,8 +106,8 @@ export class DungeonWorld {
     this.scene.background = new THREE.Color(0x080f16);
     this.scene.fog = new THREE.Fog(0x0a1520, 30, 76);
     this.materials = {
-      floor: stoneMaterial(0x737979), wall: stoneMaterial(0x59636b, 18), trim: stoneMaterial(0x889197, 31),
-      dark: new THREE.MeshStandardMaterial({ color: 0x192b34, roughness: .86 }),
+      floor: stoneMaterial(0xb5a896), wall: stoneMaterial(0x69665d, 18), trim: stoneMaterial(0x837f71, 31),
+      dark: new THREE.MeshStandardMaterial({ color: 0x070c0e, roughness: .98 }),
       gold: new THREE.MeshStandardMaterial({ color: 0xb38b47, metalness: .76, roughness: .38 }),
       runeGold: new THREE.MeshStandardMaterial({ color: 0x58624b, metalness: .45, roughness: .81 }),
       steel: new THREE.MeshStandardMaterial({ color: 0x93a5a7, metalness: .75, roughness: .35 }),
@@ -99,19 +117,21 @@ export class DungeonWorld {
       flame: new THREE.MeshStandardMaterial({ color: 0xff9218, emissive: 0xff6500, emissiveIntensity: 2, transparent: true, opacity: .94, toneMapped: false }),
     };
     if (this.softwareRenderer) for (const name of ['floor', 'wall', 'trim']) this.materials[name].bumpMap = null;
-    this.scene.add(new THREE.HemisphereLight(0x9dc8d2, 0x554637, 1.85));
-    const moon = new THREE.DirectionalLight(0xafd0dd, 3.1);
+    this.scene.add(new THREE.HemisphereLight(0x7394aa, 0x15120f, .48));
+    const moon = new THREE.DirectionalLight(0x6d8da5, 1.5);
     moon.position.set(-12, 24, -10); moon.castShadow = true;
     moon.shadow.mapSize.set(this.softwareRenderer ? 1024 : 2048, this.softwareRenderer ? 1024 : 2048); moon.shadow.camera.left = moon.shadow.camera.bottom = -23;
     moon.shadow.camera.right = moon.shadow.camera.top = 23; moon.shadow.camera.far = 80;
     moon.shadow.normalBias = .045; moon.shadow.bias = -.00015;
     this.scene.add(moon, moon.target);
+    const fill = new THREE.DirectionalLight(0xc6d3cf, .7); fill.position.set(15, 12, 18); this.scene.add(fill);
     moon.name = 'moon';
-    this.scene.add(this.floorGroup, this.enemyGroup, this.effectsGroup, this.propGroup, this.hero);
+    this.scene.add(this.floorGroup, this.enemyGroup, this.effectsGroup, this.propGroup, this.biomeGroup, this.hero);
     this.heroVisual = this.makeHero(); this.hero.add(this.heroVisual);
     this.heroLight.position.set(0, 3.5, 1); this.hero.add(this.heroLight);
     this.scene.add(this.burstLight);
     this.scene.add(...this.warmLights);
+    this.scene.add(...this.recessLights);
     this.rune = new THREE.Mesh(new THREE.RingGeometry(.65, .70, 64), new THREE.MeshBasicMaterial({ color: 0x6ef6dd, transparent: true, opacity: .48, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
     this.rune.rotation.x = -Math.PI / 2; this.rune.position.y = .06; this.hero.add(this.rune);
     this.particleGeometry.setAttribute('position', new THREE.BufferAttribute(this.particlePositions, 3));
@@ -135,13 +155,14 @@ export class DungeonWorld {
 
   async load(): Promise<void> {
     const loader = new GLTFLoader();
-    await Promise.all(['hero', 'imp', 'guardian', 'arch', 'pillar', 'brazier', 'crystal', 'chest'].map(async name => {
+    await Promise.all(['hero', 'imp', 'guardian', 'arch', 'pillar', 'brazier', 'crystal', 'chest', 'wall-bay', 'broken-wall', 'skeleton', 'wraith'].map(async name => {
       try {
         const gltf = await loader.loadAsync(`/assets/rpg/${name}.glb`);
         if (this.disposed) return;
+        if (name === 'hero') this.heroClips = gltf.animations;
         gltf.scene.traverse(object => {
           if (object instanceof THREE.Mesh) {
-            object.castShadow = true; object.receiveShadow = true;
+            object.castShadow = true; object.receiveShadow = !['hero', 'skeleton', 'wraith', 'guardian', 'imp'].includes(name);
             if (object.material instanceof THREE.MeshStandardMaterial && /glow_flame|glow_amber/.test(object.material.name)) {
               object.material.emissive.setHex(0xff780c); object.material.emissiveIntensity = 1.4; object.material.toneMapped = false;
             }
@@ -153,29 +174,64 @@ export class DungeonWorld {
         this.models.set(name, gltf.scene); this.loadedModels++;
       } catch { /* The authored procedural dungeon remains fully playable offline. */ }
     }));
+    try {
+      const texture = await new THREE.TextureLoader().loadAsync('/assets/rpg/dungeon-cobbles-v2.png');
+      texture.colorSpace = THREE.SRGBColorSpace; texture.wrapS = texture.wrapT = THREE.RepeatWrapping; texture.anisotropy = 8;
+      const relief = floorRelief(texture.image);
+      const floor = this.materials.floor;
+      floor.map?.dispose(); floor.map = texture; floor.bumpMap = this.softwareRenderer ? null : relief.bump;
+      floor.bumpScale = .13; floor.roughnessMap = relief.roughness; floor.roughness = .91; floor.metalness = .08; floor.needsUpdate = true;
+      if (this.softwareRenderer) relief.bump.dispose();
+    } catch { /* The procedural relief remains available if an asset is missing. */ }
     if (this.disposed) return;
     if (this.models.has('hero')) {
       this.hero.remove(this.heroVisual); this.releaseProcedural(this.heroVisual); this.heroVisual = new THREE.Group();
       this.heroVisual.add(this.model('hero', 1.8)!); this.hero.add(this.heroVisual); this.setEquipment(this.equipment);
+      if (this.heroClips.length) {
+        this.heroMixer = new THREE.AnimationMixer(this.heroVisual);
+        for (const clip of this.heroClips) this.heroActions.set(clip.name.toLowerCase(), this.heroMixer.clipAction(clip));
+        this.playHeroAnimation('idle');
+      }
     }
     this.enemies.forEach(enemy => {
-      const visual = this.model(enemy.brute ? 'guardian' : 'imp', enemy.brute ? (this.encounter === 5 ? 3.8 : 2.2) : 1.3);
+      const visual = this.model(enemy.modelId, enemy.brute ? (this.encounter === 5 && enemy === this.enemies[0] ? 3.8 : 2.5) : 1.65);
       if (visual) { enemy.root.remove(enemy.visual); this.releaseProcedural(enemy.visual); enemy.visual = visual; enemy.root.add(visual); }
     });
     this.batchEnemies();
     this.addModelProps();
     this.renderer.shadowMap.needsUpdate = true;
+    // Compile authored actors and uncommon effect programs during loading,
+    // before a child's first cast would otherwise pay the shader setup cost.
+    const warmup = new THREE.Group(); warmup.position.y = -1000;
+    const warmMaterials: THREE.Material[] = [novaMaterial(), stormMaterial(0xa9bdff)];
+    for (const material of warmMaterials) warmup.add(new THREE.Mesh(new THREE.PlaneGeometry(.01, .01), material));
+    const summon = this.model('guardian', 4.5);
+    summon?.traverse(object => { if (object instanceof THREE.Mesh && object.material instanceof THREE.MeshStandardMaterial) { object.material = object.material.clone(); object.material.transparent = true; warmMaterials.push(object.material); } });
+    if (summon) warmup.add(summon);
+    this.scene.add(warmup);
+    try { await this.renderer.compileAsync(this.scene, this.camera); } catch { /* Drivers without parallel compilation compile on first render. */ }
+    this.scene.remove(warmup); this.preparedMaterials.push(...warmMaterials);
+    for (const object of warmup.children) if (object instanceof THREE.Mesh) object.geometry.dispose();
     this.loadedAt = performance.now();
   }
 
   private model(name: string, height: number): THREE.Group | undefined {
     const original = this.models.get(name); if (!original) return undefined;
-    const clone = original.clone(true);
+    const clone = (name === 'hero' ? cloneSkeleton(original) : original.clone(true)) as THREE.Group;
     const bounds = new THREE.Box3().setFromObject(clone);
     const size = bounds.getSize(new THREE.Vector3());
     const scale = height / Math.max(size.y, .01); clone.scale.multiplyScalar(scale);
     clone.position.y -= bounds.min.y * scale;
     return clone;
+  }
+
+  private playHeroAnimation(name: string, restart = false): void {
+    if ((!restart && this.heroAnimation === name) || !this.heroActions.has(name)) return;
+    const previous = this.heroActions.get(this.heroAnimation), action = this.heroActions.get(name)!;
+    const once = name === 'cleave' || name === 'cast';
+    previous?.fadeOut(.12);
+    action.reset().setEffectiveWeight(1).setEffectiveTimeScale(1).setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity);
+    action.clampWhenFinished = once; action.fadeIn(.12).play(); this.heroAnimation = name;
   }
 
   private mesh(geometry: THREE.BufferGeometry, material: THREE.Material, x = 0, y = 0, z = 0): THREE.Mesh {
@@ -198,8 +254,8 @@ export class DungeonWorld {
     return group;
   }
 
-  private makeEnemy(brute: boolean, boss: boolean): THREE.Group {
-    const model = this.model(brute ? 'guardian' : 'imp', brute ? (boss ? 3.8 : 2.2) : 1.3); if (model) return model;
+  private makeEnemy(brute: boolean, boss: boolean, modelId = 'skeleton'): THREE.Group {
+    const model = this.model(brute ? 'guardian' : modelId, brute ? (boss ? 3.8 : 2.5) : 1.65); if (model) return model;
     const group = new THREE.Group(), material = brute ? this.materials.wall : this.materials.bone;
     group.userData.procedural = true;
     group.add(this.mesh(new THREE.IcosahedronGeometry(.34, 0), material, 0, .7));
@@ -222,116 +278,155 @@ export class DungeonWorld {
   }
 
   private buildDungeon(): void {
-    let state = 12479;
+    let state = 932184;
     const random = () => { state = (state * 1664525 + 1013904223) >>> 0; return state / 4294967296; };
-    const batches = new Map<string, { material: THREE.Material; geometries: THREE.BufferGeometry[] }>();
-    const add = (geometry: THREE.BufferGeometry, material: THREE.Material, x: number, y: number, z: number, ry = 0) => {
-      geometry.rotateY(ry); geometry.translate(x, y, z);
-      // Icosahedra are unindexed; normalize all primitives before batching them.
+    const batches = new Map<string, { material: THREE.Material; geometries: THREE.BufferGeometry[]; room: number }>();
+    const add = (geometry: THREE.BufferGeometry, material: THREE.Material, x: number, y: number, z: number, turn = 0) => {
+      if (material === this.materials.wall || material === this.materials.trim) {
+        const shade = .76 + random() * .46;
+        const colors = new Float32Array(geometry.getAttribute('position').count * 3);
+        for (let i = 0; i < colors.length; i += 3) { colors[i] = shade; colors[i + 1] = shade * (.97 + random() * .035); colors[i + 2] = shade * .96; }
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        (material as THREE.MeshStandardMaterial).vertexColors = true;
+      }
+      geometry.rotateY(turn); geometry.translate(x, y, z);
       const normalized = geometry.index ? geometry.toNonIndexed() : geometry;
       if (normalized !== geometry) geometry.dispose();
-      const key = `${material.uuid}:${Math.floor(z / 16)}`;
-      if (!batches.has(key)) batches.set(key, { material, geometries: [] }); batches.get(key)!.geometries.push(normalized);
+      const room = Math.round(-z / 20), key = `${material.uuid}:${room}`;
+      if (!batches.has(key)) batches.set(key, { material, geometries: [], room });
+      batches.get(key)!.geometries.push(normalized);
     };
-    const box = (w: number, h: number, d: number, m: THREE.Material, x: number, y: number, z: number, ry = 0) => add(new THREE.BoxGeometry(w, h, d), m, x, y, z, ry);
-    const floorVariants = this.floorVariants = Array.from({ length: 7 }, (_, index) => {
-      const material = this.materials.floor.clone(); material.color.multiplyScalar(.79 + index * .065);
-      return material;
-    });
-    // A continuous, authored route: six halls connected through monumental arches.
-    box(90, 1.2, 180, this.materials.dark, 0, -.85, -40);
-    for (let row = -25; row < 100; row++) for (let col = -28; col <= 28; col++) {
-      const x = col * 1.12 + (row % 2) * .56, z = -row * 1.12;
-      const floor = floorVariants[Math.abs(col) > 18 ? 0 : Math.floor(random() * floorVariants.length)];
-      const width = 1.055 + random() * .025, height = .22 + random() * .065, depth = 1.055 + random() * .025, turn = (random() - .5) * .028;
-      if (this.softwareRenderer) {
-        const tile = new THREE.PlaneGeometry(width, depth); tile.rotateX(-Math.PI / 2);
-        add(tile, floor, x, height / 2 - .14, z, turn);
-      } else box(width, height, depth, floor, x, -.14, z, turn);
-      if (random() < .035 && Math.abs(col) > 4) box(.15 + random() * .28, .13, .23, this.materials.wall, x + random() * .4, .03, z, random() * 3);
-    }
-    for (let room = 0; room < 6; room++) {
-      const center = -room * 16;
-      // Insets, ceremonial floor medallion and brass route markings.
-      const circle = new THREE.TorusGeometry(4.15, .025, 4, 64); circle.rotateX(Math.PI / 2); add(circle, this.materials.runeGold, 0, .048, center);
-      const innerCircle = new THREE.TorusGeometry(3.6, .018, 4, 64); innerCircle.rotateX(Math.PI / 2); add(innerCircle, this.materials.runeGold, 0, .048, center);
-      for (let k = 0; k < 12; k++) {
-        const angle = k / 12 * Math.PI * 2;
-        box(.06, .035, .22, this.materials.runeGold, Math.sin(angle) * 3.88, .049, center + Math.cos(angle) * 3.88, angle);
-        box(.2, .035, .04, this.materials.runeGold, Math.sin(angle) * 3.93, .049, center + Math.cos(angle) * 3.93, angle + .6);
+    const block = (w: number, h: number, d: number, material: THREE.Material, x: number, y: number, z: number, turn = 0, bevel = .065) => {
+      const geometry = new RoundedBoxGeometry(w, h, d, 1, Math.min(bevel, Math.min(w, h, d) * .2));
+      if (material === this.materials.wall && w < 3 && d < 3) {
+        const vertices = geometry.getAttribute('position'), phase = random() * 30;
+        for (let i = 0; i < vertices.count; i++) {
+          const px = vertices.getX(i), py = vertices.getY(i), pz = vertices.getZ(i);
+          vertices.setXYZ(i, px + Math.sin(py * 9 + pz * 7 + phase) * .034, py + Math.sin(px * 6 + pz * 5 + phase) * .035, pz + Math.sin(px * 8 + py * 11 + phase) * .034);
+        }
+        geometry.computeVertexNormals();
       }
+      add(geometry, material, x, y, z, turn);
+    };
+    const pillar = (x: number, z: number, height: number) => {
+      for (let tier = 0; tier < 3; tier++) block(1.8 - tier * .18, .19, 1.8 - tier * .18, this.materials.trim, x, .1 + tier * .18, z);
+      for (let layer = 0; layer < Math.ceil(height / .49); layer++) {
+        const spread = layer % 3 === 0 ? 1.17 : 1.04;
+        block(spread, .47, spread, this.materials.wall, x + (random() - .5) * .055, .72 + layer * .49, z + (random() - .5) * .05, (random() - .5) * .025);
+      }
+      for (const side of [-1, 1]) for (const front of [-1, 1]) {
+        add(new THREE.CylinderGeometry(.14, .19, height - .15, 8), this.materials.trim, x + side * .48, height * .5 + .65, z + front * .48);
+      }
+      block(1.55, .22, 1.55, this.materials.trim, x, height + .62, z);
+      block(1.32, .14, 1.32, this.materials.wall, x, height + .82, z);
+    };
+    for (let room = 0; room < 6; room++) {
+      const center = -room * 20;
+      // Texture coordinates remain in world space: neighbouring worn floor pieces
+      // share their photographically detailed surface instead of a board-game grid.
+      const floorDepth = room === 0 ? 40 : 20, floorCenter = center + (room === 0 ? 10 : 0);
+      const floor = new THREE.PlaneGeometry(46, floorDepth, 12, 8); floor.rotateX(-Math.PI / 2);
+      const uv = floor.getAttribute('uv'), position = floor.getAttribute('position');
+      for (let i = 0; i < uv.count; i++) uv.setXY(i, position.getX(i) / 4.8, (position.getZ(i) + floorCenter) / 4.8);
+      add(floor, this.materials.floor, 0, -.05, floorCenter);
+      block(47, .55, floorDepth, this.materials.dark, 0, -.38, floorCenter, 0, .015);
+      // Thick walls and stepped side aisles replace the old sparse perimeter.
       for (const side of [-1, 1]) {
-        // Raised side aisles and collapsed tombs break up the corridor silhouette.
-        for (let step = 0; step < 3; step++) box(2.6 - step * .65, .18, 4.4, this.materials.wall, side * (11.8 + step * .28), step * .18, center + 3.5);
-        for (let k = 0; k < 2; k++) {
-          const x = side * (7.2 + random() * 1.1), z = center + (k ? 5.7 : -5.1);
-          box(1.25, .65, 2.15, this.materials.wall, x, .32, z, side * .17);
-          box(1.45, .16, 2.4, this.materials.trim, x, .72, z, side * .17);
-          box(.24, .06, 1.1, this.materials.gold, x, .82, z, side * .17);
-          box(.75, .06, .16, this.materials.gold, x, .83, z + .2, side * .17);
+        const wallHeight = side === -1 ? 5.4 : 1.1;
+        for (let row = 0; row < Math.ceil(wallHeight / .57); row++) for (let n = 0; n < 17; n++) {
+          const z = center - 9.7 + n * 1.16 + (row % 2) * .5;
+          // The frontmost western vault collapsed: staggered upper courses
+          // expose an irregular silhouette instead of a continuous square box.
+          const brokenHeight = n > 11 ? 1.5 + Math.sin(n * 2.4 + room) * .55 : 5.4;
+          if (side < 0 && row * .57 > brokenHeight) continue;
+          if (row > 5 && (n * 13 + row * 7 + room) % 17 === 0) continue;
+          block(.95, .53, 1.11, this.materials.wall, side * 12.2 + (random() - .5) * .07, .26 + row * .57, z, (random() - .5) * .023);
         }
-        for (let k = 0; k < 28; k++) {
-          const outer = k > 16;
-          const x = side * (outer ? 14.5 + random() * 4.5 : 8 + random() * 3.5), z = center + (random() - .5) * 15;
-          const rubble = new THREE.DodecahedronGeometry(.16 + random() * (outer ? .8 : .36), 0);
-          rubble.scale(1.5, .5 + random() * .5, 1);
-          add(rubble, this.materials.wall, x, .1 + random() * .1, z, random() * 6);
-        }
-        for (let k = 0; k < 3; k++) {
-          const z = center + (k - 1) * 5.3, x = side * 12.2;
-          box(1.6, .4, 1.6, this.materials.trim, x, .2, z);
-          for (let course = 0; course < 8; course++) box(1.12 + (course % 3 === 0 ? .08 : 0), .46, 1.12, this.materials.wall, x, .56 + course * .48, z, (course % 2 ? .012 : -.012));
-          box(1.55, .35, 1.55, this.materials.trim, x, 4.15, z);
-          for (const offset of [-.48, .48]) box(.18, 3.65, .18, this.materials.trim, x + offset, 2.2, z + side * .55);
-          box(1.25, .1, 1.25, this.materials.gold, x, 1.16, z);
-          for (let groove = 0; groove < 3; groove++) box(.07, 2.6, .06, this.materials.trim, x - .3 + groove * .3, 2.25, z + .59);
-          this.addTorch(side * 10.85, 1.8, z, room === 0 && k === 1);
-        }
-        for (let z = center - 7; z < center + 7; z += 1.25) for (let layer = 0; layer < 4; layer++) {
-          box(.65, .59, 1.19, this.materials.wall, side * 13.3, .31 + layer * .62, z + (layer % 2) * .3);
-        }
-        for (let k = 0; k < 4; k++) {
-          const x = side * (8.8 + random() * 2.4), z = center + (random() - .5) * 12;
-          add(new THREE.IcosahedronGeometry(.35 + random() * .3, 0), this.materials.wall, x, .2, z, random() * 3);
+        for (let step = 0; step < 3; step++) block(2.0 - step * .38, .2, 19.9, this.materials.wall, side * (11.25 + step * .19), .05 + step * .19, center, 0, .045);
+        for (let bay = 0; bay < 4; bay++) {
+          const z = center - 7.4 + bay * 5;
+          pillar(side * 11.7, z, side < 0 ? (bay === 3 ? 2.2 : 4.7 + Math.sin(bay * 2.3 + room) * .45) : (bay === 0 || bay === 3 ? 3.9 : 1.25));
+          this.addTorch(side * 10.55, 2.1, z + .7, false);
+          // Deep black alcove and cool crystal recess under a carved arch.
+          if (side < 0) block(.15, 3.8, 2.55, this.materials.dark, -11.62, 2.8, z + 2.25);
+          const x = side * (9.7 + random() * .55);
           for (let n = 0; n < 3; n++) {
-            const crystal = new THREE.ConeGeometry(.18 + random() * .12, .7 + random() * .9, 5);
-            crystal.rotateZ((random() - .5) * .6);
-            add(crystal, this.materials.crystal, x + (random() - .5) * .5, .7, z + (random() - .5) * .5);
+            const crystal = new THREE.ConeGeometry(.1 + random() * .13, .6 + random() * 1.0, 5);
+            crystal.rotateZ((random() - .5) * .35);
+            add(crystal, this.materials.crystal, x + (random() - .5) * .55, .65, z + 1.4 + (random() - .5) * .6);
+          }
+        }
+        // Ruined tombs lie partly buried along the raised aisles, never centred
+        // like furniture placed on a grid. Trim catches the torchlight.
+        for (let n = 0; n < 3; n++) {
+          const x = side * (8.6 + random() * 1.1), z = center - 7 + n * 6.3;
+          const turn = (random() - .5) * .55;
+          block(1.1, .63, 2.05, this.materials.wall, x, .32, z, turn);
+          block(1.22, .15, 2.22, this.materials.trim, x + .12, .71, z - .04, turn + .09);
+          for (let rib = -1; rib <= 1; rib++) block(.06, .045, 1.7, this.materials.dark, x + rib * .28, .8, z, turn);
+        }
+      }
+      // The far wall is a layered cathedral facade with a central route opening.
+      for (const side of [-1, 1]) {
+        for (let row = 0; row < 9; row++) for (let n = 0; n < 7; n++) {
+          const x = side * (4.1 + n * 1.13 + (row % 2) * .3);
+          if (side < 0 && row > 3 + Math.floor(1.4 + Math.sin(n * 1.8 + room) * 1.4)) continue;
+          if (row > 6 && (n + room) % 3 === 0) continue;
+          block(1.08, .54, .95, this.materials.wall, x, .27 + row * .57, center - 9.7, (random() - .5) * .02);
+        }
+        pillar(side * 3.4, center - 9.35, 5.5);
+        for (let step = 0; step < 4; step++) block(6.8 - step * .28, .18, 2.6 - step * .38, this.materials.wall, 0, .05 + step * .17, center - 8.55 - step * .15);
+        // Foreground remnants frame the action; high pieces sit at the edges.
+        pillar(side * 8.7, center + 7.1, side < 0 ? 3.7 : 2.7);
+        for (let n = 0; n < 4; n++) block(1.05, .53, .84, this.materials.wall, side * (9.3 + n * .92), .25, center + 7.2, (random() - .5) * .1);
+      }
+      // Dense rubble has multiple scales: fallen voussoirs, hand-sized stones,
+      // chips and grit. Irregular clusters leave a navigable central lane.
+      for (let n = 0; n < 240; n++) {
+        const side = random() < .5 ? -1 : 1;
+        const x = side * (7.4 + random() * 9), z = center + (random() - .5) * 19.7;
+        const radius = n % 11 === 0 ? .36 + random() * .5 : .035 + random() * .2;
+        const geometry = new THREE.DodecahedronGeometry(radius, 0);
+        geometry.scale(1 + random(), .32 + random() * .7, .6 + random());
+        geometry.rotateX(random() * 2); geometry.rotateZ(random() * 2);
+        add(geometry, n % 4 === 0 ? this.materials.trim : this.materials.wall, x, radius * .26, z, random() * 6);
+      }
+      // Fallen arch segments form a bank of rubble beneath the broken vault.
+      for (let n = 0; n < 85; n++) {
+        const angle = random() * Math.PI * 2, radius = Math.sqrt(random()) * 2.4;
+        const x = -9.8 + Math.cos(angle) * radius, z = center + 4.9 + Math.sin(angle) * radius;
+        const mound = Math.max(0, 1 - radius / 2.4) * .85;
+        const stone = new THREE.DodecahedronGeometry(.13 + random() * .35, 0);
+        stone.scale(1.4, .6, .9); stone.rotateX(random() * 2);
+        add(stone, n % 3 ? this.materials.wall : this.materials.trim, x, mound + .08, z, random() * 6);
+      }
+      for (let n = 0; n < 30; n++) {
+        const x = (random() - .5) * 14, z = center + (random() - .5) * 17;
+        const shard = new THREE.DodecahedronGeometry(.045 + random() * .1, 0); shard.scale(1.8, .2, 1);
+        add(shard, this.materials.trim, x, .02, z, random() * 6);
+      }
+      // A thin, worn sigil belongs to the floor; it does not define an arena.
+      if (room === 5) {
+        const sigil = new THREE.TorusGeometry(4.1, .018, 3, 64); sigil.rotateX(Math.PI / 2);
+        add(sigil, this.materials.runeGold, 0, -.01, center);
+      }
+      if (room === 0) {
+        for (const side of [-1, 1]) {
+          pillar(side * 6.5, 15.5, side < 0 ? 3.6 : 2.2);
+          for (let blockIndex = 0; blockIndex < 7; blockIndex++) for (let row = 0; row < 2; row++) block(1.1, .52, .8, this.materials.wall, side * (7.2 + blockIndex * 1.05), .26 + row * .55, 15.5, (random() - .5) * .09);
+          for (let chip = 0; chip < 70; chip++) {
+            const geometry = new THREE.DodecahedronGeometry(.04 + random() * .25, 0); geometry.scale(1.4, .55, .8);
+            add(geometry, this.materials.wall, side * (5.2 + random() * 9), .1, 11 + random() * 9, random() * 6);
           }
         }
       }
-      if (room < 5) {
-        const z = center - 8;
-        for (const side of [-1, 1]) {
-          box(5.6, 1.0, 1.0, this.materials.wall, side * 10, .5, z);
-          box(1.6, .35, 1.7, this.materials.trim, side * 6.7, .17, z);
-          box(1.15, 4.8, 1.15, this.materials.wall, side * 6.7, 2.65, z);
-          box(1.6, .32, 1.6, this.materials.trim, side * 6.7, 4.95, z);
-        }
-        // Broken high arches leave a clear view of the battlefield below.
-        for (const side of [-1, 1]) for (let k = 0; k < 5; k++) box(.7, .75, 1, this.materials.wall, side * (6.4 - k * .55), 5.05 + k * .3, z, side * .35);
-      }
-      // Scattered barrels, urns and fallen masonry along edges, away from route.
-      for (let k = 0; k < 8; k++) {
-        const x = (k % 2 ? -1 : 1) * (7.8 + random() * 3.2), z = center + (random() - .5) * 13;
-        if (k % 3 === 0) add(new THREE.CylinderGeometry(.24, .37, .7, 8), this.materials.dark, x, .35, z);
-        else box(.5 + random() * .6, .15 + random() * .3, .5, this.materials.wall, x, .15, z, random() * 4);
-      }
     }
-    // The last hall has a destination the child can see before the final cast.
-    for (let step = 0; step < 4; step++) box(9 - step * .55, .22, 5.5 - step * .6, this.materials.wall, 0, .11 + step * .22, -88 - step * .25);
-    for (const side of [-1, 1]) {
-      for (let course = 0; course < 8; course++) for (let block = 0; block < 7; block++) {
-        box(1.12, .59, 1.2, this.materials.wall, side * (4.15 + block * 1.17), course * .62 + .3, -91);
-      }
-      box(1.5, .3, 1.5, this.materials.trim, side * 3.6, .95, -88.5);
-      box(1.05, 3.2, 1.05, this.materials.wall, side * 3.6, 2.7, -88.5);
-      add(new THREE.OctahedronGeometry(.7, 0), this.materials.crystal, side * 3.6, 4.65, -88.5);
-      this.addTorch(side * 5.1, 1.1, -86.5, true);
-    }
-    for (const { material, geometries } of batches.values()) {
+    for (const { material, geometries, room } of batches.values()) {
       const merged = mergeGeometries(geometries, false);
-      if (merged) { const mesh = this.mesh(merged, material); mesh.castShadow = material !== this.materials.floor && !floorVariants.includes(material as THREE.MeshStandardMaterial); this.floorGroup.add(mesh); }
+      if (merged) {
+        const mesh = this.mesh(merged, material); mesh.castShadow = material !== this.materials.floor && material !== this.materials.dark;
+        mesh.userData.room = room; mesh.matrixAutoUpdate = false; mesh.updateMatrix(); this.floorGroup.add(mesh);
+      }
       geometries.forEach(geometry => geometry.dispose());
     }
   }
@@ -339,7 +434,7 @@ export class DungeonWorld {
   private addTorch(x: number, y: number, z: number, withLight: boolean): void {
     const group = new THREE.Group(); group.position.set(x, y, z);
     group.add(this.mesh(new THREE.CylinderGeometry(.2, .12, .36, 8), this.materials.gold));
-    const flame = this.mesh(new THREE.OctahedronGeometry(.21, 0), this.materials.flame, 0, .38); flame.scale.y = 2.1; group.add(flame);
+    const flame = this.mesh(new THREE.PlaneGeometry(.55, .95), this.livingFlame, 0, .55); flame.rotation.y = .7; flame.castShadow = false; group.add(flame);
     const halo = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xff942b, map: this.glowMap, transparent: true, opacity: .35, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
     halo.position.y = .42; halo.scale.set(1.65, 2.1, 1); group.add(halo);
     let light: THREE.PointLight | undefined;
@@ -349,25 +444,38 @@ export class DungeonWorld {
 
   private addModelProps(): void {
     for (let room = 0; room < 6; room++) {
-      for (const side of [-1, 1]) {
-        for (const name of ['brazier', 'crystal', 'pillar']) {
-          const model = this.model(name, name === 'pillar' ? 3.7 : name === 'brazier' ? 1.7 : 1.9);
-          if (!model) continue;
-          model.position.x = side * (name === 'pillar' ? 8 : 9.8);
-          model.position.z = -room * 16 + (name === 'crystal' ? 4.5 : name === 'pillar' ? -5 : -2);
-          this.propGroup.add(model);
+      const center = -room * 20;
+      const add = (name: string, height: number, x: number, z: number, turn = 0) => {
+        const object = this.model(name, height); if (!object) return;
+        object.position.x = x; object.position.z = z; object.rotation.y = turn;
+        if (name === 'wall-bay' || name === 'arch') { object.rotation.z = Math.sin(x * 1.7 + z * .3) * .022; object.scale.x *= .94 + Math.sin(x + room) * .045; }
+        object.userData.room = room; this.propGroup.add(object);
+        return object;
+      };
+      for (let bay = 0; bay < 4; bay++) {
+        if (bay < 2) add('wall-bay', 5.6 + Math.sin(bay * 2 + room) * .4, -11.3, center - 4.9 + bay * 5, Math.PI / 2);
+        if (bay === 2) {
+          add('broken-wall', 2.4, -11.35, center + 5, Math.PI / 2);
+          const fallen = add('arch', 3.9, -9.9, center + 5.1, .4);
+          if (fallen) { fallen.rotation.x = -Math.PI / 2 + .14; fallen.rotation.z = .18; fallen.position.y = .25; }
         }
+        add('broken-wall', 1.5 + bay % 2, 11.5, center - 7.3 + bay * 5, -Math.PI / 2);
       }
-      const chest = this.model('chest', .9); if (chest) { chest.position.set(5.8, 0, -room * 16 - 3); chest.rotation.y = -.7; this.propGroup.add(chest); }
       for (const side of [-1, 1]) {
-        const arch = this.model('arch', 4.9);
-        if (arch) { arch.position.set(side * 12.8, 0, -room * 16 + 2.5); arch.rotation.y = Math.PI / 2; this.propGroup.add(arch); }
+        add(side < 0 ? 'broken-wall' : 'wall-bay', side < 0 ? 3.3 : 5.3 + Math.sin(room * 1.8) * .4, side * 7.5, center - 9.4);
+        if (side < 0) add('pillar', 4.1, -10.2, center - 9.2, .12);
+        add('brazier', 1.45, side * 7.1, center + (side < 0 ? -3.8 : 3.2));
+        this.addTorch(side * 7.1, 1.02, center + (side < 0 ? -3.8 : 3.2), false);
+        add('crystal', 1.25, side * 10.2, center - 6.2);
+        add('pillar', 4.4, side * 8.7, center + 7.1);
+      }
+      add('arch', 6.8, 0, center - 9.4);
+      add('chest', .82, 6.8, center - 5.1, -.9);
+      if (room === 5) {
+        const portal = new THREE.Mesh(new THREE.CircleGeometry(2, 48), new THREE.MeshBasicMaterial({ color: 0x128bb8, map: this.glowMap, transparent: true, opacity: .5, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+        portal.position.set(0, 2.8, center - 9.8); portal.userData.room = room; this.propGroup.add(portal);
       }
     }
-    const finalArch = this.model('arch', 6.2);
-    if (finalArch) { finalArch.position.set(0, .85, -90); this.propGroup.add(finalArch); }
-    const portal = new THREE.Mesh(new THREE.CircleGeometry(2.15, 48), new THREE.MeshBasicMaterial({ color: 0x36c9e7, map: this.glowMap, transparent: true, opacity: .7, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
-    portal.position.set(0, 3, -90.15); this.propGroup.add(portal);
   }
 
   setEncounter(index: number, regionId?: string, enemyCount?: number): void {
@@ -377,9 +485,9 @@ export class DungeonWorld {
     this.enemies.forEach(enemy => this.releaseProcedural(enemy.visual));
     this.enemyInstances.forEach(instance => instance.mesh.dispose()); this.enemyInstances.length = 0;
     this.enemies.length = 0; this.enemyGroup.clear();
-    this.destination.set(Math.sin(this.encounter * 2) * 1.3, 0, -this.encounter * 16 + 1.4);
+    this.destination.set(Math.sin(this.encounter * 2) * 1.3, 0, -this.encounter * 20 + 1.4);
     if (!this.frame || Math.abs(was - this.encounter) > 1) { this.hero.position.copy(this.destination); this.cameraTarget.copy(this.destination); }
-    const count = Math.max(1, Math.min(64, enemyCount ?? (this.encounter === 5 ? 24 : 18 + this.encounter * 2)));
+    const count = Math.max(1, Math.min(96, enemyCount ?? (this.encounter === 5 ? 36 : 24 + this.encounter * 2)));
     for (let i = 0; i < count; i++) {
       const brute = (i % 7 === 0), boss = this.encounter === 5 && i === 0;
       const angle = i * 2.39996 + this.encounter * .7;
@@ -390,24 +498,94 @@ export class DungeonWorld {
       const root = new THREE.Group();
       const origin = this.destination.clone().add(new THREE.Vector3(anchor[0] + Math.sin(angle) * radius, 0, anchor[1] + Math.cos(angle) * radius));
       if (i === 2 || i === 8) origin.copy(this.destination).add(new THREE.Vector3(i === 2 ? -2.3 : 2.4, 0, i === 2 ? .4 : -.6));
-      if (boss) origin.set(0, 0, -this.encounter * 16 - 4);
+      if (boss) origin.set(0, 0, -this.encounter * 20 - 4);
       root.position.copy(origin); root.rotation.y = Math.atan2(this.destination.x - origin.x, this.destination.z - origin.z);
-      const visual = this.makeEnemy(brute, boss); root.add(visual); this.enemyGroup.add(root);
-      this.enemies.push({ root, visual, origin, phase: i * 1.77, brute, dead: false });
+      const modelId = brute ? 'guardian' : i % 6 === 4 ? 'wraith' : 'skeleton';
+      const visual = this.makeEnemy(brute, boss, modelId); root.add(visual); this.enemyGroup.add(root);
+      this.enemies.push({ root, visual, origin, phase: i * 1.77, brute, dead: false, modelId, deathAt: 0 });
     }
     const ember = this.regionId.includes('ember') || this.regionId.includes('forge');
     const frost = this.regionId.includes('frost');
-    const color = ember ? 0xff9d42 : frost ? 0x71b6ff : 0x9676ff;
+    const color = frost ? 0x49a4d2 : this.regionId.includes('storm') ? 0x7562c2 : 0x138cb6;
     this.materials.crystal.emissive.setHex(color);
     this.materials.crystal.color.setHex(color);
     this.heroLight.color.setHex(0x4adfcf);
-    this.materials.floor.color.setHex(ember ? 0x7d7162 : frost ? 0x71838c : 0x6d707f);
-    this.floorVariants.forEach((material, index) => material.color.copy(this.materials.floor.color).multiplyScalar(.79 + index * .065));
-    this.materials.wall.color.setHex(ember ? 0x655f58 : frost ? 0x5a7280 : 0x615b74);
-    this.scene.fog = new THREE.Fog(ember ? 0x171719 : frost ? 0x101d2b : 0x181626, 30, 76);
-    this.warmLights.forEach(light => light.color.setHex(ember ? 0xffaa58 : frost ? 0x79c9ee : 0xae83ff));
+    this.materials.floor.color.setHex(ember ? 0xb5a896 : frost ? 0x919fa7 : 0x9c96a3);
+    this.materials.wall.color.setHex(ember ? 0x69665d : frost ? 0x5b6871 : 0x625d6b);
+    this.scene.fog = new THREE.Fog(frost ? 0x06101a : 0x03090c, 38, 72);
+    this.warmLights.forEach(light => light.color.setHex(ember ? 0xff963f : frost ? 0xb8cdda : 0xad7cd1));
+    this.buildBiome(); this.biomeGroup.position.z = -this.encounter * 20;
     this.batchEnemies();
     this.renderer.shadowMap.needsUpdate = true;
+  }
+
+  private buildBiome(): void {
+    if (this.biomeBuilt === this.regionId) return;
+    this.biomeBuilt = this.regionId;
+    const oldTextures = new Set<THREE.Texture>();
+    this.biomeGroup.traverse(object => { if (object instanceof THREE.Mesh) {
+      object.geometry.dispose();
+      for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+        for (const value of Object.values(material)) if (value instanceof THREE.Texture && value !== this.materials.floor.map) oldTextures.add(value);
+        material.dispose();
+      }
+    } });
+    oldTextures.forEach(texture => texture.dispose()); this.biomeGroup.clear(); this.floatingRunes.length = 0;
+    if (this.regionId.includes('frost')) {
+      const ice = new THREE.MeshStandardMaterial({ color: 0x426d83, emissive: 0x102f42, emissiveIntensity: .12, metalness: .18, roughness: .4, transparent: true, opacity: .83 });
+      const snow = stoneMaterial(0x87999d, 85); ice.name = "frost-spires"; snow.name = "frost-snow";
+      for (const side of [-1, 1]) {
+        for (let i = 0; i < 10; i++) {
+          const height = 1.2 + (i * 7 % 9) * .42;
+          const spire = this.mesh(new THREE.ConeGeometry(.28 + i % 3 * .14, height, 5), ice.clone(), side * (8.6 + i % 3 * .6), height * .45, -7.6 + i * 1.65);
+          spire.rotation.z = side * (.13 + i % 3 * .08); this.biomeGroup.add(spire);
+          const drift = this.mesh(new THREE.SphereGeometry(.9, 10, 5), snow.clone(), side * 9, .02, -7 + i * 1.65); drift.scale.set(1.5, .17, .75); this.biomeGroup.add(drift);
+        }
+        const poolGeometry = new THREE.CircleGeometry(2.7, 45), edges = poolGeometry.getAttribute('position');
+        for (let n = 1; n < edges.count; n++) { const shape = .84 + Math.sin(n * 1.7) * .06 + Math.sin(n * .7) * .09; edges.setXY(n, edges.getX(n) * shape, edges.getY(n) * shape); }
+        const frozen = ice.clone(); frozen.name = "frozen-pool"; frozen.opacity = .48; frozen.roughness = .56; frozen.color.setHex(0x385263); frozen.map = this.materials.floor.map;
+        const pool = this.mesh(poolGeometry, frozen, side * 5.8, -.008, side * 4.8); pool.rotation.x = -Math.PI / 2; pool.scale.x = .72; pool.receiveShadow = true; this.biomeGroup.add(pool);
+        for (let crack = 0; crack < 8; crack++) {
+          const a = crack * 2.4, from = new THREE.Vector3(side * 5.8, .012, side * 4.8);
+          const points = [from, from.clone().add(new THREE.Vector3(Math.sin(a) * .8, 0, Math.cos(a) * .8)), from.clone().add(new THREE.Vector3(Math.sin(a + .3) * 2.1, 0, Math.cos(a + .3) * 2.1))];
+          const line = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 8, .017, 3, false), new THREE.MeshBasicMaterial({ color: 0x7cc8e6, transparent: true, opacity: .29 })); line.material.name = "ice-cracks"; this.biomeGroup.add(line);
+        }
+      }
+      ice.dispose(); snow.dispose();
+    } else if (this.regionId.includes('storm')) {
+      const stone = stoneMaterial(0x5a5367, 61); stone.name = "storm-platform";
+      for (const side of [-1, 1]) {
+        const platform = this.mesh(new RoundedBoxGeometry(2.65, .58, 12.5, 1, .08), stone.clone(), side * 7.9, .25, -.9); this.biomeGroup.add(platform);
+        for (let i = 0; i < 4; i++) {
+          const z = -6.4 + i * 3.8;
+          const pedestal = this.mesh(new THREE.CylinderGeometry(.62, .86, .65, 6), stone.clone(), side * 7.9, .9, z); this.biomeGroup.add(pedestal);
+          const rune = new THREE.Group(); rune.position.set(side * 7.9, 2.4, z); rune.userData.baseY = 2.4;
+          const core = this.mesh(new THREE.OctahedronGeometry(.7, 0), stone.clone()); core.scale.y = 1.5; rune.add(core);
+          for (let band = 0; band < 3; band++) { const ring = new THREE.Mesh(new THREE.TorusGeometry(.49 + band * .025, .023, 4, 6), new THREE.MeshBasicMaterial({ color: 0x8d99fc })); ring.rotation.x = Math.PI / 2; ring.position.y = (band - 1) * .27; rune.add(ring); }
+          this.biomeGroup.add(rune); this.floatingRunes.push(rune);
+          if (i < 3) {
+            const points = Array.from({length:12}, (_, n) => new THREE.Vector3(side * 7.9 + Math.sin(n * 3.1) * .12, 1.2 + Math.sin(n * 2.6) * .16, z + n / 11 * 3.8));
+            const conduit = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 22, .025, 3, false), new THREE.MeshBasicMaterial({color:0x8aaafa,transparent:true,opacity:.62,blending:THREE.AdditiveBlending})); this.biomeGroup.add(conduit);
+          }
+        }
+      }
+      stone.dispose();
+    }
+    // Region dressing is static apart from the floating stones. Merge its
+    // repeated surfaces so additional scenery does not cost a draw per chip.
+    const batches = new Map<string, THREE.Mesh[]>();
+    for (const child of this.biomeGroup.children) if (child instanceof THREE.Mesh && !Array.isArray(child.material) && child.material.name) {
+      const name = child.material.name; if (!batches.has(name)) batches.set(name, []); batches.get(name)!.push(child);
+    }
+    for (const entries of batches.values()) {
+      if (entries.length < 2) continue;
+      const transformed = entries.map(mesh => { mesh.updateMatrix(); const geometry = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone(); return geometry.applyMatrix4(mesh.matrix); });
+      const geometry = mergeGeometries(transformed, false); transformed.forEach(geometry => geometry.dispose());
+      if (!geometry) continue;
+      const material = entries[0].material;
+      for (const mesh of entries) { this.biomeGroup.remove(mesh); mesh.geometry.dispose(); if (mesh.material !== material) (mesh.material as THREE.Material).dispose(); }
+      const mesh = new THREE.Mesh(geometry, material); mesh.castShadow = mesh.receiveShadow = true; this.biomeGroup.add(mesh);
+    }
   }
 
   private batchEnemies(): void {
@@ -426,7 +604,7 @@ export class DungeonWorld {
     }
     for (const { geometry, material, sources } of batches.values()) {
       const mesh = new THREE.InstancedMesh(geometry, material, sources.length);
-      mesh.castShadow = mesh.receiveShadow = true; mesh.frustumCulled = false;
+      mesh.castShadow = true; mesh.receiveShadow = false; mesh.frustumCulled = false;
       mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
       this.enemyInstances.push({ mesh, sources }); this.enemyGroup.add(mesh);
     }
@@ -453,57 +631,293 @@ export class DungeonWorld {
 
   async attack(spellId: string, options: AttackOptions = {}): Promise<void> {
     if (this.disposed || this.attacking) return;
-    this.attacking = true; this.attackAge = 0;
-    const lightning = /spark|lightning|storm|chain/.test(spellId);
-    const fire = /fire|nova|flame|ember/.test(spellId);
-    const frost = /frost|ice|cold/.test(spellId);
-    const color = lightning ? 0xb098ff : fire ? 0xff791f : frost ? 0x99eeff : 0x79f3df;
-    const origin = this.hero.position.clone(); origin.y = .18;
-    this.emit(origin.clone().add(new THREE.Vector3(0, 1.2, 0)), color, 55, 2.6, 1);
-    this.schedule(.22, () => {
-      this.shake = fire ? .32 : .2;
-      this.burstLight.color.setHex(color); this.burstLight.position.copy(origin).y = 2.5; this.burstLight.intensity = fire ? 150 : 90;
-      if (lightning) {
-        this.chainLightning(origin, color);
-        if (options.chains) this.schedule(.4, () => {
-          this.chainLightning(origin, 0xd0eeff); this.ring(origin, 0xa694ff, 8, .8, 'ring'); this.shake = .22;
-        });
+    const spell = RPG_SPELLS.find(spell => spell.id === spellId);
+    const effect = spell?.effect ?? 'nova', school = spell?.school ?? 'ember';
+    const color = school === 'ember' ? 0xff7d19 : school === 'frost' ? 0x8bdef1 : 0x8bacff;
+    this.lastAttack = { spellId, effect, options: { ...options } };
+    this.attacking = true; this.attackAge = 0; this.playHeroAnimation(effect === 'cleave' || effect === 'phoenix-dive' ? 'cleave' : 'cast', true);
+    this.attackDuration = effect === 'cleave' ? 2.2 : ['firestorm', 'blizzard', 'tempest', 'frost-guardian'].includes(effect) ? 3 : 2.7;
+    const origin = this.hero.position.clone().setY(.12);
+    const target = origin.clone().add(new THREE.Vector3(.3, 0, -3.8));
+    const resolveHorde = (delay: number) => this.enemies.forEach((enemy, i) => {
+      const offset = enemy.root.position.clone().sub(origin).setY(0), distance = offset.length();
+      let contact = delay + i / Math.max(1, this.enemies.length) * .52;
+      if (effect === 'nova') {
+        const radius = options.wide ? 10.6 : 8.8;
+        contact = 1.3 * (1 - Math.cbrt(1 - Math.min(.97, distance / (radius * 1.01))));
+      } else if (effect === 'cleave') {
+        const sweepAngle = (Math.atan2(offset.x, offset.z) - .2 + Math.PI * 2) % (Math.PI * 2);
+        contact = .08 + sweepAngle / (Math.PI * 2) * .5;
+      } else if (['ice-lance', 'arc-lance', 'glacial-surge', 'phoenix-dive'].includes(effect)) {
+        contact = delay + Math.max(0, -offset.z + 1) * .055;
+      } else if (effect === 'meteor') contact = .65 + enemy.root.position.distanceTo(target) * .035;
+      this.schedule(contact, () => this.hitEnemy(enemy, color));
+    });
+    this.emit(origin.clone().setY(1.3), color, 28, 1.1, .75);
+    this.schedule(.18, () => {
+      this.burstLight.position.copy(origin).setY(2.8); this.burstLight.color.setHex(color); this.burstLight.intensity = 100;
+      switch (effect) {
+        case 'cleave': {
+          this.heroMotion = age => new THREE.Vector3(Math.sin(Math.min(1, age / .8) * Math.PI) * 1.2, 0, -Math.sin(Math.min(1, age / .8) * Math.PI) * 1.6);
+          this.weaponSweep(origin, 0xffc875, options.wide ? 7.6 : 5.6, .2);
+          this.schedule(.35, () => this.weaponSweep(origin.clone().add(new THREE.Vector3(0, 0, -1)), 0xffecbe, 6.8, 2.8));
+          resolveHorde(.23); this.shake = .2; break;
+        }
+        case 'nova': {
+          this.fireNova(origin, options.wide ? 10.6 : 8.8);
+          if (options.echo) this.schedule(.68, () => this.fireNova(origin, 10.8));
+          resolveHorde(.25); break;
+        }
+        case 'meteor': {
+          this.targetMark(target, 0xff7534, 3.2);
+          this.projectile(target.clone().add(new THREE.Vector3(-5, 11, -3)), target, 0xff751c, 1.15, .65, () => {
+            this.fireNova(target, 10); this.debris(target, 18); this.shake = .55;
+          });
+          if (options.echo) this.schedule(.35, () => this.projectile(target.clone().add(new THREE.Vector3(6, 10, 2)), origin.clone().add(new THREE.Vector3(3, 0, 1)), 0xffb74c, .7, .6, () => this.fireNova(origin, 6)));
+          resolveHorde(.72); break;
+        }
+        case 'phoenix-dive': {
+          this.heroMotion = age => { const t = Math.min(1, age / 1.15); return new THREE.Vector3(Math.sin(t * Math.PI) * 1.7, Math.sin(t * Math.PI) * 2, -Math.sin(t * Math.PI) * 5.5); };
+          for (const side of [-1, 1]) for (let feather = 0; feather < 7; feather++) {
+            const start = origin.clone().setY(1.2), tip = origin.clone().add(new THREE.Vector3(side * (2.2 + feather * .28), 1.5 + feather * .13, -2.3 + feather * .24));
+            const points = [start, start.clone().lerp(tip, .4).add(new THREE.Vector3(0, 1.3, -1)), tip];
+            const wing = this.stroke(points, feather % 2 ? 0xffab33 : 0xffe8a8, .07, 1.15);
+            const base = wing.position.clone(); this.effects[this.effects.length - 1].update = t => { wing.position.copy(base).add(new THREE.Vector3(0, Math.sin(t * Math.PI), -Math.sin(t * Math.PI) * 5)); };
+          }
+          for (let i = 0; i < 7; i++) this.schedule(.18 + i * .06, () => this.impact(origin.clone().add(new THREE.Vector3(Math.sin(i) * 1.1, .15, -i * 1.25)), 0xff8c25, 1.6));
+          resolveHorde(.48); this.shake = .3; break;
+        }
+        case 'firestorm': {
+          for (let i = 0; i < 9; i++) this.schedule(i * .13, () => {
+            const at = this.enemies[(i * 3) % this.enemies.length].origin;
+            this.firePillar(at, 3.2 + i % 3, 1.4); this.impact(at, 0xffb638, 1.5);
+          });
+          resolveHorde(.55); break;
+        }
+        case 'frostfall': {
+          this.enemies.forEach((enemy, i) => this.schedule(i * .018, () => this.projectile(enemy.origin.clone().add(new THREE.Vector3(-.6, 7 + i % 3, 0)), enemy.origin, 0xabedff, .23, .42, () => this.impact(enemy.origin, 0xb0efff, .7), true)));
+          if (options.shards) this.schedule(.7, () => this.iceWave(origin, true));
+          resolveHorde(.5); break;
+        }
+        case 'ice-lance': {
+          const directions = options.pierce ? [-.48, 0, .48] : [0];
+          for (const angle of directions) {
+            const end = origin.clone().add(new THREE.Vector3(Math.sin(angle) * 10, .5, -Math.cos(angle) * 10));
+            this.projectile(origin.clone().setY(1.25), end, 0xc7f6ff, .48, .48, () => this.impact(end, 0x8bddff, 2.3), true);
+            this.stroke([origin.clone().setY(1), end], 0x58bfe6, .055, 1.05);
+          }
+          resolveHorde(.32); break;
+        }
+        case 'glacial-surge': {
+          this.iceWave(origin, Boolean(options.wide)); resolveHorde(.42); this.shake = .28; break;
+        }
+        case 'blizzard': {
+          this.cyclone(origin, 0x86c4e2, 7.5, 2.9, 2.4, true);
+          for (let i = 0; i < 11; i++) this.schedule(i * .12, () => {
+            for (let snow = 0; snow < 32; snow++) {
+              const at = origin.clone().add(new THREE.Vector3((Math.random() - .5) * 16, 4 + Math.random() * 3, (Math.random() - .5) * 16));
+              this.directedParticle(at, new THREE.Vector3(-2.4, -3, 1.3), 0xd5f4ff, 1.1, .34);
+            }
+          });
+          resolveHorde(.62); break;
+        }
+        case 'frost-guardian': {
+          this.summonGuardian(origin.clone().add(new THREE.Vector3(-2.7, 0, -1)), 2.3);
+          if (options.summon) this.summonGuardian(origin.clone().add(new THREE.Vector3(2.7, 0, -1)), 2.3);
+          this.schedule(.8, () => { this.iceWave(target, true); this.impact(target, 0xd2faff, 3); this.shake = .42; });
+          resolveHorde(.83); break;
+        }
+        case 'chain-lightning': {
+          this.chainLightning(origin, 0x9ac4ff);
+          if (options.chains) this.schedule(.45, () => this.chainLightning(origin, 0xe1f5ff));
+          resolveHorde(.17); break;
+        }
+        case 'arc-lance': {
+          const end = origin.clone().add(new THREE.Vector3(0, .8, -13));
+          for (let i = 0; i < 3; i++) this.schedule(i * .16, () => {
+            this.bolt(origin.clone().setY(1.2), end, 0x91bcff, .1, .5);
+            this.enemies.forEach((enemy, n) => { if (n % 3 === i) this.bolt(end.clone().lerp(origin, .45), enemy.origin.clone().setY(1), 0xb8daff, .035, .4); });
+          });
+          resolveHorde(.22); this.shake = .2; break;
+        }
+        case 'thunderclap': {
+          this.bolt(target.clone().setY(13), target.clone().setY(.1), 0xe0efff, .2, .45);
+          this.schedule(.18, () => { this.impact(target, 0xadcaff, 4.5); this.ring(target, 0xa9bfff, 11.5, .7, 'ring'); this.debris(target, 14); this.shake = .48; });
+          if (options.echo) this.schedule(.7, () => { this.bolt(origin.clone().setY(12), origin, 0xd4e7ff, .18, .45); this.ring(origin, 0xc0d9ff, 11.5, .65, 'ring'); });
+          resolveHorde(.27); break;
+        }
+        case 'ball-lightning': {
+          const count = options.orbit ? 4 : 1;
+          for (let orb = 0; orb < count; orb++) {
+            const phase = orb * Math.PI * 2 / count;
+            const sphere = new THREE.Mesh(new THREE.SphereGeometry(.36, 12, 10), new THREE.MeshBasicMaterial({ color: 0xb9ddff, transparent: true, blending: THREE.AdditiveBlending, toneMapped: false }));
+            this.effect(sphere, 2.15, t => {
+              sphere.position.copy(origin).add(new THREE.Vector3(Math.sin(phase + t * 8) * (3 + t * 2.5), 1.2 + Math.sin(t * 14) * .25, Math.cos(phase + t * 8) * (3 + t * 2.5)));
+              if (Math.random() < .15) this.bolt(sphere.position, this.enemies[(orb * 5 + Math.floor(t * 10)) % this.enemies.length].origin.clone().setY(1), 0x8fbfff, .035, .2);
+              this.emit(sphere.position, 0x84aaff, 2, .6, .45);
+            });
+          }
+          resolveHorde(.65); break;
+        }
+        case 'tempest': {
+          this.cyclone(target, 0x93b2f1, 5.5, 8, 2.45);
+          for (let bolt = 0; bolt < 9; bolt++) this.schedule(.15 + bolt * .13, () => {
+            const enemy = this.enemies[(bolt * 7) % this.enemies.length];
+            this.bolt(target.clone().add(new THREE.Vector3(Math.sin(bolt) * 3, 10, Math.cos(bolt) * 3)), enemy.origin.clone().setY(.1), 0xc4ddff, .08, .3);
+            this.impact(enemy.origin, 0x7a9fe8, 1.4);
+          });
+          resolveHorde(.62); this.shake = .32; break;
+        }
       }
-      else if (frost) {
-        this.ring(origin, 0x91e8ff, options.wide ? 10 : 8, 1.1, 'ring');
-        this.ring(origin, 0xd5faff, 5.6, .65, 'ring');
-        this.enemies.forEach((enemy, index) => this.schedule(index * .02, () => {
-          const material = new THREE.MeshBasicMaterial({ color: index % 2 ? 0x70caff : 0xd3f6ff, transparent: true, blending: THREE.AdditiveBlending });
-          const shard = new THREE.Mesh(new THREE.ConeGeometry(.25, 1.9, 5), material);
-          shard.position.copy(enemy.origin); shard.position.y = 4.8; shard.rotation.z = -.15;
-          this.effectsGroup.add(shard); this.effects.push({ mesh: shard, age: 0, duration: 1, kind: 'shard', radius: 1 });
-        }));
-        this.emit(origin, 0xb8f5ff, 140, 6.5, 1.65);
-        if (options.shards) this.schedule(.65, () => {
-          this.ring(origin, 0xe2ffff, 9, .7, 'ring');
-          this.enemies.forEach(enemy => this.emit(enemy.origin.clone().setY(.8), 0x91eaff, 8, 2.2, .9));
-          this.shake = .2;
-        });
-      } else if (fire) {
-        this.ring(origin, color, options.wide ? 10 : 8, .8, 'ring');
-        this.ring(origin, 0xffe8a1, 7.6, .52, 'ring');
-        this.emit(origin, 0xff951f, 150, 8, 1.45);
-      } else {
-        this.ring(origin, color, 6.7, .55, 'slash');
-        this.schedule(.2, () => this.ring(origin, 0xffd793, 7.6, .55, 'slash'));
-      }
-      this.enemies.forEach((enemy, index) => this.schedule((frost ? .35 : .12) + index * .018, () => this.hitEnemy(enemy, color)));
-      if (this.encounter === 5) this.schedule(.85, () => {
-        const boss = this.enemies[0];
-        this.ring(boss.origin.clone().setY(.1), 0xffd997, 10, 1.2, 'ring');
-        this.emit(boss.origin.clone().setY(1.8), 0xffd997, 100, 7, 1.6);
-        this.shake = .4;
+      if (options.shards && school === 'frost' && effect !== 'frostfall') this.schedule(.72, () => {
+        for (let i = 0; i < 8; i++) {
+          const at = this.enemies[(i * 3) % this.enemies.length].origin;
+          this.projectile(at.clone().add(new THREE.Vector3(-1, 6, 0)), at, 0xc0f2ff, effect === 'blizzard' ? .42 : .25, .38, () => this.impact(at, 0x99deff, 1), true);
+        }
       });
-      if (options.echo) this.schedule(.58, () => { this.ring(origin, color, 9, .7, 'ring'); this.emit(origin, color, 80, 7, 1.05); this.shake = .16; this.burstLight.intensity = 80; });
-      if (options.burning || options.itemId?.includes('cinder')) this.schedule(.45, () => this.ring(origin, 0xff6d24, 5.8, 2.1, 'ground'));
-      this.schedule(.95, () => this.spawnLoot(origin, this.encounter === 5));
+      if (options.chains && school === 'storm' && effect !== 'chain-lightning') this.schedule(.65, () => this.chainLightning(origin, 0xb2d3ff));
+      if (options.burning && school === 'ember') this.schedule(.85, () => {
+        for (let i = 0; i < 6; i++) this.impact(origin.clone().add(new THREE.Vector3(Math.sin(i * 2) * 3, .1, Math.cos(i * 2) * 3)), 0xdd4b13, 1.4);
+      });
+      if (this.encounter === 5) this.schedule(1.4, () => { this.impact(this.enemies[0].origin, 0xffd990, 5); this.debris(this.enemies[0].origin, 22); this.shake = .35; });
+      if (options.drop) this.schedule(1.55, () => this.spawnLoot(origin, options.drop!));
     });
     return new Promise(resolve => { this.attackResolve = resolve; });
+  }
+
+  private effect(mesh: THREE.Mesh, duration: number, update?: (t: number, delta: number) => void): THREE.Mesh {
+    this.effectsGroup.add(mesh); this.effects.push({ mesh, age: 0, duration, kind: 'custom', radius: 1, update }); return mesh;
+  }
+
+  private stroke(points: THREE.Vector3[], color: number, width: number, duration: number): THREE.Mesh {
+    const curve = new THREE.CatmullRomCurve3(points);
+    return this.effect(new THREE.Mesh(new THREE.TubeGeometry(curve, Math.max(12, points.length * 5), width, 5, false), new THREE.MeshBasicMaterial({ color, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false })), duration);
+  }
+
+  private bolt(from: THREE.Vector3, to: THREE.Vector3, color: number, width: number, duration: number): void {
+    const points = [from.clone()];
+    for (let i = 1; i < 10; i++) points.push(from.clone().lerp(to, i / 10).add(new THREE.Vector3((Math.random() - .5) * .65, (Math.random() - .5) * .5, (Math.random() - .5) * .65)));
+    points.push(to.clone()); this.stroke(points, color, width, duration); this.stroke(points, 0xf2faff, width * .25, duration * .8);
+  }
+
+  private weaponSweep(origin: THREE.Vector3, color: number, radius: number, phase: number): void {
+    const points = Array.from({ length: 28 }, (_, i) => { const a = phase + i / 27 * Math.PI * 1.5; return origin.clone().add(new THREE.Vector3(Math.sin(a) * radius, .4 + Math.sin(i / 27 * Math.PI) * .7, Math.cos(a) * radius)); });
+    this.stroke(points, color, .075, .58); this.stroke(points.map(point => point.clone().lerp(origin, .07).setY(.4)), 0xff8724, .035, .7);
+    for (let i = 0; i < points.length; i += 3) this.emit(points[i], color, 4, 1.1, .6);
+  }
+
+  private fireNova(origin: THREE.Vector3, radius: number): void {
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(radius * 2.15, radius * 2.15), novaMaterial());
+    ground.rotation.x = -Math.PI / 2; ground.position.copy(origin).setY(.09);
+    this.effect(ground, 1.3, t => { ground.material.uniforms.progress.value = t; ground.material.uniforms.time.value = this.elapsed; });
+    // Broken incandescent arcs and moving tongues stay on the blast front.
+    // Their gaps preserve the dungeon and tumbling enemy silhouettes underneath.
+    for (let segment = 0; segment < 11; segment++) {
+      const angle = segment / 11 * Math.PI * 2;
+      const points = Array.from({ length: 14 }, (_, n) => {
+        const a = angle + n / 13 * .39, r = radius * (.87 + Math.sin(n * 2.7 + segment) * .018);
+        return new THREE.Vector3(Math.sin(a) * r, .12 + Math.sin(n * 1.8) * .055, Math.cos(a) * r);
+      });
+      const arc = this.stroke(points, segment % 3 === 0 ? 0xffd581 : 0xff7e19, .021, 1.1); arc.position.copy(origin);
+      this.effects[this.effects.length - 1].update = t => arc.scale.setScalar(.15 + .85 * (1 - Math.pow(1 - t, 3)));
+    }
+    for (let i = 0; i < 26; i++) {
+      const angle = i * 2.39996, height = .48 + (i % 5) * .14;
+      const material = flameMaterial(), flame = new THREE.Mesh(new THREE.PlaneGeometry(.65, height), material);
+      flame.rotation.y = .7;
+      this.effect(flame, 1.3, t => {
+        const r = radius * .91 * (1 - Math.pow(1 - t, 3));
+        flame.position.set(origin.x + Math.sin(angle) * r, height * .45, origin.z + Math.cos(angle) * r);
+        flame.scale.y = Math.sin(t * Math.PI) * .85;
+        material.uniforms.time.value = this.elapsed + i; material.uniforms.opacity.value = Math.sin(t * Math.PI) * .7;
+      });
+    }
+    this.emit(origin.clone().setY(.4), 0xffb354, 110, 9.5, 1.3); this.shake = .32;
+    this.burstLight.position.copy(origin).setY(3); this.burstLight.color.setHex(0xff982f); this.burstLight.intensity = 420;
+  }
+
+  private impact(at: THREE.Vector3, color: number, scale: number): void {
+    this.emit(at.clone().setY(.4), color, Math.floor(18 + scale * 9), scale * 1.7, .85);
+    for (let i = 0; i < 7; i++) { const end = at.clone().add(new THREE.Vector3(Math.sin(i * 2.4) * scale, .25 + (i % 3) * scale * .4, Math.cos(i * 2.4) * scale)); this.stroke([at.clone().setY(.15), end], color, .03, .38); }
+  }
+
+  private targetMark(at: THREE.Vector3, color: number, radius: number): void { this.ring(at, color, radius, .95, 'ground'); }
+
+  private firePillar(at: THREE.Vector3, height: number, duration: number): void {
+    for (let side = 0; side < 2; side++) {
+      const material = flameMaterial(), mesh = new THREE.Mesh(new THREE.PlaneGeometry(height * .58, height), material);
+      mesh.position.copy(at).y = height * .5; mesh.rotation.y = .7 + side * Math.PI / 2;
+      this.effect(mesh, duration, t => { material.uniforms.time.value = this.elapsed + side; material.uniforms.opacity.value = (1 - t) * Math.min(1, t * 8); mesh.scale.y = Math.min(1, t * 7); mesh.position.y = at.y + height * .5 * mesh.scale.y; });
+    }
+  }
+
+  private projectile(from: THREE.Vector3, to: THREE.Vector3, color: number, size: number, duration: number, hit: () => void, ice = false): void {
+    const geometry = ice ? new THREE.ConeGeometry(size, size * 5.8, 5) : new THREE.IcosahedronGeometry(size, 1);
+    const material = new THREE.MeshStandardMaterial({ color: ice ? 0x82bfda : 0x533522, emissive: color, emissiveIntensity: ice ? .7 : 2, roughness: ice ? .15 : .68, metalness: ice ? .2 : 0, transparent: true });
+    const mesh = new THREE.Mesh(geometry, material); if (ice) mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), to.clone().sub(from).normalize());
+    this.effect(mesh, duration + .08, t => { mesh.position.copy(from).lerp(to, Math.min(1, t * 1.1)); if (!ice) mesh.rotation.x += .12; this.emit(mesh.position, color, ice ? 2 : 5, size * .8, .6); });
+    this.schedule(duration, hit);
+  }
+
+  private iceWave(origin: THREE.Vector3, wide: boolean): void {
+    const columns = wide ? 13 : 9;
+    for (let row = 0; row < 6; row++) for (let column = 0; column < columns; column++) this.schedule(row * .095 + Math.abs(column - columns / 2) * .012, () => {
+      const at = origin.clone().add(new THREE.Vector3((column - columns / 2) * .8, 0, -row * 1.3 + 2));
+      const height = 1.1 + Math.sin(column * 2 + row) * .45 + row * .12;
+      const mesh = new THREE.Mesh(new THREE.ConeGeometry(.35, height, 5), new THREE.MeshStandardMaterial({ color: 0x5895b6, emissive: 0x387a9a, emissiveIntensity: .7, roughness: .17, metalness: .25, transparent: true }));
+      mesh.position.copy(at).y = height * .5;
+      this.effect(mesh, 1.1, t => { mesh.scale.y = Math.min(1, t * 6) * (1 - Math.max(0, t - .7)); mesh.position.y = height * .5 * mesh.scale.y; mesh.rotation.z = -.18; });
+    });
+    this.emit(origin, 0xb9efff, 45, 5, .85);
+  }
+
+  private cyclone(at: THREE.Vector3, color: number, radius: number, height: number, duration: number, horizontal = false): void {
+    for (let layer = 0; layer < 3; layer++) {
+      const material = stormMaterial(color);
+      const geometry = new THREE.CylinderGeometry(radius * (1 - layer * .12), radius * .22, horizontal ? height * .65 : height, 48, 12, true);
+      const mesh = new THREE.Mesh(geometry, material); mesh.position.copy(at).y += horizontal ? height * .42 : height * .5;
+      this.effect(mesh, duration, t => {
+        material.uniforms.time.value = this.elapsed + layer * 1.8;
+        material.uniforms.opacity.value = Math.sin(Math.PI * t) * (horizontal ? .7 : 1);
+        mesh.rotation.y = this.elapsed * (horizontal ? -1.8 : 1.7) + layer * 2.1;
+        mesh.scale.setScalar(Math.min(1, t * 5) * (1 - Math.max(0, t - .78) * 2));
+      });
+    }
+    for (let ribbon = 0; ribbon < 5; ribbon++) {
+      const points = Array.from({ length: 16 }, (_, i) => {
+        const t = i / 15, a = t * 1.8 + ribbon * 1.3, r = radius * (.3 + ribbon * .13);
+        return new THREE.Vector3(Math.sin(a) * r, horizontal ? .3 + Math.sin(t * Math.PI) * height * .3 : height * (.08 + ribbon * .16 + t * .1), Math.cos(a) * r);
+      });
+      const mesh = this.stroke(points, color, .014, duration); mesh.position.copy(at);
+      this.effects[this.effects.length - 1].update = t => { mesh.rotation.y = t * (horizontal ? -10 : 13); (mesh.material as THREE.MeshBasicMaterial).opacity = Math.sin(t * Math.PI) * .45; };
+    }
+  }
+
+  private debris(at: THREE.Vector3, count: number): void {
+    for (let i = 0; i < count; i++) {
+      const angle = i * 2.399, speed = 1.8 + Math.random() * 3, geometry = new THREE.DodecahedronGeometry(.09 + Math.random() * .2, 0);
+      const mesh = new THREE.Mesh(geometry, this.materials.wall.clone());
+      this.effect(mesh, 1.2, t => { mesh.position.copy(at).add(new THREE.Vector3(Math.sin(angle) * speed * t, Math.max(.02, Math.sin(t * Math.PI) * speed * .55), Math.cos(angle) * speed * t)); mesh.rotation.set(t * 7, t * 4, t * 9); });
+    }
+  }
+
+  private directedParticle(at: THREE.Vector3, velocity: THREE.Vector3, color: number, life: number, size: number): void {
+    if (this.particles.length < 890) this.particles.push({ position: at.clone(), velocity, color: new THREE.Color(color), life, maxLife: life, size });
+  }
+
+  private summonGuardian(at: THREE.Vector3, duration: number): void {
+    const root = this.model('guardian', 4.5) ?? this.makeEnemy(true, true);
+    root.traverse(object => { if (object instanceof THREE.Mesh) {
+      const source = Array.isArray(object.material) ? object.material[0] : object.material;
+      const material = source instanceof THREE.MeshStandardMaterial ? source.clone() : new THREE.MeshStandardMaterial();
+      const crystal = /glow|crystal/i.test(object.name + source.name);
+      material.color.setHex(crystal ? 0x77cae5 : 0x91a9b5); material.emissive.setHex(crystal ? 0x257794 : 0x000000); material.emissiveIntensity = crystal ? .75 : 0;
+      material.roughness = crystal ? .35 : .74; material.metalness = .08; material.transparent = true; material.opacity = .96;
+      object.material = material; object.receiveShadow = false;
+    } });
+    this.effectsGroup.add(root);
+    this.summoned.push({ root, age: 0, duration, update: t => { root.position.copy(at).add(new THREE.Vector3(0, 0, -Math.sin(t * Math.PI) * 2.7)); this.burstLight.position.copy(root.position).add(new THREE.Vector3(1, 4.4, 2)); this.burstLight.color.setHex(0xa3d9ef); this.burstLight.intensity = Math.sin(t * Math.PI) * 160; root.rotation.y = Math.PI; root.rotation.x = Math.sin(Math.min(1, t * 2) * Math.PI) * -.35; root.traverse(object => { if (object instanceof THREE.Mesh && object.material instanceof THREE.MeshStandardMaterial) object.material.opacity = Math.min(.96, t * 6) * (1 - Math.max(0, t - .7) * 3); }); } });
+    this.impact(at, 0xa2e5ff, 2.8);
   }
 
   private schedule(delay: number, callback: () => void): void { this.scheduled.push({ at: this.elapsed + delay, callback }); }
@@ -531,28 +945,36 @@ export class DungeonWorld {
   }
 
   private hitEnemy(enemy: Enemy, color: number): void {
-    enemy.dead = true;
+    enemy.dead = true; enemy.deathAt = this.elapsed;
     this.renderer.shadowMap.needsUpdate = true;
     this.emit(enemy.origin.clone().add(new THREE.Vector3(0, .9, 0)), color, enemy.brute ? 35 : 18, 3, 1);
     this.emit(enemy.origin.clone().add(new THREE.Vector3(0, .35, 0)), 0xc7ae77, 8, 1.7, 1.35);
+    if (this.lastAttack?.options.burning || RPG_SPELLS.find(spell => spell.id === this.lastAttack?.spellId)?.school === 'ember') {
+      const scorch = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.1), new THREE.MeshBasicMaterial({ color: 0x32261b, alphaMap: this.glowMap, transparent: true, opacity: .2, depthWrite: false }));
+      scorch.rotation.x = -Math.PI / 2; scorch.position.copy(enemy.origin).y = -.025;
+      this.effect(scorch, 4, t => { scorch.material.opacity = (1 - t) * .2; });
+    }
+    if (enemy.brute) { this.debris(enemy.origin, 9); this.emit(enemy.origin.clone().setY(1.2), 0x8deaff, 16, 3.5, .65); }
   }
 
-  private spawnLoot(origin: THREE.Vector3, boss: boolean): void {
-    for (let i = 0; i < (boss ? 5 : 3); i++) {
-      const position = origin.clone().add(new THREE.Vector3(Math.cos(i * 2.4) * (2 + i * .4), .14, Math.sin(i * 2.4) * (2 + i * .4)));
-      const color = boss && i === 0 ? 0xffb54a : i === 0 ? 0xbb83ff : 0x71e8e0;
-      this.emit(position, color, 20, 1.7, 1.5);
-      const geometry = new THREE.CylinderGeometry(.025, .15, boss ? 5 : 3.4, 8, 1, true);
-      const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .65, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false }));
-      mesh.position.copy(position); mesh.position.y += boss ? 2.5 : 1.7;
-      this.effectsGroup.add(mesh); this.effects.push({ mesh, age: 0, duration: 1.7, kind: 'beam', radius: 1 });
-    }
+  private spawnLoot(origin: THREE.Vector3, drop: { name: string; rarity: string }): void {
+    const colors: Record<string, number> = { common: 0xb8c2c5, uncommon: 0x79dcb1, rare: 0x6aa9ff, epic: 0xc38aff, legendary: 0xffba57 };
+    const color = colors[drop.rarity] ?? colors.rare;
+    const position = origin.clone().add(new THREE.Vector3(2.1, .1, -.9)); this.lootPosition = position.clone(); this.lootExpiresAt = this.elapsed + 3.2;
+    this.emit(position, color, 35, 1.7, 1.5);
+    const geometry = new THREE.CylinderGeometry(.014, .09, 4.1, 8, 1, true);
+    const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .7, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false }));
+    mesh.position.copy(position); mesh.position.y += 2.05;
+    this.effectsGroup.add(mesh); this.effects.push({ mesh, age: 0, duration: 3.2, kind: 'beam', radius: 1 });
+    const glint = new THREE.Mesh(new THREE.OctahedronGeometry(.18), new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: .5, metalness: .6, roughness: .25 }));
+    glint.position.copy(position).y = .27;
+    this.effect(glint, 3.2, t => { glint.rotation.y = t * 6; glint.position.y = .27 + Math.sin(t * 8) * .06; });
   }
 
   private emit(origin: THREE.Vector3, color: number, count: number, speed: number, life: number): void {
     for (let i = 0; i < count && this.particles.length < 890; i++) {
       const angle = Math.random() * Math.PI * 2, amount = (.2 + Math.random() * .8) * speed;
-      this.particles.push({ position: origin.clone(), velocity: new THREE.Vector3(Math.cos(angle) * amount, Math.random() * speed * .6 + .3, Math.sin(angle) * amount), color: new THREE.Color(color), life, maxLife: life, size: speed < .2 ? .2 : speed < .6 ? .4 : .75 + Math.random() * .5 });
+      this.particles.push({ position: origin.clone(), velocity: new THREE.Vector3(Math.cos(angle) * amount, Math.random() * speed * .6 + .3, Math.sin(angle) * amount), color: new THREE.Color(color), life, maxLife: life, size: speed < .2 ? .2 : speed < .6 ? .4 : .28 + Math.random() * .42 });
     }
   }
 
@@ -561,7 +983,7 @@ export class DungeonWorld {
     if (width === this.width && height === this.height) return;
     this.width = width; this.height = height;
     const ratio = width / height;
-    const halfHeight = ratio < 1 ? 13.5 / ratio : 11.4;
+    const halfHeight = ratio < 1 ? 12.6 / ratio : 10.5;
     this.camera.left = -halfHeight * ratio; this.camera.right = halfHeight * ratio;
     this.camera.top = halfHeight; this.camera.bottom = -halfHeight; this.camera.updateProjectionMatrix();
     const qualityRatio = this.quality === 0 ? 1.5 : this.quality === 1 ? 1 : .75;
@@ -582,7 +1004,7 @@ export class DungeonWorld {
       // A hidden tab has no presentation to draw; an answer's release resumes
       // on return. Learning and rewards never depend on background elapsed time.
       if (document.hidden) { this.fpsFrames = 0; this.fpsMeasuredAt = performance.now(); return; }
-      this.tick(Math.min(delta, .3));
+      this.tick(delta);
     };
     animate();
   }
@@ -595,19 +1017,29 @@ export class DungeonWorld {
       this.fpsMeasuredAt = measuredAt; this.fpsFrames = 0;
       // Ignore asset/shader warm-up and brief attack spikes. Retain the complete
       // art on a fast GPU, lower fill cost only after sustained missed frames.
-      if (!this.softwareRenderer && this.loadedAt && measuredAt - this.loadedAt > 5000 && !this.attacking) {
+      if (!this.softwareRenderer && this.loadedAt && measuredAt - this.loadedAt > 8000 && !this.attacking && !this.paused) {
         this.lowFpsSamples = this.framesPerSecond < 29 ? this.lowFpsSamples + 1 : 0;
-        this.highFpsSamples = this.framesPerSecond > 55 ? this.highFpsSamples + 1 : 0;
+        this.highFpsSamples = this.framesPerSecond > 48 ? this.highFpsSamples + 1 : 0;
         if (this.lowFpsSamples >= 3 && this.quality < 2) {
           this.quality++; this.lowFpsSamples = this.highFpsSamples = 0; this.width = 0;
-        } else if (this.highFpsSamples >= 12 && this.quality > 0) {
+        } else if (this.highFpsSamples >= 8 && this.quality > 0) {
           this.quality--; this.lowFpsSamples = this.highFpsSamples = 0; this.width = 0;
         }
       }
     }
     this.elapsed += delta; this.resize();
-    for (let i = this.scheduled.length - 1; i >= 0; i--) if (this.scheduled[i].at <= this.elapsed) { const [task] = this.scheduled.splice(i, 1); task.callback(); }
+    // Releases use elapsed wall time even on a slow GPU. Execute nested cues at
+    // their authored times so a late frame cannot stretch a three-second cast.
+    const frameTime = this.elapsed;
+    this.scheduled.sort((a, b) => a.at - b.at);
+    while (this.scheduled.length && this.scheduled[0].at <= frameTime) {
+      const task = this.scheduled.shift()!; this.elapsed = task.at; task.callback();
+      this.scheduled.sort((a, b) => a.at - b.at);
+    }
+    this.elapsed = frameTime;
     const distance = this.hero.position.distanceTo(this.destination);
+    if (!this.attacking) this.playHeroAnimation(distance > .025 ? 'walk' : 'idle');
+    this.heroMixer?.update(delta);
     const shadowInterval = distance > .08 || this.attacking ? (this.softwareRenderer ? .2 : .065) : .65;
     if (this.elapsed - this.lastShadowUpdate > shadowInterval) {
       this.renderer.shadowMap.needsUpdate = true; this.lastShadowUpdate = this.elapsed;
@@ -618,26 +1050,35 @@ export class DungeonWorld {
       this.heroVisual.rotation.y = Math.atan2(this.destination.x - this.hero.position.x, this.destination.z - this.hero.position.z);
     } else {
       this.heroVisual.position.y = Math.sin(this.elapsed * 2.4) * .018;
-      this.heroVisual.rotation.y = THREE.MathUtils.lerp(this.heroVisual.rotation.y, Math.PI * .9, delta * 4);
+      this.heroVisual.rotation.y = THREE.MathUtils.lerp(this.heroVisual.rotation.y, Math.PI * .9, 1 - Math.exp(-delta * 4));
     }
     if (this.attacking) {
       this.attackAge += delta;
+      if (this.heroMotion) {
+        const movement = this.heroMotion(this.attackAge);
+        this.heroVisual.position.x = movement.x; this.heroVisual.position.z = movement.z; this.heroVisual.position.y += movement.y;
+      }
       this.heroVisual.rotation.y += Math.sin(Math.min(this.attackAge / .7, 1) * Math.PI) * .18;
       this.heroVisual.position.y += Math.sin(Math.min(this.attackAge / .5, 1) * Math.PI) * .35;
-      if (this.attackAge >= 2.35) { this.attacking = false; this.attackResolve?.(); this.attackResolve = undefined; }
+      if (this.attackAge >= this.attackDuration) { this.attacking = false; this.heroMotion = undefined; this.heroVisual.position.x = this.heroVisual.position.z = 0; this.attackResolve?.(); this.attackResolve = undefined; }
     }
     this.rune.rotation.z = this.elapsed * .14;
     this.rune.scale.setScalar(1 + Math.sin(this.elapsed * 2) * .04);
     for (const enemy of this.enemies) {
       if (enemy.dead) {
-        enemy.root.scale.multiplyScalar(Math.max(0, 1 - delta * 2.9));
-        enemy.root.position.y += delta * .23;
-        enemy.root.rotation.z += delta * (enemy.phase % 2 ? 1.4 : -1.4);
-        if (enemy.root.scale.x < .04) enemy.root.visible = false;
+        const t = Math.min(1, (this.elapsed - enemy.deathAt) / 1.1);
+        const away = enemy.origin.clone().sub(this.hero.position).setY(0).normalize();
+        enemy.root.position.copy(enemy.origin).addScaledVector(away, (1 - Math.pow(1 - t, 3)) * (enemy.brute ? 1 : 1.7));
+        enemy.root.position.y = Math.sin(t * Math.PI) * (enemy.brute ? .45 : .85);
+        enemy.root.rotation.x = -t * 1.35; enemy.root.rotation.z = Math.sin(enemy.phase) * t * .7;
+        enemy.root.scale.setScalar(Math.max(.005, 1 - Math.max(0, t - .58) / .42));
+        if (t === 1) enemy.root.visible = false;
       } else {
-        enemy.root.position.x = enemy.origin.x + Math.sin(this.elapsed * .65 + enemy.phase) * .22;
-        enemy.root.position.z = enemy.origin.z + Math.cos(this.elapsed * .72 + enemy.phase) * .2;
-        enemy.visual.position.y = Math.sin(this.elapsed * 2.7 + enemy.phase) * (enemy.brute ? .028 : .055);
+        const approach = this.hero.position.clone().sub(enemy.origin).setY(0).normalize();
+        const feint = (.5 + Math.sin(this.elapsed * .8 + enemy.phase) * .5) * (enemy.brute ? .55 : .9);
+        enemy.root.position.x = enemy.origin.x + approach.x * feint + Math.sin(this.elapsed * .65 + enemy.phase) * .16;
+        enemy.root.position.z = enemy.origin.z + approach.z * feint + Math.cos(this.elapsed * .72 + enemy.phase) * .16;
+        enemy.visual.position.y = enemy.modelId === 'wraith' ? .14 + Math.sin(this.elapsed * 2 + enemy.phase) * .09 : Math.abs(Math.sin(this.elapsed * 4.7 + enemy.phase)) * (enemy.brute ? .035 : .075);
         enemy.visual.rotation.z = Math.sin(this.elapsed * 1.5 + enemy.phase) * .035;
       }
     }
@@ -650,9 +1091,11 @@ export class DungeonWorld {
     }
     this.torches.forEach(torch => {
       const flicker = 1 + Math.sin(this.elapsed * 11 + torch.phase) * .12 + Math.sin(this.elapsed * 17 + torch.phase) * .08;
-      torch.flame.scale.y = 2.1 * flicker; if (torch.light) torch.light.intensity = 22 * flicker;
+      torch.flame.scale.y = flicker; if (torch.light) torch.light.intensity = 22 * flicker;
       if (Math.abs(torch.position.z - this.hero.position.z) < 17 && Math.random() < delta * 3) this.emit(torch.position, 0xffb965, 1, .35, 1.4);
     });
+    this.livingFlame.uniforms.time.value = this.elapsed;
+    this.floatingRunes.forEach((rune, index) => { rune.position.y = rune.userData.baseY + Math.sin(this.elapsed * 1.4 + index) * .21; rune.rotation.y = this.elapsed * .17 + index; });
     if (Math.random() < delta * 14) this.emit(this.hero.position.clone().add(new THREE.Vector3((Math.random() - .5) * 24, 1 + Math.random() * 4, (Math.random() - .5) * 20)), 0x65979b, 1, .12, 4);
     for (let i = this.effects.length - 1; i >= 0; i--) {
       const effect = this.effects[i]; effect.age += delta;
@@ -660,6 +1103,8 @@ export class DungeonWorld {
       if (t >= 1) { this.effectsGroup.remove(effect.mesh); effect.mesh.geometry.dispose(); (effect.mesh.material as THREE.Material).dispose(); this.effects.splice(i, 1); continue; }
       const material = effect.mesh.material as THREE.MeshBasicMaterial;
       material.opacity = effect.kind === 'ground' ? (1 - t) * .6 : (1 - t) * .95;
+      effect.update?.(t, delta);
+      if (effect.kind === 'custom') continue;
       if (effect.kind === 'shard') {
         effect.mesh.position.y = Math.max(.6, 4.8 - t * 14);
         effect.mesh.scale.y = 1 - Math.max(0, t - .5) * 1.5;
@@ -668,10 +1113,18 @@ export class DungeonWorld {
         if (effect.kind === 'slash') effect.mesh.rotation.z += delta * 9;
       }
     }
+    for (let i = this.summoned.length - 1; i >= 0; i--) {
+      const summon = this.summoned[i]; summon.age += delta;
+      if (summon.age >= summon.duration) {
+        this.effectsGroup.remove(summon.root);
+        summon.root.traverse(object => { if (object instanceof THREE.Mesh) for (const material of Array.isArray(object.material) ? object.material : [object.material]) material.dispose(); });
+        this.summoned.splice(i, 1);
+      } else summon.update(summon.age / summon.duration);
+    }
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i]; p.life -= delta;
       if (p.life <= 0) { this.particles.splice(i, 1); continue; }
-      p.velocity.y -= delta * .55; p.position.addScaledVector(p.velocity, delta); p.velocity.multiplyScalar(1 - delta * .7);
+      p.velocity.y -= delta * .55; p.position.addScaledVector(p.velocity, delta); p.velocity.multiplyScalar(Math.exp(-delta * .7));
       const offset = i * 3;
       this.particlePositions[offset] = p.position.x; this.particlePositions[offset + 1] = Math.max(.05, p.position.y); this.particlePositions[offset + 2] = p.position.z;
       const fade = Math.min(1, p.life / p.maxLife * 2);
@@ -679,7 +1132,7 @@ export class DungeonWorld {
       this.particleColors[offset] = p.color.r * fade * 1.3; this.particleColors[offset + 1] = p.color.g * fade * 1.3; this.particleColors[offset + 2] = p.color.b * fade * 1.3;
     }
     this.particleGeometry.setDrawRange(0, this.particles.length); this.particleGeometry.attributes.position.needsUpdate = true; this.particleGeometry.attributes.color.needsUpdate = true; this.particleGeometry.attributes.particleScale.needsUpdate = true;
-    this.burstLight.intensity *= Math.exp(-delta * 5); this.shake *= Math.exp(-delta * 7);
+    this.burstLight.intensity *= Math.exp(-delta * 3); this.shake *= Math.exp(-delta * 7);
     this.cameraTarget.lerp(this.hero.position, 1 - Math.exp(-delta * 3.7));
     const shake = this.shake;
     this.camera.position.copy(this.cameraTarget).add(new THREE.Vector3(17 + (Math.random() - .5) * shake, 25, 20 + (Math.random() - .5) * shake));
@@ -688,12 +1141,28 @@ export class DungeonWorld {
     moon.position.set(this.cameraTarget.x - 12, 24, this.cameraTarget.z - 10); moon.target.position.copy(this.cameraTarget);
     this.warmLights[0].position.set(-8, 3.3, this.cameraTarget.z - 5);
     this.warmLights[1].position.set(8, 2.8, this.cameraTarget.z + 4);
+    this.recessLights[0].position.set(-10, 2.6, this.cameraTarget.z - 6.5);
+    this.recessLights[1].position.set(5.5, 2.8, this.cameraTarget.z - 9.2);
+    for (const object of [...this.floorGroup.children, ...this.propGroup.children]) {
+      if (typeof object.userData.room === 'number') object.visible = Math.abs(object.userData.room * -20 - this.cameraTarget.z) < 37;
+    }
     this.renderer.info.reset();
     if (this.softwareRenderer) this.renderer.render(this.scene, this.camera); else this.composer.render(delta);
   }
 
+  get lootScreenPosition(): { x: number; y: number } | null {
+    if (!this.lootPosition || this.elapsed >= this.lootExpiresAt) return null;
+    const projected = this.lootPosition.clone().add(new THREE.Vector3(0, .65, 0)).project(this.camera);
+    return { x: (projected.x + 1) * this.width * .5, y: (1 - projected.y) * this.height * .5 };
+  }
+
+  get heroScreenPosition(): { x: number; y: number } {
+    const projected = this.hero.position.clone().add(new THREE.Vector3(0, 1.8, 0)).project(this.camera);
+    return { x: (projected.x + 1) * this.width * .5, y: (1 - projected.y) * this.height * .5 };
+  }
+
   get diagnostics(): Record<string, unknown> {
-    return { encounter: this.encounter, region: this.regionId, enemies: this.enemies.filter(enemy => !enemy.dead).length, attacking: this.attacking, paused: this.paused, modelsLoaded: this.loadedModels, drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, particles: this.particles.length, hero: this.hero.position.toArray(), softwareRenderer: this.softwareRenderer, fps: Math.round(this.framesPerSecond), quality: ['full', 'balanced', 'performance'][this.quality], renderer: this.renderer.getContext().getParameter(this.renderer.getContext().VERSION) };
+    return { lastAttack: this.lastAttack, lastSpellId: this.lastAttack?.spellId, lastSpellEffect: this.lastAttack?.effect, heroAnimation: this.heroAnimation || 'procedural', heroClips: [...this.heroActions.keys()], encounter: this.encounter, region: this.regionId, enemies: this.enemies.filter(enemy => !enemy.dead).length, attacking: this.attacking, paused: this.paused, modelsLoaded: this.loadedModels, drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, particles: this.particles.length, hero: this.hero.position.toArray(), softwareRenderer: this.softwareRenderer, fps: Math.round(this.framesPerSecond), quality: ['full', 'balanced', 'performance'][this.quality], renderer: this.renderer.getContext().getParameter(this.renderer.getContext().VERSION) };
   }
 
   dispose(): void {
@@ -703,6 +1172,8 @@ export class DungeonWorld {
       if (object instanceof THREE.Mesh || object instanceof THREE.Points || object instanceof THREE.Sprite) { geometries.add(object.geometry); for (const material of Array.isArray(object.material) ? object.material : [object.material]) { materials.add(material); for (const value of Object.values(material)) if (value instanceof THREE.Texture) textures.add(value); } }
     });
     geometries.forEach(geometry => geometry.dispose()); materials.forEach(material => material.dispose()); textures.forEach(texture => texture.dispose());
+    this.heroMixer?.stopAllAction(); this.heroMixer?.uncacheRoot(this.heroVisual);
+    this.preparedMaterials.forEach(material => material.dispose());
     this.waveMap.dispose(); this.glowMap.dispose();
     this.enemyInstances.forEach(instance => instance.mesh.dispose());
     this.bloom.dispose(); this.composer.dispose(); this.renderer.dispose();

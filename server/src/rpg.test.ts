@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { RPG_SPELLS, RPG_SPELL_IDS, RPG_SKILLS, RPG_ITEMS, rpgLevel, rpgSpellUnlocked, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgEncounterKills } from '@institute/shared';
 import { ensureRpgSchema, getRpgState, startRpgExpedition, resolveRpgEncounter, createRpgRoutes } from './rpg';
 
 function legacyDb(): Database {
@@ -45,7 +46,7 @@ describe('additive RPG progression on legacy learning data', () => {
     solved(db, 'sam', 'new-problem');
     const beforeResolve = snapshot(db);
     const result = resolve(db, 'sam', 'new-problem');
-    expect(result.reward).toMatchObject({ kills: 12, xp: 32, newItems: [{ id: 'cinderwand' }] });
+    expect(result.reward).toMatchObject({ kills: 24, xp: 32, newItems: [{ id: 'cinderwand' }] });
     expect(snapshot(db)).toBe(beforeResolve);
     ensureRpgSchema(db);
     expect(getRpgState(db, 'sam')).toEqual(result.state);
@@ -187,6 +188,129 @@ describe('additive RPG progression on legacy learning data', () => {
     const before = snapshot(db);
     expect(await status('retry')).toEqual({ recorded: true, correct: false, solved: true, skipped: false });
     expect(snapshot(db)).toBe(before);
+    db.close();
+  });
+});
+
+
+describe('expanded spellbook compatibility and authority', () => {
+  test('fifteen distinct abilities have complete, acyclic unlock trees and specialist equipment', () => {
+    expect(RPG_SPELLS).toHaveLength(15);
+    expect(RPG_SKILLS.length).toBeGreaterThanOrEqual(27);
+    expect(RPG_ITEMS.length).toBeGreaterThanOrEqual(20);
+    expect(new Set(RPG_SPELLS.map(spell => spell.effect)).size).toBe(15);
+    expect(RPG_SPELLS.filter(spell => rpgSpellUnlocked(spell.id, {})).map(spell => spell.id)).toEqual(['ember', 'cleave']);
+    for (const school of ['ember', 'frost', 'storm']) expect(RPG_SPELLS.filter(spell => spell.school === school)).toHaveLength(5);
+    for (const spell of RPG_SPELLS) {
+      expect(RPG_SPELL_IDS.includes(spell.id)).toBe(true);
+      if (spell.skillId) expect(RPG_SKILLS.find(skill => skill.id === spell.skillId)?.kind).toBe('unlock');
+      const path = new Set<string>();
+      let node = RPG_SKILLS.find(skill => skill.id === spell.skillId);
+      while (node) {
+        expect(path.has(node.id)).toBe(false); path.add(node.id);
+        const parent = RPG_SKILLS.find(skill => skill.id === node!.parentId);
+        if (node.parentId) { expect(parent).toBeDefined(); expect(parent!.level).toBeLessThanOrEqual(node.level); }
+        node = parent;
+      }
+      expect(RPG_ITEMS.some(item => item.scope === 'spell' && item.spellId === spell.id)).toBe(true);
+    }
+  });
+
+  test('old three-spell saves keep XP, skills, equipped items, and learning rows without a rewrite', async () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    for (const selectedSpellId of ['ember', 'frost', 'storm'] as const) {
+      const state = getRpgState(db, `old-${selectedSpellId}`);
+      Object.assign(state, { xp: 2250, ...rpgLevel(2250), selectedSpellId, skillPoints: 2,
+        skills: { ember_power: 1, ember_echo: 1, frost: 1, frost_shards: 1, storm: 1, storm_chain: 1 },
+        inventory: ['apprentice', 'cinderwand', 'glacier', 'thunderrod', 'moonstaff', 'phoenix', 'wintercrown', 'tempest'], equippedItemId: 'tempest' });
+      const oldJson = JSON.stringify(state);
+      db.query('INSERT INTO rpg_profiles VALUES (?, ?, ?)').run(state.profileId, oldJson, Date.now());
+      const learning = snapshot(db);
+      ensureRpgSchema(db);
+      expect(getRpgState(db, state.profileId)).toEqual(state);
+      expect(rpgSpellUnlocked(selectedSpellId, state.skills)).toBe(true);
+      expect(rpgSpellUnlocked('meteor', state.skills)).toBe(false);
+      expect((await call(db, '/spell', { profileId: state.profileId, spellId: 'meteor' })).status).toBe(400);
+      expect((db.query('SELECT state_json FROM rpg_profiles WHERE profile_id = ?').get(state.profileId) as any).state_json).toBe(oldJson);
+      expect(snapshot(db)).toBe(learning);
+    }
+    db.close();
+  });
+
+  test('new abilities enforce level, parent, skill-point, and item ownership gates', async () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    expect((await call(db, '/spell', { profileId: 'sam', spellId: 'cleave' })).status).toBe(200);
+    expect((await call(db, '/spell', { profileId: 'sam', spellId: 'meteor' })).status).toBe(400);
+    const state = getRpgState(db, 'sam');
+    Object.assign(state, { xp: 13455, ...rpgLevel(13455), skillPoints: 23 });
+    db.query('UPDATE rpg_profiles SET state_json = ? WHERE profile_id = ?').run(JSON.stringify(state), 'sam');
+    expect((await call(db, '/upgrade', { profileId: 'sam', skillId: 'meteor' })).status).toBe(400);
+    expect(getRpgState(db, 'sam').skillPoints).toBe(23);
+    expect((await call(db, '/upgrade', { profileId: 'sam', skillId: 'ember_power' })).status).toBe(200);
+    expect((await call(db, '/upgrade', { profileId: 'sam', skillId: 'meteor' })).status).toBe(200);
+    expect(getRpgState(db, 'sam').skillPoints).toBe(21);
+    expect((await call(db, '/spell', { profileId: 'sam', spellId: 'meteor' })).status).toBe(200);
+    expect((await call(db, '/equip', { profileId: 'sam', itemId: 'starfall' })).status).toBe(400);
+    const owned = getRpgState(db, 'sam'); owned.inventory.push('starfall');
+    db.query('UPDATE rpg_profiles SET state_json = ? WHERE profile_id = ?').run(JSON.stringify(owned), 'sam');
+    expect((await call(db, '/equip', { profileId: 'sam', itemId: 'starfall' })).status).toBe(200);
+    startRpgExpedition(db, 'sam'); solved(db, 'sam', 'meteor-test');
+    const learning = snapshot(db);
+    const result = resolve(db, 'sam', 'meteor-test', { spellId: 'meteor' });
+    expect(result.reward).toMatchObject({ spellId: 'meteor', kills: 40, xp: 32 });
+    expect(snapshot(db)).toBe(learning);
+    db.close();
+  });
+
+  test('all fifteen learned abilities can be selected and resolved through the real RPG routes', async () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    const state = getRpgState(db, 'all-abilities');
+    const xp = 29925; // Level 36, enough for one rank in every node.
+    Object.assign(state, { xp, ...rpgLevel(xp), skillPoints: 2, skills: Object.fromEntries(RPG_SKILLS.map(skill => [skill.id, 1])) });
+    db.query('INSERT INTO rpg_profiles VALUES (?, ?, ?)').run(state.profileId, JSON.stringify(state), Date.now());
+    for (const spell of RPG_SPELLS) {
+      startRpgExpedition(db, state.profileId);
+      expect((await call(db, '/spell', { profileId: state.profileId, spellId: spell.id })).status).toBe(200);
+      solved(db, state.profileId, `ability-${spell.id}`);
+      const current = getRpgState(db, state.profileId);
+      const learning = snapshot(db);
+      const response = await call(db, '/resolve', { profileId: state.profileId, problemId: `ability-${spell.id}`, expeditionId: current.expedition!.id, encounterIndex: current.expedition!.encounterIndex, spellId: spell.id });
+      expect(response.status).toBe(200);
+      const result = await response.json() as any;
+      expect(result.reward.spellId).toBe(spell.id);
+      expect(result.state.selectedSpellId).toBe(spell.id);
+      expect(snapshot(db)).toBe(learning);
+    }
+    db.close();
+  });
+
+  test('school gear and specialist modifiers affect only their documented abilities', () => {
+    const item = (id: string) => RPG_ITEMS.find(entry => entry.id === id)!;
+    expect(rpgItemApplies(item('sunforged'), 'meteor')).toBe(true);
+    expect(rpgItemApplies(item('sunforged'), 'ice_lance')).toBe(false);
+    expect(rpgItemApplies(item('starfall'), 'meteor')).toBe(true);
+    expect(rpgItemApplies(item('starfall'), 'ember')).toBe(false);
+    expect(rpgItemApplies(item('tempest'), 'storm')).toBe(true);
+    expect(rpgItemApplies(item('tempest'), 'tempest')).toBe(false); // old item ID is retained; its target is Chain Lightning.
+    const state = { skills: { ember_power: 1, ember_echo: 1, meteor: 1, meteor_shower: 1 }, equippedItemId: 'starfall', selectedSpellId: 'meteor' as const };
+    expect(rpgSpellModifiers(state)).toEqual(['echo']);
+    expect(rpgSpellModifiers(state, 'ice_lance')).toEqual([]);
+    expect(rpgEncounterKills(state, 0)).toBe(43); // 24 base + 6 Meteor + 2 Wildfire + 3 shower + 8 gear.
+    expect(rpgEncounterKills(state, 0, 'cleave')).toBe(28); // 24 base + 2 Cleave + 2 school power.
+    expect(rpgSpellSchool('frost_guardian')).toBe('frost');
+    expect(rpgSpellSchool('ball_lightning')).toBe('storm');
+  });
+
+  test('expanded loot stays collectible after the original eight relics and eventually covers every ability', () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    for (let expedition = 0; expedition < 12; expedition++) {
+      startRpgExpedition(db, 'collector');
+      for (let room = 0; room < 6; room++) {
+        const id = `collect-${expedition}-${room}`;
+        solved(db, 'collector', id); resolve(db, 'collector', id);
+      }
+    }
+    expect(new Set(getRpgState(db, 'collector').inventory)).toEqual(new Set(RPG_ITEMS.map(item => item.id)));
     db.close();
   });
 });

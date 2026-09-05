@@ -1,5 +1,90 @@
 import * as THREE from 'three';
 
+/** Moving translucent cloud strands, wrapped around a storm funnel. */
+export function stormMaterial(color: number): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    uniforms: { time: { value: 0 }, opacity: { value: 1 }, tint: { value: new THREE.Color(color) } },
+    vertexShader: `varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+    fragmentShader: `varying vec2 vUv;uniform float time;uniform float opacity;uniform vec3 tint;
+      float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+      float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);}
+      void main(){vec2 p=vec2(vUv.x*13.+vUv.y*7.-time*1.8,vUv.y*8.-time*.7);
+        float n=noise(p)*.6+noise(p*2.1)*.28+noise(p*4.3)*.12;
+        float wisps=smoothstep(.37,.75,n);float edge=smoothstep(0.,.12,vUv.y)*smoothstep(1.,.72,vUv.y);
+        float fine=pow(noise(p*3.+vec2(0.,time)),7.);
+        gl_FragColor=vec4(tint*(.3+wisps*.85+fine),edge*(wisps*.15+fine*.45)*opacity);}`,
+    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false,
+  });
+}
+
+/** A turbulent ground-hugging combustion front, with a fine white-hot edge. */
+export function novaMaterial(): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    uniforms: { progress: { value: 0 }, time: { value: 0 } },
+    vertexShader: `varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+    fragmentShader: `varying vec2 vUv; uniform float progress; uniform float time;
+      float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+      float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}
+      void main(){vec2 p=(vUv-.5)*2.;float r=length(p);float a=atan(p.y,p.x);
+        float front=(1.-pow(1.-progress,3.))*.94;
+        float wav=sin(a*19.+time*5.)*.009+sin(a*41.-time*6.)*.006+noise(p*35.)*.012;
+        float d=abs(r-front+wav);float core=exp(-d*260.);float halo=exp(-d*42.)*.42;
+        float fissure=pow(noise(p*31.+vec2(time*.2,0.)),9.)*3.;
+        float inner=step(r,front)*smoothstep(front-.24,front,r)*fissure;
+        float fade=1.-smoothstep(.5,1.,progress);
+        vec3 c=vec3(2.,.42,.025)*(halo+inner)+vec3(3.,1.5,.35)*core;
+        gl_FragColor=vec4(c,(core+halo+inner)*fade);}`,
+    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false,
+  });
+}
+
+/** Animated translucent tongues of flame, shared by torches and eruptions. */
+export function flameMaterial(): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    uniforms: { time: { value: 0 }, opacity: { value: 1 } },
+    vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+    fragmentShader: `
+      varying vec2 vUv; uniform float time; uniform float opacity;
+      float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+      float noise(vec2 p){vec2 i=floor(p),f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);}
+      float fbm(vec2 p){float n=0.,a=.5; for(int i=0;i<4;i++){n+=noise(p)*a;p=p*2.1+vec2(4.2,1.7);a*=.5;}return n;}
+      void main(){
+        float y=vUv.y; float n=fbm(vUv*vec2(7.,10.)-vec2(0.,time*2.7));
+        float x=abs(vUv.x-.5+sin(y*7.-time*2.)*.06*y);
+        float width=pow(1.-y,.7)*(.28+n*.3);
+        float edge=1.-smoothstep(width*.45,width,x);
+        float alpha=edge*smoothstep(0.,.06,y)*smoothstep(1.,.55,y+n*.13)*opacity;
+        float core=pow(1.-x/max(.01,width),2.)*(1.-y);
+        vec3 color=mix(vec3(.85,.035,.001),vec3(1.8,.45,.02),smoothstep(.0,.55,core));
+        color=mix(color,vec3(2.2,1.3,.42),smoothstep(.55,.95,core));
+        gl_FragColor=vec4(color,alpha); }
+    `,
+    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false,
+  });
+}
+
+/** Relief and roughness are derived once from the scanned albedo, then remain
+ * ordinary GPU textures. Crevices stay matte while worn stone catches light. */
+export function floorRelief(image: TexImageSource): { bump: THREE.CanvasTexture; roughness: THREE.CanvasTexture } {
+  const canvas = document.createElement('canvas'); canvas.width = canvas.height = 1024;
+  const context = canvas.getContext('2d')!; context.filter = 'blur(1.1px)'; context.drawImage(image as CanvasImageSource, 0, 0, 1024, 1024);
+  const pixels = context.getImageData(0, 0, 1024, 1024);
+  const rough = document.createElement('canvas'); rough.width = rough.height = 1024;
+  const roughContext = rough.getContext('2d')!, roughPixels = roughContext.createImageData(1024, 1024);
+  for (let offset = 0; offset < pixels.data.length; offset += 4) {
+    const value = pixels.data[offset] * .25 + pixels.data[offset + 1] * .6 + pixels.data[offset + 2] * .15;
+    const height = Math.min(255, Math.max(0, (value - 22) * 3));
+    pixels.data[offset] = pixels.data[offset + 1] = pixels.data[offset + 2] = height;
+    const finish = 224 - height * .27;
+    roughPixels.data[offset] = roughPixels.data[offset + 1] = roughPixels.data[offset + 2] = finish;
+    roughPixels.data[offset + 3] = 255;
+  }
+  context.putImageData(pixels, 0, 0); roughContext.putImageData(roughPixels, 0, 0);
+  const bump = new THREE.CanvasTexture(canvas), roughness = new THREE.CanvasTexture(rough);
+  for (const texture of [bump, roughness]) { texture.wrapS = texture.wrapT = THREE.RepeatWrapping; texture.anisotropy = 8; }
+  return { bump, roughness };
+}
+
 /** Hand-painted stone maps keep the dungeon readable without downloading textures. */
 export function stoneMaterial(color: number, seed = 7): THREE.MeshStandardMaterial {
   const canvas = document.createElement('canvas');

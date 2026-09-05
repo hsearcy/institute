@@ -2,7 +2,7 @@ import type { Database } from 'bun:sqlite';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
-  RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, rpgLevel, rpgSpellUnlocked, rpgEncounterKills,
+  RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, rpgLevel, rpgSpellUnlocked, rpgEncounterKills,
   type RpgState, type RpgReward, type RpgResolveResult,
 } from '@institute/shared';
 
@@ -74,7 +74,7 @@ export function startRpgExpedition(db: Database, profileId: string, regionId?: s
 const ResolveSchema = z.object({
   profileId: z.string().min(1).max(100), problemId: z.string().min(1).max(200),
   expeditionId: z.string().min(1).max(100), encounterIndex: z.number().int().min(0).max(5),
-  spellId: z.enum(['ember', 'frost', 'storm']).optional(), assisted: z.boolean().optional(),
+  spellId: z.enum(RPG_SPELL_IDS).optional(), assisted: z.boolean().optional(),
 });
 
 /** One recorded learning outcome can trigger one encounter, even after reloads or HTTP retries.
@@ -88,7 +88,12 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
       .get(body.profileId, body.problemId) as { expedition_id: string; encounter_index: number; reward_json: string } | null;
     if (claimed) {
       if (claimed.expedition_id !== body.expeditionId || claimed.encounter_index !== body.encounterIndex) throw new RpgError('This problem already powered another encounter.', 409);
-      return { state, reward: JSON.parse(claimed.reward_json), duplicate: true };
+      const reward = JSON.parse(claimed.reward_json) as RpgReward;
+      // Old receipts predate school/scope/effect metadata. Keep their earned XP
+      // and kills while returning the current description of the same item ID.
+      if (reward.item) reward.item = RPG_ITEMS.find(item => item.id === reward.item!.id) ?? reward.item;
+      reward.newItems = (reward.newItems ?? []).map(old => RPG_ITEMS.find(item => item.id === old.id) ?? old);
+      return { state, reward, duplicate: true };
     }
     const expedition = state.expedition;
     if (!expedition || expedition.cleared || expedition.id !== body.expeditionId || expedition.encounterIndex !== body.encounterIndex) {
@@ -112,10 +117,14 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
     // runs progress through the collection before duplicate drops give bonus XP.
     let item: typeof RPG_ITEMS[number] | null = null;
     if (state.totalKills === kills || expedition.encounterIndex === 2 || bossDefeated) {
-      const dropOrder = ['cinderwand', 'glacier', 'thunderrod', 'moonstaff', 'phoenix', 'wintercrown', 'tempest'];
-      const rarityPool = bossDefeated && state.expeditionsCompleted >= 2 ? dropOrder : dropOrder.slice(0, 4);
-      const itemId = rarityPool.find((id) => !state.inventory.includes(id)) ?? rarityPool[(state.expeditionsCompleted + expedition.encounterIndex) % rarityPool.length]!;
-      item = RPG_ITEMS.find((entry) => entry.id === itemId)!;
+      const pool = RPG_ITEMS.filter(entry => entry.id !== 'apprentice'
+        && entry.requiredClears <= state.expeditionsCompleted
+        && (bossDefeated || entry.rarity !== 'legendary'));
+      // Every eligible relic is found before that pool repeats. New trophies
+      // keep entering the pool as guardians are defeated, including specialist
+      // weapons for each of the fifteen abilities.
+      item = pool.find(entry => !state.inventory.includes(entry.id))
+        ?? pool[(state.expeditionsCompleted + expedition.encounterIndex) % pool.length]!;
     }
     const duplicateItem = !!item && state.inventory.includes(item.id);
     if (item && !duplicateItem) state.inventory.push(item.id);
@@ -214,7 +223,7 @@ export function createRpgRoutes(db: Database, applyMiss?: (profileId: string) =>
     return c.json(state);
   });
   app.post('/spell', async (c) => {
-    const { profileId, spellId } = ProfileSchema.extend({ spellId: z.enum(['ember', 'frost', 'storm']) }).parse(await c.req.json());
+    const { profileId, spellId } = ProfileSchema.extend({ spellId: z.enum(RPG_SPELL_IDS) }).parse(await c.req.json());
     const state = getRpgState(db, profileId);
     if (!rpgSpellUnlocked(spellId, state.skills)) throw new RpgError('Unlock this spell in your skill tree first.');
     state.selectedSpellId = spellId;

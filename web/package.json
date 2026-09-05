@@ -11,6 +11,7 @@
     "verify:visual": "playwright test --config playwright.rpg.config.ts",
     "verify:rpg": "playwright test --config playwright.rpg.config.ts",
     "verify:recovery": "playwright test --config playwright.recovery.config.ts",
+    "verify:spellbook": "playwright test --config playwright.spellbook.config.ts",
     "inspect:canvas": "node scripts/inspect-threejs-canvas.mjs"
   },
   "dependencies": {

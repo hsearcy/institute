@@ -1,5 +1,7 @@
 # The Sunken Vault: math dungeon RPG concepts
 
+**Current direction: [Revision 2 — horde combat, XP, and skill trees](direction-v2.md).** The new concepts retain this art style but replace the single-enemy encounter layout with a pulled-back action-RPG viewport, answer-driven combat bursts, and deeper character progression. Images 01–03 and the notes below document the original exploration.
+
 Three concept images for a gameplay overhaul of Institute. The working name is illustrative. This branch contains art and design notes only; the game and tutor have not been changed.
 
 ## The idea

@@ -44,6 +44,11 @@ for name in expected:
             if 'max' in indices:assert indices['max'][0]<accessor['count']
             triangles+=indices['count']//3
     stats[name]={'url':'/assets/rpg/'+name+'.glb','bytes':len(data),'triangles':triangles,'drawCalls':primitives,'embeddedTextures':len(doc.get('images',[])),'nodes':[n['name'] for n in doc['nodes'] if 'mesh' in n]}
+    if name in ('skeleton','imp','guardian'):
+        joints=[node.get('extras',{}).get('enemyJoint') for node in doc['nodes']]
+        assert all(key in joints for key in ('Head','Body','ArmUpperL','ArmUpperR','ArmLowerL','ArmLowerR','LegUpperL','LegUpperR','LegLowerL','LegLowerR'))
+        assert not doc.get('skins'), 'Enemies must remain rigid for shared instancing'
+        stats[name]['rigidJoints']=[key for key in joints if key]
     if name=='hero':
         clips=doc.get('animations',[])
         assert {a['name'] for a in clips}=={'idle','walk','cleave','cast'}

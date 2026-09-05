@@ -1,5 +1,29 @@
 import * as THREE from 'three';
 
+/** A wide ragged sheet of combustion; unlike torch fire it has no candle silhouette. */
+export function fireSheetMaterial(seed = 0): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    uniforms: { time: { value: 0 }, opacity: { value: 1 }, seed: { value: seed }, heat: { value: 1 } },
+    vertexShader: `varying vec2 vUv;uniform float time;uniform float seed;
+      void main(){vUv=uv;vec3 p=position;p.x+=sin(uv.y*6.+time*4.+seed)*uv.y*.15;p.z+=sin(uv.x*8.-time*3.+seed)*uv.y*.12;gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}`,
+    fragmentShader: `varying vec2 vUv;uniform float time;uniform float opacity;uniform float seed;uniform float heat;
+      float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+      float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);}
+      float fbm(vec2 p){float n=0.,a=.55;for(int i=0;i<4;i++){n+=a*noise(p);p=p*2.08+vec2(6.3,2.9);a*=.47;}return n;}
+      void main(){vec2 uv=vUv;vec2 p=vec2(uv.x*7.+seed,uv.y*3.8-time*2.3);
+        float warp=fbm(p*.62+vec2(time*.2,0.));p.x+=(warp-.5)*2.5*uv.y;
+        float n=fbm(p), fine=fbm(p*2.6+vec2(0.,-time));
+        float fuel=(1.-uv.y)*.76+n*.9-.47;
+        float tears=smoothstep(.14,.49,fine+(.8-uv.y)*.3);
+        float edge=smoothstep(0.,.12,uv.x)*smoothstep(1.,.86,uv.x)*smoothstep(0.,.05,uv.y);
+        float alpha=smoothstep(.0,.17,fuel)*tears*edge*opacity;
+        float core=smoothstep(.23,.59,fuel)*heat;
+        vec3 c=mix(vec3(.9,.075,.004),vec3(2.3,.55,.045),smoothstep(0.,.38,fuel));
+        c=mix(c,vec3(2.1,.9,.12),core*.35);gl_FragColor=vec4(c,alpha);}`,
+    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false,
+  });
+}
+
 /** Moving translucent cloud strands, wrapped around a storm funnel. */
 export function stormMaterial(color: number): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
@@ -28,11 +52,12 @@ export function novaMaterial(): THREE.ShaderMaterial {
       void main(){vec2 p=(vUv-.5)*2.;float r=length(p);float a=atan(p.y,p.x);
         float front=(1.-pow(1.-progress,3.))*.94;
         float wav=sin(a*19.+time*5.)*.009+sin(a*41.-time*6.)*.006+noise(p*35.)*.012;
-        float d=abs(r-front+wav);float core=exp(-d*260.);float halo=exp(-d*42.)*.42;
+        float breakup=noise(vec2(a*13.+time*.8,3.7))*.65+noise(p*19.)*.35;
+        float d=abs(r-front+wav);float core=exp(-d*170.)*smoothstep(.4,.74,breakup);float halo=exp(-d*35.)*.24;
         float fissure=pow(noise(p*31.+vec2(time*.2,0.)),9.)*3.;
         float inner=step(r,front)*smoothstep(front-.24,front,r)*fissure;
         float fade=1.-smoothstep(.5,1.,progress);
-        vec3 c=vec3(2.,.42,.025)*(halo+inner)+vec3(3.,1.5,.35)*core;
+        vec3 c=vec3(1.8,.32,.018)*(halo+inner)+vec3(2.5,1.1,.18)*core;
         gl_FragColor=vec4(c,(core+halo+inner)*fade);}`,
     transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false,
   });

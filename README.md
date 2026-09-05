@@ -28,7 +28,7 @@ Open `http://127.0.0.1:5188`. This uses a disposable database in `/tmp`; it does
 
 ## Playing
 
-Type an answer and press Enter or **Unleash**. Use Q/W/E for your three school favorites, B for the full spellbook, K for skill trees, I for equipment, and Escape to pause. Choosing a spell in the spellbook updates its school slot; favorites persist on this device. A number pad is available for touch devices. **Help me** offers a hint or the existing worked walkthrough. Pausing, closing the tab, and leaving at checkpoints preserve adventure progress.
+Type an answer and press Enter or **Unleash**. Use Q/W/E for your three school favorites, B for the full spellbook, K for skill trees, I for equipment, and Escape to pause. Choosing a spell in the spellbook updates its school slot; favorites persist on this device. Click a locked spell to track its next prerequisite at camp and in the dungeon; newly learned spells offer **Try it now**. A number pad is available for touch devices. **Help me** offers a hint or the existing worked walkthrough. Pausing, closing the tab, and leaving at checkpoints preserve adventure progress.
 
 ## Verification and assets
 

@@ -47,7 +47,9 @@ blade edges retain their own materials.
 Coordinates are **+Y up, +Z front, meters, ground-centered origin**. The renderer
 normalizes the model height for placement. Prefixes `Body_`, `Head_`, `Cape_`,
 `Sword_`, `Lid_`, and `Embers_` identify meaningful parts; ignore numeric suffixes.
-Actors use four to six meshes; major architecture generally uses one.
+The hero/wraith use four to six meshes. Articulated skeleton/guardian use thirteen
+and twelve respectively, shared in instanced batches. Major architecture generally
+uses one.
 
 ## Hero animation
 
@@ -59,11 +61,28 @@ blends between chest and cape. Sword meshes remain separate but are skinned to
 `idle` (3.2 seconds) and `walk` (.8 seconds) loop. `cleave` and `cast` (1.13 seconds)
 are single actions with a windup, strike/release, and recovery. Root translation
 stays zero; the game owns movement. Use `SkeletonUtils.clone` for the hero,
-`AnimationMixer`, and a short crossfade. The enemy models remain rigid for efficient
+`AnimationMixer`, and a short crossfade. Enemy limbs use rigid articulation for efficient
 instancing. This is a small authored rig, not a full anatomical animation system.
 
 ![Hero animation poses](previews/v2/hero-animation.png)
 ![Final guardian from front and back](previews/v2/guardian-final.png)
+
+## Enemy articulation
+
+Skeletons and guardians have ordinary `Joint_*` transform nodes: `Body`, `Head`,
+paired `ArmUpper`, `ArmLower`, `LegUpper`, and `LegLower` joints. The skeleton also
+has `Sword` and `Cape`. Stable `extras.enemyJoint` values identify each joint even
+if Blender adds a numeric suffix to its name. Sword is parented to the right
+forearm; elbows and knees inherit the upper limb transform. All bones and armor
+pieces remain rigid, with their existing UVs and PBR surfaces.
+
+`web/src/rpg/world/EnemyAnimator.ts` supplies cosmetic stance shifts, steps, head
+motion, warning sweeps, recoil, and limb separation on defeat. It changes local
+joint transforms only. The renderer retains travel/combat timing, calls the helper
+before `updateMatrixWorld`, and copies source mesh matrices into shared instanced
+batches. No per-enemy skinning, animation mixer, or cloned material is required.
+
+![Rigid enemy articulation poses](previews/v2/enemy-articulation.png)
 
 Studio renders use stronger fill for surface inspection; the game viewport remains
 the final lighting check. Iteration corrected low ambient readability, excessive
@@ -80,7 +99,8 @@ python scripts/blender/validate_assets.py
 ```
 
 The build creates a dedicated scene, preserves other scenes, uses seed 214 per
-asset, bakes PBR maps, rigs the hero, exports GLBs, optimizes embedded textures, and
+asset, bakes PBR maps, rigs the hero, articulates enemy parts, exports GLBs,
+optimizes embedded textures, and
 copies the skeleton compatibility alias. It requires no network. Validation checks
 GLB structure, buffer bounds, embedded images, UV/material contracts, skin joints,
 and the four animation names, then refreshes the manifest.

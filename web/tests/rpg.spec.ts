@@ -68,12 +68,35 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
   expect(originalMastery.topics.filter((t: {state:string}) => t.state === 'mastered').length).toBeGreaterThan(0);
   expect(originalLegacy.gems).toBe(482);
   await page.goto('/');
+  await page.locator('.rpg-starter-spells [data-spell="cleave"]').click();
+  await expect.poll(async () => (await state(page)).selectedSpellId).toBe('cleave');
+  await expect(page.locator('.rpg-starter-spells [data-spell="cleave"]')).toHaveAttribute('aria-pressed','true');
+  await page.locator('.rpg-starter-spells [data-spell="ember"]').click();
+  await expect.poll(async () => (await state(page)).selectedSpellId).toBe('ember');
   await page.getByRole('button',{name:/Enter the dungeon/}).click();
   await ready(page);
   await page.screenshot({path:info.outputPath('01-encounter.png')});
   const waiting = await state(page);
   await page.waitForTimeout(1200);
   expect(await state(page)).toEqual(waiting); // Thinking never damages or advances the encounter.
+
+  await expect.poll(() => page.evaluate(() => Number((window as any).__game.world.diagnostics.articulatedEnemies))).toBeGreaterThan(0);
+  const masteryBeforeTarget = await (await page.request.get(`/mastery?profileId=${profile}`)).json();
+  const targetProblem = await page.locator('#rpg-answer-form').getAttribute('data-problem-id');
+  await page.getByRole('button', {name:'Open spellbook',exact:true}).click();
+  await page.locator('#rpg-dialog-content [data-spell="meteor"]').click();
+  await expect(page.locator('#rpg-dialog-content [data-skill="meteor"]')).toHaveClass(/rpg-target-skill/);
+  await page.getByRole('button', {name:'Return to dungeon',exact:true}).click();
+  await expect(page.locator('#rpg-next-spell')).toContainText('Meteor');
+  expect(await state(page)).toEqual(waiting);
+  expect(await (await page.request.get(`/mastery?profileId=${profile}`)).json()).toEqual(masteryBeforeTarget);
+  await page.reload();
+  await page.getByRole('button',{name:/Continue adventure/}).click(); await ready(page);
+  await expect(page.locator('#rpg-next-spell')).toContainText('Meteor');
+  await expect(page.locator('#rpg-answer-form')).toHaveAttribute('data-problem-id',targetProblem!);
+  await page.locator('#rpg-next-spell').click();
+  await expect(page.locator('#rpg-dialog-content [data-skill="ember_power"]')).toHaveClass(/rpg-target-skill/);
+  await page.getByRole('button',{name:'Return to dungeon',exact:true}).click();
 
   const first = await currentProblem(page, problems);
   await page.getByRole('textbox',{name:'Your answer'}).fill(String((first.answer + 1) % 1000));
@@ -115,7 +138,9 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
   await page.locator('[data-skill="frost"]').click();
   await expect.poll(async () => (await state(page)).skills.frost).toBe(1);
   await page.screenshot({path:info.outputPath('03-skills.png')});
-  await page.getByRole('button',{name:'Return to dungeon',exact:true}).click();
+  await expect(page.locator('.rpg-learned-goal')).toContainText('Frostfall');
+  await page.locator('.rpg-learned-goal').click();
+  await expect.poll(async () => (await state(page)).selectedSpellId).toBe('frost');
   await page.locator('#rpg-dialog-content [data-action="inventory"]').click();
   const ownedItem = completed.inventory.find(id => id !== 'apprentice')!;
   await page.locator(`[data-item="${ownedItem}"]`).click();

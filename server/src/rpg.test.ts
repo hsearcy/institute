@@ -46,7 +46,7 @@ describe('additive RPG progression on legacy learning data', () => {
     solved(db, 'sam', 'new-problem');
     const beforeResolve = snapshot(db);
     const result = resolve(db, 'sam', 'new-problem');
-    expect(result.reward).toMatchObject({ kills: 24, xp: 32, newItems: [{ id: 'cinderwand' }] });
+    expect(result.reward).toMatchObject({ kills: 14, xp: 32, newItems: [{ id: 'cinderwand' }] });
     expect(snapshot(db)).toBe(beforeResolve);
     ensureRpgSchema(db);
     expect(getRpgState(db, 'sam')).toEqual(result.state);
@@ -94,6 +94,51 @@ describe('additive RPG progression on legacy learning data', () => {
     expect(() => resolve(db, 'sam', 'right')).toThrow('already powered');
     expect(db.query('SELECT COUNT(*) AS n FROM rpg_claims').get()).toEqual({ n: 1 });
     db.close();
+  });
+
+  test('old larger-pack receipts retain earned kills while future encounters use smaller packs', () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    try {
+      const initial = startRpgExpedition(db, 'sam');
+      solved(db, 'sam', 'pre-viewport-change');
+      const request = { profileId: 'sam', problemId: 'pre-viewport-change', expeditionId: initial.expedition!.id, encounterIndex: 0 };
+      const earned = resolveRpgEncounter(db, request);
+      // Simulate a saved receipt/state from the prior 24-enemy initial pack.
+      earned.reward.kills = 24; earned.state.totalKills = 24;
+      db.query('UPDATE rpg_claims SET reward_json = ? WHERE profile_id = ?').run(JSON.stringify(earned.reward), 'sam');
+      db.query('UPDATE rpg_profiles SET state_json = ? WHERE profile_id = ?').run(JSON.stringify(earned.state), 'sam');
+      const learning = snapshot(db), savedReceipt = db.query('SELECT * FROM rpg_claims').all();
+      ensureRpgSchema(db);
+      for (let retry = 0; retry < 2; retry++) {
+        const repeated = resolveRpgEncounter(db, request);
+        expect(repeated).toEqual({ state: earned.state, reward: earned.reward, duplicate: true });
+      }
+      expect(db.query('SELECT * FROM rpg_claims').all()).toEqual(savedReceipt);
+      expect(snapshot(db)).toBe(learning);
+      solved(db, 'sam', 'post-viewport-change');
+      const beforeNext = snapshot(db), next = resolve(db, 'sam', 'post-viewport-change');
+      expect(next.reward).toMatchObject({ kills: 15, xp: 32 });
+      expect(next.state.totalKills).toBe(39);
+      expect(next.state.xp).toBe(64);
+      expect(snapshot(db)).toBe(beforeNext);
+    } finally { db.close(); }
+  });
+
+  test('a capped late-game pack awards unchanged XP once and does not mutate learning', () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    try {
+      const initial = startRpgExpedition(db, 'sam');
+      Object.assign(initial, { selectedSpellId: 'firestorm', skills: Object.fromEntries(RPG_SKILLS.map(skill => [skill.id, skill.maxRank])), equippedItemId: 'apprentice' });
+      db.query('UPDATE rpg_profiles SET state_json = ? WHERE profile_id = ?').run(JSON.stringify(initial), 'sam');
+      solved(db, 'sam', 'capped-pack');
+      const learning = snapshot(db), request = { profileId: 'sam', problemId: 'capped-pack', expeditionId: initial.expedition!.id, encounterIndex: 0 };
+      const first = resolveRpgEncounter(db, request);
+      expect(first.reward).toMatchObject({ kills: 48, xp: 32 });
+      expect(first.state.totalKills).toBe(48);
+      expect(resolveRpgEncounter(db, request)).toEqual({ ...first, duplicate: true });
+      expect(snapshot(db)).toBe(learning);
+      expect(db.query('SELECT COUNT(*) AS n FROM rpg_claims').get()).toEqual({ n: 1 });
+    } finally { db.close(); }
   });
 
   test('unrecorded, other-profile, old, locked-spell, and stale-encounter claims are rejected', () => {
@@ -257,7 +302,7 @@ describe('expanded spellbook compatibility and authority', () => {
     startRpgExpedition(db, 'sam'); solved(db, 'sam', 'meteor-test');
     const learning = snapshot(db);
     const result = resolve(db, 'sam', 'meteor-test', { spellId: 'meteor' });
-    expect(result.reward).toMatchObject({ spellId: 'meteor', kills: 40, xp: 32 });
+    expect(result.reward).toMatchObject({ spellId: 'meteor', kills: 30, xp: 32 });
     expect(snapshot(db)).toBe(learning);
     db.close();
   });
@@ -295,8 +340,8 @@ describe('expanded spellbook compatibility and authority', () => {
     const state = { skills: { ember_power: 1, ember_echo: 1, meteor: 1, meteor_shower: 1 }, equippedItemId: 'starfall', selectedSpellId: 'meteor' as const };
     expect(rpgSpellModifiers(state)).toEqual(['echo']);
     expect(rpgSpellModifiers(state, 'ice_lance')).toEqual([]);
-    expect(rpgEncounterKills(state, 0)).toBe(43); // 24 base + 6 Meteor + 2 Wildfire + 3 shower + 8 gear.
-    expect(rpgEncounterKills(state, 0, 'cleave')).toBe(28); // 24 base + 2 Cleave + 2 school power.
+    expect(rpgEncounterKills(state, 0)).toBe(33); // 14 base + 6 Meteor + 2 Wildfire + 3 shower + 8 gear.
+    expect(rpgEncounterKills(state, 0, 'cleave')).toBe(18); // 14 base + 2 Cleave + 2 school power.
     expect(rpgSpellSchool('frost_guardian')).toBe('frost');
     expect(rpgSpellSchool('ball_lightning')).toBe('storm');
   });

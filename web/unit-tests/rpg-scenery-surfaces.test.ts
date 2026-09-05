@@ -12,7 +12,7 @@ test('Weathering stays registered to the floor and no scenery triangles span a c
   let scenery: THREE.Group | undefined;
   try {
     scenery = createVaultScenery(base);
-    const roomDraws = new Map<number, number>(), weatheredRooms = new Set<number>();
+    const roomDraws = new Map<number, number>(), weatheredRooms = new Set<number>(), clothRooms = new Set<number>();
     for (const mesh of scenery.children as THREE.Mesh[]) {
       const room = mesh.userData.room as number, geometry = mesh.geometry, position = geometry.getAttribute('position');
       roomDraws.set(room, (roomDraws.get(room) ?? 0) + 1);
@@ -25,12 +25,25 @@ test('Weathering stays registered to the floor and no scenery triangles span a c
           assert(Math.abs(uv.getY(i) - position.getZ(i) / 4.8) < .00001);
         }
       }
+      if (material.name === 'Worn ceremonial cloth') {
+        clothRooms.add(room);
+        assert(material.alphaTest > 0 && !material.transparent, 'Torn edges must cut away without translucent sorting artifacts');
+        for (const texture of [material.map, material.bumpMap]) assert(scenery.userData.ownedTextures.includes(texture), 'Runner maps must be owned by scenery cleanup');
+        let minHeight = Infinity, maxHeight = -Infinity;
+        for (let i = 0; i < position.count; i++) { minHeight = Math.min(minHeight, position.getY(i)); maxHeight = Math.max(maxHeight, position.getY(i)); }
+        assert(maxHeight - minHeight > .015 && maxHeight < .08, 'Cloth needs shallow creases while remaining floor dressing');
+        const pixels = (material.map as THREE.DataTexture).image.data;
+        let solid = 0, cutout = 0;
+        for (let i = 3; i < pixels.length; i += 4) { if (pixels[i] === 0) cutout++; else solid++; }
+        assert(cutout > solid * .05 && solid > cutout, 'Worn cloth must have visible tears/fraying and a substantial surviving center');
+      }
       if (room === 3) for (let i = 0; i < position.count; i += 3) {
         const xs = [0, 1, 2].map(corner => position.getX(i + corner)), zs = [0, 1, 2].map(corner => position.getZ(i + corner) + 60);
         assert.equal(boundsIntersectCrossingChasm(room, { minX: Math.min(...xs), maxX: Math.max(...xs), minZ: Math.min(...zs), maxZ: Math.max(...zs) }), false);
       }
     }
     assert.equal(weatheredRooms.size, 6);
+    assert.equal(clothRooms.size, 3);
     assert([...roomDraws.values()].every(count => count <= 15), 'Scenery must remain merged by room/material');
     const mask = (scenery.userData.ownedTextures as THREE.Texture[]).find(texture => texture instanceof THREE.DataTexture) as THREE.DataTexture;
     const { data, width, height } = mask.image;

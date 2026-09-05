@@ -60,7 +60,34 @@ export function createVaultScenery(base: Record<string, THREE.MeshStandardMateri
   dust.color.setHex(0xa49577); dust.roughness = 1; dust.opacity = .52;
   worn.color.setHex(0x58605b); worn.roughness = .29; worn.metalness = .04; worn.opacity = .58;
   group.userData.ownedTextures.push(wearMask);
-  group.userData.ownedMaterials = [stone, paleStone, clay, cloth, wax, iron, wick, grime, wet, dust, worn];
+  // The runner owns its maps; masonry/floor textures remain borrowed. Worn
+  // embroidery and clipped fibres make a cloth remnant read at the closer camera.
+  const fabricWidth = 128, fabricHeight = 256, fabricPixels = new Uint8Array(fabricWidth * fabricHeight * 4);
+  const fabricRelief = new Uint8Array(fabricPixels.length);
+  for (let y = 0; y < fabricHeight; y++) for (let x = 0; x < fabricWidth; x++) {
+    const u = x / (fabricWidth - 1), v = y / (fabricHeight - 1), index = (y * fabricWidth + x) * 4;
+    const grain = hash(x, y), wornColor = .64 + noise(x / 17, y / 23) * .52;
+    const weave = ((x % 3 === 0) !== (y % 3 === 0) ? .90 : 1) * (.88 + grain * .22);
+    const hem = Math.abs(u - .12) < .018 || Math.abs(u - .88) < .018;
+    const stitch = hem && hash(Math.floor(x / 2), Math.floor(y / 5)) > .22;
+    const fringe = .017 + noise(x / 4, 1) * .04 + (x % 4 === 0 ? .028 : 0);
+    const edge = .023 + noise(1, y / 7) * .03;
+    const torn = (v > .24 && v < .39 && u > .87 - Math.sin((v - .24) / .15 * Math.PI) * .13)
+      || Math.hypot((u - .31) * 1.8, (v - .69) * 4) < .042 + noise(x / 4, y / 4) * .017;
+    const alpha = u > edge && u < 1 - edge && v > fringe && v < 1 - fringe && !torn ? 255 : 0;
+    const color = stitch ? [117, 100, 67] : [64, 48, 42];
+    fabricPixels.set([...color.map(channel => Math.round(channel * wornColor * weave)), alpha], index);
+    const height = Math.round(125 + (weave - .9) * 110 + noise(x / 12, y / 19) * 35);
+    fabricRelief.set([height, height, height, 255], index);
+  }
+  const fabricMap = new THREE.DataTexture(fabricPixels, fabricWidth, fabricHeight);
+  const fabricBump = new THREE.DataTexture(fabricRelief, fabricWidth, fabricHeight);
+  fabricMap.colorSpace = THREE.SRGBColorSpace;
+  for (const texture of [fabricMap, fabricBump]) { texture.minFilter = THREE.LinearMipmapLinearFilter; texture.magFilter = THREE.LinearFilter; texture.generateMipmaps = true; texture.needsUpdate = true; }
+  const runner = new THREE.MeshStandardMaterial({ map: fabricMap, bumpMap: fabricBump, bumpScale: .025, alphaTest: .5, roughness: .96, side: THREE.DoubleSide, vertexColors: true });
+  runner.name = 'Worn ceremonial cloth';
+  group.userData.ownedTextures.push(fabricMap, fabricBump);
+  group.userData.ownedMaterials = [stone, paleStone, clay, cloth, wax, iron, wick, grime, wet, dust, worn, runner];
 
   const add = (room: number, geometry: THREE.BufferGeometry, material: THREE.Material, position: THREE.Vector3, rotation = new THREE.Euler(), scale = new THREE.Vector3(1, 1, 1), shadow = true, keepCombatClear = false) => {
     if (isCrossingChasm(room, position.x, position.z + room * 20)) { geometry.dispose(); return; }
@@ -199,14 +226,23 @@ export function createVaultScenery(base: Record<string, THREE.MeshStandardMateri
     }
     // A discarded, torn ceremonial runner breaks up the repeating cobbles.
     if (room % 2 === 0) {
+      // Preserve the original seeded outline draws so unrelated room dressing
+      // keeps its placement. Extra vertices create shallow, irregular folds.
+      const outline = Array.from({ length: 18 }, (_, i) => ({ x: (i % 2 ? 1 : -1) * (.40 + random() * .18), y: .022 + random() * .025 }));
       const vertices: number[] = [], uv: number[] = [], indices: number[] = [];
-      for (let row = 0; row < 9; row++) for (let edge = 0; edge < 2; edge++) {
-        vertices.push((edge ? 1 : -1) * (.40 + random() * .18), .022 + random() * .025, row * .28);
-        uv.push(edge, row / 8);
-        if (row < 8 && edge === 0) { const i = row * 2; indices.push(i, i + 1, i + 2, i + 1, i + 3, i + 2); }
+      const rows = 32, columns = 10;
+      for (let row = 0; row <= rows; row++) for (let column = 0; column <= columns; column++) {
+        const u = column / columns, v = row / rows, segment = Math.min(7, Math.floor(v * 8)), t = v * 8 - segment;
+        const left = THREE.MathUtils.lerp(outline[segment * 2].x, outline[(segment + 1) * 2].x, t);
+        const right = THREE.MathUtils.lerp(outline[segment * 2 + 1].x, outline[(segment + 1) * 2 + 1].x, t);
+        const crease = Math.pow(Math.max(0, Math.cos((u * 2.8 + v * .85) * Math.PI * 2)), 6) * .027;
+        const sag = THREE.MathUtils.lerp(outline[segment * 2].y, outline[(segment + 1) * 2].y, t) * .35;
+        vertices.push(THREE.MathUtils.lerp(left, right, u), .015 + sag + crease, v * 2.24);
+        uv.push(u, v);
+        if (row < rows && column < columns) { const i = row * (columns + 1) + column; indices.push(i, i + 1, i + columns + 1, i + 1, i + columns + 2, i + columns + 1); }
       }
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(indices); g.computeVertexNormals();
-      add(room, g, cloth, new THREE.Vector3(room % 4 === 0 ? -6.6 : 6.6, 0, center - 4), new THREE.Euler(0, .5 + room, 0), undefined, false);
+      add(room, g, runner, new THREE.Vector3(room % 4 === 0 ? -6.6 : 6.6, 0, center - 4), new THREE.Euler(0, .5 + room, 0), undefined, false);
     }
     // Fragments of iron portcullis remain attached to the high side of the vault.
     for (let chain = 0; chain < 2; chain++) {

@@ -1,6 +1,81 @@
 # The Sunken Vault playtest record
 
-Verified September 5, 2026 on `concept/math-dungeon-rpg`. Successive revisions address the gap between the first prototype and the approved concept: textured Gothic architecture, denser hordes, animated characters, illustrated controls, and substantially more magic and loot. Images below are captured from the implementation, not generated concept art.
+Verified September 5, 2026 on `concept/math-dungeon-rpg`. Successive revisions address the gap between the first prototype and the approved concept: textured Gothic architecture, closer combat framing, animated characters, illustrated controls, and substantially more magic and loot. Images below are captured from the implementation, not generated concept art.
+
+## Twelfth closer combat and spell effects pass
+
+The viewport is roughly **30% closer on desktop**, with nearly twice the actor
+size on narrow phones. Short landscape views lift the hero above the question
+dock and use a three-row number pad beside the action. The first unmodified
+pack now has **14 enemies**, rising to 18 before a 24-enemy boss encounter;
+spell, skill and equipment bonuses still contribute, with an authoritative
+**48-enemy cap**. Small packs gather in loose groups around room anchors rather
+than spreading single enemies across distant corners. Path, landmark, floor,
+chasm and spacing constraints remain intact, including stable placement prefixes
+through the old layout helper's 96-enemy capacity.
+
+![Closer desktop framing and grouped 14-enemy pack — renderer inspection](rpg-playtest/v12/horde-renderer.png)
+
+A dedicated effects agent rebuilt **Phoenix Dive** with bent flame shoulders,
+separated curling feathers, curved tail trails, dark wisps and shedding embers.
+The wing and tail roots follow the hero's actual animated position; visual review
+caught and fixed the previous mismatch between the hero and effect clocks.
+**Tempest and Blizzard** use broken asymmetric cloud strips and
+sparse charged filaments in place of smooth funnel cylinders and luminous loops.
+Lightning across the storm spells is now a thin jagged branching flash with a
+faint blue corona and brief re-strikes. Chain Lightning's visible hops now match
+its existing hit schedule, including maximum packs. Enemy hit times, cast
+completion, learning and XP rules are unchanged.
+
+![Actual Phoenix Dive from a submitted answer](rpg-playtest/v12/phoenix.png)
+![Actual Tempest with branching lightning and broken cloud wisps](rpg-playtest/v12/tempest.png)
+
+The new effects use bounded merged geometry, independent disposable materials,
+conservative shader bounds and single-pass additive ribbons. Their shaders
+compile during model loading. A second agent reviewed geometry, disposal,
+orthographic facing and timing while the primary agent inspected actual casts.
+
+The guardian received a Blender MCP material revision: darker weathered granite,
+coarser grain and baked contact dirt. Geometry, joint hierarchy and animation
+remain unchanged. Closed uneven mineral clusters replace glowing decorative
+cones. A worn ceremonial runner now has fabric grain, faded borders, torn edges
+and shallow folds instead of a conspicuous flat brown polygon. Independent art
+review checked these against the approved viewport concept.
+
+![Landscape input with the hero clear of the dock](rpg-playtest/v12/landscape.png)
+
+Validation: **280 unit tests pass**, the production build passes, and all 20 GLBs
+validate at 282,913 triangles and 31,153,696 bytes. All 15 spells passed across
+three actual expeditions in 2.4 minutes, including skills, equipment modifiers,
+armor/favorites reloads, exact question recovery and duplicate boss rewards.
+Both desktop/touch regressions passed in 1.4 minutes. A further focused touch
+run passed in 18.2 seconds, checking actual landscape keypad clicks after
+closing the relic card. Tutor fixtures use deterministic local fallbacks;
+they do not exercise a live language-model service.
+
+Compatibility tests replay a pre-change 24-kill receipt without rewriting it or
+awarding again, then verify that the next encounter uses the smaller count.
+Mastery, learning-tree selection, reward XP, levels, unlocks, inventory and saved
+history retain their existing rules. There is no save migration for this pass.
+No Ares service or child profile was modified.
+
+A trial screen-space occlusion pass was discarded after comparison: the image
+change was slight while normal-room median render cost rose from 3.2 to 5.0 ms
+and p95 rose from 4.9 to 10.1 ms in that trial. The final reproducible
+[renderer benchmark](rpg-playtest/v12/renderer-benchmark.json), on this machine's
+Intel Iris Xe at 1440×900, measured median render costs of 2.7 ms for 14 enemies,
+3.0 ms for 24, 4.5 ms for a 48-enemy Tempest and 4.9 ms for a 48-enemy Phoenix.
+These are fixed-step renderer timings including GPU synchronization. Observed
+frame intervals were 50–66.7 ms in this desktop session; these measurements do
+not establish smooth player frame rates on another machine.
+
+The closer view and Phoenix silhouette improve readability and spectacle. The
+concept still has more natural creature anatomy, richer stone detail and more
+convincing surface shading. Tempest remains comparatively restrained between
+flashes. Actual Ares resume, consistent performance on the child's device, and
+whether the child chooses to keep playing remain acceptance work. The game goal
+is still open. The horde image is a renderer inspection; spell and landscape
+images come from real UI playtests.
 
 ![Actual Flame Cleave against the mixed armored horde](rpg-playtest/v11/cleave.png)
 

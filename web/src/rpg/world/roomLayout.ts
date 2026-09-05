@@ -104,8 +104,8 @@ function fits(layout: RoomLayout, point: RoomPoint): boolean {
 }
 
 /** A jittered triangular lattice keeps capacity bounded and avoids random rejection failures.
- * After seeding the anchors, progressively choose the largest remaining clear space.
- * Normal packs spread across the room; larger packs fill the gaps, retaining every prefix.
+ * Small packs form loose groups around the anchors; larger packs occupy the remaining
+ * open floor before filling gaps. Selection depends on prefix length, never final count.
  */
 export function enemyPositions(roomIndex: number, count: number): RoomPoint[] {
   const layout = getRoomLayout(roomIndex);
@@ -144,8 +144,15 @@ export function enemyPositions(roomIndex: number, count: number): RoomPoint[] {
   }
   while (result.length < wanted) {
     let best = -1, score = -Infinity;
+    const grouping = result.length < 24;
+    const anchor = layout.hordeAnchors[(result.length - (layout.bossAnchor ? 1 : 0)) % layout.hordeAnchors.length];
+    const groupClearance = 1.8;
     for (let i = 0; i < candidates.length; i++) {
-      const next = clearance[i] * weights[i];
+      // Capping the attraction to empty space keeps small packs together instead
+      // of sending their next member to the farthest corner of the entire room.
+      const next = grouping
+        ? (clearance[i] >= groupClearance ** 2 ? 1 : .01) * weights[i] / (1 + distanceSquared(candidates[i], anchor) * .28)
+        : clearance[i] * weights[i];
       if (!used.has(i) && next > score) { best = i; score = next; }
     }
     if (best === -1) throw new Error(`Room ${layout.id} cannot fit ${wanted} enemies safely (${result.length} available)`);

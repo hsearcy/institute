@@ -131,7 +131,7 @@ cuts per mass, narrow chipped edges, sparse branching faults, and subtle pitting
 Large uncracked faces retain its hunched body and heavy forearms. Uneven quartz
 clusters use opaque mineral facets and narrow glints rather than emissive stripes.
 The optimized GLB contains 24,570 triangles, sixteen rigid mesh parts, and three
-embedded textures in 2,664,696 bytes. All ten joint pivots match the previous
+embedded textures in 2,641,856 bytes. All ten joint pivots match the previous
 articulated asset exactly. Guardian construction assigns explicit limb parts and stores authored
 joint pivots on the collection; these survive baking and avoid centroid-based
 misattachment. Older skeletal sources still use the centroid fallback. Soldier
@@ -203,7 +203,7 @@ baking and weighted as connected rigid pieces to avoid stretching armor panels.
 
 The optimized variants contain 12,842 / 13,212 / 13,202 triangles, respectively,
 and stay below 2.11 MB each. The complete library contains 20 GLBs, 282,913
-triangles, and 31,176,536 bytes. The validator checks variant skins, clips,
+triangles, and 31,153,696 bytes. The validator checks variant skins, clips,
 embedded materials, portrait presence, and the 25,000-triangle / 4 MB budgets.
 
 `detailed/render_appearances.py` reimports the final optimized GLBs into separate
@@ -236,3 +236,25 @@ textures, its right-hand sword parent, and the export budget. Source maps remain
 in `scripts/blender/textures/` rather than the runtime public tree.
 
 ![Reimported final skeleton and revenant GLBs](previews/v2/revenant-exported.png)
+
+
+## Guardian granite surface revision
+
+The guardian now uses a dedicated dark granite shader with broad warm mineral
+variation, sparse feldspar flecks, coarse normal detail, and roughness breakup.
+A restrained contact-dirt multiplier is baked into its albedo, preserving visible
+recesses under the game's direct lights when small actor meshes do not receive
+shadow maps. The separate ORM red channel still contains physical ambient
+occlusion; the audit found valid AO and correct color spaces in the prior export,
+not a missing-map or gamma error. Normal and roughness detail is authored at a
+larger scale to survive the gameplay camera distance. Icy seams and quartz
+geometry remain unchanged.
+
+`guardian_granite_materials` in `detailed/characters.py` owns this shader, and
+`make_guardian_v2` restores its material dictionary after construction so later
+assets cannot inherit guardian-specific granite during a full rebuild. No shared
+bake or optimization settings changed. Both before/after exports have identical
+45,436 vertex positions, 24,570 triangles, sixteen mesh parts, bounds, and ten
+joint pivots/hierarchy. The optimized replacement is 2,641,856 bytes.
+
+![Previous guardian surface left, revised final GLB right, identical studio lighting](previews/v2/guardian-surface-comparison.png)

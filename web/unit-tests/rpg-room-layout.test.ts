@@ -27,7 +27,7 @@ for (let room = 0; room < 6; room++) {
   test(`${getRoomLayout(room).id}: count changes preserve stable formations and separated groups`, () => {
     const full = enemyPositions(room, 96);
     // Rewards and upgrades vary the count; a retry must not rearrange the room.
-    for (const count of [0, 1, 2, 6, 24, 30, 36, 60, 95, 96]) {
+    for (const count of [0, 1, 2, 6, 14, 18, 24, 30, 36, 48, 60, 95, 96]) {
       assert.deepEqual(enemyPositions(room, count), full.slice(0, count));
     }
     const small = enemyPositions(room, 24);
@@ -42,6 +42,20 @@ for (let room = 0; room < 6; room++) {
     assert.deepEqual(enemyPositions(room, 1), full.slice(0, 1), 'Returned position objects must not be shared');
   });
 
+  test(`${getRoomLayout(room).id}: small packs form readable groups instead of distant singles`, () => {
+    const positions = enemyPositions(room, 14), anchors = getRoomLayout(room).hordeAnchors;
+    for (const [index, point] of positions.entries()) {
+      const nearAnchor = Math.min(...anchors.map(anchor => Math.hypot(point.x - anchor.x, point.z - anchor.z)));
+      assert(nearAnchor < 2.6, 'Initial enemies should stay near the existing approach groups');
+      const neighbor = Math.min(...positions.filter((_, other) => other !== index).map(other => Math.hypot(point.x - other.x, point.z - other.z)));
+      assert(neighbor >= 1.6, 'Grouping must retain room to read individual silhouettes');
+      assert(neighbor < 2.7, 'No initial actor should stand alone at the far edge of the room');
+    }
+    for (const anchor of anchors) {
+      assert(positions.filter(point => Math.hypot(point.x - anchor.x, point.z - anchor.z) < 2.6).length >= 3, 'Every approach should contain a group, not a single token enemy');
+    }
+  });
+
   test(`${getRoomLayout(room).id}: normal packs have substantially more breathing room than96-enemy crowds`, () => {
     const spacing = (count: number) => {
       const positions = enemyPositions(room, count);
@@ -50,11 +64,10 @@ for (let room = 0; room < 6; room++) {
       return { median: (nearest[count / 2 - 1] + nearest[count / 2]) / 2, mean: nearest.reduce((sum, distance) => sum + distance, 0) / count };
     };
     const crowded = spacing(96);
-    for (const count of [24, 30, 36]) {
+    for (const count of [14, 24, 30, 36]) {
       const normal = spacing(count);
-      // Unlike nearest-anchor filling, normal packs must use open floor before
-      // filling adjacent lattice cells. Median and mean prevent a few outliers
-      // from disguising a tightly packed majority.
+      // Grouping must still leave more room than dense legacy packs. Median
+      // and mean prevent isolated outliers from disguising a packed majority.
       assert(normal.median >= crowded.median * 1.5, `${count} enemies should have at least50% more typical clearance`);
       assert(normal.mean >= crowded.mean * 1.5, `${count} enemies should have at least50% more average clearance`);
     }

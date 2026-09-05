@@ -9,14 +9,19 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { dungeonCameraHalfHeight, dungeonCameraVerticalOffset } from './world/viewport';
+import { crystalClusterGeometry, crystalClusterMaterial } from './world/crystals';
 import { iceShardGeometry, iceShardMaterial } from './world/ice';
+import { lightningGeometry, lightningMaterial } from './world/lightning';
+import { phoenixWingGeometry, phoenixTailGeometry, stormFilamentsGeometry } from './world/spellShapes';
+import { phoenixFeatherMaterial, stormWispMaterial } from './world/materials';
 import { enemyRoster } from './world/enemyRoster';
 import { EnemyAnimator } from './world/EnemyAnimator';
 import { createVaultScenery } from './world/scenery';
 import { createArchitecturalRemnant, ruinGeometry, isRuinFootprintClear, type RuinKind } from './world/ruins';
 import { masonryGeometry, projectStoneUV } from './world/masonry';
 import { getRoomLayout, enemyPositions, isCrossingChasm, roomFloorPatches } from './world/roomLayout';
-import { stoneMaterial, floorRelief, flameMaterial, fireSheetMaterial, firePlumeMaterial, bladeWakeMaterial, ashMaterial, novaMaterial, stormMaterial, glowTexture, waveTexture } from './world/materials';
+import { stoneMaterial, floorRelief, flameMaterial, fireSheetMaterial, firePlumeMaterial, bladeWakeMaterial, ashMaterial, novaMaterial, glowTexture, waveTexture } from './world/materials';
 
 type Enemy = { root: THREE.Group; visual: THREE.Object3D; origin: THREE.Vector3; phase: number; brute: boolean; dead: boolean; modelId: string; height: number; deathAt: number; animator: EnemyAnimator };
 type Fragment = { position: THREE.Vector3; velocity: THREE.Vector3; rotation: THREE.Vector3; spin: THREE.Vector3; scale: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; hot: boolean; bounced: boolean };
@@ -140,6 +145,7 @@ export class DungeonWorld {
       steel: new THREE.MeshStandardMaterial({ color: 0x93a5a7, metalness: .75, roughness: .35 }),
       teal: new THREE.MeshStandardMaterial({ color: 0x187f8d, roughness: .83 }),
       bone: new THREE.MeshStandardMaterial({ color: 0xa4a391, roughness: .89 }),
+      crystalStone: crystalClusterMaterial(),
       crystal: new THREE.MeshStandardMaterial({ color: 0x29bcbf, emissive: 0x05c9e5, emissiveIntensity: 1.4, metalness: .3, roughness: .22 }),
       flame: new THREE.MeshStandardMaterial({ color: 0xff9218, emissive: 0xff6500, emissiveIntensity: 2, transparent: true, opacity: .94, toneMapped: false }),
     };
@@ -246,7 +252,7 @@ export class DungeonWorld {
     // Compile authored actors and uncommon effect programs during loading,
     // before a child's first cast would otherwise pay the shader setup cost.
     const warmup = new THREE.Group(); warmup.position.y = -1000;
-    const warmMaterials: THREE.Material[] = [novaMaterial(), fireSheetMaterial(), firePlumeMaterial(0, 1), bladeWakeMaterial(), ashMaterial(), stormMaterial(0xa9bdff)];
+    const warmMaterials: THREE.Material[] = [novaMaterial(), fireSheetMaterial(), firePlumeMaterial(0, 1), bladeWakeMaterial(), ashMaterial(), phoenixFeatherMaterial(), stormWispMaterial(0x7787a4), stormWispMaterial(0xa9bdff, true), lightningMaterial(0xa9bdff)];
     for (const material of warmMaterials) warmup.add(new THREE.Mesh(new THREE.PlaneGeometry(.01, .01), material));
     const summon = this.model('guardian', 4.5);
     summon?.traverse(object => { if (object instanceof THREE.Mesh && object.material instanceof THREE.MeshStandardMaterial) { object.material = object.material.clone(); object.material.transparent = true; warmMaterials.push(object.material); } });
@@ -432,11 +438,7 @@ export class DungeonWorld {
           pillar(side * (11.7 + sideOffset), z, brokenPier ? Math.min(pierHeight, 1.7 + bay * .3) : pierHeight, brokenPier);
           this.addTorch(side * (10.55 + sideOffset), 2.1, z + .7, false);
           const x = side * (9.7 + sideOffset + random() * .55);
-          for (let n = 0; n < 3; n++) {
-            const crystal = new THREE.ConeGeometry(.1 + random() * .13, .6 + random() * 1.0, 5);
-            crystal.rotateZ((random() - .5) * .35);
-            add(crystal, this.materials.crystal, x + (random() - .5) * .55, .65, z + 1.4 + (random() - .5) * .6);
-          }
+          add(crystalClusterGeometry(room * 43 + bay * 11 + side), this.materials.crystalStone, x, 0, z + 1.4, random() * Math.PI * 2);
         }
         // Ruined tombs lie partly buried along the raised aisles, never centred
         // like furniture placed on a grid. Trim catches the torchlight.
@@ -603,7 +605,7 @@ export class DungeonWorld {
     const layout = getRoomLayout(this.encounter);
     this.destination.set(layout.heroX, 0, -this.encounter * 20 + layout.heroZ);
     if (!this.frame || Math.abs(was - this.encounter) > 1) { this.hero.position.copy(this.destination); this.cameraTarget.copy(this.destination); }
-    const count = Math.max(1, Math.min(96, enemyCount ?? (this.encounter === 5 ? 36 : 24 + this.encounter * 2)));
+    const count = Math.max(1, Math.min(48, enemyCount ?? (this.encounter === 5 ? 24 : 14 + this.encounter)));
     const formation = enemyPositions(this.encounter, count), roster = enemyRoster(this.encounter, count);
     for (let i = 0; i < count; i++) {
       const { brute, boss, modelId, height } = roster[i];
@@ -618,6 +620,8 @@ export class DungeonWorld {
     const color = frost ? 0x49a4d2 : this.regionId.includes('storm') ? 0x7562c2 : 0x138cb6;
     this.materials.crystal.emissive.setHex(color);
     this.materials.crystal.color.setHex(color);
+    this.materials.crystalStone.emissive.setHex(color);
+    this.materials.crystalStone.color.setHex(frost ? 0xa5c5ce : this.regionId.includes('storm') ? 0xaaa5cb : 0x9db8b9);
     this.heroLight.color.setHex(0xd6e3f0);
     this.materials.floor.color.setHex(ember ? 0xb5a896 : frost ? 0x919fa7 : 0x9c96a3);
     this.updateStoneTint();
@@ -869,13 +873,41 @@ export class DungeonWorld {
           resolveHorde(.72); break;
         }
         case 'phoenix-dive': {
-          this.heroMotion = age => { const t = Math.min(1, age / 1.15); return new THREE.Vector3(Math.sin(t * Math.PI) * 1.7, Math.sin(t * Math.PI) * 2, -Math.sin(t * Math.PI) * 5.5); };
-          for (const side of [-1, 1]) for (let feather = 0; feather < 7; feather++) {
-            const start = origin.clone().setY(1.2), tip = origin.clone().add(new THREE.Vector3(side * (2.2 + feather * .28), 1.5 + feather * .13, -2.3 + feather * .24));
-            const points = [start, start.clone().lerp(tip, .4).add(new THREE.Vector3(0, 1.3, -1)), tip];
-            const wing = this.stroke(points, feather % 2 ? 0xffab33 : 0xffe8a8, .07, 1.15);
-            const base = wing.position.clone(); this.effects[this.effects.length - 1].update = t => { wing.position.copy(base).add(new THREE.Vector3(0, Math.sin(t * Math.PI), -Math.sin(t * Math.PI) * 5)); };
+          const flightStarted = this.elapsed;
+          const flightProgress = () => THREE.MathUtils.clamp((this.elapsed - flightStarted) / 1.15, 0, 1);
+          const flightDisplacement = () => {
+            const flight = Math.sin(flightProgress() * Math.PI);
+            return new THREE.Vector3(flight * 1.7, flight * 2, -flight * 5.5);
+          };
+          // Scheduled effects start after the attack windup. Use that same clock
+          // for the rider, then attach feathers after the rider's hop/idle pose.
+          this.heroMotion = flightDisplacement;
+          for (const side of [-1, 1]) {
+            const material = phoenixFeatherMaterial(), wing = new THREE.Mesh(phoenixWingGeometry(side), material);
+            wing.position.copy(origin);
+            this.effect(wing, 1.15, () => {
+              const t = flightProgress();
+              this.heroVisual.getWorldPosition(wing.position);
+              wing.rotation.z = side * (.11 * Math.sin(t * Math.PI * 2) - .05);
+              wing.scale.x = .62 + .38 * Math.sin(Math.min(1, t * 1.8) * Math.PI * .5);
+              material.uniforms.time.value = this.elapsed + side * .7;
+              material.uniforms.opacity.value = Math.min(1, t * 10) * (1 - Math.pow(t, 2.8));
+            });
           }
+          for (const smoke of [false, true]) {
+            const material = smoke ? stormWispMaterial(0x66504b) : phoenixFeatherMaterial();
+            const tail = new THREE.Mesh(phoenixTailGeometry(), material); tail.position.copy(origin);
+            if (smoke) tail.scale.set(1.45, 1.05, 1.13);
+            this.effect(tail, smoke ? 1.45 : 1.15, t => {
+              this.heroVisual.getWorldPosition(tail.position);
+              if (smoke) tail.position.add(new THREE.Vector3(0, t * .5, .5));
+              material.uniforms.time.value = this.elapsed;
+              material.uniforms.opacity.value = Math.sin((smoke ? t : flightProgress()) * Math.PI) * (smoke ? .45 : .8);
+            });
+          }
+          for (let plume = 0; plume < 5; plume++) this.schedule(.12 + plume * .14, () => {
+            this.emit(origin.clone().add(flightDisplacement()).add(new THREE.Vector3(0, 1.5, 0)), 0xf68b25, 11, 1.4, .7);
+          });
           for (let i = 0; i < 7; i++) this.schedule(.18 + i * .06, () => this.impact(origin.clone().add(new THREE.Vector3(Math.sin(i) * 1.1, .15, -i * 1.25)), 0xff8c25, 1.6));
           resolveHorde(.48); this.shake = .3; break;
         }
@@ -995,9 +1027,10 @@ export class DungeonWorld {
   }
 
   private bolt(from: THREE.Vector3, to: THREE.Vector3, color: number, width: number, duration: number): void {
-    const points = [from.clone()];
-    for (let i = 1; i < 10; i++) points.push(from.clone().lerp(to, i / 10).add(new THREE.Vector3((Math.random() - .5) * .65, (Math.random() - .5) * .5, (Math.random() - .5) * .65)));
-    points.push(to.clone()); this.stroke(points, color, width, duration); this.stroke(points, 0xf2faff, width * .25, duration * .8);
+    const view = this.camera.getWorldDirection(new THREE.Vector3()).negate();
+    const geometry = lightningGeometry(from, to, width, view, Math.floor(Math.random() * 0x7fffffff));
+    const material = lightningMaterial(color), mesh = new THREE.Mesh(geometry, material);
+    this.effect(mesh, duration, t => { material.uniforms.progress.value = t; });
   }
 
   private weaponSweep(origin: THREE.Vector3, color: number, radius: number, phase: number): void {
@@ -1219,23 +1252,18 @@ export class DungeonWorld {
 
   private cyclone(at: THREE.Vector3, color: number, radius: number, height: number, duration: number, horizontal = false): void {
     for (let layer = 0; layer < 3; layer++) {
-      const material = stormMaterial(color);
-      const geometry = new THREE.CylinderGeometry(radius * (1 - layer * .12), radius * .22, horizontal ? height * .65 : height, 48, 12, true);
-      const mesh = new THREE.Mesh(geometry, material); mesh.position.copy(at).y += horizontal ? height * .42 : height * .5;
+      const luminous = layer === 2;
+      const material = stormWispMaterial(luminous ? color : 0x7787a4, luminous);
+      const geometry = stormFilamentsGeometry(radius * (layer === 1 ? .82 : 1), height, horizontal, 1.7 + layer * 4.1, !luminous);
+      const mesh = new THREE.Mesh(geometry, material); mesh.position.copy(at);
       this.effect(mesh, duration, t => {
-        material.uniforms.time.value = this.elapsed + layer * 1.8;
-        material.uniforms.opacity.value = Math.sin(Math.PI * t) * (horizontal ? .7 : 1);
-        mesh.rotation.y = this.elapsed * (horizontal ? -1.8 : 1.7) + layer * 2.1;
-        mesh.scale.setScalar(Math.min(1, t * 5) * (1 - Math.max(0, t - .78) * 2));
+        material.uniforms.time.value = this.elapsed + layer * 2.3;
+        material.uniforms.opacity.value = Math.sin(Math.PI * t) * (luminous ? .36 : layer === 0 ? .5 : .32);
+        mesh.rotation.y = t * (horizontal ? -4.2 : 3.8) * (1 + layer * .23) + layer * 1.7;
+        mesh.position.x = at.x + Math.sin(t * 5 + layer) * radius * .055;
+        mesh.position.z = at.z + Math.sin(t * 4.1 + layer * 2) * radius * .04;
+        mesh.scale.setScalar(.65 + Math.sin(t * Math.PI) * .35);
       });
-    }
-    for (let ribbon = 0; ribbon < 5; ribbon++) {
-      const points = Array.from({ length: 16 }, (_, i) => {
-        const t = i / 15, a = t * 1.8 + ribbon * 1.3, r = radius * (.3 + ribbon * .13);
-        return new THREE.Vector3(Math.sin(a) * r, horizontal ? .3 + Math.sin(t * Math.PI) * height * .3 : height * (.08 + ribbon * .16 + t * .1), Math.cos(a) * r);
-      });
-      const mesh = this.stroke(points, color, .014, duration); mesh.position.copy(at);
-      this.effects[this.effects.length - 1].update = t => { mesh.rotation.y = t * (horizontal ? -10 : 13); (mesh.material as THREE.MeshBasicMaterial).opacity = Math.sin(t * Math.PI) * .45; };
     }
   }
 
@@ -1304,13 +1332,8 @@ export class DungeonWorld {
     let previous = origin.clone(); previous.y = 1.1;
     this.enemies.forEach((enemy, index) => {
       const from = previous.clone(), to = enemy.root.position.clone(); to.y = enemy.brute ? 1.9 : .9; previous = to;
-      this.schedule(index * .025, () => {
-        const points = [from];
-        for (let segment = 1; segment < 7; segment++) points.push(from.clone().lerp(to, segment / 7).add(new THREE.Vector3((Math.random() - .5) * .7, (Math.random() - .5) * .65, (Math.random() - .5) * .7)));
-        points.push(to);
-        const curve = new THREE.CatmullRomCurve3(points, false, 'catmullrom', .01);
-        const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 21, .055, 4, false), new THREE.MeshBasicMaterial({ color, transparent: true, blending: THREE.AdditiveBlending, toneMapped: false }));
-        this.effectsGroup.add(mesh); this.effects.push({ mesh, age: 0, duration: .55, kind: 'beam', radius: 1 });
+      this.schedule(.17 + index / Math.max(1, this.enemies.length) * .52, () => {
+        this.bolt(from, to, color, .055, .55);
       });
     });
   }
@@ -1355,9 +1378,10 @@ export class DungeonWorld {
     if (width === this.width && height === this.height) return;
     this.width = width; this.height = height;
     const ratio = width / height;
-    const halfHeight = ratio < 1 ? 12.6 / ratio : 10.5;
+    const halfHeight = dungeonCameraHalfHeight(width, height);
     this.camera.left = -halfHeight * ratio; this.camera.right = halfHeight * ratio;
-    this.camera.top = halfHeight; this.camera.bottom = -halfHeight; this.camera.updateProjectionMatrix();
+    const verticalOffset = dungeonCameraVerticalOffset(height);
+    this.camera.top = halfHeight + verticalOffset; this.camera.bottom = -halfHeight + verticalOffset; this.camera.updateProjectionMatrix();
     const qualityRatio = this.quality === 0 ? 1.5 : this.quality === 1 ? 1 : .75;
     this.renderer.setPixelRatio(this.softwareRenderer ? .7 : Math.min(window.devicePixelRatio || 1, qualityRatio)); this.renderer.setSize(width, height, false);
     this.composer.setPixelRatio(this.quality === 2 ? .75 : 1);

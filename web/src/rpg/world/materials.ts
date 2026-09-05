@@ -97,20 +97,52 @@ export function fireSheetMaterial(seed = 0): THREE.ShaderMaterial {
   });
 }
 
-/** Moving translucent cloud strands, wrapped around a storm funnel. */
-export function stormMaterial(color: number): THREE.ShaderMaterial {
+/** Torn feather surfaces: small hot edges inside broad, darker orange tongues. */
+export function phoenixFeatherMaterial(): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
-    uniforms: { time: { value: 0 }, opacity: { value: 1 }, tint: { value: new THREE.Color(color) } },
-    vertexShader: `varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-    fragmentShader: `varying vec2 vUv;uniform float time;uniform float opacity;uniform vec3 tint;
+    uniforms: { time: { value: 0 }, opacity: { value: 1 } },
+    vertexShader: `attribute float phase; varying vec2 vUv; varying float vPhase; uniform float time;
+      void main(){vUv=uv;vPhase=phase;vec3 p=position;
+        p.y+=sin(uv.x*13.-time*8.+phase)*.055*sin(uv.x*3.14159);
+        gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}`,
+    fragmentShader: `varying vec2 vUv;varying float vPhase;uniform float time;uniform float opacity;
       float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
       float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);}
-      void main(){vec2 p=vec2(vUv.x*13.+vUv.y*7.-time*1.8,vUv.y*8.-time*.7);
-        float n=noise(p)*.6+noise(p*2.1)*.28+noise(p*4.3)*.12;
-        float wisps=smoothstep(.37,.75,n);float edge=smoothstep(0.,.12,vUv.y)*smoothstep(1.,.72,vUv.y);
-        float fine=pow(noise(p*3.+vec2(0.,time)),7.);
-        gl_FragColor=vec4(tint*(.3+wisps*.85+fine),edge*(wisps*.15+fine*.45)*opacity);}`,
-    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false,
+      void main(){vec2 p=vec2(vUv.x*11.-time*3.7+vPhase,vUv.y*4.);
+        float n=noise(p)*.65+noise(p*2.3+time*.4)*.35;
+        float across=abs(vUv.y-.5)*2.;float ragged=.62+n*.38;
+        float edge=1.-smoothstep(ragged-.22,ragged,across);
+        float holes=smoothstep(.27,.52,n+(1.-vUv.x)*.14);
+        float ends=smoothstep(0.,.07,vUv.x)*(1.-smoothstep(.73,1.,vUv.x));
+        float hot=pow(max(0.,1.-across),6.)*smoothstep(.48,.75,n);
+        vec3 c=mix(vec3(.68,.045,.004),vec3(1.4,.24,.012),n);
+        c=mix(c,vec3(2.1,.82,.14),hot*.72);
+        gl_FragColor=vec4(c,edge*holes*ends*opacity*.82);}`,
+    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, toneMapped: false, forceSinglePass: true,
+  });
+}
+
+/** Broken cloud strips absorb light; sparse charged filaments remain secondary to bolts. */
+export function stormWispMaterial(color: number, luminous = false): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    uniforms: { time: { value: 0 }, opacity: { value: 1 }, tint: { value: new THREE.Color(color) }, luminous: { value: luminous ? 1 : 0 } },
+    vertexShader: `attribute float phase;varying vec2 vUv;varying float vPhase;uniform float time;
+      void main(){vUv=uv;vPhase=phase;vec3 p=position;
+        p.y+=sin(uv.x*11.+phase+time*1.3)*.09*sin(uv.x*3.14159);
+        gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}`,
+    fragmentShader: `varying vec2 vUv;varying float vPhase;uniform float time;uniform float opacity;uniform vec3 tint;uniform float luminous;
+      float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+      float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);}
+      void main(){vec2 p=vec2(vUv.x*8.+vPhase-time*.8,vUv.y*3.+sin(vUv.x*9.+time)*.3);
+        float n=noise(p)*.6+noise(p*2.2)*.27+noise(p*4.8)*.13;
+        float border=pow(max(0.,1.-abs(vUv.y-.5)*2.),1.8);
+        float ends=smoothstep(0.,.16,vUv.x)*(1.-smoothstep(.68,1.,vUv.x));
+        float broken=smoothstep(.32,.64,n);
+        vec3 cloud=mix(vec3(.015,.021,.032),tint*.26,n);
+        vec3 charged=tint*(.28+n*.46);
+        gl_FragColor=vec4(mix(cloud,charged,luminous),border*ends*broken*opacity);}`,
+    transparent: true, blending: luminous ? THREE.AdditiveBlending : THREE.NormalBlending,
+    depthWrite: false, side: THREE.DoubleSide, toneMapped: false, forceSinglePass: luminous,
   });
 }
 

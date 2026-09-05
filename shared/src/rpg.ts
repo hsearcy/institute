@@ -165,5 +165,5 @@ export function rpgEncounterKills(state: Pick<RpgState, 'skills' | 'equippedItem
   const gearPower = item && rpgItemApplies(item, spellId) ? item.power : 0;
   const skillPower = RPG_SKILLS.filter(skill => skillApplies(skill, spellId)).reduce((total, skill) => total + (state.skills[skill.id] ?? 0) * skill.powerPerRank, 0);
   const abilityPower = RPG_SPELLS.find(spell => spell.id === spellId)?.power ?? 0;
-  return (encounterIndex === 5 ? 36 : 24 + encounterIndex * 2) + abilityPower + gearPower + skillPower;
+  return Math.min(48, (encounterIndex === 5 ? 24 : 14 + encounterIndex) + abilityPower + gearPower + skillPower);
 }

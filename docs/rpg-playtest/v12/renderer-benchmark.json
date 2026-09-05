@@ -1,0 +1,212 @@
+{
+  "renderer": "ANGLE (Intel, Mesa Intel(R) Iris(R) Xe Graphics (ADL GT2), OpenGL 4.6)",
+  "software": false,
+  "viewport": [
+    1440,
+    900
+  ],
+  "cases": [
+    {
+      "room": 0,
+      "count": 14,
+      "spell": null,
+      "medianRenderMs": 2.7,
+      "p95RenderMs": 4.3,
+      "medianFrameMs": 50,
+      "p95FrameMs": 50.1,
+      "diagnostics": {
+        "appearance": "cinder",
+        "lastAttack": null,
+        "heroAnimation": "idle",
+        "heroClips": [
+          "idle",
+          "walk",
+          "cleave",
+          "cast"
+        ],
+        "encounter": 0,
+        "region": "sunken-vault",
+        "enemies": 14,
+        "articulatedEnemies": 13,
+        "enemyRoster": {
+          "guardian": 2,
+          "skeleton": 7,
+          "revenant": 4,
+          "wraith": 1
+        },
+        "attacking": false,
+        "paused": false,
+        "modelsLoaded": 19,
+        "drawCalls": 169,
+        "triangles": 714316,
+        "particles": 86,
+        "fragments": 0,
+        "hero": [
+          0,
+          0,
+          1.4
+        ],
+        "softwareRenderer": false,
+        "fps": 22,
+        "quality": "full",
+        "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      }
+    },
+    {
+      "room": 5,
+      "count": 24,
+      "spell": null,
+      "medianRenderMs": 3,
+      "p95RenderMs": 4.9,
+      "medianFrameMs": 50,
+      "p95FrameMs": 50.1,
+      "diagnostics": {
+        "appearance": "cinder",
+        "lastAttack": null,
+        "heroAnimation": "idle",
+        "heroClips": [
+          "idle",
+          "walk",
+          "cleave",
+          "cast"
+        ],
+        "encounter": 5,
+        "region": "sunken-vault",
+        "enemies": 24,
+        "articulatedEnemies": 21,
+        "enemyRoster": {
+          "guardian": 4,
+          "revenant": 7,
+          "skeleton": 10,
+          "wraith": 3
+        },
+        "attacking": false,
+        "paused": false,
+        "modelsLoaded": 19,
+        "drawCalls": 159,
+        "triangles": 858902,
+        "particles": 100,
+        "fragments": 0,
+        "hero": [
+          0,
+          0,
+          -98.6
+        ],
+        "softwareRenderer": false,
+        "fps": 22,
+        "quality": "full",
+        "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      }
+    },
+    {
+      "room": 5,
+      "count": 48,
+      "spell": "tempest",
+      "medianRenderMs": 4.5,
+      "p95RenderMs": 7.3,
+      "medianFrameMs": 50,
+      "p95FrameMs": 66.7,
+      "diagnostics": {
+        "appearance": "cinder",
+        "lastAttack": {
+          "spellId": "tempest",
+          "effect": "tempest",
+          "options": {
+            "kills": 48
+          }
+        },
+        "lastSpellId": "tempest",
+        "lastSpellEffect": "tempest",
+        "heroAnimation": "cast",
+        "heroClips": [
+          "idle",
+          "walk",
+          "cleave",
+          "cast"
+        ],
+        "encounter": 5,
+        "region": "sunken-vault",
+        "enemies": 0,
+        "articulatedEnemies": 42,
+        "enemyRoster": {
+          "guardian": 7,
+          "revenant": 15,
+          "skeleton": 20,
+          "wraith": 6
+        },
+        "attacking": true,
+        "paused": false,
+        "modelsLoaded": 19,
+        "drawCalls": 165,
+        "triangles": 1345854,
+        "particles": 420,
+        "fragments": 64,
+        "hero": [
+          0,
+          0,
+          -98.6
+        ],
+        "softwareRenderer": false,
+        "fps": 18,
+        "quality": "full",
+        "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      }
+    },
+    {
+      "room": 0,
+      "count": 48,
+      "spell": "phoenix_dive",
+      "medianRenderMs": 4.9,
+      "p95RenderMs": 11.4,
+      "medianFrameMs": 66.6,
+      "p95FrameMs": 66.7,
+      "diagnostics": {
+        "appearance": "cinder",
+        "lastAttack": {
+          "spellId": "phoenix_dive",
+          "effect": "phoenix-dive",
+          "options": {
+            "kills": 48
+          }
+        },
+        "lastSpellId": "phoenix_dive",
+        "lastSpellEffect": "phoenix-dive",
+        "heroAnimation": "cleave",
+        "heroClips": [
+          "idle",
+          "walk",
+          "cleave",
+          "cast"
+        ],
+        "encounter": 0,
+        "region": "sunken-vault",
+        "enemies": 0,
+        "articulatedEnemies": 42,
+        "enemyRoster": {
+          "guardian": 7,
+          "skeleton": 21,
+          "revenant": 14,
+          "wraith": 6
+        },
+        "attacking": true,
+        "paused": false,
+        "modelsLoaded": 19,
+        "drawCalls": 218,
+        "triangles": 1394600,
+        "particles": 202,
+        "fragments": 21,
+        "hero": [
+          0,
+          0,
+          1.4
+        ],
+        "softwareRenderer": false,
+        "fps": 19,
+        "quality": "full",
+        "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      }
+    }
+  ],
+  "errors": [],
+  "method": "45 warmup frames; 120 fixed simulation frames; gl.finish includes GPU work. Diagnostic renderer timings, not a player FPS guarantee."
+}

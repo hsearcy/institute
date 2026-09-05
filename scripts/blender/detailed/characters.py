@@ -238,22 +238,39 @@ def make_wraith_v2():
     return c
 
 def guardian_granite_materials():
-    # Granite uses broad uncracked cleavage faces and patchy grain. Major faults
-    # are sparse authored geometry on selected masses, never a closed-cell grid.
-    for key,label,base in [('stoneOld','fractured grey granite',(.17,.185,.175)),('stoneOldLight','fresh granite cleavage',(.28,.30,.28)),('stoneOldDark','deep granite recess',(.085,.097,.090))]:
-        m=source_material(label,base,'stone',0,.90)
-        nodes=m.node_tree.nodes;links=m.node_tree.links
-        p=next(n for n in nodes if n.type=='BSDF_PRINCIPLED')
-        position=next(n for n in nodes if n.type=='NEW_GEOMETRY')
-        pits=nodes.new('ShaderNodeTexNoise');pits.inputs['Scale'].default_value=43;pits.inputs['Detail'].default_value=2
-        links.new(position.outputs['Position'],pits.inputs['Vector'])
-        ramp=nodes.new('ShaderNodeValToRGB');ramp.color_ramp.elements[0].position=.30;ramp.color_ramp.elements[0].color=(.22,.22,.22,1)
-        ramp.color_ramp.elements[1].position=.43;ramp.color_ramp.elements[1].color=(1,1,1,1)
-        links.new(pits.outputs['Fac'],ramp.inputs[0])
-        mix=nodes.new('ShaderNodeMixRGB');mix.blend_type='MULTIPLY';mix.inputs[0].default_value=.32
-        links.new(p.inputs['Base Color'].links[0].from_socket,mix.inputs[1]);links.new(ramp.outputs[0],mix.inputs[2]);links.new(mix.outputs[0],p.inputs['Base Color'])
-        bump=nodes.new('ShaderNodeBump');bump.inputs['Strength'].default_value=.45;bump.inputs['Distance'].default_value=.009
-        links.new(ramp.outputs[0],bump.inputs['Height']);links.new(p.inputs['Normal'].links[0].from_socket,bump.inputs['Normal']);links.new(bump.outputs['Normal'],p.inputs['Normal'])
+    # Guardian-only granite: broad warm mineral variation survives the gameplay
+    # viewport, while shallow contact dirt keeps joints legible in direct light.
+    # Geometry and shared masonry/skeleton source materials are unchanged.
+    for key,label,base in [('stoneOld','weathered guardian granite',(.073,.082,.078)),('stoneOldLight','exposed guardian granite',(.135,.140,.117)),('stoneOldDark','guardian joint granite',(.033,.040,.037))]:
+        m=bpy.data.materials.new('Vault2_'+label);m.use_nodes=True;m['surface']='stone'
+        nodes=m.node_tree.nodes;links=m.node_tree.links;nodes.clear()
+        out=nodes.new('ShaderNodeOutputMaterial');p=nodes.new('ShaderNodeBsdfPrincipled')
+        p.inputs['Metallic'].default_value=0;links.new(p.outputs[0],out.inputs['Surface'])
+        position=nodes.new('ShaderNodeNewGeometry')
+        def noise(scale,detail=3):
+            node=nodes.new('ShaderNodeTexNoise');node.inputs['Scale'].default_value=scale;node.inputs['Detail'].default_value=detail;node.inputs['Roughness'].default_value=.72
+            links.new(position.outputs['Position'],node.inputs['Vector']);return node.outputs['Fac']
+        broad=noise(2.1,3);grain=noise(8.5,4);pits=noise(32,2)
+        ramp=nodes.new('ShaderNodeValToRGB')
+        ramp.color_ramp.elements[0].position=.22;ramp.color_ramp.elements[0].color=(*(v*.42 for v in base),1)
+        ramp.color_ramp.elements[1].position=.76;ramp.color_ramp.elements[1].color=(*(v*1.6 for v in base),1)
+        links.new(broad,ramp.inputs[0])
+        warm=nodes.new('ShaderNodeValToRGB');warm.color_ramp.elements[0].position=.54;warm.color_ramp.elements[1].position=.72
+        warm.color_ramp.elements[1].color=(.38,.38,.38,1);links.new(grain,warm.inputs[0])
+        mix=nodes.new('ShaderNodeMixRGB');links.new(warm.outputs[0],mix.inputs[0]);links.new(ramp.outputs[0],mix.inputs[1]);mix.inputs[2].default_value=(.17,.111,.052,1)
+        # Small pale feldspar flecks, softened and sparse rather than cyan noise.
+        fleck=nodes.new('ShaderNodeValToRGB');fleck.color_ramp.elements[0].position=.62;fleck.color_ramp.elements[1].position=.76;fleck.color_ramp.elements[1].color=(.42,.42,.42,1)
+        links.new(pits,fleck.inputs[0]);mineral=nodes.new('ShaderNodeMixRGB');links.new(fleck.outputs[0],mineral.inputs[0]);links.new(mix.outputs[0],mineral.inputs[1]);mineral.inputs[2].default_value=(.28,.233,.152,1)
+        # Stylized material dirt, not a replacement for the separate physical AO
+        # channel. It is deliberately bounded to retain readable stone in shade.
+        cavity=nodes.new('ShaderNodeAmbientOcclusion');cavity.samples=48;cavity.inputs['Distance'].default_value=.20
+        contact=nodes.new('ShaderNodeMixRGB');contact.blend_type='MULTIPLY';contact.inputs[0].default_value=.52
+        links.new(mineral.outputs[0],contact.inputs[1]);links.new(cavity.outputs['AO'],contact.inputs[2]);links.new(contact.outputs[0],p.inputs['Base Color'])
+        rough=nodes.new('ShaderNodeMapRange');rough.inputs['To Min'].default_value=.66;rough.inputs['To Max'].default_value=.98
+        links.new(grain,rough.inputs['Value']);links.new(rough.outputs['Result'],p.inputs['Roughness'])
+        coarse=nodes.new('ShaderNodeBump');coarse.inputs['Strength'].default_value=.53;coarse.inputs['Distance'].default_value=.052;links.new(grain,coarse.inputs['Height'])
+        fine=nodes.new('ShaderNodeBump');fine.inputs['Strength'].default_value=.40;fine.inputs['Distance'].default_value=.016
+        links.new(pits,fine.inputs['Height']);links.new(coarse.outputs['Normal'],fine.inputs['Normal']);links.new(fine.outputs['Normal'],p.inputs['Normal'])
         MATS[key]=m
 
 def guardian_rock(name,loc,size,material='stoneOld',turn=(0,0,0)):
@@ -312,6 +329,7 @@ def guardian_crystal(name,loc,radius,height,tilt=(0,0,0)):
 
 def make_guardian_v2():
     global PART
+    saved_materials=MATS.copy()
     guardian_granite_materials()
     c=begin('guardian')
     # Preserve named joint ownership through atlas baking. This allows overlapping
@@ -374,4 +392,5 @@ def make_guardian_v2():
         guardian_rock('Cheek and temple',(side*.169,-.248,1.952),(.091,.103,.122),'stoneOld',(0,side*.3,0))
     line('Jagged dark mouth seam',[(-.12,-.353,1.867),(-.04,-.377,1.859),(0,-.38,1.873),(.07,-.37,1.858),(.13,-.344,1.875)],.009,'shadow',5)
     PART='Body'
+    MATS.clear();MATS.update(saved_materials)
     return c

@@ -133,3 +133,8 @@
 .rpg-armor-progress .rpg-icon{width:17px;height:17px;flex:none}
 @media(max-width:760px){.rpg-armor-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.rpg-armor-preview{--armor-preview-height:155px}.rpg-armor-card h4{font-size:12px}.rpg-armor-section{margin-top:20px}.rpg-armor-heading h3{font-size:18px}}
 @media(max-width:380px){.rpg-armor-preview{--armor-preview-height:130px}.rpg-armor-card{padding:0 7px 9px}.rpg-armor-preview{margin-left:-7px;margin-right:-7px}.rpg-dialog .rpg-armor-card p{font-size:10px}.rpg-armor-heading{align-items:flex-start;flex-direction:column;gap:4px}}
+
+/* A short landscape screen fits three keypad rows beside the action. */
+@media(max-height:500px) and (min-width:761px){
+  .rpg-keypad{width:210px;grid-template-columns:repeat(4,1fr);bottom:175px;right:0;}
+}

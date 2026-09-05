@@ -236,6 +236,8 @@ test('saved response recovery, worked help, and touch layout remain playable', a
   await page.getByRole('button',{name:'Cast together & continue',exact:true}).click();
   await expect.poll(async () => (await state(page)).xp).toBeGreaterThan(assistedBefore.xp);
   await ready(page);
+  const dismissRelic = page.getByRole('button',{name:'Dismiss new relic',exact:true});
+  if (await dismissRelic.isVisible()) await dismissRelic.click();
   await page.getByRole('button',{name:'Toggle number pad',exact:true}).click();
   await expect(page.getByRole('button',{name:'Delete digit',exact:true})).toBeVisible();
   const touch = await currentProblem(page,problems);
@@ -247,6 +249,21 @@ test('saved response recovery, worked help, and touch layout remain playable', a
   const formBox = await page.locator('#rpg-answer-form').boundingBox();
   expect(formBox!.x).toBeGreaterThanOrEqual(0);
   expect(formBox!.x+formBox!.width).toBeLessThanOrEqual(390);
+  await page.setViewportSize({width:844,height:390});
+  await expect.poll(() => page.evaluate(() => {
+    const world = (window as any).__game.world;
+    const feet = world.hero.position.clone().project(world.camera);
+    const dock = document.querySelector('.rpg-controls')!.getBoundingClientRect();
+    return dock.top - (1 - feet.y) * innerHeight / 2;
+  })).toBeGreaterThan(20);
+  const keypad = await page.locator('#rpg-keypad').boundingBox();
+  expect(keypad!.y).toBeGreaterThan(60);
+  expect(keypad!.x+keypad!.width).toBeLessThanOrEqual(844);
+  await page.locator('#rpg-keypad [data-digit="0"]').click();
+  await expect(page.getByRole('textbox',{name:'Your answer'})).toHaveValue(`${touch.answer}0`);
+  await page.getByRole('button',{name:'Delete digit',exact:true}).click();
+  await expect(page.getByRole('textbox',{name:'Your answer'})).toHaveValue(String(touch.answer));
+  await page.screenshot({path:info.outputPath('07-landscape.png')});
   await page.getByRole('button',{name:'Pause and save',exact:true}).click();
   await expect(page.getByRole('heading',{name:'Adventure saved'})).toBeVisible();
   await page.getByRole('button',{name:'Save & leave',exact:true}).click();

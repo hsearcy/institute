@@ -1,0 +1,14 @@
+{
+  "flat-faces-front.png": "40d25d086835981d3d844b60ce5edba79f60c314a95df81f712f34bd0a3a84f2",
+  "source-flat-front.png": "d7b58807cf82fe9532a63ca59ac4d99f6eedecbf92224fe3778effa0158c9a93",
+  "source-normals-flat-front.png": "61ef73007b893c95a97d31f1bc8bfbfca879ee1113f4d8837c00ef227c7991f5",
+  "crown-geometry-audit.json": "ff6d57fe680a5eef1ed0ec511de6727fe1bf67a108d8de83720f26f2fe9ea058",
+  "portal-crown-flat-faces.png": "1f4c6d7103584ed484f898e4c0a55d0f4ae6746255c5bb0751a2bb64e7337edf",
+  "portal-crown-wire-control.png": "52104d77905f888b036f84c7aabd187bc0b794ff6539ea2097c314c25e4e5f4f",
+  "portal-crown-source-flat.png": "75ad02c69e313eef79bc547e74825a32f786d49f6755b66ec1a4f77d3264aa67",
+  "portal-crown-source-normals.png": "437ba1ad322ec1746d8123f7a0b950baba550773908102b82c6f68adaf589a12",
+  "audit-portal-crown-geometry.py": "a3693fdb31baa17a248427f1b8f2779e7e1126aa614d3f74f9f125c3396c074c",
+  "portal-source-flat-control.py": "364207a9f7fec6cc06b6b1a8309907ada6453de585493c43d5cf464f4907ab6e",
+  "portal-source-normal-control.py": "ecb837a197051b5439dc275bcac28faece1762e9dcd9258495636487f76f3ca6",
+  "README.md": "d369e3af78d16579dafe1538a9bf17493d95a3bc254d65b3568a4a8a8daa0828"
+}

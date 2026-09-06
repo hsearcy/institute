@@ -1,0 +1,14 @@
+{
+  "action": "prepare",
+  "batches": 2,
+  "geometryAndUVUnchanged": true,
+  "reusedMaps": [
+    "albedo",
+    "orm"
+  ],
+  "repairSourceIds": [
+    50,
+    61
+  ],
+  "seconds": 0.6067737640114501
+}

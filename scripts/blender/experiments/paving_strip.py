@@ -31,7 +31,7 @@ CONTOURS = [
 
 def build_paving_strip(repo_root):
     root = Path(repo_root)
-    scene = bpy.data.scenes.new('Photo registered paving strip v2')
+    scene = bpy.data.scenes.new('Photo registered paving strip v3')
     bpy.context.window.scene = scene
     collection = bpy.data.collections.new('Ten worn paving stones')
     scene.collection.children.link(collection)
@@ -88,7 +88,7 @@ def build_paving_strip(repo_root):
     links.new(noise.outputs['Fac'], bump.inputs['Height'])
     links.new(bump.outputs['Normal'], shader.inputs['Normal'])
 
-    def prism(name, contour, top, material, bevel=.009, tilt=(0, 0)):
+    def prism(name, contour, top, material, bevel=.009, tilt=(0, 0), worn_shoulders=False):
         # glTF maps Blender -Y to game +Z. The game floor uses (X,Z)/4.8.
         points = [(x / REFERENCE_SIZE * TILE_METERS, -(1-y / REFERENCE_SIZE)*TILE_METERS) for x,y in contour]
         center = Vector((sum(p[0] for p in points)/len(points), sum(p[1] for p in points)/len(points)))
@@ -113,6 +113,18 @@ def build_paving_strip(repo_root):
         if bevel:
             modifier=obj.modifiers.new('Broad worn shoulders','BEVEL')
             modifier.width=bevel; modifier.segments=3
+            if worn_shoulders:
+                # Shoulder wear varies along each slab, rather than making a
+                # continuous equally wide manufactured rim. Keep bottom edges
+                # sharp: they are buried in the existing registered floor.
+                weights = mesh.attributes.new('bevel_weight_edge', 'FLOAT', 'EDGE')
+                for edge in mesh.edges:
+                    a,b = edge.vertices
+                    if a >= n and b >= n:
+                        weights.data[edge.index].value = (.22,.8,.38,1,.18,.6,.3)[min(a,b)%7]
+                    else:
+                        weights.data[edge.index].value = .15 if max(a,b) >= n else 0
+                modifier.limit_method = 'WEIGHT'
             bpy.ops.object.modifier_apply(modifier=modifier.name)
         uv=obj.data.uv_layers.new(name='World registered photograph')
         for face in obj.data.polygons:
@@ -122,13 +134,28 @@ def build_paving_strip(repo_root):
         return obj
 
     for i, contour in enumerate(CONTOURS):
-        top = [.012,.016,.01,.008,.011,.021,.028,.014,.009,.013][i]
-        tilt = (.012,-.008) if i==5 else ((-.025,.012) if i==7 else (0,0))
+        top = [.012,.016,.01,.008,.011,.021,.014,.014,.008,.013][i]
+        tilt = {5:(.012,-.008),6:(.009,-.01),7:(-.025,.012),8:(.006,.002)}.get(i,(0,0))
         # A lost shoulder follows the original large slab's upper-left corner.
         if i==6:
             prism('Dirt occupying the missing slab corner', contour, .007, dirt, .005)
             contour=[(520,417)]+contour[2:]+[(490,453)]
-        prism('Photo stone %02d'%i, contour, top, stone, tilt=tilt)
+        if i==8:
+            # Two shallow oblique chips interrupt long shoulders without
+            # moving the whole slab away from its photographic silhouette.
+            contour=contour[:4]+[(534,659),(530,664),(535,671)]+contour[4:]
+            contour=contour[:10]+[(496,793),(493,789),(485,794)]+contour[10:]
+        prism('Photo stone %02d'%i, contour, top, stone,
+              bevel=.015 if i in (6,8) else .009, tilt=tilt,
+              worn_shoulders=i in (6,8))
+    # Thin local mortar deposits cover selected foot edges, with an irregular
+    # taper, while retaining exposed stone shoulders elsewhere.
+    prism('Mortar against settled center slab',
+          [(647,534),(653,548),(661,568),(656,591),(652,606),(648,597),(650,578),(647,559)],
+          .006,dirt,.002)
+    prism('Mortar caught at lower slab shoulder',
+          [(375,802),(399,800),(420,798),(441,797),(449,801),(429,804),(409,803),(389,807),(377,807)],
+          .004,dirt,.0015)
     # Settled broken fragments remain in the missing corner at unequal heights.
     prism('Settled slab corner',[(487,427),(510,420),(488,447),(480,460)],.011,stone,.004,(-.015,.008))
     rng=random.Random(513)

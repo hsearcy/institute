@@ -1,0 +1,17 @@
+{
+  "portal-composition-v2-before.png": "47c4a0fe5e2b5ec3190e233a312584c977ee3883fcc53a8fb896d7e8032b9589",
+  "portal-composition-v2-assembly.png": "9a50f8ba916bf2af178d0bd3e7416b37a9be990a32392fb8d19bd58adc59d3b9",
+  "portal-composition-v2-matched.png": "465d3635086606cb3aab3658385df36fee815f8c19695795a31b916f1451f2ae",
+  "portal-composition-v2-paving.png": "f09c3debe702c581d3ca9ea9dff37ce096c48aa4ddf7bd186709dae12d6c06cc",
+  "portal-composition-v2-assembly-detail.png": "3e373e253f1189018781b3a4094c55d27fcf0cf58a171b0037f47798f3f9ffa3",
+  "portal-composition-v2-evidence.json": "9bb3f399aabb644e9039a74efc3933edf2c7310a5611692397fa899810689bb8",
+  "portal-composition-v2-server.log": "0e95535bb7697778616f68822ecfcfe5608b6102bd042fe395666676cd2b100b",
+  "rpg-portal-abutments-proof.mjs": "f62ec4f3199bf52ca5cd0134ba214866df77b0042345ccc9c79706413fed19fb",
+  "rpg-portal-abutments-candidate.js": "b51e6003e309415bc337ba493ea376e900c06c1ff7829814f49e6c5158842681",
+  "rpg-portal-facade-server.mjs": "5742e861783bad80e700e3ef3c2397db41e579a863979bbed8d418c38418234a",
+  "rpg-portal-composition-v2.js": "acc15a3a37ed18ccee65287de5fe39e0b16091c684acaa0442e4dbc3aebec04d",
+  "export-portal-composition-parts.py": "4113fd4d7b291fde858af2153d30d90e170677c20a9f1195f38d87fba4a1f88e",
+  "composition-parts.glb": "bf0beb3a275c8394a0f53c5c0cce0cde3d479fdb5f2d3512d6408507ade6b98b",
+  "composition-parts.json": "c55fc7a5261dc18c1860f9aa91e97dee535daf16e98e283deaca8f893c9e0aef",
+  "README.md": "4fb79eead91856dc204c7abe713384a1e392372a2c28d7ca00ae93506ea0fdb0"
+}

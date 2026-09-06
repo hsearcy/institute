@@ -1,0 +1,5 @@
+First complete recovered bonded-portal export placed in an isolated local Chromium9222 game, with six enemies at1440x900/DPR1. No model was installed. The before/matched views use the same frozen camera and actor state. There were no page/resource errors. The existing preview's complete saved state and running RAF were restored. The static renderer diagnostics are not an FPS benchmark.
+
+Independent shown construction/material7.5, architecture integration7, whole world6.5. Compared with concept04, the broad pale full-height wings erase alcove depth and look too complete. This led to lower outer walls and a recessed right alcove in ../portal-composition-v2/. The small export crown defect was still present in this model and was subsequently repaired separately.
+
+The retained harness is a reproduction tool with later optional composition/paving branches. The original run used QA_LABEL=portal-abutments-native-v3-recovery2 MATCHED_STONE=1; neither optional branch was enabled. Exact captured GLB is in ../portal-abutments/export-v3-recovery2/.

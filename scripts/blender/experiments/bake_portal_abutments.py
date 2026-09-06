@@ -163,11 +163,20 @@ def stage(action, channel=None, batch=None, view='front'):
                 scene = cache['reviewScene']
                 output = str(DIRECTORY / ((channel + '-' if action == 'control' else 'export-') + view + '.png'))
                 restore = []
+                restore_meshes = []
                 try:
                     if action == 'control':
                         for obj in scene.objects:
                             if obj.type != 'MESH' or obj.name.startswith('AbutmentReview_Ground'):
                                 continue
+                            if channel == 'flat-faces':
+                                original_mesh = obj.data
+                                obj.data = original_mesh.copy()
+                                restore_meshes.append((obj, original_mesh))
+                                for face in obj.data.polygons:
+                                    face.use_smooth = False
+                                obj.data.normals_split_custom_set([(0, 0, 0)] * len(obj.data.loops))
+                                obj.data.update()
                             for slot in obj.material_slots:
                                 original = slot.material
                                 material = original.copy()
@@ -191,6 +200,8 @@ def stage(action, channel=None, batch=None, view='front'):
                 finally:
                     for slot, original in restore:
                         slot.material = original
+                    for obj, original in restore_meshes:
+                        obj.data = original
                 report['path'] = output
             else:
                 raise ValueError('Unknown stage ' + action)

@@ -1,0 +1,13 @@
+{
+  "changedPixels": 37830,
+  "totalPixels": 4194304,
+  "changedFraction": 0.00901937484741211,
+  "changeBounds": [
+    4,
+    95,
+    2018,
+    1956
+  ],
+  "oldSHA256": "e49ca5b136719ed2c891f5087e763a99a7b47f0fd3b1d95d97532eb477f04cbf",
+  "newSHA256": "8f9cb4872c494e2ddd91f04ec1f8822dd596d8b16e74a49fc82fe557f406b4d4"
+}

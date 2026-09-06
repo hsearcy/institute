@@ -310,7 +310,10 @@ def bake_channel(state, kind, batch_index=None):
             destination.hide_render = False
             destination.select_set(True)
             bpy.context.view_layer.objects.active = destination
-            state['scene'].render.bake.use_clear = not finished
+            # A bounded repair can retain an already verified atlas and write
+            # only the changed source charts. Ordinary full bakes still clear
+            # their first batch, so unbaked pixels cannot inherit stale data.
+            state['scene'].render.bake.use_clear = not finished and kind not in state.get('preserve_existing_maps', set())
             try:
                 bpy.ops.object.bake(type={'albedo': 'DIFFUSE', 'normal': 'NORMAL', 'orm': 'EMIT'}[kind])
                 # Persist while this image is still the active bake target.

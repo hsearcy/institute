@@ -15,10 +15,13 @@ import { iceShardGeometry, iceShardMaterial } from './world/ice';
 import { lightningGeometry, lightningMaterial } from './world/lightning';
 import { createBallLightning, createBallLightningCharge, ballLightningReleasePosition, createBallLightningContacts, ballLightningVolumeMaterial, ballLightningFilamentMaterial, ballLightningContactMaterial } from './world/ballLightning';
 import { createFireNova, createFireNovaContacts, createNovaIgnition, fireNovaFrontMaterial, fireNovaVolumeMaterial } from './world/fireNova';
+import { createFrostfallCrystal, createFrostfallContact, frostfallCrystalMaterial, frostfallContactMaterial, sampleFrostfallFlight } from './world/frostfall';
 import { phoenixWingGeometry, phoenixTailGeometry, stormFilamentsGeometry } from './world/spellShapes';
 import { phoenixFeatherMaterial, stormWispMaterial } from './world/materials';
 import { enemyRoster } from './world/enemyRoster';
 import { EnemyAnimator } from './world/EnemyAnimator';
+import { HeldEquipment, authoredHeroGrip } from './world/HeldEquipment';
+import { ITEM_MODELS } from './itemModels';
 import { createHitReaction, sampleHitReaction, type HitReaction, type CombatHit } from './world/hitReactions';
 import { advanceHeroTravel, heroDoorwayRoute, setPlanarHeroHeading, settleHeroTravel } from './world/heroLocomotion';
 import { cloneErosionProgramMaterial, createElectricDissolve } from './world/electricDissolve';
@@ -53,6 +56,7 @@ export class DungeonWorld {
   private readonly heroActions = new Map<string, THREE.AnimationAction>();
   private heroAnimation = '';
   private heroUsesAuthoredMotion = false;
+  private heldEquipment?: HeldEquipment;
   private readonly floorGroup = new THREE.Group();
   private vaultScenery?: THREE.Group;
   private sceneryMeshes: THREE.Object3D[] = [];
@@ -204,17 +208,17 @@ export class DungeonWorld {
 
   async load(): Promise<void> {
     const loader = new GLTFLoader();
-    await Promise.all(['hero', 'hero-cinder', 'hero-glacier', 'hero-tempest', 'imp', 'guardian', 'arch', 'pillar', 'masonry-pier', 'masonry-post', 'brazier', 'crystal', 'chest', 'wall-bay', 'broken-wall', 'skeleton', 'revenant', 'wraith', 'furnace', 'reliquary', 'ice_cluster'].map(async name => {
+    await Promise.all(['hero', 'hero-cinder', 'hero-glacier', 'hero-tempest', 'imp', 'guardian', 'arch', 'pillar', 'masonry-pier', 'masonry-post', 'brazier', 'crystal', 'chest', 'wall-bay', 'broken-wall', 'skeleton', 'revenant', 'wraith', 'furnace', 'reliquary', 'ice_cluster', ...Object.values(ITEM_MODELS).map(item => item.model)].map(async name => {
       try {
         const gltf = await loader.loadAsync(`/assets/rpg/${name}.glb`);
         if (this.disposed) return;
         if (name === 'hero' || name.startsWith('hero-')) this.heroClipSets.set(name, gltf.animations);
         gltf.scene.traverse(object => {
           if (object instanceof THREE.Mesh) {
-            object.castShadow = true; object.receiveShadow = !name.startsWith('hero') && !['skeleton', 'revenant', 'wraith', 'guardian', 'imp'].includes(name);
-            if (name.startsWith('hero') || ['skeleton', 'revenant', 'guardian', 'imp', 'wraith'].includes(name)) {
+            object.castShadow = true; object.receiveShadow = !name.startsWith('hero') && !name.startsWith('items/') && !['skeleton', 'revenant', 'wraith', 'guardian', 'imp'].includes(name);
+            if (name.startsWith('hero') || name.startsWith('items/') || ['skeleton', 'revenant', 'guardian', 'imp', 'wraith'].includes(name)) {
               for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
-                if (material instanceof THREE.MeshStandardMaterial) { material.envMap = this.environment.texture; material.envMapIntensity = name.startsWith('hero') ? .55 : .225; }
+                if (material instanceof THREE.MeshStandardMaterial) { material.envMap = this.environment.texture; material.envMapIntensity = name.startsWith('hero') || name.startsWith('items/') ? .55 : .225; }
               }
             }
             if (object.material instanceof THREE.MeshStandardMaterial && /glow_flame|glow_amber/.test(object.material.name)) {
@@ -270,6 +274,7 @@ export class DungeonWorld {
     // before a child's first cast would otherwise pay the shader setup cost.
     const warmup = new THREE.Group(); warmup.position.y = -1000;
     const warmMaterials: THREE.Material[] = [novaMaterial(), fireSheetMaterial(), firePlumeMaterial(0, 1), bladeWakeMaterial(), ashMaterial(), phoenixFeatherMaterial(), stormWispMaterial(0x7787a4), stormWispMaterial(0xa9bdff, true), lightningMaterial(0xa9bdff), ballLightningVolumeMaterial(), ballLightningFilamentMaterial(), ballLightningContactMaterial(), ballLightningContactMaterial(true), fireNovaFrontMaterial(), fireNovaVolumeMaterial()];
+    warmMaterials.push(frostfallCrystalMaterial(), frostfallCrystalMaterial(true), frostfallContactMaterial());
     const ignitionWarmup = createNovaIgnition();
     for (const layer of [ignitionWarmup.mesh, ignitionWarmup.seed]) { warmMaterials.push(layer.material); layer.geometry.dispose(); }
     for (const layer of createFireNovaContacts(1).layers) { warmMaterials.push(layer.material); layer.geometry.dispose(); }
@@ -315,8 +320,19 @@ export class DungeonWorld {
     const contacts = createFireNovaContacts(Math.max(1, this.enemies.length), false, this.encounter);
     const ball = createBallLightning(1, 1 / renderer.getPixelRatio());
     const electricalContacts = createBallLightningContacts(Math.max(1, this.enemies.length));
+    const frostCrystal = createFrostfallCrystal(), frostContact = createFrostfallContact();
+    // Cleave's wake, contact flash, scorch and ash need the compositor's output
+    // variant too; compileAsync alone leaves their first actual draw unprepared.
+    const bladeWake = new THREE.Mesh(new THREE.PlaneGeometry(.5, .3), bladeWakeMaterial());
+    // The live ribbon carries position/UV only. Three keys programs by normal
+    // attribute presence even when this unlit shader never reads normals.
+    bladeWake.geometry.deleteAttribute('normal');
+    const ash = new THREE.Mesh(new THREE.CylinderGeometry(.3, .1, .2, 8, 1, true), ashMaterial());
+    const fireStroke = new THREE.Mesh(new THREE.PlaneGeometry(.2, .1), new THREE.MeshBasicMaterial({ color: 0xffc875, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+    const fireFlash = new THREE.Mesh(new THREE.PlaneGeometry(.3, .3), new THREE.MeshBasicMaterial({ color: 0xffebbd, map: this.glowMap, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+    const scorch = new THREE.Mesh(new THREE.PlaneGeometry(.3, .3), new THREE.MeshBasicMaterial({ color: 0x32261b, alphaMap: this.glowMap, transparent: true, opacity: .2, depthWrite: false }));
     const discharge = new THREE.Mesh(lightningGeometry(origin.clone().setY(1.2), origin.clone().add(new THREE.Vector3(1.5, .9, -1)), .03, view, 1), lightningMaterial(0x7abaff));
-    const layers = [ignition.mesh, ignition.seed, ...wave.layers, ...contacts.layers, ...ball.layers, ...electricalContacts.layers, discharge];
+    const layers = [ignition.mesh, ignition.seed, ...wave.layers, ...contacts.layers, ...ball.layers, ...electricalContacts.layers, ...frostCrystal.layers, ...frostContact.layers, bladeWake, ash, fireStroke, fireFlash, scorch, discharge];
     const hand = origin.clone().setY(1.5), ground = origin.clone().setY(.06);
     this.heroVisual.getObjectByName('CastOrigin')?.getWorldPosition(hand);
     ignition.update(hand, ground, .13, new THREE.Vector3(.7, 0, 0));
@@ -326,6 +342,10 @@ export class DungeonWorld {
     ball.update(origin.clone().setY(1.2), view, .2, this.elapsed);
     electricalContacts.strike(0, origin.clone().setY(.9), view, this.elapsed);
     electricalContacts.update(this.elapsed + .04);
+    frostCrystal.update(origin.clone().setY(1.8), new THREE.Vector3(.1, -1, 0), this.elapsed);
+    frostContact.update(origin.clone().setY(.9), .15, this.elapsed);
+    for (const mesh of [bladeWake, ash, fireStroke, fireFlash, scorch]) mesh.position.copy(origin).y = .8;
+    bladeWake.material.uniforms.opacity.value = .5; ash.material.uniforms.opacity.value = .5;
     this.scene.add(...layers);
     try {
       renderer.setRenderTarget(target);
@@ -1000,6 +1020,7 @@ export class DungeonWorld {
     const previousVisual = this.heroVisual;
     const previousAnimation = this.heroAnimation || 'idle';
     const previousTime = this.heroActions.get(previousAnimation)?.time ?? 0;
+    this.heldEquipment?.clear(); this.heldEquipment = undefined;
     this.heroMixer?.stopAllAction(); this.heroMixer?.uncacheRoot(this.heroVisual);
     this.heroActions.clear(); this.heroAnimation = '';
     this.hero.remove(this.heroVisual); this.releaseProcedural(this.heroVisual);
@@ -1017,6 +1038,9 @@ export class DungeonWorld {
     // New actors author their grounding and strike weight in the skeleton.
     // Keep the legacy accents only for the older armor rigs.
     this.heroUsesAuthoredMotion = !!model.getObjectByName('CastOrigin');
+    // GLTFLoader sanitizes the authored hand.R bone name to handR.
+    const hand = model.getObjectByName('handR');
+    if (hand && this.heroUsesAuthoredMotion) this.heldEquipment = new HeldEquipment(model, hand, authoredHeroGrip());
     this.heroModelId = modelId; this.appearance = modelId === appearance.modelId ? appearance.id : 'wayfarer';
     this.heroMixer = new THREE.AnimationMixer(this.heroVisual);
     for (const clip of this.heroClipSets.get(modelId) ?? []) this.heroActions.set(clip.name.toLowerCase(), this.heroMixer.clipAction(clip));
@@ -1030,6 +1054,8 @@ export class DungeonWorld {
     this.equipment = itemId;
     const glow = /cinder|ember|phoenix/.test(itemId) ? 0xff8c22 : /storm|thunder|tempest/.test(itemId) ? 0x8d9eff : /frost|glacier|winter/.test(itemId) ? 0x87edff : 0xffb64b;
     this.rune.material instanceof THREE.MeshBasicMaterial && this.rune.material.color.setHex(glow);
+    if (this.heldEquipment?.itemId === itemId) return;
+    this.heldEquipment?.clear();
     this.heroVisual.traverse(object => {
       if (object instanceof THREE.Mesh && /sword|weapon|blade/i.test(object.name)) {
         const material = object.material;
@@ -1044,6 +1070,9 @@ export class DungeonWorld {
         }
       }
     });
+    const authoredItem = ITEM_MODELS[itemId];
+    if (authoredItem) this.heldEquipment?.replace(this.models.get(authoredItem.model));
+    this.renderer.shadowMap.needsUpdate = true;
   }
 
   setPaused(paused: boolean): void { this.paused = paused; }
@@ -1115,7 +1144,7 @@ export class DungeonWorld {
     }
     if (effect !== 'nova' && effect !== 'ball-lightning') this.emit(origin.clone().setY(1.3), color, 28, 1.1, .75);
     this.schedule(.18, () => {
-      this.burstLight.position.copy(origin).setY(2.8); this.burstLight.color.setHex(color); this.burstLight.intensity = 100;
+      this.burstLight.position.copy(origin).setY(2.8); this.burstLight.color.setHex(color); this.burstLight.intensity = effect === 'frostfall' ? 24 : 100;
       switch (effect) {
         case 'cleave': {
           // The articulated clip already plants the feet and shifts strike weight.
@@ -1186,9 +1215,32 @@ export class DungeonWorld {
           resolveHorde(.55); break;
         }
         case 'frostfall': {
-          targets.forEach((enemy, i) => this.schedule(i * .018, () => this.projectile(enemy.origin.clone().add(new THREE.Vector3(-.6, 7 + i % 3, 0)), enemy.origin, 0xabedff, options.shards ? .36 : .23, .42, () => this.impact(enemy.origin, 0xb0efff, .7), true)));
-          if (options.shards) this.schedule(.7, () => this.iceWave(origin, true));
-          resolveHorde(.5); break;
+          targets.forEach((enemy, i) => this.schedule(i * .045, () => {
+            const target = enemy.root.position.clone(); target.y += enemy.height * .55;
+            const from = target.clone().add(new THREE.Vector3(-.65 + i % 2 * .25, 5.4 + i % 3 * .5, -.3));
+            const shard = createFrostfallCrystal(i + this.encounter * 11, options.shards ? 1.15 : .9);
+            const tip = new THREE.Vector3(), velocity = new THREE.Vector3();
+            const duration = .46 + i % 3 * .025, started = this.elapsed;
+            const update = () => {
+              const age = this.elapsed - started;
+              // Track the idle body's small feint until contact, then keep the
+              // shatter at that contact rather than following the recoil.
+              if (age < duration) { target.copy(enemy.root.position); target.y += enemy.height * .55; }
+              sampleFrostfallFlight(from, target, age / duration, tip, velocity);
+              shard.update(tip, velocity, this.elapsed, 1 - THREE.MathUtils.smoothstep(age, duration, duration + .06));
+            };
+            update();
+            shard.layers.forEach((layer, index) => this.effect(layer, duration + .06, index === 0 ? update : undefined));
+            this.schedule(duration, () => {
+              target.copy(enemy.root.position); target.y += enemy.height * .55;
+              this.hitEnemy(enemy, 0xb0efff, hitById.get(enemy.id));
+              const contact = createFrostfallContact(i + this.encounter * 11, options.shards ? 1.15 : .9, target.clone().sub(from)), contactAt = this.elapsed;
+              contact.update(target, 0, this.elapsed);
+              contact.layers.forEach((layer, index) => this.effect(layer, .92, index === 0 ? () => contact.update(target, this.elapsed - contactAt, this.elapsed) : undefined));
+              this.shake = Math.max(this.shake, enemy.brute ? .13 : .065);
+            });
+          }));
+          break;
         }
         case 'ice-lance': {
           const directions = options.pierce ? [-.48, 0, .48] : [0];
@@ -1887,8 +1939,10 @@ export class DungeonWorld {
         }
         enemy.root.rotation.x = enemy.root.rotation.z = 0;
         enemy.root.scale.setScalar(1); enemy.root.userData.electricDissolve = 0;
-        enemy.visual.position.y = (enemy.modelId === 'wraith' ? .14 + Math.sin(this.elapsed * 2 + enemy.phase) * .09 : Math.abs(Math.sin(this.elapsed * 4.7 + enemy.phase)) * (enemy.brute || enemy.modelId === 'revenant' ? .035 : .075)) * (1 - (response?.control ?? 0));
-        enemy.visual.rotation.z = Math.sin(this.elapsed * 1.5 + enemy.phase) * .035 * (1 - (response?.control ?? 0));
+        // Authored foot support already settles the soles through each pose.
+        // A second whole-model bounce would lift those planted feet afterward.
+        enemy.visual.position.y = enemy.animator.ownsGroundedPose ? 0 : (enemy.modelId === 'wraith' ? .14 + Math.sin(this.elapsed * 2 + enemy.phase) * .09 : Math.abs(Math.sin(this.elapsed * 4.7 + enemy.phase)) * (enemy.brute || enemy.modelId === 'revenant' ? .035 : .075)) * (1 - (response?.control ?? 0));
+        enemy.visual.rotation.z = enemy.animator.ownsGroundedPose ? 0 : Math.sin(this.elapsed * 1.5 + enemy.phase) * .035 * (1 - (response?.control ?? 0));
       }
       enemy.animator.update(this.elapsed, {
         moving: (.35 + Math.abs(Math.cos(this.elapsed * .8 + enemy.phase)) * .4) * (1 - (response?.control ?? 0)),
@@ -1974,9 +2028,10 @@ export class DungeonWorld {
     if (recentHit) {
       const reaction = recentHit.root.userData.hitReaction as HitReaction;
       const response = sampleHitReaction(reaction, this.elapsed);
-      this.burstLight.position.copy(recentHit.root.position).add(new THREE.Vector3(-reaction.dx * .35, recentHit.height * .75 + .45, -reaction.dz * .35));
-      this.burstLight.color.setHex(reaction.element === 'fire' ? 0xffa35a : reaction.element === 'electric' ? 0x8abbff : 0xd6dce8);
-      this.burstLight.intensity = 9 * response.light;
+      const frostfall = this.lastAttack?.spellId === 'frost', reach = frostfall ? .65 : .35;
+      this.burstLight.position.copy(recentHit.root.position).add(new THREE.Vector3(-reaction.dx * reach, recentHit.height * .75 + .45, -reaction.dz * reach));
+      this.burstLight.color.setHex(reaction.element === 'fire' ? 0xffa35a : reaction.element === 'electric' ? 0x8abbff : frostfall ? 0x76bcca : 0xd6dce8);
+      this.burstLight.intensity = (frostfall ? 3 : 9) * response.light;
     }
     this.cameraTarget.lerp(this.hero.position, 1 - Math.exp(-delta * 3.7));
     const shake = this.shake;

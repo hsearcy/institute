@@ -2,6 +2,7 @@ import { BufferGeometry, Euler, Matrix4, Mesh, Object3D, Quaternion, Vector3 } f
 import { solvePlanarLeg } from './legSupport';
 import { bendWraithPoint, wraithGatherGeometry } from './wraithGather';
 import { ConvexHull } from 'three/examples/jsm/math/ConvexHull.js';
+import { AuthoredEnemyGuard, type AuthoredGuardSupport } from './AuthoredEnemyGuard';
 const supportCache = new WeakMap<BufferGeometry, Vector3[]>();
 const spectralReleaseDirections = { L: new Vector3(.12, -1, .06).normalize(), R: new Vector3(-.12, -1, .06).normalize() };
 function supportVertices(mesh: Mesh): Vector3[] {
@@ -56,7 +57,12 @@ export class EnemyAnimator {
   private readonly supportPoint = new Vector3();
   private readonly garments: Mesh[] = [];
   private spectralEnvelope = { hem: 0, height: 1 };
-  private readonly legSupports = new Map<string, { foot: Vector3; center: Vector3 }>();
+  private readonly legSupports = new Map<string, { foot: Vector3; center: Vector3; sole: readonly Vector3[] }>();
+  private readonly authoredGuard?: AuthoredEnemyGuard;
+  private readonly authoredGuardSupport?: AuthoredGuardSupport;
+
+  /** Authored foot support owns the visual pose, including its ground height. */
+  get ownsGroundedPose(): boolean { return this.authoredGuard !== undefined; }
   private readonly armSupports = new Map<string, { node: Object3D; point: Vector3 }[]>();
   private readonly capeSupports: { node: Object3D; point: Vector3 }[] = [];
   private readonly settledArmAngles = new Map<string, number>();
@@ -95,15 +101,22 @@ export class EnemyAnimator {
       const low = Math.min(...points.map(p => this.inSupportSpace(p.node, this.supportPoint.copy(p.point)).y));
       const sole = points.filter(p => this.inSupportSpace(p.node, this.supportPoint.copy(p.point)).y < low + .075);
       if (!sole.length) continue;
-      const center = new Vector3(), foot = new Vector3();
+      const center = new Vector3(), foot = new Vector3(), soleLocal: Vector3[] = [];
       for (const p of sole) {
         center.add(this.inSupportSpace(p.node, this.supportPoint.copy(p.point)));
         const local = p.point.clone();
         for (let node: Object3D | null = p.node; node && node !== lower; node = node.parent) { node.updateMatrix(); local.applyMatrix4(node.matrix); }
         foot.add(local);
+        soleLocal.push(local);
       }
-      this.legSupports.set(side, { foot: foot.divideScalar(sole.length), center: center.divideScalar(sole.length) });
+      this.legSupports.set(side, { foot: foot.divideScalar(sole.length), center: center.divideScalar(sole.length), sole: soleLocal });
     }
+    this.authoredGuard = AuthoredEnemyGuard.create(visual, this.joints);
+    if (this.authoredGuard) this.authoredGuardSupport = {
+      legs: this.legSupports, floor: this.supportHeight,
+      toSpace: (node, point) => this.inSupportSpace(node, point),
+      lowest: () => this.lowestSupport(),
+    };
   }
 
   /** Updates local joint transforms only; caller updates matrixWorld before batching. */
@@ -203,6 +216,7 @@ export class EnemyAnimator {
         this.rotate('Head', -.3 * hit, .16 * hit * side, .13 * hit * side);
       }
     }
+    if (this.authoredGuard && this.authoredGuardSupport) this.authoredGuard.apply(state, this.authoredGuardSupport);
   }
 
   private inSupportSpace(node: Object3D, point: Vector3): Vector3 {

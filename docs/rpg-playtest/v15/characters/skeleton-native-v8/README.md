@@ -1,0 +1,13 @@
+# Authored skeleton native v8 — pending acceptance
+
+The exact export passed construction/material fidelity 8. These actual Embercrypt captures establish a separate native gate: the original 1.65-height skeleton scores presence 7 and visible guard/wounded silhouette 7.5. The matched 1.85-height comparison improves presence to 7.5; fine forearm, shin and hand silhouettes still need strengthening. Neither size is approved for public installation.
+
+The video records two real starter Nova answers in a disposable copy of the local baseline database. Authoritative HP changes from [12,6,8,8,10,6] to [6,0,2,2,4,0], then advances to the next room only after its clearing cast. All actual skeleton actors use the reviewed 11-joint GLB and the opt-in guard hook. The run reports ten hits, at most seven visible actors and no page, shader or resource errors. Cadence was instrumented and recorded; it is not an isolated performance benchmark.
+
+The size PNGs compare the same elapsed pose/camera at 1440×900 before and after one real first cast. Only candidate visual scale/height changes; the projection matrix stays identical. Highest bounding top moves from 174.4 to 162.6px and the lowest bottom remains below 518px, clear of the question dock near 669px. This does not establish phone framing. The test restores original scale and closes owned browser/API/Vite processes.
+
+Independent ordered review gives connected fall/hold/erosion ordering 8, survivor recoil/recovery readability 7.5, and final death slack 7.5. The narrow legs obscure the support catch; one upper limb remains conspicuously raised in final death frames 174–201. The reviewer recommends evaluating the stronger silhouette before changing timing. `decoded-frame-index.json` maps the 288 original 25fps frames extracted from video seconds 11.52–23.0; full decoded PNGs remain in ignored `tmp/skeleton-native-v8-1788711729266/frames` and can be reproduced from the retained WebM. No interpolated frames are used. Page telemetry and WebM clocks are separate; exact onset timing requires visible-event alignment.
+
+The test routes skeleton and pending Apprentice item URLs to review files. No public skeleton or legacy save was modified. Browser harnesses remain in `tmp/skeleton-native-proof.mjs`, `tmp/skeleton-size-proof.mjs`, and `tmp/skeleton-native-server.mjs`.
+
+A later source audit found that the world still applies legacy visual-wrapper bob/roll to living authored skeletons. The model-space vertex sweeps do not cover that outer transform. Root was notified to remove only those accents for the opt-in authored actor before the next native grounding proof; the original run above is preserved as recorded.

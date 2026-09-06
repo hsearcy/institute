@@ -1,3 +1,5 @@
+import { ITEM_MODELS } from './itemModels';
+
 // Original lightweight vector UI art. The dungeon/characters use Blender GLBs.
 const paths: Record<string, string> = {
   ember: '<path d="M32 7c6 15-9 16 0 26 1-8 9-9 8-16 16 17 16 34-8 39C9 51 11 34 22 24c-2 12 5 12 5 7 0-10 8-12 5-24Z"/><ellipse cx="32" cy="48" rx="25" ry="9" fill="none"/>',
@@ -31,6 +33,8 @@ export function spellArt(id: string): string {
 
 const relicAtlas = ['apprentice','cinderwand','glacier','thunderrod','moonstaff','phoenix','wintercrown','tempest','cleaver','starfall','phoenix_talon','inferno','sunforged','icespear','tideglass','hailcaller','wardenheart','winterbranch','arcfang','thunderbell','stormorbit','skybreaker','stormsilver'];
 export function relicArt(id: string): string {
+  const authored = ITEM_MODELS[id];
+  if (authored) return `<span class="rpg-relic-art" aria-hidden="true" style="background-image:url('${authored.thumbnail}');background-size:contain;background-position:center;background-repeat:no-repeat"></span>`;
   const index = Math.max(0,relicAtlas.indexOf(id));
   return `<span class="rpg-relic-art" aria-hidden="true" style="--art-x:${(index % 6)*20}%;--art-y:${Math.floor(index/6)*100/3}%"></span>`;
 }

@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "coordinateConvention": "Rigid equipment uses palm origin, separate from ground-origin scenery/enemy assets.",
+  "items": [
+    {
+      "id": "apprentice",
+      "model": "apprentice.glb",
+      "thumbnail": "apprentice.png",
+      "sha256": "843adac02c11ea0d8d7aacba6d8f0eec90cf92e3bb0653a836f39ded73c35761",
+      "candidateSha256": "843adac02c11ea0d8d7aacba6d8f0eec90cf92e3bb0653a836f39ded73c35761",
+      "thumbnailSha256": "01e66d6d3064f411ad55e13de561f0a9be4edee042fde066fa7cb36751da5105",
+      "bytes": 1311748,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/apprentice-v7-source.blend",
+        "sha256": "058af1a1a45481bca7a8d0dcd62a4dabcf7f6f71450f332f715d854c39bffa42",
+        "recipe": "scripts/blender/items/build_studies.py::apprentice",
+        "recipeFilesAtInstallation": {
+          "scripts/blender/items/build_studies.py": "ecf3918193161bffa339480ef68996d858c13c5d15ba19b2ae4fb3bae90c583d",
+          "scripts/blender/items/surfaces.py": "b21a9a2b8d912b0ff9c2561a2d357e480615fe89e27eff6ee29108982637cf54",
+          "scripts/blender/items/bake_items.py": "4408b3298fb03705dbf6d911c48a93908e77168a32970b2075e5e90b8d6658ff",
+          "scripts/blender/items/pack_candidate.py": "b317bac3d5d6ce5602a09e5c50936884349875675df910a354c39281e3962109"
+        },
+        "materialRevision": "v4 blackened forged iron crossguard; baseColor multiplier(.32,.36,.38), metalness.65, roughness.54. Other accepted surfaces retained."
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "actual palm/grasp center at local(0,0,0)",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "apprentice_Grip.014",
+        "tipNode": "apprentice_Tip.014",
+        "transform": "full measured palm socket \u00d7 inverse local Grip transform; no bounding-box fit"
+      },
+      "render": {
+        "triangles": 4746,
+        "meshes": 1,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "textures": 3,
+        "embeddedImages": 3,
+        "textureSize": [
+          1024,
+          1024
+        ],
+        "transmission": false,
+        "skinned": false,
+        "drawCallScope": "per item color pass; shadow/depth/postprocessing passes counted separately"
+      },
+      "review": {
+        "sourceConstruction": 8,
+        "sourceMaterial": 8,
+        "exactExportConstruction": 8,
+        "exactExportMaterial": 8,
+        "nativeStaticAttachmentScale": 8,
+        "nativeStaticMaterial": 8,
+        "standaloneThumbnail": 8,
+        "continuousMotion": {
+          "score": 8,
+          "scope": "Weapon-only grip, continuity and material across three actual Cleave intervals at observed recording sampling.",
+          "firstCastSmoothness": {
+            "score": 8,
+            "scope": "One fresh first Cleave cast; weapon-only continuity and smoothness reviewed at25fps video sampling, corroborated by actual-render telemetry. No Cleave FX acceptance inferred.",
+            "activeIntervalMedianMs": 16.8,
+            "activeIntervalMaximumMs": 23.7,
+            "programCount": 144,
+            "programCountStable": true,
+            "evidence": [
+              "docs/rpg-playtest/v15/items/apprentice-v4/first-cast-warmup.json",
+              "docs/rpg-playtest/v15/items/apprentice-v4/first-cast-warmup.webm"
+            ],
+            "priorFailure": "Earlier98.9ms opening gap retained as prior evidence; corrected warm geometry now includes the actual ribbon attribute variant."
+          },
+          "spellEffectAcceptance": "not implied"
+        },
+        "actualInventoryCard": {
+          "score": 8,
+          "reviewedSizesPx": [
+            210,
+            93
+          ],
+          "scope": "Actual feature and inventory-card deployment"
+        },
+        "scope": "Independent scoped art reviews; no other item or general gameplay acceptance inferred."
+      }
+    }
+  ]
+}

@@ -1,0 +1,1617 @@
+{
+  "file": "scripts/blender/experiments/exports/skeleton-candidate-hand-uv-v8/skeleton-candidate.glb",
+  "phase": 0.7,
+  "collapse": "grounded",
+  "rows": [
+    {
+      "state": {},
+      "sole": -0.00008349725976589811,
+      "floor": -0.00008349725976589811,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589811
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": -0.0000437681095001724
+        },
+        {
+          "name": "LegUpperL_Baked.012",
+          "low": 0.5063456623730505
+        }
+      ]
+    },
+    {
+      "state": {
+        "brace": 0.2,
+        "injury": 0.25
+      },
+      "sole": -0.00008349725976586342,
+      "floor": -0.00008349725976586342,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976586342
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.0064711490518821885
+        },
+        {
+          "name": "LegUpperL_Baked.012",
+          "low": 0.510696243715141
+        }
+      ]
+    },
+    {
+      "state": {
+        "brace": 0.7,
+        "recoil": 0.6,
+        "impactSide": -1,
+        "catchStep": 0.4,
+        "footOffset": -0.12
+      },
+      "sole": -0.0000834972597657524,
+      "floor": -0.0000834972597657524,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": -0.0000834972597657524
+        },
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": 0.008115000251526394
+        },
+        {
+          "name": "LegUpperL_Baked.012",
+          "low": 0.46724527689671347
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976586342,
+      "floor": -0.00008349725976586342,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976586342
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": -0.00008348430128535256
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.4913581907749176
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.016666666666666666,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976586342,
+      "floor": -0.00008349725976586342,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976586342
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": -0.00008348430128535256
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.4913581907749176
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.03333333333333333,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976586342,
+      "floor": -0.00008349725976586342,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976586342
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": -0.00008348430128535256
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.4913581907749176
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.05,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976586342,
+      "floor": -0.00008349725976586342,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976586342
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": -0.00008348430128535256
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.4913581907749176
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.06666666666666667,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976586342,
+      "floor": -0.00008349725976586342,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976586342
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": -0.00008348430128535256
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.4913581907749176
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.08333333333333333,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589223,
+      "floor": -0.00008349725976589223,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589223
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": -0.00008306276821905128
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.49137025143921315
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.1,
+        "collapse": "grounded"
+      },
+      "sole": -0.0000834972597659468,
+      "floor": -0.0000834972597659468,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.0000834972597659468
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": -0.00006363424214644972
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.4917774831348549
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.11666666666666667,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976580617,
+      "floor": -0.00008349725976580617,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976580617
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.000011877511172406902
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.4927728062003792
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.13333333333333333,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976592413,
+      "floor": -0.00008349725976592413,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976592413
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.00023463112148252793
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.49477969126327587
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.15,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976567433,
+      "floor": -0.00008349725976567433,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976567433
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.0007163141487280915
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.4972660794208242
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.16666666666666666,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976577842,
+      "floor": -0.00008349725976577842,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976577842
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.001587666349169889
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.500059036782236
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.18333333333333332,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976591546,
+      "floor": -0.00008349725976591546,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976591546
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.002981870406380944
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.5029801645963283
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.2,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976592934,
+      "floor": -0.00008349725976592934,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976592934
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.005021016994020893
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.5058539016398578
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.21666666666666667,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589811,
+      "floor": -0.00008349725976589811,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589811
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.007803525977986704
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.5082681241150591
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.23333333333333334,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976604383,
+      "floor": -0.00008349725976604383,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976604383
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.01139326093534232
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.5094873482285951
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.25,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976574546,
+      "floor": -0.00008349725976574546,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976574546
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.015760003922284833
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.5102264745026384
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.26666666666666666,
+        "collapse": "grounded"
+      },
+      "sole": -0.0000834972597657177,
+      "floor": -0.0000834972597657177,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.0000834972597657177
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.020964157546532997
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.5105472458106793
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.2833333333333333,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.02689165520920564
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.5102122925036212
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.3,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976594669,
+      "floor": -0.00008349725976594669,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976594669
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.033421645725573726
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.5091996674735565
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.31666666666666665,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976591893,
+      "floor": -0.00008349725976591893,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976591893
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.040395300935018114
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.5072461503964782
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.3333333333333333,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976573852,
+      "floor": -0.00008349725976573852,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976573852
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.04762646182813772
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.5045522338557856
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.35,
+        "collapse": "grounded"
+      },
+      "sole": -0.0000834972597658773,
+      "floor": -0.0000834972597658773,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.0000834972597658773
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.05491451696937649
+        },
+        {
+          "name": "LegUpperR_Baked.012",
+          "low": 0.5013157312978637
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.36666666666666664,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.06205813336429464
+        },
+        {
+          "name": "Sword_Baked.004",
+          "low": 0.491132485635831
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.38333333333333336,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976583566,
+      "floor": -0.00008349725976583566,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976583566
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.0688683348766983
+        },
+        {
+          "name": "Sword_Baked.004",
+          "low": 0.4541704762382699
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.4,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976586342,
+      "floor": -0.00008349725976586342,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976586342
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.07517947771954181
+        },
+        {
+          "name": "Sword_Baked.004",
+          "low": 0.4184414729407796
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.4166666666666667,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.08085689680103642
+        },
+        {
+          "name": "Sword_Baked.004",
+          "low": 0.3856277735895797
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.43333333333333335,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976601607,
+      "floor": -0.00008349725976601607,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976601607
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.08580035790778207
+        },
+        {
+          "name": "Sword_Baked.004",
+          "low": 0.3586210759941578
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.45,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976586342,
+      "floor": -0.00008349725976586342,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976586342
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.08994289937835609
+        },
+        {
+          "name": "Sword_Baked.004",
+          "low": 0.3382312758846318
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.4666666666666667,
+        "collapse": "grounded"
+      },
+      "sole": -0.0000834972597660022,
+      "floor": -0.0000834972597660022,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.0000834972597660022
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.09323905619941267
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.31985846889222735
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.48333333333333334,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976580791,
+      "floor": -0.00008349725976580791,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976580791
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.09565930246936066
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.3035055406315309
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.5,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976583566,
+      "floor": -0.00008349725976583566,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976583566
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.09721578933766656
+        },
+        {
+          "name": "Body_Baked.012",
+          "low": 0.28070432101715515
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.5166666666666667,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976591893,
+      "floor": -0.00008349725976591893,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976591893
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.09787329229915773
+        },
+        {
+          "name": "Body_Baked.012",
+          "low": 0.25784962159438607
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.5333333333333333,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.09789249153308496
+        },
+        {
+          "name": "Body_Baked.012",
+          "low": 0.240343688035422
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.55,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.09789249153308496
+        },
+        {
+          "name": "Body_Baked.012",
+          "low": 0.2241970262228944
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.5666666666666667,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.09789249153308496
+        },
+        {
+          "name": "Body_Baked.012",
+          "low": 0.20922668755502621
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.5833333333333334,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.09789249153308496
+        },
+        {
+          "name": "Body_Baked.012",
+          "low": 0.19545359701005285
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.6,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.09789249153308496
+        },
+        {
+          "name": "Body_Baked.012",
+          "low": 0.17416100729575196
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.6166666666666667,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.09789249153308496
+        },
+        {
+          "name": "Body_Baked.012",
+          "low": 0.14799630009511872
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.6333333333333333,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.09789249153308496
+        },
+        {
+          "name": "Body_Baked.012",
+          "low": 0.12597248630009597
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.65,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.09789249153308496
+        },
+        {
+          "name": "Body_Baked.012",
+          "low": 0.10836173009632737
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.6666666666666666,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "Body_Baked.012",
+          "low": 0.09542564076093363
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.09789249153308496
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.6833333333333333,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "Body_Baked.012",
+          "low": 0.08743611858780732
+        },
+        {
+          "name": "LegLowerL_Baked.012",
+          "low": 0.09789249153308496
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.7,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "Body_Baked.012",
+          "low": 0.08469717050556458
+        },
+        {
+          "name": "Head_Baked.012",
+          "low": 0.09579355370521814
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.7166666666666667,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "Body_Baked.012",
+          "low": 0.08469717050556458
+        },
+        {
+          "name": "Head_Baked.012",
+          "low": 0.09579355370521814
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.7333333333333333,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.08359437759154323
+        },
+        {
+          "name": "Body_Baked.012",
+          "low": 0.08469717050556458
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.75,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.05067453607369757
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.0542617079879297
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.7666666666666667,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.02907063899811063
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.029669615246380454
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.7833333333333333,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.8,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.8166666666666667,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.8333333333333334,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.85,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.8666666666666667,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.8833333333333333,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.9,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.9166666666666666,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.9333333333333333,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.95,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.9666666666666667,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 0.9833333333333333,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 1,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 1.0166666666666666,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 1.0333333333333334,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 1.05,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 1.0666666666666667,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 1.0833333333333333,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    },
+    {
+      "state": {
+        "deathAge": 1.1,
+        "collapse": "grounded"
+      },
+      "sole": -0.00008349725976589117,
+      "floor": -0.00008349725976589117,
+      "supportFloor": -0.00008349725976586342,
+      "lowestParts": [
+        {
+          "name": "LegLowerR_Baked.012",
+          "low": -0.00008349725976589117
+        },
+        {
+          "name": "ArmLowerR_Baked.012",
+          "low": 0.023093943701947076
+        },
+        {
+          "name": "ArmLowerL_Baked.012",
+          "low": 0.023249785448734045
+        }
+      ]
+    }
+  ]
+}

@@ -1,7 +1,23 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
 import * as THREE from 'three';
-import { frostfallCrystalGeometry, createFrostfallCrystal, createFrostfallContact } from '../src/rpg/world/frostfall';
+import { frostfallCrystalGeometry, createFrostfallCrystal, createFrostfallContact, sampleFrostfallFlight } from '../src/rpg/world/frostfall';
+
+test('Frostfall accelerates into the chosen body contact without overshoot', () => {
+  const from = new THREE.Vector3(-2, 7, -4), target = new THREE.Vector3(1, 1.2, -3);
+  const tip = new THREE.Vector3(), velocity = new THREE.Vector3();
+  let previousDistance = Infinity, previousSpeed = 0;
+  for (const progress of [0, .2, .5, .8, 1]) {
+    sampleFrostfallFlight(from, target, progress, tip, velocity);
+    assert(tip.distanceTo(target) <= previousDistance);
+    assert(velocity.length() >= previousSpeed);
+    assert(velocity.dot(target.clone().sub(from)) > 0);
+    previousDistance = tip.distanceTo(target); previousSpeed = velocity.length();
+  }
+  assert(tip.distanceTo(target) < 1e-8);
+  sampleFrostfallFlight(from, target, 1.2, tip, velocity);
+  assert(tip.distanceTo(target) < 1e-8, 'A late frame must not carry the projectile through its contact');
+});
 
 test('Falling crystal fractures form finite closed outward hulls with a leading point at zero', () => {
   for (const seed of [0, 1, 2, 7, 19]) {
@@ -42,6 +58,22 @@ test('Crystal layers share their moving leading tip without a global scene trans
   } finally { for(const layer of crystal.layers){layer.geometry.dispose();layer.material.dispose();} }
 });
 
+test('Internal fracture sheets remain inside every randomized exterior', () => {
+  for (const seed of [0, 1, 2, 7, 19]) {
+    const crystal = createFrostfallCrystal(seed);
+    try {
+      const inner = crystal.layers[0].geometry.getAttribute('position');
+      const hull = crystal.layers[1].geometry.getAttribute('position');
+      const normals = crystal.layers[1].geometry.getAttribute('normal');
+      const p = new THREE.Vector3(), normal = new THREE.Vector3(), anchor = new THREE.Vector3();
+      for (let i = 0; i < inner.count; i++) for (let face = 0; face < hull.count; face += 3) {
+        p.fromBufferAttribute(inner, i); normal.fromBufferAttribute(normals, face); anchor.fromBufferAttribute(hull, face);
+        assert(normal.dot(p.sub(anchor)) < 1e-6, 'Internal ice planes must not stick through the broken outer surface');
+      }
+    } finally { for (const layer of crystal.layers) { layer.geometry.dispose(); layer.material.dispose(); } }
+  }
+});
+
 test('Impact splinters stay above their floor and the complete study fades on schedule', () => {
   const contact=createFrostfallContact(), origin=new THREE.Vector3(2,0,-5);
   try {
@@ -58,4 +90,24 @@ test('Impact splinters stay above their floor and the complete study fades on sc
       }
     }
   } finally { for(const layer of contact.layers){layer.geometry.dispose();layer.material.dispose();} }
+});
+
+test('A chest-height impact leaves its vapor on the floor while splinters begin at the body', () => {
+  const contact = createFrostfallContact(), origin = new THREE.Vector3(2, 1.4, -5);
+  try {
+    contact.update(origin, 0, 4, .3);
+    assert.equal(contact.layers.at(-1)!.position.y, .345, 'The vapor bed must not become a horizontal plate through the chest');
+    assert(contact.layers.slice(0, -1).every(layer => layer.position.y >= origin.y));
+    for (const age of [.1, .3, .55, .9]) {
+      contact.update(origin, age, 4 + age, .3);
+      for (const layer of contact.layers) {
+        layer.updateMatrixWorld(true);
+        const vertices = layer.geometry.getAttribute('position');
+        for (let i = 0; i < vertices.count; i++) {
+          const point = new THREE.Vector3().fromBufferAttribute(vertices, i).applyMatrix4(layer.matrixWorld);
+          assert(point.y >= .3 - 1e-6, 'Body-height splinters must respect the same supporting floor');
+        }
+      }
+    }
+  } finally { for (const layer of contact.layers) { layer.geometry.dispose(); layer.material.dispose(); } }
 });

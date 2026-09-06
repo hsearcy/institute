@@ -1,0 +1,41 @@
+{
+  "sourceConstruction": 8,
+  "sourceMaterial": 8,
+  "sourceRevision": "v8 outward face winding",
+  "sourceRecipeSHA256": "bd0501ede3ae4bfc95fd3160705d6898c79bd0a7753328ad0688708e36dd8b40",
+  "sourceSnapshotSHA256": "6dee67a6f3a732825b66077e178120d1803a86e2c748f324fc5008f7871f38f2",
+  "triangles": 11212,
+  "atlasSize": 1024,
+  "projectionGroups": 6,
+  "completedChannels": [
+    "albedo",
+    "normal",
+    "orm"
+  ],
+  "exactExport": {
+    "construction": 8,
+    "materialFidelity": 8,
+    "scope": "All five normal-enabled exact views; black tips/enamel/claws resolved. No native or thumbnail approval inferred."
+  },
+  "native": {
+    "idleAttachmentScaleMaterial": 8,
+    "desktopFeatureCard": 8,
+    "weaponOnlyMotion": 8,
+    "scope": "Two actual Cleave casts and one Nova; all reviewed25fps frames. No FX, phone inventory or subframe acceptance."
+  },
+  "installed": true,
+  "candidateSHA256": "1114e85036a0670de36b9182bef1a8e795b5f5e705ba715ee8ec14a0ca9cfcc0",
+  "bytes": 1013548,
+  "materials": 1,
+  "standaloneThumbnail": 8,
+  "routeFreeInstalledValidation": "passed",
+  "validation": {
+    "routeFreeInstalledUiCombatReload": "passed",
+    "fiveModelSwitching": "passed",
+    "fullTests": 385,
+    "testFiles": 50,
+    "failures": 0,
+    "productionBuild": "passed",
+    "evidence": "docs/rpg-playtest/v18/items/phoenix/runtime"
+  }
+}

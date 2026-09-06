@@ -1,0 +1,13 @@
+{
+  "seconds": 14.118336200714111,
+  "sourceRecipe": "bd0501ede3ae4bfc95fd3160705d6898c79bd0a7753328ad0688708e36dd8b40",
+  "sourceSnapshotSHA256": "6dee67a6f3a732825b66077e178120d1803a86e2c748f324fc5008f7871f38f2",
+  "sourceTriangles": 56984,
+  "lowTriangles": 11212,
+  "projectionGroups": 6,
+  "atlasSize": 1024,
+  "geometryNormalsOnly": true,
+  "structuredGrip": true,
+  "smallMeshRatio": 0.35,
+  "restoredScene": "Scene"
+}

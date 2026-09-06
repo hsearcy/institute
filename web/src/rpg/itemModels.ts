@@ -4,4 +4,5 @@ export const ITEM_MODELS: Readonly<Record<string, { model: string; thumbnail: st
   thunderrod: { model: 'items/thunderrod', thumbnail: '/assets/rpg/items/thunderrod.png' },
   cleaver: { model: 'items/cleaver', thumbnail: '/assets/rpg/items/cleaver.png' },
   moonstaff: { model: 'items/moonstaff', thumbnail: '/assets/rpg/items/moonstaff.png' },
+  phoenix: { model: 'items/phoenix', thumbnail: '/assets/rpg/items/phoenix.png' },
 };

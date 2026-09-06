@@ -311,6 +311,111 @@
         "productionBuild": "passed",
         "evidence": "docs/rpg-playtest/v18/items/moonstaff/runtime"
       }
+    },
+    {
+      "id": "phoenix",
+      "model": "phoenix.glb",
+      "thumbnail": "phoenix.png",
+      "sha256": "1114e85036a0670de36b9182bef1a8e795b5f5e705ba715ee8ec14a0ca9cfcc0",
+      "candidateSha256": "1114e85036a0670de36b9182bef1a8e795b5f5e705ba715ee8ec14a0ca9cfcc0",
+      "thumbnailSha256": "71cb4bcc4fd456e64e5bc4f1f7ba7b99575da81959502a23908278359ea6b81c",
+      "bytes": 1013548,
+      "source": {
+        "recipe": "scripts/blender/items/build_studies.py::phoenix",
+        "sourceSnapshotSha256": "6dee67a6f3a732825b66077e178120d1803a86e2c748f324fc5008f7871f38f2",
+        "sourceRecipeSnapshot": "docs/rpg-playtest/v18/items/phoenix/source-recipe-v8",
+        "evidence": "docs/rpg-playtest/v18/items/phoenix",
+        "bakeOptions": {
+          "structured_grip": true,
+          "small_mesh_ratio": 0.35,
+          "geometry_normals_only": true
+        },
+        "materialRevision": "Protected bronze wing roots, clean exposed faces, red enamel and deep garnet; v8 outward winding preserves approved vertex positions and material intent"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "actual palm/grasp center at local(0,0,0)",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "phoenix_Grip.007",
+        "tipNode": "phoenix_Tip.007",
+        "transform": "full measured palm socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 11212,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "textureSize": [
+          1024,
+          1024
+        ],
+        "transmission": false,
+        "skinned": false,
+        "drawCallScope": "per item color pass; shadow/depth passes separate"
+      },
+      "review": {
+        "sourceConstruction": 8,
+        "sourceMaterial": 8,
+        "exactExportConstruction": 8,
+        "exactExportMaterial": 8,
+        "nativeStaticAttachmentScale": 8,
+        "nativeStaticMaterial": 8,
+        "standaloneThumbnail": 8,
+        "actualInventoryCard": {
+          "score": 8,
+          "reviewedSizesPx": [
+            210,
+            92
+          ]
+        },
+        "continuousMotion": {
+          "score": 8,
+          "scope": "Weapon-only seated hand/shaft continuity, head and shaft clearance and material readability through two real Cleave casts and one Nova cast; reviewed every original25fps frame. FX, phone inventory and subframe behavior excluded.",
+          "reviewedFrames": {
+            "firstCleave": [
+              345,
+              425
+            ],
+            "nova": [
+              515,
+              605
+            ],
+            "secondCleave": [
+              680,
+              765
+            ]
+          }
+        },
+        "evidence": "docs/rpg-playtest/v18/items/phoenix/runtime",
+        "scope": "Independent bounded reviews; no other item, spell art or global acceptance"
+      },
+      "performance": {
+        "evidence": "docs/rpg-playtest/v18/items/phoenix/runtime/native-performance.json",
+        "scope": "One current-host three-cast candidate run,25fps recording, existing preview rendering suspended and exactly restored; no global benchmark",
+        "activeMedianMs": 22.9,
+        "activeP95Ms": 29.8,
+        "activeMaximumMs": 37.8,
+        "programCount": 163,
+        "programCountStable": true
+      },
+      "preview": {
+        "thumbnailAzimuth": 28,
+        "thumbnailElevation": 12,
+        "thumbnailRoll": 22,
+        "thumbnailMargin": 1.18,
+        "scope": "Uses exact GLB embedded framing metadata"
+      },
+      "validation": {
+        "routeFreeInstalledUiCombatReload": "passed",
+        "fiveModelSwitching": "passed",
+        "fullTests": 385,
+        "testFiles": 50,
+        "failures": 0,
+        "productionBuild": "passed",
+        "evidence": "docs/rpg-playtest/v18/items/phoenix/runtime"
+      }
     }
   ]
 }

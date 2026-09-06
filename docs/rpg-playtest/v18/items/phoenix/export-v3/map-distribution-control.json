@@ -1,0 +1,12 @@
+{
+  "v2": {
+    "nonzeroColorTexels": 477328,
+    "normalBackHemisphereTexels": 43619,
+    "nearZeroAOColorTexels": 279294
+  },
+  "v3": {
+    "nonzeroColorTexels": 474665,
+    "normalBackHemisphereTexels": 12,
+    "nearZeroAOColorTexels": 151935
+  }
+}

@@ -1,0 +1,503 @@
+bun test v1.4.0 (34cbb9a40)
+
+scripts/contract-graph.test.ts:
+(pass) contractEdges > contracts through excluded nodes [0.86ms]
+(pass) contractEdges > ignores soft edges [0.14ms]
+(pass) contractEdges > stops at the first curated ancestor (no skipping past it) [0.12ms]
+(pass) contractEdges > dedupes diamond paths [0.13ms]
+(pass) contractEdges with union strengths > union contraction crosses soft hops [0.12ms]
+(pass) contractEdges with union strengths > default stays hard-only [0.09ms]
+
+scripts/audio/sound.test.ts:
+(pass) gesture gating, preload deduplication, mute, tab visibility, and teardown [7.63ms]
+(pass) leaving while clips load cannot restart ambience or play a delayed effect [1.24ms]
+(pass) expanded ability signatures are gesture-gated, deduplicated, and cancelled by mute [1.25ms]
+
+server/src/costume.test.ts:
+(pass) costume > compatible kinds get a shop story; math untouched; spoken bounded [32.09ms]
+(pass) costume > incompatible kinds always decline [0.95ms]
+(pass) costume > compare_pick preserves polarity and never invents prices [4.44ms]
+(pass) costume > missing_any: only gap shapes costume; whole-shapes decline [3.55ms]
+(pass) costume > ten_more_less story uses the parsed step [2.94ms]
+
+server/src/dailyRecord.test.ts:
+[daily] ignoring unknown timezone "Mars/Olympus_Mons"
+(pass) the player timezone > falls back to the deployment default when the env value is nonsense [2.54ms]
+(pass) the player timezone > accepts any real IANA zone, trimmed [1.44ms]
+(pass) the player timezone > a late-evening answer belongs to HIS day, not to UTC's next day [0.58ms]
+(pass) the player timezone > the day rolls over at HIS midnight [0.10ms]
+(pass) the player timezone > spring-forward moves the boundary in UTC terms but never skips a day [0.08ms]
+(pass) the player timezone > shiftDay steps calendar dates, unaffected by DST or leap years [0.20ms]
+(pass) counting solved problems > only counts a problem once, however many times it is reported [3.74ms]
+(pass) counting solved problems > buckets by the player's day, and keeps profiles separate [1.32ms]
+(pass) the record moment > the first ever day never fires a record — there is nothing to beat yet [1.91ms]
+(pass) the record moment > ANY earlier positive record counts as a benchmark — even a one-problem day [1.33ms]
+(pass) the record moment > breaking a record fires exactly once, on the answer that breaks it [1.91ms]
+(pass) the record moment > previousRecord is the bar to clear and excludes today [1.16ms]
+(pass) durable record celebrations > the record event survives a lost response and keeps being offered [1.46ms]
+(pass) durable record celebrations > acknowledging retires it, and acknowledging again is harmless [1.08ms]
+(pass) durable record celebrations > one profile cannot acknowledge another's celebration [0.98ms]
+(pass) durable record celebrations > a re-reported answer does not queue the party twice [0.92ms]
+(pass) durable record celebrations > an undelivered party goes stale instead of ambushing him days later [0.91ms]
+(pass) the stats view > history is zero-filled, oldest first, and ends today [1.25ms]
+(pass) the stats view > summary stats cover the last 7 days, the best day, and the day streak [1.33ms]
+(pass) the stats view > an unplayed morning still shows yesterday's run intact [1.15ms]
+(pass) the stats view > an empty profile reads as all zeroes, not an error [0.78ms]
+(pass) migrating an existing database > backfills what the attempt log can prove, deduped, correct-only [1.00ms]
+(pass) migrating an existing database > declares completeness from TOMORROW — legacy retry solves are gone [0.88ms]
+(pass) migrating an existing database > a brand-new database has lost nothing: complete from day one [0.66ms]
+(pass) migrating an existing database > legacy activity with no first-try correct row still discloses missing retry history [1.09ms]
+(pass) migrating an existing database > the backfill runs once — a restart never re-counts or wipes live rows [1.42ms]
+(pass) migrating an existing database > an interrupted backfill is retried, not mistaken for a finished one [1.26ms]
+
+server/src/graph.test.ts:
+(pass) unlockedTopics > roots are always unlocked [0.42ms]
+(pass) unlockedTopics > a topic unlocks when ALL prereqs are mastered [0.17ms]
+(pass) frontierTopics > frontier = unlocked and not yet mastered [0.15ms]
+(pass) frontierTopics > all mastered → empty frontier [0.08ms]
+
+server/src/integration.test.ts:
+[institute] daily record days are America/New_York calendar days
+[institute] tutor server on :8787 (model claude-sonnet-5)
+(pass) topic-graph tutor flow > weekly quest counts five completed daily boards, awards 250 once, and resets Sunday [120.35ms]
+(pass) topic-graph tutor flow > daily streak quest starts at zero even when the profile streak carries over [9.83ms]
+(pass) topic-graph tutor flow > a wrong first try is penalty-free; the counted miss lives at /reward/miss [4.62ms]
+(pass) topic-graph tutor flow > a shield absorbs the counted miss and keeps the streak [2.58ms]
+(pass) topic-graph tutor flow > finishing the whole daily board awards one Crazy Coin exactly once [27.47ms]
+(pass) topic-graph tutor flow > daily quests reward endurance, accuracy, speed, and topic variety [8.64ms]
+(pass) topic-graph tutor flow > exploring counts a topic he ATTEMPTED, even if he missed it first try [5.44ms]
+(pass) topic-graph tutor flow > retry solves count for endurance but not speed or topic variety [1.67ms]
+(pass) topic-graph tutor flow > lifetime gems rise with rewards and never fall when gems are spent [2.88ms]
+(pass) topic-graph tutor flow > first problem comes from a root topic and carries topicId + label [2.34ms]
+(pass) topic-graph tutor flow > mastering ALL prereqs of a topic unlocks it [17.36ms]
+(pass) topic-graph tutor flow > fluency topics stay practicing when solves are slow [9.82ms]
+[tutor] LLM branches failed; local fallback: Connection error.
+(pass) topic-graph tutor flow > branches fall back locally and stay on the current topic [9.15ms]
+(pass) topic-graph tutor flow > legacy mastery rows migrate to topic grants [0.97ms]
+(pass) topic-graph tutor flow > mastering a topic schedules a review ~1 day out [8.02ms]
+(pass) topic-graph tutor flow > crazy coin redemption refuses when no daily reward is available [0.32ms]
+[tutor] LLM branches failed; local fallback: Connection error.
+(pass) topic-graph tutor flow > right branch rotates topic after a 4-run (interleaving) [4.15ms]
+[tutor] LLM branches failed; local fallback: Connection error.
+(pass) topic-graph tutor flow > two consecutive misses route the wrong branch down to a prerequisite [2.22ms]
+[tutor] explain failed; hint fallback: Connection error.
+(pass) topic-graph tutor flow > explain falls back to the local hint when the LLM is unreachable, and caches [1.50ms]
+(pass) topic-graph tutor flow > leaksAnswer catches standalone answer tokens only [0.26ms]
+(pass) pad theme shop > buy deducts gems, records ownership, auto-equips; insufficient rejected [5.77ms]
+(pass) pad theme shop > equip: classic always; unowned rejected; pad keys can't equip as pickaxes [0.67ms]
+(pass) gem style shop > buy deducts gems, records ownership, auto-equips, and persists in state [1.67ms]
+(pass) gem style shop > classic is always equipable while unowned and cross-category keys are rejected [0.44ms]
+(pass) gem style shop > unaffordable and unknown styles are rejected without changing balance [0.21ms]
+(pass) the 'not sure yet' escape hatch > a skip costs nothing: streak, shields, and gems all untouched [3.67ms]
+(pass) the 'not sure yet' escape hatch > a skip is honest learning data: it counts as a not-correct attempt [0.92ms]
+[tutor] LLM branches failed; local fallback: Connection error.
+(pass) the 'not sure yet' escape hatch > skipping arms the prereq step-down, exactly like a miss [1.66ms]
+(pass) the 'not sure yet' escape hatch > a skip for an already-answered problem is ignored (no double-count) [0.89ms]
+[tutor] walkthrough failed; answer+hint fallback: Connection error.
+(pass) the 'not sure yet' escape hatch > walkthrough falls back to the answer + hint when the LLM is unreachable [1.36ms]
+[tutor] demo failed; scripted fallback: Connection error.
+(pass) new-topic demonstration > a genuinely new topic is flagged, and the demo clears the flag [2.60ms]
+[tutor] LLM branches failed; local fallback: Connection error.
+(pass) new-topic demonstration > a topic he has already practiced is never 'new' [2.22ms]
+[tutor] demo failed; scripted fallback: Connection error.
+(pass) new-topic demonstration > the demo costs nothing — no streak, gems, or mastery effect [6.55ms]
+(pass) daily correct-answer count and the all-time record > /state reports today, the record, graph history, and summary stats [7.83ms]
+(pass) daily correct-answer count and the all-time record > an evening answer belongs to his day, not to UTC's next one [1.48ms]
+(pass) daily correct-answer count and the all-time record > /state discloses how far back the count is actually complete [0.57ms]
+(pass) daily correct-answer count and the all-time record > one problem counts once, however many times the client reports it [2.74ms]
+(pass) daily correct-answer count and the all-time record > a miss never counts, and reports the day's total unchanged [1.62ms]
+(pass) daily correct-answer count and the all-time record > the first day never fires a record; beating a real one fires exactly once [13.12ms]
+(pass) daily correct-answer count and the all-time record > the record party is durable: /state keeps offering it until acknowledged [6.24ms]
+(pass) daily correct-answer count and the all-time record > another profile's acknowledgement cannot steal his celebration [2.82ms]
+(pass) daily correct-answer count and the all-time record > today's count resets with his calendar day while the record carries over [4.53ms]
+
+server/src/mastery.test.ts:
+(pass) median > odd/even lengths [0.06ms]
+(pass) topicState > needs ≥8 lifetime attempts and ≥85% recent accuracy [0.16ms]
+(pass) topicState > fluency topics also need fast median solves [0.05ms]
+(pass) topicState > windowed accuracy demotes after two recent misses [0.02ms]
+(pass) topicState > one recent miss does not demote [0.05ms]
+(pass) topicState > legacy grants (no attempt rows) use lifetime ratio [0.05ms]
+
+server/src/nodashes.test.ts:
+(pass) no dashes in spoken or on-screen text > web/src is clean [20.07ms]
+(pass) no dashes in spoken or on-screen text > server/src is clean [3.90ms]
+
+server/src/rescue.test.ts:
+(pass) rescueTopic > prefers a mastered candidate [0.15ms]
+(pass) rescueTopic > falls back to any candidate when none mastered [0.03ms]
+(pass) rescueTopic > null when the topic has no prereqs at all [0.02ms]
+(pass) rescueTopic > ignores unresolvable ids [0.04ms]
+
+server/src/review.test.ts:
+(pass) nextReview > first mastery starts at 1 day [0.04ms]
+(pass) nextReview > climbs the tighter ladder 1→2→3→5→8→13 [0.04ms]
+(pass) nextReview > interval caps at 13 days [0.02ms]
+(pass) nextReview > wrong review resets to 1 day [0.02ms]
+(pass) nextReview > a foundational skill graduates out of review once it passes at the cap [0.04ms]
+
+server/src/select.session.test.ts:
+(pass) full-session selector behaviour (regression guard) > a stuck topic pulls in its PREREQS, not unrelated novelty (focused remediation) [2.03ms]
+(pass) full-session selector behaviour (regression guard) > never trapped cycling only the two hard topics [2.04ms]
+(pass) full-session selector behaviour (regression guard) > once the prereqs are mastered, genuinely-new topics resume (not imprisoned) [2.77ms]
+(pass) full-session selector behaviour (regression guard) > a freshly-MASTERED topic in recent history does not suppress the next pick (the c4dcd0b bug) [1.30ms]
+(pass) full-session selector behaviour (regression guard) > a HEALTHY set (no stuck topic) meets new topics on a steady cadence, not a firehose [1.43ms]
+
+server/src/select.test.ts:
+(pass) rut-breaking rotation > breaks out of a rut: when he's circled ≤2 topics, introduce a NEW one [0.52ms]
+(pass) rut-breaking rotation > just after meeting a NEW topic, consolidate it instead of piling on another [0.21ms]
+(pass) rut-breaking rotation > breaks out even with several long-worked topics (the real ares bug) [0.20ms]
+(pass) rut-breaking rotation > brand-new topics get picked when nothing is in progress [0.18ms]
+(pass) rut-breaking rotation > a never-attempted topic starts gently [0.13ms]
+(pass) selectNext > cold start serves a frontier root [0.11ms]
+(pass) selectNext > due review wins over learning [0.23ms]
+(pass) selectNext > never two reviews back-to-back [0.21ms]
+(pass) selectNext > stays on current frontier topic under the run cap [0.10ms]
+(pass) selectNext > rotates after 4 consecutive, preferring a different domain [0.09ms]
+(pass) selectNext > reviews are not served for practicing topics even with stale due dates [0.13ms]
+(pass) selectNext > everything mastered and nothing due → deepest topic, learn mode [0.21ms]
+
+server/src/topicgen-expansion.test.ts:
+(pass) expansion generators > two_digit_ones / add_2d2d / add_within_100 are correct binary arithmetic [7.40ms]
+(pass) expansion generators > missing_any covers all four slots and answers the blank [7.89ms]
+(pass) expansion generators > compare_pick answers with one of the two shown numbers, correctly [1.30ms]
+(pass) expansion generators > compose_hundreds builds the three-digit number [0.81ms]
+(pass) expansion generators > coins totals are correct cents [1.67ms]
+(pass) expansion generators > money_sum answers the gap or the coin count [1.42ms]
+(pass) expansion generators > round_to rounds half-up to the base [2.81ms]
+(pass) expansion generators > odd_pick has exactly one number of the asked parity [3.71ms]
+(pass) expansion generators > skip with offset starts off-multiple; back counts down without going negative [3.20ms]
+(pass) expansion generators > ten_more_less with steps [10,100] uses both jumps [1.45ms]
+(pass) spoken sequences use words (ElevenLabs garbles digit runs) > numberWords covers 0-999 [0.26ms]
+(pass) spoken sequences use words (ElevenLabs garbles digit runs) > skip-counting spoken lines contain no digit runs [1.05ms]
+
+server/src/topicgen.test.ts:
+(pass) problemForTopic > every curated topic generates valid problems across the difficulty range [42.99ms]
+(pass) problemForTopic > add_sub within 5 stays within 5 [2.61ms]
+(pass) problemForTopic > missing_addend answers the missing part [1.84ms]
+(pass) problemForTopic > mul_div sometimes produces division [0.77ms]
+
+server/src/tts.test.ts:
+(pass) ttsText > em and en dashes become commas (they flip the multilingual model) [0.21ms]
+(pass) ttsText > ordinary text is untouched [0.08ms]
+(pass) spokenForm > numbers become words [0.39ms]
+(pass) spokenForm > math symbols become words [0.17ms]
+(pass) spokenForm > punctuation and case do not matter [0.08ms]
+(pass) speechSimilarity > a faithful take scores at the top [0.57ms]
+(pass) speechSimilarity > a stray inserted word still passes [0.52ms]
+(pass) speechSimilarity > a take that flips language is rejected [0.32ms]
+(pass) speechSimilarity > a take that drops most of the line is rejected [0.23ms]
+(pass) speechSimilarity > empty audio is rejected [0.14ms]
+(pass) speechSimilarity > word order matters — a scrambled take is rejected [0.11ms]
+
+server/src/rpg.test.ts:
+(pass) additive RPG progression on legacy learning data > several recorded answers damage one persistent pack and only its clear advances or drops loot [8.66ms]
+(pass) additive RPG progression on legacy learning data > an old active save gets deterministic health on reads without rewriting earned progress [1.72ms]
+(pass) additive RPG progression on legacy learning data > schema creation and RPG actions leave every legacy table byte-for-byte unchanged [3.05ms]
+(pass) additive RPG progression on legacy learning data > an on-disk checkpoint and reward receipt survive closing and reopening the database [7.37ms]
+(pass) additive RPG progression on legacy learning data > reward retries are idempotent and cannot spend the same problem on another encounter [4.41ms]
+(pass) additive RPG progression on legacy learning data > region hunt previews match real rewards while preserving profiles, learning and experience [19.25ms]
+(pass) additive RPG progression on legacy learning data > a pre-hunt global-pool receipt never rerolls into the new regional reward [3.11ms]
+(pass) additive RPG progression on legacy learning data > old larger-pack receipts retain earned kills while future encounters use smaller packs [2.51ms]
+(pass) additive RPG progression on legacy learning data > a capped late-game pack awards unchanged XP once and does not mutate learning [2.05ms]
+(pass) additive RPG progression on legacy learning data > unrecorded, other-profile, old, locked-spell, and stale-encounter claims are rejected [1.90ms]
+(pass) additive RPG progression on legacy learning data > assisted skips progress the adventure with identical rewards and no learning rewrite [1.74ms]
+(pass) additive RPG progression on legacy learning data > six encounters award a boss, persist the checkpoint, unlock region and allow free respec [8.90ms]
+(pass) additive RPG progression on legacy learning data > API validates skill costs, item ownership, region unlocks, malformed requests and isolates profiles [7.13ms]
+(pass) additive RPG progression on legacy learning data > skill purchase request IDs prevent a lost response from spending two points [2.42ms]
+(pass) additive RPG progression on legacy learning data > read-only attempt reconciliation distinguishes missing, first incorrect, retry solved, and skip [2.54ms]
+(pass) expanded spellbook compatibility and authority > fifteen distinct abilities have complete, acyclic unlock trees and specialist equipment [0.82ms]
+(pass) expanded spellbook compatibility and authority > old three-spell saves keep XP, skills, equipped items, and learning rows without a rewrite [2.99ms]
+(pass) expanded spellbook compatibility and authority > new abilities enforce level, parent, skill-point, and item ownership gates [4.08ms]
+(pass) expanded spellbook compatibility and authority > all fifteen learned abilities can be selected and resolved through the real RPG routes [16.88ms]
+(pass) expanded spellbook compatibility and authority > school gear and specialist modifiers affect only their documented abilities [0.68ms]
+(pass) expanded spellbook compatibility and authority > expanded loot stays collectible after the original eight relics and eventually covers every ability [100.52ms]
+
+server/src/rpg.integration.test.ts:
+(pass) real tutor first answer, retry solve and skip all power RPG without changing learning outcomes [13.73ms]
+(pass) a lost tutor response can be reconciled without reposting or double-counting mastery [3.01ms]
+(pass) an exhausted RPG problem preserves the legacy shield outcome exactly once across retries [3.25ms]
+
+server/src/rpg.appearance.test.ts:
+(pass) Legacy saves default appearance in memory without rewriting progress or schema [2.44ms]
+(pass) Every cosmetic milestone uses earned XP and rejects early or forged-level selection [4.54ms]
+(pass) Malformed and locked stored appearances normalize safely without writes [2.90ms]
+(pass) Appearance selection is free, idempotent, and isolated between profiles [2.53ms]
+(pass) Selected appearance and legacy learning data survive database reopen without a migration [3.07ms]
+
+shared/src/topics.test.ts:
+(pass) curated topics > loads and validates all topics [1.08ms]
+(pass) curated topics > every prereq id resolves [0.21ms]
+(pass) curated topics > helpPrereqs resolve, exclude self, and are disjoint from hard prereqs [0.11ms]
+(pass) curated topics > graph is acyclic [0.35ms]
+(pass) curated topics > has at least one root [0.07ms]
+
+shared/src/rpg.appearance.test.ts:
+(pass) Appearance milestones have explicit assets and unlock at the existing level boundary [0.35ms]
+(pass) Unknown appearances and invalid levels never unlock [0.13ms]
+
+shared/src/rpg.encounters.test.ts:
+(pass) fixed packs and guardian/boss health are independent of spell power [0.38ms]
+(pass) starter Nova defeats weak enemies and leaves persistent wounds; a second cast clears the first room [0.50ms]
+(pass) damage, coverage and applicable equipment make upgrades meaningful without multiplying enemies [0.30ms]
+(pass) all learned spell/relic combinations preserve the ten-enemy cap and conserve actual damage [5.34ms]
+
+shared/src/rpg.relics.test.ts:
+(pass) The first reward remains Cinderbranch and destinations offer different attainable relics [0.57ms]
+(pass) Regional pools fall back to universal then other schools before any repeat [5.93ms]
+(pass) Forecasts skip an intervening duplicate when the boss has a new relic, preserving gates [0.87ms]
+(pass) Resumed and completed expeditions forecast the proper room without mutating save state [0.56ms]
+
+web/unit-tests/dailyStats.test.ts:
+(pass) day formatting > labels a day in words, not just a colour or a number [0.35ms]
+(pass) day formatting > counts are phrased, including the empty day [0.07ms]
+(pass) the graph bars > scale to the tallest day in view, oldest first [0.69ms]
+(pass) the graph bars > a rest day is flat and a tiny day is still visible [0.11ms]
+(pass) the graph bars > today and the record day are labelled in text, never by colour alone [0.13ms]
+(pass) the graph bars > shows at most CHART_DAYS days, keeping the most recent [0.31ms]
+(pass) the graph bars > a brand-new profile renders flat bars instead of dividing by zero [0.17ms]
+(pass) the summary tiles > cover today, the record, the week, and the lifetime totals [0.32ms]
+(pass) the summary tiles > an untouched record reads as 'not set yet', not as a zero date [0.08ms]
+(pass) the summary tiles > today's tile calls out a record day [0.06ms]
+(pass) the encouraging line > invites a first gem before there is any record [0.10ms]
+(pass) the encouraging line > counts exactly how many more beat the record [0.06ms]
+(pass) the encouraging line > celebrates while he is on a record day [0.11ms]
+(pass) the encouraging line > a fresh morning points at the record to chase [0.05ms]
+(pass) the HUD chip label > spells out both numbers and that it opens something [0.07ms]
+(pass) the tracking small print > stays quiet when nothing was ever lost [0.06ms]
+(pass) the tracking small print > says plainly what the rebuilt days can be missing [0.09ms]
+(pass) the tracking small print > cannot name a date it does not have [0.03ms]
+(pass) showing a record celebration exactly once > skips events already shown on this device [0.19ms]
+(pass) showing a record celebration exactly once > a duplicated id inside one payload is still one party [0.10ms]
+(pass) showing a record celebration exactly once > remembers ids newest-last, without duplicates [0.12ms]
+(pass) showing a record celebration exactly once > forgets the oldest ids rather than growing without bound [0.24ms]
+(pass) showing a record celebration exactly once > a small cap still keeps the most recent [0.10ms]
+(pass) the modal focus trap > cycles forward and wraps at the end [0.06ms]
+(pass) the modal focus trap > cycles backward and wraps at the start [0.02ms]
+(pass) the modal focus trap > pulls focus in when it is outside the dialog [0.02ms]
+(pass) the modal focus trap > a single control (our close button) always keeps focus [0.01ms]
+(pass) the modal focus trap > an empty dialog is left alone rather than throwing [0.01ms]
+
+web/unit-tests/gemStyles.test.ts:
+(pass) gem style model kit > publishes the classic model and four purchasable silhouettes [0.12ms]
+(pass) gem style model kit > offers recognizable real gemstones with generated hero-model sources [0.11ms]
+(pass) gem style model kit > every generated gem still keeps a procedural fallback for a failed load [9.61ms]
+(pass) gem style model kit > every style builds a layered, centered mine target with authored materials [10.44ms]
+(pass) gem style model kit > the authored diamond has a crown, girdle, pavilion, and inner star facet [1.38ms]
+(pass) gem style model kit > shop metadata gives every model a readable preview identity [0.19ms]
+
+web/unit-tests/rpg-next-spell.test.ts:
+(pass) personal spell target follows existing progression gates > a new hero sees an attainable next spell without inventing a cast countdown [1.39ms]
+(pass) personal spell target follows existing progression gates > Meteor points to its missing ancestor before its level gate [0.45ms]
+(pass) personal spell target follows existing progression gates > spent points and a respec update the target instead of promising an unavailable unlock [0.28ms]
+
+web/unit-tests/rpg-enemy-animation.test.ts:
+(pass) skeleton survivor shoulder recoil retains connected joints and resets into guard [41.70ms]
+(pass) guardian survivor shoulder recoil retains connected joints and resets into guard [40.64ms]
+(pass) revenant survivor shoulder recoil retains connected joints and resets into guard [22.37ms]
+(pass) wraith survivor shoulder recoil retains connected joints and resets into guard [34.53ms]
+(pass) skeleton asymmetric survivor catch keeps an actual support sole on the floor [26.50ms]
+(pass) guardian asymmetric survivor catch keeps an actual support sole on the floor [42.75ms]
+(pass) revenant asymmetric survivor catch keeps an actual support sole on the floor [28.02ms]
+(pass) skeleton grounded fall 0.7 has a low rib support without buried geometry [16.22ms]
+(pass) skeleton grounded fall 2.2 has a low rib support without buried geometry [25.08ms]
+(pass) revenant grounded fall 0.7 has a low rib support without buried geometry [18.88ms]
+(pass) revenant grounded fall 2.2 has a low rib support without buried geometry [47.86ms]
+(pass) guardian body-specific settle keeps complete geometry above the floor [34.61ms]
+(pass) wraith body-specific settle keeps complete geometry above the floor [17.22ms]
+(pass) Wraith cloth folds and rigid attachments reset independently on a new living pose [22.33ms]
+(pass) Wraith staff hand releases below the bowed head after its failed brace [11.65ms]
+(pass) Wraith terminal joint geometry releases the forearm vertically and lowers its Head region [25.43ms]
+(pass) Guardian fatal contact retains shoulder impulse against its planted lower mass [28.98ms]
+(pass) skeleton electric variant 0.7 keeps actual sole geometry grounded through its hold [22.62ms]
+(pass) skeleton electric variant 2.2 keeps actual sole geometry grounded through its hold [38.60ms]
+(pass) guardian electric variant 0.7 keeps actual sole geometry grounded through its hold [35.55ms]
+(pass) guardian electric variant 2.2 keeps actual sole geometry grounded through its hold [28.12ms]
+(pass) revenant electric variant 0.7 keeps actual sole geometry grounded through its hold [20.48ms]
+(pass) revenant electric variant 2.2 keeps actual sole geometry grounded through its hold [15.91ms]
+(pass) skeleton electric collapse keeps attachments intact, lowers weight, and resets independently [27.34ms]
+(pass) guardian electric collapse keeps attachments intact, lowers weight, and resets independently [29.45ms]
+(pass) revenant electric collapse keeps attachments intact, lowers weight, and resets independently [15.70ms]
+(pass) An arm-only wraith rig animates its staff while an unrigged legacy wraith stays independent [0.73ms]
+(pass) skeleton exported joints animate shared instance sources independently [2.61ms]
+(pass) guardian exported joints animate shared instance sources independently [3.28ms]
+(pass) revenant exported joints animate shared instance sources independently [2.52ms]
+
+web/unit-tests/rpg-room-layout.test.ts:
+(pass) gate: ten-enemy formation respects floor occupancy and travel clearance [5.87ms]
+(pass) gate: reloads and bounded count changes preserve actor positions [19.12ms]
+(pass) gate: projected silhouettes retain clear space at the ten-enemy cap [3.09ms]
+(pass) ember-hall: ten-enemy formation respects floor occupancy and travel clearance [3.00ms]
+(pass) ember-hall: reloads and bounded count changes preserve actor positions [15.16ms]
+(pass) ember-hall: projected silhouettes retain clear space at the ten-enemy cap [10.61ms]
+(pass) reliquary: ten-enemy formation respects floor occupancy and travel clearance [1.36ms]
+(pass) reliquary: reloads and bounded count changes preserve actor positions [6.91ms]
+(pass) reliquary: projected silhouettes retain clear space at the ten-enemy cap [1.18ms]
+(pass) collapsed-crossing: ten-enemy formation respects floor occupancy and travel clearance [0.82ms]
+(pass) collapsed-crossing: reloads and bounded count changes preserve actor positions [5.22ms]
+(pass) collapsed-crossing: projected silhouettes retain clear space at the ten-enemy cap [0.75ms]
+(pass) crystal-gallery: ten-enemy formation respects floor occupancy and travel clearance [1.11ms]
+(pass) crystal-gallery: reloads and bounded count changes preserve actor positions [9.77ms]
+(pass) crystal-gallery: projected silhouettes retain clear space at the ten-enemy cap [1.23ms]
+(pass) boss-sanctum: ten-enemy formation respects floor occupancy and travel clearance [1.47ms]
+(pass) boss-sanctum: reloads and bounded count changes preserve actor positions [10.16ms]
+(pass) boss-sanctum: projected silhouettes retain clear space at the ten-enemy cap [1.20ms]
+(pass) Six silhouettes expose distinct architecture and retain the agreed landmark coordinates [6.87ms]
+(pass) Presentation inputs are bounded and never produce nonfinite coordinates [3.23ms]
+(pass) Crossing floor tiling removes exactly two6.2×8 openings and has no overlapping patches [1.61ms]
+(pass) Every enemy footprint and full declared hero lane are supported by actual floor patches [9.66ms]
+(pass) The renderer straight-line arrival remains inside each room’s reserved incoming lane [0.72ms]
+(pass) Transformed scenery bounds cannot cover a chasm even when their centers are on land [0.25ms]
+(pass) Chasm bounds allow exact rim contact, reject tiny overlaps, and affect only the crossing [0.12ms]
+
+web/unit-tests/rpg-ice-geometry.test.ts:
+(pass) Ice shards form finite, nondegenerate, outward-facing closed surfaces [9.23ms]
+(pass) Welded ice faces have no holes, duplicate boundary edges, or disconnected shells [3.51ms]
+(pass) Ice shards are grounded, reach the requested height, and stay inside useful placement bounds [1.89ms]
+(pass) Seeds reproducibly vary actual outlines rather than only surface colors [3.50ms]
+
+web/unit-tests/rpg-masonry-geometry.test.ts:
+(pass) Inset masonry keeps outward winding, positive stone volume, and usable relief UVs [76.64ms]
+(pass) Masonry depressions preserve a single closed manifold across every original face boundary [85.94ms]
+
+web/unit-tests/rpg-enemy-roster.test.ts:
+(pass) Enemy presentation preserves the supplied count and established boss/guardian roles [4.65ms]
+(pass) Normal packs mix armored soldiers with lean bones and spectral accents without armor clumps [1.93ms]
+(pass) Roster retries and count upgrades preserve deterministic prefixes while rooms vary [2.34ms]
+
+web/unit-tests/rpg-ruins.test.ts:
+(pass) Architectural fractures are closed, consistently wound solids with finite surface UVs [328.68ms]
+(pass) Ruin placement rejects full footprint overlap with pits, travel, tombs and braziers [0.72ms]
+
+web/unit-tests/rpg-scenery-surfaces.test.ts:
+(pass) Weathering stays registered to the floor and no scenery triangles span a crossing opening [518.93ms]
+
+web/unit-tests/rpg-crystals.test.ts:
+(pass) Mineral clusters have finite lighting/UVs and each shell is closed with outward winding [20.90ms]
+(pass) Seeded mineral silhouettes stay grounded within their placement allowance [14.46ms]
+(pass) Crystal material ownership is independent and avoids transparent sorting or neon emission [0.40ms]
+
+web/unit-tests/rpg-viewport.test.ts:
+(pass) Closer framing enlarges desktop and phone actors while retaining the hero and forward approach [5.54ms]
+(pass) Portrait browser chrome changes do not resize actors and orientation has no zoom discontinuity [0.32ms]
+(pass) Separate landscape combat panes retain full approaching actors at closer zoom [2.05ms]
+(pass) Portrait framing keeps the hero and surrounding spell space above an open keypad [1.42ms]
+(pass) Complete landscape and desktop formations fit below the boss/header and above the dock [48.30ms]
+(pass) Portrait framing keeps full shoulder and weapon envelopes inside both edges [30.69ms]
+
+web/unit-tests/rpg-spell-shapes.test.ts:
+(pass) Phoenix feathers retain separate, nondegenerate curved surfaces and shader attributes [20.08ms]
+(pass) Storm clouds and charged filaments remain valid for both actual spell orientations [18.66ms]
+(pass) Repeated casts own independent geometry buffers with deterministic authored shapes [7.58ms]
+(pass) Culling bounds contain maximum shader flutter, including the smoky Phoenix tail [7.27ms]
+(pass) Additive ribbons use one pass while absorbing smoke preserves back/front ordering [0.70ms]
+
+web/unit-tests/rpg-lightning.test.ts:
+(pass) Lightning remains finite and indexed for horizontal, vertical and camera-parallel paths [20.02ms]
+(pass) Coincident and negligible endpoints create an empty disposable bolt without NaNs [0.32ms]
+(pass) Bolt geometry is deterministic, independently owned, and capped for long channels [0.38ms]
+(pass) Independent lightning shaders have bounded state and do not occlude later effects [0.34ms]
+
+web/unit-tests/rpg-skill-preview.test.ts:
+(pass) capped coverage still shows the damage upgrade without promising a duplicate effect [0.67ms]
+(pass) school power improves damage for matching learned spells while respecting the target cap [0.28ms]
+(pass) a new effect remains a real upgrade at the target cap; maxed and unknown ranks have no preview [0.14ms]
+
+web/unit-tests/rpg-ball-lightning.test.ts:
+(pass) Electrical volumes use finite, independently phased merged branches within budget [40.38ms]
+(pass) Orb layers share a moving origin and fade completely at charge and decay boundaries [7.65ms]
+(pass) Electrical contacts pool finite directional fragments and floor haze for the full horde [2.85ms]
+(pass) Reduced-framebuffer strand coverage preserves authored paths and conservative bounds [10.99ms]
+(pass) Palm charge follows copied anchors and cleans up without changing mature orb scale [4.84ms]
+(pass) Released orbs leave the palm continuously and rejoin the original path before contact [0.65ms]
+
+web/unit-tests/rpg-electric-dissolve.test.ts:
+(pass) Prepared erosion programs retain exact shader hooks after an encounter releases its materials [3.57ms]
+(pass) Electric erosion owns its batch resources and leaves cached asset surfaces unchanged [1.14ms]
+(pass) Compacted erosion values reset to the new visible order and reject nonfinite progress [0.78ms]
+(pass) Surface and shadow shaders discard the same world-space erosion and guard non-instanced warmups [0.60ms]
+(pass) Burn response caches only its surface variant and preserves electric and shadow erosion [1.02ms]
+
+web/unit-tests/rpg-fire-nova.test.ts:
+(pass) Nova front reaches targets at the preserved radial contact time [0.39ms]
+(pass) Nova volume displacement stays within conservative culling bounds and bounded geometry [14.23ms]
+(pass) Nova contacts pool whole-horde submissions and preserve each independent strike time [4.14ms]
+(pass) Crossing floor masks use room-local coordinates for traveling beds and world-space contacts [2.90ms]
+(pass) Nova ignition follows copied world-space hand anchors with bounded strands, seed and owned resources [1.65ms]
+
+web/unit-tests/rpg-hero-locomotion.test.ts:
+(pass) late appearance quaternion copies cannot reverse planar heading [0.36ms]
+(pass) authored travel caps speed and advances exactly one stride per measured cycle [1.18ms]
+(pass) paused or already arrived travel does not advance the walk clip [0.15ms]
+(pass) a rapid answer stages hero and camera in the active encounter before casting [0.23ms]
+(pass) each sequential route aligns before the stairs and stays inside the doorway through the pier depth [0.35ms]
+
+web/unit-tests/rpg-frostfall.test.ts:
+(pass) Frostfall accelerates into the chosen body contact without overshoot [0.47ms]
+(pass) Falling crystal fractures form finite closed outward hulls with a leading point at zero [3.24ms]
+(pass) Crystal layers share their moving leading tip without a global scene transmission pass [1.56ms]
+(pass) Internal fracture sheets remain inside every randomized exterior [1.49ms]
+(pass) The inset fracture remains one finite broad plane across shard scales [3.16ms]
+(pass) Impact splinters stay above their floor and the complete study fades on schedule [3.40ms]
+(pass) A chest-height impact leaves its vapor on the floor while splinters begin at the body [2.67ms]
+
+web/unit-tests/rpg-hit-reactions.test.ts:
+(pass) Authoritative survivors recoil away from the source and recover without erosion [1.08ms]
+(pass) Fatal impacts retain full-size settled bodies before independent late cleanup [0.23ms]
+(pass) Repeated hits replace presentation without sharing state or introducing invalid vectors [0.21ms]
+(pass) Rear foot plants before the pelvis finishes absorbing the impact [0.18ms]
+
+web/unit-tests/rpg-leg-support.test.ts:
+(pass) Supported knee solver reaches both rear and forward planted-foot targets [0.31ms]
+(pass) Unreachable and degenerate targets remain finite without stretching limbs [0.18ms]
+
+web/unit-tests/rpg-wraith-gather.test.ts:
+(pass) Gathered garment anchors its hem, lowers its top, and preserves source geometry [2.81ms]
+(pass) Compacted instanced garments retain each actor morph independently [2.57ms]
+(pass) Short cape and full robe use one continuous bend with preserved centerline length [4.27ms]
+
+web/unit-tests/rpg-authored-enemy-guard.test.ts:
+(pass) authored guard requires opt-in valid metadata and leaves legacy rigs alone [1.93ms]
+(pass) world grounded-pose ownership requires a valid authored rig [2.05ms]
+(pass) reviewed guard composes recoil without rewriting neutral joint bases [1.72ms]
+(pass) guard hip drop uses a grounded stagger and repeats without accumulating transforms [4.50ms]
+(pass) settled defeat does not receive an additional guard or support correction [0.83ms]
+(pass) authored defeat repairs small shin penetration without lifting for deep weapon defects [0.63ms]
+(pass) cached sole correction preserves a reaction catch foot above the floor [1.06ms]
+(pass) authored prone fall keeps independent hips attached to the rotated pelvis and resets for survivors [3.01ms]
+
+web/unit-tests/rpg-held-equipment.test.ts:
+(pass) Nested item grip tracks the measured palm through parent animation and model scale [3.29ms]
+(pass) Failed replacement preserves the item; clearing restores original visibility without disposing cached materials [1.18ms]
+(pass) Replacing the held model removes its old instance and accepts suffixed grip role metadata [0.92ms]
+(pass) Blade samples follow actual tip/grip role nodes through animation and clear with the mount [1.18ms]
+(pass) A rigid embedded sword caches its real endpoint and follows the hand without a replacement asset [1.85ms]
+
+web/unit-tests/rpg-room-cutaway.test.ts:
+(pass) Doorway fade is continuous, reversible, and leaves the next room opaque [1.03ms]
+(pass) Shared scenery maps and materials survive independent room fading and teardown [3.39ms]
+(pass) Flame animation stays connected while light and packed shadows share a reversible fade [2.76ms]
+(pass) Nearest-surface prepass exists only during fading and releases only owned resources [0.56ms]
+
+web/unit-tests/rpg-cleave.test.ts:
+(pass) Cleave leaves the actual distal blade and contacts each authoritative target on visible radial arrival once [9.75ms]
+(pass) The near trace follows a changed live blade rather than a precomputed hero-centered arc [0.73ms]
+(pass) A dropped frame crosses queued contacts exactly once without changing target coverage [0.68ms]
+(pass) A near-target edge sector terminates while a farther sector still travels [0.51ms]
+(pass) Resuming after the mesh lifetime still reconciles every supplied target once [0.54ms]
+(pass) The separated cutting segments leave the untargeted gap empty without an indexed connector [0.79ms]
+(pass) A close untargeted direction trims only its side of the crescent while preserving the target crossing [0.66ms]
+
+web/unit-tests/rpg-chain.test.ts:
+(pass) The first chain link samples the rendered hand and target at the original contact cue [0.61ms]
+(pass) The next recoil and link start at the previous actual arrival, preserving supplied target order [0.28ms]
+(pass) A delayed frame and cosmetic echo never duplicate authoritative contacts [0.65ms]
+(pass) Resuming after visual expiry reconciles remaining results without stale echo effects [0.25ms]
+(pass) An empty authoritative pack creates no links or contacts [0.07ms]
+(pass) Discharge ribbon centers preserve both exact endpoints and all generated attributes stay finite [3.03ms]
+(pass) The hand buildup stays small and uses the same complete attributes as its warmed material [0.57ms]
+
+ 385 pass
+ 0 fail
+ 85444 expect() calls
+Ran 385 tests across 50 files. [3.58s]

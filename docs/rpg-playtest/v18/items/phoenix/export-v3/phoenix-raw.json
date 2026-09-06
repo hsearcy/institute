@@ -1,0 +1,10 @@
+{
+  "id": "phoenix",
+  "triangles": 11212,
+  "bytes": 1323772,
+  "materials": 1,
+  "gripNode": "phoenix_Grip.007",
+  "tipNode": "phoenix_Tip.007",
+  "atlas": 1024,
+  "status": "Raw candidate; requires global texture padding and exact-export review"
+}

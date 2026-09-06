@@ -1,0 +1,19 @@
+{
+  "seconds": 0.2731666564941406,
+  "output": "/home/houston/git/institute/tmp/item-models/phoenix/v3/baked/phoenix-raw.glb",
+  "immutableInputs": {
+    "albedo": {
+      "path": "/home/houston/git/institute/tmp/item-models/phoenix/v3/baked/phoenix-albedo-checkpoint.png",
+      "sha256": "65ad0f7648c09149d5e9ac4d774a1cae8e0c78ebf001dcc4319c47b3dbc3342a"
+    },
+    "normal": {
+      "path": "/home/houston/git/institute/tmp/item-models/phoenix/v3/baked/phoenix-normal-checkpoint.png",
+      "sha256": "2f82df87f7de8d2b172ac090642bf57103e4063dd1ee092840dcd0a423700595"
+    },
+    "orm": {
+      "path": "/home/houston/git/institute/tmp/item-models/phoenix/v3/baked/phoenix-orm-checkpoint.png",
+      "sha256": "493f9ca9d0b99851e47bc9a54b73a93680eaaeabbaeffc41852431339b935153"
+    }
+  },
+  "restoredScene": "Scene"
+}

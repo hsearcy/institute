@@ -1,0 +1,16 @@
+{
+  "channel": "albedo",
+  "seconds": 3.1649599075317383,
+  "checkpoint": "/home/houston/git/institute/tmp/item-models/phoenix/v3/baked/phoenix-albedo-checkpoint.png",
+  "sha256": "65ad0f7648c09149d5e9ac4d774a1cae8e0c78ebf001dcc4319c47b3dbc3342a",
+  "rgbMax": [
+    0.6000000238418579,
+    0.46666669845581055,
+    0.2823529541492462
+  ],
+  "nonzeroPixels": 474665,
+  "completed": [
+    "albedo"
+  ],
+  "restoredScene": "Scene"
+}

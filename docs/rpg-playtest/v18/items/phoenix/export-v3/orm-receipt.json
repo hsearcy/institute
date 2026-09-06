@@ -1,0 +1,18 @@
+{
+  "channel": "orm",
+  "seconds": 9.837377548217773,
+  "checkpoint": "/home/houston/git/institute/tmp/item-models/phoenix/v3/baked/phoenix-orm-checkpoint.png",
+  "sha256": "493f9ca9d0b99851e47bc9a54b73a93680eaaeabbaeffc41852431339b935153",
+  "rgbMax": [
+    1.0,
+    0.8901961445808411,
+    0.8588235974311829
+  ],
+  "nonzeroPixels": 474665,
+  "completed": [
+    "albedo",
+    "normal",
+    "orm"
+  ],
+  "restoredScene": "Scene"
+}

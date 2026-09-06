@@ -1,0 +1,18 @@
+{
+  "evidence": "Read-only bmesh.calc_volume(signed=True) on v2 superseded_sources before correction; source v8 all-positive audit separately preserved",
+  "inwardPhoenixFeatherParts": 12,
+  "exampleSignedVolumes": {
+    "leftPrimaryWing": -0.00017719542426682369,
+    "rightPrimaryWing": -0.00016480464789391105,
+    "leftEnamel": -2.42419423160249e-06,
+    "rightEnamel": -2.424428265641674e-06,
+    "crownClaw": -2.467734449652252e-06
+  },
+  "positiveControls": {
+    "grip": 0.00030272058380397844,
+    "socket": 0.00025358680864362996,
+    "pommel": 0.00010048191472898837
+  },
+  "noNormalControl": "export-v2-head-no-normal.png",
+  "interpretation": "Removing normal map restores head material. Inward winding is a concrete mechanism under test; corrected export still required."
+}

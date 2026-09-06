@@ -70,3 +70,19 @@ rendering is retained solely as a diagnostic, not the proposed asset.
 The winding-corrected v8 source head independently preserves construction and
 material at 8. Its position audit matches the previous source at one micrometer.
 Corrected normal-enabled export review remains pending.
+
+Corrected normal-enabled exact v3 now independently passes construction and
+material fidelity at 8 across all five views. Black feather caps, enamel and
+claw patches are gone, preserving the source finish and grip/pommel. The
+1,013,548-byte candidate remains uninstalled pending thumbnail and native
+equipment/motion/card checks.
+
+Phoenix v3 is now installed as the fifth unique model. Independent source,
+exact export, standalone thumbnail, native idle/card and weapon-only motion
+reviews all pass8. A route-free app check switched all five installed models
+through inventory with one held mount each, cast Cleave with Phoenix, and
+retained the equipped item and progress on reload. Browser errors were empty;
+the existing user's preview world, serialized state and prior rendering state
+were restored exactly. Full validation passes385tests across50files with no
+failures, and production TypeScript/Vite build passes. See `runtime/` for
+receipts and recordings; no FX, phone or universal performance pass inferred.

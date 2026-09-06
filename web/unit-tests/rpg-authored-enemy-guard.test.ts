@@ -97,3 +97,23 @@ test('cached sole correction preserves a reaction catch foot above the floor', (
   assert(Math.abs(low - f.support.floor - .06) < .002, 'The catch foot must not be pinned down by the guard overlay');
   assert(Math.abs(f.support.lowest() - f.support.floor) < .001, 'The opposite foot remains planted');
 });
+
+test('authored prone fall keeps independent hips attached to the rotated pelvis and resets for survivors', () => {
+  const f = fixture(), guard = AuthoredEnemyGuard.create(f.root, f.joints)!;
+  const body = f.joints.get('Body')!;
+  const hipOffsets = ['L', 'R'].map(side => f.joints.get('LegUpper' + side)!.position.clone().sub(body.position));
+  body.object.position.y = .24; body.object.rotation.set(1.58, .12, -.34);
+  for (const side of ['L', 'R']) f.joints.get('LegUpper' + side)!.object.position.y = .517;
+  guard.apply({ deathAge: .85, collapse: 'grounded' }, f.support);
+  body.object.updateMatrix();
+  for (let i = 0; i < 2; i++) {
+    const hip = f.joints.get('LegUpper' + ['L', 'R'][i])!;
+    assert(hip.object.position.distanceTo(hipOffsets[i]!.applyMatrix4(body.object.matrix)) < 1e-6,
+      'The old 277mm pelvis/hip split must not survive the terminal pose');
+    assert(f.joints.get('LegLower' + ['L', 'R'][i])!.object.rotation.x < .3, 'The prone legs release the old sharply folded knees');
+  }
+  assert.equal(body.object.position.y, .24, 'Leg support must not hide a defect by lifting the entire corpse');
+  f.reset(); guard.apply({ brace: .3 }, f.support);
+  assert.equal(body.object.position.z, 0, 'A subsequent survivor does not inherit corpse travel');
+  assert(Math.abs(f.support.lowest() - f.support.floor) < .001);
+});

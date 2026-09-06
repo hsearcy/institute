@@ -43,12 +43,20 @@ const {root,nodes,soles}=exportedRig(file),a:any=new EnemyAnimator(root,{kind:'s
 assert(a.footSupports.length>0,"The audit must load the same Three Mesh class as the runtime");
 assert(a.authoredGuard && a.authoredGuardSupport, "The real animator must activate the authored hook");
 const support=a.authoredGuardSupport;
+const body=a.joints.get('Body');
+const hipOffsets=['L','R'].map(side=>a.joints.get('LegUpper'+side).position.clone().sub(body.position).applyQuaternion(body.rotation.clone().invert()));
 const rows:any[]=[];const p=new Vector3();
-for(const state of [{},{brace:.2,injury:.25},{brace:.7,recoil:.6,impactSide:-1,catchStep:.4,footOffset:-.12},...Array.from({length:67},(_,i)=>({deathAge:i/60,collapse}))]){
+for(const state of [{},{brace:.2,injury:.25},{brace:.7,recoil:.6,impactSide:-1,catchStep:.4,footOffset:-.12},...Array.from({length:265},(_,i)=>({deathAge:i/240,collapse}))]){
  a.update(2,{moving:0,threat:0,...state});root.updateMatrixWorld(true);
  const sole=Math.min(...soles.flatMap(s=>s.vertices.map(v=>p.copy(v).applyMatrix4(s.node.matrixWorld).y)));
  let floor=Infinity;const parts:any[]=[];for(const n of nodes)if(n instanceof Mesh){const v=n.geometry.getAttribute('position');let low=Infinity;for(let i=0;i<v.count;i++)low=Math.min(low,n.getVertexPosition(i,p).applyMatrix4(n.matrixWorld).y);floor=Math.min(floor,low);parts.push({name:n.name,low});}
- rows.push({state,sole,floor,supportFloor:support.floor,lowestParts:parts.sort((a,b)=>a.low-b.low).slice(0,3)});
+ const hipGaps=hipOffsets.map((offset,i)=>a.joints.get('LegUpper'+['L','R'][i]).object.position.distanceTo(p.copy(offset).applyMatrix4(body.object.matrix)));
+ rows.push({state,sole,floor,hipGaps,supportFloor:support.floor,lowestParts:parts.sort((a,b)=>a.low-b.low).slice(0,3)});
+ if('deathAge' in state && state.deathAge!>.22 && collapse==='grounded')assert(Math.max(...hipGaps)<1e-6,'Authored hips must follow the rotated pelvis: '+JSON.stringify(rows.at(-1)));
+ if('deathAge' in state && state.deathAge!>=.8 && collapse==='grounded'){
+  const elbow=support.toSpace(a.joints.get('ArmLowerL').object,p.set(0,0,0)).y;
+  assert(elbow<support.floor+.11,'Released free elbow must descend beside the torso, not retain the high hook: '+elbow);
+ }
  if(!('deathAge' in state))assert(Math.abs(sole-support.floor)<.001,JSON.stringify(rows.at(-1)));
  for(const n of nodes)assert(n.matrixWorld.elements.every(Number.isFinite));
 }

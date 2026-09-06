@@ -3,9 +3,10 @@ import { solvePlanarLeg } from './legSupport';
 
 type Joint = { object: Object3D; position: Vector3; rotation: Quaternion };
 type Pose = { position: number[]; quaternion: number[] };
-export type AuthoredGuardState = { deathAge?: number; brace?: number; injury?: number; recoil?: number };
+export type AuthoredGuardState = { deathAge?: number; collapse?: string; brace?: number; injury?: number; recoil?: number };
 export type AuthoredGuardSupport = {
-  legs: ReadonlyMap<string, { foot: Vector3; center: Vector3; sole?: readonly Vector3[] }>;
+  legs: ReadonlyMap<string, { foot: Vector3; center: Vector3; sole?: readonly Vector3[]; limb?: readonly { node: Object3D; point: Vector3 }[] }>;
+  arms?: ReadonlyMap<string, readonly { node: Object3D; point: Vector3 }[]>;
   toSpace: (node: Object3D, point: Vector3) => Vector3;
   lowest: () => number;
   floor: number;
@@ -29,6 +30,12 @@ export class AuthoredEnemyGuard {
   private readonly point = new Vector3();
   private readonly targets = new Map<string, Vector3>();
   private readonly targetFloors = new Map<string, number>();
+  private readonly hipAnchors = new Map<string, Vector3>();
+  private readonly legPose = { upper: 0, lower: 0 };
+  private readonly freeUpperWorld = new Quaternion();
+  private readonly freeLowerWorld = new Quaternion();
+  private readonly freeTarget = new Quaternion();
+  private readonly freeParent = new Quaternion();
   private readonly weaponParent = new Quaternion();
   private readonly weaponTarget = new Quaternion();
   private readonly weaponAlong = new Vector3();
@@ -60,6 +67,19 @@ export class AuthoredEnemyGuard {
     this.drop = Math.max(0, Math.min(.08, -poses.Body.position[1]));
     this.targets.set('L', new Vector3()); this.targets.set('R', new Vector3());
     this.targetFloors.set('L', 0); this.targetFloors.set('R', 0);
+    const body = joints.get('Body')!;
+    for (const side of sides) this.hipAnchors.set(side, joints.get(`LegUpper${side}`)!.position.clone().sub(body.position).applyQuaternion(this.motion.copy(body.rotation).invert()));
+    this.freeUpperWorld.setFromUnitVectors(joints.get('ArmLowerL')!.position.clone().normalize(), new Vector3(-.25, -.14, -.16).normalize());
+    // Neutral elbow-to-wrist axis of the pinned anatomical source. The palm
+    // normal faces outward in +Z; the settled basis turns it toward the floor.
+    const along = new Vector3(-.075, -.221, .074).normalize();
+    const normal = new Vector3(0, 0, 1).addScaledVector(along, -along.z).normalize();
+    const across = along.clone().cross(normal);
+    const targetAlong = new Vector3(-.10, .04, -.31).normalize();
+    const targetNormal = new Vector3(0, -1, 0).addScaledVector(targetAlong, targetAlong.y).normalize();
+    const targetAcross = targetAlong.clone().cross(targetNormal);
+    this.freeLowerWorld.setFromRotationMatrix(new Matrix4().makeBasis(targetAcross, targetAlong, targetNormal)
+      .multiply(new Matrix4().makeBasis(across, along, normal).invert()));
   }
 
   apply(state: AuthoredGuardState, support: AuthoredGuardSupport): void {
@@ -85,6 +105,10 @@ export class AuthoredEnemyGuard {
         const release = saturate((age - .24) / .16);
         sword.quaternion.slerp(this.weaponTarget, release * release * (3 - 2 * release));
       }
+      if (state.collapse === 'grounded' && age > .22) {
+        this.groundedFall(age, support);
+        this.releaseFreeArm(age, support);
+      }
     }
     const progress = age === undefined ? 0 : saturate(age / .16);
     const weight = 1 - progress * progress * (3 - 2 * progress);
@@ -96,8 +120,8 @@ export class AuthoredEnemyGuard {
       this.blend.identity().slerp(guard, weight);
       joint.object.quaternion.copy(joint.rotation).multiply(this.blend).multiply(this.motion);
     }
-    // Defeat poses already have their own whole-body ground constraints. Fade
-    // the guard above, then leave that solver's support coordinates untouched.
+    // The living guard owns only its stagger/catch support below. Defeat
+    // support and release are handled above without reapplying this hip drop.
     if (age !== undefined || this.drop === 0) return;
     const reacting = (state.brace ?? 0) > 0 || (state.injury ?? 0) > 0 || (state.recoil ?? 0) > 0;
     for (const side of sides) {
@@ -137,6 +161,58 @@ export class AuthoredEnemyGuard {
     // Use actual exported sole vertices through the animator's existing cache.
     const correction = support.lowest() - support.floor;
     if (Number.isFinite(correction)) for (const name of supportRoots) this.joints.get(name)!.object.position.y -= correction;
+  }
+
+  private groundedFall(age: number, support: AuthoredGuardSupport): void {
+    for (const side of sides) if (!support.legs.get(side)?.sole?.length) return;
+    const t = saturate((age - .22) / .48), land = t * t * (3 - 2 * t);
+    const f = saturate((age - .22) / .23), forward = f * f * (3 - 2 * f);
+    const body = this.joints.get('Body')!;
+    // Carry the pelvis beyond the knees while the legs trail behind. The
+    // independent rigid hip roots must follow the actual rotated pelvis;
+    // inheriting only the old vertical crouch leaves a 277–350mm separation.
+    for (const side of sides) {
+      const lower = this.joints.get(`LegLower${side}`)!, leg = support.legs.get(side)!;
+      const target = this.targets.get(side)!;
+      target.copy(support.toSpace(lower.object, this.point.copy(leg.foot))).lerp(leg.center, land);
+      target.z -= .32 * forward;
+    }
+    body.object.position.z += .88 * forward; body.object.updateMatrix();
+    for (const side of sides) {
+      const upperJoint = this.joints.get(`LegUpper${side}`)!, lowerJoint = this.joints.get(`LegLower${side}`)!;
+      const leg = support.legs.get(side)!, target = this.targets.get(side)!;
+      upperJoint.object.position.copy(this.point.copy(this.hipAnchors.get(side)!).applyMatrix4(body.object.matrix));
+      // Sole-only IK can bury the knee during the prone transition. The
+      // cached convex hull keeps the whole shin supported as the foot slides
+      // back; it does not raise the entire body to hide a weapon intersection.
+      for (let iteration = 0; iteration < 12; iteration++) {
+        const pose = solvePlanarLeg(lowerJoint.position.y, lowerJoint.position.z, leg.foot.y, leg.foot.z,
+          target.y - upperJoint.object.position.y, target.z - upperJoint.object.position.z, this.legPose);
+        upperJoint.object.quaternion.copy(upperJoint.rotation).multiply(this.motion.setFromEuler(this.euler.set(pose.upper, 0, 0)));
+        lowerJoint.object.quaternion.copy(lowerJoint.rotation).multiply(this.motion.setFromEuler(this.euler.set(pose.lower, 0, 0)));
+        let low = Infinity, limbLow = Infinity;
+        for (const sole of leg.sole!) low = Math.min(low, support.toSpace(lowerJoint.object, this.point.copy(sole)).y);
+        if (leg.limb) for (const sample of leg.limb) limbLow = Math.min(limbLow, support.toSpace(sample.node, this.point.copy(sample.point)).y);
+        const error = low - support.floor;
+        if (Math.abs(error) < .0001 && limbLow >= support.floor - .001) break;
+        target.y -= error;
+        if (limbLow < support.floor - .001) target.z -= Math.min(.12, (support.floor - limbLow) * 1.5);
+      }
+    }
+  }
+
+  private releaseFreeArm(age: number, support: AuthoredGuardSupport): void {
+    if (age <= .52 || !support.arms?.get('L')?.length) return;
+    const body = this.joints.get('Body')!, upperJoint = this.joints.get('ArmUpperL')!, lowerJoint = this.joints.get('ArmLowerL')!;
+    const t = saturate((age - .52) / .26), release = t * t * (3 - 2 * t);
+    // Lowering the elbow alone leaves the curled hand pointing back at the
+    // skull. Extend and turn the whole forearm toward the trailing torso,
+    // with the palm floor-facing; keep the sword arm's asymmetrical support.
+    this.freeTarget.copy(body.object.quaternion).invert().multiply(this.freeUpperWorld);
+    upperJoint.object.quaternion.slerp(this.freeTarget, release);
+    this.freeParent.copy(body.object.quaternion).multiply(upperJoint.object.quaternion);
+    this.freeTarget.copy(this.freeParent).invert().multiply(this.freeLowerWorld);
+    lowerJoint.object.quaternion.slerp(this.freeTarget, release);
   }
 
   private legAngle(joint: Joint, angle: number): void {

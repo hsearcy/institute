@@ -57,7 +57,7 @@ export class EnemyAnimator {
   private readonly supportPoint = new Vector3();
   private readonly garments: Mesh[] = [];
   private spectralEnvelope = { hem: 0, height: 1 };
-  private readonly legSupports = new Map<string, { foot: Vector3; center: Vector3; sole: readonly Vector3[] }>();
+  private readonly legSupports = new Map<string, { foot: Vector3; center: Vector3; sole: readonly Vector3[]; limb: readonly { node: Object3D; point: Vector3 }[] }>();
   private readonly authoredGuard?: AuthoredEnemyGuard;
   private readonly authoredGuardSupport?: AuthoredGuardSupport;
 
@@ -109,11 +109,11 @@ export class EnemyAnimator {
         foot.add(local);
         soleLocal.push(local);
       }
-      this.legSupports.set(side, { foot: foot.divideScalar(sole.length), center: center.divideScalar(sole.length), sole: soleLocal });
+      this.legSupports.set(side, { foot: foot.divideScalar(sole.length), center: center.divideScalar(sole.length), sole: soleLocal, limb: points });
     }
     this.authoredGuard = AuthoredEnemyGuard.create(visual, this.joints);
     if (this.authoredGuard) this.authoredGuardSupport = {
-      legs: this.legSupports, floor: this.supportHeight,
+      legs: this.legSupports, arms: this.armSupports, floor: this.supportHeight,
       toSpace: (node, point) => this.inSupportSpace(node, point),
       lowest: () => this.lowestSupport(),
     };

@@ -1,0 +1,664 @@
+{
+  "label": "skeleton-terminal-v12",
+  "db": "/home/houston/git/institute/tmp/skeleton-terminal-v12-1788721157984/study.db",
+  "candidate": "/home/houston/git/institute/scripts/blender/experiments/exports/skeleton-native-shafts-v10/skeleton-candidate.glb",
+  "receipts": [],
+  "errors": [],
+  "poses": [
+    {
+      "kind": "skeleton",
+      "outcome": "death",
+      "age": 0.45,
+      "view": "native",
+      "fixture": "Controlled lethal reaction advanced through ordinary positive ticks; no live outcome claim",
+      "collapseAge": 0.34999999999997444,
+      "x": 938.2718635064217,
+      "y": 454.1368885336235,
+      "root": [
+        3.578080884669595,
+        0,
+        -2.200686504576443
+      ],
+      "jointPositions": [
+        {
+          "name": "Body",
+          "position": [
+            3.1904524543123984,
+            0.7625517112891159,
+            -1.824479436017126
+          ]
+        },
+        {
+          "name": "ArmUpperL",
+          "position": [
+            2.953073339527195,
+            1.2683025940487638,
+            -1.819635828861824
+          ]
+        },
+        {
+          "name": "ArmLowerL",
+          "position": [
+            2.9167217575465982,
+            1.0235974692937237,
+            -2.049075406481687
+          ]
+        },
+        {
+          "name": "ArmUpperR",
+          "position": [
+            3.2344005843476205,
+            1.2477622206833163,
+            -1.550991623640646
+          ]
+        },
+        {
+          "name": "ArmLowerR",
+          "position": [
+            3.442484341169259,
+            0.9824580729689436,
+            -1.5383656692293308
+          ]
+        },
+        {
+          "name": "Sword",
+          "position": [
+            3.5153826544898847,
+            0.6086294270867763,
+            -1.4988868858055844
+          ]
+        },
+        {
+          "name": "Head",
+          "position": [
+            3.0863214684139915,
+            1.3260956268389648,
+            -1.6723440651357606
+          ]
+        },
+        {
+          "name": "LegUpperL",
+          "position": [
+            3.1128973740974235,
+            0.7682141927349484,
+            -1.8985381106347075
+          ]
+        },
+        {
+          "name": "LegLowerL",
+          "position": [
+            3.101474767131566,
+            0.2930281978208711,
+            -1.912392853332339
+          ]
+        },
+        {
+          "name": "LegUpperR",
+          "position": [
+            3.2680075345273734,
+            0.7568892298432834,
+            -1.7504207613995442
+          ]
+        },
+        {
+          "name": "LegLowerR",
+          "position": [
+            3.343416670734072,
+            0.2898668506610848,
+            -1.798667203000493
+          ]
+        }
+      ],
+      "morph": [],
+      "programs": 159,
+      "morphBatches": 4,
+      "path": "skeleton-terminal-v12-skeleton-death-0_45-native.png"
+    },
+    {
+      "kind": "skeleton",
+      "outcome": "death",
+      "age": 0.45,
+      "view": "side",
+      "fixture": "Controlled lethal reaction advanced through ordinary positive ticks; no live outcome claim",
+      "collapseAge": 0.34999999999997444,
+      "x": 719.9999999999999,
+      "y": 444.7785227634106,
+      "root": [
+        3.578080884669595,
+        0,
+        -2.200686504576443
+      ],
+      "jointPositions": [
+        {
+          "name": "Body",
+          "position": [
+            3.1904524543123984,
+            0.7625517112891159,
+            -1.824479436017126
+          ]
+        },
+        {
+          "name": "ArmUpperL",
+          "position": [
+            2.953073339527195,
+            1.2683025940487638,
+            -1.819635828861824
+          ]
+        },
+        {
+          "name": "ArmLowerL",
+          "position": [
+            2.9167217575465982,
+            1.0235974692937237,
+            -2.049075406481687
+          ]
+        },
+        {
+          "name": "ArmUpperR",
+          "position": [
+            3.2344005843476205,
+            1.2477622206833163,
+            -1.550991623640646
+          ]
+        },
+        {
+          "name": "ArmLowerR",
+          "position": [
+            3.442484341169259,
+            0.9824580729689436,
+            -1.5383656692293308
+          ]
+        },
+        {
+          "name": "Sword",
+          "position": [
+            3.5153826544898847,
+            0.6086294270867763,
+            -1.4988868858055844
+          ]
+        },
+        {
+          "name": "Head",
+          "position": [
+            3.0863214684139915,
+            1.3260956268389648,
+            -1.6723440651357606
+          ]
+        },
+        {
+          "name": "LegUpperL",
+          "position": [
+            3.1128973740974235,
+            0.7682141927349484,
+            -1.8985381106347075
+          ]
+        },
+        {
+          "name": "LegLowerL",
+          "position": [
+            3.101474767131566,
+            0.2930281978208711,
+            -1.912392853332339
+          ]
+        },
+        {
+          "name": "LegUpperR",
+          "position": [
+            3.2680075345273734,
+            0.7568892298432834,
+            -1.7504207613995442
+          ]
+        },
+        {
+          "name": "LegLowerR",
+          "position": [
+            3.343416670734072,
+            0.2898668506610848,
+            -1.798667203000493
+          ]
+        }
+      ],
+      "morph": [],
+      "programs": 159,
+      "morphBatches": 4,
+      "path": "skeleton-terminal-v12-skeleton-death-0_45-side.png"
+    },
+    {
+      "kind": "skeleton",
+      "outcome": "death",
+      "age": 0.65,
+      "view": "native",
+      "fixture": "Controlled lethal reaction advanced through ordinary positive ticks; no live outcome claim",
+      "collapseAge": 0.5499999999999631,
+      "x": 938.2718635064217,
+      "y": 454.1368885336235,
+      "root": [
+        3.578080884669595,
+        0,
+        -2.200686504576443
+      ],
+      "jointPositions": [
+        {
+          "name": "Body",
+          "position": [
+            2.9290819701027444,
+            0.33077715255407036,
+            -1.5708101590194774
+          ]
+        },
+        {
+          "name": "ArmUpperL",
+          "position": [
+            2.5134903277379785,
+            0.5009163794562179,
+            -1.2384060520286928
+          ]
+        },
+        {
+          "name": "ArmLowerL",
+          "position": [
+            2.474334542697956,
+            0.555395102072069,
+            -1.5690772613171606
+          ]
+        },
+        {
+          "name": "ArmUpperR",
+          "position": [
+            2.8507782124973526,
+            0.49819575745763345,
+            -1.0435570961021856
+          ]
+        },
+        {
+          "name": "ArmLowerR",
+          "position": [
+            3.162298269051091,
+            0.522172487221052,
+            -1.1709341983100023
+          ]
+        },
+        {
+          "name": "Sword",
+          "position": [
+            3.4679693401707556,
+            0.42386456617940904,
+            -1.3795518961420252
+          ]
+        },
+        {
+          "name": "Head",
+          "position": [
+            2.6508377857945042,
+            0.5294885624723656,
+            -1.0863887231626759
+          ]
+        },
+        {
+          "name": "LegUpperL",
+          "position": [
+            2.8360999022808038,
+            0.33152716188028947,
+            -1.6245252779242612
+          ]
+        },
+        {
+          "name": "LegLowerL",
+          "position": [
+            3.1533939215806246,
+            0.21054910081206518,
+            -1.957411104694242
+          ]
+        },
+        {
+          "name": "LegUpperR",
+          "position": [
+            3.022064037924685,
+            0.33002714322785126,
+            -1.5170950401146936
+          ]
+        },
+        {
+          "name": "LegLowerR",
+          "position": [
+            3.364417418907923,
+            0.209737854774679,
+            -1.824420290005377
+          ]
+        }
+      ],
+      "morph": [],
+      "programs": 159,
+      "morphBatches": 4,
+      "path": "skeleton-terminal-v12-skeleton-death-0_65-native.png"
+    },
+    {
+      "kind": "skeleton",
+      "outcome": "death",
+      "age": 0.65,
+      "view": "side",
+      "fixture": "Controlled lethal reaction advanced through ordinary positive ticks; no live outcome claim",
+      "collapseAge": 0.5499999999999631,
+      "x": 719.9999999999999,
+      "y": 444.7785227634106,
+      "root": [
+        3.578080884669595,
+        0,
+        -2.200686504576443
+      ],
+      "jointPositions": [
+        {
+          "name": "Body",
+          "position": [
+            2.9290819701027444,
+            0.33077715255407036,
+            -1.5708101590194774
+          ]
+        },
+        {
+          "name": "ArmUpperL",
+          "position": [
+            2.5134903277379785,
+            0.5009163794562179,
+            -1.2384060520286928
+          ]
+        },
+        {
+          "name": "ArmLowerL",
+          "position": [
+            2.474334542697956,
+            0.555395102072069,
+            -1.5690772613171606
+          ]
+        },
+        {
+          "name": "ArmUpperR",
+          "position": [
+            2.8507782124973526,
+            0.49819575745763345,
+            -1.0435570961021856
+          ]
+        },
+        {
+          "name": "ArmLowerR",
+          "position": [
+            3.162298269051091,
+            0.522172487221052,
+            -1.1709341983100023
+          ]
+        },
+        {
+          "name": "Sword",
+          "position": [
+            3.4679693401707556,
+            0.42386456617940904,
+            -1.3795518961420252
+          ]
+        },
+        {
+          "name": "Head",
+          "position": [
+            2.6508377857945042,
+            0.5294885624723656,
+            -1.0863887231626759
+          ]
+        },
+        {
+          "name": "LegUpperL",
+          "position": [
+            2.8360999022808038,
+            0.33152716188028947,
+            -1.6245252779242612
+          ]
+        },
+        {
+          "name": "LegLowerL",
+          "position": [
+            3.1533939215806246,
+            0.21054910081206518,
+            -1.957411104694242
+          ]
+        },
+        {
+          "name": "LegUpperR",
+          "position": [
+            3.022064037924685,
+            0.33002714322785126,
+            -1.5170950401146936
+          ]
+        },
+        {
+          "name": "LegLowerR",
+          "position": [
+            3.364417418907923,
+            0.209737854774679,
+            -1.824420290005377
+          ]
+        }
+      ],
+      "morph": [],
+      "programs": 159,
+      "morphBatches": 4,
+      "path": "skeleton-terminal-v12-skeleton-death-0_65-side.png"
+    },
+    {
+      "kind": "skeleton",
+      "outcome": "death",
+      "age": 0.9,
+      "view": "native",
+      "fixture": "Controlled lethal reaction advanced through ordinary positive ticks; no live outcome claim",
+      "collapseAge": 0.7999999999999489,
+      "x": 938.2718635064217,
+      "y": 454.1368885336235,
+      "root": [
+        3.578080884669595,
+        0,
+        -2.200686504576443
+      ],
+      "jointPositions": [
+        {
+          "name": "Body",
+          "position": [
+            2.9290819701027444,
+            0.2473493581131014,
+            -1.5708101590194774
+          ]
+        },
+        {
+          "name": "ArmUpperL",
+          "position": [
+            2.524099503035686,
+            0.22021579299146954,
+            -1.1868710608662492
+          ]
+        },
+        {
+          "name": "ArmLowerL",
+          "position": [
+            2.4517021568614488,
+            0.22059304377365077,
+            -1.5164208102532393
+          ]
+        },
+        {
+          "name": "ArmUpperR",
+          "position": [
+            2.8709482229845116,
+            0.2653720099655751,
+            -1.0154256871940195
+          ]
+        },
+        {
+          "name": "ArmLowerR",
+          "position": [
+            3.1806091302895547,
+            0.19340242968356489,
+            -1.1284524865528525
+          ]
+        },
+        {
+          "name": "Sword",
+          "position": [
+            3.485177583269631,
+            0.11704764576811225,
+            -1.3476067685786755
+          ]
+        },
+        {
+          "name": "Head",
+          "position": [
+            2.6660488028961167,
+            0.2501907778922752,
+            -1.0394198529980663
+          ]
+        },
+        {
+          "name": "LegUpperL",
+          "position": [
+            2.8334642125149108,
+            0.2349008871807287,
+            -1.618073479413929
+          ]
+        },
+        {
+          "name": "LegLowerL",
+          "position": [
+            3.157692438178012,
+            0.15965873877398268,
+            -1.9576891981227218
+          ]
+        },
+        {
+          "name": "LegUpperR",
+          "position": [
+            3.024699727690578,
+            0.2597978290454741,
+            -1.523546838625026
+          ]
+        },
+        {
+          "name": "LegLowerR",
+          "position": [
+            3.372393695160224,
+            0.1727833700348869,
+            -1.8360553161354884
+          ]
+        }
+      ],
+      "morph": [],
+      "programs": 159,
+      "morphBatches": 4,
+      "path": "skeleton-terminal-v12-skeleton-death-0_9-native.png"
+    },
+    {
+      "kind": "skeleton",
+      "outcome": "death",
+      "age": 0.9,
+      "view": "side",
+      "fixture": "Controlled lethal reaction advanced through ordinary positive ticks; no live outcome claim",
+      "collapseAge": 0.7999999999999489,
+      "x": 719.9999999999999,
+      "y": 444.7785227634106,
+      "root": [
+        3.578080884669595,
+        0,
+        -2.200686504576443
+      ],
+      "jointPositions": [
+        {
+          "name": "Body",
+          "position": [
+            2.9290819701027444,
+            0.2473493581131014,
+            -1.5708101590194774
+          ]
+        },
+        {
+          "name": "ArmUpperL",
+          "position": [
+            2.524099503035686,
+            0.22021579299146954,
+            -1.1868710608662492
+          ]
+        },
+        {
+          "name": "ArmLowerL",
+          "position": [
+            2.4517021568614488,
+            0.22059304377365077,
+            -1.5164208102532393
+          ]
+        },
+        {
+          "name": "ArmUpperR",
+          "position": [
+            2.8709482229845116,
+            0.2653720099655751,
+            -1.0154256871940195
+          ]
+        },
+        {
+          "name": "ArmLowerR",
+          "position": [
+            3.1806091302895547,
+            0.19340242968356489,
+            -1.1284524865528525
+          ]
+        },
+        {
+          "name": "Sword",
+          "position": [
+            3.485177583269631,
+            0.11704764576811225,
+            -1.3476067685786755
+          ]
+        },
+        {
+          "name": "Head",
+          "position": [
+            2.6660488028961167,
+            0.2501907778922752,
+            -1.0394198529980663
+          ]
+        },
+        {
+          "name": "LegUpperL",
+          "position": [
+            2.8334642125149108,
+            0.2349008871807287,
+            -1.618073479413929
+          ]
+        },
+        {
+          "name": "LegLowerL",
+          "position": [
+            3.157692438178012,
+            0.15965873877398268,
+            -1.9576891981227218
+          ]
+        },
+        {
+          "name": "LegUpperR",
+          "position": [
+            3.024699727690578,
+            0.2597978290454741,
+            -1.523546838625026
+          ]
+        },
+        {
+          "name": "LegLowerR",
+          "position": [
+            3.372393695160224,
+            0.1727833700348869,
+            -1.8360553161354884
+          ]
+        }
+      ],
+      "morph": [],
+      "programs": 159,
+      "morphBatches": 4,
+      "path": "skeleton-terminal-v12-skeleton-death-0_9-side.png"
+    }
+  ],
+  "success": true
+}

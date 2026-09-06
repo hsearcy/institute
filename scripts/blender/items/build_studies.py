@@ -719,10 +719,10 @@ def starfall(root,p):
                 materials.append(1 if abs(u)>.68 else 2 if abs(u)<.15 and .31<z<.79 and abs(z-.535)>.024 else 0)
     for j in range(nz):
         for i in (0,nx):
-            a=j*(nx+1)+i;b=a+nx+1;faces.append((a,b,b+plane,a+plane));materials.append(1)
+            a=j*(nx+1)+i;b=a+nx+1;face=(a,b,b+plane,a+plane);faces.append(face if i==0 else tuple(reversed(face)));materials.append(1)
     for j in (0,nz):
         for i in range(nx):
-            a=j*(nx+1)+i;faces.append((a,a+plane,a+plane+1,a+1));materials.append(0)
+            a=j*(nx+1)+i;face=(a,a+plane,a+plane+1,a+1);faces.append(face if j==0 else tuple(reversed(face)));materials.append(0)
     blade=mesh('Starfall continuous leaf-shaped fullered blade',vertices,faces,iron,root,smooth=True)
     blade.data.materials.append(edge);blade.data.materials.append(inset)
     for face,index in zip(blade.data.polygons,materials):face.material_index=index

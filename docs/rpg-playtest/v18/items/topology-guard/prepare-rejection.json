@@ -1,0 +1,19 @@
+{
+  "seconds": 0.9825482368469238,
+  "entryPoint": "bake_items.prepare",
+  "expectedRejection": "Invalid closed source winding: Phoenix crown retaining claw.003, Phoenix fitted heart retaining claw.006, Phoenix fitted heart retaining claw.007, Phoenix primary swept wing.006, Phoenix primary swept wing.007, Phoenix protected feather enamel.006, Phoenix protected feather enamel.007, Phoenix rear cup support.003, Phoenix rooted shorter flight feather.012, Phoenix rooted shorter flight feather.013, Phoenix rooted shorter flight feather.014, Phoenix rooted shorter flight feather.015; inspect /home/houston/git/institute/tmp/item-models/phoenix/source-topology.json",
+  "beforeCounts": [
+    28,
+    961,
+    1425
+  ],
+  "afterCounts": [
+    28,
+    961,
+    1425
+  ],
+  "sourceGeometryMaterialsUnchanged": true,
+  "sourceFingerprint": "ad98b5e513173dc35b4ad68dc24965f19fbc6eff3554c700ae1b01dc582d243a",
+  "restoredScene": "Scene",
+  "scope": "Actual prepare rejects invalid closed source before bake scene creation or atlas work"
+}

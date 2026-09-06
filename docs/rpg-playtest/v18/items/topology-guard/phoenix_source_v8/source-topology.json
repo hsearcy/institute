@@ -1,0 +1,348 @@
+{
+  "itemId": "phoenix",
+  "parts": [
+    {
+      "name": "Flat leather wrapped oval grip.004",
+      "components": [
+        {
+          "faces": 16642,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.00030272155294642806,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Phoenix continuous tapered tang.004",
+      "components": [
+        {
+          "faces": 242,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.0007255198548839958,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Phoenix counterweight butt.004",
+      "components": [
+        {
+          "faces": 3842,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.00010048191472898695,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Phoenix crown retaining claw.004",
+      "components": [
+        {
+          "faces": 290,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 2.4677344496522323e-06,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Phoenix fitted heart retaining claw.008",
+      "components": [
+        {
+          "faces": 290,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 2.943169156542412e-06,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Phoenix fitted heart retaining claw.009",
+      "components": [
+        {
+          "faces": 290,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 2.918429318803219e-06,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Phoenix flared cradle socket.004",
+      "components": [
+        {
+          "faces": 322,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.0002535868086436299,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Phoenix garnet fitted cup.004",
+      "components": [
+        {
+          "faces": 1536,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.0002986544282606455,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Phoenix polished garnet heart.004",
+      "components": [
+        {
+          "faces": 1536,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.0002502572515611195,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Phoenix primary swept wing.008",
+      "components": [
+        {
+          "faces": 434,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.00017719542620547082,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Phoenix primary swept wing.009",
+      "components": [
+        {
+          "faces": 434,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.00016480464859859614,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Phoenix protected feather enamel.008",
+      "components": [
+        {
+          "faces": 290,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 2.42419420298001e-06,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Phoenix protected feather enamel.009",
+      "components": [
+        {
+          "faces": 290,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 2.424428294264165e-06,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Phoenix rear cup support.004",
+      "components": [
+        {
+          "faces": 290,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 3.177463907009511e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Phoenix rooted shorter flight feather.016",
+      "components": [
+        {
+          "faces": 290,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 3.106497737823553e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Phoenix rooted shorter flight feather.017",
+      "components": [
+        {
+          "faces": 290,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 2.3800010048280485e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Phoenix rooted shorter flight feather.018",
+      "components": [
+        {
+          "faces": 290,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 2.610931130641347e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Phoenix rooted shorter flight feather.019",
+      "components": [
+        {
+          "faces": 290,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 1.914930963409602e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Phoenix seated grip ferrule.008",
+      "components": [
+        {
+          "faces": 146,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 2.33600099353307e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Phoenix seated grip ferrule.009",
+      "components": [
+        {
+          "faces": 146,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 2.3360021262963175e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    }
+  ],
+  "openParts": [],
+  "rejectedParts": [],
+  "scope": "Topology preflight only; no source geometry changed and no visual acceptance"
+}

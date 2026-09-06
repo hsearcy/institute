@@ -1,0 +1,40 @@
+{
+  "seconds": 2.184377908706665,
+  "results": [
+    {
+      "source": "phoenix_source_v7",
+      "rejected": true,
+      "rejectedParts": [
+        "Phoenix crown retaining claw.003",
+        "Phoenix fitted heart retaining claw.006",
+        "Phoenix fitted heart retaining claw.007",
+        "Phoenix primary swept wing.006",
+        "Phoenix primary swept wing.007",
+        "Phoenix protected feather enamel.006",
+        "Phoenix protected feather enamel.007",
+        "Phoenix rear cup support.003",
+        "Phoenix rooted shorter flight feather.012",
+        "Phoenix rooted shorter flight feather.013",
+        "Phoenix rooted shorter flight feather.014",
+        "Phoenix rooted shorter flight feather.015"
+      ],
+      "openParts": [],
+      "sceneObjectMeshCountsUnchanged": true
+    },
+    {
+      "source": "phoenix_source_v8",
+      "rejected": false,
+      "rejectedParts": [],
+      "openParts": [],
+      "sceneObjectMeshCountsUnchanged": true
+    },
+    {
+      "source": "starfall_source_v1",
+      "rejected": false,
+      "rejectedParts": [],
+      "openParts": [],
+      "sceneObjectMeshCountsUnchanged": true
+    }
+  ],
+  "restoredScene": "Scene"
+}

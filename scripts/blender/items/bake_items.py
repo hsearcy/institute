@@ -45,6 +45,40 @@ def _structured_grip_low(source):
     return bpy.data.objects.new(source.name+' structured low',data)
 
 
+def validate_source_topology(root, graph, directory):
+    """Reject invalid closed sources before cloning, atlas work or any bake.
+
+    Open surfaces are reported explicitly, not silently repaired or promoted.
+    Evaluation includes modifiers and the same root-space transform used below.
+    """
+    topology=load(ROOT/'scripts/blender/items/source_topology.py','item_source_topology')
+    inverse=root.matrix_world.inverted();parts=[]
+    for original in root.children:
+        if original.type!='MESH':continue
+        evaluated=original.evaluated_get(graph)
+        data=evaluated.to_mesh(preserve_all_data_layers=True,depsgraph=graph)
+        try:
+            data.calc_loop_triangles();transform=inverse@original.matrix_world
+            vertices=[tuple(transform@vertex.co) for vertex in data.vertices]
+            faces=[tuple(face.vertices) for face in data.polygons]
+            triangles=[(triangle.polygon_index,tuple(triangle.vertices))
+                       for triangle in data.loop_triangles]
+            parts.append(dict(name=original.name,**topology.inspect_mesh(vertices,faces,triangles)))
+        finally:evaluated.to_mesh_clear()
+    report={'itemId':root.get('itemId'),'parts':parts,
+            'openParts':[part['name'] for part in parts if part['openComponents']],
+            'rejectedParts':[part['name'] for part in parts if part['rejected']],
+            'scope':'Topology preflight only; no source geometry changed and no visual acceptance'}
+    path=Path(directory)/'source-topology.json'
+    path.write_text(json.dumps(report,indent=2)+'\n')
+    print(json.dumps({'sourceTopology':str(path),'openParts':report['openParts'],
+                      'rejectedParts':report['rejectedParts']}))
+    if report['rejectedParts']:
+        raise ValueError('Invalid closed source winding: '+', '.join(report['rejectedParts'])+
+                         '; inspect '+str(path))
+    return report
+
+
 def prepare(source_scene,item_id,size=1024,*,structured_blade=False,split_material_boundaries=False,structured_grip=False,small_mesh_ratio=1):
     if not 0<small_mesh_ratio<=1:raise ValueError('small_mesh_ratio must be within (0,1]')
     if source_scene.get('diagnosticOnly'):
@@ -60,11 +94,12 @@ def prepare(source_scene,item_id,size=1024,*,structured_blade=False,split_materi
         root=next(o for o in source_scene.objects if o.get('itemId')==item_id)
         root_inverse=root.matrix_world.inverted()
         source_meta={key:value for key,value in root.items()}
+        graph=bpy.context.evaluated_depsgraph_get()
+        topology_report=validate_source_topology(root,graph,directory)
         scene=bpy.data.scenes.new('Item bake '+item_id)
         high=bpy.data.collections.new(item_id+' isolated high');scene.collection.children.link(high)
         destination=bpy.data.collections.new(item_id+' low and projection targets');scene.collection.children.link(destination)
         sources=[];glows=[]
-        graph=bpy.context.evaluated_depsgraph_get()
         for original in root.children:
             if original.type!='MESH':continue
             data=bpy.data.meshes.new_from_object(original.evaluated_get(graph),preserve_all_data_layers=True,depsgraph=graph)
@@ -142,7 +177,7 @@ def prepare(source_scene,item_id,size=1024,*,structured_blade=False,split_materi
         scene.render.bake.margin=0;scene.render.bake.use_selected_to_active=True
         scene.render.bake.cage_extrusion=.006;scene.render.bake.max_ray_distance=.025
         scene.render.bake.use_pass_direct=False;scene.render.bake.use_pass_indirect=False;scene.render.bake.use_pass_color=True
-        state=dict(scene=scene,destination=destination,low=low,sources=sources,batches=batches,material=material,target=target,images=images,directory=directory,size=size,completed=set(),channel_batches={},helper=helper,source_triangles=helper.triangle_count(sources))
+        state=dict(scene=scene,destination=destination,low=low,sources=sources,batches=batches,material=material,target=target,images=images,directory=directory,size=size,completed=set(),channel_batches={},helper=helper,source_triangles=helper.triangle_count(sources),source_topology=topology_report)
         result=joined.joined_source_comparison(state,directory/'baked')
         result.update(item_id=item_id,metadata=source_meta,glows=glows,joined_helper=joined,
                       geometry_normals_only=item_id=='apprentice')

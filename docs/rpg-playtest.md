@@ -8,8 +8,8 @@ The independent [art review](rpg-art-review-v13.md) scores every rendered art
 category against the user's scale: 10 is AAA graphics and every category must
 reach 8. The baseline is approximately 4.5 overall and **fails**. Individual
 failures and missing evidence remain visible; improved code and passing tests
-do not imply visual acceptance. The current wraith, Ball Lightning and skill
-tree revisions are candidates awaiting review and further iteration.
+do not imply visual acceptance. Review continues by category: the skill menu and reviewed grimoire/victory
+static screens now reach 8; models and complete combat effects remain candidates.
 
 Regional expeditions now prioritize undiscovered eligible relics of their own
 school, while retaining first-reward, encounter, clear-count and legendary
@@ -22,12 +22,16 @@ Upgrade previews report actual extra targets for the current loadout and room,
 including the 48-target limit and already-active modifiers. The underlying
 learning trees, mastery and question selection are unchanged.
 
-Current validation: the production build and 292 CPU tests pass. Desktop/phone
-regressions passed in 1.2 minutes, saved-phase recovery in 1.1 minutes, and all
-fifteen spells across three expeditions in 2.1 minutes. The phone test verifies
+Current checkpoint validation: the production build and 308 CPU tests pass.
+Desktop/phone regressions pass in 1 minute and all fifteen spells across three
+expeditions pass in 1.7 minutes. The gameplay check requires the actual accepted
+wraith geometry and rigid articulation in live instance batches, so a silent
+skeleton fallback cannot satisfy it. The phone test verifies
 that selecting a rune spends nothing, opening Details exposes the learning
-button, and Learn spends exactly one point. Twenty GLBs validate at 286,791
-triangles and 31,365,188 bytes. These checks do not certify art quality.
+button, and Learn spends exactly one point. Twenty GLBs validate at 279,303
+triangles and 31,946,400 bytes. Saved-phase recovery previously passed in
+1.1 minutes at `32e7ecf`; this presentation pass does not change its protocol.
+These checks do not certify art quality or the actual Ares deployment.
 
 The new [upgrade illustrations](rpg-skill-art-v3.md) scored 8 as source art.
 Visible desktop skill-tree partial states reached 8 across all three schools;
@@ -35,10 +39,62 @@ phone trees and lower-node coverage also reached 8 after label refinements.
 Phone detail illustrations also reached 8 after increasing their presentation
 to 144 pixels. This scoped acceptance covers the reviewed skill menu only;
 HUD, other menus, models, world and complete effects retain separate gates.
-Ball Lightning v4 orb forms reached 8 in the desktop full-quality samples;
-complete spell motion, contacts and responsive presentation remain unverified.
-The runtime wraith remains 5. Structural experiments are isolated from the
-reproducible runtime builder and have not been accepted or baked into the game.
+
+The grimoire now pairs a large spell illustration with five compact school
+entries. A sage Viewing marker identifies the featured spell; gold Selected
+identifies equipped magic. Desktop, short desktop, portrait phone, locked and
+tracked states reached 8 in the independent review. Existing one-click spell
+selection, learning routes and per-school favorites retain their handlers.
+[Reviewed grimoire evidence](rpg-playtest/v13/grimoire/rpg-grimoire-v2-desktop.png).
+
+The guardian reward screen presents a large framed relic, the recorded XP,
+current level progress and a skill-point action. It distinguishes duplicate
+conversion from new discovery using the reward receipt. Reviewed legendary,
+duplicate, rare, XP-only and low-level/no-point desktop states and portrait
+phone presentation reached 8 as static screens. Reveal motion remains a
+separate unresolved gate. These art-review fixtures only changed client
+presentation, awarded nothing and were immediately restored.
+[Reviewed reward evidence](rpg-playtest/v13/treasure/rpg-treasure-v2-phone.png).
+
+Equipment now places a large equipped relic beside a compact collection case.
+Twelve-pixel labels and three columns keep phone item names readable; desktop
+shows all 23 deployed illustrations. Fresh desktop, upper/lower phone rows,
+locked items and alternate rare/legendary details reached 8 for the static
+relic section. The original one-click equip handler is retained. Armor thumbnails
+remain a separately failing category, and the two altered-state captures are
+unsaved client-only fixtures.
+[Reviewed equipment evidence](rpg-playtest/v13/equipment/rpg-equipment-v3-fresh-desktop.png).
+
+The short-landscape layout reserves a separate combat canvas beside the question
+and keypad, with a compact dock below it. The reviewed layout reached 8. Its
+568×320 and 640×360 tier uses one readable current-spell name and simplified orbs;
+this static compact HUD also reached 8. Portrait camera framing now follows the
+measured free space above its controls; reviewed four-orb framing reached 8 at
+390×844 and 360×780. These presentation changes do not affect learning state.
+
+Ball Lightning orb forms reached 8 in desktop and reduced-resolution fallback
+samples; four-orb desktop/landscape/portrait context, full-size dissolution and
+asymmetric grounded death poses also reached scoped 8s. Sampled frames from the
+normal-loop boss clip show coherent release, contact, settling and erosion;
+continuous smoothness remains unverified by the independent critic's image tools.
+An unrecorded actual-HUD 48-enemy boss cast measured 16.7ms median / 33.4ms p95
+rAF intervals (~49fps mean). Recording was substantially slower. These are
+cadence samples on this machine, not GPU timing or a universal frame-rate claim.
+[Evidence and timing limits](rpg-playtest/v13/ball-lightning/README.md).
+
+The authored CC0 lich adaptation passed source, moderate-pose and exported-model
+reviews at 8. A stronger localized cloth-midtone correction brought native-camera
+warm/cool dungeon readability to 8 at its 1.85m presentation height. The accepted
+wraith is now public with matching canonical Blender source, authored UVs and
+seven rigid joints; source caches remain authoring-only. Other creature models
+retain their separate failing grades.
+
+A real local boss answer entered with the landscape keypad completed normally:
+the scratch learner gained 106 XP (90 plus the existing duplicate conversion),
+48 recorded kills and a cleared expedition. An initially hidden Chromium tab
+paused animation; after activating the demonstrably paused tab, the cast and
+receipt-backed victory screen finished. Render-only fixture state had been restored
+before this answer. This is local progression evidence, not an Ares resume test.
 No Ares service or child profile was modified.
 
 ![Desktop Storm skill tree, render-only partial-progress fixture](rpg-playtest/v13/rpg-v13-skills4-storm-desktop-partial-fixture.png)

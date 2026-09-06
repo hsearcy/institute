@@ -1,10 +1,44 @@
-# Independent art review — v13 baseline
+# Independent art review — v13 current gate and baseline history
 
 Reviewer: independent `art_critic` subagent, separate from implementation. Reviewed 2026-09-05. Baseline code commit: `ff25a45`; the new uncommitted wraith is explicitly identified below. This is a visual critique, not a learning-system or gameplay correctness certification.
 
-**Acceptance gate: FAILED.** The user requires every art category to score at least 8/10, with 10 meaning AAA graphics and 1 meaning garbage. Current evidence does not support that claim. Overall presentation is approximately **4.5/10**; that number is descriptive and must never average away a failing asset or category. Some source illustrations reach 8, but current real-time graphics and their integration do not.
+**Acceptance gate: FAILED.** The user requires every art category to score at least 8/10, with 10 meaning AAA graphics and 1 meaning garbage. Current evidence does not support that claim. The initial baseline presentation was approximately **4.5/10**. That historical descriptive number is not a current aggregate score and must never average away a failing asset or category. The ledger below records current scoped acceptance; historical scores remain below for traceability.
 
 Scores are subjective art-direction judgments, grounded in the listed visible evidence. They are not precision measurements. 8 means cohesive, highly polished production art at the intended gameplay distance, with convincing materials, intentional silhouettes/composition, clean integration, and no conspicuous prototype geometry or presentation. Stylization can score 8–10; photorealism is not required. Being procedural, child-friendly, technically functional, or improved over the previous pass does not lower the bar.
+
+## Current acceptance ledger
+
+**Global gate: FAILED. No complete game-wide art or animation acceptance.** A score applies only to the specified evidence and scope. Source/static/layout passes do not transfer to runtime readability, animation, other assets or other viewports.
+
+| Accepted scope | Score | Latest reviewed evidence |
+|---|---:|---|
+| Skill menu, desktop and phone; all three schools, partial/mastered branches and details | 8 | `docs/rpg-playtest/v13/rpg-v13-skills{4,5,6}-*.png`; `phone-detail-fresh-load.png` |
+| Grimoire static presentation, desktop/phone, all schools, viewing/selected/locked/tracked states | 8 | `docs/rpg-playtest/v13/grimoire/rpg-grimoire-v2-*.png` |
+| Victory static presentation, desktop/phone, new/duplicate/rare/XP-only, low-level/no-point states | 8 | `/tmp/rpg-treasure-v1-*.png`; `/tmp/rpg-treasure-v2-{rare-desktop,no-item-desktop,phone}.png` |
+| Equipment relic section static states, desktop/phone; all 23 desktop crops, shown phone upper/lower rows, unowned/rare/legendary equipped states | 8 | `docs/rpg-playtest/v13/equipment/rpg-equipment-v3-{fresh-desktop,phone-top,phone-lower,phone-locked,legendary-desktop}.png` |
+| Revised short-landscape HUD layout/hierarchy only | 8 | `/tmp/rpg-landscape-v4-open.png`; `/tmp/rpg-ball-v5-ordinary-landscape-{contact,latecontact}.png` |
+| Compact small-landscape static HUD presentation at568×320 and640×360 | 8 | `/tmp/rpg-landscape-compact-v2-{568,640}.png`; readable current-spell name, simplified orbs, no XP microtext |
+| Ball Lightning main orb visible form at full-quality desktop, single and orbit variants | 8 | `docs/rpg-playtest/v13/rpg-ball-v4-{single-0_7,orbit-1_1}.png`; `/tmp/rpg-ball-v5-ordinary-desktop-contact.png` |
+| Ball Lightning fallback orb form and revised landscape orbit context | 8 | `/tmp/rpg-ball-v6-orbit-{fallback,desktop,landscape}-contact.png`; fallback late-contact confirms recovered strand separation |
+| Ball Lightning portrait four-orb framing/form at 390×844 and 360×780 | 8 | `/tmp/rpg-ball-v7-safe-orbit-{portrait,portrait-small}-{contact,latecontact}.png`; lower orbitals remain above the question panel |
+| Ball Lightning full-scale erosion/dissolution material treatment in reviewed desktop phases | 8 | `/tmp/rpg-ball-v5-ordinary-desktop-{latecontact,fade}.png` |
+| Refined lich/wraith source and final GLB static appearance; depicted moderate rigid pose | 8 | `scripts/blender/previews/v2/lich-refined-study-{front-back,high-view}.png`; `lich-rigid-pose-comparison.png`; `wraith-cc0-exported-game-angle.png` |
+| Final wraith runtime static readability at1.85 in reviewed Embercrypt/Stormspire camera | 8 | `/tmp/rpg-wraith-midtone-v2-{embercrypt,stormspire}-185.png`; stronger localized cloth curve restores broad panel separation |
+| Ball Lightning depicted static settled death poses | 8 | `/tmp/rpg-electric-ground-v8-grounded-{1.75,2.2}.png`; asymmetric knee/brace variants retain full-size support before erosion |
+| Spell/relic/skill illustration source art | 8 | `web/public/assets/rpg/ui/{spells-v2,relics-v2,skills-v3}.png`, `wildfire-v3.png`; deployment acceptance only where reviewed separately above |
+
+| Failing or unverified scope | Current grade/status | Main remaining gap / evidence |
+|---|---:|---|
+| Hero variants, skeleton, revenant, guardian/boss | 3.5–5 baseline; no accepted replacement | Authored anatomy, armor/cloth construction, convincing silhouettes and materials still needed. Individual grades below. |
+| World, architecture, floor, lighting, landmarks and props | 4–6 baseline; no accepted replacement | Repeated blocky structures, weak authored material/prop composition. Individual grades below. |
+| Ball Lightning complete effect | Not accepted | Reviewed orb, dissolve, static death-pose and viewport/fallback components all reach8; continuous-motion art review remains unresolved. Unrecorded actual-HUD stress cadence is much better than recorded footage; see latest evidence below. |
+| Other fourteen spells, shared non-Ball impacts/deaths and loot effects | 3–5 baseline or unverified | Every family has its own unresolved form/contact/temporal gaps; see individual table below. No whole-spell temporal acceptance. |
+| Desktop/portrait combat HUD, notifications | Below gate / full review pending | Safe portrait orbit framing passes separately; accepted landscape presentation does not approve all other HUD layouts or notifications. |
+| Armor selection section | 5 historical; still below gate in current partial view | `docs/rpg-playtest/v13/equipment/rpg-equipment-v3-phone-lower.png`: generic default shield and simplistic character thumbnails remain; accepted relic section does not approve armor. |
+| Animation, reveal transitions, character locomotion/casting/death, performance modes | Unverified for full acceptance | Normal Ball clip sampled at 1/8 FPS shows ordered progression, not continuous playback/smoothness approval. Recorded rAF timing is separate from visual quality and encoded video FPS. |
+| Remaining coverage | Unverified | Remaining large equipped-detail variants, full room/biome coverage, every character under intended lighting and motion, and every effect/modifier on supported viewports. All23 relic collection crops have passed. |
+
+The latest scores supersede historical entries only within their named scope. Technical tests, licensing provenance, polygon counts and implementation effort do not raise visual scores.
 
 ## Evidence and limitations
 
@@ -197,7 +231,7 @@ This is a deliberately scoped form score, **not full spell acceptance**. Continu
 
 ## Candidate review K — fifth skill tree and complete lower-node coverage
 
-Evidence: twelve `/tmp/rpg-v13-skills5-{ember,frost,storm}-{phone-partial,phone-lower-mastered,phone-detail,desktop-lower-mastered}.png` captures, plus previously reviewed unchanged desktop upper states.
+Evidence: twelve `docs/rpg-playtest/v13/rpg-v13-skills5-{ember,frost,storm}-{phone-partial,phone-lower-mastered,phone-detail,desktop-lower-mastered}.png` captures, plus previously reviewed unchanged desktop upper states.
 
 **Desktop trees: 8/10 in all three schools. Phone trees: 8/10 in all three schools.** Mixed-case mobile labels in consistent slots resolve the prior overlap, stabilize rank placement and retain readable names. Upper partial-state and lower mastered captures now cover the full branch layouts and all deployed upgrade illustrations. Selected, learnable, locked and mastered states are visually distinguishable. No further tree redesign is needed for this visual gate.
 
@@ -213,6 +247,164 @@ The authorized search for an authored openly licensed sculpt foundation is a rea
 
 ## Candidate review M — settled larger phone skill details
 
-Evidence: `/tmp/rpg-v13-skills6-{ember,frost,storm}-phone-detail.png`. **All three phone Details presentations: 8/10.** Increasing the illustration to 144 pixels makes the detailed art appreciable at the supplied phone resolution while preserving a coherent hierarchy. The previously observed small-image softness no longer materially weakens the presentation. The root reports no active transform/filter/animation and identical decoded PNG/lossless-WebP pixels; this is a presentation-size improvement, not a claim that source compression or a browser defect was fixed.
+Evidence: `docs/rpg-playtest/v13/rpg-v13-skills6-{ember,frost,storm}-phone-detail.png`. **All three phone Details presentations: 8/10.** Increasing the illustration to 144 pixels makes the detailed art appreciable at the supplied phone resolution while preserving a coherent hierarchy. The previously observed small-image softness no longer materially weakens the presentation. The root reports no active transform/filter/animation and identical decoded PNG/lossless-WebP pixels; this is a presentation-size improvement, not a claim that source compression or a browser defect was fixed.
 
 **The reviewed skill-menu visual category now meets 8 across desktop and phone trees, partial/mastered state fixtures, lower branches and detail panels.** Preserve these reviewed captures and verify the fresh application load uses the final CSS. This acceptance is limited to the skill menu; it does not transfer to HUD, spellbook, equipment, victory, world, models or complete spell effects.
+
+
+## Persisted accepted evidence
+
+The accepted skill-menu captures are preserved under `docs/rpg-playtest/v13/`: the `rpg-v13-skills4-*` partial desktop states, `rpg-v13-skills5-*` complete lower-branch and phone tree captures, and `rpg-v13-skills6-*-phone-detail.png` settled larger details. `phone-detail-fresh-load.png` independently shows the same enlarged detail presentation after a fresh application load; it was inspected and remains consistent with the scoped 8/10 grade.
+
+Representative accepted Ball Lightning orb-form frames are preserved as `docs/rpg-playtest/v13/rpg-ball-v4-single-0_7.png` and `rpg-ball-v4-orbit-1_1.png`. Other exact-time phase frames retain their temporary paths in the historical review above. The adjacent `rpg-ball-v4-no-recording.json` is performance evidence, not proof of full visual or temporal acceptance.
+
+Global art gate remains **FAILED**. Accepted skill-menu presentation and Ball Lightning orb form do not average away the below-8 world/model/HUD/other-menu/spell categories or missing motion evidence.
+
+## Candidate review N — integrated grimoire v1
+
+Evidence: `/tmp/rpg-grimoire-v1-desktop.png` and `/tmp/rpg-grimoire-v1-phone.png`. **Desktop 7.5/10; phone 7.5/10, provisional.** The large focused illustration and restrained spell index are substantially better than the earlier catalog cards and use materials consistent with the accepted skill menu.
+
+The principal remaining visual issue is state identity: Fire Nova is the focused detail, but its index row has the same treatment and `Select spell` text as every other row. Give the focused row a restrained visible surround/rule tied to the large detail panel, and distinguish the actually equipped spell from mere inspection/focus. Avoid making every row a large equal-weight button. Desktop content currently pushes important actions/footer below the visible modal; the implementer is already reducing its height. Phone text/art is legible, though the focus panel occupies much of the first screen, so keep its summary/actions concise while preserving list navigation. Final coverage requires all three schools, locked/equipped/focused states and the bottom actions. Source illustration quality is not itself grimoire acceptance.
+
+## Candidate reviews O–P — grimoire acceptance and authored lich foundation
+
+### Grimoire v2
+
+Evidence: `docs/rpg-playtest/v13/grimoire/rpg-grimoire-v2-{desktop,frost-desktop,storm-desktop,short-desktop,locked-desktop,locked-phone,locked-phone-bottom,storm-phone,flame-phone,narrow-phone}.png`.
+
+**Desktop 8/10; phone 8/10 for the reviewed visual states.** The focused `Viewing` row is distinct from the gold actually `Selected` spell, locked/tracked states remain readable, the large detail illustration and index form a coherent composition, and the bottom actions are clearly presented. The 360-pixel phone uses a deliberate stacked detail arrangement without sacrificing illustration/text readability. Desktop height is now controlled, including the short desktop view. No further visual redesign is needed for this grimoire category. Preserve these images and verify fresh-load/interaction behavior separately; this score does not transfer to other menus or combat HUD.
+
+### Authored anatomy adaptation
+
+Evidence: `scripts/blender/previews/v2/wraith-cc0-fixed-clay-{front-back,isometric}.png`. **Complete shape 6.5/10.** The visible bones and hands are more anatomically convincing and the skull less toy-like. Source pedigree earns no credit; this is a visible improvement. The old garment remains the limiting part, with stretched smooth slabs, pinched waist shelf and an open neckline, and it hides nearly all facial character in the high view. Preserve the improved anatomy but replace the garment foundation rather than repeatedly tweaking isolated strips/collar rings.
+
+### New lich garment foundation
+
+Evidence: `scripts/blender/previews/v2/lich-cc0-foundation-high-view.png`, neutral clay and normalized textured render of the actual imported asset. **Current rendered presentation 7.5/10, provisional from one view.** It is the strongest model foundation reviewed so far: layered cowl, gathered waist cloth, unequal hanging strips and a deliberate tall silhouette solve much of the prior garment-design problem. The source license/pedigree did not affect the grade.
+
+Remaining deficits: coarse thin/angular garment strips and jagged ground hem can look like mesh artifacts; the staff/hand is rigidly merged; fine relief appears primarily in albedo and needs convincing cloth/trim/bone response under changing light. Preserve the authored garment/helm design while cleaning and thickening fragile edges, refining major fold normals, separating/removing the staff cleanly and introducing restrained material roughness/normal variation. A desaturated teal adaptation should retain local value contrast. Back views, actual high gameplay camera and integration/motion evidence are required before final asset acceptance. Do not replace the well-authored garment with the weaker procedural foundation merely to retain old code.
+
+Accepted grimoire v2 evidence is now persisted under `docs/rpg-playtest/v13/grimoire/` with the same basenames. The accepted category remains limited to the reviewed grimoire presentation.
+
+
+## Candidate review Q — refined lich source presentation
+
+Evidence: `scripts/blender/previews/v2/lich-refined-study-front-back.png` and `lich-refined-study-high-view.png`. **Visible static source asset: 8/10 at these studio and elevated angles.** Continuous authored folds, layered trim, varied hanging silhouette and restrained teal value grouping now clear the static-model appearance gate. The back is coherent and the refined normals avoid the earlier coarse shading. Slightly sharp hem tips and similar bright bone/trim values are polish opportunities rather than grounds for another structural redesign.
+
+This score is limited to the supplied source renders. The proposed rigid upper-body joints, posed sleeve/shoulder seams, staff/grip continuity, final exported GLB/material fidelity and actual dungeon-camera readability remain unverified. Preserve the intact drapes and test a moderate casting/reaching pose; detached forearms or large sleeve gaps would invalidate the current appearance. The existing runtime wraith is not promoted by this source-only acceptance.
+
+## Candidate review R — Ball Lightning electrical-collapse direction
+
+Evidence: `/tmp/rpg-electric-collapse-{before,after}-{0.9,1.75,2.2}.png`; inspected before/after at 0.9 and 1.75 seconds and after at 2.2 seconds. Reduced root throw improves containment and removes the distracting orange reflected flare at 1.75 seconds. The residual orb fade at 2.2 seconds is restrained. **Visible shared death-pose quality remains about 5/10**: skeleton/revenant bodies still spread their limbs and float, and guardians form airborne piles. Reducing the root hop does not make the joint poses read as an electrical collapse.
+
+Highest-return next change: a brief authored contraction/recoil, then knees and torso folding toward the ground while arms drop and shields lower, with small joint separation. Avoid the existing explosive limb spread/disassembly. Preserve the accepted orb form. A white actor flash and cool flare at the upper edge still need isolation and temporal review. Actual HUD, mobile, short landscape, fallback and continuous motion/cadence remain unverified for the complete spell.
+
+## Candidate review S — guardian treasure/victory screen
+
+Evidence: `/tmp/rpg-treasure-v1-{desktop,phone,phone-bottom,duplicate}.png` and `/tmp/rpg-treasure-v2-{rare-desktop,no-item-desktop,phone}.png`. These are client-only receipt/state fixtures, not evidence that rewards were awarded in gameplay.
+
+**Reviewed static victory presentation: 8/10 on desktop and phone.** The large framed relic illustration, restrained material palette and clear reward/XP/action hierarchy form a coherent screen. Legendary new and duplicate states, a rare item at level 2 with no unspent points, and an XP-only state all retain that hierarchy. The XP-only illustration supports progression without leaving an empty reward slot. The fresh-load phone footer fits and all actions remain visible. No further decorative redesign is needed for these reviewed states.
+
+Reveal and transition animation remain unverified; stills do not prove their pacing or smoothness. This acceptance is limited to the static victory screen and does not promote the dungeon, combat HUD, reward behavior or other menus. Global art gate remains **FAILED** while the remaining categories are below 8 or unverified.
+
+
+### Refined lich moderate rigid-pose check
+
+Evidence: `scripts/blender/previews/v2/lich-rigid-pose-comparison.png`, rest and reaching pose. **Depicted pose integrity: 8/10.** The reaching gesture reads, holding hand/staff remain connected, and no conspicuous shoulder, elbow or waist opening is visible at this angle. The hanging sleeve and front skirt remain fairly stiff sheets; runtime rotations should remain restrained until broader motion evidence shows that larger cape swings or elbow lifts preserve the silhouette. Bake/export can proceed without another shape redesign. This check does not approve continuous animation, unseen joint extremes or the final runtime asset.
+
+
+### Weighted electrical joint-collapse iteration
+
+Evidence: `/tmp/rpg-electric-weighted-after-{0.9,1.75,2.2}.png`, `before-1.75.png` and `after-cold-off-1.75.png`. **Pose direction: 6.5/10.** Connected bent knees and lowered arms now read as contraction rather than disassembly. The disappearance is still weak: at 2.2 seconds, victims become miniature intact characters instead of full-size bodies losing energy. Source inspection confirms the shared root scale shrinks to .005 after normalized death time .58. For Ball Lightning, retain body scale, finish a low grounded fold and dissolve/fade the settled body over the existing lifecycle. Grounded sparse brute chips are also appropriate for the isolated cold-recess reflection. Continuous motion may expose further timing issues; complete effect acceptance remains pending.
+
+
+## Candidate review T — exported lich and initial HUD context
+
+Final GLB evidence: `scripts/blender/previews/v2/wraith-cc0-exported-game-angle.png`. **Reimported static asset appearance/fidelity: 8/10.** Trim, layered folds, crown silhouette and restrained warm/cool response survive the bake/export. No further bake correction is warranted from this evidence. Actual crowded dungeon integration `/tmp/rpg-wraith-final-dungeon-desktop.png` remains **provisionally 7.5/10 for readability**: dark skirt folds merge with thin bright ribs and crown/face are difficult to distinguish. Ordinary lower-density encounter evidence and native-scale warm/cool crops are requested to distinguish presentation density/camera from asset material issues. Runtime motion remains unverified.
+
+Landscape side-control candidate `/tmp/rpg-landscape-v3-open.png`: **visual hierarchy about 7/10**. Moving controls beside the unobscured canvas is a structural improvement. The oversized plain red level orb versus smaller blue orb is a known pending correction; painted art and balanced sizes need restoring. At this stress density the 622×305 canvas makes characters very small, so ordinary encounter evidence is required before final layout acceptance. Functional control fit is not visual acceptance.
+
+Ball Lightning HUD contact frames `/tmp/rpg-ball-hud-{desktop,portrait,landscape,fallback}-contact.png`: desktop main orb form remains **8**, fallback form/readability **7.5**, portrait context/readability **7**, and old short landscape context **5.5**. Reduced-resolution fallback smears fine depth channels; the crowded portrait clips the left volume; the old landscape dock obstructs the lower orbitals. Root's new side-control layout must replace the old landscape evidence before further grading that arrangement. These are contact-frame/context grades only, not complete effect or animation approval. Other supplied phase frames were not used to grant acceptance; death/fade changes are still in progress.
+
+
+### Full-scale electrical dissolution iteration
+
+Evidence: `/tmp/rpg-electric-dissolve-after-{0.9,1.75,2.2,2.55}.png` and `after-no-stones-1.75.png`. **Death/fade presentation: 7/10 from these stills.** Miniature shrinking is gone and the 2.55-second frame clears cleanly. The no-stones A/B isolates the distracting upper flare; the subsequent grounded-chip correction is reported but not yet independently rendered in these files. Remaining deficit: cyan lace-like outlines across dissolving torsos at 1.75–2.2 seconds resemble a material debug effect. Thin and dim the edge, break its continuity and introduce a coherent erosion progression, such as upper-body energy draining toward the grounded residual. Preserve the full-size silhouette and restrained settled pose. Ordinary-density close evidence and continuous motion are required before the pose/fade can reach 8.
+
+
+## Candidate review U — ordinary-density Ball v5, landscape layout and normal-pack wraith
+
+Ball evidence: `/tmp/rpg-ball-v5-ordinary-{desktop,portrait,landscape,fallback}-{contact,latecontact,fade}.png` where inspected, and normal-loop recording `/tmp/rpg-ball-v5-ordinary-motion/page@b436e66b6aafa09969c80b5ffb23c282.webm`. Contact and late-contact were inspected across the four layouts; desktop/portrait fade were inspected. **Dissolution material treatment: 8/10 in the shown desktop phases.** Reduced edge brightness/continuity eliminates the cyan lace appearance, while grounded chips remove the isolated bright flare. Main single-orb form remains 8 on desktop and legible in revised portrait/landscape. Fallback internal-channel detail remains about 7.5 due to reduced-resolution smearing. Four-orb modifier context requires separate updated coverage.
+
+**Death-pose presentation remains about 7/10.** Bent skeleton knees remain suspended above ground shadows, brutes hunch at near-standing height, and wraiths tilt as rigid cones. Lower hips/root enough for convincing foot or knee support, retain connected attachments and briefly hold a full-size grounded silhouette before erosion. Wraiths need a restrained spectral slouch/dissipation rather than a large rigid tilt. Do not rework the now-accepted dissolve material.
+
+The real recording was sampled at 1 FPS for overview and 8 FPS over seconds 6–9 for the first cast, producing `/tmp/rpg-ball-v5-motion-overview.png` and `rpg-ball-v5-motion-cast-sequence.png`. These sequences show orderly orb travel, staggered target loss and clean room transition. This is sampled-frame inspection, **not continuous-video playback or a smoothness pass**. Implementer-reported recorded rAF median 33.3ms is separate evidence; encoded 25 FPS is not a renderer/GPU performance measurement.
+
+Revised landscape `/tmp/rpg-landscape-v4-open.png`, corroborated by the ordinary-density Ball landscape contact/late-contact frames: **static HUD layout/hierarchy 8/10**. Balanced orbs, unobscured play area and coherent side controls resolve the previous structure problem. This limited layout acceptance does not promote world, characters, other HUD layouts or motion.
+
+Normal 15-actor wraith evidence `/tmp/rpg-wraith-normal-{warm,cool}.png`: **runtime readability remains 7.5/10**. Reduced density improves separation, but cloth still collapses to near-black triangular masses with thin bright ribs, losing the layered fold volumes seen in the accepted export. Raise dark cloth midtones modestly while preserving dark recesses and trim brightness, then compare the same native camera. Source/export appearance remains 8; no new silhouette redesign is requested. Global art gate remains FAILED.
+
+
+### Size-only wraith and ground-v6 follow-up
+
+Size-only evidence `/tmp/rpg-wraith-size-{embercrypt,stormspire}-{165,185}.png`: **both sizes remain 7.5/10 runtime readability**. The 1.85 scale gives a modest crown/upper-body improvement but does not recover dark skirt fold volumes. A localized cloth midtone lift remains the next correction, preserving dark recesses and trim/bone values.
+
+Ground-v6 evidence `/tmp/rpg-electric-ground-v6-grounded-{1.75,2.2}.png`: **death-pose presentation remains about 7/10**. Wraith posture is more upright and avoids the prior rigid cone tip. Skeleton/revenant poses still read as synchronized half-squats and guardians remain almost standing. A deeper bilateral knee fold with matched hip drop and verified sole bounds should establish a lower supported final posture before the accepted erosion. No further orb/dissolve material embellishment is requested.
+
+
+## Candidate review V — equipment v1 and orbit/fallback v6
+
+Equipment evidence `/tmp/rpg-equipment-v1-{desktop,phone}.png`: **relic presentation desktop 7.5, phone 7**. Large equipped art and coherent collection illustrations are strong. Planned six-column desktop layout, shorter feature panel and removal of the inherited full-width count box address composition waste. Collection labels remain too small, especially on phone; use readable roughly 12px mixed-case names in consistent two-line slots even if scrolling remains. Keep equipped state distinct from hover/focus. Lower collection rows, unowned/locked and different-equipped states remain unreviewed. Unchanged armor thumbnails retain their separate below-gate grade.
+
+Orbit evidence `/tmp/rpg-ball-v6-orbit-{desktop,portrait,landscape,fallback}-contact.png` plus portrait/fallback late-contact. **Fallback orb form now 8**: recovered strand coverage preserves internal separation without broad wires or opaque balls. Desktop and revised landscape four-orb context also retain **8 for visible orb presentation**. **Portrait orbit context remains 7** because lower orbitals disappear behind the input panel at late contact. Center the hero within the unobscured battlefield above that panel to allow orbit space below and above; preserve the accepted orb shaders.
+
+Implementer reports stress-recorded casting median50.1ms/p95200.1ms and approximately14.8FPS mean. This is a material unresolved cadence issue, not an 8-rated motion result. The ordinary-density recording and sampled sequence do not override the stress result. Global gate remains FAILED.
+
+
+### Equipment v2 shown-state follow-up
+
+Evidence `/tmp/rpg-equipment-v2-{desktop,phone}.png`: **shown relic section desktop 8, phone 8**. Readable labels, three-column phone cards and balanced desktop feature/collection composition resolve the previous deficits. All 23 desktop relic crops are now visible and coherent. Phone lower rows, locked/unowned state and alternate equipped detail remain pending; armor remains separately below gate. No further decorative redesign is required before reviewing those states.
+
+
+## Candidate review W — safe portrait, deeper fold and first wraith cloth lift
+
+Safe portrait evidence `/tmp/rpg-ball-v7-safe-orbit-{portrait,portrait-small}-{contact,latecontact}.png`: **four-orb framing/form context 8 at390×844 and360×780**. Hero and all four orbitals remain in the usable battlefield above the question panel. Preserve the framing. This does not approve every HUD element or continuous motion.
+
+Deeper fold evidence `/tmp/rpg-electric-ground-v7-grounded-{1.75,2.2}.png`: **death-pose presentation7.5**. Lower weight and support now read more clearly. Remaining deficit is repeated bilateral squat silhouettes across skeletons/revenants. Two restrained asymmetric settled variants, such as weight folding over one knee and a hand/shield bracing toward ground, would make the loss of support more convincing while preserving verified sole bounds. Wraith's upright dissipation direction is now adequate in these stills.
+
+First cloth lift `/tmp/rpg-wraith-midtone-{embercrypt,stormspire}-185.png` remains **7.5 runtime readability** compared with the matching size-185 baselines. Pixel difference bounds confirm only the wraith changes (maximumlocalchange about14/255), but broad skirt values remain too close to black between bright ribs. A stronger localized cloth-midtone curve is requested without lifting bone/trim or deep recesses.
+
+New implementer-reported actual-HUD unrecorded stress evidence `/tmp/rpg-ball-v7-hud-unrecorded-evidence.json`:48-enemy four-orb boss cast to victory, medianrAF16.7ms/p9533.4ms and about49.1FPS mean, compared with roughly47FPS isolated unrecorded. This supports the conclusion that the earlier14.8FPS recording was not representative in the controlled follow-up. It is cadence evidence, not a GPU-cost or animation-art score.
+
+
+## Candidate review X — equipment relic-state acceptance
+
+Evidence `docs/rpg-playtest/v13/equipment/rpg-equipment-v3-{fresh-desktop,phone-top,phone-lower,phone-locked,legendary-desktop}.png`: **reviewed static relic section8/10 on desktop and phone**. Fresh desktop, upper/lower phone collection, unowned/locked state with rare equipped detail and legendary Phoenix detail retain coherent framing, readable labels and clear equipped identity. All23 deployed collection illustrations are covered on desktop; shown phone crops remain consistent. These client-only state fixtures do not prove equip/reward behavior or animation.
+
+The separate armor section remains below gate: its generic default shield and simplistic character thumbnails are visible unchanged at the bottom of the phone-lower image. Relic-section acceptance must not be presented as complete equipment/armor-screen acceptance.
+
+
+## Candidate review Y — smallest landscape HUD
+
+Evidence `/tmp/rpg-landscape-small-568.png` at568×320 and `rpg-landscape-small-640.png` at640×360. **Layout hierarchy remains8**: side controls preserve a clear play rectangle. **Complete HUD typography/detail remains about7 at568 and7.5 at640**. Spell captions, skill-tree label and XP detail become microtext, and ornate orb detail compresses into visual noise. A compact presentation tier should simplify orb ornament, show readable short spell labels around10–12px or a single readable current-spell name, and omit nonessential XP microdetail while retaining the bar/level. Control fit does not close this visual gap. The39-actor world crowding and old public wraith retain their separate model/world grades.
+
+Accepted equipment relic-state evidence is now preserved under `docs/rpg-playtest/v13/equipment/` with the v3 basenames and `evidence.json` fixture provenance. References above use the durable paths. Functional test counts do not affect these visual scores.
+
+
+## Candidate review Z — static wraith integration and asymmetric electrical poses
+
+Evidence `/tmp/rpg-wraith-midtone-v2-{embercrypt,stormspire}-185.png`: **runtime wraith static readability8/10 at1.85 in these native-camera views**. Broad skirt panels now separate from deep recesses without whitening crown/bone/trim. This closes the previously weak material-value integration in the reviewed conditions. Preserve the stronger localized cloth candidate. Source/export/moderate-pose passes remain intact; continuous motion and other camera/light conditions remain separately unverified.
+
+Evidence `/tmp/rpg-electric-ground-v8-grounded-{1.75,2.2}.png`: **depicted static electrical death-pose presentation8/10**. The lower-knee and hand/shield brace variants break the repeated bilateral-squat pattern, preserve connected full-size bodies and support the accepted restrained erosion. No further static redesign is requested. Normal-loop release/settle/fade timing remains the next independent gate. This does not approve the underlying low-scoring skeleton/revenant/guardian model art or other spells' shared deaths.
+
+
+### Exact cloth-v2 export and final Ball sampled timing
+
+Exact final reimport `scripts/blender/previews/v2/wraith-cc0-cloth-v2-exported-game-angle.png` confirms **8/10 static/export fidelity** for the same stronger-cloth candidate accepted in runtime views. Relief, trim and broad value grouping remain coherent. No further material changes are requested.
+
+Final normal-loop recording `/tmp/rpg-ball-v8-final-motion-motion/page@6a8c075e3df3fd54252ba445a55a7d8c.webm` was sampled at1FPS overview and8FPS over12.5–15.5seconds, producing `/tmp/rpg-ball-v8-motion-overview.png` and `rpg-ball-v8-motion-cast-sequence.png`. Release, travel/contact, supported collapse and erosion form a coherent progression; staged target loss reads and no miniature shrink, white victim flare or abrupt room-cut residue appears in the samples. No further timing redesign is indicated by this evidence. **Direct continuous playback/smoothness remains unverified**, so this does not grant complete motion acceptance. Recorded cadence approximately28.5FPS with33.3ms median/83.3ms p95 remains separate from the unrecorded actual-HUD49FPS result.
+
+
+## Candidate review AA — compact small-landscape acceptance
+
+Evidence `/tmp/rpg-landscape-compact-v2-{568,640}.png`: **static HUD presentation8/10 at568×320 and640×360**. A readable current-spell name, simplified shaded orbs and retained progress bar resolve the previous microtext/compressed-ornament problem while preserving coherent side controls and an unobscured play rectangle. Preserve this compact tier. World/model quality, other HUD layouts and continuous motion remain separate. Global gate remains FAILED.

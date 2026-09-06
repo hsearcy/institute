@@ -200,42 +200,9 @@ def make_hero_v2():
     return c
 
 def make_wraith_v2():
-    global PART
-    c=begin('wraith')
-    # Open-front layered robe with sinuous tattered skirt, not a cone silhouette.
-    verts=[];nx=36;ny=20
-    for j in range(ny+1):
-        t=j/ny;z=1.52-1.43*t;rx=.20-.035*sin(t*pi)+.18*t*t;ry=.15+.10*t
-        for i in range(nx+1):
-            a=-pi/2+.44+(2*pi-.88)*i/nx
-            fold=.024*sin(a*7+t*.9)+.010*sin(a*13-t*2)
-            zz=z
-            if j==ny:zz+=.16*(.5+.5*sin(a*6.7))+.035*cos(a*11)
-            verts.append(((rx+fold)*cos(a),(ry+fold)*sin(a)+.10*t,zz))
-    faces=[]
-    for j in range(ny):
-        for i in range(nx):
-            if j>=ny-2 and i in (3,4,16,26):continue
-            v=j*(nx+1)+i;faces.append((v,v+1,v+nx+2,v+nx+1))
-    robe=mesh('Tattered wraith robe',verts,faces,'tealDark');smooth(robe)
-    mod=robe.modifiers.new('Threadbare cloth edges','SOLIDIFY');mod.thickness=.008
-    bpy.context.view_layer.objects.active=robe;bpy.ops.object.modifier_apply(modifier=mod.name)
-    for side in (-1,1):
-        shoulder=(side*.22,-.01,1.43);elbow=(side*.32,-.075,1.20);hand=(side*.43,-.19,1.25)
-        bone_segment('Emerging wraith arm',shoulder,elbow,.029)
-        bone_segment('Skeletal forearm',elbow,hand,.024)
-        for j in range(4):
-            xx=hand[0]+(j-1.5)*.018
-            line('Long spellcasting claw',[(xx,hand[1],hand[2]),(xx+side*.01,hand[1]-.09,hand[2]+.018),(xx+side*.028,hand[1]-.125,hand[2]-.033)],.008,'bone',6)
-        # Hanging sleeve tatters run behind raised forearms.
-        panel=cloth_panel('Trailing torn sleeve',(side*.25,.015,1.43),.13,.66,'tealDark',.13,.13,3)
-        panel.rotation_euler.y=side*.14
-        plate('Wraith iron shoulder',[(side*.12,-.11,1.48),(side*.27,-.05,1.53),(side*.35,-.06,1.42),(side*.27,-.15,1.34)],.024,'iron',.007)
-    PART='Head';hood_shell((0,-.013,1.67),.18,.24,'tealDark')
-    sphere('Hollow hood darkness',(0,-.116,1.656),(.131,.04,.18),'shadow',18,12)
-    for side in (-1,1):line('Wraith soul eye',[(side*.045,-.163,1.68),(side*.085,-.146,1.675)],.006,'cyan',6)
-    PART='Cape';cloth_panel('Long wraith mantle',(0,.14,1.48),.31,1.34,'tealDark',.30,.14,5)
-    return c
+    helper=RPG_REPO_ROOT/'scripts/blender/detailed/wraith_cc0.py'
+    exec(compile(helper.read_text(),str(helper),'exec'),globals())
+    return make_wraith_cc0(RPG_REPO_ROOT)
 
 def guardian_granite_materials():
     # Guardian-only granite: broad warm mineral variation survives the gameplay

@@ -1,0 +1,16 @@
+{
+  "anticipation.png": "/tmp/rpg-ball-v6-orbit-desktop-anticipation.png",
+  "desktop-contact.png": "/tmp/rpg-ball-v6-orbit-desktop-contact.png",
+  "fallback-contact.png": "/tmp/rpg-ball-v6-orbit-fallback-contact.png",
+  "landscape-contact.png": "/tmp/rpg-ball-v6-orbit-landscape-contact.png",
+  "portrait-contact.png": "/tmp/rpg-ball-v7-safe-orbit-portrait-contact.png",
+  "portrait-small-contact.png": "/tmp/rpg-ball-v7-safe-orbit-portrait-small-contact.png",
+  "single-contact.png": "/tmp/rpg-ball-v5-ordinary-desktop-contact.png",
+  "settled.png": "/tmp/rpg-electric-ground-v8-grounded-1.75.png",
+  "fade.png": "/tmp/rpg-electric-ground-v8-grounded-2.2.png",
+  "clear.png": "/tmp/rpg-electric-ground-v8-grounded-2.55.png",
+  "hud-orbit-telemetry.json": "/tmp/rpg-ball-v6-orbit-evidence.json",
+  "hud-portrait-telemetry.json": "/tmp/rpg-ball-v7-safe-orbit-evidence.json",
+  "unrecorded-hud-boss-telemetry.json": "/tmp/rpg-ball-v7-hud-unrecorded-evidence.json",
+  "final-pose-validation.json": "/tmp/rpg-electric-ground-v8-evidence.json"
+}

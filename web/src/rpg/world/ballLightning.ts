@@ -56,9 +56,13 @@ export function ballLightningFilamentMaterial(seed = 0): THREE.ShaderMaterial {
     uniforms: {
       time: { value: 0 }, opacity: { value: 0 }, discharge: { value: 0 }, seed: { value: seed },
       viewDirection: { value: new THREE.Vector3(0, 0, 1) },
+      detailScale: { value: 1 },
     },
-    vertexShader: `attribute float power;attribute float phase;varying vec3 vLocal;varying vec2 vUv;varying float vPower,vPhase;
-      void main(){vLocal=position;vUv=uv;vPower=power;vPhase=phase;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+    vertexShader: `attribute float power;attribute float phase;uniform float detailScale;varying vec3 vLocal;varying vec2 vUv;varying float vPower,vPhase;
+      void main(){vLocal=position;vUv=uv;vPower=power;vPhase=phase;
+        float radius=power>.8?.018*power:.009*power;
+        vec3 filteredPosition=position+normal*radius*(detailScale-1.);
+        gl_Position=projectionMatrix*modelViewMatrix*vec4(filteredPosition,1.);}`,
     fragmentShader: `varying vec3 vLocal;varying vec2 vUv;varying float vPower,vPhase;uniform vec3 viewDirection;uniform float time,opacity,discharge,seed;
       void main(){
         float front=smoothstep(-.45,.45,dot(vLocal,normalize(viewDirection)));
@@ -123,12 +127,16 @@ export function ballLightningFilamentGeometry(seed = 0): THREE.BufferGeometry {
   return geometry;
 }
 
-export function createBallLightning(seed = 0): {
+export function createBallLightning(seed = 0, detailScale = 1): {
   layers: THREE.Mesh<THREE.BufferGeometry, THREE.ShaderMaterial>[];
   update(position: THREE.Vector3, view: THREE.Vector3, progress: number, time: number, discharge?: number): void;
 } {
   const cloud = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), ballLightningVolumeMaterial(seed));
   const channels = new THREE.Mesh(ballLightningFilamentGeometry(seed), ballLightningFilamentMaterial(seed));
+  // Preserve the authored centerlines and full-quality silhouette. Subpixel
+  // strands get only their lost pixel coverage back on a reduced framebuffer.
+  channels.material.uniforms.detailScale.value = Number.isFinite(detailScale) ? THREE.MathUtils.clamp(detailScale, 1, 1.5) : 1;
+  channels.geometry.boundingSphere!.radius += .01;
   cloud.scale.setScalar(.8); cloud.renderOrder = 1; channels.renderOrder = 2;
   const layers = [cloud, channels];
   const localView = new THREE.Vector3(), inverseRotation = new THREE.Quaternion();

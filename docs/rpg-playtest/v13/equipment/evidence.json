@@ -1,0 +1,12 @@
+{
+  "source": "Actual local Chromium9222 UI, fresh application load",
+  "profile": "rpg-archmage in disposable local SQLite fixture",
+  "captures": {
+    "fresh-desktop": "Saved scratch profile state",
+    "phone-top": "Saved scratch profile state",
+    "phone-lower": "Saved scratch profile state",
+    "phone-locked": "Temporary client-only state; no server write; original client state restored immediately after capture",
+    "legendary-desktop": "Temporary client-only state; no server write; original client state restored immediately after capture"
+  },
+  "scope": "Relic collection/static equipment detail only. Armor appearance and behavior are separate gates."
+}

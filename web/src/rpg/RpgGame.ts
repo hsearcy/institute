@@ -9,6 +9,13 @@ import { DungeonWorld } from './DungeonWorld';
 import { icon, spellArt, skillArt, relicArt, escapeHtml as esc } from './icons';
 import './rpg.css';
 import './ui-v2.css';
+import { renderSpellbookView } from './spellbookView';
+import './spellbook-v3.css';
+import { renderVictoryView } from './victoryView';
+import './victory-v3.css';
+import { renderEquipmentView } from './equipmentView';
+import './equipment-v3.css';
+import './landscape-v3.css';
 import { nextSpellGoal } from './nextSpell';
 import { skillUpgradePreview } from './skillPreview';
 import { getRoomLayout } from './world/roomLayout';
@@ -55,6 +62,7 @@ export class RpgGame {
   private demoTopics = new Set<string>();
   private retryAction: (() => Promise<void>) | null = null;
   private abort = new AbortController();
+  private combatLayoutObserver: ResizeObserver;
   private clockRunning = false;
   private retrying = false;
   private storageReady = false;
@@ -82,13 +90,21 @@ export class RpgGame {
         <div class="rpg-hint" id="rpg-hint" role="status" hidden></div>
         <form id="rpg-answer-form" class="rpg-answer-panel" autocomplete="off"><div class="rpg-question"><span id="rpg-topic" class="rpg-eyebrow">POWER YOUR SPELL</span><label for="rpg-answer" id="rpg-problem">Preparing your next spell…</label></div><input id="rpg-answer" aria-label="Your answer" inputmode="none" autocomplete="off" maxlength="3" pattern="[0-9]*" type="text"><button class="rpg-primary" id="rpg-cast" type="submit">Unleash <span>↵</span></button><div class="rpg-help-buttons"><button type="button" data-action="hear" aria-label="Read problem aloud" title="Hear the problem">${icon('sound')}</button><button type="button" data-action="help" aria-label="Help me" title="Help me">${icon('help')}</button><button type="button" data-action="keypad" aria-label="Toggle number pad" title="Number pad">⌨</button></div></form>
         <div id="rpg-keypad" class="rpg-keypad" hidden>${[1,2,3,4,5,6,7,8,9,'⌫',0,'✓'].map(n => `<button type="button" data-digit="${n}" aria-label="${n === '⌫' ? 'Delete digit' : n === '✓' ? 'Submit answer' : n}">${n}</button>`).join('')}</div>
-        <footer class="rpg-hotbar"><div class="rpg-hud-art" aria-hidden="true"></div><div class="rpg-level-orb"><span>LEVEL</span><strong id="rpg-level">1</strong></div><div class="rpg-spellbar" id="rpg-spellbar"></div><button class="rpg-gear-button" data-action="inventory" aria-label="Open equipment">${icon('sword')}<span id="rpg-equipped">Equipment</span></button><button class="rpg-magic-orb" data-action="spellbook" aria-label="Open spellbook"><span>SPELLS</span><strong id="rpg-spell-count">2</strong><small>Spellbook · B</small></button></footer>
+        <footer class="rpg-hotbar"><div class="rpg-hud-art" aria-hidden="true"></div><div class="rpg-level-orb"><span>LEVEL</span><strong id="rpg-level">1</strong></div><div class="rpg-spellbar" id="rpg-spellbar"></div><span class="rpg-compact-spell-name" id="rpg-compact-spell-name" aria-hidden="true"></span><button class="rpg-gear-button" data-action="inventory" aria-label="Open equipment">${icon('sword')}<span id="rpg-equipped">Equipment</span></button><button class="rpg-magic-orb" data-action="spellbook" aria-label="Open spellbook"><span>SPELLS</span><strong id="rpg-spell-count">2</strong><small>Spellbook · B</small></button></footer>
         <div class="rpg-xp"><div><i id="rpg-xp-fill"></i></div><span id="rpg-xp-label">0 / 90 XP</span></div>
       </section>
       <div class="rpg-connection" id="rpg-connection" hidden role="alert"><span>Reconnecting to your adventure…</span><button data-action="retry">Try again</button></div>
       <div id="rpg-overlay" class="rpg-overlay" hidden><section class="rpg-dialog" role="dialog" aria-modal="true" aria-labelledby="rpg-dialog-title" tabindex="-1"><button class="rpg-dialog-close" data-action="close" aria-label="Close">×</button><div id="rpg-dialog-content"></div></section></div>
       <button class="rpg-parent" data-action="parent">Parent journal</button><span id="rpg-save-status" class="rpg-save-status">◆ Adventure saved on your server</span>`;
     document.querySelector('#app')!.append(this.root);
+    const controls = this.root.querySelector<HTMLElement>('.rpg-controls')!;
+    const route = this.root.querySelector<HTMLElement>('.rpg-route')!;
+    const updateCombatSafeArea = () => {
+      const origin = canvas.getBoundingClientRect().top;
+      this.world.setCombatSafeArea(route.getBoundingClientRect().bottom + 14 - origin, controls.getBoundingClientRect().top - 14 - origin);
+    };
+    this.combatLayoutObserver = new ResizeObserver(updateCombatSafeArea);
+    this.combatLayoutObserver.observe(controls); this.combatLayoutObserver.observe(route);
     this.root.addEventListener('click', this.onClick, { signal: this.abort.signal });
     this.el<HTMLFormElement>('rpg-answer-form').addEventListener('submit', e => { e.preventDefault(); void this.submit(); }, { signal: this.abort.signal });
     this.el<HTMLInputElement>('rpg-answer').addEventListener('input', e => {
@@ -103,7 +119,7 @@ export class RpgGame {
       } else this.startClock();
     }, { signal: this.abort.signal });
     window.addEventListener('pagehide', () => { this.stopClock(); this.saveSession(); }, { signal: this.abort.signal });
-    window.addEventListener('resize', () => { this.world.resize(); this.drawSkillLinks(); }, { signal: this.abort.signal });
+    window.addEventListener('resize', () => { this.world.resize(); updateCombatSafeArea(); this.drawSkillLinks(); }, { signal: this.abort.signal });
     this.muted = localStorage.getItem('institute:rpg:muted') === 'true';
     try {
       const favorites = JSON.parse(localStorage.getItem(`${sessionKey}:favorites`) ?? '{}');
@@ -192,12 +208,13 @@ export class RpgGame {
     for (const school of RPG_SCHOOLS) if (!rpgSpellUnlocked(this.favoriteSpells[school.id],s.skills)) this.favoriteSpells[school.id] = school.id;
     localStorage.setItem(`${sessionKey}:favorites`,JSON.stringify(this.favoriteSpells));
     this.el('rpg-spell-count').textContent = String(RPG_SPELLS.filter(spell => rpgSpellUnlocked(spell.id, s.skills)).length);
+    this.el('rpg-compact-spell-name').textContent = RPG_SPELLS.find(spell => spell.id === s.selectedSpellId)!.name;
     this.el('rpg-spellbar').innerHTML = (['ember','frost','storm'] as RpgSchoolId[]).map((school, i) => {
       const favorite = this.favoriteSpells[school];
       const spell = RPG_SPELLS.find(entry => entry.id === favorite && rpgSpellUnlocked(entry.id,s.skills)) ?? RPG_SPELLS.find(entry => entry.id === school)!;
       const unlocked = rpgSpellUnlocked(spell.id, s.skills);
       return `<button data-spell="${spell.id}" class="rpg-spell ${s.selectedSpellId === spell.id ? 'selected' : ''} ${!unlocked ? 'locked' : ''}" style="--spell-color:${spell.color}" aria-label="${spell.name}${!unlocked ? ', unlock in skill tree' : ''}" aria-pressed="${s.selectedSpellId === spell.id}">${spellArt(spell.id)}<span>${spell.name}</span>${!unlocked ? `<i class="rpg-spell-lock">${icon('lock')}</i>` : ''}<kbd>${['Q','W','E'][i]}</kbd></button>`;
-    }).join('') + `<button class="rpg-spell rpg-tree-button" data-action="skills">${icon('tree')}<span>Skill trees</span>${s.skillPoints ? `<i>${s.skillPoints} new</i>` : '<kbd>K</kbd>'}</button>`;
+    }).join('') + `<button class="rpg-spell rpg-tree-button" data-action="skills" aria-label="Skill trees">${icon('tree')}<span>Skill trees</span>${s.skillPoints ? `<i>${s.skillPoints} new</i>` : '<kbd>K</kbd>'}</button>`;
     const item = RPG_ITEMS.find(i => i.id === s.equippedItemId)!;
     this.el('rpg-equipped').textContent = item.name;
     const gear = this.root.querySelector('.rpg-gear-button')!;
@@ -419,14 +436,9 @@ export class RpgGame {
   }
   private showVictory(reward: RpgReward): void {
     const s = this.state!; const region = RPG_REGIONS.find(r => r.id === s.expedition?.regionId)!;
-    // The receipt decides whether this was a discovery or a conversion. Never
-    // infer it from inventory, which already includes newly awarded relics.
-    const converted = reward.duplicateItem && !!reward.item;
-    const rewardLabel = converted ? 'DUPLICATE RELIC' : reward.item ? `${reward.item.rarity.toUpperCase()} RELIC` : 'GUARDIAN REWARD';
-    const rewardDescription = converted ? `Already in your collection. Converted into +${RPG_DUPLICATE_ITEM_XP} bonus XP. +${reward.xp} XP total from this guardian.`
-      : reward.item?.description ?? 'One step closer to your next spell.';
-    this.showDialog('victory', `<div class="rpg-seal">${icon('crown')}</div><p class="rpg-eyebrow">EXPEDITION COMPLETE</p><h2 id="rpg-dialog-title">${esc(region.bossName)}<br><em>defeated.</em></h2><p>The halls are yours. Your next adventure awaits.</p><div class="rpg-victory-reward">${reward.item ? relicArt(reward.item.id) : icon('crown')}<div><small>${esc(rewardLabel)}</small><strong>${esc(reward.item?.name ?? `+${reward.xp} experience`)}</strong><span>${esc(rewardDescription)}</span></div></div><div class="rpg-button-row"><button class="rpg-primary" data-action="map">Next adventure →</button><button data-action="inventory">Inspect loot</button><button data-action="camp">Save & leave</button></div>${s.skillPoints ? `<button class="rpg-text-button" data-action="skills">Spend ${s.skillPoints} skill point${s.skillPoints > 1 ? 's' : ''}</button>` : ''}`);
+    this.showDialog('victory', renderVictoryView(s, reward, region.bossName));
   }
+
   private hint(text: string): void { this.el('rpg-hint').textContent = text; this.el('rpg-hint').hidden = false; }
   private async help(): Promise<void> {
     if (!this.session || this.busy) return;
@@ -464,12 +476,14 @@ export class RpgGame {
     return `<div class="rpg-school-tabs" role="group" aria-label="Magic school">${RPG_SCHOOLS.map(school => `<button data-school="${school.id}" data-view="${action}" class="${this.school === school.id ? 'active' : ''}" style="--spell-color:${school.color}" aria-pressed="${this.school === school.id}">${spellArt(school.id)}<span>${school.name}</span></button>`).join('')}</div>`;
   }
   private showSpellbook(): void {
-    if (!this.state) return; const s = this.state;
-    this.showDialog('spellbook', `<p class="rpg-eyebrow">THE GRIMOIRE</p><h2 id="rpg-dialog-title">Your spells <small>${RPG_SPELLS.filter(spell => rpgSpellUnlocked(spell.id,s.skills)).length} / ${RPG_SPELLS.length} learned</small></h2><p>Choose your magic. Each school remembers your last selected spell.</p>${this.schoolTabs('spellbook')}<div class="rpg-spell-library">${RPG_SPELLS.filter(spell => spell.school === this.school).map(spell => {
-      const learned = rpgSpellUnlocked(spell.id,s.skills);
-      const skill = RPG_SKILLS.find(skill => skill.id === spell.skillId);
-      return `<button class="rpg-spell-card ${learned ? 'learned' : 'locked'} ${s.selectedSpellId === spell.id ? 'selected' : ''}" data-spell="${spell.id}" style="--spell-color:${spell.color}">${spellArt(spell.id)}<div><small>${learned ? 'LEARNED SPELL' : `UNLOCK · LEVEL ${skill?.level ?? 1}`}</small><strong>${spell.name}</strong><p>${spell.description}</p><b>${s.selectedSpellId === spell.id ? '✓ Selected' : learned ? 'Select spell →' : this.trackedSpell === spell.id ? '✓ Tracked · View skill tree' : 'Track spell · View skill tree →'}</b></div></button>`;
-    }).join('')}</div><div class="rpg-button-row"><button class="rpg-primary" data-action="close">${this.playing ? 'Return to dungeon' : 'Back to camp'}</button><button data-action="skills">Learn new spells</button></div>`, true);
+    if (!this.state) return;
+    this.showDialog('spellbook', renderSpellbookView({
+      state: this.state,
+      school: this.school,
+      trackedSpell: this.trackedSpell,
+      playing: this.playing,
+      favoriteSpell: this.favoriteSpells[this.school],
+    }), true);
   }
   private skillPreviewCard(skillId: string): string {
     if (!this.state) return '';
@@ -558,11 +572,8 @@ export class RpgGame {
     return `<span class="rpg-relic-hunt ${item.rarity}" data-hunt-item="${item.id}">${relicArt(item.id)}<span><small>${hunt.duplicate ? 'DUPLICATE TREASURE' : 'NEXT DISCOVERY'}</small><strong>${esc(item.name)}</strong><span>${hunt.encounterIndex === 5 ? 'Guardian treasure' : `Room ${hunt.encounterIndex + 1}`} · ${hunt.duplicate ? `Duplicate becomes +${RPG_DUPLICATE_ITEM_XP} XP` : item.rarity + ' relic'}</span>${!hunt.regional && !hunt.duplicate ? '<span class="rpg-hunt-fallback">Treasure from beyond this vault</span>' : ''}<span class="rpg-hunt-collection">${collected} / ${total} ${RPG_SCHOOLS.find(school => school.id === region.relicSchool)!.name} relics found</span></span></span>`;
   }
   private showInventory(): void {
-    if (!this.state) return; const s = this.state;
-    this.showDialog('inventory', `<p class="rpg-eyebrow">RELICS OF THE VAULT</p><h2 id="rpg-dialog-title">Your equipment <small>${s.inventory.length} / ${RPG_ITEMS.length} found</small></h2>${this.armorCards()}<h3 class="rpg-relics-title">Relics</h3><p>Find rare weapons. Change the way your magic looks and strikes.</p><div class="rpg-inventory">${RPG_ITEMS.map(item => {
-      const owned = s.inventory.includes(item.id); const equipped = s.equippedItemId === item.id;
-      return `<button class="rpg-item ${item.rarity} ${!owned ? 'undiscovered' : ''} ${equipped ? 'equipped' : ''}" data-item="${item.id}" ${!owned ? 'disabled' : ''}>${owned ? relicArt(item.id) : `<span class="rpg-item-art">${icon('lock')}</span>`}<small>${owned ? item.rarity : 'UNDISCOVERED'}</small><strong>${owned ? item.name : 'Hidden relic'}</strong><span>${owned ? item.description : 'Keep exploring the vaults.'}</span><b>${equipped ? '✓ Equipped' : owned ? 'Equip' : item.rarity + ' treasure'}</b></button>`;
-    }).join('')}</div><div class="rpg-button-row"><button class="rpg-primary" data-action="close">${this.playing ? 'Return to dungeon' : 'Back to camp'}</button><button data-action="map">Find your next relic</button><a href="?mode=mine" class="rpg-text-button">Visit your gem collection & original shop</a></div>`, true);
+    if (!this.state) return;
+    this.showDialog('inventory', renderEquipmentView(this.state, this.armorCards(), this.playing), true);
   }
   private showMap(): void {
     if (!this.state) return; const s = this.state;
@@ -769,6 +780,7 @@ export class RpgGame {
   };
   dispose(): void {
     this.stopClock(); this.saveSession(); this.disposed = true; this.abort.abort(); this.panelResolve?.();
+    this.combatLayoutObserver.disconnect();
     if (this.toastTimer) clearTimeout(this.toastTimer);
     if (this.lootLabelFrame !== null) cancelAnimationFrame(this.lootLabelFrame);
     dungeonSound.dispose(); this.world.dispose(); this.root.remove(); document.body.classList.remove('rpg-mode');

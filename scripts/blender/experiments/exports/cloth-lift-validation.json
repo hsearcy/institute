@@ -1,0 +1,47 @@
+{
+  "revision": 2,
+  "file": "web/public/assets/rpg/review/wraith-cloth-lift.glb",
+  "bytes": 2061768,
+  "sha256": "35283fca5428b5e502e063f34425032ad0e4397324713b3832aba68763ba010a",
+  "changedPayload": "albedo only; every other bufferView byte-identical",
+  "curve": [
+    [
+      0,
+      0
+    ],
+    [
+      0.0015,
+      0.0015
+    ],
+    [
+      0.006,
+      0.03
+    ],
+    [
+      0.012,
+      0.06
+    ],
+    [
+      0.024,
+      0.09
+    ],
+    [
+      0.04,
+      0.12
+    ],
+    [
+      0.065,
+      0.14
+    ],
+    [
+      0.15,
+      0.15
+    ],
+    [
+      1,
+      1
+    ]
+  ],
+  "status": "accepted 8/10 native warm/cool readability and exact GLB reimport; promoted to public wraith.glb",
+  "publicBytes": 2061908
+}

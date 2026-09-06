@@ -27,6 +27,7 @@ for name in ('pillar','arch','wall','wall-bay','broken-wall','hero','hero-cinder
     print(bake_asset(name,collection,512 if name in ('pillar','brazier','crystal','chest','ice_cluster') else 1024))
     if name=='hero' or name.startswith('hero-'):rig_hero(collection,name)
     if name in ('skeleton','revenant','guardian'):articulate_enemy(name,collection)
+    if name=='wraith':export_wraith_joints(collection,OUT/'wraith.glb')
 subprocess.run(['python',str(source/'detailed/optimize_assets.py')],check=True)
 # Preserve the legacy load path as a compatible skeletal minion, not the old toy imp.
 shutil.copyfile(OUT/'skeleton.glb',OUT/'imp.glb')

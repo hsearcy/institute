@@ -372,16 +372,36 @@
     },
     "wraith": {
       "url": "/assets/rpg/wraith.glb",
-      "bytes": 1269204,
-      "triangles": 12798,
-      "drawCalls": 4,
+      "bytes": 2061908,
+      "triangles": 9188,
+      "drawCalls": 7,
       "embeddedTextures": 3,
       "nodes": [
-        "Head_Glow.002",
-        "Body_Baked.011",
-        "Head_Baked.002",
-        "Cape_Baked.002"
-      ]
+        "Body_Baked.099",
+        "ArmUpperL_Baked.026",
+        "ArmLowerL_Baked.026",
+        "ArmUpperR_Baked.026",
+        "ArmLowerR_Baked.026",
+        "Cape_Baked.045",
+        "Head_Baked.064"
+      ],
+      "rigidJoints": [
+        "ArmLowerL",
+        "ArmUpperL",
+        "ArmLowerR",
+        "ArmUpperR",
+        "Cape",
+        "Head",
+        "Body"
+      ],
+      "provenance": {
+        "license": "CC0",
+        "creator": "Samfa12-tech / Meshy",
+        "source": "https://github.com/Samfa12-tech/The-Horde-RT-demo",
+        "commit": "463aed23d879ea673600bd1121fd0989a518599b",
+        "sourceSha256": "049979a83aca55358f54af8d3af1f7d518607bef634474a4ef015bfdff947a42",
+        "licenseEvidence": "scripts/blender/sources/cc0-lich"
+      }
     },
     "furnace": {
       "url": "/assets/rpg/furnace.glb",

@@ -26,6 +26,6 @@ export function enemyRoster(encounterIndex: number, count: number): EnemyRosterE
     const armored = Math.floor((ordinal + 1) * .35 + phase) > Math.floor(ordinal * .35 + phase);
     if (armored) return { modelId: 'revenant', height: 1.8 + ((ordinal * 11 + room * 7) % 16) / 100, brute: false, boss: false };
     const wraith = (ordinal + room * 2) % 5 === 3;
-    return { modelId: wraith ? 'wraith' : 'skeleton', height: 1.65, brute: false, boss: false };
+    return { modelId: wraith ? 'wraith' : 'skeleton', height: wraith ? 1.85 : 1.65, brute: false, boss: false };
   });
 }

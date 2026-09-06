@@ -1,0 +1,127 @@
+/* Grimoire presentation, scoped to avoid changing the reviewed skill menu. */
+.rpg-grimoire{--book-gold:#cbb17b;--book-edge:#716347;--book-ink:#101616;}
+.rpg-dialog .rpg-grimoire-title>p:last-child{margin:0;color:#b2b5a8;font-size:13px;}
+.rpg-grimoire .rpg-school-tabs{margin:21px 0 22px;}
+.rpg-grimoire-spread{display:grid;grid-template-columns:minmax(0, .92fr) minmax(0,1.08fr);gap:30px;position:relative;text-align:left;}
+.rpg-grimoire-spread:before{content:'';position:absolute;top:13px;bottom:13px;left:calc(46% - 1px);width:1px;background:linear-gradient(transparent,#aa8f534f 18%,#aa8f534f 82%,transparent);}
+.rpg-grimoire-feature{position:relative;min-width:0;display:flex;align-items:center;flex-direction:column;padding:17px 25px 21px;border:1px solid #71634755;background:radial-gradient(ellipse at 50% 26%,color-mix(in srgb,var(--spell-color) 8%,transparent),transparent 57%),linear-gradient(120deg,#1a2019ee,#091113e8 65%);box-shadow:inset 0 1px 0 #c2a76d22,0 9px 19px #0004;}
+.rpg-grimoire-feature:before,.rpg-grimoire-feature:after{content:'';position:absolute;width:11px;height:11px;pointer-events:none;border-color:#b79d655c;border-style:solid;}
+.rpg-grimoire-feature:before{top:5px;left:5px;border-width:1px 0 0 1px;}.rpg-grimoire-feature:after{bottom:5px;right:5px;border-width:0 1px 1px 0;}
+.rpg-grimoire-chapter{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #80714b44;padding-bottom:13px;}
+.rpg-grimoire-chapter>span{font-size:8px;letter-spacing:1.4px;color:#a59a7e;white-space:nowrap;}
+.rpg-grimoire-chapter>b{font:16px 'Cinzel',Georgia,serif;font-weight:400;color:#d7c297;}
+.rpg-grimoire-portrait{position:relative;margin:23px 0 21px;padding:7px;}
+.rpg-grimoire-portrait:before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(#b59b65,#655a3d) left top/22px 2px no-repeat,linear-gradient(#b59b65,#655a3d) left top/2px 22px no-repeat,linear-gradient(#b59b65,#655a3d) right top/22px 2px no-repeat,linear-gradient(#b59b65,#655a3d) right top/2px 22px no-repeat,linear-gradient(#655a3d,#b59b65) left bottom/22px 2px no-repeat,linear-gradient(#655a3d,#b59b65) left bottom/2px 22px no-repeat,linear-gradient(#655a3d,#b59b65) right bottom/22px 2px no-repeat,linear-gradient(#655a3d,#b59b65) right bottom/2px 22px no-repeat;}
+.rpg-grimoire-bezel{padding:9px;background:linear-gradient(140deg,#6e6954,#292f2b 15%,#0a1112 52%,#3d4338 84%,#87754d);box-shadow:inset 0 0 0 1px #99835e88,inset 0 0 0 4px #121b19,0 8px 16px #000a;}
+.rpg-grimoire-bezel .rpg-painted-art{width:220px;border:1px solid #9b80564a;}
+.rpg-grimoire-portrait-mark{position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);color:#c8ae77;background:#101714;border:1px solid #7a6944;width:25px;height:21px;display:grid;place-items:center;font-size:10px;}
+.rpg-grimoire-feature-copy{width:100%;text-align:center;}
+.rpg-grimoire-feature-state{font-size:8px;letter-spacing:1.8px;color:#c0ad81;}
+.rpg-grimoire-feature h3{font:25px/1.22 'Cinzel',Georgia,serif;color:#f0d7a7;margin:9px 0 10px;}
+.rpg-dialog .rpg-grimoire-description{font-size:13px;line-height:1.65;color:#c2c2b1;margin:0;}
+.rpg-grimoire-feature-bottom{width:100%;margin-top:auto;padding-top:13px;}
+.rpg-grimoire-engraving{display:block;width:min(240px,100%);height:26px;margin:0 auto 12px;stroke:#9c8350;stroke-width:.8;opacity:.75;}
+.rpg-grimoire-power{display:flex;align-items:center;justify-content:center;gap:12px;color:#d6c399;}
+.rpg-grimoire-power>strong{font:34px/1 'Cinzel',Georgia,serif;color:#ead4a8;}
+.rpg-grimoire-power>span{font-size:12px;line-height:1.5;}
+.rpg-grimoire-power small{display:block;font-size:10px;color:#969f95;}
+.rpg-grimoire-modifiers{list-style:none;display:flex;flex-wrap:wrap;justify-content:center;gap:5px 13px;padding:0;margin:12px 0 0;font-size:10px;color:#b9c7bc;}
+.rpg-grimoire-modifiers li:before{content:'◆';font-size:6px;color:var(--spell-color);margin-right:6px;vertical-align:2px;}
+.rpg-dialog .rpg-grimoire-requirement{font-size:12px;line-height:1.8;color:#b1b5a6;margin:0;text-align:center;}
+.rpg-grimoire-requirement b{color:#d7bd87;font-weight:500;}
+.rpg-grimoire-index{min-width:0;padding:10px 0 0;display:flex;flex-direction:column;}
+.rpg-grimoire-index-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 2px 15px;border-bottom:1px solid #81714b66;margin-bottom:7px;}
+.rpg-grimoire-index-heading h3{font:21px 'Cinzel',Georgia,serif;color:#dbc398;margin:0;}
+.rpg-grimoire-index-heading>span{font-size:10px;color:#a9ad9d;white-space:nowrap;}
+.rpg-grimoire .rpg-spell-library{display:flex;flex-direction:column;gap:4px;}
+#rpg-ui .rpg-grimoire-entry{position:relative;display:flex;align-items:center;gap:13px;min-height:88px;padding:11px 12px 11px 5px;border:1px solid transparent;border-bottom-color:#786b483d;border-radius:0;background:transparent;box-shadow:none;text-align:left;}
+.rpg-grimoire-entry-number{font:11px Georgia,serif;color:#80775f;min-width:18px;text-align:center;}
+.rpg-grimoire-entry-art{position:relative;display:block;flex:none;padding:4px;background:linear-gradient(135deg,#6e6954,#161f1d 34%,#101619 64%,#5b543c);box-shadow:inset 0 0 0 1px #6c634a80;}
+.rpg-grimoire .rpg-spell-card .rpg-painted-art{width:58px;box-shadow:none;border:1px solid #93805b5c;}
+.rpg-grimoire-entry-copy{display:block;flex:1;min-width:0;}
+.rpg-grimoire .rpg-spell-card strong{font:17px/1.3 'Cinzel',Georgia,serif;color:#e1cba3;margin:0 0 7px;}
+.rpg-grimoire-entry-copy>span{font-size:11px;line-height:1.4;color:#aab3a8;display:block;}
+.rpg-grimoire-entry-mark{font:25px/1 Georgia,serif;color:#aa9364;width:15px;flex:none;text-align:center;}
+#rpg-ui .rpg-grimoire-entry.focused:not(.selected){border-color:#82948566;background:linear-gradient(90deg,#637b7021,#14201c33 75%);box-shadow:inset 2px 0 0 #8ca69a;}
+.rpg-grimoire .rpg-grimoire-viewing{display:inline-block;margin:0 7px 0 0;padding:1px 4px;border:1px solid #84988b70;color:#c1d0c5;font:9px/1.4 'DM Sans',sans-serif;letter-spacing:.1px;vertical-align:1px;}
+#rpg-ui .rpg-grimoire-entry.selected{border-color:#b09656a8;background:linear-gradient(90deg,#70603233,#18201b88 58%,#11171355);box-shadow:inset 3px 0 0 #d5b671,inset 0 0 0 3px #0a101155;}
+.rpg-grimoire-entry.selected .rpg-grimoire-entry-copy>span{color:#ead4a2;}
+.rpg-grimoire-entry.selected .rpg-grimoire-entry-mark{font-size:12px;color:#edcc85;}
+.rpg-grimoire-entry.tracked .rpg-grimoire-entry-copy>span{color:#d5c49e;}
+.rpg-grimoire .rpg-spell-card.locked .rpg-painted-art{filter:saturate(.6) brightness(.75);}
+.rpg-grimoire-entry-lock{position:absolute;right:0;bottom:0;background:#101616;border:1px solid #7b735c;color:#b4b19a;padding:3px;display:flex;}
+.rpg-grimoire-entry-lock .rpg-icon{width:13px;height:13px;}
+#rpg-ui .rpg-grimoire-entry:hover{background-color:#a7914930;border-color:#a48c5b88;}
+#rpg-ui .rpg-grimoire-entry:focus-visible{outline:2px solid #f5d798;outline-offset:2px;}
+.rpg-dialog .rpg-grimoire-index-note{font-size:11px;line-height:1.7;color:#a7ad9e;margin:16px 3px 13px;}
+#rpg-ui .rpg-grimoire-tree-link{margin-top:auto;display:flex;align-items:center;gap:10px;width:100%;min-height:47px;padding:11px 14px;border:1px solid #7d6c485e;background:linear-gradient(100deg,#222820c9,#121919a8);border-radius:0;color:#d7c29a;font:13px 'Cinzel',Georgia,serif;box-shadow:inset 0 1px 0 #b49b5c11;}
+.rpg-grimoire-tree-link>.rpg-icon{width:22px;height:22px;color:#b69c67;}.rpg-grimoire-tree-link>span:first-of-type{flex:1;text-align:left;}
+.rpg-grimoire-footer{justify-content:space-between;align-items:center;gap:15px;padding-top:18px;margin-top:19px;border-top:1px solid #83714b44;}
+.rpg-grimoire-footer>span{font-size:11px;color:#9ea594;}
+@media(min-width:761px){
+ #rpg-ui[data-panel="spellbook"] .rpg-dialog{padding:24px 30px;}
+ .rpg-dialog .rpg-grimoire-title>.rpg-eyebrow{margin:0 0 7px;}
+ .rpg-grimoire-title h2{margin:6px 0 9px;}
+ .rpg-dialog .rpg-grimoire-title>p:last-child{line-height:1.4;}
+ .rpg-grimoire .rpg-school-tabs{margin:15px 0 17px;}
+ .rpg-grimoire-feature{padding:13px 23px 15px;}
+ .rpg-grimoire-chapter{padding-bottom:10px;}
+ .rpg-grimoire-portrait{margin:15px 0 15px;}
+ .rpg-grimoire-feature h3{margin:7px 0 8px;}
+ .rpg-grimoire-feature-bottom{padding-top:10px;}
+ .rpg-grimoire-engraving{height:22px;margin-bottom:8px;}
+ .rpg-grimoire-index{padding-top:8px;}
+ .rpg-grimoire-index-heading{padding-bottom:12px;margin-bottom:5px;}
+ #rpg-ui .rpg-grimoire-entry{min-height:77px;padding-top:6px;padding-bottom:6px;}
+ .rpg-grimoire .rpg-spell-library{gap:3px;}
+ .rpg-dialog .rpg-grimoire-index-note{margin:12px 3px 10px;line-height:1.5;}
+ #rpg-ui .rpg-grimoire-tree-link{min-height:43px;padding-top:9px;padding-bottom:9px;}
+ .rpg-grimoire-footer{padding-top:14px;margin-top:14px;}
+}
+@media(min-width:761px) and (max-height:820px){
+ #rpg-ui[data-panel="spellbook"] .rpg-dialog{padding:18px 27px;}
+ .rpg-grimoire-title h2{font-size:26px;margin:4px 0 5px;}
+ .rpg-dialog .rpg-grimoire-title>p:last-child{display:none;}
+ .rpg-grimoire .rpg-school-tabs{margin:12px 0 13px;}
+ .rpg-grimoire .rpg-school-tabs .rpg-painted-art{width:35px;}
+ .rpg-grimoire-bezel .rpg-painted-art{width:184px;}
+ .rpg-grimoire-portrait{margin:12px 0 12px;}
+ .rpg-grimoire-feature h3{font-size:22px;}
+ .rpg-dialog .rpg-grimoire-description{font-size:12px;line-height:1.5;}
+ .rpg-grimoire-feature-bottom{padding-top:8px;}
+ .rpg-grimoire-power>strong{font-size:29px;}
+ .rpg-grimoire-engraving{height:18px;margin-bottom:5px;}
+ #rpg-ui .rpg-grimoire-entry{min-height:68px;padding-top:5px;padding-bottom:5px;}
+ .rpg-grimoire .rpg-spell-card .rpg-painted-art{width:48px;}
+ .rpg-dialog .rpg-grimoire-index-note{font-size:10px;margin:9px 3px;}
+ .rpg-grimoire-footer{padding-top:10px;margin-top:11px;}
+}
+@media(max-width:1000px) and (min-width:761px){
+ .rpg-grimoire-spread{gap:20px;grid-template-columns:minmax(0,.94fr) minmax(0,1.06fr);}
+ .rpg-grimoire-feature{padding:15px 17px 20px;}.rpg-grimoire-bezel .rpg-painted-art{width:184px;}
+ #rpg-ui .rpg-grimoire-entry{gap:9px;padding-right:8px;}.rpg-grimoire .rpg-spell-card strong{font-size:15px;}.rpg-grimoire-entry-number{display:none;}
+ .rpg-grimoire-feature h3{font-size:23px;}
+}
+@media(max-width:760px){
+ #rpg-ui[data-panel="spellbook"] .rpg-dialog{padding:25px 16px 20px;}
+ .rpg-dialog .rpg-grimoire-title>p:last-child{font-size:12px;}.rpg-grimoire-title h2{margin-bottom:9px;}
+ .rpg-grimoire .rpg-school-tabs{margin:16px 0;gap:6px;}.rpg-grimoire .rpg-school-tabs button{flex:1;min-width:0!important;gap:7px!important;padding:5px!important;justify-content:center;}
+ .rpg-grimoire .rpg-school-tabs .rpg-painted-art{width:29px;}.rpg-grimoire .rpg-school-tabs span:last-child{font-size:11px;}
+ .rpg-grimoire-spread{display:flex;flex-direction:column;gap:18px;}.rpg-grimoire-spread:before{display:none;}
+ .rpg-grimoire-feature{display:grid;grid-template-columns:158px minmax(0,1fr);column-gap:11px;row-gap:13px;padding:13px 11px 16px;align-items:center;}
+ .rpg-grimoire-chapter{grid-column:1/-1;padding-bottom:11px;}.rpg-grimoire-chapter>b{font-size:15px;}.rpg-grimoire-chapter>span{font-size:8px;letter-spacing:1px;}
+ .rpg-grimoire-portrait{margin:0;padding:3px;}.rpg-grimoire-bezel{padding:4px;}.rpg-grimoire-bezel .rpg-painted-art{width:144px;}
+ .rpg-grimoire-portrait:before{display:none;}.rpg-grimoire-portrait-mark{display:none;}
+ .rpg-grimoire-feature-copy{text-align:left;}.rpg-grimoire-feature-state{font-size:8px;letter-spacing:1px;}.rpg-grimoire-feature h3{font:20px/1.22 Georgia,serif;margin:8px 0;}
+ .rpg-dialog .rpg-grimoire-description{font-size:12px;line-height:1.5;}.rpg-grimoire-feature-bottom{grid-column:1/-1;padding-top:8px;border-top:1px solid #8a764444;}
+ .rpg-grimoire-engraving{display:none;}.rpg-grimoire-power{justify-content:flex-start;padding-left:5px;gap:10px;}.rpg-grimoire-power>strong{font-size:28px;}.rpg-grimoire-power>span{font-size:12px;}.rpg-grimoire-modifiers{justify-content:flex-start;margin:9px 0 0 5px;}
+ .rpg-grimoire-index{padding:0;}.rpg-grimoire-index-heading{padding-bottom:11px;}.rpg-grimoire-index-heading h3{font-size:19px;}
+ #rpg-ui .rpg-grimoire-entry{gap:10px;min-height:75px;padding:8px 10px 8px 6px;}.rpg-grimoire-entry-number{min-width:15px;font-size:10px;}
+ .rpg-grimoire-entry-art{padding:3px;}.rpg-grimoire .rpg-spell-card .rpg-painted-art{width:50px;}.rpg-grimoire .rpg-spell-card strong{font:17px/1.25 Georgia,serif;margin-bottom:6px;}
+ .rpg-grimoire-entry-copy>span{font-size:11px;}.rpg-grimoire-entry-mark{width:12px;}
+ .rpg-dialog .rpg-grimoire-index-note{font-size:11px;margin:13px 3px;}.rpg-grimoire-footer{flex-direction:column-reverse;align-items:stretch;margin-top:18px;padding-top:16px;gap:14px;}.rpg-grimoire-footer>span{text-align:center;font-size:10px;}
+}
+@media(max-width:374px){
+ .rpg-grimoire-feature{display:flex;gap:13px;}.rpg-grimoire-feature-copy{text-align:center;}.rpg-grimoire-portrait{margin-top:2px;}.rpg-grimoire-feature h3{font-size:23px;}.rpg-grimoire-power{justify-content:center;}
+ .rpg-grimoire-entry-number{display:none;}
+}

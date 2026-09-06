@@ -82,3 +82,19 @@ test('Electrical contacts pool finite directional fragments and floor haze for t
     }
   } finally { for (const layer of contacts.layers) { layer.geometry.dispose(); layer.material.dispose(); } }
 });
+
+test('Reduced-framebuffer strand coverage preserves authored paths and conservative bounds', () => {
+  const full = createBallLightning(3), reduced = createBallLightning(3, 1 / .75), invalid = createBallLightning(3, NaN);
+  try {
+    assert.equal(full.layers[1].material.uniforms.detailScale.value, 1);
+    assert.equal(invalid.layers[1].material.uniforms.detailScale.value, 1);
+    const mesh = reduced.layers[1], scale = mesh.material.uniforms.detailScale.value;
+    assert.deepEqual(mesh.geometry.getAttribute('position').array, full.layers[1].geometry.getAttribute('position').array, 'Filtering must retain the accepted branch centerlines');
+    const positions = mesh.geometry.getAttribute('position'), normals = mesh.geometry.getAttribute('normal'), power = mesh.geometry.getAttribute('power');
+    for (let i = 0; i < positions.count; i++) {
+      const radius = (power.getX(i) > .8 ? .018 : .009) * power.getX(i);
+      const point = new Vector3().fromBufferAttribute(positions, i).addScaledVector(new Vector3().fromBufferAttribute(normals, i), radius * (scale - 1));
+      assert(point.distanceTo(mesh.geometry.boundingSphere!.center) <= mesh.geometry.boundingSphere!.radius + 1e-6);
+    }
+  } finally { for (const orb of [full, reduced, invalid]) for (const layer of orb.layers) { layer.geometry.dispose(); layer.material.dispose(); } }
+});

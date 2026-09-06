@@ -107,22 +107,24 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
   await page.waitForTimeout(1200);
   expect(await state(page)).toEqual(waiting); // Thinking never damages or advances the encounter.
 
-  // Requested roster labels alone would also pass when a missing knight GLB
-  // silently falls back to skeletons. Require its geometry in the live batches.
+  // Roster labels alone would pass if either authored GLB silently fell back
+  // to skeletons. Require the actual knight and wraith geometry in live batches.
   await expect.poll(() => page.evaluate(() => Number((window as any).__game.world.diagnostics.modelsLoaded)), { timeout: 30_000 }).toBeGreaterThanOrEqual(19);
   await expect.poll(() => page.evaluate(() => {
     const world = (window as any).__game.world;
-    const source = world.models.get('revenant');
-    if (!source) return false;
-    const geometries = new Set<unknown>();
-    source.traverse((node: any) => { if (node.isMesh) geometries.add(node.geometry); });
-    const knights = world.enemies.filter((enemy: any) => enemy.modelId === 'revenant');
-    return knights.length > 0 && knights.every((enemy: any) => {
-      let authored = false;
-      enemy.visual.traverse((node: any) => {
-        if (node.isMesh && geometries.has(node.geometry) && world.enemyInstances.some((batch: any) => batch.mesh.parent === world.enemyGroup && batch.mesh.visible && batch.sources.includes(node))) authored = true;
+    return ['revenant', 'wraith'].every(modelId => {
+      const source = world.models.get(modelId);
+      if (!source) return false;
+      const geometries = new Set<unknown>();
+      source.traverse((node: any) => { if (node.isMesh) geometries.add(node.geometry); });
+      const actors = world.enemies.filter((enemy: any) => enemy.modelId === modelId);
+      return actors.length > 0 && actors.every((enemy: any) => {
+        let authored = false;
+        enemy.visual.traverse((node: any) => {
+          if (node.isMesh && geometries.has(node.geometry) && world.enemyInstances.some((batch: any) => batch.mesh.parent === world.enemyGroup && batch.mesh.visible && batch.sources.includes(node))) authored = true;
+        });
+        return authored && enemy.animator.articulated;
       });
-      return authored && enemy.animator.articulated;
     });
   }), { timeout: 30_000 }).toBe(true);
   const roster = await page.evaluate(() => {
@@ -131,7 +133,7 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
   });
   expect(roster.counts.revenant).toBeGreaterThan(0);
   expect(Object.values(roster.counts).reduce((sum, count) => sum + count, 0)).toBe(rpgEncounterKills(waiting, waiting.expedition!.encounterIndex));
-  expect(roster.articulated).toBe((roster.counts.guardian ?? 0) + (roster.counts.skeleton ?? 0) + roster.counts.revenant!);
+  expect(roster.articulated).toBe((roster.counts.guardian ?? 0) + (roster.counts.skeleton ?? 0) + roster.counts.revenant! + (roster.counts.wraith ?? 0));
   const masteryBeforeTarget = await (await page.request.get(`/mastery?profileId=${profile}`)).json();
   const targetProblem = await page.locator('#rpg-answer-form').getAttribute('data-problem-id');
   await page.getByRole('button', {name:'Open spellbook',exact:true}).click();
@@ -281,9 +283,13 @@ test('saved response recovery, worked help, and touch layout remain playable', a
   await expect.poll(() => page.evaluate(() => {
     const world = (window as any).__game.world;
     const feet = world.hero.position.clone().project(world.camera);
+    const canvas = document.querySelector('#game-canvas')!.getBoundingClientRect();
     const dock = document.querySelector('.rpg-controls')!.getBoundingClientRect();
-    return dock.top - (1 - feet.y) * innerHeight / 2;
-  })).toBeGreaterThan(20);
+    const feetX = canvas.left + (feet.x + 1) * canvas.width / 2;
+    const feetY = canvas.top + (1 - feet.y) * canvas.height / 2;
+    return canvas.right <= dock.left && feetX > canvas.left + 20 && feetX < canvas.right - 20
+      && feetY > canvas.top + 20 && feetY < canvas.bottom - 20;
+  })).toBe(true);
   const keypad = await page.locator('#rpg-keypad').boundingBox();
   expect(keypad!.y).toBeGreaterThan(60);
   expect(keypad!.x+keypad!.width).toBeLessThanOrEqual(844);

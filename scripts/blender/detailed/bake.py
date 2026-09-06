@@ -8,6 +8,7 @@ from pathlib import Path
 
 def bake_asset(name,collection,size=1024):
     started=time.time();scene=bpy.context.scene
+    size=int(collection.get('atlasSize',size))
     for o in scene.objects:o.hide_render=o not in collection.objects.values()
     bpy.ops.object.select_all(action='DESELECT')
     solids=[];glows=[];parts={}
@@ -24,7 +25,8 @@ def bake_asset(name,collection,size=1024):
     bpy.ops.object.transform_apply(location=False,rotation=True,scale=True)
     bpy.context.scene.cursor.location=(0,0,0);bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
     bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.uv.smart_project(angle_limit=math.radians(62),island_margin=.006,correct_aspect=True,scale_to_bounds=True)
+    if not collection.get('preserveAuthoredUV'):
+        bpy.ops.uv.smart_project(angle_limit=math.radians(62),island_margin=.006,correct_aspect=True,scale_to_bounds=True)
     bpy.ops.object.mode_set(mode='OBJECT')
     scene.render.engine='CYCLES';scene.cycles.samples=12;scene.cycles.use_denoising=False
     scene.render.bake.margin=8;scene.render.bake.use_clear=True;scene.render.bake.use_selected_to_active=False
@@ -71,6 +73,7 @@ def bake_asset(name,collection,size=1024):
     # The runtime material is standard metallic/roughness glTF, with baked normals.
     runtime=bpy.data.materials.new('Vault2_Baked_'+name);runtime.use_nodes=True
     p=runtime.node_tree.nodes.get('Principled BSDF');n=runtime.node_tree.nodes;l=runtime.node_tree.links
+    if 'runtimeSpecular' in collection:p.inputs['Specular IOR Level'].default_value=collection['runtimeSpecular']
     tex={}
     for kind,im in images.items():
         a=n.new('ShaderNodeTexImage');a.image=im;a.label=kind;tex[kind]=a

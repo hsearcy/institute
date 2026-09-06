@@ -1,0 +1,30 @@
+/* Guardian treasure: receipt-backed reward, presented as a discovered artifact. */
+#rpg-ui[data-panel="victory"] .rpg-dialog{width:min(790px,100%);padding:30px 38px 22px;}
+.rpg-treasure{--treasure-color:#a9cbd1;}
+.rpg-treasure[data-rarity="epic"]{--treasure-color:#c0a9db;}.rpg-treasure[data-rarity="legendary"]{--treasure-color:#ddbd78;}
+.rpg-treasure-heading .rpg-eyebrow{margin:2px 0 12px;letter-spacing:3px;}
+.rpg-treasure-heading h2{font-size:29px;line-height:1.4;margin:0;}.rpg-treasure-heading h2 em{display:block;font-size:22px;color:#b5ad94;font-weight:400;}
+.rpg-dialog .rpg-treasure-heading>p:last-child{margin:12px 0 0;font-size:12px;color:#a8afa3;}
+.rpg-victory-reward.rpg-treasure-reward{display:grid;grid-template-columns:250px minmax(0,1fr);align-items:center;gap:25px;background:radial-gradient(ellipse at 24% 50%,color-mix(in srgb,var(--treasure-color) 9%,transparent),transparent 70%),linear-gradient(125deg,#0c1515d9,#0b1012a8);border:1px solid #71634470;padding:24px 24px 24px 19px;margin:25px 0 0;box-shadow:inset 0 0 0 4px #0b11114d;}
+.rpg-victory-reward .rpg-treasure-display{position:relative;display:block;padding:6px;background:linear-gradient(#b39a66,#746445) left top/25px 2px no-repeat,linear-gradient(#b39a66,#746445) left top/2px 25px no-repeat,linear-gradient(#746445,#b39a66) right bottom/25px 2px no-repeat,linear-gradient(#746445,#b39a66) right bottom/2px 25px no-repeat;}
+.rpg-victory-reward .rpg-treasure-bezel{display:block;padding:8px;background:linear-gradient(135deg,#78715a,#1a2523 25%,#101919 65%,#796644);box-shadow:inset 0 0 0 1px #98805c88,0 9px 23px #0008;}
+.rpg-victory-reward .rpg-treasure-bezel .rpg-relic-art,.rpg-victory-reward .rpg-treasure-bezel .rpg-painted-art{display:block;width:100%;aspect-ratio:1;height:auto;box-sizing:border-box;border:1px solid #95835e55;}
+.rpg-treasure-display>.rpg-treasure-gem{position:absolute;bottom:-4px;left:calc(50% - 12px);display:grid;place-items:center;width:24px;height:20px;background:#111917;border:1px solid #776746;color:var(--treasure-color);font-size:9px;}
+.rpg-victory-reward .rpg-treasure-copy{gap:13px;}.rpg-treasure-copy>small{font:9px/1.6 'Nunito',sans-serif;letter-spacing:1.6px;color:var(--treasure-color);}
+.rpg-treasure-copy>strong{font:27px/1.3 'Cinzel',Georgia,serif;color:#eed7ae;}.rpg-treasure-copy>span{font-size:13px;line-height:1.8;color:#c5c7b5;}
+.rpg-dialog .rpg-treasure-saved{font-size:10px;color:#a4b89f;margin:0;padding-top:12px;border-top:1px solid #6d745438;}
+.rpg-treasure-growth{display:flex;align-items:center;gap:25px;padding:21px 12px;border-bottom:1px solid #82704950;text-align:left;}
+.rpg-treasure-xp{flex:none;min-width:110px;border-right:1px solid #82704950;padding-right:25px;text-align:center;}.rpg-treasure-xp>strong{display:block;font:32px/1.2 'Cinzel',Georgia,serif;color:#e2c895;}.rpg-treasure-xp>span{display:block;font-size:8px;letter-spacing:1.8px;color:#b2a282;margin-top:5px;}
+.rpg-treasure-level{flex:1;min-width:0;}.rpg-treasure-level>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px;}.rpg-treasure-level b{font:14px Georgia,serif;color:#d5c8a5;}.rpg-treasure-level span{font-size:10px;color:#a8b0a1;}.rpg-treasure-progress{height:8px;background:#070d0e;box-shadow:inset 0 0 0 1px #71603d70;padding:2px;}.rpg-treasure-progress i{display:block;height:100%;background:linear-gradient(90deg,#4d766e,#a5c3a7);box-shadow:0 0 8px #8bcaaa30;}.rpg-treasure-level>small{display:block;margin-top:7px;font-size:10px;color:#929f91;}
+#rpg-ui .rpg-treasure-skill{display:flex;align-items:center;gap:13px;width:100%;padding:12px 14px;margin-top:15px;border:1px solid #82704960;border-radius:0;background:linear-gradient(110deg,#252c2199,#10181799);color:#d6c69f;text-align:left;}
+.rpg-treasure-skill>span:nth-child(2){flex:1;}.rpg-treasure-point{display:grid;place-items:center;width:34px;height:34px;border:1px solid #a28b535f;background:#101c1b;font:20px Georgia,serif;}.rpg-treasure-skill strong{display:block;font:15px Georgia,serif;}.rpg-treasure-skill small{display:block;font-size:10px;color:#aab4a0;margin-top:5px;}
+.rpg-treasure-actions{margin-top:22px;}.rpg-treasure-actions>.rpg-primary{width:100%;}.rpg-treasure-actions>div{display:flex;justify-content:center;gap:24px;margin-top:12px;}.rpg-treasure-actions>div button{border:0!important;background:none!important;padding:6px!important;font-size:12px!important;color:#c4b896!important;}.rpg-treasure-actions>small{display:block;margin-top:9px;font-size:9px;color:#89958b;}
+@media(max-width:760px){
+ #rpg-ui[data-panel="victory"] .rpg-dialog{padding:25px 18px 19px;}
+ .rpg-treasure-heading .rpg-eyebrow{font-size:8px;letter-spacing:2px;margin-bottom:10px;}.rpg-treasure-heading h2{font-size:24px;}.rpg-treasure-heading h2 em{font-size:19px;}.rpg-dialog .rpg-treasure-heading>p:last-child{margin-top:8px;}
+ .rpg-victory-reward.rpg-treasure-reward{display:flex;flex-direction:column;gap:16px;padding:17px 16px 19px;margin-top:19px;text-align:center;}
+ .rpg-victory-reward .rpg-treasure-display{width:190px;flex:none;box-sizing:border-box;}.rpg-victory-reward .rpg-treasure-copy{gap:9px;}.rpg-treasure-copy>strong{font-size:23px;}.rpg-treasure-copy>span{font-size:12px;line-height:1.6;}.rpg-dialog .rpg-treasure-saved{padding-top:9px;font-size:10px;}
+ .rpg-treasure-growth{gap:14px;padding:17px 2px;}.rpg-treasure-xp{min-width:83px;padding-right:15px;}.rpg-treasure-xp>strong{font-size:28px;}.rpg-treasure-xp>span{font-size:7px;letter-spacing:1.2px;}.rpg-treasure-level>div:first-child{gap:5px;}.rpg-treasure-level b{font-size:12px;}.rpg-treasure-level span{font-size:9px;}.rpg-treasure-level>small{font-size:9px;}
+ #rpg-ui .rpg-treasure-skill{padding:10px;gap:10px;margin-top:12px;}.rpg-treasure-skill strong{font-size:14px;}.rpg-treasure-actions{margin-top:12px;}.rpg-treasure-actions>div{margin-top:8px;}.rpg-treasure-actions>small{margin-top:4px;}
+}
+@media(prefers-reduced-motion:no-preference){.rpg-treasure-reward{animation:rpg-treasure-arrive .5s ease-out both;}@keyframes rpg-treasure-arrive{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}}

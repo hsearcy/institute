@@ -17,6 +17,8 @@ test('Enemy presentation preserves the supplied count and established boss/guard
         assert.equal(enemy.height, enemy.boss ? 3.8 : 2.5);
       } else if (enemy.modelId === 'revenant') {
         assert(enemy.height >= 1.8 && enemy.height <= 1.95, 'Armored soldiers must retain the agreed silhouette scale');
+      } else if (enemy.modelId === 'wraith') {
+        assert(enemy.height >= 1.8 && enemy.height <= 1.95, 'Crowned wraiths must remain readable beside armored soldiers');
       } else assert.equal(enemy.height, 1.65);
     }
   }

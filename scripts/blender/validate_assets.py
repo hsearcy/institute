@@ -49,6 +49,19 @@ for name in expected:
         assert all(key in joints for key in ('Head','Body','ArmUpperL','ArmUpperR','ArmLowerL','ArmLowerR','LegUpperL','LegUpperR','LegLowerL','LegLowerR'))
         assert not doc.get('skins'), 'Enemies must remain rigid for shared instancing'
         stats[name]['rigidJoints']=[key for key in joints if key]
+    if name=='wraith':
+        joints={i:node.get('extras',{}).get('enemyJoint') for i,node in enumerate(doc['nodes']) if node.get('extras',{}).get('enemyJoint')}
+        assert set(joints.values())=={'Body','Head','Cape','ArmUpperL','ArmUpperR','ArmLowerL','ArmLowerR'}
+        assert not doc.get('skins') and not doc.get('animations')
+        parents={child:i for i,node in enumerate(doc['nodes']) for child in node.get('children',[])}
+        for index,key in joints.items():
+            expected_parent='ArmUpper'+key[-1] if key.startswith('ArmLower') else 'Body' if key!='Body' else None
+            assert joints.get(parents.get(index))==expected_parent
+        staff=next(i for i,node in enumerate(doc['nodes']) if node.get('extras',{}).get('rigidEquipment')=='staff')
+        assert joints[parents[staff]]=='ArmLowerL'
+        assert triangles<12_000 and primitives==7 and len(doc['images'])==3
+        stats[name]['rigidJoints']=list(joints.values())
+        stats[name]['provenance']={'license':'CC0','creator':'Samfa12-tech / Meshy','source':'https://github.com/Samfa12-tech/The-Horde-RT-demo','commit':'463aed23d879ea673600bd1121fd0989a518599b','sourceSha256':'049979a83aca55358f54af8d3af1f7d518607bef634474a4ef015bfdff947a42','licenseEvidence':'scripts/blender/sources/cc0-lich'}
     if name=='hero' or name.startswith('hero-'):
         clips=doc.get('animations',[])
         assert {a['name'] for a in clips}=={'idle','walk','cleave','cast'}

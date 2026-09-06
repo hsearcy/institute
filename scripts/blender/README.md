@@ -1,9 +1,11 @@
-# Sunken Vault original model library
+# Sunken Vault model library
 
-These original models were built, UV-baked, exported, inspected, and revised with
+These models were authored or adapted, UV-baked, exported, inspected, and revised with
 **Blender MCP** connected to Blender 4.5.13 LTS, using the exact user prompt
-**“use blender mcp to create high quality models.”** No downloaded models or
-third-party textures are included. The procedural Blender sources are reproducible.
+**“use blender mcp to create high quality models.”** The wraith adapts an explicitly
+CC0 creator-published lich foundation; its source, fixed hashes, license evidence,
+and cache recovery are documented in [sources/cc0-lich](sources/cc0-lich/README.md).
+Other runtime models retain their project-authored procedural sources.
 
 The second revision responds to the approved [horde viewport](../../docs/concepts/math-dungeon-rpg/04-horde-viewport.png)
 and [Fire Nova](../../docs/concepts/math-dungeon-rpg/05-fire-nova.png) concepts with
@@ -22,7 +24,7 @@ compression decoder dependency. `imp.glb` aliases the skeleton for compatibility
 The Blender shaders generate stone grain, cracks, cloth weave, worn metal, bone,
 and oak. UV baking preserves these surfaces in standard glTF materials. Source
 maps are in `scripts/blender/textures`, outside the production public directory.
-Runtime albedo atlases retain up to 1024 pixels; normal and packed ORM maps use
+Runtime albedo atlases retain up to 1024 pixels (2048 for the authored wraith); normal and packed ORM maps use
 512 pixels to limit aliasing and size.
 Unused UV pixels are padded from their nearest valid surface across all three maps
 before resizing, preventing black borders from bleeding into thin bones. Valid
@@ -38,7 +40,7 @@ blade edges retain their own materials.
 | `hero-cinder.glb`, `hero-glacier.glb`, `hero-tempest.glb` | Progression armor silhouettes, matching rig and clips; transparent appearance portraits |
 | `skeleton.glb`, `imp.glb` | Socketed skull, jaw and teeth, ribs, spine, paired limb bones, rusted armor |
 | `revenant.glb` | Broad armored undead knight, broken left shield and long right blade; twelve rigid joints |
-| `wraith.glb` | Hollow hood, torn hanging robe, curved sleeves and skeletal casting hands |
+| `wraith.glb` | Layered CC0 robe/crown foundation, skull-like face, held staff; seven rigid joints |
 | `guardian.glb` | Hunched granite body, oblique cleavage planes, sparse faults, sharp quartz clusters |
 | `pillar.glb`, `arch.glb` | Chipped masonry, clustered columns, carved leaf capitals and pointed ribs |
 | `wall.glb`, `wall-bay.glb`, `broken-wall.glb` | Irregular masonry, Gothic recess and grille, broken coping and rubble |
@@ -52,7 +54,7 @@ blade edges retain their own materials.
 Coordinates are **+Y up, +Z front, meters, ground-centered origin**. The renderer
 normalizes the model height for placement. Prefixes `Body_`, `Head_`, `Cape_`,
 `Sword_`, `Lid_`, and `Embers_` identify meaningful parts; ignore numeric suffixes.
-The hero/wraith use four to six meshes. Articulated skeleton/guardian use thirteen
+The hero uses four to six meshes; the wraith uses seven. Articulated skeleton/guardian use thirteen
 and sixteen respectively, shared in instanced batches. Major architecture generally
 uses one.
 
@@ -202,8 +204,8 @@ All four heroes share their ground and head bounds. New armor is posed before
 baking and weighted as connected rigid pieces to avoid stretching armor panels.
 
 The optimized variants contain 12,842 / 13,212 / 13,202 triangles, respectively,
-and stay below 2.11 MB each. The complete library contains 20 GLBs, 282,913
-triangles, and 31,153,696 bytes. The validator checks variant skins, clips,
+and stay below 2.11 MB each. The complete library contains 20 GLBs, 279,303
+triangles, and 31,946,400 bytes. The validator checks variant skins, clips,
 embedded materials, portrait presence, and the 25,000-triangle / 4 MB budgets.
 
 `detailed/render_appearances.py` reimports the final optimized GLBs into separate
@@ -258,3 +260,48 @@ bake or optimization settings changed. Both before/after exports have identical
 joint pivots/hierarchy. The optimized replacement is 2,641,856 bytes.
 
 ![Previous guardian surface left, revised final GLB right, identical studio lighting](previews/v2/guardian-surface-comparison.png)
+
+
+## CC0 wraith foundation and rigid articulation
+
+The current wraith preserves a layered robe, crown, skull-like face and held staff
+from a creator-published CC0 Meshy foundation, with coherent cloth normals,
+restrained teal coloring, matte roughness breakup and a UV-preserving Blender bake.
+A localized monotonic Body/Cape value curve reveals broad dark cloth folds in the
+dungeon while preserving deep recesses and bright trim.
+The exact source is pinned to commit `463aed23d879ea673600bd1121fd0989a518599b`;
+its SHA-256 is `049979a83aca55358f54af8d3af1f7d518607bef634474a4ef015bfdff947a42`.
+Credit: Lich foundation created and animated with Meshy, shared CC0 by
+Samfa12-tech; adapted for Embercrypt. No generation service is required to run it.
+
+`detailed/wraith_cc0.py` is the canonical builder. Restore a missing ignored
+source cache with `python scripts/blender/sources/cc0-lich/fetch.py` before a
+full Blender rebuild. The builder checks its fixed hash and explicitly fails
+if it is missing or altered; it never falls back to a rejected procedural model.
+The shipped GLB embeds everything needed at runtime.
+
+The optimized model is 2,061,908 bytes with 9,188 triangles, seven rigid mesh parts
+and seven joints:
+Body, Head, Cape, ArmUpperL/R and ArmLowerL/R. Forearms parent to upper arms;
+head, cape and shoulders parent to Body. The staff is ordinary geometry in
+the holding ArmLowerL mesh, so it cannot distort with biped leg/skin weights.
+There are no skins, clips or artificial leg joints. Keep motion restrained to
+preserve the rigid garment overlaps. The previous exact vertical bounds
+0.06131713–1.93340003 meters are retained; width is 1.294m including the staff.
+
+The authored UVs retain a 2048px albedo; normal and ORM maps are packed at 512px.
+The full build honors the wraith's UV/atlas/specular metadata, then adds the
+rigid hierarchy. The manifest records final byte counts and provenance; the
+validator verifies all seven joints and that the staff follows its forearm.
+
+The final GLB reimport and a moderate reaching pose each passed independent
+8/10 asset review. Native-camera warm/cool room readability also passed 8/10 at
+the renderer's 1.85m presentation height. These are scoped visual reviews, not an
+assertion that every animation or the whole game meets that grade. Source/clay studies and rejected experiments remain isolated
+under `experiments`, with their limitations recorded rather than called finished.
+
+![Final GLB reimport at the actual camera elevation](previews/v2/wraith-cc0-cloth-v2-exported-game-angle.png)
+
+![Native-camera Embercrypt readability](../../docs/rpg-playtest/wraith-accepted/embercrypt.png)
+
+![Native-camera Stormspire readability](../../docs/rpg-playtest/wraith-accepted/stormspire.png)

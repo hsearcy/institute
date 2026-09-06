@@ -9,7 +9,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
-import { dungeonCameraHalfHeight, dungeonCameraVerticalOffset } from './world/viewport';
+import { dungeonCameraHalfHeight, dungeonCameraVerticalOffset, dungeonPortraitOffset } from './world/viewport';
 import { crystalClusterGeometry, crystalClusterMaterial } from './world/crystals';
 import { iceShardGeometry, iceShardMaterial } from './world/ice';
 import { lightningGeometry, lightningMaterial } from './world/lightning';
@@ -18,6 +18,7 @@ import { phoenixWingGeometry, phoenixTailGeometry, stormFilamentsGeometry } from
 import { phoenixFeatherMaterial, stormWispMaterial } from './world/materials';
 import { enemyRoster } from './world/enemyRoster';
 import { EnemyAnimator } from './world/EnemyAnimator';
+import { createElectricDissolve } from './world/electricDissolve';
 import { createVaultScenery } from './world/scenery';
 import { createArchitecturalRemnant, ruinGeometry, isRuinFootprintClear, type RuinKind } from './world/ruins';
 import { masonryGeometry, projectStoneUV } from './world/masonry';
@@ -84,7 +85,7 @@ export class DungeonWorld {
   private readonly torches: { flame: THREE.Mesh; light?: THREE.PointLight; position: THREE.Vector3; phase: number }[] = [];
   private readonly effects: Effect[] = [];
   private readonly enemies: Enemy[] = [];
-  private readonly enemyInstances: { mesh: THREE.InstancedMesh; sources: THREE.Mesh[]; roots: THREE.Group[] }[] = [];
+  private readonly enemyInstances: { mesh: THREE.InstancedMesh; sources: THREE.Mesh[]; roots: THREE.Group[]; baseMaterial: THREE.Material | THREE.Material[]; dissolve: ReturnType<typeof createElectricDissolve> }[] = [];
   private lastFrameAt = performance.now();
   private frame = 0;
   private elapsed = 0;
@@ -95,6 +96,8 @@ export class DungeonWorld {
   private lootExpiresAt = 0;
   private disposed = false;
   private paused = false;
+  private combatSafeTop = 0;
+  private combatSafeBottom = 0;
   private attacking = false;
   private attackAge = 0;
   private attackDuration = 2.65;
@@ -259,7 +262,12 @@ export class DungeonWorld {
     summon?.traverse(object => { if (object instanceof THREE.Mesh && object.material instanceof THREE.MeshStandardMaterial) { object.material = object.material.clone(); object.material.transparent = true; warmMaterials.push(object.material); } });
     if (summon) warmup.add(summon);
     this.scene.add(warmup);
-    try { await this.renderer.compileAsync(this.scene, this.camera); } catch { /* Drivers without parallel compilation compile on first render. */ }
+    try {
+      await this.renderer.compileAsync(this.scene, this.camera);
+      this.setElectricMaterials(true);
+      await this.renderer.compileAsync(this.scene, this.camera);
+    } catch { /* Drivers without parallel compilation compile on first render. */ }
+    finally { this.setElectricMaterials(false); }
     this.scene.remove(warmup); this.preparedMaterials.push(...warmMaterials);
     for (const object of warmup.children) if (object instanceof THREE.Mesh) object.geometry.dispose();
     this.loadedAt = performance.now();
@@ -601,7 +609,7 @@ export class DungeonWorld {
     this.encounter = Math.max(0, Math.min(5, index));
     if (regionId) this.regionId = regionId;
     this.enemies.forEach(enemy => this.releaseProcedural(enemy.visual));
-    this.enemyInstances.forEach(instance => instance.mesh.dispose()); this.enemyInstances.length = 0;
+    this.releaseEnemyInstances();
     this.enemies.length = 0; this.enemyGroup.clear();
     const layout = getRoomLayout(this.encounter);
     this.destination.set(layout.heroX, 0, -this.encounter * 20 + layout.heroZ);
@@ -752,7 +760,7 @@ export class DungeonWorld {
   }
 
   private batchEnemies(): void {
-    this.enemyInstances.forEach(instance => { this.enemyGroup.remove(instance.mesh); instance.mesh.dispose(); }); this.enemyInstances.length = 0;
+    this.releaseEnemyInstances();
     const batches = new Map<string, { geometry: THREE.BufferGeometry; material: THREE.Material | THREE.Material[]; sources: THREE.Mesh[]; roots: THREE.Group[] }>();
     for (const enemy of this.enemies) {
       // Keep procedural actors independent until their authored models arrive.
@@ -767,11 +775,26 @@ export class DungeonWorld {
       });
     }
     for (const { geometry, material, sources, roots } of batches.values()) {
-      const mesh = new THREE.InstancedMesh(geometry, material, sources.length);
+      const dissolve = createElectricDissolve(geometry, material, sources.length);
+      const mesh = new THREE.InstancedMesh(dissolve.geometry, material, sources.length);
       mesh.castShadow = true; mesh.receiveShadow = false; mesh.frustumCulled = false;
       mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-      this.enemyInstances.push({ mesh, sources, roots }); this.enemyGroup.add(mesh);
+      this.enemyInstances.push({ mesh, sources, roots, baseMaterial: material, dissolve }); this.enemyGroup.add(mesh);
     }
+  }
+
+  private setElectricMaterials(enabled: boolean): void {
+    for (const instance of this.enemyInstances) {
+      instance.mesh.material = enabled ? instance.dissolve.material : instance.baseMaterial;
+      instance.mesh.customDepthMaterial = enabled ? instance.dissolve.depth : undefined;
+    }
+  }
+
+  private releaseEnemyInstances(): void {
+    for (const instance of this.enemyInstances) {
+      this.enemyGroup.remove(instance.mesh); instance.mesh.dispose(); instance.dissolve.dispose();
+    }
+    this.enemyInstances.length = 0;
   }
 
   setAppearance(appearanceId: RpgAppearanceId): void {
@@ -833,6 +856,7 @@ export class DungeonWorld {
     const effect = spell?.effect ?? 'nova', school = spell?.school ?? 'ember';
     const color = school === 'ember' ? 0xff7d19 : school === 'frost' ? 0x8bdef1 : 0x8bacff;
     this.lastAttack = { spellId, effect, options: { ...options } };
+    this.setElectricMaterials(effect === 'ball-lightning');
     this.attacking = true; this.attackAge = 0; this.playHeroAnimation(effect === 'cleave' || effect === 'phoenix-dive' ? 'cleave' : 'cast', true);
     this.attackDuration = effect === 'cleave' ? 2.2 : ['firestorm', 'blizzard', 'tempest', 'frost-guardian'].includes(effect) ? 3 : 2.7;
     const origin = this.hero.position.clone().setY(.12);
@@ -983,15 +1007,21 @@ export class DungeonWorld {
         case 'ball-lightning': {
           const count = options.orbit ? 4 : 1;
           const started = this.elapsed, view = new THREE.Vector3();
+          let contactLightAt = -Infinity;
           const contacts = createBallLightningContacts(this.enemies.length);
-          contacts.layers.forEach((layer, index) => this.effect(layer, 2.15, index === 0 ? () => contacts.update(this.elapsed) : undefined));
+          contacts.layers.forEach((layer, index) => this.effect(layer, 2.15, index === 0 ? () => {
+            contacts.update(this.elapsed);
+            // A short reflected pulse supports the actual discharge instead of
+            // leaving a bright lamp embedded inside the falling victim.
+            this.burstLight.intensity = 14 * Math.exp(-Math.max(0, this.elapsed - contactLightAt) * 24);
+          } : undefined));
           const orbPosition = (orb: number, t: number, at: THREE.Vector3) => {
             const phase = orb * Math.PI * 2 / count;
             return at.copy(origin).add(new THREE.Vector3(Math.sin(phase + t * 8) * (3 + t * 2.5), 1.2 + Math.sin(t * 14 + orb*.7) * .25, Math.cos(phase + t * 8) * (3 + t * 2.5)));
           };
           const orbs: { at: THREE.Vector3; flashedAt: number }[] = [];
           for (let orb = 0; orb < count; orb++) {
-            const visual = createBallLightning(orb + 1), state = { at: new THREE.Vector3(), flashedAt: -Infinity };
+            const visual = createBallLightning(orb + 1, 1 / this.renderer.getPixelRatio()), state = { at: new THREE.Vector3(), flashedAt: -Infinity };
             orbs.push(state);
             visual.update(orbPosition(orb, 0, state.at), this.camera.getWorldDirection(view).negate(), 0, started);
             visual.layers.forEach((layer, index) => this.effect(layer, 2.15, index === 0 ? t => {
@@ -1012,9 +1042,19 @@ export class DungeonWorld {
               const next = this.enemies[index + 1];
               this.bolt(contact, next.root.position.clone().add(new THREE.Vector3(0, next.brute ? 1.55 : .9, 0)), 0x8abaff, .022, .085);
             }
-            this.burstLight.position.copy(contact); this.burstLight.color.setHex(0x7abaff);
-            this.burstLight.intensity = Math.max(this.burstLight.intensity, 16);
+            contactLightAt = this.elapsed;
+            this.burstLight.position.copy(enemy.root.position).y += enemy.height + 1.05; this.burstLight.color.setHex(0x7abaff);
+            this.burstLight.intensity = 14;
           }));
+          if (this.encounter === 5) this.schedule(1.4, () => {
+            const boss = this.enemies[0], contact = boss.root.position.clone().add(new THREE.Vector3(0, .45, 0));
+            const from = orbs[0].at;
+            contacts.strike(0, contact, contact.clone().sub(from), this.elapsed);
+            this.bolt(from, contact, 0x8ebeff, .035, .12);
+            contactLightAt = this.elapsed;
+            this.burstLight.position.copy(boss.root.position).y += boss.height + 1.05;
+            this.burstLight.color.setHex(0x7abaff); this.burstLight.intensity = 14;
+          });
           resolveHorde(.65); break;
         }
         case 'tempest': {
@@ -1037,7 +1077,7 @@ export class DungeonWorld {
       if (options.burning && school === 'ember') this.schedule(.85, () => {
         for (let i = 0; i < 6; i++) this.impact(origin.clone().add(new THREE.Vector3(Math.sin(i * 2) * 3, .1, Math.cos(i * 2) * 3)), 0xdd4b13, 1.4);
       });
-      if (this.encounter === 5) this.schedule(1.4, () => { this.impact(this.enemies[0].origin, 0xffd990, 5); this.debris(this.enemies[0].origin, 22); this.shake = .35; });
+      if (this.encounter === 5 && effect !== 'ball-lightning') this.schedule(1.4, () => { this.impact(this.enemies[0].origin, 0xffd990, 5); this.debris(this.enemies[0].origin, 22); this.shake = .35; });
       if (options.drop) this.schedule(1.55, () => this.spawnLoot(origin, options.drop!));
     });
     return new Promise(resolve => { this.attackResolve = resolve; });
@@ -1376,7 +1416,11 @@ export class DungeonWorld {
       scorch.rotation.x = -Math.PI / 2; scorch.position.copy(enemy.origin).y = -.025;
       this.effect(scorch, 4, t => { scorch.material.opacity = (1 - t) * .2; });
     }
-    if (enemy.brute) { this.debris(enemy.origin, 9); this.emit(enemy.origin.clone().setY(1.2), 0x8deaff, ballLightning ? 0 : 16, 3.5, .65); }
+    if (enemy.brute) {
+      if (ballLightning) this.debris(enemy.origin, 3, false, .3, { direction: enemy.origin.clone().sub(this.hero.position).setY(0), spread: 1, lift: .2, grounded: true });
+      else this.debris(enemy.origin, 9);
+      this.emit(enemy.origin.clone().setY(1.2), 0x8deaff, ballLightning ? 0 : 16, 3.5, .65);
+    }
   }
 
   private spawnLoot(origin: THREE.Vector3, drop: { name: string; rarity: string }): void {
@@ -1400,15 +1444,28 @@ export class DungeonWorld {
     }
   }
 
+  setCombatSafeArea(top: number, bottom: number): void {
+    const safeTop = Number.isFinite(top) ? Math.max(0, top) : 0;
+    const safeBottom = Number.isFinite(bottom) ? Math.max(0, bottom) : 0;
+    if (safeTop === this.combatSafeTop && safeBottom === this.combatSafeBottom) return;
+    this.combatSafeTop = safeTop; this.combatSafeBottom = safeBottom;
+    this.updateCameraProjection(Math.max(1, this.canvas.clientWidth), Math.max(1, this.canvas.clientHeight));
+  }
+
+  private updateCameraProjection(width: number, height: number): void {
+    const ratio = width / height;
+    const separateControls = getComputedStyle(this.canvas).getPropertyValue('--rpg-separate-controls').trim() === '1';
+    const halfHeight = dungeonCameraHalfHeight(width, height, separateControls);
+    this.camera.left = -halfHeight * ratio; this.camera.right = halfHeight * ratio;
+    const verticalOffset = dungeonCameraVerticalOffset(height, separateControls) + dungeonPortraitOffset(width, height, this.combatSafeTop, this.combatSafeBottom);
+    this.camera.top = halfHeight + verticalOffset; this.camera.bottom = -halfHeight + verticalOffset; this.camera.updateProjectionMatrix();
+  }
+
   resize(): void {
     const width = Math.max(1, this.canvas.clientWidth), height = Math.max(1, this.canvas.clientHeight);
     if (width === this.width && height === this.height) return;
     this.width = width; this.height = height;
-    const ratio = width / height;
-    const halfHeight = dungeonCameraHalfHeight(width, height);
-    this.camera.left = -halfHeight * ratio; this.camera.right = halfHeight * ratio;
-    const verticalOffset = dungeonCameraVerticalOffset(height);
-    this.camera.top = halfHeight + verticalOffset; this.camera.bottom = -halfHeight + verticalOffset; this.camera.updateProjectionMatrix();
+    this.updateCameraProjection(width, height);
     const qualityRatio = this.quality === 0 ? 1.5 : this.quality === 1 ? 1 : .75;
     this.renderer.setPixelRatio(this.softwareRenderer ? .7 : Math.min(window.devicePixelRatio || 1, qualityRatio)); this.renderer.setSize(width, height, false);
     this.composer.setPixelRatio(this.quality === 2 ? .75 : 1);
@@ -1494,10 +1551,15 @@ export class DungeonWorld {
       if (enemy.dead) {
         const t = Math.min(1, (this.elapsed - enemy.deathAt) / 1.1);
         const away = enemy.origin.clone().sub(this.hero.position).setY(0).normalize();
-        enemy.root.position.copy(enemy.origin).addScaledVector(away, (1 - Math.pow(1 - t, 3)) * (enemy.brute ? 1 : 1.7));
-        enemy.root.position.y = Math.sin(t * Math.PI) * (enemy.brute ? .45 : .85);
-        enemy.root.rotation.x = -t * (enemy.animator.articulated ? .24 : 1.35); enemy.root.rotation.z = Math.sin(enemy.phase) * t * (enemy.animator.articulated ? .13 : .7);
-        enemy.root.scale.setScalar(Math.max(.005, 1 - Math.max(0, t - .58) / .42));
+        const electricalCollapse = this.lastAttack?.spellId === 'ball_lightning';
+        const throwDistance = electricalCollapse ? (enemy.brute ? .3 : .45) : (enemy.brute ? 1 : 1.7);
+        enemy.root.position.copy(enemy.origin).addScaledVector(away, (1 - Math.pow(1 - t, 3)) * throwDistance);
+        enemy.root.position.y = electricalCollapse ? Math.sin(Math.min(1, (this.elapsed - enemy.deathAt) / .22) * Math.PI) * .035 : Math.sin(t * Math.PI) * (enemy.brute ? .45 : .85);
+        enemy.root.rotation.x = electricalCollapse ? 0 : -t * (enemy.animator.articulated ? .24 : 1.35);
+        enemy.root.rotation.z = electricalCollapse ? 0 : Math.sin(enemy.phase) * t * (enemy.animator.articulated ? .13 : .7);
+        if (electricalCollapse) { enemy.visual.position.y *= Math.exp(-delta * 24); enemy.visual.rotation.z *= Math.exp(-delta * 24); }
+        enemy.root.scale.setScalar(electricalCollapse ? 1 : Math.max(.005, 1 - Math.max(0, t - .58) / .42));
+        enemy.root.userData.electricDissolve = electricalCollapse ? THREE.MathUtils.smoothstep(t, .58, 1) : 0;
         if (t === 1) enemy.root.visible = false;
       } else {
         const approach = this.hero.position.clone().sub(enemy.origin).setY(0).normalize();
@@ -1507,7 +1569,7 @@ export class DungeonWorld {
         enemy.visual.position.y = enemy.modelId === 'wraith' ? .14 + Math.sin(this.elapsed * 2 + enemy.phase) * .09 : Math.abs(Math.sin(this.elapsed * 4.7 + enemy.phase)) * (enemy.brute || enemy.modelId === 'revenant' ? .035 : .075);
         enemy.visual.rotation.z = Math.sin(this.elapsed * 1.5 + enemy.phase) * .035;
       }
-      enemy.animator.update(this.elapsed, { moving: .35 + Math.abs(Math.cos(this.elapsed * .8 + enemy.phase)) * .4, threat: this.paused ? .25 : .8, deathAge: enemy.dead ? this.elapsed - enemy.deathAt : undefined });
+      enemy.animator.update(this.elapsed, { moving: .35 + Math.abs(Math.cos(this.elapsed * .8 + enemy.phase)) * .4, threat: this.paused ? .25 : .8, deathAge: enemy.dead ? this.elapsed - enemy.deathAt : undefined, collapse: this.lastAttack?.spellId === 'ball_lightning' ? 'electric' : undefined });
     }
     if (this.enemyInstances.length) {
       this.enemyGroup.updateMatrixWorld(true);
@@ -1517,11 +1579,14 @@ export class DungeonWorld {
         // draw rather than submitting their full geometry at a tiny scale.
         let count = 0;
         instance.sources.forEach((source, index) => {
-          if (instance.roots[index].visible) instance.mesh.setMatrixAt(count++, source.matrixWorld);
+          if (instance.roots[index].visible) {
+            instance.dissolve.set(count, instance.roots[index].userData.electricDissolve ?? 0);
+            instance.mesh.setMatrixAt(count++, source.matrixWorld);
+          }
         });
         instance.mesh.count = count;
         instance.mesh.visible = count > 0;
-        if (count > 0) instance.mesh.instanceMatrix.needsUpdate = true;
+        if (count > 0) { instance.mesh.instanceMatrix.needsUpdate = true; instance.dissolve.upload(); }
       });
     }
     this.torches.forEach(torch => {
@@ -1606,6 +1671,7 @@ export class DungeonWorld {
 
   dispose(): void {
     if (this.disposed) return; this.disposed = true; cancelAnimationFrame(this.frame); this.attackResolve?.(); this.scheduled.length = 0;
+    this.releaseEnemyInstances();
     const geometries = new Set<THREE.BufferGeometry>(), materials = new Set<THREE.Material>(), textures = new Set<THREE.Texture>();
     const collect = (object: THREE.Object3D) => {
       if (object instanceof THREE.SkinnedMesh) object.skeleton.dispose();
@@ -1616,7 +1682,6 @@ export class DungeonWorld {
     this.heroMixer?.stopAllAction(); this.heroMixer?.uncacheRoot(this.heroVisual);
     this.preparedMaterials.forEach(material => material.dispose());
     this.waveMap.dispose(); this.glowMap.dispose();
-    this.enemyInstances.forEach(instance => instance.mesh.dispose());
     this.stoneFragments.dispose(); this.hotFragments.dispose();
     this.environment.dispose(); this.bloom.dispose(); this.composer.dispose(); this.renderer.dispose();
   }

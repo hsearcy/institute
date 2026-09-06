@@ -1,0 +1,7 @@
+# Asset-specific creator license statement
+
+Source: https://github.com/Samfa12-tech/The-Horde-RT-demo/blob/main/ASSET_LICENSES.md
+
+Retrieved 2026-09-05. This applies only to the named lich, not the whole repository.
+
+| Lich placeholder, merged animations v01 | Active Meshy-generated skinned GLB placeholder; 9,188 triangles, nine clips, embedded 2K base-colour plus a falsely duplicated emissive image; deterministic raw-KTX2/ASTC derivatives and selective violet emissive mask | User-supplied `Meshy_AI_Meshy_Merged_Animations.glb`; see `assets/models/enemies/meshy/lich_placeholder_merged_animations_v01.METADATA.md` | **CC0.** The user's Meshy workspace shows this exact lich asset with `Change License: CC0`; retained evidence: `assets/models/enemies/meshy/lich_placeholder_source_licence.png`, SHA-256 `6094E4D9A27A25022A1426C297F069DB60F779CC77526CFE6B154421F6DB96EE`. | User-supplied Meshy output; audited by Codex, 2026-07-15/16 | Runtime final-room placeholder. Robe, body, and staff are fused into one standard biped-skinned primitive with no staff or cloth bones; visible staff/robe deformation is a known source-art limitation. The two embedded image payloads decode identically, so `tools/prepare-lich-textures.ps1` derives a selective violet staff/eye/gem mask. Forty UV-audited emissive staff vertices drive the moving staff-light sample through their real skin weights. Proposed credit: “Placeholder lich character created and animated with Meshy.” |

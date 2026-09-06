@@ -9,6 +9,8 @@ export type EnemyPoseState = {
   recoil?: number;
   /** Seconds since defeat; omitted while alive. */
   deathAge?: number;
+  /** Element-specific presentation; never changes hit or cleanup timing. */
+  collapse?: 'electric';
 };
 type Joint = { object: Object3D; position: Vector3; rotation: Quaternion; index: number };
 const clamp = (n: number) => Math.max(0, Math.min(1, n));
@@ -22,16 +24,17 @@ export class EnemyAnimator {
   private readonly offset = new Quaternion();
   private readonly brute: boolean;
   private readonly armored: boolean;
+  private readonly spectral: boolean;
   private readonly phase: number;
 
   constructor(visual: Object3D, options: { kind: string; phase: number }) {
-    this.brute = options.kind === 'guardian'; this.armored = options.kind === 'revenant'; this.phase = options.phase;
+    this.brute = options.kind === 'guardian'; this.armored = options.kind === 'revenant'; this.spectral = options.kind === 'wraith'; this.phase = options.phase;
     visual.traverse(object => {
       const name = typeof object.userData.enemyJoint === 'string'
         ? object.userData.enemyJoint : /^Joint_(\w+)/.exec(object.name)?.[1];
       if (name) this.joints.set(name, { object, position: object.position.clone(), rotation: object.quaternion.clone(), index: this.joints.size });
     });
-    this.articulated = this.joints.has('ArmUpperR') && this.joints.has('LegUpperL');
+    this.articulated = this.joints.has('ArmUpperR') && (this.joints.has('LegUpperL') || (this.spectral && this.joints.has('Body')));
   }
 
   /** Updates local joint transforms only; caller updates matrixWorld before batching. */
@@ -64,7 +67,7 @@ export class EnemyAnimator {
     const cycle = ((t % 5.7) + 5.7) % 5.7;
     const windup = smooth((cycle - 3.4) / .65) * (1 - smooth((cycle - 4.08) / .28));
     const sweep = smooth((cycle - 4.06) / .23) * (1 - smooth((cycle - 4.34) / .8));
-    const threat = clamp(state.threat ?? 1) * weight;
+    const threat = clamp(state.threat ?? 1) * weight * (this.spectral ? .4 : 1);
     if (threat > 0 && windup + sweep > 0) {
       this.rotate('ArmUpperR', (-.75 * windup + .25 * sweep) * threat, (-.30 * windup + .62 * sweep) * threat, (-.55 * windup + .22 * sweep) * threat);
       this.rotate('ArmLowerR', (-.75 * windup - .15 * sweep) * threat, 0, 0);
@@ -80,7 +83,46 @@ export class EnemyAnimator {
       this.rotate('ArmUpperL', -.37 * recoil, -.14 * recoil, -.35 * recoil);
       this.rotate('ArmUpperR', -.22 * recoil, .15 * recoil, .38 * recoil);
     }
-    if (death !== undefined) this.breakApart(Math.max(0, death));
+    if (death !== undefined) {
+      if (state.collapse === 'electric') this.electricalCollapse(Math.max(0, death));
+      else this.breakApart(Math.max(0, death));
+    }
+  }
+
+  private electricalCollapse(age: number): void {
+    // The initial contraction reads as a strike; weight then settles through
+    // bent knees. Joint attachments remain intact instead of exploding apart.
+    const recoil = Math.sin(clamp(age / .24) * Math.PI);
+    const fold = smooth((age - .08) / .44);
+    const side = Math.sin(this.phase) * .045;
+    const braced = Math.sin(this.phase * 1.7) > 0;
+    // Sole-checked against the exported leg meshes: the deeper bend raises
+    // the soles nonlinearly. Match that lift instead of adding a root shove.
+    // The fold settles at .52s, before the existing .638s erosion onset.
+    const soleLift = braced ? (this.brute ? .37 : .377) : (this.brute ? .404 : .45);
+    const drop = this.spectral ? fold * .34 : Math.pow(fold, this.brute && !braced ? 1.95 : 1.65) * soleLift;
+    for (const name of ['Body', 'LegUpperL', 'LegUpperR']) {
+      const joint = this.joints.get(name);
+      if (joint) joint.object.position.y -= drop;
+    }
+    this.rotate('Body', -.13 * recoil + fold * (this.spectral ? .18 : braced ? 1.12 : .91), side * fold, (this.spectral ? side : braced ? -.12 : .15) * fold);
+    this.rotate('Head', -.18 * recoil + .19 * fold, -.05 * fold, side);
+    this.rotate('LegUpperL', -(braced ? 1.56 : 1.2) * fold, -.025 * fold, -.035 * fold);
+    this.rotate('LegUpperR', -(braced ? 1.35 : 1.65) * fold, .025 * fold, .035 * fold);
+    this.rotate('LegLowerL', (braced ? 2.27 : 2.42) * fold, 0, 0);
+    this.rotate('LegLowerR', (braced ? 2.05 : 2.15) * fold, 0, 0);
+    for (const [sideName, sign] of [['L', -1], ['R', 1]] as const) {
+      this.rotate(`ArmUpper${sideName}`, -.3 * recoil + .07 * fold, sign * .025, sign * (.035 + .055 * recoil));
+      this.rotate(`ArmLower${sideName}`, -.4 * recoil - .07 * fold, 0, sign * .02);
+    }
+    if (!this.spectral && braced) {
+      // The leading hand (or the revenant's shield) takes some weight while
+      // the other arm drops. This is distinct from the lower-knee variant.
+      this.rotate('ArmUpperL', -.3 * recoil - .8 * fold, -.08 * fold, -.11 * fold);
+      this.rotate('ArmLowerL', -.4 * recoil - .4 * fold, 0, -.02 * fold);
+    }
+    this.rotate('Cape', .04 + .11 * fold, side, 0);
+    this.rotate('Sword', .09 * fold, 0, 0);
   }
 
   private rotate(name: string, x: number, y: number, z: number): void {

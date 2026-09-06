@@ -1,0 +1,14 @@
+{
+  "seconds": 16.65875816345215,
+  "sourceRecipe": "6687fa7ae82391207829671ab39296a54430f218a8bd84db7e708da0b44890d6",
+  "sourceSnapshotSHA256": "70a4805c481063c4b48bf597666672eac90c9bd97e8e716ded481954c485e169",
+  "sourceTriangles": 56984,
+  "lowTriangles": 17610,
+  "projectionGroups": 6,
+  "atlasSize": 1024,
+  "geometryNormalsOnly": true,
+  "structuredGrip": true,
+  "restoredScene": "Scene",
+  "status": "Over 12000 triangle item budget; no bake/export attempted",
+  "limitTriangles": 12000
+}

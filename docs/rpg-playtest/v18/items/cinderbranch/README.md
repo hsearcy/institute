@@ -22,7 +22,20 @@ right-face step is insufficiently conspicuous. Visible ray hits confirm the
 correct seed region, but near-parallel normals explain the shallow crease.
 V18 intersects that region with a tilted fracture plane, preserving the
 remaining mass, seat and heat. Its front/close renders completed in 30.10s;
-the new verdict is pending, and no export or installation is approved.
+the verdict remains 7.5 for coal and wood. The nominated face still reads as
+a smooth dark wall. A neutral oblique view of the actual final mesh is next;
+no export or installation is approved.
+
+V19's neutral original-camera view still scored 7.5: only a small upper facet
+read distinctly. The later skew was nonlinear, so pre-skew plane changes did
+not guarantee planar final cheeks. V20 replaces the active coal builder with
+explicit final topology, two broad cheek planes separated by 33.61 degrees,
+and a real recessed valley. It has no later deformation. This replacement
+passed the narrow neutral diagnostic: final planes are distinct. It remains
+an unfinished charcoal model because the vertical valley, level waist and
+truncated top look machined. V21 keeps explicit planes but gives the shoulder
+and valley an oblique path with unequal corner losses; its proof is pending.
+The procedural version remains a private reference function during review.
 
 The first v18 call lost its connection before producing output. A host probe
 then found Blender absent; the parent found no recent core dump or OOM record,

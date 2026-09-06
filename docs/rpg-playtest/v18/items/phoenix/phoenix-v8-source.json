@@ -1,0 +1,93 @@
+{
+  "seconds": 14.73490285873413,
+  "sourceSHA256": {
+    "build_studies.py": "97610c1283429108f6a4494fe950faa2e92829d7a2b7d36bc43eab4ba60f0e46",
+    "surfaces.py": "0182e936616c99534984bd67d0e19ebff0234db5b5c8dfd7130548a88294d6e1",
+    "metal_weapons.py": "93f28d5797610608d123c62120857d6b3e3de663964ff6b4786acaec10891c8a"
+  },
+  "restoredScene": "Scene",
+  "scope": "V8 outward face winding only; vertex positions unchanged, no material/profile redesign",
+  "positionsUnchangedAtMicrometer": true,
+  "volumes": [
+    {
+      "name": "Flat leather wrapped oval grip.004",
+      "signedVolume": 0.00030272058380397844
+    },
+    {
+      "name": "Phoenix continuous tapered tang.004",
+      "signedVolume": 0.0007255198548839958
+    },
+    {
+      "name": "Phoenix seated grip ferrule.008",
+      "signedVolume": 2.3360009935330783e-05
+    },
+    {
+      "name": "Phoenix seated grip ferrule.009",
+      "signedVolume": 2.3360021262963202e-05
+    },
+    {
+      "name": "Phoenix counterweight butt.004",
+      "signedVolume": 0.00010048191472898837
+    },
+    {
+      "name": "Phoenix flared cradle socket.004",
+      "signedVolume": 0.00025358680864362996
+    },
+    {
+      "name": "Phoenix primary swept wing.008",
+      "signedVolume": 0.0001771960219105444
+    },
+    {
+      "name": "Phoenix rooted shorter flight feather.016",
+      "signedVolume": 3.106452329718258e-05
+    },
+    {
+      "name": "Phoenix rooted shorter flight feather.017",
+      "signedVolume": 2.3799505891413166e-05
+    },
+    {
+      "name": "Phoenix primary swept wing.009",
+      "signedVolume": 0.00016484004665388762
+    },
+    {
+      "name": "Phoenix rooted shorter flight feather.018",
+      "signedVolume": 2.6112978721226137e-05
+    },
+    {
+      "name": "Phoenix rooted shorter flight feather.019",
+      "signedVolume": 1.9150725458761282e-05
+    },
+    {
+      "name": "Phoenix protected feather enamel.008",
+      "signedVolume": 2.4244282908607697e-06
+    },
+    {
+      "name": "Phoenix protected feather enamel.009",
+      "signedVolume": 2.424194206383395e-06
+    },
+    {
+      "name": "Phoenix garnet fitted cup.004",
+      "signedVolume": 4.166787186174021
+    },
+    {
+      "name": "Phoenix polished garnet heart.004",
+      "signedVolume": 4.166787186174024
+    },
+    {
+      "name": "Phoenix rear cup support.004",
+      "signedVolume": 3.177463907009517e-05
+    },
+    {
+      "name": "Phoenix fitted heart retaining claw.008",
+      "signedVolume": 2.9184293808032e-06
+    },
+    {
+      "name": "Phoenix fitted heart retaining claw.009",
+      "signedVolume": 2.943169094542413e-06
+    },
+    {
+      "name": "Phoenix crown retaining claw.004",
+      "signedVolume": 2.4677344496522162e-06
+    }
+  ]
+}

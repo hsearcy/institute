@@ -1,0 +1,17 @@
+{
+  "channel": "normal",
+  "seconds": 2.750676393508911,
+  "checkpoint": "/home/houston/git/institute/tmp/item-models/phoenix/v2/baked/phoenix-normal-checkpoint.png",
+  "sha256": "e489ac1194a137152b9a1fb2d8afc2998e8e4dbc4f113cb30615e46200dfa5c2",
+  "rgbMax": [
+    0.9921569228172302,
+    1.0,
+    1.0
+  ],
+  "nonzeroPixels": 1048576,
+  "completed": [
+    "albedo",
+    "normal"
+  ],
+  "restoredScene": "Scene"
+}

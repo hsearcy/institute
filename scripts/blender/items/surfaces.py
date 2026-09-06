@@ -3,7 +3,7 @@ import math
 from pathlib import Path
 
 import bpy
-from mathutils import Vector, Matrix, kdtree
+from mathutils import Vector, Matrix, kdtree, geometry
 
 
 def forged_surface(root, materials):
@@ -98,7 +98,7 @@ def wrapped_hilt(root,materials,wear_color=(.18,.067,.033,1)):
     return obj
 
 
-def fractured_coal(root,materials):
+def _procedural_coal_v19(root,materials):
     """Unequal short charcoal planes separated by chipped cellular valleys."""
     bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=6,radius=1)
     obj=bpy.context.object;obj.name='Thermally fractured charcoal mass';obj.parent=root
@@ -128,10 +128,14 @@ def fractured_coal(root,materials):
             # its lip while the upper field remains recessed by a real step.
             # Intersect two genuinely different fracture planes. A radial
             # height step left both large fields almost parallel in v17.
-            # This oblique upper plane changes the normal by about 25deg;
-            # unequal edge losses interrupt its intersection with the lower.
-            normal=seeds[index]+Vector((-.18,0,.48))
-            offset=.835-.018*max(0,math.sin(q.y*13+q.x*7))**3
+            # Set the intersection through the cheek itself at normalized
+            # (x=.45,z=.10), not its top edge. The second plane turns roughly
+            # 39 degrees and leaves a broad unequal lower face beneath it.
+            # Sparse edge losses interrupt the shoulder without a staircase.
+            slope=Vector((-.30,0,.75))
+            normal=seeds[index]+slope
+            offset=.82+slope.x*.45+slope.z*.10
+            offset-=.012*max(0,math.sin(q.y*13+q.x*7))**3
             upper=offset/max(.30,q.dot(normal))
             radius=min(radius,upper-.16*valley**1.6*scallop)
         else:
@@ -195,6 +199,61 @@ def fractured_coal(root,materials):
             q.x=q.x*(1-.45*t)+.004*math.sin(t*math.pi)-.008*t
             q.y*=1-.15*t
             vertex.co=center+turn@q
+    return obj
+
+
+def fractured_coal(root,materials):
+    """Authored planar charcoal wedge; no deformation follows its fracture faces."""
+    center=Vector((-.026,-.027,.530))
+    turn=Matrix.Rotation(.20,3,'Z')@Matrix.Rotation(-.06,3,'X')
+    # The narrow inward corner is an actual fracture valley. Unequal broad
+    # cheeks lie either side of it, and a deliberate middle shoulder separates
+    # the lower and upper planes. All final faces keep explicit flat normals.
+    outline=[(-.019,-.008),(-.008,-.017),(-.0005,-.0148),(.0002,-.0115),
+             (.0015,-.0142),(.016,-.010),(.020,.005),(.005,.012),(-.017,.008)]
+    vertices=[];n=len(outline)
+    for row,(z,scale,dx,dy) in enumerate([(-.030,.90,0,0),(-.003,1,0,-.001),(.027,.57,-.006,.008)]):
+        for index,(x,y) in enumerate(outline):
+            px,py=x*scale+dx,y*scale+dy
+            # The shoulder and fracture travel obliquely through the mass,
+            # with unequal valley widths instead of a machined vertical slot.
+            if 2<=index<=4:px+=(.003,-.001,-.003)[row]
+            pz=z+(.12,.28,.50)[row]*px-(.05,.18,.30)[row]*py
+            # Two substantial unequal corner losses interrupt the top. Their
+            # adjoining triangles are deliberate brittle fracture planes.
+            if row==2 and index==5:px-=.003;py+=.003;pz-=.007
+            if row==2 and index==8:px+=.002;pz+=.004
+            vertices.append(center+turn@Vector((px,py,pz)))
+    faces=[]
+    for row in range(2):
+        for j in range(n):
+            quad=(row*n+j,row*n+(j+1)%n,(row+1)*n+(j+1)%n,(row+1)*n+j)
+            if row==1 and j in (4,5,7,8):faces.extend([(quad[0],quad[1],quad[2]),(quad[0],quad[2],quad[3])])
+            else:faces.append(quad)
+    faces.append(tuple(reversed(range(n))))
+    cap=vertices[2*n:];lookup={tuple(v):2*n+i for i,v in enumerate(cap)}
+    faces.extend(tuple(lookup[tuple(v)] for v in triangle) for triangle in geometry.tessellate_polygon([cap]))
+    data=bpy.data.meshes.new('Explicit charcoal cheeks shoulder and fracture valley')
+    data.from_pydata(vertices,[],faces);data.update()
+    obj=bpy.data.objects.new('Thermally fractured charcoal mass',data);bpy.context.scene.collection.objects.link(obj);obj.parent=root
+    data.materials.append(materials['char'])
+    for face in data.polygons:face.use_smooth=False
+    # Heat sits on the deep valley wall, in two interrupted interior patches.
+    # It does not trace the entire outer edge or cover a broad face.
+    hot_vertices=[];hot_faces=[]
+    for row,lo,hi in [(0,.76,.97),(1,.07,.46)]:
+        a,b=vertices[row*n+2],vertices[(row+1)*n+2]
+        c,d=vertices[row*n+3],vertices[(row+1)*n+3]
+        inset_offset=data.polygons[row*n+2].normal*.000035
+        for t,width in [(lo,.42),(hi,.66)]:
+            deep=c.lerp(d,t);outer=a.lerp(b,t)
+            hot_vertices.extend([deep.lerp(outer,.07)+inset_offset,deep.lerp(outer,width)+inset_offset])
+        start=len(hot_vertices)-4;hot_faces.append((start,start+1,start+3,start+2))
+    hot_data=bpy.data.meshes.new('Deep interrupted charcoal incandescence');hot_data.from_pydata(hot_vertices,[],hot_faces);hot_data.update()
+    hot=bpy.data.objects.new('Interrupted incandescent coal interiors',hot_data);bpy.context.scene.collection.objects.link(hot);hot.parent=root
+    hot_data.materials.append(materials['ember'])
+    obj['coalConstruction']='Explicit final planar topology, no post-fracture skew'
+    obj['lowerUpperCheekAngleDegrees']=math.degrees(data.polygons[4].normal.angle(data.polygons[n+4].normal))
     return obj
 
 

@@ -572,15 +572,31 @@ def phoenix(root,p):
     links.new(wear.outputs['Fac'],shift.inputs[0]);links.new(shift.outputs[0],ramp.inputs[0])
     sheltered=nodes.new('ShaderNodeMixRGB');sheltered.blend_type='MULTIPLY';sheltered.inputs[0].default_value=.35
     links.new(ramp.outputs['Color'],sheltered.inputs[1]);links.new(ao.outputs['AO'],sheltered.inputs[2]);links.new(sheltered.outputs[0],nodes.get('Principled BSDF').inputs['Base Color'])
-    rough=nodes.new('ShaderNodeMapRange');rough.inputs['From Min'].default_value=-1;rough.inputs['From Max'].default_value=1
-    rough.inputs['To Min'].default_value=.58;rough.inputs['To Max'].default_value=.30
-    links.new(wear.outputs['Fac'],rough.inputs[0]);links.new(rough.outputs[0],nodes.get('Principled BSDF').inputs['Roughness'])
+    rough=nodes.new('ShaderNodeValToRGB');rough.color_ramp.elements[0].color=(.58,.58,.58,1)
+    rough.color_ramp.elements.new(.5).color=(.32,.32,.32,1);rough.color_ramp.elements[2].color=(.26,.26,.26,1)
+    links.new(shift.outputs[0],rough.inputs[0]);links.new(rough.outputs[0],nodes.get('Principled BSDF').inputs['Roughness'])
     SURFACES.wrapped_hilt(root,p,(.11,.030,.020,1))
     lathe_z('Phoenix continuous tapered tang',[(-.14,.014),(.137,.014),(.156,.021),(.40,.017),(.48,.027),(.53,.032)],shadow,root,48)
     for z in (-.109,.120):
         lathe_z('Phoenix seated grip ferrule',[(z-.007,.019),(z-.004,.024),(z+.004,.024),(z+.007,.020)],bronze,root,48)
-    lathe_z('Phoenix counterweight butt',[(-.169,.006),(-.166,.019),(-.153,.027),(-.133,.027),(-.121,.021),(-.116,.019)],bronze,root,64)
-    lathe_z('Phoenix flared cradle socket',[(.433,.021),(.440,.027),(.456,.028),(.473,.036),(.494,.036),(.514,.027)],bronze,root,64)
+    pommel_profile=[(-.169,.006),(-.166,.019),(-.153,.027),(-.133,.027),(-.121,.021),(-.116,.019)]
+    slopes=[(b[1]-a[1])/(b[0]-a[0]) for a,b in zip(pommel_profile,pommel_profile[1:])]
+    tangents=[slopes[0]]
+    for left,right in zip(slopes,slopes[1:]):tangents.append(0 if left*right<=0 else 2*left*right/(left+right))
+    tangents.append(slopes[-1]);rounded_profile=[]
+    for index,(a,b) in enumerate(zip(pommel_profile,pommel_profile[1:])):
+        for step in range(12):
+            t=step/12;span=b[0]-a[0]
+            radius=(2*t**3-3*t*t+1)*a[1]+(t**3-2*t*t+t)*span*tangents[index]+(-2*t**3+3*t*t)*b[1]+(t**3-t*t)*span*tangents[index+1]
+            rounded_profile.append((a[0]+span*t,max(min(a[1],b[1]),min(max(a[1],b[1]),radius))))
+    rounded_profile.append(pommel_profile[-1])
+    lathe_z('Phoenix counterweight butt',rounded_profile,bronze,root,64)
+    socket=lathe_z('Phoenix flared cradle socket',[(.433,.021),(.440,.027),(.456,.028),(.473,.036),(.494,.036),(.514,.027)],bronze,root,64)
+    socket_wear=socket.data.attributes.new('PhoenixBronzeWear','FLOAT','POINT')
+    for vertex in socket.data.vertices:
+        z=vertex.co.z;angle=math.atan2(vertex.co.y,vertex.co.x)
+        protected_lip=z>.485 and math.sin(angle)<.25
+        socket_wear.data[vertex.index].value=-.88 if protected_lip else -.75 if z<.445 else .15
 
     def feather(name,points,widths,thickness,mat):
         path,widths=curved_path(points,widths,12)
@@ -596,14 +612,30 @@ def phoenix(root,p):
             for j in range(sides):
                 a=i*sides+j;b=i*sides+(j+1)%sides;faces.append((a,b,b+sides,a+sides))
         faces.extend([tuple(reversed(range(sides))),tuple((len(path)-1)*sides+j for j in range(sides))])
+        # Across points left of the path tangent while the ring's second axis
+        # points +Y. Reverse this clockwise ring winding so the closed surface
+        # faces outward; back-facing source normals corrupt thin-tip projection.
+        faces=[tuple(reversed(face)) for face in faces]
         result=mesh(name,vertices,faces,mat,root,smooth=True)
         if mat==bronze:
             wear=result.data.attributes.new('PhoenixBronzeWear','FLOAT','POINT')
+            wing_side=-1 if points[-1][0]<0 else 1
             for i in range(len(path)):
-                t=i/(len(path)-1);root_shade=max(0,1-t/.30)
+                t=i/(len(path)-1)
+                # Keep the protected transition visible where the smaller
+                # feather emerges, rather than burying all dark texels inside
+                # its parent. Broad exposed metal remains quiet and clean.
                 for j in range(sides):
-                    arris=max(0,(abs(math.cos(j*math.tau/sides))-.80)/.20)
-                    wear.data[i*sides+j].value=-.90*root_shade+.50*arris*(1-root_shade)
+                    angle=j*math.tau/sides;c=math.cos(angle)
+                    protected_end=(.72 if 'shorter flight' in name else .56)+.045*math.sin(angle*2+t*8)
+                    run=max(0,min(1,(protected_end-t)/.065))
+                    inner=max(0,min(1,(wing_side*c+.30)/.40))
+                    # A broad, bounded sheltered patch reaches the visible
+                    # inner face. Its broken edge ends below the clean tip;
+                    # this is not a gradient hidden entirely inside the root.
+                    patch=run*inner
+                    arris=max(0,(abs(c)-.80)/.20)
+                    wear.data[i*sides+j].value=-.92*patch+.50*arris*(1-.65*patch)
         return result
 
     # Unequal wings are rooted deeply inside the socket. Their broad convex
@@ -650,7 +682,57 @@ def cleaver(root,p):
     METAL_WEAPONS.cleaver(root,p,(SURFACES,solid_outline,lathe_z,material))
 
 
-BUILDERS={'apprentice':apprentice,'cinderwand':cinderwand,'glacier':glacier,'thunderrod':thunderrod,'cleaver':cleaver,'moonstaff':moonstaff,'phoenix':phoenix}
+def starfall(root,p):
+    """Leaf-shaped meteor iron with a continuous sharpened perimeter and tang."""
+    iron=material('Starfall dense meteoric iron',(.043,.052,.061),.78,.39,grain=.00012)
+    edge=material('Starfall restrained honed perimeter',(.24,.29,.33),.90,.36)
+    inset=material('Starfall dark interrupted fuller',(.021,.027,.033),.67,.49)
+    SURFACES.wrapped_hilt(root,p,(.042,.044,.051,1))
+    stations=[(.174,.025,.012),(.25,.034,.013),(.46,.057,.014),(.61,.062,.012),(.76,.049,.009),(.865,.027,.005),(.94,.0004,.0004)]
+    def section(z):
+        for a,b in zip(stations,stations[1:]):
+            if z<=b[0]:
+                t=(z-a[0])/(b[0]-a[0]);return a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t
+        return stations[-1][1:]
+    nx,nz=40,144;vertices=[];faces=[];materials=[]
+    for side in (-1,1):
+        for j in range(nz+1):
+            z=.174+(.94-.174)*j/nz;width,depth=section(z)
+            run=min(1,max(0,(z-.27)/.06))*min(1,max(0,(.84-z)/.065))
+            for i in range(nx+1):
+                u=-1+2*i/nx;a=abs(u)
+                y=.0003+(depth-.0003)*min(1,(1-a)/.32)
+                channel=max(0,1-a/max(.001,.22*math.sqrt(run)))
+                # A shallow fullered bed ends continuously before the tip;
+                # an intact central bridge interrupts it beneath the iron scar.
+                bridge=max(0,1-abs(z-.535)/.030)
+                y-=.0030*channel**1.4*run*(1-bridge)
+                vertices.append((u*width,side*y,z))
+    plane=(nx+1)*(nz+1)
+    for side in range(2):
+        for j in range(nz):
+            z=.174+(.94-.174)*(j+.5)/nz
+            for i in range(nx):
+                a=side*plane+j*(nx+1)+i;face=(a,a+1,a+nx+2,a+nx+1)
+                faces.append(face if side==0 else tuple(reversed(face)))
+                u=-1+2*(i+.5)/nx
+                materials.append(1 if abs(u)>.68 else 2 if abs(u)<.15 and .31<z<.79 and abs(z-.535)>.024 else 0)
+    for j in range(nz):
+        for i in (0,nx):
+            a=j*(nx+1)+i;b=a+nx+1;faces.append((a,b,b+plane,a+plane));materials.append(1)
+    for j in (0,nz):
+        for i in range(nx):
+            a=j*(nx+1)+i;faces.append((a,a+plane,a+plane+1,a+1));materials.append(0)
+    blade=mesh('Starfall continuous leaf-shaped fullered blade',vertices,faces,iron,root,smooth=True)
+    blade.data.materials.append(edge);blade.data.materials.append(inset)
+    for face,index in zip(blade.data.polygons,materials):face.material_index=index
+    solid_outline('Starfall close fitted ricasso seat',[(-.026,.117),(-.030,.153),(-.025,.181),(.025,.181),(.031,.149),(.027,.117)],.018,iron,root,.002)
+    solid_outline('Starfall unequal swept crossguard',[(-.128,.187),(-.112,.183),(-.071,.158),(-.027,.146),(.030,.147),(.069,.121),(.066,.108),(.052,.112),(.019,.126),(-.033,.127),(-.080,.146),(-.126,.171)],.014,iron,root,.003)
+    lathe_z('Starfall seated copper lower ferrule',[(-.118,.022),(-.114,.026),(-.108,.026),(-.104,.022)],p['copper'],root)
+    lathe_z('Starfall low peened counterweight',[(-.173,.006),(-.169,.021),(-.156,.030),(-.137,.028),(-.122,.021),(-.116,.021)],iron,root)
+
+
+BUILDERS={'apprentice':apprentice,'cinderwand':cinderwand,'glacier':glacier,'thunderrod':thunderrod,'cleaver':cleaver,'moonstaff':moonstaff,'phoenix':phoenix,'starfall':starfall}
 
 
 def build_study(ids=None):

@@ -45,7 +45,8 @@ def _structured_grip_low(source):
     return bpy.data.objects.new(source.name+' structured low',data)
 
 
-def prepare(source_scene,item_id,size=1024,*,structured_blade=False,split_material_boundaries=False,structured_grip=False):
+def prepare(source_scene,item_id,size=1024,*,structured_blade=False,split_material_boundaries=False,structured_grip=False,small_mesh_ratio=1):
+    if not 0<small_mesh_ratio<=1:raise ValueError('small_mesh_ratio must be within (0,1]')
     if source_scene.get('diagnosticOnly'):
         raise ValueError('Optical control scenes are not export candidates')
     previous=bpy.context.window.scene
@@ -90,6 +91,11 @@ def prepare(source_scene,item_id,size=1024,*,structured_blade=False,split_materi
             for value in attr.data:value.value=source_id
             triangles=helper.triangle_count([low])
             ratio=1 if authored_blade or authored_grip else .035 if 'grown' in source.name or 'leather wrapped' in source.name else .075 if 'Forged blade' in source.name else .045 if 'charcoal mass' in source.name else .25 if triangles>1500 else 1
+            # Multi-part heads can exceed the complete-item budget while each
+            # individual feather stays below the usual reduction threshold.
+            # Opt in per candidate; accepted items retain the original default.
+            if not authored_blade and not authored_grip and 80<=triangles<=1500:
+                ratio=min(ratio,small_mesh_ratio)
             if ratio<1:
                 bpy.ops.object.select_all(action='DESELECT');low.select_set(True);bpy.context.view_layer.objects.active=low
                 modifier=low.modifiers.new('Preserve source silhouette for projection','DECIMATE');modifier.ratio=ratio;modifier.use_collapse_triangulate=True

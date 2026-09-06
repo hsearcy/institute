@@ -87,13 +87,14 @@
       "id": "phoenix",
       "name": "Phoenix Scepter",
       "attachment": "hand.R",
-      "silhouette": "Short ceremonial scepter with rising unequal wing blades enclosing a coal heart",
-      "materials": "Aged gilded bronze, red enamel feather recesses, restrained amber core",
+      "silhouette": "Short ceremonial scepter with rising unequal wing blades around a seated garnet heart",
+      "materials": "Aged gilded bronze with sheltered inner roots, red enamel recesses and polished deep garnet",
       "length": 1.02,
       "preview": {
-        "azimuth": 20,
+        "azimuth": 28,
         "elevation": 12,
         "margin": 1.18,
+        "roll": 22,
         "background": "transparent",
         "derivedFrom": "accepted-item-glb"
       }

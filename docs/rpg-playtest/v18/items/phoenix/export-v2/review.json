@@ -1,0 +1,17 @@
+{
+  "id": "phoenix",
+  "candidateSHA256": "cf380c75f63b6a6c21c41ad5cc74674f9cba52b4358847996cad952b5f779631",
+  "bytes": 994884,
+  "triangles": 11212,
+  "materials": 1,
+  "sourceGate": 8,
+  "exactExportVisualGate": {
+    "construction": 8,
+    "gripPommelTransfer": 8,
+    "completeMaterialFidelity": 6.5,
+    "blocker": "All six feather tips have broad jet-black caps; enamel strips and retaining claws also black versus source. No-normal control pending."
+  },
+  "nativeGate": "pending",
+  "thumbnailGate": "pending",
+  "installed": false
+}

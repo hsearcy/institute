@@ -97,7 +97,7 @@ def add_authored_weapon(root,scene,collection):
     finally:bpy.context.window.scene=prior
 
 
-def build_candidate(root,native_shafts=False):
+def build_candidate(root,native_shafts=False,native_remnants=False):
     anatomy=module(Path(root)/'scripts/blender/experiments/authored_enemies.py','equipped_anatomy')
     prior=bpy.context.window.scene
     try:
@@ -111,6 +111,7 @@ def build_candidate(root,native_shafts=False):
         for obj in collection.objects:
             if obj.type=='MESH':obj.data.materials.clear();obj.data.materials.append(mat)
         harness(collection);add_authored_weapon(root,scene,collection)
+        if native_remnants:module(Path(root)/'scripts/blender/experiments/skeleton_remnants.py','skeleton_remnants').build(collection)
         bpy.context.window.scene=scene
         joints=anatomy.articulate_anatomy_study(collection,True)
         collection['status']='Equipped candidate only; source/export/native review required'

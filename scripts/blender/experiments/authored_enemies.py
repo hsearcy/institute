@@ -169,7 +169,10 @@ def _articulate_anatomy_study_active(collection, guarded=True):
         if obj.type!='MESH':continue
         name=re.sub(r'\.\d{3}$','',obj.get('anatomicalSource',''))
         side='R' if name.endswith('.L') else 'L'
-        if obj.get('equipmentHand'):part='ArmLower'+obj['equipmentHand']
+        if obj.get('authoredEquipmentJoint'):
+            part=obj['authoredEquipmentJoint']
+            if part not in joints:raise ValueError('Unknown equipment attachment joint: '+part)
+        elif obj.get('equipmentHand'):part='ArmLower'+obj['equipmentHand']
         elif obj.get('authoredHarness'):part='Body'
         elif 'skull' in name or 'spine_cervical' in name:part='Head'
         elif 'arm_humerus' in name:part='ArmUpper'+side

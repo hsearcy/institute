@@ -10,10 +10,10 @@ from mathutils import Vector,Matrix
 from equipped_skeleton import build_candidate,module
 
 
-def prepare(root,directory,size=2048,native_shafts=False,source_candidate=None):
+def prepare(root,directory,size=2048,native_shafts=False,source_candidate=None,native_remnants=False):
     previous=bpy.context.window.scene
     try:
-        posed,collection,joints,anatomy=source_candidate or build_candidate(root,native_shafts=native_shafts)
+        posed,collection,joints,anatomy=source_candidate or build_candidate(root,native_shafts=native_shafts,native_remnants=native_remnants)
         if native_shafts and not collection.get('nativeShaftComparison'):
             raise ValueError('Supplied source candidate lacks the requested native shaft comparison')
         bpy.context.window.scene=posed
@@ -56,7 +56,7 @@ def prepare(root,directory,size=2048,native_shafts=False,source_candidate=None):
                 for item in attr.data:item.value=value
             label=source.get('anatomicalSource','')
             ratio=.30 if label=='skull' else .20 if 'ripcage' in label else .18 if label=='hip' else .22 if any(k in label for k in ('proximal.','middle.','distal.','metacarpal')) else .12
-            if source.get('equipmentHand') or source.get('authoredHarness'):ratio=1
+            if source.get('equipmentHand') or source.get('authoredHarness') or source.get('authoredEquipmentJoint'):ratio=1
             if ratio<1:
                 bpy.ops.object.select_all(action='DESELECT');low.select_set(True);bpy.context.view_layer.objects.active=low
                 modifier=low.modifiers.new('Anatomical silhouette density','DECIMATE');modifier.ratio=ratio;modifier.use_collapse_triangulate=True
@@ -98,9 +98,28 @@ def prepare(root,directory,size=2048,native_shafts=False,source_candidate=None):
         directory.mkdir(parents=True,exist_ok=True)
         state=dict(scene=scene,sources=sources,original_sources=sources,weapon_grip=weapon_grip,low=low,destination=destination,material=material,target=target,images=images,directory=directory,completed=set(),source_triangles=masonry.triangle_count(sources),size=size,batches=batches,channel_batches={},parts=parts,pivots=pivots,guard=guard,helper=masonry,root=Path(root))
         if native_shafts:state['native_shaft_comparison']=json.loads(collection['nativeShaftComparison'])
+        if collection.get('nativeRemnantsTriangles'):state['native_remnants_triangles']=int(collection['nativeRemnantsTriangles'])
         print(json.dumps({'source':state['source_triangles'],'low':masonry.triangle_count([low]),'groups':len(batches),'parts':parts}))
         return state
     finally:bpy.context.window.scene=previous
+
+
+def prepare_native_candidate(root,directory,source_candidate=None,native_remnants=False):
+    """Reproduce the reviewed native source/atlas recipe, ready for staged bakes.
+
+    Call bake(state, 'albedo'), bake(state, 'normal'), bake(state, 'orm'), then
+    finish(state). The caller may release Blender between each bounded stage.
+    All work stays in the requested non-public candidate directory.
+    """
+    directory=Path(directory)
+    base=prepare(root,directory/'work-base',size=1024,native_shafts=True,
+                 source_candidate=source_candidate,native_remnants=native_remnants)
+    joined=joined_source_comparison(base,directory/'work-joined')
+    separate_held_weapon(joined)
+    atlas=enlarged_hand_chart_comparison(joined,directory/'work-atlas')
+    final=isolated_carpal_normal_control(atlas,directory)
+    final['exclude_bone_micrograin']=True
+    return final
 
 
 def bake(state,kind,batch_index=None):
@@ -275,7 +294,8 @@ def finish(state):
         report['transfer']={'excludeBoneMicrograin':bool(state.get('exclude_bone_micrograin')),
                             'normalProjectionGroups':len(state.get('normal_batches',state['batches'])),
                             'handChartArea':state.get('hand_chart_area'),
-                            'nativeShaftComparison':state.get('native_shaft_comparison')}
+                            'nativeShaftComparison':state.get('native_shaft_comparison'),
+                            'nativeRemnantsTriangles':state.get('native_remnants_triangles')}
         (state['directory']/'skeleton-candidate.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report));return output
     finally:bpy.context.window.scene=previous
 

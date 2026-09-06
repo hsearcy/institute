@@ -1,0 +1,22 @@
+{
+  "before": {
+    "frame": 195363,
+    "paused": true,
+    "playing": false,
+    "state": "{\"profileId\":\"rpg-playtest\",\"xp\":826,\"level\":5,\"xpIntoLevel\":196,\"xpForNextLevel\":270,\"skillPoints\":1,\"skills\":{\"cleave\":1,\"storm\":1,\"storm_chain\":1},\"inventory\":[\"apprentice\",\"cinderwand\",\"cleaver\",\"glacier\"],\"equippedItemId\":\"glacier\",\"selectedSpellId\":\"ember\",\"appearanceId\":\"wayfarer\",\"totalKills\":48,\"expeditionsCompleted\":1,\"expedition\":{\"id\":\"fce51ccd-9282-49e9-a678-645e25c69a96\",\"regionId\":\"embercrypt\",\"encounterIndex\":5,\"encountersTotal\":6,\"cleared\":true,\"startedAt\":1788702462248,\"combat\":{\"version\":1,\"encounterIndex\":5,\"casts\":6,\"enemies\":[{\"id\":\"enemy-0\",\"hp\":0,\"maxHp\":36},{\"id\":\"enemy-1\",\"hp\":0,\"maxHp\":10},{\"id\":\"enemy-2\",\"hp\":0,\"maxHp\":12},{\"id\":\"enemy-3\",\"hp\":0,\"maxHp\":12},{\"id\":\"enemy-4\",\"hp\":0,\"maxHp\":14},{\"id\":\"enemy-5\",\"hp\":0,\"maxHp\":10},{\"id\":\"enemy-6\",\"hp\":0,\"maxHp\":10},{\"id\":\"enemy-7\",\"hp\":0,\"maxHp\":16},{\"id\":\"enemy-8\",\"hp\":0,\"maxHp\":12},{\"id\":\"enemy-9\",\"hp\":0,\"maxHp\":14}]}}}"
+  },
+  "run": {
+    "code": 0,
+    "stdout": "{\"label\":\"chain-public-v3\",\"success\":true,\"video\":\"/home/houston/git/institute/tmp/chain-public-v3-1788736068498/video/page@d8fc9b0063a40ef071a0d5da3a70433d.webm\",\"casts\":[{\"before\":[12,6,8,8,10,6],\"after\":[5,0,1,1,10,6],\"encounter\":0},{\"before\":[5,0,1,1,10,6],\"after\":[0,0,0,0,3,6],\"encounter\":0}],\"maxVisible\":6,\"hits\":8}\n",
+    "stderr": ""
+  },
+  "stillHeld": true,
+  "success": true,
+  "restored": {
+    "sameWorld": true,
+    "frame": 196739,
+    "paused": true,
+    "playing": false,
+    "state": "{\"profileId\":\"rpg-playtest\",\"xp\":826,\"level\":5,\"xpIntoLevel\":196,\"xpForNextLevel\":270,\"skillPoints\":1,\"skills\":{\"cleave\":1,\"storm\":1,\"storm_chain\":1},\"inventory\":[\"apprentice\",\"cinderwand\",\"cleaver\",\"glacier\"],\"equippedItemId\":\"glacier\",\"selectedSpellId\":\"ember\",\"appearanceId\":\"wayfarer\",\"totalKills\":48,\"expeditionsCompleted\":1,\"expedition\":{\"id\":\"fce51ccd-9282-49e9-a678-645e25c69a96\",\"regionId\":\"embercrypt\",\"encounterIndex\":5,\"encountersTotal\":6,\"cleared\":true,\"startedAt\":1788702462248,\"combat\":{\"version\":1,\"encounterIndex\":5,\"casts\":6,\"enemies\":[{\"id\":\"enemy-0\",\"hp\":0,\"maxHp\":36},{\"id\":\"enemy-1\",\"hp\":0,\"maxHp\":10},{\"id\":\"enemy-2\",\"hp\":0,\"maxHp\":12},{\"id\":\"enemy-3\",\"hp\":0,\"maxHp\":12},{\"id\":\"enemy-4\",\"hp\":0,\"maxHp\":14},{\"id\":\"enemy-5\",\"hp\":0,\"maxHp\":10},{\"id\":\"enemy-6\",\"hp\":0,\"maxHp\":10},{\"id\":\"enemy-7\",\"hp\":0,\"maxHp\":16},{\"id\":\"enemy-8\",\"hp\":0,\"maxHp\":12},{\"id\":\"enemy-9\",\"hp\":0,\"maxHp\":14}]}}}"
+  }
+}

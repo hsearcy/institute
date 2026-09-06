@@ -1,0 +1,42 @@
+{
+  "recorded": true,
+  "viewport": {
+    "inner": [
+      1440,
+      900
+    ],
+    "screen": [
+      1440,
+      900
+    ],
+    "dpr": 1.0000000149011612
+  },
+  "renderer": "ANGLE (Intel, Mesa Intel(R) Iris(R) Xe Graphics (ADL GT2), OpenGL ES 3.2)",
+  "softwareRenderer": false,
+  "warm": {
+    "programs": 162,
+    "durationMs": 595.9000000059605
+  },
+  "preAttackPrograms": 163,
+  "runtimePrograms": [
+    163
+  ],
+  "attackPreparation": [
+    {
+      "at": 9981.5,
+      "duration": 5.0999999940395355,
+      "spell": "storm"
+    },
+    {
+      "at": 15554.40000000596,
+      "duration": 0.8999999761581421,
+      "spell": "storm"
+    }
+  ],
+  "castFrameMs": {
+    "median": 22.5,
+    "p95": 29.899999976158142,
+    "max": 42.19999998807907
+  },
+  "scope": "Two recorded base Storm casts, isolated existing-preview RAF; not an unrecorded general performance benchmark."
+}

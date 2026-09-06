@@ -22,6 +22,7 @@ import { enemyRoster } from './world/enemyRoster';
 import { EnemyAnimator } from './world/EnemyAnimator';
 import { HeldEquipment, authoredHeroGrip } from './world/HeldEquipment';
 import { createCleaveStrike, cleaveEdgeMaterial, CLEAVE_RELEASE, CLEAVE_SPEED } from './world/cleave';
+import { createChainSequence, chainLightningGeometry, chainLightningMaterial, createChainCharge, CHAIN_BOLT_LIFETIME } from './world/chain';
 import { RoomCutaway } from './world/RoomCutaway';
 import { ITEM_MODELS } from './itemModels';
 import { createHitReaction, sampleHitReaction, type HitReaction, type CombatHit } from './world/hitReactions';
@@ -60,6 +61,8 @@ export class DungeonWorld {
   private heroUsesAuthoredMotion = false;
   private heldEquipment?: HeldEquipment;
   private cleaveCandidate = true;
+  private chainCandidate = true;
+  private chainUsesHandOrigin = false;
   private readonly floorGroup = new THREE.Group();
   private vaultScenery?: THREE.Group;
   private sceneryMeshes: THREE.Object3D[] = [];
@@ -282,6 +285,7 @@ export class DungeonWorld {
     const warmMaterials: THREE.Material[] = [novaMaterial(), fireSheetMaterial(), firePlumeMaterial(0, 1), bladeWakeMaterial(), ashMaterial(), phoenixFeatherMaterial(), stormWispMaterial(0x7787a4), stormWispMaterial(0xa9bdff, true), lightningMaterial(0xa9bdff), ballLightningVolumeMaterial(), ballLightningFilamentMaterial(), ballLightningContactMaterial(), ballLightningContactMaterial(true), fireNovaFrontMaterial(), fireNovaVolumeMaterial()];
     warmMaterials.push(frostfallCrystalMaterial(), frostfallCrystalMaterial(true), frostfallContactMaterial());
     warmMaterials.push(cleaveEdgeMaterial());
+    warmMaterials.push(chainLightningMaterial());
     const ignitionWarmup = createNovaIgnition();
     for (const layer of [ignitionWarmup.mesh, ignitionWarmup.seed]) { warmMaterials.push(layer.material); layer.geometry.dispose(); }
     for (const layer of createFireNovaContacts(1).layers) { warmMaterials.push(layer.material); layer.geometry.dispose(); }
@@ -341,7 +345,9 @@ export class DungeonWorld {
     const fireFlash = new THREE.Mesh(new THREE.PlaneGeometry(.3, .3), new THREE.MeshBasicMaterial({ color: 0xffebbd, map: this.glowMap, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
     const scorch = new THREE.Mesh(new THREE.PlaneGeometry(.3, .3), new THREE.MeshBasicMaterial({ color: 0x32261b, alphaMap: this.glowMap, transparent: true, opacity: .2, depthWrite: false }));
     const discharge = new THREE.Mesh(lightningGeometry(origin.clone().setY(1.2), origin.clone().add(new THREE.Vector3(1.5, .9, -1)), .03, view, 1), lightningMaterial(0x7abaff));
-    const layers = [ignition.mesh, ignition.seed, ...wave.layers, ...contacts.layers, ...ball.layers, ...electricalContacts.layers, ...frostCrystal.layers, ...frostContact.layers, bladeWake, cuttingEdge, ash, fireStroke, fireFlash, scorch, discharge];
+    const chainDischarge = new THREE.Mesh(chainLightningGeometry(origin.clone().setY(1.2), origin.clone().add(new THREE.Vector3(-1.2, 1, -.8)), view, 7), chainLightningMaterial());
+    const chainCharge = createChainCharge(); chainCharge.position.copy(origin).y += 1.3; chainCharge.quaternion.copy(this.camera.quaternion);
+    const layers = [ignition.mesh, ignition.seed, ...wave.layers, ...contacts.layers, ...ball.layers, ...electricalContacts.layers, ...frostCrystal.layers, ...frostContact.layers, bladeWake, cuttingEdge, ash, fireStroke, fireFlash, scorch, discharge, chainDischarge, chainCharge];
     const hand = origin.clone().setY(1.5), ground = origin.clone().setY(.06);
     this.heroVisual.getObjectByName('CastOrigin')?.getWorldPosition(hand);
     ignition.update(hand, ground, .13, new THREE.Vector3(.7, 0, 0));
@@ -1122,6 +1128,8 @@ export class DungeonWorld {
   /** Review switch for comparing the accepted blade effect with the legacy
    * fallback. Rigs without measured blade endpoints always use that fallback. */
   setCleaveCandidate(enabled: boolean): void { this.cleaveCandidate = enabled; }
+  /** Rigs without an authored CastOrigin retain the legacy chain effect. */
+  setChainCandidate(enabled: boolean): void { this.chainCandidate = enabled; }
 
   async attack(spellId: string, options: AttackOptions = {}): Promise<void> {
     if (this.disposed || this.attacking) return;
@@ -1141,6 +1149,9 @@ export class DungeonWorld {
     const color = school === 'ember' ? 0xff7d19 : school === 'frost' ? 0x8bdef1 : 0x8bacff;
     const bladeGrip = new THREE.Vector3(), bladeTip = new THREE.Vector3();
     const mountedCleave = effect === 'cleave' && this.cleaveCandidate && !!this.heldEquipment?.sampleWorldBlade(bladeGrip, bladeTip);
+    const chainOrigin = effect === 'chain-lightning' && this.chainCandidate ? this.heroVisual.getObjectByName('CastOrigin') : undefined;
+    const anchoredChain = !!chainOrigin;
+    this.chainUsesHandOrigin = anchoredChain;
     this.lastAttack = { spellId, effect, options: { ...options } };
     this.novaContacts = undefined;
     this.setElectricMaterials(true, RPG_SPELLS.find(spell => spell.id === spellId)?.school === 'ember' ? 'burn' : 'electric');
@@ -1164,6 +1175,30 @@ export class DungeonWorld {
         strike.update(bladeGrip, bladeTip, this.elapsed - started, this.elapsed);
       } : undefined));
       this.schedule(duration - .05, () => strike.finish(bladeGrip, bladeTip));
+    }
+    if (anchoredChain) {
+      const started = this.elapsed, hand = new THREE.Vector3();
+      const sampleHand = () => chainOrigin!.getWorldPosition(hand);
+      const charge = createChainCharge();
+      this.effect(charge, .39, () => {
+        sampleHand(); charge.position.copy(hand); charge.quaternion.copy(this.camera.quaternion);
+        const age = this.elapsed - started, gather = THREE.MathUtils.smoothstep(age, .04, .29);
+        charge.scale.setScalar(.45 + .55 * gather);
+        charge.material.uniforms.progress.value = age / .35;
+        charge.material.uniforms.opacity.value = gather * (1 - THREE.MathUtils.smoothstep(age, .31, .38)) * .8;
+      });
+      const chain = createChainSequence(targets.map(enemy => ({
+        position: enemy.root.position, height: enemy.height,
+        contact: (from: THREE.Vector3) => this.hitEnemy(enemy, color, hitById.get(enemy.id), from),
+      })), (from, arrival, _index, echo) => this.chainBolt(from, arrival, echo), Boolean(options.chains));
+      // An invisible lifetime carrier runs after the hero mixer and enemy pose
+      // update, so links sample the hand and arrivals shown in this frame.
+      const carrier = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial());
+      carrier.visible = false;
+      this.effect(carrier, 1.5, () => {
+        sampleHand(); chain.update(hand, this.elapsed - started);
+      });
+      this.schedule(1.45, () => { sampleHand(); chain.finish(hand); });
     }
     const resolveHorde = (delay: number) => targets.forEach((enemy, i) => {
       const offset = enemy.root.position.clone().sub(origin).setY(0), distance = offset.length();
@@ -1207,9 +1242,9 @@ export class DungeonWorld {
         charge.update(hand, this.camera.getWorldDirection(view).negate(), this.elapsed - started, this.elapsed);
       } : undefined));
     }
-    if (effect !== 'nova' && effect !== 'ball-lightning' && !mountedCleave) this.emit(origin.clone().setY(1.3), color, 28, 1.1, .75);
+    if (effect !== 'nova' && effect !== 'ball-lightning' && !mountedCleave && !anchoredChain) this.emit(origin.clone().setY(1.3), color, 28, 1.1, .75);
     this.schedule(.18, () => {
-      this.burstLight.position.copy(origin).setY(2.8); this.burstLight.color.setHex(color); this.burstLight.intensity = mountedCleave ? 12 : effect === 'frostfall' ? 24 : 100;
+      this.burstLight.position.copy(origin).setY(2.8); this.burstLight.color.setHex(color); this.burstLight.intensity = anchoredChain ? 0 : mountedCleave ? 12 : effect === 'frostfall' ? 24 : 100;
       switch (effect) {
         case 'cleave': {
           if (mountedCleave) break;
@@ -1337,6 +1372,7 @@ export class DungeonWorld {
           resolveHorde(.83); break;
         }
         case 'chain-lightning': {
+          if (anchoredChain) break;
           this.chainLightning(origin, 0x9ac4ff, targets);
           if (options.chains) this.schedule(.45, () => this.chainLightning(origin, 0xe1f5ff, targets));
           resolveHorde(.17); break;
@@ -1781,11 +1817,18 @@ export class DungeonWorld {
     });
   }
 
-  private hitEnemy(enemy: Enemy, _color: number, hit?: CombatHit, bladeOrigin?: THREE.Vector3): void {
+  private chainBolt(from: THREE.Vector3, arrival: THREE.Vector3, echo = false): void {
+    const view = this.camera.getWorldDirection(new THREE.Vector3()).negate();
+    const material = chainLightningMaterial(); material.uniforms.opacity.value = echo ? .7 : 1;
+    const mesh = new THREE.Mesh(chainLightningGeometry(from, arrival, view, Math.floor(Math.random() * 0x7fffffff)), material);
+    this.effect(mesh, CHAIN_BOLT_LIFETIME, progress => { material.uniforms.progress.value = progress; });
+  }
+
+  private hitEnemy(enemy: Enemy, _color: number, hit?: CombatHit, contactOrigin?: THREE.Vector3): void {
     if (enemy.dead) return;
     const school = RPG_SPELLS.find(spell => spell.id === this.lastAttack?.spellId)?.school;
     const element = school === 'ember' ? 'fire' : school === 'storm' ? 'electric' : 'other';
-    const reactionOrigin = bladeOrigin ?? this.hero.position;
+    const reactionOrigin = contactOrigin ?? this.hero.position;
     const reaction = createHitReaction({ at: this.elapsed, x: enemy.root.position.x, z: enemy.root.position.z, sourceX: reactionOrigin.x, sourceZ: reactionOrigin.z, phase: enemy.phase, heavy: enemy.brute, maxHp: enemy.maxHp, hit, element });
     enemy.root.userData.hitReaction = reaction;
     enemy.hp = hit ? hit.hpAfter : 0;
@@ -1800,7 +1843,7 @@ export class DungeonWorld {
     // Spell contacts own their element. The body response must remain visible
     // rather than disappear inside a generic particle explosion.
     if (nova) this.novaContacts?.strike(this.enemies.indexOf(enemy), enemy.root.position, enemy.origin.clone().sub(this.hero.position).setY(0).normalize(), this.elapsed, enemy.brute ? 1.3 : .85 + Math.abs(Math.sin(enemy.phase)) * .25);
-    if (!nova && !bladeOrigin && (this.lastAttack?.options.burning || RPG_SPELLS.find(spell => spell.id === this.lastAttack?.spellId)?.school === 'ember')) {
+    if (!nova && !(this.lastAttack?.effect === 'cleave' && contactOrigin) && (this.lastAttack?.options.burning || RPG_SPELLS.find(spell => spell.id === this.lastAttack?.spellId)?.school === 'ember')) {
       this.fireContact(enemy.root.position, enemy.brute ? 1.35 : .7 + Math.abs(Math.sin(enemy.phase)) * .45);
       const scorch = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.1), new THREE.MeshBasicMaterial({ color: 0x32261b, alphaMap: this.glowMap, transparent: true, opacity: .2, depthWrite: false }));
       scorch.rotation.x = -Math.PI / 2; scorch.position.copy(enemy.origin).y = -.025;
@@ -2095,10 +2138,11 @@ export class DungeonWorld {
     if (recentHit) {
       const reaction = recentHit.root.userData.hitReaction as HitReaction;
       const response = sampleHitReaction(reaction, this.elapsed);
-      const frostfall = this.lastAttack?.spellId === 'frost', reach = frostfall ? .65 : .35;
-      this.burstLight.position.copy(recentHit.root.position).add(new THREE.Vector3(-reaction.dx * reach, recentHit.height * .75 + .45, -reaction.dz * reach));
+      const frostfall = this.lastAttack?.spellId === 'frost', chain = this.chainUsesHandOrigin;
+      const reach = chain ? .7 : frostfall ? .65 : .35;
+      this.burstLight.position.copy(recentHit.root.position).add(new THREE.Vector3(-reaction.dx * reach, chain ? recentHit.height + .85 : recentHit.height * .75 + .45, -reaction.dz * reach));
       this.burstLight.color.setHex(reaction.element === 'fire' ? 0xffa35a : reaction.element === 'electric' ? 0x8abbff : frostfall ? 0x76bcca : 0xd6dce8);
-      this.burstLight.intensity = (frostfall ? 3 : 9) * response.light;
+      this.burstLight.intensity = (chain ? 2 : frostfall ? 3 : 9) * response.light;
     }
     this.cameraTarget.lerp(this.hero.position, 1 - Math.exp(-delta * 3.7));
     const shake = this.shake;

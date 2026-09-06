@@ -21,6 +21,7 @@ import { phoenixFeatherMaterial, stormWispMaterial } from './world/materials';
 import { enemyRoster } from './world/enemyRoster';
 import { EnemyAnimator } from './world/EnemyAnimator';
 import { HeldEquipment, authoredHeroGrip } from './world/HeldEquipment';
+import { RoomCutaway } from './world/RoomCutaway';
 import { ITEM_MODELS } from './itemModels';
 import { createHitReaction, sampleHitReaction, type HitReaction, type CombatHit } from './world/hitReactions';
 import { advanceHeroTravel, heroDoorwayRoute, setPlanarHeroHeading, settleHeroTravel } from './world/heroLocomotion';
@@ -65,6 +66,7 @@ export class DungeonWorld {
   private readonly enemyGroup = new THREE.Group();
   private readonly effectsGroup = new THREE.Group();
   private readonly propGroup = new THREE.Group();
+  private readonly roomCutaway = new RoomCutaway();
   private readonly biomeGroup = new THREE.Group();
   private biomeBuilt = "";
   private stoneSurfaceLoaded = false;
@@ -269,6 +271,7 @@ export class DungeonWorld {
     this.addModelProps();
     this.installMasonryPiers();
     this.installMasonryPosts();
+    this.roomCutaway.prepare([...this.floorGroup.children, ...this.propGroup.children]);
     this.biomeBuilt = ""; this.buildBiome();
     this.renderer.shadowMap.needsUpdate = true;
     // Compile authored actors and uncommon effect programs during loading,
@@ -358,6 +361,25 @@ export class DungeonWorld {
         }
         renderer.shadowMap.needsUpdate = true;
         renderer.render(this.scene, this.camera);
+      }
+      // A real draw prepares both the nearest-surface depth pass and the
+      // transparent stone variant. Visit every doorway during loading so a
+      // first crossing cannot compile these programs in the middle of travel.
+      const cameraPosition = this.camera.position.clone(), cameraRotation = this.camera.quaternion.clone();
+      const moon = this.scene.getObjectByName('moon') as THREE.DirectionalLight;
+      const moonPosition = moon.position.clone(), moonTarget = moon.target.position.clone();
+      try {
+        for (let room = 0; room < 6; room++) {
+          const z = -room * 20 - 10.5;
+          this.camera.position.set(17, 25, z + 20); this.camera.lookAt(0, .2, z - 1.8); this.camera.updateMatrixWorld();
+          moon.position.set(-12, 24, z - 10); moon.target.position.set(0, 0, z);
+          this.roomCutaway.update(z); renderer.shadowMap.needsUpdate = true;
+          renderer.render(this.scene, this.camera);
+        }
+      } finally {
+        this.camera.position.copy(cameraPosition); this.camera.quaternion.copy(cameraRotation); this.camera.updateMatrixWorld();
+        moon.position.copy(moonPosition); moon.target.position.copy(moonTarget);
+        this.roomCutaway.update(this.cameraTarget.z);
       }
       // Complete first-use driver work before the loading promise resolves.
       renderer.getContext().finish();
@@ -2058,12 +2080,12 @@ export class DungeonWorld {
     for (const object of [...this.floorGroup.children, ...this.propGroup.children]) {
       if (typeof object.userData.room === 'number') {
         const center = object.userData.room * -20;
-        // Cut away the room behind the camera once its doorway is crossed;
-        // keep its ground so the viewport still has a continuous dungeon floor.
-        object.visible = Math.abs(center - this.cameraTarget.z) < 37
-          && !(object.userData.occluder && this.cameraTarget.z < center - 10);
+        object.visible = Math.abs(center - this.cameraTarget.z) < 37;
       }
     }
+    // Ground remains continuous; only foreground architecture fades as the
+    // camera passes its doorway. Materials and shadows share the same weight.
+    this.roomCutaway.update(this.cameraTarget.z);
     this.renderer.info.reset();
     if (this.softwareRenderer) this.renderer.render(this.scene, this.camera); else this.composer.render(delta);
   }
@@ -2103,6 +2125,7 @@ export class DungeonWorld {
 
   dispose(): void {
     if (this.disposed) return; this.disposed = true; cancelAnimationFrame(this.frame); this.attackResolve?.(); this.scheduled.length = 0;
+    this.roomCutaway.clear();
     this.releaseEnemyInstances();
     const geometries = new Set<THREE.BufferGeometry>(), materials = new Set<THREE.Material>(), textures = new Set<THREE.Texture>();
     const collect = (object: THREE.Object3D) => {

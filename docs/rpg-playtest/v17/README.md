@@ -1,10 +1,11 @@
 # Doorway cutaway candidate, 2026-09-06
 
-**Independent review pending; the global art gate remains failed.** The three
-subagents remain unavailable due to their service usage limit. No score is
-assigned by the implementer. The candidate module is not installed in
-DungeonWorld; its existing abrupt visibility rule remains until review and
-integration. The new `traveling` readout is installed and tested in actual play.
+**The independently reviewed candidate crossing scores 8/10; the global art
+gate remains failed.** The reviewer approved its fade, visible shadow/light
+continuity, hero visibility, and observed transition. Review tools are available
+again. RoomCutaway is now integrated into DungeonWorld with preparation during
+loading. The separate integrated recording below is awaiting visual review.
+The new `traveling` readout is installed and tested in actual play.
 
 ## What changed
 
@@ -26,8 +27,8 @@ Four alternatives were exercised in real Chromium room transitions:
 The final approach needs a real warmup draw before combat. Without it, its first
 appearance compiled new programs and stalled the crossing. The warmed run uses
 a 128x128 temporary target before starting combat; the target is disposed and
-the normal render target restored. Production integration must perform that
-preparation during loading and include all required room/material variants.
+the normal render target restored. Production now performs that preparation
+during loading, visiting all six room positions to draw their material variants.
 
 ## Exact visual evidence
 
@@ -52,10 +53,25 @@ The clip and `uninterrupted-evidence.json` establish:
 - Final hero position approximately `(1.1984, 0, -18.5901)`, camera target Z
   -18.4910, `traveling === false`, and previous-room opacity zero.
 
-Root observation: the prepass removes the conspicuous stippling and internal
-face accumulation. Independent review must still assess the whole motion,
-shadow continuity, transparent objects behind the fading walls, and whether
-the fade feels appropriate to the concept. No whole-world approval follows.
+Independent review confirms the prepass removes the conspicuous stippling and
+internal face accumulation in this crossing. Other doorways, biomes, and
+transparent objects behind fading walls remain separate coverage. No whole-world
+approval follows. See the current art-review ledger for the bounded scores.
+
+## Production integration verification
+
+`integrated-room-crossing.webm` and `integrated-evidence.json` record a fresh
+disposable-profile run using the installed class and loading warmup, without
+injected fading or preparation. Two Fire Nova casts leave four survivors, then
+clear the room and advance to seven enemies. There are ten hit callbacks and no
+page errors or context-loss events. The hero reaches approximately
+`(1.1964, 0, -18.5775)` with `traveling === false`.
+
+The fade includes 76 intermediate-opacity frames over 1.422 seconds. Programs
+remain at 159; recorded intervals are median 18.8 ms, p95 23.2 ms, maximum
+24.1 ms. Loading preparation took 1.662 seconds in this run. These instrumented
+measurements establish this run's behavior, not general performance approval.
+Both the integrated build and all 368 tests pass; their logs are included.
 
 ## Travel verification correction
 
@@ -77,7 +93,7 @@ the final position. No learning state or reward logic was changed.
 resource isolation, shadow/flame uniforms, reversible lights, and temporary
 prepass lifetime. All gameplay uses disposable local progress.
 
-Review and integrate the preferred candidate, warm its programs during loading,
-then verify other doorways and actual browser performance. The existing portal
+Review the integrated recording, then verify other doorways and actual browser
+performance. The existing portal
 model, other world art, characters, all item models and remaining spell effects
 retain their separate unfinished gates.

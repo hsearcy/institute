@@ -46,5 +46,21 @@
   "rpg-cutaway-build.log.txt": {
     "bytes": 722,
     "sha256": "b61da3d9198404c872fd5eeaa9ee5e6fa353cb996b4eec38498da9857018ab78"
+  },
+  "integrated-evidence.json": {
+    "bytes": 992742,
+    "sha256": "ad07e5e6f34fc488659096e59ea068624c395223cb80e4b295c3a0cce4eecf23"
+  },
+  "integrated-room-crossing.webm": {
+    "bytes": 3275694,
+    "sha256": "b7d42e5b1b24ac7aaadf2dba33eab888fe653b1728ae89ee7658098bd6d2eba0"
+  },
+  "integrated-tests.log.txt": {
+    "bytes": 39040,
+    "sha256": "1b4de291bf35e215ace56090447b48715105e8a8b9aded6894db734f4056f9f9"
+  },
+  "integrated-build.log.txt": {
+    "bytes": 722,
+    "sha256": "842407557565a9e7c18536bf061ec509220e0cd13fd289522eb5473717fb76f8"
   }
 }

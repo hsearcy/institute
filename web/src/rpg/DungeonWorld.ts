@@ -2068,6 +2068,12 @@ export class DungeonWorld {
     if (this.softwareRenderer) this.renderer.render(this.scene, this.camera); else this.composer.render(delta);
   }
 
+  /** Includes queued doorway waypoints, not merely the current walk clip. */
+  get traveling(): boolean {
+    return this.heroTravelWaypoints.length > 0
+      || this.hero.position.distanceToSquared(this.destination) > .025 ** 2;
+  }
+
   get lootScreenPosition(): { x: number; y: number } | null {
     if (!this.lootPosition || this.elapsed >= this.lootExpiresAt) return null;
     const projected = this.lootPosition.clone().add(new THREE.Vector3(0, .65, 0)).project(this.camera);

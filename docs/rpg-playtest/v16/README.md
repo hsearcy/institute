@@ -7,6 +7,11 @@ substitute for the requested independent 8/10 review.
 
 ## Skeleton v10: actual combat
 
+Follow-up verification correction: these temporary harnesses referenced a then
+undefined `world.traveling` property. Their `afterTravel` snapshot does not prove
+arrival. Combat/room-state claims below remain valid; the corrected full-crossing
+evidence and actual travel readout are documented in `../v17/README.md`.
+
 `skeleton-v10/actual-two-casts.webm` records two actual Fire Nova answers with the
 candidate GLB substituted by browser routing. The public skeleton is unchanged.
 `manifest.json` identifies the exact candidate bytes. The source/export reviews

@@ -1,0 +1,97 @@
+{
+  "sha256": "36050c17559a894ea65a67bb5a365b4fbb663e07744e3e033e730e7e7d9f3c65",
+  "bytes": 10738252,
+  "triangles": 32518,
+  "meshes": 1,
+  "primitives": 1,
+  "materials": 1,
+  "images": [
+    {
+      "name": "worn-pier-normal",
+      "dimensions": [
+        2048,
+        2048
+      ],
+      "bytes": 4392633,
+      "extrema": [
+        [
+          2,
+          232
+        ],
+        [
+          0,
+          255
+        ],
+        [
+          0,
+          255
+        ]
+      ]
+    },
+    {
+      "name": "worn-pier-orm",
+      "dimensions": [
+        2048,
+        2048
+      ],
+      "bytes": 3709532,
+      "extrema": [
+        [
+          0,
+          255
+        ],
+        [
+          0,
+          242
+        ],
+        [
+          0,
+          0
+        ]
+      ]
+    },
+    {
+      "name": "worn-pier-albedo",
+      "dimensions": [
+        2048,
+        2048
+      ],
+      "bytes": 1236718,
+      "extrema": [
+        [
+          0,
+          195
+        ],
+        [
+          0,
+          183
+        ],
+        [
+          0,
+          166
+        ]
+      ]
+    }
+  ],
+  "extensions": [],
+  "animations": 0,
+  "skins": 0,
+  "positionAccessorBounds": {
+    "min": [
+      -4.789870738983154,
+      -0.00015861541032791138,
+      -0.6719444394111633
+    ],
+    "max": [
+      4.790409564971924,
+      5.993469715118408,
+      0.6205734610557556
+    ]
+  },
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "action": "recover-albedo",
+  "channel": null,
+  "batch": null,
+  "view": "front",
+  "batches": 8,
+  "reusedChannels": [
+    "normal",
+    "orm"
+  ],
+  "uv": {
+    "occupiedFraction": 0.5011064456760641,
+    "charts": 1636,
+    "facesBelowPixelArea": 12626,
+    "minimumChartExtentPixels": 9.29736328125,
+    "chartsNarrowerThanTwoPixels": 0
+  },
+  "seconds": 1.7092985339986626,
+  "sceneRestored": "Scene"
+}

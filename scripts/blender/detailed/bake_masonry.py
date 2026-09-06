@@ -231,6 +231,7 @@ def prepare_bake(scene, source_collection, directory, size=1024, minimum_chart_p
     images = {}
     for kind in ('albedo', 'normal', 'orm'):
         image = bpy.data.images.new('WornPier_' + kind, width=size, height=size, alpha=False)
+        image.use_fake_user = True
         if kind != 'albedo':
             image.colorspace_settings.name = 'Non-Color'
         images[kind] = image
@@ -312,12 +313,17 @@ def bake_channel(state, kind, batch_index=None):
             state['scene'].render.bake.use_clear = not finished
             try:
                 bpy.ops.object.bake(type={'albedo': 'DIFFUSE', 'normal': 'NORMAL', 'orm': 'EMIT'}[kind])
+                # Persist while this image is still the active bake target.
+                # Staged jobs may render unrelated scenes between channels;
+                # do not rely on an unreferenced generated image's live buffer.
+                checkpoint_image(state, kind)
                 finished.add(index)
             finally:
                 destination.hide_set(True)
                 destination.hide_render = True
         if len(finished) == len(state['batches']):
             state['completed'].add(kind)
+            complete_image(state, kind)
     finally:
         for material, output, original, temporary in restore:
             material.node_tree.links.new(original, output.inputs['Surface'])
@@ -326,22 +332,56 @@ def bake_channel(state, kind, batch_index=None):
     print('Baked masonry', kind)
 
 
+def checkpoint_image(state, kind):
+    from array import array
+    image = state['images'][kind]
+    pixels = array('f', [0]) * (len(image.pixels))
+    image.pixels.foreach_get(pixels)
+    maxima = [max(pixels[channel::4], default=0) for channel in range(3)]
+    if max(maxima) <= .000001:
+        raise ValueError('Refusing empty black masonry map: ' + kind)
+    image.use_fake_user = True
+    image.filepath_raw = str(state['directory'] / ('worn-pier-' + kind + '.png'))
+    image.file_format = 'PNG'
+    image.save()
+    return dict(channel=kind, maxima=maxima, path=image.filepath_raw)
+
+
+def complete_image(state, kind):
+    import hashlib
+    import shutil
+    source = Path(state['images'][kind].filepath_raw)
+    target = state['directory'] / ('completed-' + kind + '.png')
+    shutil.copyfile(source, target)
+    state.setdefault('completed_images', {})[kind] = dict(
+        path=str(target), sha256=hashlib.sha256(target.read_bytes()).hexdigest())
+
+
 def finish_bake(state):
     if state['completed'] != {'albedo', 'normal', 'orm'}:
         raise ValueError('All three maps must finish before export')
     material = state['material']
     nodes, links = material.node_tree.nodes, material.node_tree.links
-    nodes.remove(state['target'])
     shader = nodes.get('Principled BSDF')
     textures = {}
-    for kind, image in state['images'].items():
-        image.filepath_raw = str(state['directory'] / ('worn-pier-' + kind + '.png'))
-        image.file_format = 'PNG'
-        image.save()
+    # Export from immutable completed files, not live generated buffers or
+    # an older packed payload retained across incremental bake operations.
+    import hashlib
+    for kind in state['images']:
+        completed = state['completed_images'][kind]
+        path = Path(completed['path'])
+        if hashlib.sha256(path.read_bytes()).hexdigest() != completed['sha256']:
+            raise ValueError('Completed masonry map changed: ' + kind)
+        image = bpy.data.images.load(str(path), check_existing=False)
+        if kind != 'albedo':
+            image.colorspace_settings.name = 'Non-Color'
+        image.use_fake_user = True
         image.pack()
+        state['images'][kind] = image
         texture = nodes.new('ShaderNodeTexImage')
         texture.image = image
         textures[kind] = texture
+    nodes.remove(state['target'])
     links.new(textures['albedo'].outputs['Color'], shader.inputs['Base Color'])
     normal = nodes.new('ShaderNodeNormalMap')
     links.new(textures['normal'].outputs['Color'], normal.inputs['Color'])
@@ -376,7 +416,8 @@ def finish_bake(state):
                              export_apply=True, export_animations=False, export_image_format='AUTO')
     report = dict(source_triangles=state['source_triangles'],
                   triangles=triangle_count([state['low']]), bytes=output.stat().st_size,
-                  atlas=state['size'], source_objects_preserved=len(state['sources']))
+                  atlas=state['size'], source_objects_preserved=len(state['sources']),
+                  completed_images=state['completed_images'])
     (state['directory'] / 'worn-pier-review.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report))
     return output

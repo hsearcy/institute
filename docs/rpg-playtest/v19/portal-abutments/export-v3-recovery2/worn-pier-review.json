@@ -1,0 +1,21 @@
+{
+  "source_triangles": 195584,
+  "triangles": 32518,
+  "bytes": 14149632,
+  "atlas": 2048,
+  "source_objects_preserved": 174,
+  "completed_images": {
+    "normal": {
+      "path": "/home/houston/git/institute/tmp/portal-abutments-bake-v3-recovery2/completed-normal.png",
+      "sha256": "e49ca5b136719ed2c891f5087e763a99a7b47f0fd3b1d95d97532eb477f04cbf"
+    },
+    "orm": {
+      "path": "/home/houston/git/institute/tmp/portal-abutments-bake-v3-recovery2/completed-orm.png",
+      "sha256": "c95b564c920d27017fd2da2b4e8479ec4faba38f18c73d60356d686efe87f13c"
+    },
+    "albedo": {
+      "path": "/home/houston/git/institute/tmp/portal-abutments-bake-v3-recovery2/completed-albedo.png",
+      "sha256": "49b3f23676c95995af30c821a0fb35ba20e06c040850fee15bd0b8678183f9ce"
+    }
+  }
+}

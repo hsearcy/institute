@@ -1,0 +1,25 @@
+{
+  "status": "candidate evidence; scope in README",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 555,
+      "sha256": "8e2045512242c8c87cb61ace0d55d29dd7ed09cd32332cdf061be6d2868c9e06"
+    },
+    {
+      "path": "audit.json",
+      "bytes": 208,
+      "sha256": "dbc0bd3a3d5a0fde2bb89748a6e095d2ffe1f14ac1d1de0e108ddd7d25a4b27f"
+    },
+    {
+      "path": "source-recipe.py",
+      "bytes": 9932,
+      "sha256": "704846595e709d178e18a31132617affdb972ab22e0073e7bc7641f58b77b570"
+    },
+    {
+      "path": "source.png",
+      "bytes": 1680723,
+      "sha256": "4854a4408034f3cc13051078b4a826ca4e96c85e69da80c037fc0be66c4ef4e9"
+    }
+  ]
+}

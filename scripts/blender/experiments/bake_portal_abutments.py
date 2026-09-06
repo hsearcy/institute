@@ -9,11 +9,12 @@ import runpy
 import time
 
 import bpy
+import bmesh
 
 
 ROOT = Path(__file__).resolve().parents[3]
-KEY = 'root_portal_abutments_bake_v3'
-DIRECTORY = ROOT / 'tmp/portal-abutments-bake-v3'
+KEY = 'root_portal_abutments_bake_v3_recovery2'
+DIRECTORY = ROOT / 'tmp/portal-abutments-bake-v3-recovery2'
 
 
 def uv_audit(mesh, size):
@@ -52,7 +53,58 @@ def stage(action, channel=None, batch=None, view='front'):
     report = {'action': action, 'channel': channel, 'batch': batch, 'view': view}
     DIRECTORY.mkdir(parents=True, exist_ok=True)
     try:
-        if action == 'prepare':
+        if action == 'recover-albedo':
+            if KEY in bpy.app.driver_namespace:
+                raise RuntimeError('Recovery already prepared; resume its stages')
+            original = bpy.app.driver_namespace['root_portal_abutments_bake_v3']
+            baker = runpy.run_path(str(ROOT / 'scripts/blender/detailed/bake_masonry.py'))
+            state = dict(original['state'])
+            state['directory'] = DIRECTORY
+            state['images'] = dict(state['images'])
+            state['completed_images'] = {}
+            state['completed'] = {'normal', 'orm'}
+            state['channel_batches'] = {k: set(v) for k, v in state['channel_batches'].items() if k != 'albedo'}
+            bpy.context.window.scene = state['scene']
+            # Preserve the exact reviewed UVs/low mesh. Only the lost color
+            # channel is recomputed; completed normal/ORM are checkpointed.
+            for kind in ('normal', 'orm'):
+                baker['checkpoint_image'](state, kind)
+                baker['complete_image'](state, kind)
+            material = bpy.data.materials.new('Recovered portal bake')
+            material.use_nodes = True
+            state['material'] = material
+            state['target'] = material.node_tree.nodes.new('ShaderNodeTexImage')
+            image = bpy.data.images.new('Recovered portal albedo', width=state['size'], height=state['size'], alpha=False)
+            image.use_fake_user = True
+            state['images']['albedo'] = image
+            low = state['low']
+            low.data.materials.clear(); low.data.materials.append(material)
+            saved = low.data.attributes.new('masonry_bake_normal', 'FLOAT_VECTOR', 'CORNER')
+            for value, normal in zip(saved.data, low.data.corner_normals): value.vector = normal.vector
+            batches = []
+            for ids in baker['projection_groups'](state['sources']):
+                data = low.data.copy()
+                bm = bmesh.new(); bm.from_mesh(data)
+                layer = bm.faces.layers.int.get('masonry_source_id')
+                if layer is None: raise ValueError('Recovery requires exact source identity')
+                bmesh.ops.delete(bm, geom=[f for f in bm.faces if f[layer] not in ids], context='FACES')
+                loose = [v for v in bm.verts if not v.link_faces]
+                if loose: bmesh.ops.delete(bm, geom=loose, context='VERTS')
+                bm.to_mesh(data); bm.free()
+                attribute = data.attributes['masonry_bake_normal']
+                data.normals_split_custom_set([tuple(v.vector) for v in attribute.data])
+                data.attributes.remove(attribute)
+                obj = bpy.data.objects.new('Recovered albedo projection group', data)
+                state['destination'].objects.link(obj)
+                obj.matrix_world = low.matrix_world.copy(); obj.visible_shadow = False
+                obj.hide_set(True); obj.hide_render = True
+                batches.append(([state['sources'][i] for i in ids], obj))
+            low.data.attributes.remove(saved)
+            low.hide_set(True); low.hide_render = True
+            state['batches'] = batches
+            bpy.app.driver_namespace[KEY] = dict(baker=baker, state=state, source=original['source'])
+            report.update(batches=len(batches), reusedChannels=['normal', 'orm'], uv=uv_audit(low.data, state['size']))
+        elif action == 'prepare':
             if KEY in bpy.app.driver_namespace:
                 raise RuntimeError('Bake already prepared; resume its stages')
             source = bpy.app.driver_namespace.get('root_portal_abutments_v4')

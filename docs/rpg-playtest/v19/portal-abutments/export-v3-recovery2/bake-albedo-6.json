@@ -1,0 +1,39 @@
+{
+  "action": "bake",
+  "channel": "albedo",
+  "batch": 6,
+  "view": "front",
+  "completed": {
+    "normal": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "orm": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "albedo": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
+  },
+  "seconds": 5.321349686011672,
+  "sceneRestored": "Scene"
+}

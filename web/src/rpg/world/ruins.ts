@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { boundsIntersectCrossingChasm, getRoomLayout, type RoomBounds } from './roomLayout';
+import { roomHasTomb } from './gateComposition';
 
 export type RuinKind = 'fallen-column' | 'column-stump' | 'arch-remnant';
 
@@ -13,6 +14,7 @@ export function isRuinFootprintClear(room: number, bounds: RoomBounds): boolean 
   if (layout.landmarks.some(mark => Math.hypot(Math.max(bounds.minX - mark.x, 0, mark.x - bounds.maxX), Math.max(bounds.minZ - mark.z, 0, mark.z - bounds.maxZ)) < mark.radius + .22)) return false;
   for (const side of [-1, 1]) {
     for (let tomb = 0; tomb < 3; tomb++) {
+      if (!roomHasTomb(room, side, tomb)) continue;
       const xs = [side * (8.6 + offset), side * (9.7 + offset)], z = -7 + tomb * 6.3;
       if (overlaps({ minX: Math.min(...xs) - 1.05, maxX: Math.max(...xs) + 1.05, minZ: z - 1.45, maxZ: z + 1.45 })) return false;
     }

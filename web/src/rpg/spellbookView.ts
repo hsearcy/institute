@@ -1,5 +1,5 @@
 import {
-  RPG_SCHOOLS, RPG_SKILLS, RPG_SPELLS, rpgEncounterKills, rpgSpellModifiers, rpgSpellUnlocked,
+  RPG_SCHOOLS, RPG_SKILLS, RPG_SPELLS, rpgSpellCombatStats, rpgSpellModifiers, rpgSpellUnlocked,
   type RpgModifier, type RpgSchoolId, type RpgSpellId, type RpgState,
 } from '@institute/shared';
 import { escapeHtml as esc, icon, spellArt } from './icons';
@@ -35,13 +35,11 @@ export function renderSpellbookView({ state, school: schoolId, trackedSpell, pla
   const selected = state.selectedSpellId === focus.id;
   const unlock = RPG_SKILLS.find(skill => skill.id === focus.skillId);
   const parent = RPG_SKILLS.find(skill => skill.id === unlock?.parentId);
-  const room = state.expedition && !state.expedition.cleared ? state.expedition.encounterIndex : 0;
+  const power = rpgSpellCombatStats(state, focus.id);
   const modifiers = learned ? rpgSpellModifiers(state, focus.id) : [];
   const learnedCount = RPG_SPELLS.filter(spell => isLearned(spell.id)).length;
   const chapter = ['I', 'II', 'III'][RPG_SCHOOLS.indexOf(school)];
-  // Extra-target copy belongs in the shared power calculation below, so a capped
-  // loadout is never presented as receiving the uncapped catalogue bonus.
-  const description = focus.description.replace(/ Catch \d+ extra monsters\.$/, '');
+  const description = focus.description;
 
   return `<div class="rpg-grimoire" style="--spell-color:${school.color}">
     <header class="rpg-grimoire-title">
@@ -61,7 +59,7 @@ export function renderSpellbookView({ state, school: schoolId, trackedSpell, pla
         </div>
         <div class="rpg-grimoire-feature-bottom">
           ${engraving}
-          ${learned ? `<div class="rpg-grimoire-power"><strong>${rpgEncounterKills(state, room, focus.id)}</strong><span>monsters per cast<small>${state.expedition && !state.expedition.cleared ? 'In this room' : 'In the first room'} · with your equipment</small></span></div>${modifiers.length ? `<ul class="rpg-grimoire-modifiers" aria-label="Spell enhancements">${modifiers.map(modifier => `<li>${modifierNames[modifier]}</li>`).join('')}</ul>` : ''}` : `<p class="rpg-grimoire-requirement">Learn in the ${esc(school.name)} skill tree.<br><b>Level ${unlock?.level ?? 1}</b>${parent ? ` · Requires ${esc(parent.name)}` : ''}</p>`}
+          ${learned ? `<div class="rpg-grimoire-power"><strong>${power.damage}</strong><span>damage per target<small>Up to ${power.targets} targets · with your equipment</small></span></div>${modifiers.length ? `<ul class="rpg-grimoire-modifiers" aria-label="Spell enhancements">${modifiers.map(modifier => `<li>${modifierNames[modifier]}</li>`).join('')}</ul>` : ''}` : `<p class="rpg-grimoire-requirement">Learn in the ${esc(school.name)} skill tree.<br><b>Level ${unlock?.level ?? 1}</b>${parent ? ` · Requires ${esc(parent.name)}` : ''}</p>`}
         </div>
       </section>
       <section class="rpg-grimoire-index" aria-label="${esc(school.name)} spells">

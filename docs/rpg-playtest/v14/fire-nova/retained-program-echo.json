@@ -1,0 +1,2406 @@
+{
+  "db": "/tmp/rpg-nova-hud-1788694422639.db",
+  "profile": "rpg-archmage",
+  "browser": "151.0.7922.173",
+  "report": [
+    {
+      "name": "recorded-normal-loop",
+      "evidence": "Real HUD, scratch tutor solve and ordinary animation loop; no manual stepping or timing overrides. Recording cadence is separate from unrecorded cadence, neither is GPU cost.",
+      "loaded": {
+        "programs": 122,
+        "attackAge": 0,
+        "diagnostics": {
+          "appearance": "wayfarer",
+          "drawWarmup": {
+            "programs": 122,
+            "durationMs": 862.7999999970198
+          },
+          "lastAttack": null,
+          "heroAnimation": "idle",
+          "heroClips": [
+            "idle",
+            "walk",
+            "cast",
+            "cleave"
+          ],
+          "encounter": 0,
+          "region": "embercrypt",
+          "enemies": 39,
+          "articulatedEnemies": 39,
+          "enemyRoster": {
+            "guardian": 6,
+            "skeleton": 18,
+            "revenant": 11,
+            "wraith": 4
+          },
+          "attacking": false,
+          "paused": true,
+          "modelsLoaded": 21,
+          "drawCalls": 337,
+          "triangles": 2678907,
+          "particles": 13,
+          "fragments": 0,
+          "hero": [
+            0,
+            0,
+            1.4
+          ],
+          "softwareRenderer": false,
+          "fps": 0,
+          "quality": "full",
+          "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+        },
+        "viewport": [
+          1440,
+          900
+        ],
+        "canvas": [
+          1440,
+          900
+        ],
+        "warmRestored": {
+          "target": true,
+          "bindings": true
+        },
+        "state": {
+          "xp": 82305,
+          "totalKills": 740,
+          "encounter": 0
+        },
+        "busy": false,
+        "panel": "camp",
+        "clock": 8840.29999999702
+      },
+      "begun": {
+        "programs": 122,
+        "attackAge": 0,
+        "diagnostics": {
+          "appearance": "wayfarer",
+          "drawWarmup": {
+            "programs": 122,
+            "durationMs": 862.7999999970198
+          },
+          "lastAttack": null,
+          "heroAnimation": "idle",
+          "heroClips": [
+            "idle",
+            "walk",
+            "cast",
+            "cleave"
+          ],
+          "encounter": 0,
+          "region": "embercrypt",
+          "enemies": 39,
+          "articulatedEnemies": 39,
+          "enemyRoster": {
+            "guardian": 6,
+            "skeleton": 18,
+            "revenant": 11,
+            "wraith": 4
+          },
+          "attacking": false,
+          "paused": false,
+          "modelsLoaded": 21,
+          "drawCalls": 181,
+          "triangles": 1228026,
+          "particles": 37,
+          "fragments": 0,
+          "hero": [
+            0,
+            0,
+            1.4
+          ],
+          "softwareRenderer": false,
+          "fps": 6,
+          "quality": "full",
+          "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+        },
+        "viewport": [
+          1440,
+          900
+        ],
+        "canvas": [
+          1440,
+          900
+        ],
+        "warmRestored": {
+          "target": true,
+          "bindings": true
+        },
+        "state": {
+          "xp": 82305,
+          "totalKills": 740,
+          "encounter": 0
+        },
+        "problemId": "pmtpqhczx_0",
+        "problem": "30, then?",
+        "busy": false,
+        "panel": "",
+        "clock": 9334.5
+      },
+      "before": {
+        "programs": 122,
+        "attackAge": 0,
+        "diagnostics": {
+          "appearance": "wayfarer",
+          "drawWarmup": {
+            "programs": 122,
+            "durationMs": 862.7999999970198
+          },
+          "lastAttack": null,
+          "heroAnimation": "idle",
+          "heroClips": [
+            "idle",
+            "walk",
+            "cast",
+            "cleave"
+          ],
+          "encounter": 0,
+          "region": "embercrypt",
+          "enemies": 39,
+          "articulatedEnemies": 39,
+          "enemyRoster": {
+            "guardian": 6,
+            "skeleton": 18,
+            "revenant": 11,
+            "wraith": 4
+          },
+          "attacking": false,
+          "paused": false,
+          "modelsLoaded": 21,
+          "drawCalls": 181,
+          "triangles": 1228026,
+          "particles": 73,
+          "fragments": 0,
+          "hero": [
+            0,
+            0,
+            1.4
+          ],
+          "softwareRenderer": false,
+          "fps": 50,
+          "quality": "full",
+          "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+        },
+        "viewport": [
+          1440,
+          900
+        ],
+        "canvas": [
+          1440,
+          900
+        ],
+        "warmRestored": {
+          "target": true,
+          "bindings": true
+        },
+        "state": {
+          "xp": 82305,
+          "totalKills": 740,
+          "encounter": 0
+        },
+        "problemId": "pmtpqhczx_0",
+        "problem": "30, then?",
+        "busy": false,
+        "panel": "",
+        "clock": 10672.79999999702
+      },
+      "after": {
+        "programs": 122,
+        "attackAge": 2.700099999994041,
+        "diagnostics": {
+          "appearance": "wayfarer",
+          "drawWarmup": {
+            "programs": 122,
+            "durationMs": 862.7999999970198
+          },
+          "lastAttack": {
+            "spellId": "ember",
+            "effect": "nova",
+            "options": {
+              "echo": true,
+              "wide": false,
+              "burning": true,
+              "shards": false,
+              "chains": false,
+              "pierce": false,
+              "orbit": false,
+              "summon": false,
+              "itemId": "cinderwand",
+              "kills": 39,
+              "xp": 32
+            }
+          },
+          "lastSpellId": "ember",
+          "lastSpellEffect": "nova",
+          "heroAnimation": "walk",
+          "heroClips": [
+            "idle",
+            "walk",
+            "cast",
+            "cleave"
+          ],
+          "encounter": 1,
+          "region": "embercrypt",
+          "enemies": 40,
+          "articulatedEnemies": 40,
+          "enemyRoster": {
+            "guardian": 6,
+            "skeleton": 18,
+            "revenant": 12,
+            "wraith": 4
+          },
+          "attacking": false,
+          "paused": false,
+          "modelsLoaded": 21,
+          "drawCalls": 183,
+          "triangles": 1275432,
+          "particles": 104,
+          "fragments": 0,
+          "hero": [
+            0,
+            0,
+            -0.9209464450181036
+          ],
+          "softwareRenderer": false,
+          "fps": 59,
+          "quality": "full",
+          "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+        },
+        "viewport": [
+          1440,
+          900
+        ],
+        "canvas": [
+          1440,
+          900
+        ],
+        "warmRestored": {
+          "target": true,
+          "bindings": true
+        },
+        "state": {
+          "xp": 82337,
+          "totalKills": 779,
+          "encounter": 1
+        },
+        "problemId": "pmtpqhd2g_1",
+        "problem": "26, then?",
+        "busy": false,
+        "panel": "",
+        "clock": 14418.29999999702
+      },
+      "cadence": [
+        {
+          "dt": -4.199999988079071,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 50,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0.01679999999701977,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.047900000005960466,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.06659999999403954,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0.0835,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.11329999999701977,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0.11870000000298024,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0.14,
+          "attacking": true
+        },
+        {
+          "dt": 16.80000000000109,
+          "age": 0.15929999999701977,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0.17859999999403953,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0.19790000000596045,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0.2195999999940395,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.23879999999701973,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0.2589000000059604,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0.27940000000596044,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 0.3027000000029802,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0.32379999999701975,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0.3475999999940395,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 0.371,
+          "attacking": true
+        },
+        {
+          "dt": 16.799999999999272,
+          "age": 0.3954000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.4192999999970198,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0.44440000000596047,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 0.46859999999403956,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0.49420000000298026,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0.5190999999940396,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.5445999999940395,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.5692000000029802,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0.5947000000029802,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 0.619,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0.6442999999970198,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0.6692000000029803,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.6947999999970198,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.7192000000029802,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.7454000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.7692999999970198,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0.7949000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 0.8202000000029803,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0.8457999999970198,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0.8677999999970198,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.8925999999940396,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0.9160999999940396,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.9397999999970198,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.9627999999970198,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.9874000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 1.0120999999940397,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 1.0357000000029803,
+          "attacking": true
+        },
+        {
+          "dt": 16.5,
+          "age": 1.0627000000029803,
+          "attacking": true
+        },
+        {
+          "dt": 33.5,
+          "age": 1.0889000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 1.1134000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 1.1404000000059604,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.1674000000059603,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 1.192,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 1.2187000000029802,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 1.2447999999970196,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 1.2705999999940394,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.3005999999940394,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 1.3260999999940395,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 1.3525999999940395,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 1.381,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.4040999999940396,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 1.4290999999940395,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 1.4549999999999998,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 1.4794000000059604,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 1.5022000000029803,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 1.5274000000059604,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 1.5482000000029803,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 1.56879999999702,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 1.5910999999940396,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 1.612,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 1.6322999999970198,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 1.6519000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 1.6732999999970197,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 1.6920999999940396,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 1.7119000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 16.799999999999272,
+          "age": 1.7312999999970198,
+          "attacking": true
+        },
+        {
+          "dt": 33.20000000000073,
+          "age": 1.7517999999970197,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 1.7704000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 1.7899000000059606,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 1.808,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 1.8284000000059606,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 1.84629999999702,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 1.8647000000029805,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.88429999999702,
+          "attacking": true
+        },
+        {
+          "dt": 16.80000000000109,
+          "age": 1.9025999999940397,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 1.9210000000000003,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 1.93929999999702,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 1.9569000000059606,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 1.9760000000000002,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 1.9944000000059607,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.013400000005961,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.03129999999702,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 2.0500000000000003,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.0680999999940397,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.0862000000029806,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.1037999999970203,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.123400000005961,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.140400000005961,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.157900000005961,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.1760999999940402,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.1965999999940404,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.2125999999940404,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.2280999999940403,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.2425000000000006,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.2585000000000006,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.2740000000000005,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.289400000005961,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.3044000000059612,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.320700000002981,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.336799999997021,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.353000000000001,
+          "attacking": true
+        },
+        {
+          "dt": 16.5,
+          "age": 2.368799999997021,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.3855999999940405,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.401000000000001,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.4177000000029816,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.4337000000029816,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.449900000005962,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.4667000000029815,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.483500000000001,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.5000000000000013,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.5165999999940407,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.533299999997021,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.5590000000000015,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.5667000000029816,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.589299999997021,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.6000000000000014,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.6210000000000013,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.6332999999970212,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.654099999994041,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.6667000000029817,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.683400000005962,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.80000000000109,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.700099999994041,
+          "attacking": false
+        },
+        {
+          "dt": 16.5,
+          "age": 2.700099999994041,
+          "attacking": false
+        }
+      ],
+      "draws": [
+        {
+          "age": 0.01679999999701977,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 7.700000002980232
+        },
+        {
+          "age": 0.047900000005960466,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 5
+        },
+        {
+          "age": 0.06659999999403954,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.7999999970197678
+        },
+        {
+          "age": 0.0835,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.7000000029802322
+        },
+        {
+          "age": 0.11329999999701977,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.7999999970197678
+        },
+        {
+          "age": 0.11870000000298024,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.1000000089406967
+        },
+        {
+          "age": 0.14,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.800000011920929
+        },
+        {
+          "age": 0.15929999999701977,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.5999999940395355
+        },
+        {
+          "age": 0.17859999999403953,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.800000011920929
+        },
+        {
+          "age": 0.19790000000596045,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3
+        },
+        {
+          "age": 0.2195999999940395,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.0999999940395355
+        },
+        {
+          "age": 0.23879999999701973,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4.200000002980232
+        },
+        {
+          "age": 0.2589000000059604,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3
+        },
+        {
+          "age": 0.27940000000596044,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.2999999970197678
+        },
+        {
+          "age": 0.3027000000029802,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 5.700000002980232
+        },
+        {
+          "age": 0.32379999999701975,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4
+        },
+        {
+          "age": 0.3475999999940395,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4.799999997019768
+        },
+        {
+          "age": 0.371,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4
+        },
+        {
+          "age": 0.3954000000059605,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 5.299999997019768
+        },
+        {
+          "age": 0.4192999999970198,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4.100000008940697
+        },
+        {
+          "age": 0.44440000000596047,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.4000000059604645
+        },
+        {
+          "age": 0.46859999999403956,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.5
+        },
+        {
+          "age": 0.49420000000298026,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.5
+        },
+        {
+          "age": 0.5190999999940396,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.7000000029802322
+        },
+        {
+          "age": 0.5445999999940395,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.4000000059604645
+        },
+        {
+          "age": 0.5692000000029802,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.2999999970197678
+        },
+        {
+          "age": 0.5947000000029802,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.5
+        },
+        {
+          "age": 0.619,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 5.4000000059604645
+        },
+        {
+          "age": 0.6442999999970198,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 5.200000002980232
+        },
+        {
+          "age": 0.6692000000029803,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.5
+        },
+        {
+          "age": 0.6947999999970198,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.2999999970197678
+        },
+        {
+          "age": 0.7192000000029802,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 5.700000002980232
+        },
+        {
+          "age": 0.7454000000059605,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.800000011920929
+        },
+        {
+          "age": 0.7692999999970198,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.5999999940395355
+        },
+        {
+          "age": 0.7949000000059605,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.0999999940395355
+        },
+        {
+          "age": 0.8202000000029803,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4.199999988079071
+        },
+        {
+          "age": 0.8457999999970198,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.7000000029802322
+        },
+        {
+          "age": 0.8677999999970198,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.7000000029802322
+        },
+        {
+          "age": 0.8925999999940396,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.9000000059604645
+        },
+        {
+          "age": 0.9160999999940396,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 5.299999997019768
+        },
+        {
+          "age": 0.9397999999970198,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3
+        },
+        {
+          "age": 0.9627999999970198,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.300000011920929
+        },
+        {
+          "age": 0.9874000000059605,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 5.0999999940395355
+        },
+        {
+          "age": 1.0120999999940397,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.0999999940395355
+        },
+        {
+          "age": 1.0357000000029803,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4.5999999940395355
+        },
+        {
+          "age": 1.0627000000029803,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 5.299999997019768
+        },
+        {
+          "age": 1.0889000000059605,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 5.200000002980232
+        },
+        {
+          "age": 1.1134000000059605,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.9000000059604645
+        },
+        {
+          "age": 1.1404000000059604,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 5.699999988079071
+        },
+        {
+          "age": 1.1674000000059603,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.5
+        },
+        {
+          "age": 1.192,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.9000000059604645
+        },
+        {
+          "age": 1.2187000000029802,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 5.299999997019768
+        },
+        {
+          "age": 1.2447999999970196,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.5
+        },
+        {
+          "age": 1.2705999999940394,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.7000000029802322
+        },
+        {
+          "age": 1.3005999999940394,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.0999999940395355
+        },
+        {
+          "age": 1.3260999999940395,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.5999999940395355
+        },
+        {
+          "age": 1.3525999999940395,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.7000000029802322
+        },
+        {
+          "age": 1.381,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.2999999970197678
+        },
+        {
+          "age": 1.4040999999940396,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.6000000089406967
+        },
+        {
+          "age": 1.4290999999940395,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.9000000059604645
+        },
+        {
+          "age": 1.4549999999999998,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.5
+        },
+        {
+          "age": 1.4794000000059604,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.1000000089406967
+        },
+        {
+          "age": 1.5022000000029803,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.9000000059604645
+        },
+        {
+          "age": 1.5274000000059604,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.2999999970197678
+        },
+        {
+          "age": 1.5482000000029803,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3
+        },
+        {
+          "age": 1.56879999999702,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.9000000059604645
+        },
+        {
+          "age": 1.5910999999940396,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.7000000029802322
+        },
+        {
+          "age": 1.612,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.7000000029802322
+        },
+        {
+          "age": 1.6322999999970198,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.7000000029802322
+        },
+        {
+          "age": 1.6519000000059605,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3
+        },
+        {
+          "age": 1.6732999999970197,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4.700000002980232
+        },
+        {
+          "age": 1.6920999999940396,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 5.299999997019768
+        },
+        {
+          "age": 1.7119000000059605,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4.700000002980232
+        },
+        {
+          "age": 1.7312999999970198,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4.5
+        },
+        {
+          "age": 1.7517999999970197,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.7999999970197678
+        },
+        {
+          "age": 1.7704000000059605,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4.5
+        },
+        {
+          "age": 1.7899000000059606,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.2000000029802322
+        },
+        {
+          "age": 1.808,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4.5
+        },
+        {
+          "age": 1.8284000000059606,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4.100000008940697
+        },
+        {
+          "age": 1.84629999999702,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 5.299999997019768
+        },
+        {
+          "age": 1.8647000000029805,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4.5
+        },
+        {
+          "age": 1.88429999999702,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4
+        },
+        {
+          "age": 1.9025999999940397,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4.299999997019768
+        },
+        {
+          "age": 1.9210000000000003,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 5.199999988079071
+        },
+        {
+          "age": 1.93929999999702,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4.300000011920929
+        },
+        {
+          "age": 1.9569000000059606,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.7999999970197678
+        },
+        {
+          "age": 1.9760000000000002,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4.799999997019768
+        },
+        {
+          "age": 1.9944000000059607,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.2000000029802322
+        },
+        {
+          "age": 2.013400000005961,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.5
+        },
+        {
+          "age": 2.03129999999702,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.1000000089406967
+        },
+        {
+          "age": 2.0500000000000003,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.7999999970197678
+        },
+        {
+          "age": 2.0680999999940397,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.8999999910593033
+        },
+        {
+          "age": 2.0862000000029806,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.9000000059604645
+        },
+        {
+          "age": 2.1037999999970203,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.5999999940395355
+        },
+        {
+          "age": 2.123400000005961,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.2000000029802322
+        },
+        {
+          "age": 2.140400000005961,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.4000000059604645
+        },
+        {
+          "age": 2.157900000005961,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.300000011920929
+        },
+        {
+          "age": 2.1760999999940402,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4.100000008940697
+        },
+        {
+          "age": 2.1965999999940404,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.2000000029802322
+        },
+        {
+          "age": 2.2125999999940404,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4.0999999940395355
+        },
+        {
+          "age": 2.2280999999940403,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.1000000089406967
+        },
+        {
+          "age": 2.2425000000000006,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.4000000059604645
+        },
+        {
+          "age": 2.2585000000000006,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.1000000089406967
+        },
+        {
+          "age": 2.2740000000000005,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.7999999970197678
+        },
+        {
+          "age": 2.289400000005961,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.9000000059604645
+        },
+        {
+          "age": 2.3044000000059612,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.5999999940395355
+        },
+        {
+          "age": 2.320700000002981,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.5
+        },
+        {
+          "age": 2.336799999997021,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.5
+        },
+        {
+          "age": 2.353000000000001,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.2000000029802322
+        },
+        {
+          "age": 2.368799999997021,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.7000000029802322
+        },
+        {
+          "age": 2.3855999999940405,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.2999999970197678
+        },
+        {
+          "age": 2.401000000000001,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.4000000059604645
+        },
+        {
+          "age": 2.4177000000029816,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 1.9000000059604645
+        },
+        {
+          "age": 2.4337000000029816,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.2000000029802322
+        },
+        {
+          "age": 2.449900000005962,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 4.200000002980232
+        },
+        {
+          "age": 2.4667000000029815,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.5
+        },
+        {
+          "age": 2.483500000000001,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2
+        },
+        {
+          "age": 2.5000000000000013,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2
+        },
+        {
+          "age": 2.5165999999940407,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.2000000029802322
+        },
+        {
+          "age": 2.533299999997021,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2
+        },
+        {
+          "age": 2.5590000000000015,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.0999999940395355
+        },
+        {
+          "age": 2.5667000000029816,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2
+        },
+        {
+          "age": 2.589299999997021,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.7000000029802322
+        },
+        {
+          "age": 2.6000000000000014,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.0999999940395355
+        },
+        {
+          "age": 2.6210000000000013,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 5
+        },
+        {
+          "age": 2.6332999999970212,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.2999999970197678
+        },
+        {
+          "age": 2.654099999994041,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.4000000059604645
+        },
+        {
+          "age": 2.6667000000029817,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 2.7999999970197678
+        },
+        {
+          "age": 2.683400000005962,
+          "before": 122,
+          "after": 122,
+          "cpuMs": 3.199999988079071
+        }
+      ],
+      "nextRoom": null,
+      "errors": [],
+      "videoPath": "/tmp/rpg-nova-motion-video/page@2ebfecf86491b9af8a95c81663b85fb9.webm"
+    }
+  ]
+}

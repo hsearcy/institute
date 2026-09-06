@@ -1,8 +1,8 @@
 # Blender Studio anatomy foundation (CC0)
 
 These sources are **experimental inputs**, not production assets. Their quality
-and open license do not constitute visual acceptance. The public game wraith is
-still built by `detailed/characters.py`.
+and open license do not constitute visual acceptance. The public game wraith uses the separately licensed, accepted lich adaptation
+in `detailed/wraith_cc0.py`; these anatomy studies are not its production source.
 
 Upstream: [Blender Human Base Meshes](https://www.blender.org/download/demo-files/)
 and the official [blender-assets repository](https://projects.blender.org/blender/blender-assets).

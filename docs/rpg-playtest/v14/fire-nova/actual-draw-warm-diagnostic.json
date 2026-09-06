@@ -1,0 +1,2854 @@
+{
+  "db": "/tmp/rpg-nova-hud-1788693157641.db",
+  "profile": "rpg-playtest",
+  "browser": "151.0.7922.173",
+  "report": [
+    {
+      "name": "baseline-first-cast",
+      "evidence": "Real HUD, scratch tutor solve and ordinary animation loop; no manual stepping or timing overrides. Recording cadence is separate from unrecorded cadence, neither is GPU cost.",
+      "before": {
+        "attackAge": 0,
+        "diagnostics": {
+          "appearance": "wayfarer",
+          "lastAttack": null,
+          "heroAnimation": "idle",
+          "heroClips": [
+            "idle",
+            "walk",
+            "cast",
+            "cleave"
+          ],
+          "encounter": 0,
+          "region": "embercrypt",
+          "enemies": 14,
+          "articulatedEnemies": 14,
+          "enemyRoster": {
+            "guardian": 2,
+            "skeleton": 7,
+            "revenant": 4,
+            "wraith": 1
+          },
+          "attacking": false,
+          "paused": false,
+          "modelsLoaded": 21,
+          "drawCalls": 319,
+          "triangles": 1466772,
+          "particles": 78,
+          "fragments": 0,
+          "hero": [
+            0,
+            0,
+            1.4
+          ],
+          "softwareRenderer": false,
+          "fps": 28,
+          "quality": "full",
+          "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+        },
+        "viewport": [
+          1440,
+          900
+        ],
+        "canvas": [
+          1440,
+          900
+        ],
+        "state": {
+          "xp": 0,
+          "totalKills": 0,
+          "encounter": 0
+        },
+        "problemId": "pmtppqbmq_0",
+        "problem": "49, then?",
+        "busy": false,
+        "panel": "",
+        "clock": 13968.20000000298
+      },
+      "after": {
+        "attackAge": 2.71740000000596,
+        "diagnostics": {
+          "appearance": "wayfarer",
+          "lastAttack": {
+            "spellId": "ember",
+            "effect": "nova",
+            "options": {
+              "echo": false,
+              "wide": false,
+              "burning": false,
+              "shards": false,
+              "chains": false,
+              "pierce": false,
+              "orbit": false,
+              "summon": false,
+              "itemId": "apprentice",
+              "kills": 14,
+              "drop": {
+                "name": "Cinderbranch",
+                "rarity": "rare"
+              },
+              "xp": 32
+            }
+          },
+          "lastSpellId": "ember",
+          "lastSpellEffect": "nova",
+          "heroAnimation": "walk",
+          "heroClips": [
+            "idle",
+            "walk",
+            "cast",
+            "cleave"
+          ],
+          "encounter": 1,
+          "region": "embercrypt",
+          "enemies": 15,
+          "articulatedEnemies": 15,
+          "enemyRoster": {
+            "guardian": 3,
+            "skeleton": 6,
+            "revenant": 4,
+            "wraith": 2
+          },
+          "attacking": false,
+          "paused": false,
+          "modelsLoaded": 21,
+          "drawCalls": 327,
+          "triangles": 1546476,
+          "particles": 109,
+          "fragments": 0,
+          "hero": [
+            0,
+            0,
+            -0.9079986099903748
+          ],
+          "softwareRenderer": false,
+          "fps": 34,
+          "quality": "full",
+          "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+        },
+        "viewport": [
+          1440,
+          900
+        ],
+        "canvas": [
+          1440,
+          900
+        ],
+        "state": {
+          "xp": 32,
+          "totalKills": 14,
+          "encounter": 1
+        },
+        "problemId": "pmtppqbo1_1",
+        "problem": "52, then?",
+        "busy": false,
+        "panel": "",
+        "clock": 17768.90000000596
+      },
+      "cadence": [
+        {
+          "dt": 93.89999999702013,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 50,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 0.029900000005960464,
+          "attacking": true
+        },
+        {
+          "dt": 116.69999999999891,
+          "age": 0.15279999999701976,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.16190000000596047,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0.17840000000596046,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0.2075,
+          "attacking": true
+        },
+        {
+          "dt": 116.70000000000073,
+          "age": 0.3221000000089407,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0.32849999999999996,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 0.3452999999970197,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0.36179999999701973,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0.39640000000596043,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 0.43160000000894067,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0.46620000000298023,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.503,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 0.5384000000059604,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0.5745,
+          "attacking": true
+        },
+        {
+          "dt": 50,
+          "age": 0.6115,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.647,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 0.6824000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.7195,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0.756,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 0.7927000000029802,
+          "attacking": true
+        },
+        {
+          "dt": 50,
+          "age": 0.8289000000059604,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0.865,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.9019000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 0.9382000000029802,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.9739000000059604,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.01,
+          "attacking": true
+        },
+        {
+          "dt": 50,
+          "age": 1.0452000000029802,
+          "attacking": true
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 1.0815,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 1.1159999999999999,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.1522999999970196,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 1.1879999999999997,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.2246000000089403,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 1.2597999999970193,
+          "attacking": true
+        },
+        {
+          "dt": 49.899999999999636,
+          "age": 1.29640000000596,
+          "attacking": true
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 1.3322999999970193,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.36940000000596,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.4057999999970194,
+          "attacking": true
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 1.4429999999999996,
+          "attacking": true
+        },
+        {
+          "dt": 49.899999999999636,
+          "age": 1.4797999999970193,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 1.5177000000029797,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.5539999999999994,
+          "attacking": true
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 1.5877000000029797,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.6209999999999996,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.6537999999970192,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 1.6859000000059599,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 1.71740000000596,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 1.7472999999970193,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 1.77690000000596,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.8082999999970193,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 1.8394999999999995,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 1.8691000000089402,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.8987999999970193,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 1.9267000000029797,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.9557999999970193,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 1.9854999999999996,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 2.0132000000029797,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.0416000000089403,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.0707999999970195,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 2.0984000000059604,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.1269000000059606,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 2.156,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 2.183400000005961,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.2109000000059607,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 2.2397000000029803,
+          "attacking": true
+        },
+        {
+          "dt": 33.19999999999891,
+          "age": 2.2675,
+          "attacking": true
+        },
+        {
+          "dt": 33.5,
+          "age": 2.29520000000298,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.3244000000059604,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.3526000000089407,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.3794000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.4087000000029803,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.4367000000029804,
+          "attacking": true
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 2.4642000000029802,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.4934000000059604,
+          "attacking": true
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 2.522100000008941,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.5494000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 2.5777999999970196,
+          "attacking": true
+        },
+        {
+          "dt": 33.39999999999782,
+          "age": 2.60620000000298,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.6341000000089405,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000291,
+          "age": 2.66220000000298,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999709,
+          "age": 2.6901000000089406,
+          "attacking": true
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.39999999999782,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 49.89999999999782,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 50,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.39999999999782,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000291,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.39999999999782,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.39999999999782,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000291,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.39999999999782,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.20000000000073,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.39999999999782,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.39999999999782,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000291,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999709,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000291,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.39999999999782,
+          "age": 2.71740000000596,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.71740000000596,
+          "attacking": false
+        }
+      ],
+      "errors": [],
+      "shadowWarm": null,
+      "draws": [
+        {
+          "age": 0.029900000005960464,
+          "cpuSubmissionMs": 120.3999999910593,
+          "programsBefore": 106,
+          "programsAfter": 113
+        },
+        {
+          "age": 0.15279999999701976,
+          "cpuSubmissionMs": 7.200000002980232,
+          "programsBefore": 113,
+          "programsAfter": 113
+        },
+        {
+          "age": 0.16190000000596047,
+          "cpuSubmissionMs": 4,
+          "programsBefore": 113,
+          "programsAfter": 113
+        },
+        {
+          "age": 0.17840000000596046,
+          "cpuSubmissionMs": 4,
+          "programsBefore": 113,
+          "programsAfter": 113
+        },
+        {
+          "age": 0.2075,
+          "cpuSubmissionMs": 109.5,
+          "programsBefore": 113,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.3221000000089407,
+          "cpuSubmissionMs": 4.700000002980232,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.32849999999999996,
+          "cpuSubmissionMs": 3.4000000059604645,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.3452999999970197,
+          "cpuSubmissionMs": 3.3999999910593033,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.36179999999701973,
+          "cpuSubmissionMs": 3.2000000029802322,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.39640000000596043,
+          "cpuSubmissionMs": 4.5,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.43160000000894067,
+          "cpuSubmissionMs": 3.2999999970197678,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.46620000000298023,
+          "cpuSubmissionMs": 3.5,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.503,
+          "cpuSubmissionMs": 3.7000000029802322,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.5384000000059604,
+          "cpuSubmissionMs": 3.7999999970197678,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.5745,
+          "cpuSubmissionMs": 3.2000000029802322,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.6115,
+          "cpuSubmissionMs": 4.5,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.647,
+          "cpuSubmissionMs": 4.399999991059303,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.6824000000059605,
+          "cpuSubmissionMs": 3.7000000029802322,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.7195,
+          "cpuSubmissionMs": 3.0999999940395355,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.756,
+          "cpuSubmissionMs": 3.4000000059604645,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.7927000000029802,
+          "cpuSubmissionMs": 3.5,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.8289000000059604,
+          "cpuSubmissionMs": 4.299999997019768,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.865,
+          "cpuSubmissionMs": 4,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.9019000000059605,
+          "cpuSubmissionMs": 3.699999988079071,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.9382000000029802,
+          "cpuSubmissionMs": 3.2999999970197678,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 0.9739000000059604,
+          "cpuSubmissionMs": 4.0999999940395355,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 1.01,
+          "cpuSubmissionMs": 3.199999988079071,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 1.0452000000029802,
+          "cpuSubmissionMs": 3.7000000029802322,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 1.0815,
+          "cpuSubmissionMs": 3.2000000029802322,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 1.1159999999999999,
+          "cpuSubmissionMs": 3.8999999910593033,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 1.1522999999970196,
+          "cpuSubmissionMs": 3.0999999940395355,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 1.1879999999999997,
+          "cpuSubmissionMs": 3.5999999940395355,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 1.2246000000089403,
+          "cpuSubmissionMs": 3.300000011920929,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 1.2597999999970193,
+          "cpuSubmissionMs": 4.100000008940697,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 1.29640000000596,
+          "cpuSubmissionMs": 4,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 1.3322999999970193,
+          "cpuSubmissionMs": 4,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 1.36940000000596,
+          "cpuSubmissionMs": 3.7000000029802322,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 1.4057999999970194,
+          "cpuSubmissionMs": 4,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 1.4429999999999996,
+          "cpuSubmissionMs": 3,
+          "programsBefore": 117,
+          "programsAfter": 117
+        },
+        {
+          "age": 1.4797999999970193,
+          "cpuSubmissionMs": 4.299999997019768,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 1.5177000000029797,
+          "cpuSubmissionMs": 3.5,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 1.5539999999999994,
+          "cpuSubmissionMs": 3.6000000089406967,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 1.5877000000029797,
+          "cpuSubmissionMs": 3.7999999970197678,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 1.6209999999999996,
+          "cpuSubmissionMs": 4.299999997019768,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 1.6537999999970192,
+          "cpuSubmissionMs": 3.1000000089406967,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 1.6859000000059599,
+          "cpuSubmissionMs": 3.5,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 1.71740000000596,
+          "cpuSubmissionMs": 3.7000000029802322,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 1.7472999999970193,
+          "cpuSubmissionMs": 3.6000000089406967,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 1.77690000000596,
+          "cpuSubmissionMs": 3.7999999970197678,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 1.8082999999970193,
+          "cpuSubmissionMs": 4.399999991059303,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 1.8394999999999995,
+          "cpuSubmissionMs": 3.5,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 1.8691000000089402,
+          "cpuSubmissionMs": 3.5,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 1.8987999999970193,
+          "cpuSubmissionMs": 3.2999999970197678,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 1.9267000000029797,
+          "cpuSubmissionMs": 3.300000011920929,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 1.9557999999970193,
+          "cpuSubmissionMs": 5.299999997019768,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 1.9854999999999996,
+          "cpuSubmissionMs": 3.5,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.0132000000029797,
+          "cpuSubmissionMs": 3.1000000089406967,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.0416000000089403,
+          "cpuSubmissionMs": 2.8999999910593033,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.0707999999970195,
+          "cpuSubmissionMs": 2.7000000029802322,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.0984000000059604,
+          "cpuSubmissionMs": 3,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.1269000000059606,
+          "cpuSubmissionMs": 2.7999999970197678,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.156,
+          "cpuSubmissionMs": 4.5999999940395355,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.183400000005961,
+          "cpuSubmissionMs": 2.5999999940395355,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.2109000000059607,
+          "cpuSubmissionMs": 3,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.2397000000029803,
+          "cpuSubmissionMs": 3.5,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.2675,
+          "cpuSubmissionMs": 2.7000000029802322,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.29520000000298,
+          "cpuSubmissionMs": 3.1000000089406967,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.3244000000059604,
+          "cpuSubmissionMs": 2.9000000059604645,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.3526000000089407,
+          "cpuSubmissionMs": 2.4000000059604645,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.3794000000059605,
+          "cpuSubmissionMs": 2.7999999970197678,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.4087000000029803,
+          "cpuSubmissionMs": 2.7000000029802322,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.4367000000029804,
+          "cpuSubmissionMs": 2.5,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.4642000000029802,
+          "cpuSubmissionMs": 2.5,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.4934000000059604,
+          "cpuSubmissionMs": 3.1000000089406967,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.522100000008941,
+          "cpuSubmissionMs": 2.7000000029802322,
+          "programsBefore": 115,
+          "programsAfter": 115
+        },
+        {
+          "age": 2.5494000000059605,
+          "cpuSubmissionMs": 2.7000000029802322,
+          "programsBefore": 111,
+          "programsAfter": 111
+        },
+        {
+          "age": 2.5777999999970196,
+          "cpuSubmissionMs": 3.2000000029802322,
+          "programsBefore": 111,
+          "programsAfter": 111
+        },
+        {
+          "age": 2.60620000000298,
+          "cpuSubmissionMs": 2.7000000029802322,
+          "programsBefore": 111,
+          "programsAfter": 111
+        },
+        {
+          "age": 2.6341000000089405,
+          "cpuSubmissionMs": 2.7999999970197678,
+          "programsBefore": 111,
+          "programsAfter": 111
+        },
+        {
+          "age": 2.66220000000298,
+          "cpuSubmissionMs": 3,
+          "programsBefore": 111,
+          "programsAfter": 111
+        },
+        {
+          "age": 2.6901000000089406,
+          "cpuSubmissionMs": 2.7000000029802322,
+          "programsBefore": 111,
+          "programsAfter": 111
+        }
+      ],
+      "videoPath": null
+    },
+    {
+      "name": "actual-draw-warmed-first-cast",
+      "evidence": "Real HUD, scratch tutor solve and ordinary animation loop; no manual stepping or timing overrides. Recording cadence is separate from unrecorded cadence, neither is GPU cost.",
+      "before": {
+        "attackAge": 0,
+        "diagnostics": {
+          "appearance": "wayfarer",
+          "lastAttack": null,
+          "heroAnimation": "idle",
+          "heroClips": [
+            "idle",
+            "walk",
+            "cast",
+            "cleave"
+          ],
+          "encounter": 0,
+          "region": "embercrypt",
+          "enemies": 14,
+          "articulatedEnemies": 14,
+          "enemyRoster": {
+            "guardian": 2,
+            "skeleton": 7,
+            "revenant": 4,
+            "wraith": 1
+          },
+          "attacking": false,
+          "paused": false,
+          "modelsLoaded": 21,
+          "drawCalls": 319,
+          "triangles": 1466772,
+          "particles": 97,
+          "fragments": 0,
+          "hero": [
+            0,
+            0,
+            1.4
+          ],
+          "softwareRenderer": false,
+          "fps": 30,
+          "quality": "full",
+          "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+        },
+        "viewport": [
+          1440,
+          900
+        ],
+        "canvas": [
+          1440,
+          900
+        ],
+        "state": {
+          "xp": 32,
+          "totalKills": 14,
+          "encounter": 0
+        },
+        "problemId": "pmtppqiw9_5",
+        "problem": "3 + ? = 6",
+        "busy": false,
+        "panel": "",
+        "clock": 5997.5999999940395
+      },
+      "after": {
+        "attackAge": 2.7192000000029797,
+        "diagnostics": {
+          "appearance": "wayfarer",
+          "lastAttack": {
+            "spellId": "ember",
+            "effect": "nova",
+            "options": {
+              "echo": false,
+              "wide": false,
+              "burning": false,
+              "shards": false,
+              "chains": false,
+              "pierce": false,
+              "orbit": false,
+              "summon": false,
+              "itemId": "apprentice",
+              "kills": 14,
+              "xp": 32
+            }
+          },
+          "lastSpellId": "ember",
+          "lastSpellEffect": "nova",
+          "heroAnimation": "walk",
+          "heroClips": [
+            "idle",
+            "walk",
+            "cast",
+            "cleave"
+          ],
+          "encounter": 1,
+          "region": "embercrypt",
+          "enemies": 15,
+          "articulatedEnemies": 15,
+          "enemyRoster": {
+            "guardian": 3,
+            "skeleton": 6,
+            "revenant": 4,
+            "wraith": 2
+          },
+          "attacking": false,
+          "paused": false,
+          "modelsLoaded": 21,
+          "drawCalls": 323,
+          "triangles": 1546428,
+          "particles": 102,
+          "fragments": 0,
+          "hero": [
+            0,
+            0,
+            -0.9138824799909129
+          ],
+          "softwareRenderer": false,
+          "fps": 32,
+          "quality": "full",
+          "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+        },
+        "viewport": [
+          1440,
+          900
+        ],
+        "canvas": [
+          1440,
+          900
+        ],
+        "state": {
+          "xp": 64,
+          "totalKills": 28,
+          "encounter": 1
+        },
+        "problemId": "pmtppqix6_6",
+        "problem": "2 + ? = 7",
+        "busy": false,
+        "panel": "",
+        "clock": 9784.5
+      },
+      "cadence": [
+        {
+          "dt": 11.20000001192102,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 49.999999999999545,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.400000000000546,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.400000000000546,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.400000000000546,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.699999999999818,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.400000000000546,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.400000000000546,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.400000000000546,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.400000000000546,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.19999999999982,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.699999999999818,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.400000000000546,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.19999999999982,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 50,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.400000000000546,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.19999999999982,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 50.099999999999454,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 166.60000000000036,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.699999999999818,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.699999999999818,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0.0373999999910593,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0.06979999999701977,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0.10329999999701978,
+          "attacking": true
+        },
+        {
+          "dt": 50,
+          "age": 0.14800000000000002,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0.1832999999970198,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0.21959999999403956,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0.25589999999105933,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0.29400000000000004,
+          "attacking": true
+        },
+        {
+          "dt": 50.099999999999454,
+          "age": 0.3332999999970198,
+          "attacking": true
+        },
+        {
+          "dt": 33.20000000000073,
+          "age": 0.37420000000298026,
+          "attacking": true
+        },
+        {
+          "dt": 50.099999999999454,
+          "age": 0.41470000000298024,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0.4537000000029802,
+          "attacking": true
+        },
+        {
+          "dt": 50,
+          "age": 0.5037999999970197,
+          "attacking": true
+        },
+        {
+          "dt": 50,
+          "age": 0.5527999999970198,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0.594,
+          "attacking": true
+        },
+        {
+          "dt": 50,
+          "age": 0.634,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0.6752000000029802,
+          "attacking": true
+        },
+        {
+          "dt": 50.099999999999454,
+          "age": 0.7162000000029802,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0.7573999999910593,
+          "attacking": true
+        },
+        {
+          "dt": 50,
+          "age": 0.7982000000029803,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 0.8378999999910594,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 0.8780999999940395,
+          "attacking": true
+        },
+        {
+          "dt": 49.900000000000546,
+          "age": 0.9175999999940395,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.9582000000029802,
+          "attacking": true
+        },
+        {
+          "dt": 50.100000000000364,
+          "age": 0.9980999999940395,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 1.0375999999940395,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 1.077,
+          "attacking": true
+        },
+        {
+          "dt": 50,
+          "age": 1.1172000000029803,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 1.1563999999910592,
+          "attacking": true
+        },
+        {
+          "dt": 50,
+          "age": 1.198,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 1.23770000000298,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 1.2790999999940393,
+          "attacking": true
+        },
+        {
+          "dt": 50,
+          "age": 1.3184999999999998,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 1.3592999999970194,
+          "attacking": true
+        },
+        {
+          "dt": 50,
+          "age": 1.398399999991059,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 1.4399999999999997,
+          "attacking": true
+        },
+        {
+          "dt": 50,
+          "age": 1.481399999991059,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 1.5214999999999996,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.5608999999910589,
+          "attacking": true
+        },
+        {
+          "dt": 50,
+          "age": 1.59820000000298,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 1.6344999999999996,
+          "attacking": true
+        },
+        {
+          "dt": 33.400000000000546,
+          "age": 1.670399999991059,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.7044999999999997,
+          "attacking": true
+        },
+        {
+          "dt": 33.400000000000546,
+          "age": 1.7397999999970195,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 1.77420000000298,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.808899999991059,
+          "attacking": true
+        },
+        {
+          "dt": 33.400000000000546,
+          "age": 1.841899999991059,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 1.875399999991059,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.9070999999940392,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 1.9394999999999998,
+          "attacking": true
+        },
+        {
+          "dt": 33.400000000000546,
+          "age": 1.9698999999910591,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.0007999999970196,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 2.0315999999940395,
+          "attacking": true
+        },
+        {
+          "dt": 16.699999999999818,
+          "age": 2.0633999999910593,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000018,
+          "age": 2.0950999999940394,
+          "attacking": true
+        },
+        {
+          "dt": 33.400000000000546,
+          "age": 2.1267999999970195,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.1585999999940393,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 2.1905999999940393,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 2.22220000000298,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.2529999999999997,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 2.284599999994039,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.316099999994039,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 2.3482000000029797,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.3784999999999994,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.4099999999999993,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 2.4412000000029797,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 2.4724999999999993,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.5019999999999993,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 2.5333999999910586,
+          "attacking": true
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 2.5653999999910586,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.598099999994039,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.6272999999970192,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.6588999999910587,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 2.689599999994039,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999891,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 50,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000000364,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 50,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.399999999999636,
+          "age": 2.7192000000029797,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000109,
+          "age": 2.7192000000029797,
+          "attacking": false
+        }
+      ],
+      "errors": [],
+      "shadowWarm": {
+        "programsBefore": 106,
+        "programsAfter": 119
+      },
+      "draws": [
+        {
+          "age": 0.0373999999910593,
+          "cpuSubmissionMs": 9.299999997019768,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.06979999999701977,
+          "cpuSubmissionMs": 5.799999997019768,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.10329999999701978,
+          "cpuSubmissionMs": 10.600000008940697,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.14800000000000002,
+          "cpuSubmissionMs": 7.5999999940395355,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.1832999999970198,
+          "cpuSubmissionMs": 8.899999991059303,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.21959999999403956,
+          "cpuSubmissionMs": 4.5,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.25589999999105933,
+          "cpuSubmissionMs": 5.0999999940395355,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.29400000000000004,
+          "cpuSubmissionMs": 7.800000011920929,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.3332999999970198,
+          "cpuSubmissionMs": 7.600000008940697,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.37420000000298026,
+          "cpuSubmissionMs": 7.199999988079071,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.41470000000298024,
+          "cpuSubmissionMs": 6,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.4537000000029802,
+          "cpuSubmissionMs": 4.899999991059303,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.5037999999970197,
+          "cpuSubmissionMs": 6.299999997019768,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.5527999999970198,
+          "cpuSubmissionMs": 6.299999997019768,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.594,
+          "cpuSubmissionMs": 7.4000000059604645,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.634,
+          "cpuSubmissionMs": 5.4000000059604645,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.6752000000029802,
+          "cpuSubmissionMs": 8.799999997019768,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.7162000000029802,
+          "cpuSubmissionMs": 5.800000011920929,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.7573999999910593,
+          "cpuSubmissionMs": 8.199999988079071,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.7982000000029803,
+          "cpuSubmissionMs": 6.5,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.8378999999910594,
+          "cpuSubmissionMs": 8.799999997019768,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.8780999999940395,
+          "cpuSubmissionMs": 4.699999988079071,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.9175999999940395,
+          "cpuSubmissionMs": 5.199999988079071,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.9582000000029802,
+          "cpuSubmissionMs": 4.200000002980232,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 0.9980999999940395,
+          "cpuSubmissionMs": 5.100000008940697,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.0375999999940395,
+          "cpuSubmissionMs": 4.299999997019768,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.077,
+          "cpuSubmissionMs": 6,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.1172000000029803,
+          "cpuSubmissionMs": 8,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.1563999999910592,
+          "cpuSubmissionMs": 7.9000000059604645,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.198,
+          "cpuSubmissionMs": 6.399999991059303,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.23770000000298,
+          "cpuSubmissionMs": 5,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.2790999999940393,
+          "cpuSubmissionMs": 6.700000002980232,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.3184999999999998,
+          "cpuSubmissionMs": 5,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.3592999999970194,
+          "cpuSubmissionMs": 5,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.398399999991059,
+          "cpuSubmissionMs": 5.0999999940395355,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.4399999999999997,
+          "cpuSubmissionMs": 4.199999988079071,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.481399999991059,
+          "cpuSubmissionMs": 7.399999991059303,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.5214999999999996,
+          "cpuSubmissionMs": 4.200000002980232,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.5608999999910589,
+          "cpuSubmissionMs": 4.899999991059303,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.59820000000298,
+          "cpuSubmissionMs": 6.5,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.6344999999999996,
+          "cpuSubmissionMs": 5.199999988079071,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.670399999991059,
+          "cpuSubmissionMs": 3.8999999910593033,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.7044999999999997,
+          "cpuSubmissionMs": 5.9000000059604645,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.7397999999970195,
+          "cpuSubmissionMs": 3.9000000059604645,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.77420000000298,
+          "cpuSubmissionMs": 4.600000008940697,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.808899999991059,
+          "cpuSubmissionMs": 3.2999999970197678,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.841899999991059,
+          "cpuSubmissionMs": 3.3999999910593033,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.875399999991059,
+          "cpuSubmissionMs": 2.800000011920929,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.9070999999940392,
+          "cpuSubmissionMs": 3.5,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.9394999999999998,
+          "cpuSubmissionMs": 2.7999999970197678,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 1.9698999999910591,
+          "cpuSubmissionMs": 2.5999999940395355,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.0007999999970196,
+          "cpuSubmissionMs": 3.6000000089406967,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.0315999999940395,
+          "cpuSubmissionMs": 2.7000000029802322,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.0633999999910593,
+          "cpuSubmissionMs": 2.4000000059604645,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.0950999999940394,
+          "cpuSubmissionMs": 3,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.1267999999970195,
+          "cpuSubmissionMs": 2.2999999970197678,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.1585999999940393,
+          "cpuSubmissionMs": 2.3999999910593033,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.1905999999940393,
+          "cpuSubmissionMs": 2.9000000059604645,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.22220000000298,
+          "cpuSubmissionMs": 2.9000000059604645,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.2529999999999997,
+          "cpuSubmissionMs": 2.300000011920929,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.284599999994039,
+          "cpuSubmissionMs": 3.0999999940395355,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.316099999994039,
+          "cpuSubmissionMs": 2.5999999940395355,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.3482000000029797,
+          "cpuSubmissionMs": 2.6000000089406967,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.3784999999999994,
+          "cpuSubmissionMs": 2.7999999970197678,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.4099999999999993,
+          "cpuSubmissionMs": 3.5,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.4412000000029797,
+          "cpuSubmissionMs": 3.7999999970197678,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.4724999999999993,
+          "cpuSubmissionMs": 2.7000000029802322,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.5019999999999993,
+          "cpuSubmissionMs": 3.5999999940395355,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.5333999999910586,
+          "cpuSubmissionMs": 4.299999997019768,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.5653999999910586,
+          "cpuSubmissionMs": 4,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.598099999994039,
+          "cpuSubmissionMs": 2.3999999910593033,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.6272999999970192,
+          "cpuSubmissionMs": 2.6000000089406967,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.6588999999910587,
+          "cpuSubmissionMs": 3,
+          "programsBefore": 119,
+          "programsAfter": 119
+        },
+        {
+          "age": 2.689599999994039,
+          "cpuSubmissionMs": 2.2000000029802322,
+          "programsBefore": 119,
+          "programsAfter": 119
+        }
+      ],
+      "videoPath": null
+    }
+  ]
+}

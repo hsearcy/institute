@@ -1,0 +1,35 @@
+#rpg-health-bars { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.rpg-enemy-health {
+  position: absolute; width: 48px; height: 9px; transform: translate(-50%, -100%);
+  padding: 1px; background: #110d0bea; border: 1px solid #b2946680;
+  box-shadow: 0 1px 3px #000b; border-radius: 1px;
+}
+.rpg-enemy-health > i { display: block; height: 100%; background: linear-gradient(#dd8065, #a74938); transition: width .16s ease-out; }
+.rpg-enemy-health[hidden] { display: none; }
+
+@media (min-width: 761px) and (min-height: 651px) {
+  .rpg-toast { top: 64px; max-width: 560px; padding: 8px 18px; font-size: 14px; }
+}
+
+.rpg-boss [role="progressbar"] { overflow: hidden; background: #1e100ee8; box-shadow: 0 1px 5px #000; }
+.rpg-boss [role="progressbar"] > i { display: block; height: 100%; background: linear-gradient(90deg,#963f30,#d87639); transition: width .16s ease-out; }
+@media (min-width: 761px) and (min-height: 651px) {
+  .rpg-toast { line-height: 20px; }
+  .rpg-boss { top: 124px; }
+}
+
+.rpg-toast.compact {
+  transform: none; max-width: none; padding: 0; line-height: 15px; font-size: 11px;
+  text-align: left; background: none; animation: none; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+#rpg-ui:has(.rpg-toast.compact:not([hidden])) .rpg-location p { visibility: hidden; }
+
+@media (max-width: 760px), (max-width: 1000px) and (max-height: 500px) and (min-aspect-ratio: 3/2) {
+  #rpg-floating-xp { display: none; }
+  .rpg-xp-earned > div { animation: rpg-xp-earned .7s ease-out; }
+}
+@keyframes rpg-xp-earned {
+  20% { box-shadow: 0 0 8px #85c4ce, inset 0 0 3px #a8e3e8; }
+  100% { box-shadow: none; }
+}

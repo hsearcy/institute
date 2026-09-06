@@ -12,33 +12,57 @@
   "assets": {
     "hero": {
       "url": "/assets/rpg/hero.glb",
-      "bytes": 1845900,
-      "triangles": 11330,
-      "drawCalls": 6,
-      "embeddedTextures": 3,
+      "bytes": 8294568,
+      "triangles": 62593,
+      "drawCalls": 15,
+      "embeddedTextures": 27,
       "nodes": [
-        "Body_Baked.010",
-        "Cape_Baked.001",
-        "Head_Baked.001",
-        "Head_Glow.001",
-        "Sword_Baked.001",
-        "Sword_Glow"
+        "Authored_equipped_blade.017",
+        "Authored_equipped_sword.019",
+        "clothing_review.019",
+        "eye_blend_review.019",
+        "eye_outer_review.019",
+        "eyelashes_review.019",
+        "head.001_review.019",
+        "head_lowpoly_sdiv2.002_review.019",
+        "head_lowpoly_sdiv2.003_review.019",
+        "head_lowpoly_sdiv2.004_review.019",
+        "hood and scarf_review.019"
       ],
+      "provenance": {
+        "license": "CC0",
+        "creator": "Your_Dankest_Meme / GlutamateAntagonist",
+        "source": "https://www.reddit.com/r/blender/comments/1hhptp6/please_use_my_models_as_you_see_fit/",
+        "sourceSha256": "3f48d820b532677426ebae5ad77175faefc55f0ef4b071f523a4a97b5ab253ce",
+        "licenseEvidence": "scripts/blender/sources/cc0-hooded-warrior"
+      },
+      "portrait": "/assets/rpg/appearances/wayfarer.png",
       "animations": {
-        "idle": 3.2333333333333334,
-        "walk": 0.8333333333333334,
-        "cleave": 1.1666666666666667,
-        "cast": 1.1666666666666667
+        "idle": 3.2,
+        "walk": 0.8,
+        "cast": 1.1,
+        "cleave": 1.1
       },
       "joints": [
         "root",
+        "pelvis",
         "chest",
         "head",
-        "arm.L",
-        "arm.R",
         "cape",
+        "cape.mid",
+        "cape.hem",
+        "arm.R",
+        "forearm.R",
+        "hand.R",
+        "arm.L",
+        "forearm.L",
+        "hand.L",
+        "leg.R",
+        "shin.R",
+        "foot.R",
         "leg.L",
-        "leg.R"
+        "shin.L",
+        "foot.L"
       ]
     },
     "hero-cinder": {
@@ -223,6 +247,38 @@
       "nodes": [
         "Body_Baked"
       ]
+    },
+    "masonry-pier": {
+      "url": "/assets/rpg/masonry-pier.glb",
+      "bytes": 3181224,
+      "triangles": 11804,
+      "drawCalls": 1,
+      "embeddedTextures": 3,
+      "nodes": [
+        "WornPier_Review.004"
+      ],
+      "provenance": {
+        "license": "CC0",
+        "textureSource": "https://polyhaven.com/a/rock_face_03",
+        "source": "scripts/blender/detailed/masonry_pier.py",
+        "licenseEvidence": "scripts/blender/sources/rock-face-03"
+      }
+    },
+    "masonry-post": {
+      "url": "/assets/rpg/masonry-post.glb",
+      "bytes": 3496548,
+      "triangles": 5570,
+      "drawCalls": 1,
+      "embeddedTextures": 3,
+      "nodes": [
+        "WornPier_Review.009"
+      ],
+      "provenance": {
+        "license": "CC0",
+        "textureSource": "https://polyhaven.com/a/rock_face_03",
+        "source": "scripts/blender/detailed/masonry_pier.py",
+        "licenseEvidence": "scripts/blender/sources/rock-face-03"
+      }
     },
     "arch": {
       "url": "/assets/rpg/arch.glb",

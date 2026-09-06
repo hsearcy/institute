@@ -33,3 +33,13 @@ export function dungeonPortraitOffset(width: number, height: number, top: number
   const start = Math.max(0, Math.min(height, top)), end = Math.max(start, Math.min(height, bottom));
   return ((start + end) / height - 1) * dungeonCameraHalfHeight(width, height);
 }
+
+/** Fit a static formation beneath the HUD in the separate landscape pane.
+ * Preserve the closer zoom whenever the full formation already fits. */
+export function dungeonCombatFrame(minY: number, maxY: number, top: number, bottom: number, height: number): { scale: number; shift: number } {
+  if (![minY, maxY, top, bottom, height].every(Number.isFinite) || height <= 0 || maxY < minY || bottom <= top) return { scale: 1, shift: 0 };
+  const scale = Math.max(1, (maxY - minY) / (bottom - top));
+  const first = height / 2 + (minY - height / 2) / scale;
+  const last = height / 2 + (maxY - height / 2) / scale;
+  return { scale, shift: Math.max(top - first, Math.min(0, bottom - last)) };
+}

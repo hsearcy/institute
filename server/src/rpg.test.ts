@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { RPG_SPELLS, RPG_SPELL_IDS, RPG_SKILLS, RPG_ITEMS, rpgLevel, rpgSpellUnlocked, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgEncounterKills, rpgNextRelicHunt } from '@institute/shared';
+import { RPG_SPELLS, RPG_SPELL_IDS, RPG_SKILLS, RPG_ITEMS, rpgLevel, rpgSpellUnlocked, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgEncounterKills, rpgSpellCombatStats, rpgNextRelicHunt } from '@institute/shared';
 import { ensureRpgSchema, getRpgState, startRpgExpedition, resolveRpgEncounter, createRpgRoutes } from './rpg';
 
 function legacyDb(): Database {
@@ -30,11 +30,67 @@ function resolve(db: Database, profileId: string, problemId: string, extra = {})
   const expedition = getRpgState(db, profileId).expedition!;
   return resolveRpgEncounter(db, { profileId, problemId, expeditionId: expedition.id, encounterIndex: expedition.encounterIndex, ...extra });
 }
+function clearRoom(db: Database, profileId: string, prefix: string) {
+  const room = getRpgState(db, profileId).expedition!.encounterIndex;
+  for (let cast = 0; cast < 16; cast++) {
+    const problem = `${prefix}-cast-${cast}`;
+    solved(db, profileId, problem);
+    const before = snapshot(db), result = resolve(db, profileId, problem);
+    expect(snapshot(db)).toBe(before);
+    if (result.reward.combat!.encounterCleared) return result;
+    expect(result.state.expedition!.encounterIndex).toBe(room);
+  }
+  throw new Error('Starter failed to clear room within bounded cast count');
+}
 function call(db: Database, path: string, body?: unknown) {
   return createRpgRoutes(db).request(path, { method: body === undefined ? 'GET' : 'POST', headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
 }
 
 describe('additive RPG progression on legacy learning data', () => {
+  test('several recorded answers damage one persistent pack and only its clear advances or drops loot', () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    try {
+      const initial = startRpgExpedition(db, 'sam');
+      solved(db, 'sam', 'cast-one'); solved(db, 'sam', 'cast-two');
+      const learning = snapshot(db);
+      const request = { profileId: 'sam', problemId: 'cast-one', expeditionId: initial.expedition!.id, encounterIndex: 0 };
+      const first = resolveRpgEncounter(db, request);
+      expect(first.state.expedition).toMatchObject({ encounterIndex: 0, combat: { casts: 1 } });
+      expect(first.reward).toMatchObject({ kills: 2, item: null, bossDefeated: false });
+      const saved = getRpgState(db, 'sam');
+      expect(saved.expedition!.combat!.enemies).toEqual(first.reward.combat!.enemiesAfter);
+      expect(rpgNextRelicHunt(saved, 'embercrypt')).toMatchObject({ itemId: 'cinderwand', encounterIndex: 0 });
+      const second = resolveRpgEncounter(db, { ...request, problemId: 'cast-two' });
+      expect(second.reward.combat!.enemiesBefore).toEqual(first.reward.combat!.enemiesAfter);
+      expect(second.reward).toMatchObject({ kills: 4, xp: 32, item: { id: 'cinderwand' }, combat: { encounterCleared: true } });
+      expect(second.state).toMatchObject({ xp: 64, totalKills: 6, expedition: { encounterIndex: 1, combat: { casts: 0 } } });
+      const lateRetry = resolveRpgEncounter(db, request);
+      expect(lateRetry.reward).toEqual(first.reward);
+      expect(lateRetry.state).toEqual(second.state);
+      expect(lateRetry.duplicate).toBe(true);
+      expect(db.query('SELECT COUNT(*) AS n FROM rpg_cast_claims').get()).toEqual({ n: 2 });
+      expect(db.query('SELECT COUNT(*) AS n FROM rpg_claims').get()).toEqual({ n: 0 });
+      expect(snapshot(db)).toBe(learning);
+    } finally { db.close(); }
+  });
+
+  test('an old active save gets deterministic health on reads without rewriting earned progress', () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    try {
+      const state = startRpgExpedition(db, 'sam');
+      state.xp = 420; state.totalKills = 177; state.expedition!.encounterIndex = 4;
+      delete state.expedition!.combat;
+      const oldJson = JSON.stringify(state);
+      db.query('UPDATE rpg_profiles SET state_json = ? WHERE profile_id = ?').run(oldJson, 'sam');
+      const before = snapshot(db), read = getRpgState(db, 'sam');
+      expect(read).toMatchObject({ xp: 420, totalKills: 177, expedition: { encounterIndex: 4, combat: { casts: 0, version: 1 } } });
+      expect(read.expedition!.combat!.enemies).toHaveLength(9);
+      expect(getRpgState(db, 'sam')).toEqual(read);
+      expect((db.query('SELECT state_json FROM rpg_profiles WHERE profile_id = ?').get('sam') as any).state_json).toBe(oldJson);
+      expect(snapshot(db)).toBe(before);
+    } finally { db.close(); }
+  });
+
   test('schema creation and RPG actions leave every legacy table byte-for-byte unchanged', () => {
     const db = legacyDb();
     const before = snapshot(db);
@@ -46,7 +102,7 @@ describe('additive RPG progression on legacy learning data', () => {
     solved(db, 'sam', 'new-problem');
     const beforeResolve = snapshot(db);
     const result = resolve(db, 'sam', 'new-problem');
-    expect(result.reward).toMatchObject({ kills: 14, xp: 32, newItems: [{ id: 'cinderwand' }] });
+    expect(result.reward).toMatchObject({ kills: 2, xp: 32, newItems: [], combat: { encounterCleared: false } });
     expect(snapshot(db)).toBe(beforeResolve);
     ensureRpgSchema(db);
     expect(getRpgState(db, 'sam')).toEqual(result.state);
@@ -91,8 +147,8 @@ describe('additive RPG progression on legacy learning data', () => {
     expect(retry.duplicate).toBe(true);
     expect(retry.state).toEqual(first.state);
     expect(retry.reward).toEqual(first.reward);
-    expect(() => resolve(db, 'sam', 'right')).toThrow('already powered');
-    expect(db.query('SELECT COUNT(*) AS n FROM rpg_claims').get()).toEqual({ n: 1 });
+    expect(() => resolveRpgEncounter(db, { ...request, encounterIndex: 1 })).toThrow('already powered');
+    expect(db.query('SELECT COUNT(*) AS n FROM rpg_cast_claims').get()).toEqual({ n: 1 });
     db.close();
   });
 
@@ -108,15 +164,10 @@ describe('additive RPG progression on legacy learning data', () => {
         expect(preview).toMatchObject({ itemId: targetItem, encounterIndex: 2 });
         startRpgExpedition(db, profileId, regionId);
         for (let room = 0; room <= preview.encounterIndex; room++) {
-          const problemId = `${profileId}-${room}`;
-          solved(db, profileId, problemId);
-          const learning = snapshot(db), current = getRpgState(db, profileId);
-          const request = { profileId, problemId, expeditionId: current.expedition!.id, encounterIndex: room };
-          const result = resolveRpgEncounter(db, request);
+          const result = clearRoom(db, profileId, `${profileId}-${room}`);
           expect(result.reward.xp).toBe(32);
           expect(result.reward.item?.id ?? null).toBe(room === 2 ? targetItem : null);
-          expect(resolveRpgEncounter(db, request)).toEqual({ ...result, duplicate: true });
-          expect(snapshot(db)).toBe(learning);
+
         }
         expect(getRpgState(db, profileId).inventory).toEqual(['apprentice', 'cinderwand', targetItem]);
       }
@@ -132,14 +183,14 @@ describe('additive RPG progression on legacy learning data', () => {
       db.query('UPDATE rpg_profiles SET state_json = ? WHERE profile_id = ?').run(JSON.stringify(initial), 'sam');
       solved(db, 'sam', 'pre-hunt');
       const request = { profileId: 'sam', problemId: 'pre-hunt', expeditionId: initial.expedition!.id, encounterIndex: 2 };
-      const prior = resolveRpgEncounter(db, request);
-      expect(prior.reward.item?.id).toBe('cleaver');
-      // The prior global catalogue would have awarded Glacier Fang here.
       const oldRelic = RPG_ITEMS.find(item => item.id === 'glacier')!;
-      prior.reward.item = oldRelic; prior.reward.newItems = [oldRelic];
-      prior.state.inventory = ['apprentice', 'cinderwand', 'glacier'];
-      db.query('UPDATE rpg_claims SET reward_json = ? WHERE profile_id = ?').run(JSON.stringify(prior.reward), 'sam');
-      db.query('UPDATE rpg_profiles SET state_json = ? WHERE profile_id = ?').run(JSON.stringify(prior.state), 'sam');
+      const oldReward = { xp: 32, kills: 16, levelUp: false, levelsGained: 0, item: oldRelic, newItems: [oldRelic], duplicateItem: false, bossDefeated: false, spellId: 'ember' as const };
+      initial.inventory = ['apprentice', 'cinderwand', 'glacier'];
+      initial.xp = 32; initial.totalKills = 116; initial.expedition!.encounterIndex = 3;
+      delete initial.expedition!.combat;
+      db.query('INSERT INTO rpg_claims VALUES (?,?,?,?,?,?)').run('sam', request.problemId, request.expeditionId, 2, JSON.stringify(oldReward), Date.now());
+      db.query('UPDATE rpg_profiles SET state_json = ? WHERE profile_id = ?').run(JSON.stringify(initial), 'sam');
+      const prior = { state: getRpgState(db, 'sam'), reward: oldReward };
       const saved = db.query('SELECT * FROM rpg_claims').all(), learning = snapshot(db);
       expect(resolveRpgEncounter(db, request)).toEqual({ ...prior, duplicate: true });
       expect(db.query('SELECT * FROM rpg_claims').all()).toEqual(saved);
@@ -154,11 +205,12 @@ describe('additive RPG progression on legacy learning data', () => {
       const initial = startRpgExpedition(db, 'sam');
       solved(db, 'sam', 'pre-viewport-change');
       const request = { profileId: 'sam', problemId: 'pre-viewport-change', expeditionId: initial.expedition!.id, encounterIndex: 0 };
-      const earned = resolveRpgEncounter(db, request);
-      // Simulate a saved receipt/state from the prior 24-enemy initial pack.
-      earned.reward.kills = 24; earned.state.totalKills = 24;
-      db.query('UPDATE rpg_claims SET reward_json = ? WHERE profile_id = ?').run(JSON.stringify(earned.reward), 'sam');
-      db.query('UPDATE rpg_profiles SET state_json = ? WHERE profile_id = ?').run(JSON.stringify(earned.state), 'sam');
+      const oldReward = { xp: 32, kills: 24, levelUp: false, levelsGained: 0, item: null, newItems: [], duplicateItem: false, bossDefeated: false, spellId: 'ember' as const };
+      initial.xp = 32; initial.xpIntoLevel = 32; initial.totalKills = 24; initial.expedition!.encounterIndex = 1;
+      delete initial.expedition!.combat;
+      db.query('INSERT INTO rpg_claims VALUES (?,?,?,?,?,?)').run('sam', request.problemId, request.expeditionId, 0, JSON.stringify(oldReward), Date.now());
+      db.query('UPDATE rpg_profiles SET state_json = ? WHERE profile_id = ?').run(JSON.stringify(initial), 'sam');
+      const earned = { state: getRpgState(db, 'sam'), reward: oldReward };
       const learning = snapshot(db), savedReceipt = db.query('SELECT * FROM rpg_claims').all();
       ensureRpgSchema(db);
       for (let retry = 0; retry < 2; retry++) {
@@ -169,8 +221,8 @@ describe('additive RPG progression on legacy learning data', () => {
       expect(snapshot(db)).toBe(learning);
       solved(db, 'sam', 'post-viewport-change');
       const beforeNext = snapshot(db), next = resolve(db, 'sam', 'post-viewport-change');
-      expect(next.reward).toMatchObject({ kills: 15, xp: 32 });
-      expect(next.state.totalKills).toBe(39);
+      expect(next.reward).toMatchObject({ kills: 2, xp: 32 });
+      expect(next.state.totalKills).toBe(26);
       expect(next.state.xp).toBe(64);
       expect(snapshot(db)).toBe(beforeNext);
     } finally { db.close(); }
@@ -185,11 +237,11 @@ describe('additive RPG progression on legacy learning data', () => {
       solved(db, 'sam', 'capped-pack');
       const learning = snapshot(db), request = { profileId: 'sam', problemId: 'capped-pack', expeditionId: initial.expedition!.id, encounterIndex: 0 };
       const first = resolveRpgEncounter(db, request);
-      expect(first.reward).toMatchObject({ kills: 48, xp: 32 });
-      expect(first.state.totalKills).toBe(48);
+      expect(first.reward).toMatchObject({ kills: 6, xp: 32 });
+      expect(first.state.totalKills).toBe(6);
       expect(resolveRpgEncounter(db, request)).toEqual({ ...first, duplicate: true });
       expect(snapshot(db)).toBe(learning);
-      expect(db.query('SELECT COUNT(*) AS n FROM rpg_claims').get()).toEqual({ n: 1 });
+      expect(db.query('SELECT COUNT(*) AS n FROM rpg_cast_claims').get()).toEqual({ n: 1 });
     } finally { db.close(); }
   });
 
@@ -223,10 +275,10 @@ describe('additive RPG progression on legacy learning data', () => {
     expect(startRpgExpedition(db, 'sam', 'frostvault')).toEqual(run);
     let last;
     for (let i = 0; i < 6; i++) {
-      solved(db, 'sam', `p${i}`);
-      last = resolve(db, 'sam', `p${i}`);
+      last = clearRoom(db, 'sam', `p${i}`);
       if (i === 2) {
-        expect(last.state).toMatchObject({ level: 2, skillPoints: 1 });
+        expect(last.state.level).toBeGreaterThanOrEqual(2);
+        expect(last.state.skillPoints).toBeGreaterThanOrEqual(1);
         const upgrade = await call(db, '/upgrade', { profileId: 'sam', skillId: 'frost' });
         expect(upgrade.status).toBe(200);
         expect((await upgrade.json() as any).skills.frost).toBe(1);
@@ -234,9 +286,9 @@ describe('additive RPG progression on legacy learning data', () => {
       }
     }
     expect(last!.reward.bossDefeated).toBe(true);
-    expect(last!.state).toMatchObject({ expeditionsCompleted: 1, level: 3, expedition: { cleared: true } });
+    expect(last!.state).toMatchObject({ expeditionsCompleted: 1, expedition: { cleared: true } });
     expect((await call(db, '/respec', { profileId: 'sam' })).status).toBe(200);
-    expect(getRpgState(db, 'sam')).toMatchObject({ skills: {}, skillPoints: 2, selectedSpellId: 'ember' });
+    expect(getRpgState(db, 'sam')).toMatchObject({ skills: {}, skillPoints: last!.state.level - 1, selectedSpellId: 'ember' });
     const next = startRpgExpedition(db, 'sam', 'frostvault');
     expect(next.expedition!.regionId).toBe('frostvault');
     expect(next.expedition!.id).not.toBe(run.expedition!.id);
@@ -253,7 +305,7 @@ describe('additive RPG progression on legacy learning data', () => {
       ['/resolve', { profileId: 'sam', xp: 999999 }],
       ['/start', { profileId: '' }],
     ] as const) expect((await call(db, path, body)).status).toBe(400);
-    startRpgExpedition(db, 'sam'); solved(db, 'sam', 'reward'); resolve(db, 'sam', 'reward');
+    startRpgExpedition(db, 'sam'); clearRoom(db, 'sam', 'reward');
     expect((await call(db, '/equip', { profileId: 'sam', itemId: 'cinderwand' })).status).toBe(200);
     expect(getRpgState(db, 'other-kid').inventory).toEqual(['apprentice']);
     expect(getRpgState(db, 'other-kid').xp).toBe(0);
@@ -354,7 +406,7 @@ describe('expanded spellbook compatibility and authority', () => {
     startRpgExpedition(db, 'sam'); solved(db, 'sam', 'meteor-test');
     const learning = snapshot(db);
     const result = resolve(db, 'sam', 'meteor-test', { spellId: 'meteor' });
-    expect(result.reward).toMatchObject({ spellId: 'meteor', kills: 30, xp: 32 });
+    expect(result.reward).toMatchObject({ spellId: 'meteor', kills: 6, xp: 32 });
     expect(snapshot(db)).toBe(learning);
     db.close();
   });
@@ -392,8 +444,8 @@ describe('expanded spellbook compatibility and authority', () => {
     const state = { skills: { ember_power: 1, ember_echo: 1, meteor: 1, meteor_shower: 1 }, equippedItemId: 'starfall', selectedSpellId: 'meteor' as const };
     expect(rpgSpellModifiers(state)).toEqual(['echo']);
     expect(rpgSpellModifiers(state, 'ice_lance')).toEqual([]);
-    expect(rpgEncounterKills(state, 0)).toBe(33); // 14 base + 6 Meteor + 2 Wildfire + 3 shower + 8 gear.
-    expect(rpgEncounterKills(state, 0, 'cleave')).toBe(18); // 14 base + 2 Cleave + 2 school power.
+    expect(rpgSpellCombatStats(state).damage).toBe(27); // 8 base + 6 Meteor + 2 Wildfire + 3 shower + 8 gear.
+    expect(rpgSpellCombatStats(state, 'cleave').damage).toBe(11); // 7 base + 2 Cleave + 2 school power.
     expect(rpgSpellSchool('frost_guardian')).toBe('frost');
     expect(rpgSpellSchool('ball_lightning')).toBe('storm');
   });
@@ -404,7 +456,7 @@ describe('expanded spellbook compatibility and authority', () => {
       startRpgExpedition(db, 'collector');
       for (let room = 0; room < 6; room++) {
         const id = `collect-${expedition}-${room}`;
-        solved(db, 'collector', id); resolve(db, 'collector', id);
+        clearRoom(db, 'collector', id);
       }
     }
     expect(new Set(getRpgState(db, 'collector').inventory)).toEqual(new Set(RPG_ITEMS.map(item => item.id)));

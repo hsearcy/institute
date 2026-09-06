@@ -9,8 +9,7 @@ test('Appearance milestones have explicit assets and unlock at the existing leve
     const threshold = Array.from({ length: appearance.requiredLevel - 1 }, (_, index) => 90 + index * 45).reduce((sum, xp) => sum + xp, 0);
     expect(rpgAppearanceUnlocked(appearance.id, rpgLevel(threshold).level)).toBe(true);
     if (threshold) expect(rpgAppearanceUnlocked(appearance.id, rpgLevel(threshold - 1).level)).toBe(false);
-    if (appearance.id === 'wayfarer') expect(appearance.thumbnail).toBeNull();
-    else expect(appearance.thumbnail).toBe(`/assets/rpg/appearances/${appearance.id}.png`);
+    expect(appearance.thumbnail).toBe(`/assets/rpg/appearances/${appearance.id}.png`);
   }
 });
 

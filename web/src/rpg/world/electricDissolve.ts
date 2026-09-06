@@ -1,5 +1,15 @@
 import * as THREE from 'three';
 
+/** Keep a prepared program alive independently of an encounter's material. */
+export function cloneErosionProgramMaterial<T extends THREE.Material>(source: T): T {
+  const material = source.clone();
+  // Material.copy omits both hooks, which would silently compile an ordinary
+  // surface instead of the exact erosion/depth variant used by the next room.
+  material.onBeforeCompile = source.onBeforeCompile;
+  material.customProgramCacheKey = source.customProgramCacheKey;
+  return material;
+}
+
 const vertexDeclarations = `
 varying float vElectricDissolve;
 varying vec3 vElectricWorld;
@@ -25,7 +35,7 @@ const fragmentDeclarations = `
 `;
 
 type Shader = Parameters<THREE.Material['onBeforeCompile']>[0];
-function patch(shader: Shader, surface: boolean): void {
+function patch(shader: Shader, surface: boolean, burn = false): void {
   shader.vertexShader = vertexDeclarations + shader.vertexShader;
   shader.vertexShader = shader.vertexShader.replace('#include <project_vertex>', `#include <project_vertex>
     vElectricDissolve=0.;
@@ -41,7 +51,7 @@ function patch(shader: Shader, surface: boolean): void {
       if(vElectricDissolve>0.001) {
         float edge=1.-smoothstep(0.,.012,electricField()-vElectricDissolve);
         edge*=smoothstep(.48,.75,electricNoise(vElectricWorld*3.5+2.1));
-        totalEmissiveRadiance+=vec3(.015,.05,.08)*edge;
+        totalEmissiveRadiance+=vec3(${burn ? '.08,.026,.006' : '.015,.05,.08'})*edge;
       }`);
 }
 
@@ -50,19 +60,28 @@ export function createElectricDissolve(source: THREE.BufferGeometry, materials: 
   const geometry = source.clone();
   const amount = new THREE.InstancedBufferAttribute(new Float32Array(capacity), 1).setUsage(THREE.DynamicDrawUsage);
   geometry.setAttribute('instanceDissolve', amount);
-  const copies = (Array.isArray(materials) ? materials : [materials]).map(original => {
+  const originals = Array.isArray(materials) ? materials : [materials];
+  const copyMaterials = (burn: boolean) => originals.map(original => {
     const material = original.clone();
-    material.onBeforeCompile = (shader, renderer) => { original.onBeforeCompile.call(material, shader, renderer); patch(shader, true); };
-    material.customProgramCacheKey = () => `${original.customProgramCacheKey()}|electric-erosion-v2`;
+    material.onBeforeCompile = (shader, renderer) => { original.onBeforeCompile.call(material, shader, renderer); patch(shader, true, burn); };
+    material.customProgramCacheKey = () => `${original.customProgramCacheKey()}|${burn ? 'burn-erosion-v1' : 'electric-erosion-v2'}`;
     return material;
   });
+  const copies = copyMaterials(false);
+  let burnCopies: THREE.Material[] | undefined;
   const depth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
   depth.onBeforeCompile = shader => patch(shader, false);
   depth.customProgramCacheKey = () => 'electric-erosion-depth-v2';
   return {
     geometry, material: Array.isArray(materials) ? copies : copies[0], depth, amount,
+    // Both responses share per-instance erosion and its exact shadow discard.
+    // Only the restrained residual edge changes; cached asset maps stay intact.
+    materialFor(style: 'electric' | 'burn') {
+      const selected = style === 'burn' ? (burnCopies ??= copyMaterials(true)) : copies;
+      return Array.isArray(materials) ? selected : selected[0];
+    },
     set(index: number, progress: number) { amount.setX(index, Number.isFinite(progress) ? THREE.MathUtils.clamp(progress, 0, 1) : 0); },
     upload() { amount.needsUpdate = true; },
-    dispose() { geometry.dispose(); copies.forEach(material => material.dispose()); depth.dispose(); },
+    dispose() { geometry.dispose(); copies.forEach(material => material.dispose()); burnCopies?.forEach(material => material.dispose()); depth.dispose(); },
   };
 }

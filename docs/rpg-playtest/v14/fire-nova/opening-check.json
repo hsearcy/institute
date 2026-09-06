@@ -1,0 +1,360 @@
+[
+  {
+    "variant": "legacy",
+    "sizeShots": [],
+    "cadence": null,
+    "errors": [],
+    "stages": [
+      {
+        "age": 0.08,
+        "ignition": [
+          {
+            "age": 0.08,
+            "hand": [
+              0.31978991746920227,
+              1.4120485913751555,
+              1.1197600872733493
+            ],
+            "ground": [
+              0.4899269813193323,
+              0.06,
+              1.4822894463180216
+            ]
+          }
+        ],
+        "dead": [],
+        "burnMaterials": true
+      },
+      {
+        "age": 0.13,
+        "ignition": [
+          {
+            "age": 0.13,
+            "hand": [
+              0.24969294626312724,
+              1.5006643480570285,
+              1.055829355426063
+            ],
+            "ground": [
+              0.4899269813193323,
+              0.06,
+              1.4822894463180216
+            ]
+          }
+        ],
+        "dead": [],
+        "burnMaterials": true
+      },
+      {
+        "age": 0.17,
+        "ignition": [
+          {
+            "age": 0.17,
+            "hand": [
+              0.14007542471942305,
+              1.5538492752415303,
+              0.9985291101590636
+            ],
+            "ground": [
+              0.4899269813193323,
+              0.06,
+              1.4822894463180216
+            ]
+          }
+        ],
+        "dead": [],
+        "burnMaterials": true
+      },
+      {
+        "age": 0.18,
+        "ignition": [
+          {
+            "age": 0.18,
+            "hand": [
+              0.14678084565693755,
+              1.5642258505446618,
+              1.0009318562598182
+            ],
+            "ground": [
+              0.4899269813193323,
+              0.06,
+              1.4822894463180216
+            ]
+          }
+        ],
+        "dead": [],
+        "burnMaterials": true
+      },
+      {
+        "age": 0.23,
+        "ignition": [
+          {
+            "age": 0.23,
+            "hand": [
+              0.022319254973901748,
+              1.5966791876264188,
+              0.9753803456534188
+            ],
+            "ground": [
+              0.4899269813193323,
+              0.06,
+              1.4822894463180216
+            ]
+          }
+        ],
+        "dead": [],
+        "burnMaterials": true
+      },
+      {
+        "age": 0.35,
+        "ignition": [],
+        "dead": [],
+        "burnMaterials": true
+      }
+    ],
+    "screenshots": [
+      "/tmp/rpg-nova-v26-opening-legacy-0.08.png",
+      "/tmp/rpg-nova-v26-opening-legacy-0.13.png",
+      "/tmp/rpg-nova-v26-opening-legacy-0.17.png",
+      "/tmp/rpg-nova-v26-opening-legacy-0.18.png",
+      "/tmp/rpg-nova-v26-opening-legacy-0.23.png",
+      "/tmp/rpg-nova-v26-opening-legacy-0.35.png"
+    ],
+    "validation": {
+      "glError": 0,
+      "allDeadHidden": false,
+      "counts": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "newRoom": true,
+      "matrixFinite": true
+    }
+  },
+  {
+    "variant": "authored",
+    "sizeShots": [],
+    "cadence": null,
+    "errors": [],
+    "stages": [
+      {
+        "age": 0.08,
+        "ignition": [
+          {
+            "age": 0.08,
+            "hand": [
+              -0.06057251876203079,
+              1.2110782280782497,
+              1.0153096181718437
+            ],
+            "ground": [
+              0.4899269813193323,
+              0.06,
+              1.4822894463180216
+            ]
+          }
+        ],
+        "dead": [],
+        "burnMaterials": true
+      },
+      {
+        "age": 0.13,
+        "ignition": [
+          {
+            "age": 0.13,
+            "hand": [
+              -0.16264412635306516,
+              1.4025918266925992,
+              0.9086734678777881
+            ],
+            "ground": [
+              0.4899269813193323,
+              0.06,
+              1.4822894463180216
+            ]
+          }
+        ],
+        "dead": [],
+        "burnMaterials": true
+      },
+      {
+        "age": 0.17,
+        "ignition": [
+          {
+            "age": 0.17,
+            "hand": [
+              -0.2467681154766916,
+              1.6604990030953,
+              0.8366629299675015
+            ],
+            "ground": [
+              0.4899269813193323,
+              0.06,
+              1.4822894463180216
+            ]
+          }
+        ],
+        "dead": [],
+        "burnMaterials": true
+      },
+      {
+        "age": 0.18,
+        "ignition": [
+          {
+            "age": 0.18,
+            "hand": [
+              -0.24311628608725444,
+              1.7011046061576525,
+              0.8428115719468448
+            ],
+            "ground": [
+              0.4899269813193323,
+              0.06,
+              1.4822894463180216
+            ]
+          }
+        ],
+        "dead": [],
+        "burnMaterials": true
+      },
+      {
+        "age": 0.23,
+        "ignition": [
+          {
+            "age": 0.23,
+            "hand": [
+              -0.24311629524777267,
+              1.7011046451468574,
+              0.8428115613147102
+            ],
+            "ground": [
+              0.4899269813193323,
+              0.06,
+              1.4822894463180216
+            ]
+          }
+        ],
+        "dead": [],
+        "burnMaterials": true
+      },
+      {
+        "age": 0.35,
+        "ignition": [],
+        "dead": [],
+        "burnMaterials": true
+      }
+    ],
+    "screenshots": [
+      "/tmp/rpg-nova-v26-opening-authored-0.08.png",
+      "/tmp/rpg-nova-v26-opening-authored-0.13.png",
+      "/tmp/rpg-nova-v26-opening-authored-0.17.png",
+      "/tmp/rpg-nova-v26-opening-authored-0.18.png",
+      "/tmp/rpg-nova-v26-opening-authored-0.23.png",
+      "/tmp/rpg-nova-v26-opening-authored-0.35.png"
+    ],
+    "validation": {
+      "glError": 0,
+      "allDeadHidden": false,
+      "counts": [
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        2,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        7,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "newRoom": true,
+      "matrixFinite": true
+    }
+  }
+]

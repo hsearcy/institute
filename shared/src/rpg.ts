@@ -8,7 +8,7 @@ export interface RpgAppearance {
 }
 /** Cosmetic milestones use existing experience; they never alter combat or learning. */
 export const RPG_APPEARANCES: readonly RpgAppearance[] = [
-  { id: 'wayfarer', name: 'Wayfarer', description: 'Your familiar hood and runeblade, ready for another adventure.', requiredLevel: 1, modelId: 'hero', thumbnail: null },
+  { id: 'wayfarer', name: 'Wayfarer', description: 'Your familiar hood and runeblade, ready for another adventure.', requiredLevel: 1, modelId: 'hero', thumbnail: '/assets/rpg/appearances/wayfarer.png' },
   { id: 'cinder', name: 'Cinder Knight', description: 'Wear ember-forged armor and the colors of a seasoned Flame adventurer.', requiredLevel: 12, modelId: 'hero-cinder', thumbnail: '/assets/rpg/appearances/cinder.png' },
   { id: 'glacier', name: 'Glacier Warden', description: 'Wear crystal-trimmed armor and the mantle of a Frost guardian.', requiredLevel: 15, modelId: 'hero-glacier', thumbnail: '/assets/rpg/appearances/glacier.png' },
   { id: 'tempest', name: 'Tempest Weaver', description: 'Wear storm-marked armor and the mantle of a master of lightning.', requiredLevel: 18, modelId: 'hero-tempest', thumbnail: '/assets/rpg/appearances/tempest.png' },
@@ -31,20 +31,20 @@ export const RPG_SCHOOLS: readonly { id: RpgSchoolId; name: string; description:
 export interface RpgSpell { id: RpgSpellId; school: RpgSchoolId; name: string; description: string; color: string; skillId: string | null; effect: RpgSpellEffect; power: number }
 export const RPG_SPELLS: readonly RpgSpell[] = [
   { id: 'ember', school: 'ember', name: 'Fire Nova', description: 'Send a ring of flame outward in every direction.', color: '#ff994f', skillId: null, effect: 'nova', power: 0 },
-  { id: 'cleave', school: 'ember', name: 'Flame Cleave', description: 'Sweep your runeblade through a burning arc. Catch 2 extra monsters.', color: '#ffb46d', skillId: null, effect: 'cleave', power: 2 },
-  { id: 'meteor', school: 'ember', name: 'Meteor', description: 'Call down a blazing rock that bursts on impact. Catch 6 extra monsters.', color: '#ff7849', skillId: 'meteor', effect: 'meteor', power: 6 },
-  { id: 'phoenix_dive', school: 'ember', name: 'Phoenix Dive', description: 'Become a fiery phoenix and charge through the horde. Catch 8 extra monsters.', color: '#ffc264', skillId: 'phoenix_dive', effect: 'phoenix-dive', power: 8 },
-  { id: 'firestorm', school: 'ember', name: 'Firestorm', description: 'Raise a field of flame pillars that erupt in sequence. Catch 12 extra monsters.', color: '#ff653d', skillId: 'firestorm', effect: 'firestorm', power: 12 },
-  { id: 'frost', school: 'frost', name: 'Frostfall', description: 'Bring down ice crystals across the entire horde.', color: '#80ddff', skillId: 'frost', effect: 'frostfall', power: 0 },
-  { id: 'ice_lance', school: 'frost', name: 'Ice Lance', description: 'Launch a long ice spear that pierces a row of monsters. Catch 3 extra monsters.', color: '#c0f4ff', skillId: 'ice_lance', effect: 'ice-lance', power: 3 },
-  { id: 'glacial_surge', school: 'frost', name: 'Glacial Surge', description: 'Roll a wall of ice forward through the dungeon. Catch 6 extra monsters.', color: '#6dc9ff', skillId: 'glacial_surge', effect: 'glacial-surge', power: 6 },
-  { id: 'blizzard', school: 'frost', name: 'Blizzard', description: 'Cover the battlefield in a swirling hailstorm. Catch 9 extra monsters.', color: '#b8ebff', skillId: 'blizzard', effect: 'blizzard', power: 9 },
-  { id: 'frost_guardian', school: 'frost', name: 'Frost Guardian', description: 'Summon an ice giant to smash the horde for you. Catch 12 extra monsters.', color: '#62e0ec', skillId: 'frost_guardian', effect: 'frost-guardian', power: 12 },
+  { id: 'cleave', school: 'ember', name: 'Flame Cleave', description: 'Sweep your runeblade through a burning arc. Deal 2 extra damage per target.', color: '#ffb46d', skillId: null, effect: 'cleave', power: 2 },
+  { id: 'meteor', school: 'ember', name: 'Meteor', description: 'Call down a blazing rock that bursts on impact. Deal 6 extra damage per target.', color: '#ff7849', skillId: 'meteor', effect: 'meteor', power: 6 },
+  { id: 'phoenix_dive', school: 'ember', name: 'Phoenix Dive', description: 'Become a fiery phoenix and charge through the horde. Deal 8 extra damage per target.', color: '#ffc264', skillId: 'phoenix_dive', effect: 'phoenix-dive', power: 8 },
+  { id: 'firestorm', school: 'ember', name: 'Firestorm', description: 'Raise a field of flame pillars that erupt in sequence. Deal 12 extra damage per target.', color: '#ff653d', skillId: 'firestorm', effect: 'firestorm', power: 12 },
+  { id: 'frost', school: 'frost', name: 'Frostfall', description: 'Bring down ice crystals across nearby monsters.', color: '#80ddff', skillId: 'frost', effect: 'frostfall', power: 0 },
+  { id: 'ice_lance', school: 'frost', name: 'Ice Lance', description: 'Launch a long ice spear that pierces a row of monsters. Deal 3 extra damage per target.', color: '#c0f4ff', skillId: 'ice_lance', effect: 'ice-lance', power: 3 },
+  { id: 'glacial_surge', school: 'frost', name: 'Glacial Surge', description: 'Roll a wall of ice forward through the dungeon. Deal 6 extra damage per target.', color: '#6dc9ff', skillId: 'glacial_surge', effect: 'glacial-surge', power: 6 },
+  { id: 'blizzard', school: 'frost', name: 'Blizzard', description: 'Cover the battlefield in a swirling hailstorm. Deal 9 extra damage per target.', color: '#b8ebff', skillId: 'blizzard', effect: 'blizzard', power: 9 },
+  { id: 'frost_guardian', school: 'frost', name: 'Frost Guardian', description: 'Summon an ice giant to smash the horde for you. Deal 12 extra damage per target.', color: '#62e0ec', skillId: 'frost_guardian', effect: 'frost-guardian', power: 12 },
   { id: 'storm', school: 'storm', name: 'Chain Lightning', description: 'Send lightning leaping from one monster to the next.', color: '#c3a1ff', skillId: 'storm', effect: 'chain-lightning', power: 0 },
-  { id: 'arc_lance', school: 'storm', name: 'Arc Lance', description: 'Fire a focused lightning beam through the horde. Catch 3 extra monsters.', color: '#a9c9ff', skillId: 'arc_lance', effect: 'arc-lance', power: 3 },
-  { id: 'thunderclap', school: 'storm', name: 'Thunderclap', description: 'Strike the ground and blast monsters with thunder rings. Catch 6 extra monsters.', color: '#e4bbff', skillId: 'thunderclap', effect: 'thunderclap', power: 6 },
-  { id: 'ball_lightning', school: 'storm', name: 'Ball Lightning', description: 'Release a roaming orb that zaps monsters as it passes. Catch 9 extra monsters.', color: '#bcadff', skillId: 'ball_lightning', effect: 'ball-lightning', power: 9 },
-  { id: 'tempest', school: 'storm', name: 'Tempest', description: 'Summon a storm overhead and rain down lightning bolts. Catch 12 extra monsters.', color: '#efcaff', skillId: 'tempest', effect: 'tempest', power: 12 },
+  { id: 'arc_lance', school: 'storm', name: 'Arc Lance', description: 'Fire a focused lightning beam through the horde. Deal 3 extra damage per target.', color: '#a9c9ff', skillId: 'arc_lance', effect: 'arc-lance', power: 3 },
+  { id: 'thunderclap', school: 'storm', name: 'Thunderclap', description: 'Strike the ground and blast monsters with thunder rings. Deal 6 extra damage per target.', color: '#e4bbff', skillId: 'thunderclap', effect: 'thunderclap', power: 6 },
+  { id: 'ball_lightning', school: 'storm', name: 'Ball Lightning', description: 'Release a roaming orb that zaps monsters as it passes. Deal 9 extra damage per target.', color: '#bcadff', skillId: 'ball_lightning', effect: 'ball-lightning', power: 9 },
+  { id: 'tempest', school: 'storm', name: 'Tempest', description: 'Summon a storm overhead and rain down lightning bolts. Deal 12 extra damage per target.', color: '#efcaff', skillId: 'tempest', effect: 'tempest', power: 12 },
 ];
 export interface RpgSkill {
   id: string; name: string; description: string; school: RpgSchoolId; spellId: RpgSpellId;
@@ -53,39 +53,39 @@ export interface RpgSkill {
 }
 /** Existing nine IDs retain their ranks; additions form two paths per school. */
 export const RPG_SKILLS: readonly RpgSkill[] = [
-  { id: 'ember_power', name: 'Wildfire', description: 'All Flame abilities catch 2 more monsters per rank.', school: 'ember', spellId: 'ember', parentId: null, level: 2, maxRank: 3, kind: 'power', scope: 'school', powerPerRank: 2 },
-  { id: 'ember_echo', name: 'Twin Nova', description: 'Fire Nova erupts twice and catches 4 more monsters.', school: 'ember', spellId: 'ember', parentId: 'ember_power', level: 4, maxRank: 1, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'echo' },
-  { id: 'ember_master', name: 'Phoenix Heart', description: 'All Flame abilities catch 6 more monsters per rank.', school: 'ember', spellId: 'ember', parentId: 'ember_echo', level: 6, maxRank: 2, kind: 'power', scope: 'school', powerPerRank: 6 },
-  { id: 'cleave', name: 'Heavy Cleave', description: 'Flame Cleave catches 2 more monsters.', school: 'ember', spellId: 'cleave', parentId: null, level: 2, maxRank: 1, kind: 'power', scope: 'spell', powerPerRank: 2 },
-  { id: 'cleave_sweep', name: 'Blazing Reach', description: 'Widen Flame Cleave. Catch 2 more monsters per rank.', school: 'ember', spellId: 'cleave', parentId: 'cleave', level: 3, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 2, effect: 'wide' },
+  { id: 'ember_power', name: 'Wildfire', description: 'All Flame abilities deal 2 more damage per target per rank.', school: 'ember', spellId: 'ember', parentId: null, level: 2, maxRank: 3, kind: 'power', scope: 'school', powerPerRank: 2 },
+  { id: 'ember_echo', name: 'Twin Nova', description: 'Fire Nova erupts twice and deals 4 more damage per target.', school: 'ember', spellId: 'ember', parentId: 'ember_power', level: 4, maxRank: 1, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'echo' },
+  { id: 'ember_master', name: 'Phoenix Heart', description: 'All Flame abilities deal 6 more damage per target per rank.', school: 'ember', spellId: 'ember', parentId: 'ember_echo', level: 6, maxRank: 2, kind: 'power', scope: 'school', powerPerRank: 6 },
+  { id: 'cleave', name: 'Heavy Cleave', description: 'Flame Cleave deals 2 more damage per target.', school: 'ember', spellId: 'cleave', parentId: null, level: 2, maxRank: 1, kind: 'power', scope: 'spell', powerPerRank: 2 },
+  { id: 'cleave_sweep', name: 'Blazing Reach', description: 'Widen Flame Cleave. Deal 2 more damage per target per rank.', school: 'ember', spellId: 'cleave', parentId: 'cleave', level: 3, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 2, effect: 'wide' },
   { id: 'meteor', name: 'Meteor', description: 'Unlock a falling star and its explosive impact.', school: 'ember', spellId: 'meteor', parentId: 'ember_power', level: 4, maxRank: 1, kind: 'unlock', scope: 'spell', powerPerRank: 0 },
-  { id: 'meteor_shower', name: 'Meteor Shower', description: 'Split Meteor into repeated impacts. Catch 3 more monsters per rank.', school: 'ember', spellId: 'meteor', parentId: 'meteor', level: 5, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 3, effect: 'echo' },
+  { id: 'meteor_shower', name: 'Meteor Shower', description: 'Split Meteor into repeated impacts. Deal 3 more damage per target per rank.', school: 'ember', spellId: 'meteor', parentId: 'meteor', level: 5, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 3, effect: 'echo' },
   { id: 'phoenix_dive', name: 'Phoenix Dive', description: 'Unlock a fiery charge through the dungeon.', school: 'ember', spellId: 'phoenix_dive', parentId: 'cleave', level: 6, maxRank: 1, kind: 'unlock', scope: 'spell', powerPerRank: 0 },
-  { id: 'phoenix_wings', name: 'Ashen Wings', description: 'Phoenix Dive leaves a burning trail. Catch 4 more monsters per rank.', school: 'ember', spellId: 'phoenix_dive', parentId: 'phoenix_dive', level: 8, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'burn' },
+  { id: 'phoenix_wings', name: 'Ashen Wings', description: 'Phoenix Dive leaves a burning trail. Deal 4 more damage per target per rank.', school: 'ember', spellId: 'phoenix_dive', parentId: 'phoenix_dive', level: 8, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'burn' },
   { id: 'firestorm', name: 'Firestorm', description: 'Unlock a field of erupting flame pillars.', school: 'ember', spellId: 'firestorm', parentId: 'meteor', level: 10, maxRank: 1, kind: 'unlock', scope: 'spell', powerPerRank: 0 },
-  { id: 'firestorm_inferno', name: 'Living Inferno', description: 'Firestorm leaves a field of embers. Catch 4 more monsters per rank.', school: 'ember', spellId: 'firestorm', parentId: 'firestorm', level: 12, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'burn' },
+  { id: 'firestorm_inferno', name: 'Living Inferno', description: 'Firestorm leaves a field of embers. Deal 4 more damage per target per rank.', school: 'ember', spellId: 'firestorm', parentId: 'firestorm', level: 12, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'burn' },
   { id: 'frost', name: 'Frostfall', description: 'Unlock the Frostfall spell.', school: 'frost', spellId: 'frost', parentId: null, level: 2, maxRank: 1, kind: 'unlock', scope: 'spell', powerPerRank: 0 },
-  { id: 'frost_shards', name: 'Crystal Shards', description: 'All Frost abilities scatter shards and catch 3 more monsters per rank.', school: 'frost', spellId: 'frost', parentId: 'frost', level: 3, maxRank: 3, kind: 'power', scope: 'school', powerPerRank: 3, effect: 'ice-shards' },
-  { id: 'frost_master', name: 'Winter Crown', description: 'All Frost abilities catch 6 more monsters per rank.', school: 'frost', spellId: 'frost', parentId: 'frost_shards', level: 6, maxRank: 2, kind: 'power', scope: 'school', powerPerRank: 6 },
+  { id: 'frost_shards', name: 'Crystal Shards', description: 'All Frost abilities scatter shards and deal 3 more damage per target per rank.', school: 'frost', spellId: 'frost', parentId: 'frost', level: 3, maxRank: 3, kind: 'power', scope: 'school', powerPerRank: 3, effect: 'ice-shards' },
+  { id: 'frost_master', name: 'Winter Crown', description: 'All Frost abilities deal 6 more damage per target per rank.', school: 'frost', spellId: 'frost', parentId: 'frost_shards', level: 6, maxRank: 2, kind: 'power', scope: 'school', powerPerRank: 6 },
   { id: 'ice_lance', name: 'Ice Lance', description: 'Unlock a spear that pierces a row of monsters.', school: 'frost', spellId: 'ice_lance', parentId: 'frost', level: 3, maxRank: 1, kind: 'unlock', scope: 'spell', powerPerRank: 0 },
-  { id: 'ice_lance_split', name: 'Splintering Lance', description: 'Ice Lance breaks into piercing splinters. Catch 2 more monsters per rank.', school: 'frost', spellId: 'ice_lance', parentId: 'ice_lance', level: 4, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 2, effect: 'pierce' },
+  { id: 'ice_lance_split', name: 'Splintering Lance', description: 'Ice Lance breaks into piercing splinters. Deal 2 more damage per target per rank.', school: 'frost', spellId: 'ice_lance', parentId: 'ice_lance', level: 4, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 2, effect: 'pierce' },
   { id: 'glacial_surge', name: 'Glacial Surge', description: 'Unlock a rolling wall of ice.', school: 'frost', spellId: 'glacial_surge', parentId: 'frost_shards', level: 5, maxRank: 1, kind: 'unlock', scope: 'spell', powerPerRank: 0 },
-  { id: 'glacial_tide', name: 'Glacial Tide', description: 'Widen Glacial Surge. Catch 3 more monsters per rank.', school: 'frost', spellId: 'glacial_surge', parentId: 'glacial_surge', level: 6, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 3, effect: 'wide' },
+  { id: 'glacial_tide', name: 'Glacial Tide', description: 'Widen Glacial Surge. Deal 3 more damage per target per rank.', school: 'frost', spellId: 'glacial_surge', parentId: 'glacial_surge', level: 6, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 3, effect: 'wide' },
   { id: 'blizzard', name: 'Blizzard', description: 'Unlock a swirling hailstorm.', school: 'frost', spellId: 'blizzard', parentId: 'ice_lance', level: 7, maxRank: 1, kind: 'unlock', scope: 'spell', powerPerRank: 0 },
-  { id: 'blizzard_hail', name: 'Diamond Hail', description: 'Blizzard rains larger crystal shards. Catch 4 more monsters per rank.', school: 'frost', spellId: 'blizzard', parentId: 'blizzard', level: 9, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'ice-shards' },
+  { id: 'blizzard_hail', name: 'Diamond Hail', description: 'Blizzard rains larger crystal shards. Deal 4 more damage per target per rank.', school: 'frost', spellId: 'blizzard', parentId: 'blizzard', level: 9, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'ice-shards' },
   { id: 'frost_guardian', name: 'Frost Guardian', description: 'Unlock an ice giant that fights beside you.', school: 'frost', spellId: 'frost_guardian', parentId: 'glacial_surge', level: 10, maxRank: 1, kind: 'unlock', scope: 'spell', powerPerRank: 0 },
-  { id: 'guardian_twins', name: 'Twin Guardians', description: 'Summon a second frost guardian. Catch 4 more monsters per rank.', school: 'frost', spellId: 'frost_guardian', parentId: 'frost_guardian', level: 12, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'summon' },
+  { id: 'guardian_twins', name: 'Twin Guardians', description: 'Summon a second frost guardian. Deal 4 more damage per target per rank.', school: 'frost', spellId: 'frost_guardian', parentId: 'frost_guardian', level: 12, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'summon' },
   { id: 'storm', name: 'Chain Lightning', description: 'Unlock the Chain Lightning spell.', school: 'storm', spellId: 'storm', parentId: null, level: 3, maxRank: 1, kind: 'unlock', scope: 'spell', powerPerRank: 0 },
-  { id: 'storm_chain', name: 'Thunder Web', description: 'All Storm abilities fork and catch 3 more monsters per rank.', school: 'storm', spellId: 'storm', parentId: 'storm', level: 4, maxRank: 3, kind: 'power', scope: 'school', powerPerRank: 3, effect: 'chain' },
-  { id: 'storm_master', name: 'Tempest Mastery', description: 'All Storm abilities catch 6 more monsters per rank.', school: 'storm', spellId: 'storm', parentId: 'storm_chain', level: 6, maxRank: 2, kind: 'power', scope: 'school', powerPerRank: 6 },
+  { id: 'storm_chain', name: 'Thunder Web', description: 'All Storm abilities fork and deal 3 more damage per target per rank.', school: 'storm', spellId: 'storm', parentId: 'storm', level: 4, maxRank: 3, kind: 'power', scope: 'school', powerPerRank: 3, effect: 'chain' },
+  { id: 'storm_master', name: 'Tempest Mastery', description: 'All Storm abilities deal 6 more damage per target per rank.', school: 'storm', spellId: 'storm', parentId: 'storm_chain', level: 6, maxRank: 2, kind: 'power', scope: 'school', powerPerRank: 6 },
   { id: 'arc_lance', name: 'Arc Lance', description: 'Unlock a focused lightning beam.', school: 'storm', spellId: 'arc_lance', parentId: 'storm', level: 4, maxRank: 1, kind: 'unlock', scope: 'spell', powerPerRank: 0 },
-  { id: 'arc_lance_fork', name: 'Forked Arc', description: 'Arc Lance forks into side bolts. Catch 2 more monsters per rank.', school: 'storm', spellId: 'arc_lance', parentId: 'arc_lance', level: 5, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 2, effect: 'chain' },
+  { id: 'arc_lance_fork', name: 'Forked Arc', description: 'Arc Lance forks into side bolts. Deal 2 more damage per target per rank.', school: 'storm', spellId: 'arc_lance', parentId: 'arc_lance', level: 5, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 2, effect: 'chain' },
   { id: 'thunderclap', name: 'Thunderclap', description: 'Unlock ground-shaking thunder rings.', school: 'storm', spellId: 'thunderclap', parentId: 'storm_chain', level: 5, maxRank: 1, kind: 'unlock', scope: 'spell', powerPerRank: 0 },
-  { id: 'thunderclap_echo', name: 'Rolling Thunder', description: 'Thunderclap sends a second shockwave. Catch 3 more monsters per rank.', school: 'storm', spellId: 'thunderclap', parentId: 'thunderclap', level: 7, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 3, effect: 'echo' },
+  { id: 'thunderclap_echo', name: 'Rolling Thunder', description: 'Thunderclap sends a second shockwave. Deal 3 more damage per target per rank.', school: 'storm', spellId: 'thunderclap', parentId: 'thunderclap', level: 7, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 3, effect: 'echo' },
   { id: 'ball_lightning', name: 'Ball Lightning', description: 'Unlock a roaming orb of electricity.', school: 'storm', spellId: 'ball_lightning', parentId: 'arc_lance', level: 7, maxRank: 1, kind: 'unlock', scope: 'spell', powerPerRank: 0 },
-  { id: 'ball_lightning_orbit', name: 'Orbiting Sparks', description: 'Ball Lightning releases satellite orbs. Catch 4 more monsters per rank.', school: 'storm', spellId: 'ball_lightning', parentId: 'ball_lightning', level: 9, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'orbit' },
+  { id: 'ball_lightning_orbit', name: 'Orbiting Sparks', description: 'Ball Lightning releases satellite orbs. Deal 4 more damage per target per rank.', school: 'storm', spellId: 'ball_lightning', parentId: 'ball_lightning', level: 9, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'orbit' },
   { id: 'tempest', name: 'Tempest', description: 'Unlock a sky full of lightning strikes.', school: 'storm', spellId: 'tempest', parentId: 'thunderclap', level: 10, maxRank: 1, kind: 'unlock', scope: 'spell', powerPerRank: 0 },
-  { id: 'tempest_overcharge', name: 'Overcharge', description: 'Tempest strikes branch across the floor. Catch 4 more monsters per rank.', school: 'storm', spellId: 'tempest', parentId: 'tempest', level: 12, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'chain' },
+  { id: 'tempest_overcharge', name: 'Overcharge', description: 'Tempest strikes branch across the floor. Deal 4 more damage per target per rank.', school: 'storm', spellId: 'tempest', parentId: 'tempest', level: 12, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'chain' },
 ];
 export interface RpgRegion { id: string; name: string; subtitle: string; color: string; requiredClears: number; bossName: string; relicSchool: RpgSchoolId }
 export const RPG_REGIONS: readonly RpgRegion[] = [
@@ -100,36 +100,44 @@ export interface RpgItem {
 }
 export const RPG_ITEMS: readonly RpgItem[] = [
   { id: 'apprentice', name: "Apprentice's Runeblade", rarity: 'common', description: 'Your first spark of adventure.', power: 0, spellId: null, school: null, scope: 'all', requiredClears: 0 },
-  { id: 'cinderwand', name: 'Cinderbranch', rarity: 'rare', description: 'Fire Nova leaves burning embers and catches 3 more monsters.', power: 3, effect: 'burn', spellId: 'ember', school: 'ember', scope: 'spell', requiredClears: 0 },
-  { id: 'glacier', name: 'Glacier Fang', rarity: 'rare', description: 'Frostfall scatters extra shards and catches 3 more monsters.', power: 3, effect: 'ice-shards', spellId: 'frost', school: 'frost', scope: 'spell', requiredClears: 0 },
-  { id: 'thunderrod', name: 'Thunder Rod', rarity: 'rare', description: 'Chain Lightning forks and catches 3 more monsters.', power: 3, effect: 'chain', spellId: 'storm', school: 'storm', scope: 'spell', requiredClears: 0 },
-  { id: 'moonstaff', name: 'Moonshard Staff', rarity: 'epic', description: 'Every ability catches 4 more monsters.', power: 4, spellId: null, school: null, scope: 'all', requiredClears: 1 },
-  { id: 'phoenix', name: 'Phoenix Scepter', rarity: 'legendary', description: 'Fire Nova erupts twice and catches 8 more monsters.', power: 8, effect: 'echo', spellId: 'ember', school: 'ember', scope: 'spell', requiredClears: 2 },
-  { id: 'wintercrown', name: 'Staff of Endless Winter', rarity: 'legendary', description: 'Frostfall rains giant shards and catches 8 more monsters.', power: 8, effect: 'ice-shards', spellId: 'frost', school: 'frost', scope: 'spell', requiredClears: 3 },
-  { id: 'tempest', name: 'Tempest Caller', rarity: 'legendary', description: 'Chain Lightning arcs twice and catches 8 more monsters.', power: 8, effect: 'chain', spellId: 'storm', school: 'storm', scope: 'spell', requiredClears: 4 },
-  { id: 'cleaver', name: 'Ashsplitter', rarity: 'rare', description: 'Flame Cleave cuts a wider arc and catches 4 more monsters.', power: 4, effect: 'wide', spellId: 'cleave', school: 'ember', scope: 'spell', requiredClears: 0 },
-  { id: 'starfall', name: 'Starfall Edge', rarity: 'epic', description: 'Meteor splits into a shower and catches 8 more monsters.', power: 8, effect: 'echo', spellId: 'meteor', school: 'ember', scope: 'spell', requiredClears: 1 },
-  { id: 'phoenix_talon', name: 'Phoenix Talon', rarity: 'epic', description: 'Phoenix Dive leaves burning ground and catches 7 more monsters.', power: 7, effect: 'burn', spellId: 'phoenix_dive', school: 'ember', scope: 'spell', requiredClears: 2 },
-  { id: 'inferno', name: 'Crown of the Inferno', rarity: 'legendary', description: 'Firestorm leaves lasting embers and catches 12 more monsters.', power: 12, effect: 'burn', spellId: 'firestorm', school: 'ember', scope: 'spell', requiredClears: 5 },
-  { id: 'sunforged', name: 'Sunforged Runeblade', rarity: 'epic', description: 'All Flame abilities leave embers and catch 5 more monsters.', power: 5, effect: 'burn', spellId: null, school: 'ember', scope: 'school', requiredClears: 2 },
-  { id: 'icespear', name: 'Rimepiercer', rarity: 'rare', description: 'Ice Lance splinters through the horde and catches 4 more monsters.', power: 4, effect: 'pierce', spellId: 'ice_lance', school: 'frost', scope: 'spell', requiredClears: 0 },
-  { id: 'tideglass', name: 'Tideglass Blade', rarity: 'epic', description: 'Glacial Surge widens and catches 7 more monsters.', power: 7, effect: 'wide', spellId: 'glacial_surge', school: 'frost', scope: 'spell', requiredClears: 1 },
-  { id: 'hailcaller', name: 'Hailcaller', rarity: 'epic', description: 'Blizzard rains giant crystals and catches 8 more monsters.', power: 8, effect: 'ice-shards', spellId: 'blizzard', school: 'frost', scope: 'spell', requiredClears: 2 },
-  { id: 'wardenheart', name: "Winter Warden's Heart", rarity: 'legendary', description: 'Frost Guardian calls a second giant and catches 12 more monsters.', power: 12, effect: 'summon', spellId: 'frost_guardian', school: 'frost', scope: 'spell', requiredClears: 5 },
-  { id: 'winterbranch', name: 'Winterbranch', rarity: 'epic', description: 'All Frost abilities scatter shards and catch 5 more monsters.', power: 5, effect: 'ice-shards', spellId: null, school: 'frost', scope: 'school', requiredClears: 2 },
-  { id: 'arcfang', name: 'Arc Fang', rarity: 'rare', description: 'Arc Lance splinters through the horde and catches 4 more monsters.', power: 4, effect: 'pierce', spellId: 'arc_lance', school: 'storm', scope: 'spell', requiredClears: 0 },
-  { id: 'thunderbell', name: 'Bell of Thunder', rarity: 'epic', description: 'Thunderclap echoes a second time and catches 7 more monsters.', power: 7, effect: 'echo', spellId: 'thunderclap', school: 'storm', scope: 'spell', requiredClears: 1 },
-  { id: 'stormorbit', name: 'Orb of the Stormkeeper', rarity: 'epic', description: 'Ball Lightning gains orbiting sparks and catches 8 more monsters.', power: 8, effect: 'orbit', spellId: 'ball_lightning', school: 'storm', scope: 'spell', requiredClears: 2 },
-  { id: 'skybreaker', name: 'Skybreaker', rarity: 'legendary', description: 'Tempest forks its lightning strikes and catches 12 more monsters.', power: 12, effect: 'chain', spellId: 'tempest', school: 'storm', scope: 'spell', requiredClears: 5 },
-  { id: 'stormsilver', name: 'Stormsilver Runeblade', rarity: 'epic', description: 'All Storm abilities fork their lightning and catch 5 more monsters.', power: 5, effect: 'chain', spellId: null, school: 'storm', scope: 'school', requiredClears: 2 },
+  { id: 'cinderwand', name: 'Cinderbranch', rarity: 'rare', description: 'Fire Nova leaves burning embers and deals 3 more damage per target.', power: 3, effect: 'burn', spellId: 'ember', school: 'ember', scope: 'spell', requiredClears: 0 },
+  { id: 'glacier', name: 'Glacier Fang', rarity: 'rare', description: 'Frostfall scatters extra shards and deals 3 more damage per target.', power: 3, effect: 'ice-shards', spellId: 'frost', school: 'frost', scope: 'spell', requiredClears: 0 },
+  { id: 'thunderrod', name: 'Thunder Rod', rarity: 'rare', description: 'Chain Lightning forks and deals 3 more damage per target.', power: 3, effect: 'chain', spellId: 'storm', school: 'storm', scope: 'spell', requiredClears: 0 },
+  { id: 'moonstaff', name: 'Moonshard Staff', rarity: 'epic', description: 'Every ability deals 4 more damage per target.', power: 4, spellId: null, school: null, scope: 'all', requiredClears: 1 },
+  { id: 'phoenix', name: 'Phoenix Scepter', rarity: 'legendary', description: 'Fire Nova erupts twice and deals 8 more damage per target.', power: 8, effect: 'echo', spellId: 'ember', school: 'ember', scope: 'spell', requiredClears: 2 },
+  { id: 'wintercrown', name: 'Staff of Endless Winter', rarity: 'legendary', description: 'Frostfall rains giant shards and deals 8 more damage per target.', power: 8, effect: 'ice-shards', spellId: 'frost', school: 'frost', scope: 'spell', requiredClears: 3 },
+  { id: 'tempest', name: 'Tempest Caller', rarity: 'legendary', description: 'Chain Lightning arcs twice and deals 8 more damage per target.', power: 8, effect: 'chain', spellId: 'storm', school: 'storm', scope: 'spell', requiredClears: 4 },
+  { id: 'cleaver', name: 'Ashsplitter', rarity: 'rare', description: 'Flame Cleave cuts a wider arc and deals 4 more damage per target.', power: 4, effect: 'wide', spellId: 'cleave', school: 'ember', scope: 'spell', requiredClears: 0 },
+  { id: 'starfall', name: 'Starfall Edge', rarity: 'epic', description: 'Meteor splits into a shower and deals 8 more damage per target.', power: 8, effect: 'echo', spellId: 'meteor', school: 'ember', scope: 'spell', requiredClears: 1 },
+  { id: 'phoenix_talon', name: 'Phoenix Talon', rarity: 'epic', description: 'Phoenix Dive leaves burning ground and deals 7 more damage per target.', power: 7, effect: 'burn', spellId: 'phoenix_dive', school: 'ember', scope: 'spell', requiredClears: 2 },
+  { id: 'inferno', name: 'Crown of the Inferno', rarity: 'legendary', description: 'Firestorm leaves lasting embers and deals 12 more damage per target.', power: 12, effect: 'burn', spellId: 'firestorm', school: 'ember', scope: 'spell', requiredClears: 5 },
+  { id: 'sunforged', name: 'Sunforged Runeblade', rarity: 'epic', description: 'All Flame abilities leave embers and deal 5 more damage per target.', power: 5, effect: 'burn', spellId: null, school: 'ember', scope: 'school', requiredClears: 2 },
+  { id: 'icespear', name: 'Rimepiercer', rarity: 'rare', description: 'Ice Lance splinters through the horde and deals 4 more damage per target.', power: 4, effect: 'pierce', spellId: 'ice_lance', school: 'frost', scope: 'spell', requiredClears: 0 },
+  { id: 'tideglass', name: 'Tideglass Blade', rarity: 'epic', description: 'Glacial Surge widens and deals 7 more damage per target.', power: 7, effect: 'wide', spellId: 'glacial_surge', school: 'frost', scope: 'spell', requiredClears: 1 },
+  { id: 'hailcaller', name: 'Hailcaller', rarity: 'epic', description: 'Blizzard rains giant crystals and deals 8 more damage per target.', power: 8, effect: 'ice-shards', spellId: 'blizzard', school: 'frost', scope: 'spell', requiredClears: 2 },
+  { id: 'wardenheart', name: "Winter Warden's Heart", rarity: 'legendary', description: 'Frost Guardian calls a second giant and deals 12 more damage per target.', power: 12, effect: 'summon', spellId: 'frost_guardian', school: 'frost', scope: 'spell', requiredClears: 5 },
+  { id: 'winterbranch', name: 'Winterbranch', rarity: 'epic', description: 'All Frost abilities scatter shards and deal 5 more damage per target.', power: 5, effect: 'ice-shards', spellId: null, school: 'frost', scope: 'school', requiredClears: 2 },
+  { id: 'arcfang', name: 'Arc Fang', rarity: 'rare', description: 'Arc Lance splinters through the horde and deals 4 more damage per target.', power: 4, effect: 'pierce', spellId: 'arc_lance', school: 'storm', scope: 'spell', requiredClears: 0 },
+  { id: 'thunderbell', name: 'Bell of Thunder', rarity: 'epic', description: 'Thunderclap echoes a second time and deals 7 more damage per target.', power: 7, effect: 'echo', spellId: 'thunderclap', school: 'storm', scope: 'spell', requiredClears: 1 },
+  { id: 'stormorbit', name: 'Orb of the Stormkeeper', rarity: 'epic', description: 'Ball Lightning gains orbiting sparks and deals 8 more damage per target.', power: 8, effect: 'orbit', spellId: 'ball_lightning', school: 'storm', scope: 'spell', requiredClears: 2 },
+  { id: 'skybreaker', name: 'Skybreaker', rarity: 'legendary', description: 'Tempest forks its lightning strikes and deals 12 more damage per target.', power: 12, effect: 'chain', spellId: 'tempest', school: 'storm', scope: 'spell', requiredClears: 5 },
+  { id: 'stormsilver', name: 'Stormsilver Runeblade', rarity: 'epic', description: 'All Storm abilities fork their lightning and deal 5 more damage per target.', power: 5, effect: 'chain', spellId: null, school: 'storm', scope: 'school', requiredClears: 2 },
 ];
-export interface RpgExpedition { id: string; regionId: string; encounterIndex: number; encountersTotal: number; cleared: boolean; startedAt: number }
+export interface RpgCombatEnemy { id: string; hp: number; maxHp: number }
+export interface RpgCombatState { version: 1; encounterIndex: number; casts: number; enemies: RpgCombatEnemy[] }
+export interface RpgCombatResult {
+  enemiesBefore: RpgCombatEnemy[]; enemiesAfter: RpgCombatEnemy[];
+  hits: { enemyId: string; damage: number; hpBefore: number; hpAfter: number }[];
+  defeatedIds: string[]; encounterCleared: boolean; remainingEnemies: number;
+  damage: number; coverage: number;
+}
+export interface RpgExpedition { id: string; regionId: string; encounterIndex: number; encountersTotal: number; cleared: boolean; startedAt: number; combat?: RpgCombatState }
 export interface RpgState {
   profileId: string; xp: number; level: number; xpIntoLevel: number; xpForNextLevel: number; skillPoints: number;
   skills: Record<string, number>; inventory: string[]; equippedItemId: string; selectedSpellId: RpgSpellId; appearanceId: RpgAppearanceId;
   totalKills: number; expeditionsCompleted: number; expedition: RpgExpedition | null;
 }
-export interface RpgReward { xp: number; kills: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; bossDefeated: boolean; spellId: RpgSpellId }
+export interface RpgReward { xp: number; kills: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; bossDefeated: boolean; spellId: RpgSpellId; combat?: RpgCombatResult }
 export interface RpgResolveResult { state: RpgState; reward: RpgReward; duplicate: boolean }
 
 type RelicProgress = Pick<RpgState, 'inventory' | 'expeditionsCompleted' | 'totalKills'>;
@@ -163,7 +171,8 @@ export function rpgNextRelicHunt(state: RpgState, regionId: string): RpgRelicHun
   if (!region || state.expeditionsCompleted < region.requiredClears) return null;
   const active = state.expedition && !state.expedition.cleared && state.expedition.regionId === regionId;
   const firstRoom = active ? state.expedition!.encounterIndex : 0;
-  const progress: RelicProgress = { inventory: [...state.inventory], expeditionsCompleted: state.expeditionsCompleted, totalKills: state.totalKills };
+  const priorRoomKills = active ? rpgEncounterCombat(state).enemies.filter(enemy => enemy.hp === 0).length : 0;
+  const progress: RelicProgress = { inventory: [...state.inventory], expeditionsCompleted: state.expeditionsCompleted, totalKills: state.totalKills - priorRoomKills };
   let nextDuplicate: RpgRelicHunt | null = null;
   for (let room = firstRoom; room < 6; room++) {
     const item = rpgRelicDrop(progress, regionId, room);
@@ -208,11 +217,52 @@ export function rpgSpellModifiers(state: Pick<RpgState, 'skills' | 'equippedItem
   if (item?.effect && rpgItemApplies(item, spellId)) effects.push(item.effect);
   return [...new Set(effects)];
 }
-/** Shared count keeps visible hordes and authoritative rewards aligned. */
-export function rpgEncounterKills(state: Pick<RpgState, 'skills' | 'equippedItemId' | 'selectedSpellId'>, encounterIndex: number, spellId = state.selectedSpellId): number {
+type RpgLoadout = Pick<RpgState, 'skills' | 'equippedItemId' | 'selectedSpellId'>;
+/** A spell changes damage and coverage, never the number of monsters spawned. */
+export function rpgSpellCombatStats(state: RpgLoadout, spellId = state.selectedSpellId): { damage: number; targets: number } {
   const item = RPG_ITEMS.find(entry => entry.id === state.equippedItemId);
   const gearPower = item && rpgItemApplies(item, spellId) ? item.power : 0;
-  const skillPower = RPG_SKILLS.filter(skill => skillApplies(skill, spellId)).reduce((total, skill) => total + (state.skills[skill.id] ?? 0) * skill.powerPerRank, 0);
+  const skillPower = RPG_SKILLS.filter(skill => skillApplies(skill, spellId)).reduce((total, skill) => total + Math.max(0, Math.min(skill.maxRank, state.skills[skill.id] ?? 0)) * skill.powerPerRank, 0);
   const abilityPower = RPG_SPELLS.find(spell => spell.id === spellId)?.power ?? 0;
-  return Math.min(48, (encounterIndex === 5 ? 24 : 14 + encounterIndex) + abilityPower + gearPower + skillPower);
+  const bases: Record<RpgSpellId, [number, number]> = {
+    ember: [6, 6], cleave: [7, 3], meteor: [8, 5], phoenix_dive: [7, 6], firestorm: [7, 8],
+    frost: [6, 6], ice_lance: [8, 3], glacial_surge: [7, 7], blizzard: [7, 8], frost_guardian: [9, 5],
+    storm: [7, 4], arc_lance: [8, 4], thunderclap: [7, 7], ball_lightning: [8, 6], tempest: [8, 8],
+  };
+  const power = abilityPower + gearPower + skillPower, [damage, coverage] = bases[spellId];
+  return { damage: damage + power, targets: Math.min(10, coverage + Math.floor(power / 6)) };
+}
+
+/** Deterministic current-room health. Returns a copy and never rewrites a save. */
+export function rpgEncounterCombat(state: Pick<RpgState, 'expedition'>, encounterIndex = state.expedition?.encounterIndex ?? 0): RpgCombatState {
+  const room = Math.max(0, Math.min(5, Math.floor(encounterIndex)));
+  const saved = state.expedition?.combat;
+  if (saved?.version === 1 && saved.encounterIndex === room) {
+    return { ...saved, enemies: saved.enemies.map(enemy => ({ ...enemy })) };
+  }
+  const region = Math.max(0, RPG_REGIONS.findIndex(entry => entry.id === state.expedition?.regionId));
+  const count = [6, 7, 8, 8, 9, 10][room];
+  return { version: 1, encounterIndex: room, casts: 0, enemies: Array.from({ length: count }, (_, index) => {
+    const boss = room === 5 && index === 0;
+    const maxHp = (boss ? 36 : index % 7 === 0 ? 12 : [6, 6, 8, 8, 10][index % 5]) + region * (boss ? 8 : 2) + Math.floor(room / 2) * (boss ? 0 : 2);
+    return { id: `enemy-${index}`, hp: maxHp, maxHp };
+  }) };
+}
+
+/** Pure authoritative cast preview; callers persist the returned state atomically. */
+export function rpgApplyCombat(state: RpgLoadout, combat: RpgCombatState, spellId = state.selectedSpellId): { combat: RpgCombatState; result: RpgCombatResult } {
+  const stats = rpgSpellCombatStats(state, spellId);
+  const next: RpgCombatState = { ...combat, casts: combat.casts + 1, enemies: combat.enemies.map(enemy => ({ ...enemy })) };
+  const hits = next.enemies.filter(enemy => enemy.hp > 0).slice(0, stats.targets).map(enemy => {
+    const hpBefore = enemy.hp;
+    enemy.hp = Math.max(0, enemy.hp - stats.damage);
+    return { enemyId: enemy.id, damage: hpBefore - enemy.hp, hpBefore, hpAfter: enemy.hp };
+  });
+  const remainingEnemies = next.enemies.filter(enemy => enemy.hp > 0).length;
+  return { combat: next, result: { damage: stats.damage, coverage: stats.targets, enemiesBefore: combat.enemies.map(enemy => ({ ...enemy })), enemiesAfter: next.enemies.map(enemy => ({ ...enemy })), hits, defeatedIds: hits.filter(hit => hit.hpAfter === 0).map(hit => hit.enemyId), encounterCleared: remainingEnemies === 0, remainingEnemies } };
+}
+
+/** Legacy call sites receive a bounded preview of real defeats, not population. */
+export function rpgEncounterKills(state: RpgLoadout & Partial<Pick<RpgState, 'expedition'>>, encounterIndex: number, spellId = state.selectedSpellId): number {
+  return rpgApplyCombat(state, rpgEncounterCombat({ expedition: state.expedition ?? null }, encounterIndex), spellId).result.defeatedIds.length;
 }

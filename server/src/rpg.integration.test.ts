@@ -39,7 +39,7 @@ test('real tutor first answer, retry solve and skip all power RPG without changi
     expect(await call(`/state?profileId=${profileId}`)).toEqual(beforeRewards);
   }
   const state = await call(`/rpg/state?profileId=${profileId}`);
-  expect(state).toMatchObject({ xp: 96, level: 2, skillPoints: 1, expedition: { encounterIndex: 3 } });
+  expect(state).toMatchObject({ xp: 96, level: 2, skillPoints: 1, expedition: { encounterIndex: 1 } });
 });
 
 test('a lost tutor response can be reconciled without reposting or double-counting mastery', async () => {

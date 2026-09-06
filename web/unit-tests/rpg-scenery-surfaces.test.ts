@@ -12,6 +12,14 @@ test('Weathering stays registered to the floor and no scenery triangles span a c
   let scenery: THREE.Group | undefined;
   try {
     scenery = createVaultScenery(base);
+    const gateFloor = scenery.userData.gateFloorMaterial as THREE.MeshStandardMaterial;
+    assert(gateFloor instanceof THREE.MeshStandardMaterial, 'Room zero must receive a renderable floor on every scenery rebuild');
+    assert.equal(gateFloor.map, map, 'Dry paving borrows the loaded floor texture');
+    assert.equal(gateFloor.roughnessMap, null);
+    assert(gateFloor.roughness > .9 && scenery.userData.ownedMaterials.includes(gateFloor));
+    assert.notEqual(gateFloor, base.floor, 'Local weathering must not mutate other rooms');
+    base.floor.color.setHex(0x919fa7);
+    assert.equal(gateFloor.color.getHex(), 0x919fa7, 'Changing region must tint the dry gate floor too');
     const roomDraws = new Map<number, number>(), weatheredRooms = new Set<number>(), clothRooms = new Set<number>();
     for (const mesh of scenery.children as THREE.Mesh[]) {
       const room = mesh.userData.room as number, geometry = mesh.geometry, position = geometry.getAttribute('position');

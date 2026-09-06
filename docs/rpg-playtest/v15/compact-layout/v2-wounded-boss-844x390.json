@@ -1,0 +1,442 @@
+{
+  "browserTime": 58662.5,
+  "viewport": {
+    "width": 844,
+    "height": 390
+  },
+  "rectangles": {
+    "#game-canvas": {
+      "hidden": false,
+      "text": "",
+      "x": 0,
+      "y": 0,
+      "width": 622,
+      "height": 305
+    },
+    ".rpg-controls": {
+      "hidden": false,
+      "text": "\n        \n        Number Bonds3 + ? = 9Unleash ↵⌨\n        123456789⌫0✓\n        LEVEL4Fire NovaQFrostfallWChain LightningESkill trees3 newFire NovaCinderbranchSPELLS2Spellbook · B\n        75 / 225 XP\n      ",
+      "x": 632,
+      "y": 62,
+      "width": 202,
+      "height": 316
+    },
+    "#rpg-toast": {
+      "hidden": false,
+      "text": "10 enemies remain",
+      "x": 17,
+      "y": 50,
+      "width": 152.453125,
+      "height": 15
+    },
+    "#rpg-boss": {
+      "hidden": false,
+      "text": "GUARDIAN OF THE VAULTThe Hollow King",
+      "x": 196,
+      "y": 47,
+      "width": 230,
+      "height": 39
+    },
+    "#rpg-discovery": {
+      "hidden": true,
+      "text": "×RARE RELIC DISCOVEREDAshsplitterFlame Cleave cuts a wider arc and deals 4 more damage per target.Equip this relicAlready saved in your equipment",
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0
+    }
+  },
+  "enemies": [
+    {
+      "id": "enemy-0",
+      "hp": 27,
+      "maxHp": 36,
+      "dead": false,
+      "head": {
+        "x": 357.3807395155119,
+        "y": 43.837502971707785
+      }
+    },
+    {
+      "id": "enemy-1",
+      "hp": 1,
+      "maxHp": 10,
+      "dead": false,
+      "head": {
+        "x": 286.843415675443,
+        "y": 46.25981805502068
+      }
+    },
+    {
+      "id": "enemy-2",
+      "hp": 3,
+      "maxHp": 12,
+      "dead": false,
+      "head": {
+        "x": 428.2672030758149,
+        "y": 120.73125771914611
+      }
+    },
+    {
+      "id": "enemy-3",
+      "hp": 3,
+      "maxHp": 12,
+      "dead": false,
+      "head": {
+        "x": 402.63443845422165,
+        "y": 77.20261758844157
+      }
+    },
+    {
+      "id": "enemy-4",
+      "hp": 5,
+      "maxHp": 14,
+      "dead": false,
+      "head": {
+        "x": 261.66924807218265,
+        "y": 71.06266779325867
+      }
+    },
+    {
+      "id": "enemy-5",
+      "hp": 1,
+      "maxHp": 10,
+      "dead": false,
+      "head": {
+        "x": 399.81300541664973,
+        "y": 145.80250756362867
+      }
+    },
+    {
+      "id": "enemy-6",
+      "hp": 10,
+      "maxHp": 10,
+      "dead": false,
+      "head": {
+        "x": 454.38477142131615,
+        "y": 79.16154149513464
+      }
+    },
+    {
+      "id": "enemy-7",
+      "hp": 16,
+      "maxHp": 16,
+      "dead": false,
+      "head": {
+        "x": 246.48293765883105,
+        "y": 11.268461674568021
+      }
+    },
+    {
+      "id": "enemy-8",
+      "hp": 12,
+      "maxHp": 12,
+      "dead": false,
+      "head": {
+        "x": 464.6218102363799,
+        "y": 137.94424990114766
+      }
+    },
+    {
+      "id": "enemy-9",
+      "hp": 14,
+      "maxHp": 14,
+      "dead": false,
+      "head": {
+        "x": 311.9780102817597,
+        "y": 22.0322305587646
+      }
+    }
+  ],
+  "state": {
+    "profileId": "rpg-playtest",
+    "xp": 480,
+    "level": 4,
+    "xpIntoLevel": 75,
+    "xpForNextLevel": 225,
+    "skillPoints": 3,
+    "skills": {},
+    "inventory": [
+      "apprentice",
+      "cinderwand",
+      "cleaver"
+    ],
+    "equippedItemId": "cinderwand",
+    "selectedSpellId": "ember",
+    "appearanceId": "wayfarer",
+    "totalKills": 38,
+    "expeditionsCompleted": 0,
+    "expedition": {
+      "id": "460f5fa6-f3fa-48ca-b3ea-3ba6727d08e4",
+      "regionId": "embercrypt",
+      "encounterIndex": 5,
+      "encountersTotal": 6,
+      "cleared": false,
+      "startedAt": 1788700800044,
+      "combat": {
+        "version": 1,
+        "encounterIndex": 5,
+        "casts": 1,
+        "enemies": [
+          {
+            "id": "enemy-0",
+            "hp": 27,
+            "maxHp": 36
+          },
+          {
+            "id": "enemy-1",
+            "hp": 1,
+            "maxHp": 10
+          },
+          {
+            "id": "enemy-2",
+            "hp": 3,
+            "maxHp": 12
+          },
+          {
+            "id": "enemy-3",
+            "hp": 3,
+            "maxHp": 12
+          },
+          {
+            "id": "enemy-4",
+            "hp": 5,
+            "maxHp": 14
+          },
+          {
+            "id": "enemy-5",
+            "hp": 1,
+            "maxHp": 10
+          },
+          {
+            "id": "enemy-6",
+            "hp": 10,
+            "maxHp": 10
+          },
+          {
+            "id": "enemy-7",
+            "hp": 16,
+            "maxHp": 16
+          },
+          {
+            "id": "enemy-8",
+            "hp": 12,
+            "maxHp": 12
+          },
+          {
+            "id": "enemy-9",
+            "hp": 14,
+            "maxHp": 14
+          }
+        ]
+      }
+    }
+  },
+  "diagnostics": {
+    "appearance": "wayfarer",
+    "drawWarmup": {
+      "programs": 127,
+      "durationMs": 537.1999999880791
+    },
+    "lastAttack": {
+      "spellId": "ember",
+      "effect": "nova",
+      "options": {
+        "combat": {
+          "damage": 9,
+          "coverage": 6,
+          "enemiesBefore": [
+            {
+              "id": "enemy-0",
+              "hp": 36,
+              "maxHp": 36
+            },
+            {
+              "id": "enemy-1",
+              "hp": 10,
+              "maxHp": 10
+            },
+            {
+              "id": "enemy-2",
+              "hp": 12,
+              "maxHp": 12
+            },
+            {
+              "id": "enemy-3",
+              "hp": 12,
+              "maxHp": 12
+            },
+            {
+              "id": "enemy-4",
+              "hp": 14,
+              "maxHp": 14
+            },
+            {
+              "id": "enemy-5",
+              "hp": 10,
+              "maxHp": 10
+            },
+            {
+              "id": "enemy-6",
+              "hp": 10,
+              "maxHp": 10
+            },
+            {
+              "id": "enemy-7",
+              "hp": 16,
+              "maxHp": 16
+            },
+            {
+              "id": "enemy-8",
+              "hp": 12,
+              "maxHp": 12
+            },
+            {
+              "id": "enemy-9",
+              "hp": 14,
+              "maxHp": 14
+            }
+          ],
+          "enemiesAfter": [
+            {
+              "id": "enemy-0",
+              "hp": 27,
+              "maxHp": 36
+            },
+            {
+              "id": "enemy-1",
+              "hp": 1,
+              "maxHp": 10
+            },
+            {
+              "id": "enemy-2",
+              "hp": 3,
+              "maxHp": 12
+            },
+            {
+              "id": "enemy-3",
+              "hp": 3,
+              "maxHp": 12
+            },
+            {
+              "id": "enemy-4",
+              "hp": 5,
+              "maxHp": 14
+            },
+            {
+              "id": "enemy-5",
+              "hp": 1,
+              "maxHp": 10
+            },
+            {
+              "id": "enemy-6",
+              "hp": 10,
+              "maxHp": 10
+            },
+            {
+              "id": "enemy-7",
+              "hp": 16,
+              "maxHp": 16
+            },
+            {
+              "id": "enemy-8",
+              "hp": 12,
+              "maxHp": 12
+            },
+            {
+              "id": "enemy-9",
+              "hp": 14,
+              "maxHp": 14
+            }
+          ],
+          "hits": [
+            {
+              "enemyId": "enemy-0",
+              "damage": 9,
+              "hpBefore": 36,
+              "hpAfter": 27
+            },
+            {
+              "enemyId": "enemy-1",
+              "damage": 9,
+              "hpBefore": 10,
+              "hpAfter": 1
+            },
+            {
+              "enemyId": "enemy-2",
+              "damage": 9,
+              "hpBefore": 12,
+              "hpAfter": 3
+            },
+            {
+              "enemyId": "enemy-3",
+              "damage": 9,
+              "hpBefore": 12,
+              "hpAfter": 3
+            },
+            {
+              "enemyId": "enemy-4",
+              "damage": 9,
+              "hpBefore": 14,
+              "hpAfter": 5
+            },
+            {
+              "enemyId": "enemy-5",
+              "damage": 9,
+              "hpBefore": 10,
+              "hpAfter": 1
+            }
+          ],
+          "defeatedIds": [],
+          "encounterCleared": false,
+          "remainingEnemies": 10
+        },
+        "echo": false,
+        "wide": false,
+        "burning": true,
+        "shards": false,
+        "chains": false,
+        "pierce": false,
+        "orbit": false,
+        "summon": false,
+        "itemId": "cinderwand",
+        "kills": 0,
+        "xp": 32
+      }
+    },
+    "lastSpellId": "ember",
+    "lastSpellEffect": "nova",
+    "heroAnimation": "idle",
+    "heroClips": [
+      "idle",
+      "walk",
+      "cast",
+      "cleave"
+    ],
+    "encounter": 5,
+    "region": "embercrypt",
+    "enemies": 10,
+    "articulatedEnemies": 10,
+    "enemyRoster": {
+      "guardian": 2,
+      "revenant": 3,
+      "skeleton": 5
+    },
+    "attacking": false,
+    "paused": false,
+    "modelsLoaded": 21,
+    "drawCalls": 148,
+    "triangles": 679700,
+    "particles": 109,
+    "fragments": 0,
+    "hero": [
+      0,
+      0,
+      -98.6
+    ],
+    "softwareRenderer": false,
+    "fps": 29,
+    "quality": "performance",
+    "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+  }
+}

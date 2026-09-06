@@ -1,7 +1,8 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { writeFile } from 'node:fs/promises';
-import { RPG_SPELLS, RPG_SCHOOLS, RPG_SKILLS, rpgSpellUnlocked, rpgEncounterKills, rpgSpellModifiers, type RpgResolveResult, type RpgSpellId, type RpgAppearanceId, type RpgState } from '../../shared/src/rpg';
+import { RPG_SPELLS, RPG_SCHOOLS, RPG_SKILLS, rpgSpellUnlocked, rpgEncounterCombat, rpgEncounterKills, rpgSpellModifiers, type RpgResolveResult, type RpgSpellId, type RpgAppearanceId, type RpgState } from '../../shared/src/rpg';
 import type { Problem } from '../../shared/src/index';
+import { observePopulationCap, expectPopulationCap, expectWorldHealth } from './rpg-combat-assertions';
 
 const profile = 'rpg-archmage';
 const captureSequences = process.env.RPG_CAPTURE_SEQUENCE === '1';
@@ -132,6 +133,7 @@ async function wear(page: Page, appearanceId: RpgAppearanceId): Promise<void> {
 }
 
 test('all fifteen spellbook abilities cast distinct effects, honor equipment, and persist across three expeditions', async ({ page }, info) => {
+  await observePopulationCap(page);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(() => localStorage.setItem('institute:rpg:muted', 'true'));
@@ -164,7 +166,8 @@ test('all fifteen spellbook abilities cast distinct effects, honor equipment, an
   const seenEffects = new Set<string>();
   const seenSpells = new Set<string>();
   // Three complete runs, covering every ability plus a repeat of each school's
-  // finale. Every solve uses the actual tutor and transactional RPG endpoint.
+  // finale. Each rotation entry clears one room with as many actual tutor
+  // outcomes as needed; a cast no longer implies an instant room clear.
   const rotation: RpgSpellId[] = [...RPG_SPELLS.map(spell => spell.id), 'firestorm', 'blizzard', 'tempest'];
   const regions = ['embercrypt', 'frostvault', 'stormspire'];
   for (let index = 0; index < rotation.length; index++) {
@@ -233,6 +236,8 @@ test('all fifteen spellbook abilities cast distinct effects, honor equipment, an
     expect(result.duplicate).toBe(false);
     expect(result.reward.spellId).toBe(spellId);
     expect(result.reward.kills).toBe(rpgEncounterKills(current, current.expedition!.encounterIndex));
+    expect(result.reward.combat!.enemiesBefore).toEqual(rpgEncounterCombat(current).enemies);
+    expect(result.reward.combat!.enemiesAfter.length).toBeLessThanOrEqual(10);
     await expect.poll(() => page.evaluate(() => (window as any).__game.world.diagnostics.lastAttack?.spellId)).toBe(spellId);
     const dispatched = await page.evaluate(() => (window as any).__game.world.diagnostics.lastAttack);
     await info.attach(`encounter-${index + 1}-${spellId}`, { body: JSON.stringify({ reward: result.reward, attack: dispatched }, null, 2), contentType: 'application/json' });
@@ -260,22 +265,40 @@ test('all fifteen spellbook abilities cast distinct effects, honor equipment, an
     } else if (!captureSequences && ['meteor', 'frost_guardian', 'ball_lightning'].includes(spellId)) {
       await page.screenshot({ path: info.outputPath(`cast-${spellId}.png`) });
     }
-    if (result.reward.bossDefeated) {
+    if (!result.reward.bossDefeated) await ready(page);
+    // Gameplay assertions and effect checks run concurrently with observation;
+    // only wait for the travel still after the cast/receipt checks have passed.
+    if (sequencePromise) await sequencePromise;
+    let completedRoom = result;
+    for (let extraCast = 0; extraCast < 12 && !completedRoom.reward.combat!.encounterCleared; extraCast++) {
+      await ready(page);
+      await expectWorldHealth(page, completedRoom.reward.combat!.enemiesAfter);
+      const nextProblem = await page.evaluate(() => (window as any).__game.session.problem) as Problem;
+      const response = page.waitForResponse(reply => new URL(reply.url()).pathname === '/rpg/resolve' && reply.request().method() === 'POST');
+      await page.getByRole('textbox', { name: 'Your answer' }).fill(String(nextProblem.answer));
+      await page.getByRole('button', { name: /Unleash/ }).click();
+      const nextCast = await (await response).json() as RpgResolveResult;
+      expect(nextCast.reward.combat!.enemiesBefore).toEqual(completedRoom.reward.combat!.enemiesAfter);
+      expect(nextCast.reward.spellId).toBe(spellId);
+      expect(nextCast.duplicate).toBe(false);
+      completedRoom = nextCast;
+      if (!completedRoom.reward.bossDefeated) await ready(page);
+    }
+    expect(completedRoom.reward.combat!.encounterCleared, 'The chosen spell must finish its persistent room').toBe(true);
+    if (completedRoom.reward.bossDefeated) {
       await expect(page.getByRole('button', { name: 'Next adventure →', exact: true })).toBeVisible();
       const rewardCard = page.locator('.rpg-victory-reward');
-      if (result.reward.duplicateItem) {
+      if (completedRoom.reward.duplicateItem) {
         await expect(rewardCard).toContainText('DUPLICATE RELIC');
-        await expect(rewardCard).toContainText(result.reward.item!.name);
+        await expect(rewardCard).toContainText(completedRoom.reward.item!.name);
         await expect(rewardCard).toContainText('Converted into +16 bonus XP');
-        await expect(rewardCard).toContainText(`+${result.reward.xp} XP total from this guardian`);
+        await expect(rewardCard).toContainText(`+${completedRoom.reward.xp} XP total from this guardian`);
         expect((await state(page)).inventory).toEqual(current.inventory);
       } else {
         await expect(rewardCard).not.toContainText('DUPLICATE RELIC');
       }
-    } else await ready(page);
-    // Gameplay assertions and effect checks run concurrently with observation;
-    // only wait for the travel still after the cast/receipt checks have passed.
-    if (sequencePromise) await sequencePromise;
+    }
+
     });
   }
   expect(seenSpells.size).toBe(15); expect(seenEffects.size).toBe(15);
@@ -283,6 +306,7 @@ test('all fifteen spellbook abilities cast distinct effects, honor equipment, an
   expect(after.expeditionsCompleted).toBe(before.expeditionsCompleted + 3);
   expect(after.expedition).toMatchObject({ regionId: 'stormspire', cleared: true });
   expect(after.xp).toBeGreaterThan(before.xp);
+  await expectPopulationCap(page);
   expect(errors).toEqual([]);
   // All three school tabs remain available after the larger content set.
   await page.locator('#rpg-dialog-content [data-action="skills"]').click();

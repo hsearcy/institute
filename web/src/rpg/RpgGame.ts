@@ -1,5 +1,5 @@
 import type { Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgAppearanceId, RpgReward, Reward } from '@institute/shared';
-import { RPG_APPEARANCES, rpgAppearanceUnlocked, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, RPG_DUPLICATE_ITEM_XP, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgEncounterKills, rpgNextRelicHunt, ProblemSchema } from '@institute/shared';
+import { RPG_APPEARANCES, rpgAppearanceUnlocked, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, RPG_DUPLICATE_ITEM_XP, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgEncounterCombat, rpgNextRelicHunt, ProblemSchema } from '@institute/shared';
 import { fetchState, fetchMastery, redeemCrazyCoin, type Demo } from '../game/tutor';
 import { speak } from '../game/audio';
 import * as dungeonSound from './sound';
@@ -16,6 +16,8 @@ import './victory-v3.css';
 import { renderEquipmentView } from './equipmentView';
 import './equipment-v3.css';
 import './landscape-v3.css';
+import './desktop-dock-v4.css';
+import './combat-health.css';
 import { nextSpellGoal } from './nextSpell';
 import { skillUpgradePreview } from './skillPreview';
 import { getRoomLayout } from './world/roomLayout';
@@ -69,6 +71,7 @@ export class RpgGame {
   private speechDepth = 0;
   private discovery: string | null = null;
   private lootLabelFrame: number | null = null;
+  private healthFrame: number | null = null;
   private lootLabelUntil = 0;
   private school: RpgSchoolId = 'ember';
   private focusedSkill: string | null = null;
@@ -84,7 +87,7 @@ export class RpgGame {
       <header class="rpg-top"><div class="rpg-location"><span class="rpg-eyebrow">INSTITUTE <b>◆</b> THE SUNKEN VAULT</span><h1 id="rpg-region">The Embercrypt</h1><p id="rpg-room">A new adventure awaits</p></div>
       <nav aria-label="Adventure menu"><button data-action="map" title="Expeditions" aria-label="Expeditions">${icon('map')}</button><button data-action="skills" title="Skill trees" aria-label="Skill trees">${icon('tree')}<i id="rpg-points" hidden></i></button><button data-action="inventory" title="Equipment" aria-label="Equipment">${icon('bag')}</button><button data-action="sound" title="Toggle tutor voice" aria-label="Mute tutor voice">${icon('sound')}</button><button data-action="pause" title="Pause and save" aria-label="Pause and save">Ⅱ</button></nav></header>
       <div class="rpg-route" aria-label="Expedition progress" id="rpg-route"></div><button id="rpg-next-spell" class="rpg-next-spell" data-action="spell-goal" hidden></button>
-      <div id="rpg-boss" class="rpg-boss" hidden><span>GUARDIAN OF THE VAULT</span><strong></strong><div></div></div>
+      <div id="rpg-boss" class="rpg-boss" hidden><span>GUARDIAN OF THE VAULT</span><strong></strong><div role="progressbar" aria-label="Guardian health" aria-valuemin="0" aria-valuemax="36" aria-valuenow="36"><i></i></div></div>
       <div id="rpg-toast" class="rpg-toast" role="status" aria-live="polite" hidden></div><aside id="rpg-discovery" class="rpg-discovery" aria-label="New relic" aria-live="polite" hidden></aside><div id="rpg-floating-xp" class="rpg-floating-xp" aria-hidden="true"></div><div id="rpg-world-loot" class="rpg-world-loot" aria-hidden="true" hidden></div>
       <section class="rpg-controls" id="rpg-controls" hidden aria-label="Spell controls">
         <div class="rpg-hint" id="rpg-hint" role="status" hidden></div>
@@ -96,15 +99,22 @@ export class RpgGame {
       <div class="rpg-connection" id="rpg-connection" hidden role="alert"><span>Reconnecting to your adventure…</span><button data-action="retry">Try again</button></div>
       <div id="rpg-overlay" class="rpg-overlay" hidden><section class="rpg-dialog" role="dialog" aria-modal="true" aria-labelledby="rpg-dialog-title" tabindex="-1"><button class="rpg-dialog-close" data-action="close" aria-label="Close">×</button><div id="rpg-dialog-content"></div></section></div>
       <button class="rpg-parent" data-action="parent">Parent journal</button><span id="rpg-save-status" class="rpg-save-status">◆ Adventure saved on your server</span>`;
+    const health = document.createElement('div'); health.id = 'rpg-health-bars';
+    health.innerHTML = Array.from({ length: 10 }, (_, i) => `<div class="rpg-enemy-health" data-enemy-health="enemy-${i}" role="img" hidden><i></i></div>`).join('');
+    this.root.append(health);
     document.querySelector('#app')!.append(this.root);
+    this.updateEnemyHealth();
     const controls = this.root.querySelector<HTMLElement>('.rpg-controls')!;
     const route = this.root.querySelector<HTMLElement>('.rpg-route')!;
     const updateCombatSafeArea = () => {
+      this.positionToast();
       const origin = canvas.getBoundingClientRect().top;
-      this.world.setCombatSafeArea(route.getBoundingClientRect().bottom + 14 - origin, controls.getBoundingClientRect().top - 14 - origin);
+      const boss = this.el('rpg-boss');
+      const top = Math.max(route.getBoundingClientRect().bottom, boss.hidden ? 0 : boss.getBoundingClientRect().bottom);
+      this.world.setCombatSafeArea(top + 14 - origin, controls.getBoundingClientRect().top - 14 - origin);
     };
     this.combatLayoutObserver = new ResizeObserver(updateCombatSafeArea);
-    this.combatLayoutObserver.observe(controls); this.combatLayoutObserver.observe(route);
+    this.combatLayoutObserver.observe(controls); this.combatLayoutObserver.observe(route); this.combatLayoutObserver.observe(this.el('rpg-boss'));
     this.root.addEventListener('click', this.onClick, { signal: this.abort.signal });
     this.el<HTMLFormElement>('rpg-answer-form').addEventListener('submit', e => { e.preventDefault(); void this.submit(); }, { signal: this.abort.signal });
     this.el<HTMLInputElement>('rpg-answer').addEventListener('input', e => {
@@ -190,7 +200,8 @@ export class RpgGame {
   }
   private setEncounter(index = this.state?.expedition?.encounterIndex): void {
     if (index === undefined || !this.state?.expedition) return;
-    this.world.setEncounter(index, this.state.expedition.regionId, rpgEncounterKills(this.state, index));
+    const combat = rpgEncounterCombat(this.state, index);
+    this.world.setEncounter(index, this.state.expedition.regionId, combat.enemies.length, combat.enemies);
   }
   private renderState(): void {
     const s = this.state; if (!s || this.disposed) return;
@@ -362,8 +373,20 @@ export class RpgGame {
       this.el<HTMLInputElement>('rpg-answer').disabled = true;
       this.el('rpg-answer-form').classList.add('correct');
       if (!session.rewardShown) {
+        if (this.toastTimer) clearTimeout(this.toastTimer);
+        this.toastTimer = null;
+        this.el('rpg-toast').hidden = true;
+        this.discovery = null; this.renderDiscovery();
+        this.el('rpg-floating-xp').classList.remove('rpg-xp-rise');
+        if (result.duplicate && result.reward.combat) {
+          // A lost response can leave the fetched save ahead of this visual
+          // cast. Replay its bounded, exact before-state, not the next room.
+          const before = result.reward.combat.enemiesBefore;
+          this.world.setEncounter(session.encounterIndex, this.state!.expedition!.regionId, before.length, before);
+        }
         if (!this.muted) dungeonSound.cast(result.reward.spellId);
         await this.world.attack(result.reward.spellId, {
+          combat: result.reward.combat,
           echo: modifiers.includes('echo'), wide: modifiers.includes('wide'),
           burning: modifiers.includes('burn'), shards: modifiers.includes('ice-shards'),
           chains: modifiers.includes('chain'), pierce: modifiers.includes('pierce'),
@@ -379,10 +402,12 @@ export class RpgGame {
       if (this.state.expedition!.cleared) {
         this.session = null; this.saveSession(); this.busy = false; this.showVictory(result.reward); return;
       }
-      if (this.state.expedition!.id !== session.expeditionId || this.state.expedition!.encounterIndex !== session.encounterIndex + 1) {
+      const sameRoom = this.state.expedition!.encounterIndex === session.encounterIndex;
+      if (this.state.expedition!.id !== session.expeditionId || (!sameRoom && this.state.expedition!.encounterIndex !== session.encounterIndex + 1)) {
         this.session = null; this.saveSession(); this.busy = false; this.showCamp(); return;
       }
-      this.setEncounter();
+      if (sameRoom) this.world.setCombatState(rpgEncounterCombat(this.state).enemies);
+      else this.setEncounter();
       // Keep the pending receipt until showProblem durably replaces this
       // session. A failed next-problem fetch is safe to retry from here.
       await this.nextProblem();
@@ -403,15 +428,22 @@ export class RpgGame {
       if (this.lootLabelFrame !== null) cancelAnimationFrame(this.lootLabelFrame);
       this.updateLootLabel();
     }
+    const xpStrip = this.root.querySelector<HTMLElement>('.rpg-xp')!;
+    xpStrip.classList.remove('rpg-xp-earned');
+    void xpStrip.offsetWidth; xpStrip.classList.add('rpg-xp-earned');
     const floating = this.el('rpg-floating-xp');
     floating.textContent = `+${reward.xp} XP`;
     const position = this.world.heroScreenPosition;
     floating.style.left = `${position.x}px`; floating.style.top = `${Math.max(100,position.y-45)}px`;
     floating.classList.remove('rpg-xp-rise');
     void floating.offsetWidth; floating.classList.add('rpg-xp-rise');
-    const item = reward.item && !reward.duplicateItem ? ` · Found ${reward.item.name}` : '';
-    const level = reward.levelUp ? ` · Level ${this.state!.level}! +${reward.levelsGained} skill point${reward.levelsGained > 1 ? 's' : ''}` : '';
-    this.toast(`+${reward.xp} XP · ${reward.kills} monsters defeated${item}${level}`, reward.levelUp || !!item ? 6500 : 2600);
+    const level = reward.levelUp ? ` · Level ${this.state!.level}!` : '';
+    const outcome = reward.combat && !reward.combat.encounterCleared
+      ? `${reward.kills ? `${reward.kills} defeated · ` : ''}${reward.combat.remainingEnemies} enemies remain`
+      : `${reward.kills} monsters defeated`;
+    const compactOutcome = reward.combat && !reward.combat.encounterCleared
+      ? `${reward.combat.remainingEnemies} enemies remain` : 'Room cleared';
+    this.toast(`${outcome}${level}`, reward.levelUp ? 4500 : 2600, compactOutcome);
     if (!this.muted) {
       if (reward.bossDefeated) dungeonSound.boss();
       else if (reward.levelUp) dungeonSound.levelUp();
@@ -425,6 +457,26 @@ export class RpgGame {
     label.hidden = !position || position.y < 80 || position.y > innerHeight - 180 || position.x < 20 || position.x > innerWidth - 20;
     if (position) { label.style.left = `${position.x}px`; label.style.top = `${position.y-30}px`; }
     this.lootLabelFrame = requestAnimationFrame(this.updateLootLabel);
+  };
+  private updateEnemyHealth = (): void => {
+    if (this.disposed) return;
+    const boss = this.world.bossHealth;
+    if (boss) {
+      const meter = this.el('rpg-boss').querySelector<HTMLElement>('[role="progressbar"]')!;
+      meter.setAttribute('aria-valuenow', String(boss.hp));
+      meter.setAttribute('aria-valuemax', String(boss.maxHp));
+      meter.setAttribute('aria-valuetext', `${boss.hp} of ${boss.maxHp} health`);
+      (meter.firstElementChild as HTMLElement).style.width = `${100 * boss.hp / boss.maxHp}%`;
+    }
+    const visible = new Map((this.panel || !this.playing ? [] : this.world.enemyHealthScreenPositions).map(enemy => [enemy.id, enemy]));
+    for (const bar of this.root.querySelectorAll<HTMLElement>('[data-enemy-health]')) {
+      const enemy = visible.get(bar.dataset.enemyHealth!); bar.hidden = !enemy;
+      if (!enemy) continue;
+      bar.style.left = `${enemy.x}px`; bar.style.top = `${enemy.y}px`;
+      bar.setAttribute('aria-label', `Enemy health ${enemy.hp} of ${enemy.maxHp}`);
+      bar.firstElementChild!.setAttribute('style', `width:${100 * enemy.hp / enemy.maxHp}%`);
+    }
+    this.healthFrame = requestAnimationFrame(this.updateEnemyHealth);
   };
   private renderDiscovery(): void {
     const item = RPG_ITEMS.find(item => item.id === this.discovery);
@@ -492,12 +544,12 @@ export class RpgGame {
     if (!previews?.length) return '';
     const chosen = previews.find(preview => preview.spell.id === s.selectedSpellId) ?? previews[0];
     const labels = { burn: 'burning ground', 'ice-shards': 'extra ice shards', chain: 'forked lightning', echo: 'a second strike', pierce: 'piercing splinters', wide: 'a wider sweep', orbit: 'orbiting sparks', summon: 'a second guardian' };
-    const targets = chosen.extraTargets > 0 ? `+${chosen.extraTargets} monsters` : chosen.after === 48 ? 'already at the 48-monster limit' : 'same number of monsters';
+    const targets = `${chosen.beforeDamage} → ${chosen.afterDamage} damage · up to ${chosen.after} targets${chosen.extraTargets > 0 ? ` (+${chosen.extraTargets})` : ''}`;
     const gained = chosen.newModifiers.map(effect => labels[effect]);
-    const other = previews.filter(preview => preview !== chosen && (preview.extraTargets > 0 || preview.newModifiers.length));
+    const other = previews.filter(preview => preview !== chosen && (preview.extraDamage > 0 || preview.extraTargets > 0 || preview.newModifiers.length));
     const details = gained.length ? ` Adds ${gained.join(' and ')}.` : chosen.existingModifier ? ' Its spell effect is already active.' : '';
-    const alternatives = !chosen.extraTargets && !gained.length && other.length ? ` Still improves ${other.map(preview => preview.spell.name).join(', ')}.` : '';
-    const unchanged = !chosen.extraTargets && !gained.length && !other.length;
+    const alternatives = !chosen.extraDamage && !chosen.extraTargets && !gained.length && other.length ? ` Still improves ${other.map(preview => preview.spell.name).join(', ')}.` : '';
+    const unchanged = !chosen.extraDamage && !chosen.extraTargets && !gained.length && !other.length;
     return `<span class="rpg-skill-preview ${unchanged ? 'unchanged' : ''}"><b>With your relic · ${room === 0 ? 'first room' : `room ${room + 1}`}</b>${esc(chosen.spell.name)}: ${targets}.${esc(details + alternatives)}${unchanged ? ' You can save this point or change relics.' : ''}</span>`;
   }
   private showSkills(): void {
@@ -612,11 +664,30 @@ export class RpgGame {
     this.panel = ''; this.root.dataset.panel = ''; this.el('rpg-overlay').hidden = true; this.world.setPaused(false); this.startClock();
     if (this.playing && !this.busy) this.el<HTMLInputElement>('rpg-answer').focus({ preventScroll: true });
   }
-  private toast(text: string, ms = 3500): void {
+  /** Compact notices borrow the existing room subtitle row, preserving the combat area. */
+  private positionToast = (): void => {
+    const notice = this.el('rpg-toast');
+    const compact = this.playing && (innerWidth <= 760
+      || matchMedia('(max-width:1000px) and (max-height:500px) and (min-aspect-ratio:3/2)').matches);
+    notice.classList.toggle('compact', compact);
+    notice.textContent = (compact ? notice.dataset.compactText : notice.dataset.fullText) ?? '';
+    if (compact) {
+      const room = this.el('rpg-room').getBoundingClientRect(), origin = this.root.getBoundingClientRect();
+      notice.style.left = `${room.left - origin.left}px`;
+      notice.style.top = `${room.top - origin.top}px`;
+      notice.style.width = `${Math.min(room.width, innerWidth - room.left - 12)}px`;
+    } else {
+      for (const key of ['left', 'top', 'width']) notice.style.removeProperty(key);
+    }
+  };
+  private toast(text: string, ms = 3500, compactText = text): void {
     if (this.disposed) return;
     if (this.toastTimer) clearTimeout(this.toastTimer);
-    this.el('rpg-toast').textContent = text; this.el('rpg-toast').hidden = false;
-    this.toastTimer = setTimeout(() => { this.el('rpg-toast').hidden = true; }, ms);
+    const notice = this.el('rpg-toast');
+    notice.dataset.fullText = text; notice.dataset.compactText = compactText;
+    notice.setAttribute('aria-label', text); notice.hidden = false;
+    this.positionToast();
+    this.toastTimer = setTimeout(() => { notice.hidden = true; }, ms);
   }
   private async runSafely(action: () => Promise<void>): Promise<void> {
     this.stopClock(); this.busy = true;
@@ -783,6 +854,7 @@ export class RpgGame {
     this.combatLayoutObserver.disconnect();
     if (this.toastTimer) clearTimeout(this.toastTimer);
     if (this.lootLabelFrame !== null) cancelAnimationFrame(this.lootLabelFrame);
+    if (this.healthFrame !== null) cancelAnimationFrame(this.healthFrame);
     dungeonSound.dispose(); this.world.dispose(); this.root.remove(); document.body.classList.remove('rpg-mode');
   }
 }

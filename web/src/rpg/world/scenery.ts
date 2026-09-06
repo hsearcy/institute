@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { isCrossingChasm, boundsIntersectCrossingChasm, getRoomLayout } from './roomLayout';
 import { isRuinFootprintClear, ruinGeometry } from './ruins';
+import { gateBrazierSoot, gateRubble, gateWear } from './gateComposition';
 
 /** Low relief and remnants of the old vault. All meshes are static, grouped by
  * room/material, and have no collision or connection to learning state. */
@@ -59,6 +60,17 @@ export function createVaultScenery(base: Record<string, THREE.MeshStandardMateri
   for (const material of [dust, worn]) { material.alphaMap = wearMask; material.transparent = true; material.depthWrite = false; material.vertexColors = true; material.polygonOffset = true; material.polygonOffsetFactor = -1; material.polygonOffsetUnits = -1; }
   dust.color.setHex(0xa49577); dust.roughness = 1; dust.opacity = .52;
   worn.color.setHex(0x58605b); worn.roughness = .29; worn.metalness = .04; worn.opacity = .58;
+  // The breached gate is dry stone with local deposits, not a uniformly wet
+  // room. These clones borrow the loaded maps and belong to this scenery set.
+  const gateFloor = (base.floor ?? base.wall).clone();
+  // Region changes tint the base floor in place. Share that color while keeping
+  // the gate's dry surface properties local to this material.
+  gateFloor.color = (base.floor ?? base.wall).color;
+  gateFloor.name = 'Dry gate paving'; gateFloor.roughnessMap = null; gateFloor.roughness = .94; gateFloor.metalness = .02;
+  const gateDust = dust.clone(), gateDamp = worn.clone();
+  gateDust.name = 'Gate masonry dust'; gateDust.roughnessMap = null; gateDust.roughness = 1; gateDust.opacity = .72;
+  gateDamp.name = 'Gate damp passage'; gateDamp.roughnessMap = null; gateDamp.roughness = .38; gateDamp.opacity = .62;
+  group.userData.gateFloorMaterial = gateFloor;
   group.userData.ownedTextures.push(wearMask);
   // The runner owns its maps; masonry/floor textures remain borrowed. Worn
   // embroidery and clipped fibres make a cloth remnant read at the closer camera.
@@ -87,12 +99,12 @@ export function createVaultScenery(base: Record<string, THREE.MeshStandardMateri
   const runner = new THREE.MeshStandardMaterial({ map: fabricMap, bumpMap: fabricBump, bumpScale: .025, alphaTest: .5, roughness: .96, side: THREE.DoubleSide, vertexColors: true });
   runner.name = 'Worn ceremonial cloth';
   group.userData.ownedTextures.push(fabricMap, fabricBump);
-  group.userData.ownedMaterials = [stone, paleStone, clay, cloth, wax, iron, wick, grime, wet, dust, worn, runner];
+  group.userData.ownedMaterials = [stone, paleStone, clay, cloth, wax, iron, wick, grime, wet, dust, worn, gateFloor, gateDust, gateDamp, runner];
 
   const add = (room: number, geometry: THREE.BufferGeometry, material: THREE.Material, position: THREE.Vector3, rotation = new THREE.Euler(), scale = new THREE.Vector3(1, 1, 1), shadow = true, keepCombatClear = false) => {
     if (isCrossingChasm(room, position.x, position.z + room * 20)) { geometry.dispose(); return; }
     geometry.applyMatrix4(new THREE.Matrix4().compose(position, new THREE.Quaternion().setFromEuler(rotation), scale));
-    if (material === dust || material === worn) {
+    if (material === dust || material === worn || material === gateDust || material === gateDamp) {
       const vertices = geometry.getAttribute('position'), uv = geometry.getAttribute('uv');
       for (let i = 0; i < vertices.count; i++) uv.setXY(i, vertices.getX(i) / 4.8, vertices.getZ(i) / 4.8);
     }
@@ -140,12 +152,20 @@ export function createVaultScenery(base: Record<string, THREE.MeshStandardMateri
     const center = -room * 20;
     // Broad deposits and polished damp lanes follow the same cobbles beneath.
     // These are flat surface changes: neither enemies nor the hero gain obstacles.
-    const weatherPatches = room === 3
+    const weatherPatches = room === 0 ? [] : room === 3
       ? [[-1.9, -3.5, 2.3, 3.6, .05, 0], [1.7, 4.8, 2.6, 2.5, .15, 1]]
       : [[-3.9, -3.7, 5.6, 3.6, .38, 0], [4.4, 2.6, 5.1, 3.1, -.65, 0], [-4.9, 6.3, 4.3, 2.4, .25, 0], [3.3, -6.1, 4.5, 2.2, -.35, 0], [-4.6, 1.3, 3.2, 2.5, 1.15, 1], [3.7, -2, 3.0, 2.6, .15, 1]];
     for (const [x, z, width, depth, angle, wetness] of weatherPatches) {
       const geometry = new THREE.PlaneGeometry(width, depth); geometry.setAttribute('uv1', geometry.getAttribute('uv').clone());
       add(room, geometry, wetness ? worn : dust, new THREE.Vector3(x, -.032 + wetness * .001, center + z), new THREE.Euler(-Math.PI / 2, 0, angle + room * .37), undefined, false);
+    }
+    if (room === 0) {
+      for (const [x, z, width, depth, angle, kind] of gateWear) {
+        const geometry = new THREE.PlaneGeometry(width, depth); geometry.setAttribute('uv1', geometry.getAttribute('uv').clone());
+        add(room, geometry, kind === 'dust' ? gateDust : gateDamp, new THREE.Vector3(x, -.031, z), new THREE.Euler(-Math.PI / 2, 0, angle), undefined, false);
+      }
+      for (const { x, z } of gateBrazierSoot) stain(room, x, z, 3.1, 2.8, grime);
+      for (const block of gateRubble) fallenBlock(room, block.x, block.z, block.width, block.height, block.depth, block.angle, stone, .24);
     }
     // A worn procession aisle: chipped corners rise only centimetres above the
     // original floor, with cracks and missing pieces outside the walking line.
@@ -157,6 +177,8 @@ export function createVaultScenery(base: Record<string, THREE.MeshStandardMateri
     for (const side of [-1, 1]) {
       const layout = getRoomLayout(room), clusters = side < 0 ? 3 : 2;
       for (let cluster = 0; cluster < clusters; cluster++) {
+        // The missing west span supplies one connected apron in this room.
+        if (room === 0 && side < 0) continue;
         const onApron = room !== 3 && ((side < 0 && cluster === 1) || (side > 0 && cluster === 0));
         const x = side * (layout.sideWallX - layout.sideWallWidth * .5 - 1.05 - (onApron ? .9 : 0) + (random() - .5) * .35);
         const sampledZ = -6.1 + cluster * (12.2 / (clusters - 1)) + (random() - .5) * 1.3;
@@ -190,7 +212,7 @@ export function createVaultScenery(base: Record<string, THREE.MeshStandardMateri
       for (let n = 0; n < 6; n++) {
         const x = side * (8.1 + random() * 4.8), z = center - 8.5 + n * 3.2;
         stain(room, x, z, 5.5, 3.4, grime);
-        if (n % 3 === 0) stain(room, side * (6.3 + random()), z + .7, 2.5, 1.7, wet);
+        if (room !== 0 && n % 3 === 0) stain(room, side * (6.3 + random()), z + .7, 2.5, 1.7, wet);
         // Broken vessels, their exposed curved rims and dark inner faces.
         if ((n + room) % 2 === 0) {
           const profile = [new THREE.Vector2(.15, 0), new THREE.Vector2(.27, .12), new THREE.Vector2(.32, .31), new THREE.Vector2(.25, .52), new THREE.Vector2(.16, .59), new THREE.Vector2(.18, .65)];

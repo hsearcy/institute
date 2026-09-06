@@ -159,6 +159,32 @@ export function createBallLightning(seed = 0, detailScale = 1): {
   };
 }
 
+/** A compact version of the accepted volume follows the casting palm. */
+export function createBallLightningCharge(detailScale = 1) {
+  const visual = createBallLightning(1, detailScale);
+  const scales = visual.layers.map(layer => layer.scale.clone());
+  return {
+    layers: visual.layers,
+    update(position: THREE.Vector3, view: THREE.Vector3, age: number, time: number) {
+      visual.update(position, view, .2, time);
+      const growth = .18 + .1 * THREE.MathUtils.smoothstep(age, 0, .14);
+      const opacity = THREE.MathUtils.smoothstep(age, 0, .06) * (1 - THREE.MathUtils.smoothstep(age, .18, .28)) * .82;
+      visual.layers.forEach((layer, index) => {
+        layer.scale.copy(scales[index]).multiplyScalar(growth);
+        layer.material.uniforms.opacity.value = opacity;
+      });
+    },
+  };
+}
+
+/** Rejoin the original orbital trajectory before any target can be struck. */
+export function ballLightningReleasePosition(from: THREE.Vector3, target: THREE.Vector3, side: THREE.Vector3, age: number, out: THREE.Vector3, delay = 0): THREE.Vector3 {
+  const t = THREE.MathUtils.smoothstep(age, delay, .28 + delay);
+  out.copy(from).lerp(target, t).addScaledVector(side, Math.sin(t * Math.PI) * .45);
+  out.y += Math.sin(t * Math.PI) * .12;
+  return out;
+}
+
 export function ballLightningContactMaterial(haze = false): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     uniforms: { time: { value: 0 } },

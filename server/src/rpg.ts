@@ -2,7 +2,7 @@ import type { Database } from 'bun:sqlite';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
-  RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellUnlocked, rpgEncounterKills, rpgRelicDrop,
+  RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellUnlocked, rpgEncounterCombat, rpgApplyCombat, rpgRelicDrop,
   type RpgState, type RpgReward, type RpgResolveResult,
 } from '@institute/shared';
 
@@ -36,6 +36,15 @@ export function ensureRpgSchema(db: Database): void {
       PRIMARY KEY (profile_id, problem_id),
       UNIQUE (profile_id, expedition_id, encounter_index)
     );
+    CREATE TABLE IF NOT EXISTS rpg_cast_claims (
+      profile_id TEXT NOT NULL,
+      problem_id TEXT NOT NULL,
+      expedition_id TEXT NOT NULL,
+      encounter_index INTEGER NOT NULL,
+      reward_json TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      PRIMARY KEY (profile_id, problem_id)
+    );
   `);
 }
 
@@ -50,6 +59,7 @@ export function getRpgState(db: Database, profileId: string): RpgState {
     // Existing JSON saves gain a default only in the response. Reading never
     // rewrites the profile or changes any earned learning/adventure progress.
     state.appearanceId = rpgAppearanceUnlocked(state.appearanceId, rpgLevel(state.xp).level) ? state.appearanceId : 'wayfarer';
+    if (state.expedition && !state.expedition.cleared) state.expedition.combat = rpgEncounterCombat(state);
     return state;
   }
   return {
@@ -72,6 +82,7 @@ export function startRpgExpedition(db: Database, profileId: string, regionId?: s
     if (!region) throw new RpgError('Unknown dungeon.');
     if (state.expeditionsCompleted < region.requiredClears) throw new RpgError('Finish more adventures to unlock this dungeon.');
     state.expedition = { id: crypto.randomUUID(), regionId: region.id, encounterIndex: 0, encountersTotal: 6, cleared: false, startedAt: Date.now() };
+    state.expedition.combat = rpgEncounterCombat(state);
     save(db, state);
     return state;
   })();
@@ -83,15 +94,18 @@ const ResolveSchema = z.object({
   spellId: z.enum(RPG_SPELL_IDS).optional(), assisted: z.boolean().optional(),
 });
 
-/** One recorded learning outcome can trigger one encounter, even after reloads or HTTP retries.
+/** One recorded learning outcome can trigger one cast, even after reloads or HTTP retries.
  * Correctness remains the existing tutor's responsibility. This module reads its receipts only.
  * Assisted outcomes give the same adventure progress without changing any mastery records. */
 export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveSchema>): RpgResolveResult {
   const body = ResolveSchema.parse(input);
   return db.transaction(() => {
     const state = getRpgState(db, body.profileId);
-    const claimed = db.query('SELECT expedition_id, encounter_index, reward_json FROM rpg_claims WHERE profile_id = ? AND problem_id = ?')
-      .get(body.profileId, body.problemId) as { expedition_id: string; encounter_index: number; reward_json: string } | null;
+    // Old room-clear receipts remain untouched and still reserve their solve.
+    // The additive table allows several different problems in the same room.
+    const claimed = db.query(`SELECT expedition_id, encounter_index, reward_json FROM rpg_claims WHERE profile_id = ? AND problem_id = ?
+      UNION ALL SELECT expedition_id, encounter_index, reward_json FROM rpg_cast_claims WHERE profile_id = ? AND problem_id = ? LIMIT 1`)
+      .get(body.profileId, body.problemId, body.profileId, body.problemId) as { expedition_id: string; encounter_index: number; reward_json: string } | null;
     if (claimed) {
       if (claimed.expedition_id !== body.expeditionId || claimed.encounter_index !== body.encounterIndex) throw new RpgError('This problem already powered another encounter.', 409);
       const reward = JSON.parse(claimed.reward_json) as RpgReward;
@@ -113,11 +127,18 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
       AND (correct = 0 OR skipped = 1) ORDER BY id DESC LIMIT 1`).get(body.profileId, body.problemId) as { created_at: number } | null : null;
     const receiptTime = solve?.solved_at ?? assisted?.created_at;
     if (receiptTime === undefined || receiptTime < expedition.startedAt) throw new RpgError('Finish this problem with your tutor before casting.');
-    const bossDefeated = expedition.encounterIndex === expedition.encountersTotal - 1;
-    const kills = rpgEncounterKills(state, expedition.encounterIndex, spellId);
+    const before = rpgEncounterCombat(state);
+    const cast = rpgApplyCombat(state, before, spellId);
+    expedition.combat = cast.combat;
+    const bossDefeated = cast.result.encounterCleared && expedition.encounterIndex === expedition.encountersTotal - 1;
+    const kills = cast.result.defeatedIds.length;
     let xp = bossDefeated ? 90 : 32;
     const oldLevel = state.level;
-    const item = rpgRelicDrop(state, expedition.regionId, expedition.encounterIndex);
+    // Relic forecasts use progress at the room's start, even when several
+    // casts were needed. In particular, the first-room gift cannot disappear
+    // merely because earlier casts already defeated a weak enemy.
+    const roomStartKills = state.totalKills - before.enemies.filter(enemy => enemy.hp === 0).length;
+    const item = cast.result.encounterCleared ? rpgRelicDrop({ ...state, totalKills: roomStartKills }, expedition.regionId, expedition.encounterIndex) : null;
     state.totalKills += kills;
     state.selectedSpellId = spellId;
     const duplicateItem = !!item && state.inventory.includes(item.id);
@@ -128,9 +149,9 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
     const levelsGained = state.level - oldLevel;
     state.skillPoints += levelsGained;
     if (bossDefeated) { expedition.cleared = true; state.expeditionsCompleted++; }
-    else expedition.encounterIndex++;
-    const reward: RpgReward = { xp, kills, levelUp: levelsGained > 0, levelsGained, item, newItems: item && !duplicateItem ? [item] : [], duplicateItem, bossDefeated, spellId };
-    db.query(`INSERT INTO rpg_claims (profile_id, problem_id, expedition_id, encounter_index, reward_json, created_at)
+    else if (cast.result.encounterCleared) { expedition.encounterIndex++; expedition.combat = rpgEncounterCombat(state); }
+    const reward: RpgReward = { xp, kills, levelUp: levelsGained > 0, levelsGained, item, newItems: item && !duplicateItem ? [item] : [], duplicateItem, bossDefeated, spellId, combat: cast.result };
+    db.query(`INSERT INTO rpg_cast_claims (profile_id, problem_id, expedition_id, encounter_index, reward_json, created_at)
       VALUES (?, ?, ?, ?, ?, ?)`).run(body.profileId, body.problemId, expedition.id, body.encounterIndex, JSON.stringify(reward), Date.now());
     save(db, state);
     return { state, reward, duplicate: false };

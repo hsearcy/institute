@@ -1,2 +1,4 @@
-*.png
-*.glb
+# Raw material conversions and duplicate verification/canonical intermediates.
+# Production GLBs, source scripts and concise review reports live outside here.
+*
+!.gitignore

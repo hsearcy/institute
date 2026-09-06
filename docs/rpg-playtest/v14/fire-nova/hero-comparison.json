@@ -1,0 +1,1776 @@
+{
+  "method": "Same native GPU context/world, room0/14 enemies/fullquality1440x900; only hero asset+clips swapped.45frame warmup,90rAF samples, EXT GPU timers around composer only. Submission/tick are CPU-wall, interval is scheduling. Legacy repeat checks drift. No answers or production edits.",
+  "errors": [],
+  "results": [
+    {
+      "variant": "legacy",
+      "gpu": "ANGLE (Intel, Mesa Intel(R) Iris(R) Xe Graphics (ADL GT2), OpenGL ES 3.2)",
+      "canvas": [
+        1440,
+        900
+      ],
+      "diagnostics": {
+        "appearance": "wayfarer",
+        "lastAttack": null,
+        "heroAnimation": "idle",
+        "heroClips": [
+          "idle",
+          "walk",
+          "cleave",
+          "cast"
+        ],
+        "encounter": 0,
+        "region": "embercrypt",
+        "enemies": 14,
+        "articulatedEnemies": 14,
+        "enemyRoster": {
+          "guardian": 2,
+          "skeleton": 7,
+          "revenant": 4,
+          "wraith": 1
+        },
+        "attacking": false,
+        "paused": false,
+        "modelsLoaded": 21,
+        "drawCalls": 172,
+        "triangles": 682335,
+        "particles": 83,
+        "fragments": 0,
+        "hero": [
+          0,
+          0,
+          1.4
+        ],
+        "softwareRenderer": false,
+        "fps": 60,
+        "quality": "full",
+        "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "programs": 94,
+      "samples": [
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 3.1000000089406967,
+          "gpuMs": 10.690624
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 10.445104
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.1000000089406967,
+          "tickMs": 3.2000000029802322,
+          "gpuMs": 10.514114
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 2.199999988079071,
+          "tickMs": 2.699999988079071,
+          "gpuMs": 10.548645
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.8999999910593033,
+          "tickMs": 3.7000000029802322,
+          "gpuMs": 10.46401
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 10.438593
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 3,
+          "gpuMs": 10.473593
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.5999999940395355,
+          "gpuMs": 10.414739
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.2000000029802322,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 10.509635
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.5999999940395355,
+          "gpuMs": 10.423333
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 10.495208
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.7000000029802322,
+          "tickMs": 3.5,
+          "gpuMs": 10.517239
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 2.0999999940395355,
+          "tickMs": 3,
+          "gpuMs": 10.58802
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 3.2999999970197678,
+          "tickMs": 3.9000000059604645,
+          "gpuMs": 10.534635
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.2999999970197678,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 10.515937
+        },
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.6000000089406967,
+          "gpuMs": 10.510468
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.1000000089406967,
+          "tickMs": 2.800000011920929,
+          "gpuMs": 10.491458
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.0999999940395355,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 10.575677
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 1.7999999970197678,
+          "tickMs": 2.699999988079071,
+          "gpuMs": 10.590416
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 3.1000000089406967,
+          "tickMs": 3.7000000029802322,
+          "gpuMs": 10.621041
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.699999988079071,
+          "tickMs": 3.3999999910593033,
+          "gpuMs": 10.543697
+        },
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 2.7999999970197678,
+          "tickMs": 3.5,
+          "gpuMs": 10.542656
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 3,
+          "tickMs": 3.7000000029802322,
+          "gpuMs": 10.60026
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.7000000029802322,
+          "tickMs": 3.2999999970197678,
+          "gpuMs": 10.660104
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 10.575208
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.4000000059604645,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 10.711562
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.0999999940395355,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 10.566979
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 1.8999999910593033,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 10.752864
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.0999999940395355,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 10.455572
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.2000000029802322,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 10.634583
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.6000000089406967,
+          "gpuMs": 10.470989
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.5,
+          "gpuMs": 10.570781
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.5,
+          "gpuMs": 10.4175
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 10.498802
+        },
+        {
+          "intervalMs": 16.799999999999272,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 10.430416
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.2000000029802322,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 10.633437
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 2.2999999970197678,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 10.480625
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.300000011920929,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 10.600625
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 10.468541
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 1.5999999940395355,
+          "tickMs": 2.5999999940395355,
+          "gpuMs": 10.48401
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 10.40651
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.5999999940395355,
+          "tickMs": 2.5,
+          "gpuMs": 10.549218
+        },
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 10.479687
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.1000000089406967,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 10.545989
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.5999999940395355,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 10.493072
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 1.800000011920929,
+          "tickMs": 2.5,
+          "gpuMs": 10.635416
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 1.800000011920929,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 10.412708
+        },
+        {
+          "intervalMs": 16.80000000000109,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 10.482708
+        },
+        {
+          "intervalMs": 16.5,
+          "renderSubmissionMs": 2.0999999940395355,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 10.487604
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 10.587239
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.8999999910593033,
+          "tickMs": 2.699999988079071,
+          "gpuMs": 10.482395
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.2999999970197678,
+          "tickMs": 3.2999999970197678,
+          "gpuMs": 10.578593
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 2.4000000059604645,
+          "tickMs": 3.4000000059604645,
+          "gpuMs": 10.497552
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.7000000029802322,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 10.525364
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 2.1000000089406967,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 10.454687
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 1.7999999970197678,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 10.547187
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.2000000029802322,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 10.534791
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 1.7999999970197678,
+          "tickMs": 3.0999999940395355,
+          "gpuMs": 10.558906
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.5999999940395355,
+          "gpuMs": 10.561406
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.0999999940395355,
+          "tickMs": 2.5999999940395355,
+          "gpuMs": 10.589166
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 2.2000000029802322,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 10.474062
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 10.664166
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.8999999910593033,
+          "tickMs": 2.699999988079071,
+          "gpuMs": 10.482656
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 1.7999999970197678,
+          "tickMs": 2.3999999910593033,
+          "gpuMs": 10.63552
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.7999999970197678,
+          "tickMs": 2.5999999940395355,
+          "gpuMs": 10.484375
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 10.509895
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.5999999940395355,
+          "gpuMs": 10.412864
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.800000011920929,
+          "tickMs": 2.5,
+          "gpuMs": 10.47875
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 1.7999999970197678,
+          "tickMs": 2.6000000089406967,
+          "gpuMs": 10.56151
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 10.565468
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.1000000089406967,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 10.572083
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.5,
+          "gpuMs": 10.667447
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 2.0999999940395355,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 10.702395
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.2999999970197678,
+          "tickMs": 2.8999999910593033,
+          "gpuMs": 10.738385
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.2000000029802322,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 10.403593
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 10.647083
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.199999988079071,
+          "tickMs": 2.8999999910593033,
+          "gpuMs": 10.560416
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.1000000089406967,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 10.367916
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.2000000029802322,
+          "tickMs": 2.800000011920929,
+          "gpuMs": 10.647552
+        },
+        {
+          "intervalMs": 16.799999999999272,
+          "renderSubmissionMs": 2.1000000089406967,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 10.645104
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 10.566197
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 10.609791
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.5999999940395355,
+          "tickMs": 3.4000000059604645,
+          "gpuMs": 10.702552
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.2000000029802322,
+          "tickMs": 2.800000011920929,
+          "gpuMs": 10.676614
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 2.0999999940395355,
+          "tickMs": 2.5999999940395355,
+          "gpuMs": 10.58875
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 1.800000011920929,
+          "tickMs": 2.2000000029802322,
+          "gpuMs": 10.602604
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.5,
+          "gpuMs": 10.634166
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 1.7999999970197678,
+          "tickMs": 2.2000000029802322,
+          "gpuMs": 10.702708
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.5999999940395355,
+          "gpuMs": 10.613229
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.8999999910593033,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 10.680156
+        }
+      ],
+      "glError": 0,
+      "visibility": "visible"
+    },
+    {
+      "variant": "authored",
+      "gpu": "ANGLE (Intel, Mesa Intel(R) Iris(R) Xe Graphics (ADL GT2), OpenGL ES 3.2)",
+      "canvas": [
+        1440,
+        900
+      ],
+      "diagnostics": {
+        "appearance": "wayfarer",
+        "lastAttack": null,
+        "heroAnimation": "idle",
+        "heroClips": [
+          "idle",
+          "walk",
+          "cast",
+          "cleave"
+        ],
+        "encounter": 0,
+        "region": "embercrypt",
+        "enemies": 14,
+        "articulatedEnemies": 14,
+        "enemyRoster": {
+          "guardian": 2,
+          "skeleton": 7,
+          "revenant": 4,
+          "wraith": 1
+        },
+        "attacking": false,
+        "paused": false,
+        "modelsLoaded": 21,
+        "drawCalls": 319,
+        "triangles": 1466772,
+        "particles": 104,
+        "fragments": 0,
+        "hero": [
+          0,
+          0,
+          1.4
+        ],
+        "softwareRenderer": false,
+        "fps": 34,
+        "quality": "full",
+        "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "programs": 101,
+      "samples": [
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 3.2000000029802322,
+          "tickMs": 3.5999999940395355,
+          "gpuMs": 25.275625
+        },
+        {
+          "intervalMs": 33.5,
+          "renderSubmissionMs": 3.1000000089406967,
+          "tickMs": 3.5,
+          "gpuMs": 24.873541
+        },
+        {
+          "intervalMs": 33.19999999999891,
+          "renderSubmissionMs": 3,
+          "tickMs": 3.5,
+          "gpuMs": 24.32927
+        },
+        {
+          "intervalMs": 16.80000000000109,
+          "renderSubmissionMs": 2.6000000089406967,
+          "tickMs": 3.1000000089406967,
+          "gpuMs": 24.600677
+        },
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 2.3999999910593033,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 25.354739
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.9000000059604645,
+          "tickMs": 3.4000000059604645,
+          "gpuMs": 25.009061
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.7999999970197678,
+          "tickMs": 3.2000000029802322,
+          "gpuMs": 24.344687
+        },
+        {
+          "intervalMs": 33.30000000000109,
+          "renderSubmissionMs": 2.6000000089406967,
+          "tickMs": 3.1000000089406967,
+          "gpuMs": 25.573489
+        },
+        {
+          "intervalMs": 33.29999999999927,
+          "renderSubmissionMs": 2.6000000089406967,
+          "tickMs": 3.1000000089406967,
+          "gpuMs": 25.820729
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 3.2000000029802322,
+          "tickMs": 3.6000000089406967,
+          "gpuMs": 24.492551
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.6000000089406967,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 24.684322
+        },
+        {
+          "intervalMs": 33.29999999999927,
+          "renderSubmissionMs": 3.699999988079071,
+          "tickMs": 4.199999988079071,
+          "gpuMs": 25.511666
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.3999999910593033,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 25.794479
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 3,
+          "tickMs": 3.3999999910593033,
+          "gpuMs": 24.406875
+        },
+        {
+          "intervalMs": 33.30000000000109,
+          "renderSubmissionMs": 2.699999988079071,
+          "tickMs": 3.0999999940395355,
+          "gpuMs": 24.960677
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.7000000029802322,
+          "tickMs": 3.0999999940395355,
+          "gpuMs": 25.276666
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 3.9000000059604645,
+          "tickMs": 4.299999997019768,
+          "gpuMs": 25.688333
+        },
+        {
+          "intervalMs": 33.29999999999927,
+          "renderSubmissionMs": 3.199999988079071,
+          "tickMs": 3.7999999970197678,
+          "gpuMs": 24.619062
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 24.858072
+        },
+        {
+          "intervalMs": 33.30000000000109,
+          "renderSubmissionMs": 2.2999999970197678,
+          "tickMs": 2.699999988079071,
+          "gpuMs": 25.412083
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.3999999910593033,
+          "tickMs": 2.699999988079071,
+          "gpuMs": 25.835937
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.6000000089406967,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 24.55151
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.2999999970197678,
+          "tickMs": 2.800000011920929,
+          "gpuMs": 24.954322
+        },
+        {
+          "intervalMs": 33.20000000000073,
+          "renderSubmissionMs": 3.3999999910593033,
+          "tickMs": 3.8999999910593033,
+          "gpuMs": 25.723229
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 2.4000000059604645,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 25.768125
+        },
+        {
+          "intervalMs": 33.30000000000109,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 2.800000011920929,
+          "gpuMs": 24.857395
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.2999999970197678,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 24.90401
+        },
+        {
+          "intervalMs": 33.29999999999927,
+          "renderSubmissionMs": 2.7000000029802322,
+          "tickMs": 3,
+          "gpuMs": 25.867812
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 25.862968
+        },
+        {
+          "intervalMs": 33.29999999999927,
+          "renderSubmissionMs": 2.4000000059604645,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 24.764583
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.7000000029802322,
+          "tickMs": 3.0999999940395355,
+          "gpuMs": 24.900677
+        },
+        {
+          "intervalMs": 33.30000000000109,
+          "renderSubmissionMs": 2.300000011920929,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 25.730833
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.6000000089406967,
+          "tickMs": 3,
+          "gpuMs": 26.100625
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 4,
+          "tickMs": 4.5,
+          "gpuMs": 24.601822
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.8999999910593033,
+          "tickMs": 3.5,
+          "gpuMs": 25.16427
+        },
+        {
+          "intervalMs": 33.20000000000073,
+          "renderSubmissionMs": 3.6000000089406967,
+          "tickMs": 4.0999999940395355,
+          "gpuMs": 25.545104
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 2.5999999940395355,
+          "tickMs": 3,
+          "gpuMs": 26.204687
+        },
+        {
+          "intervalMs": 33.30000000000109,
+          "renderSubmissionMs": 2.5999999940395355,
+          "tickMs": 3,
+          "gpuMs": 24.649427
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 25.157031
+        },
+        {
+          "intervalMs": 33.29999999999927,
+          "renderSubmissionMs": 2.5999999940395355,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 26.299583
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.7000000029802322,
+          "tickMs": 3.2000000029802322,
+          "gpuMs": 26.175572
+        },
+        {
+          "intervalMs": 33.29999999999927,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 26.016822
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.4000000059604645,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 25.16875
+        },
+        {
+          "intervalMs": 33.30000000000109,
+          "renderSubmissionMs": 2.4000000059604645,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 25.231354
+        },
+        {
+          "intervalMs": 33.29999999999927,
+          "renderSubmissionMs": 3.9000000059604645,
+          "tickMs": 4.200000002980232,
+          "gpuMs": 26.108802
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 4.0999999940395355,
+          "tickMs": 4.5,
+          "gpuMs": 26.117916
+        },
+        {
+          "intervalMs": 33.29999999999927,
+          "renderSubmissionMs": 2.4000000059604645,
+          "tickMs": 2.800000011920929,
+          "gpuMs": 24.88177
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 2.8999999910593033,
+          "gpuMs": 25.04177
+        },
+        {
+          "intervalMs": 33.20000000000073,
+          "renderSubmissionMs": 2.800000011920929,
+          "tickMs": 3.300000011920929,
+          "gpuMs": 25.945625
+        },
+        {
+          "intervalMs": 16.799999999999272,
+          "renderSubmissionMs": 2.6000000089406967,
+          "tickMs": 3.2000000029802322,
+          "gpuMs": 25.989531
+        },
+        {
+          "intervalMs": 33.20000000000073,
+          "renderSubmissionMs": 2.4000000059604645,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 25.250312
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.7999999970197678,
+          "tickMs": 3.0999999940395355,
+          "gpuMs": 25.290364
+        },
+        {
+          "intervalMs": 33.30000000000109,
+          "renderSubmissionMs": 2.4000000059604645,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 25.739218
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 2.4000000059604645,
+          "tickMs": 2.800000011920929,
+          "gpuMs": 25.946197
+        },
+        {
+          "intervalMs": 33.30000000000109,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 24.847656
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.3999999910593033,
+          "tickMs": 2.699999988079071,
+          "gpuMs": 25.124739
+        },
+        {
+          "intervalMs": 33.29999999999927,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 3,
+          "gpuMs": 26.228906
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.6000000089406967,
+          "tickMs": 3,
+          "gpuMs": 26.119895
+        },
+        {
+          "intervalMs": 33.29999999999927,
+          "renderSubmissionMs": 2.3999999910593033,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 26.110104
+        },
+        {
+          "intervalMs": 33.400000000001455,
+          "renderSubmissionMs": 2.699999988079071,
+          "tickMs": 3.0999999940395355,
+          "gpuMs": 25.215937
+        },
+        {
+          "intervalMs": 33.29999999999927,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 25.478437
+        },
+        {
+          "intervalMs": 33.29999999999927,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 26.263541
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.7000000029802322,
+          "tickMs": 3.2000000029802322,
+          "gpuMs": 26.318697
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 2.8999999910593033,
+          "gpuMs": 24.893593
+        },
+        {
+          "intervalMs": 33.30000000000109,
+          "renderSubmissionMs": 2.6000000089406967,
+          "tickMs": 3,
+          "gpuMs": 25.322083
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 25.887864
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 26.253489
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 26.241718
+        },
+        {
+          "intervalMs": 33.29999999999927,
+          "renderSubmissionMs": 2.4000000059604645,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 25.355416
+        },
+        {
+          "intervalMs": 33.30000000000109,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 3,
+          "gpuMs": 25.287187
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.3999999910593033,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 26.445052
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.7000000029802322,
+          "tickMs": 3.199999988079071,
+          "gpuMs": 26.255884
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.6000000089406967,
+          "tickMs": 3,
+          "gpuMs": 25.323854
+        },
+        {
+          "intervalMs": 33.19999999999891,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 2.800000011920929,
+          "gpuMs": 25.287812
+        },
+        {
+          "intervalMs": 33.400000000001455,
+          "renderSubmissionMs": 2.6000000089406967,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 25.505937
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 26.027812
+        },
+        {
+          "intervalMs": 16.600000000000364,
+          "renderSubmissionMs": 2.7000000029802322,
+          "tickMs": 3.1000000089406967,
+          "gpuMs": 26.124061
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.4000000059604645,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 25.119479
+        },
+        {
+          "intervalMs": 33.29999999999927,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 25.52151
+        },
+        {
+          "intervalMs": 33.30000000000109,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 2.699999988079071,
+          "gpuMs": 26.355312
+        },
+        {
+          "intervalMs": 16.69999999999891,
+          "renderSubmissionMs": 2.4000000059604645,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 26.200572
+        },
+        {
+          "intervalMs": 33.30000000000109,
+          "renderSubmissionMs": 2.300000011920929,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 26.343645
+        },
+        {
+          "intervalMs": 33.399999999999636,
+          "renderSubmissionMs": 2.4000000059604645,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 25.277291
+        },
+        {
+          "intervalMs": 33.19999999999891,
+          "renderSubmissionMs": 2.3999999910593033,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 25.310781
+        },
+        {
+          "intervalMs": 33.400000000001455,
+          "renderSubmissionMs": 2.300000011920929,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 26.560572
+        },
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 2.7000000029802322,
+          "tickMs": 3.1000000089406967,
+          "gpuMs": 26.887447
+        },
+        {
+          "intervalMs": 33.400000000001455,
+          "renderSubmissionMs": 2.2999999970197678,
+          "tickMs": 2.699999988079071,
+          "gpuMs": 26.210364
+        },
+        {
+          "intervalMs": 33.29999999999927,
+          "renderSubmissionMs": 2.2000000029802322,
+          "tickMs": 2.5,
+          "gpuMs": 25.267656
+        },
+        {
+          "intervalMs": 33.29999999999927,
+          "renderSubmissionMs": 2.3999999910593033,
+          "tickMs": 2.7999999970197678,
+          "gpuMs": 25.530572
+        },
+        {
+          "intervalMs": 33.30000000000109,
+          "renderSubmissionMs": 2.2999999970197678,
+          "tickMs": 2.6000000089406967,
+          "gpuMs": 26.396562
+        }
+      ],
+      "glError": 0,
+      "visibility": "visible"
+    },
+    {
+      "variant": "legacy-repeat",
+      "gpu": "ANGLE (Intel, Mesa Intel(R) Iris(R) Xe Graphics (ADL GT2), OpenGL ES 3.2)",
+      "canvas": [
+        1440,
+        900
+      ],
+      "diagnostics": {
+        "appearance": "wayfarer",
+        "lastAttack": null,
+        "heroAnimation": "idle",
+        "heroClips": [
+          "idle",
+          "walk",
+          "cleave",
+          "cast"
+        ],
+        "encounter": 0,
+        "region": "embercrypt",
+        "enemies": 14,
+        "articulatedEnemies": 14,
+        "enemyRoster": {
+          "guardian": 2,
+          "skeleton": 7,
+          "revenant": 4,
+          "wraith": 1
+        },
+        "attacking": false,
+        "paused": false,
+        "modelsLoaded": 21,
+        "drawCalls": 172,
+        "triangles": 682335,
+        "particles": 80,
+        "fragments": 0,
+        "hero": [
+          0,
+          0,
+          1.4
+        ],
+        "softwareRenderer": false,
+        "fps": 60,
+        "quality": "full",
+        "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "programs": 101,
+      "samples": [
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.7000000029802322,
+          "tickMs": 3.2000000029802322,
+          "gpuMs": 12.172187
+        },
+        {
+          "intervalMs": 16.600000000002183,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 12.094479
+        },
+        {
+          "intervalMs": 16.69999999999709,
+          "renderSubmissionMs": 1.7000000029802322,
+          "tickMs": 2,
+          "gpuMs": 12.042604
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.5,
+          "tickMs": 1.800000011920929,
+          "gpuMs": 12.24776
+        },
+        {
+          "intervalMs": 16.600000000002183,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 12.085677
+        },
+        {
+          "intervalMs": 16.799999999999272,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 11.525729
+        },
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 10.892083
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.8999999910593033,
+          "tickMs": 2.2000000029802322,
+          "gpuMs": 10.985364
+        },
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 2.5999999940395355,
+          "tickMs": 3,
+          "gpuMs": 10.985937
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.7000000029802322,
+          "tickMs": 2.5,
+          "gpuMs": 10.853697
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.300000011920929,
+          "gpuMs": 10.993072
+        },
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 1.8999999910593033,
+          "tickMs": 2.2000000029802322,
+          "gpuMs": 10.906614
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.2000000029802322,
+          "gpuMs": 10.848385
+        },
+        {
+          "intervalMs": 16.600000000002183,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 10.873333
+        },
+        {
+          "intervalMs": 16.69999999999709,
+          "renderSubmissionMs": 1.8999999910593033,
+          "tickMs": 2.2000000029802322,
+          "gpuMs": 10.855052
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.8999999910593033,
+          "tickMs": 2.199999988079071,
+          "gpuMs": 11.092291
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.3999999910593033,
+          "gpuMs": 11.165833
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 11.14
+        },
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.300000011920929,
+          "gpuMs": 11.015833
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.199999988079071,
+          "tickMs": 2.5999999940395355,
+          "gpuMs": 11.070833
+        },
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 1.8999999910593033,
+          "tickMs": 2.2000000029802322,
+          "gpuMs": 11.199947
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.7999999970197678,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 11.213697
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.7000000029802322,
+          "tickMs": 2.300000011920929,
+          "gpuMs": 11.168593
+        },
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.300000011920929,
+          "gpuMs": 11.474739
+        },
+        {
+          "intervalMs": 16.600000000002183,
+          "renderSubmissionMs": 1.7000000029802322,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 11.345208
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.4000000059604645,
+          "gpuMs": 11.360781
+        },
+        {
+          "intervalMs": 16.69999999999709,
+          "renderSubmissionMs": 1.7999999970197678,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 11.172447
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.7999999970197678,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 11.261145
+        },
+        {
+          "intervalMs": 16.600000000002183,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.3999999910593033,
+          "gpuMs": 11.149427
+        },
+        {
+          "intervalMs": 16.69999999999709,
+          "renderSubmissionMs": 1.8999999910593033,
+          "tickMs": 2.5,
+          "gpuMs": 11.155104
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.8999999910593033,
+          "tickMs": 2.3999999910593033,
+          "gpuMs": 11.238802
+        },
+        {
+          "intervalMs": 16.600000000002183,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.5,
+          "gpuMs": 11.117812
+        },
+        {
+          "intervalMs": 16.69999999999709,
+          "renderSubmissionMs": 2.0999999940395355,
+          "tickMs": 2.4000000059604645,
+          "gpuMs": 11.1775
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.4000000059604645,
+          "gpuMs": 11.160989
+        },
+        {
+          "intervalMs": 16.600000000002183,
+          "renderSubmissionMs": 1.8999999910593033,
+          "tickMs": 2.3999999910593033,
+          "gpuMs": 11.224218
+        },
+        {
+          "intervalMs": 16.69999999999709,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.4000000059604645,
+          "gpuMs": 11.210468
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.8999999910593033,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 11.052708
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.2000000029802322,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 11.465625
+        },
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.3999999910593033,
+          "gpuMs": 11.447916
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 11.275989
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.2000000029802322,
+          "gpuMs": 11.152812
+        },
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.3999999910593033,
+          "gpuMs": 11.248385
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 11.484427
+        },
+        {
+          "intervalMs": 16.600000000002183,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 11.118125
+        },
+        {
+          "intervalMs": 16.69999999999709,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.300000011920929,
+          "gpuMs": 11.417968
+        },
+        {
+          "intervalMs": 16.600000000002183,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 3,
+          "gpuMs": 11.333958
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 11.239739
+        },
+        {
+          "intervalMs": 16.69999999999709,
+          "renderSubmissionMs": 2.0999999940395355,
+          "tickMs": 2.3999999910593033,
+          "gpuMs": 11.286197
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 11.230729
+        },
+        {
+          "intervalMs": 16.600000000002183,
+          "renderSubmissionMs": 2.199999988079071,
+          "tickMs": 2.5999999940395355,
+          "gpuMs": 11.136979
+        },
+        {
+          "intervalMs": 16.69999999999709,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.2000000029802322,
+          "gpuMs": 11.33026
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.8999999910593033,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 11.168437
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.8999999910593033,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 11.334427
+        },
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 1.8999999910593033,
+          "tickMs": 2.2000000029802322,
+          "gpuMs": 11.139114
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.3999999910593033,
+          "gpuMs": 11.141822
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2.5,
+          "tickMs": 2.9000000059604645,
+          "gpuMs": 11.157812
+        },
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 1.8999999910593033,
+          "tickMs": 2.3999999910593033,
+          "gpuMs": 11.450729
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.800000011920929,
+          "tickMs": 2.2000000029802322,
+          "gpuMs": 11.330104
+        },
+        {
+          "intervalMs": 16.600000000002183,
+          "renderSubmissionMs": 1.7999999970197678,
+          "tickMs": 2.1000000089406967,
+          "gpuMs": 11.429375
+        },
+        {
+          "intervalMs": 16.69999999999709,
+          "renderSubmissionMs": 1.7999999970197678,
+          "tickMs": 2.1000000089406967,
+          "gpuMs": 11.408072
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 11.47802
+        },
+        {
+          "intervalMs": 16.600000000002183,
+          "renderSubmissionMs": 1.8999999910593033,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 11.094635
+        },
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 1.7999999970197678,
+          "tickMs": 2.1000000089406967,
+          "gpuMs": 11.394531
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.800000011920929,
+          "tickMs": 2.2000000029802322,
+          "gpuMs": 11.267864
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.7999999970197678,
+          "tickMs": 2.1000000089406967,
+          "gpuMs": 11.242552
+        },
+        {
+          "intervalMs": 16.69999999999709,
+          "renderSubmissionMs": 2.0999999940395355,
+          "tickMs": 2.3999999910593033,
+          "gpuMs": 11.515104
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.3999999910593033,
+          "gpuMs": 11.552812
+        },
+        {
+          "intervalMs": 16.600000000002183,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.2000000029802322,
+          "gpuMs": 11.48875
+        },
+        {
+          "intervalMs": 16.69999999999709,
+          "renderSubmissionMs": 2.9000000059604645,
+          "tickMs": 3.4000000059604645,
+          "gpuMs": 11.383229
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.7999999970197678,
+          "tickMs": 2.2000000029802322,
+          "gpuMs": 11.663802
+        },
+        {
+          "intervalMs": 16.600000000002183,
+          "renderSubmissionMs": 1.7999999970197678,
+          "tickMs": 2.0999999940395355,
+          "gpuMs": 11.652864
+        },
+        {
+          "intervalMs": 16.69999999999709,
+          "renderSubmissionMs": 2.0999999940395355,
+          "tickMs": 2.3999999910593033,
+          "gpuMs": 11.238229
+        },
+        {
+          "intervalMs": 16.600000000002183,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.4000000059604645,
+          "gpuMs": 11.424166
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 11.381979
+        },
+        {
+          "intervalMs": 16.69999999999709,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.3999999910593033,
+          "gpuMs": 11.2675
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.4000000059604645,
+          "gpuMs": 11.502447
+        },
+        {
+          "intervalMs": 16.600000000002183,
+          "renderSubmissionMs": 1.7000000029802322,
+          "tickMs": 2.2000000029802322,
+          "gpuMs": 11.613177
+        },
+        {
+          "intervalMs": 16.69999999999709,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.4000000059604645,
+          "gpuMs": 11.671197
+        },
+        {
+          "intervalMs": 16.600000000002183,
+          "renderSubmissionMs": 1.7000000029802322,
+          "tickMs": 2.4000000059604645,
+          "gpuMs": 11.336927
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.7999999970197678,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 11.555729
+        },
+        {
+          "intervalMs": 16.69999999999709,
+          "renderSubmissionMs": 1.7000000029802322,
+          "tickMs": 2.4000000059604645,
+          "gpuMs": 11.386406
+        },
+        {
+          "intervalMs": 16.600000000002183,
+          "renderSubmissionMs": 1.7999999970197678,
+          "tickMs": 2.2999999970197678,
+          "gpuMs": 11.419739
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.4000000059604645,
+          "gpuMs": 11.532031
+        },
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 1.800000011920929,
+          "tickMs": 2.300000011920929,
+          "gpuMs": 11.378333
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.7000000029802322,
+          "gpuMs": 11.528697
+        },
+        {
+          "intervalMs": 16.700000000000728,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.4000000059604645,
+          "gpuMs": 11.39151
+        },
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 1.800000011920929,
+          "tickMs": 2.300000011920929,
+          "gpuMs": 11.490312
+        },
+        {
+          "intervalMs": 16.799999999999272,
+          "renderSubmissionMs": 1.5999999940395355,
+          "tickMs": 2.199999988079071,
+          "gpuMs": 11.422708
+        },
+        {
+          "intervalMs": 16.600000000002183,
+          "renderSubmissionMs": 2,
+          "tickMs": 2.4000000059604645,
+          "gpuMs": 11.560156
+        },
+        {
+          "intervalMs": 16.599999999998545,
+          "renderSubmissionMs": 1.9000000059604645,
+          "tickMs": 2.1000000089406967,
+          "gpuMs": 11.383697
+        }
+      ],
+      "glError": 0,
+      "visibility": "visible"
+    }
+  ]
+}

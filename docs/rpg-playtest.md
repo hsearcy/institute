@@ -1,6 +1,82 @@
 # The Sunken Vault playtest record
 
-Verified September 5, 2026 on `concept/math-dungeon-rpg`. Successive revisions address the gap between the first prototype and the approved concept: textured Gothic architecture, closer combat framing, animated characters, illustrated controls, and substantially more magic and loot. Images below are captured from the implementation, not generated concept art.
+Verified September 5–6, 2026 on `concept/math-dungeon-rpg`. Successive revisions address the gap between the first prototype and the approved concept: textured Gothic architecture, closer combat framing, animated characters, illustrated controls, and substantially more magic and loot. Images below are captured from the implementation, not generated concept art.
+
+## Fifteenth pass — bounded combat and persistent health, work in progress
+
+Rooms now contain 6–10 enemies, independent of equipped power, with a hard renderer limit of ten. Enemy health persists across answers. Starter Nova damages six enemies and defeats two in the first room; four survive with their own remaining health, and the next math problem stays in that room. Only clearing its remaining enemies advances the expedition or awards room loot. Skills and relics increase damage and bounded coverage; equipment, spellbook and skill previews show those actual stats.
+
+The existing tutor still chooses every problem and records mastery, attempts, retry solves and assisted outcomes. Each completed problem powers one atomic RPG cast. An additive cast-receipt table supports multiple problems in a room; old room-clear receipts still replay without new damage. Exact before/after enemy snapshots support response-loss recovery. Existing saves receive current-room health lazily without resetting XP, items or learning progress. Compatibility is validated locally using disposable legacy-save fixtures. Live Ares verification is outside this pass's scope.
+
+The current [ordinary-loop v7 recordings](rpg-playtest/v15/combat/README.md) show real starter Nova and upgraded Ball Lightning casts. Nova changes HP `[12,6,8,8,10,6] → [6,0,2,2,4,0]`, supplies a new question with four survivors, then clears the room on the second solve. Upgraded Ball clears its six- and seven-enemy early-room packs; that recording does not prove Ball survivor behavior. Both maintain 134 shader programs from loading through casts and room transitions, with no browser, shader or resource errors. Reported frame intervals describe observed recording cadence, not GPU execution cost.
+
+The user's cheap-impact rejection supersedes historical complete Nova/Ball acceptance. The latest independent motion review accepts skeletal survivor catch/recovery, skeleton/revenant fall/settle, guardian final collapse/settle and cleanup/order at 8 within these desktop recordings. **Complete impact still fails:** guardian initial contact is 7.5 and wraith death is 7.5, with insufficient heavy-body impulse and a held reaching arm respectively. Earlier fixed-pose studies had disclosed idle-height/contact-light fixture limitations; they do not establish motion quality. See the [independent review](rpg-art-review-v13.md) for exact scopes and source-model limitations. Global art acceptance remains failed.
+
+Desktop damaged-health bars and formation/outcome presentation pass scoped review at 8. [Compact captures](rpg-playtest/v15/compact-layout/README.md) also pass ordinary health-bar legibility, subtitle notices, portrait/landscape boss framing and reward unobstruction at 8. Ordinary captures follow a real starter answer. The latest boss layout captures load a previously recorded authoritative wounded-boss state in a disposable fixture; they do not claim a new boss-impact playthrough. Compact floating XP no longer crosses actors, and stale discovery/outcome feedback clears when the next cast begins. The boss meter follows authoritative remaining health.
+
+Validation at the v8 body-pose revision: **349 tests pass across 45 files**, the production build passes, and all 22 public GLBs validate. The v7 ordinary-loop recordings above provide the latest completed motion review. V8 preserves guardian recoil before collapse and lowers the wraith staff hand; its motion review remains pending. Desktop and phone core regressions pass. Dedicated recovery passes, including lost responses during partial damage, reloads, partial boss health, and unchanged XP/items/mastery/rewards on duplicate replay. The fifteen-spell suite passes: 25 real casts across 18 rooms, seven partial casts, all fifteen abilities, skill purchases, equipment, appearance/prompt reloads and duplicate relics, with a per-frame population maximum of ten. It predates the cloak-morph revision; the later Nova/Ball recordings separately verify the revised rendering path.
+
+A v8 recorded Stormspire run encountered blank-program WebGL errors at a room transition; a clean retry separately failed with Chromium `ERR_INSUFFICIENT_RESOURCES`. Both failures are preserved. Moving 2,045 MiB of older task-owned archives/decoded frames from RAM-backed temporary storage to ignored disk storage reduced resource pressure while retaining paths through symlinks. A subsequent unrecorded six-cast Stormspire check passes through arrival at the boss, with at most ten visible enemies and no graphics, context or network errors. This does not establish the cause of the earlier failures or provide motion-quality acceptance. Focused boss-survivor and ordinary death recordings follow that check.
+
+The [actual Chromium starter checkpoint](rpg-playtest/v15/combat/chromium-starter/README.md) confirms four wounded survivors through the user's existing port-9222 browser. The preview at `http://127.0.0.1:5240/` has since been refreshed to v7 while retaining 32 XP and that partial room. The all-unlocked profile remains separate on port5239.
+
+## Fourteenth pass — source models and starter fire, work in progress
+
+The independent [art review](rpg-art-review-v13.md) still fails the complete game.
+Current scoped results:
+
+- The authored hooded hero is now installed. Source, corrected equipment grip,
+  packed export, native cast/cleave, level-ground gait, rapid-answer staging and
+  doorway clearance pass 8. Its 62,593-triangle, 8,294,568-byte GLB has the exact
+  19-joint hierarchy and four reviewed clips. Existing armor variants retain
+  their separate older models and limits; they are not covered by this pass.
+- [Full-height piers](rpg-playtest/v14/masonry/README.md) and the
+  [separate short post](rpg-playtest/v14/masonry/post/README.md) pass 8 for source,
+  export and inspected native integration. They replace 44 tall and 19 short
+  placements. Corrected bases at 33 side-aisle anchors now rest on the .53m step;
+  the other 30 placements remain at floor height. Bridge torch placement and
+  light response also pass 8.
+- Fire Nova's front, contacts, grounded collapse, warm erosion, aftermath,
+  supported bridge footprint and observed echo/burn ordering pass scoped review
+  at 8. The final reviewed desktop sequence also passes 8 for the previously
+  blocked palm-to-floor opening, ordinary 14-enemy cast and upgraded 39-enemy
+  echo/burn. Phone, landscape and fallback retain their earlier static scopes.
+- The [Broken Gate composition](rpg-playtest/v14/gate/README.md) remains 7, floor
+  6.5, and unrelated masonry/tomb sources 5. Ordinary skeleton/revenant models and
+  multiple other effects remain below the bar. Gateway disappearance during room
+  travel is a newly isolated world-rendering defect, scored 5.
+
+The hero's original cornea transmission caused a second full-scene render. A
+controlled same-world comparison measured GPU medians of 26.56ms with it and
+12.11ms without it. Simply making the shell opaque failed portrait review at 7;
+alpha-discarding that shell preserves the underlying authored eyes and passes 8.
+The public asset and its portrait now use that correction. The desktop Wayfarer
+armor card and selected phone card also pass 8; the other appearance cards remain
+outside acceptance.
+
+Actual effect draws are now prepared synchronously offscreen during loading,
+including custom depth variants. The diagnostic removed first-cast stalls that
+shader compilation alone had not prevented. Independent copies retain the exact
+erosion surface/depth programs across encounter disposal. Program counts remain
+stable through Begin and two real consecutive room solves; the final normal-loop
+review passes 8. The desktop/phone browser regressions also pass after this fix.
+
+The rear approach stairs now flank a level passage. Hero travel aligns with each
+actual doorway before crossing; a quick second answer stages the hero and camera
+in the active encounter before casting. Learning selection, mastery, question
+availability, reward recovery and save plumbing are unchanged.
+
+Latest validation: **320 unit tests, production build, all 22 GLB validators and
+both desktop/phone gameplay regressions pass**. The browser run after the final hero
+and shader-lifetime changes took **1.1 minutes** and checks WebGL shader errors
+and failed bundled RPG asset requests. It also checks actual loaded masonry geometry, unique placements,
+world-space footing heights, legacy learning state, reward recovery and worked
+help. The public GLB package totals 347,940 triangles and 45,072,840 bytes.
+
+All learner validation uses disposable local profiles. The son's Ares save has
+not been modified or verified against this branch. The portal source study and
+remaining visual/performance revisions are still candidates; passing functional
+checks does not satisfy the global 8/10 art requirement.
 
 ## Thirteenth pass — independent art gate, work in progress
 

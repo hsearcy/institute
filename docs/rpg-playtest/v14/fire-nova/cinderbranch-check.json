@@ -1,0 +1,1374 @@
+{
+  "db": "/tmp/rpg-nova-hud-1788689830621.db",
+  "profile": "rpg-archmage",
+  "browser": "151.0.7922.173",
+  "report": [
+    {
+      "config": {
+        "name": "burn-boss",
+        "width": 1440,
+        "height": 900,
+        "quality": 0
+      },
+      "evidence": "Actual HUD and real scratch tutor/reward solve; rendering manually stepped to exact authored simulation ages for still inspection. Not continuous animation evidence.",
+      "before": {
+        "attackAge": 0,
+        "diagnostics": {
+          "appearance": "wayfarer",
+          "lastAttack": null,
+          "heroAnimation": "idle",
+          "heroClips": [
+            "idle",
+            "walk",
+            "cleave",
+            "cast"
+          ],
+          "encounter": 5,
+          "region": "embercrypt",
+          "enemies": 48,
+          "articulatedEnemies": 48,
+          "enemyRoster": {
+            "guardian": 7,
+            "revenant": 15,
+            "skeleton": 20,
+            "wraith": 6
+          },
+          "attacking": false,
+          "paused": false,
+          "modelsLoaded": 20,
+          "drawCalls": 169,
+          "triangles": 1366152,
+          "particles": 47,
+          "fragments": 0,
+          "hero": [
+            0,
+            0,
+            -98.6
+          ],
+          "softwareRenderer": false,
+          "fps": 2,
+          "quality": "full",
+          "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+        },
+        "viewport": [
+          1440,
+          900
+        ],
+        "canvas": [
+          1440,
+          900
+        ],
+        "state": {
+          "xp": 82305,
+          "totalKills": 740,
+          "encounter": 5
+        },
+        "problemId": "pmtpnqxw0_0",
+        "problem": "53, then?",
+        "busy": false,
+        "panel": "",
+        "clock": 9186.29999999702
+      },
+      "frames": [
+        {
+          "label": "anticipation",
+          "requestedAge": 0.12,
+          "path": "/tmp/rpg-nova-v21-burn-burn-boss-anticipation.png",
+          "attackAge": 0.12,
+          "diagnostics": {
+            "appearance": "wayfarer",
+            "lastAttack": {
+              "spellId": "ember",
+              "effect": "nova",
+              "options": {
+                "echo": true,
+                "wide": false,
+                "burning": true,
+                "shards": false,
+                "chains": false,
+                "pierce": false,
+                "orbit": false,
+                "summon": false,
+                "itemId": "cinderwand",
+                "kills": 48,
+                "xp": 106
+              }
+            },
+            "lastSpellId": "ember",
+            "lastSpellEffect": "nova",
+            "heroAnimation": "cast",
+            "heroClips": [
+              "idle",
+              "walk",
+              "cleave",
+              "cast"
+            ],
+            "encounter": 5,
+            "region": "embercrypt",
+            "enemies": 48,
+            "articulatedEnemies": 48,
+            "enemyRoster": {
+              "guardian": 7,
+              "revenant": 15,
+              "skeleton": 20,
+              "wraith": 6
+            },
+            "attacking": true,
+            "paused": false,
+            "modelsLoaded": 20,
+            "drawCalls": 289,
+            "triangles": 2740298,
+            "particles": 53,
+            "fragments": 0,
+            "hero": [
+              0,
+              0,
+              -98.6
+            ],
+            "softwareRenderer": false,
+            "fps": 2,
+            "quality": "full",
+            "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+          },
+          "viewport": [
+            1440,
+            900
+          ],
+          "canvas": [
+            1440,
+            900
+          ],
+          "state": {
+            "xp": 82305,
+            "totalKills": 740,
+            "encounter": 5
+          },
+          "problemId": "pmtpnqxw0_0",
+          "problem": "53, then?",
+          "busy": true,
+          "panel": "",
+          "clock": 9720.60000000894
+        },
+        {
+          "label": "release",
+          "requestedAge": 0.35,
+          "path": "/tmp/rpg-nova-v21-burn-burn-boss-release.png",
+          "attackAge": 0.35,
+          "diagnostics": {
+            "appearance": "wayfarer",
+            "lastAttack": {
+              "spellId": "ember",
+              "effect": "nova",
+              "options": {
+                "echo": true,
+                "wide": false,
+                "burning": true,
+                "shards": false,
+                "chains": false,
+                "pierce": false,
+                "orbit": false,
+                "summon": false,
+                "itemId": "cinderwand",
+                "kills": 48,
+                "xp": 106
+              }
+            },
+            "lastSpellId": "ember",
+            "lastSpellEffect": "nova",
+            "heroAnimation": "cast",
+            "heroClips": [
+              "idle",
+              "walk",
+              "cleave",
+              "cast"
+            ],
+            "encounter": 5,
+            "region": "embercrypt",
+            "enemies": 44,
+            "articulatedEnemies": 48,
+            "enemyRoster": {
+              "guardian": 7,
+              "revenant": 15,
+              "skeleton": 20,
+              "wraith": 6
+            },
+            "attacking": true,
+            "paused": false,
+            "modelsLoaded": 20,
+            "drawCalls": 295,
+            "triangles": 2746996,
+            "particles": 55,
+            "fragments": 0,
+            "hero": [
+              0,
+              0,
+              -98.6
+            ],
+            "softwareRenderer": false,
+            "fps": 2,
+            "quality": "full",
+            "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+          },
+          "viewport": [
+            1440,
+            900
+          ],
+          "canvas": [
+            1440,
+            900
+          ],
+          "state": {
+            "xp": 82305,
+            "totalKills": 740,
+            "encounter": 5
+          },
+          "problemId": "pmtpnqxw0_0",
+          "problem": "53, then?",
+          "busy": true,
+          "panel": "",
+          "clock": 10131.70000000298
+        },
+        {
+          "label": "contact",
+          "requestedAge": 0.65,
+          "path": "/tmp/rpg-nova-v21-burn-burn-boss-contact.png",
+          "attackAge": 0.65,
+          "diagnostics": {
+            "appearance": "wayfarer",
+            "lastAttack": {
+              "spellId": "ember",
+              "effect": "nova",
+              "options": {
+                "echo": true,
+                "wide": false,
+                "burning": true,
+                "shards": false,
+                "chains": false,
+                "pierce": false,
+                "orbit": false,
+                "summon": false,
+                "itemId": "cinderwand",
+                "kills": 48,
+                "xp": 106
+              }
+            },
+            "lastSpellId": "ember",
+            "lastSpellEffect": "nova",
+            "heroAnimation": "cast",
+            "heroClips": [
+              "idle",
+              "walk",
+              "cleave",
+              "cast"
+            ],
+            "encounter": 5,
+            "region": "embercrypt",
+            "enemies": 14,
+            "articulatedEnemies": 48,
+            "enemyRoster": {
+              "guardian": 7,
+              "revenant": 15,
+              "skeleton": 20,
+              "wraith": 6
+            },
+            "attacking": true,
+            "paused": false,
+            "modelsLoaded": 20,
+            "drawCalls": 295,
+            "triangles": 2746996,
+            "particles": 68,
+            "fragments": 0,
+            "hero": [
+              0,
+              0,
+              -98.6
+            ],
+            "softwareRenderer": false,
+            "fps": 26,
+            "quality": "full",
+            "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+          },
+          "viewport": [
+            1440,
+            900
+          ],
+          "canvas": [
+            1440,
+            900
+          ],
+          "state": {
+            "xp": 82305,
+            "totalKills": 740,
+            "encounter": 5
+          },
+          "problemId": "pmtpnqxw0_0",
+          "problem": "53, then?",
+          "busy": true,
+          "panel": "",
+          "clock": 10511.90000000596
+        },
+        {
+          "label": "echo",
+          "requestedAge": 1.05,
+          "path": "/tmp/rpg-nova-v21-burn-burn-boss-echo.png",
+          "attackAge": 1.05,
+          "diagnostics": {
+            "appearance": "wayfarer",
+            "lastAttack": {
+              "spellId": "ember",
+              "effect": "nova",
+              "options": {
+                "echo": true,
+                "wide": false,
+                "burning": true,
+                "shards": false,
+                "chains": false,
+                "pierce": false,
+                "orbit": false,
+                "summon": false,
+                "itemId": "cinderwand",
+                "kills": 48,
+                "xp": 106
+              }
+            },
+            "lastSpellId": "ember",
+            "lastSpellEffect": "nova",
+            "heroAnimation": "cast",
+            "heroClips": [
+              "idle",
+              "walk",
+              "cleave",
+              "cast"
+            ],
+            "encounter": 5,
+            "region": "embercrypt",
+            "enemies": 3,
+            "articulatedEnemies": 48,
+            "enemyRoster": {
+              "guardian": 7,
+              "revenant": 15,
+              "skeleton": 20,
+              "wraith": 6
+            },
+            "attacking": true,
+            "paused": false,
+            "modelsLoaded": 20,
+            "drawCalls": 297,
+            "triangles": 2747358,
+            "particles": 84,
+            "fragments": 0,
+            "hero": [
+              0,
+              0,
+              -98.6
+            ],
+            "softwareRenderer": false,
+            "fps": 26,
+            "quality": "full",
+            "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+          },
+          "viewport": [
+            1440,
+            900
+          ],
+          "canvas": [
+            1440,
+            900
+          ],
+          "state": {
+            "xp": 82305,
+            "totalKills": 740,
+            "encounter": 5
+          },
+          "problemId": "pmtpnqxw0_0",
+          "problem": "53, then?",
+          "busy": true,
+          "panel": "",
+          "clock": 10910.10000000894
+        },
+        {
+          "label": "settle",
+          "requestedAge": 1.4,
+          "path": "/tmp/rpg-nova-v21-burn-burn-boss-settle.png",
+          "attackAge": 1.3999999999999988,
+          "diagnostics": {
+            "appearance": "wayfarer",
+            "lastAttack": {
+              "spellId": "ember",
+              "effect": "nova",
+              "options": {
+                "echo": true,
+                "wide": false,
+                "burning": true,
+                "shards": false,
+                "chains": false,
+                "pierce": false,
+                "orbit": false,
+                "summon": false,
+                "itemId": "cinderwand",
+                "kills": 48,
+                "xp": 106
+              }
+            },
+            "lastSpellId": "ember",
+            "lastSpellEffect": "nova",
+            "heroAnimation": "cast",
+            "heroClips": [
+              "idle",
+              "walk",
+              "cleave",
+              "cast"
+            ],
+            "encounter": 5,
+            "region": "embercrypt",
+            "enemies": 0,
+            "articulatedEnemies": 48,
+            "enemyRoster": {
+              "guardian": 7,
+              "revenant": 15,
+              "skeleton": 20,
+              "wraith": 6
+            },
+            "attacking": true,
+            "paused": false,
+            "modelsLoaded": 20,
+            "drawCalls": 297,
+            "triangles": 2704302,
+            "particles": 90,
+            "fragments": 0,
+            "hero": [
+              0,
+              0,
+              -98.6
+            ],
+            "softwareRenderer": false,
+            "fps": 26,
+            "quality": "full",
+            "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+          },
+          "viewport": [
+            1440,
+            900
+          ],
+          "canvas": [
+            1440,
+            900
+          ],
+          "state": {
+            "xp": 82305,
+            "totalKills": 740,
+            "encounter": 5
+          },
+          "problemId": "pmtpnqxw0_0",
+          "problem": "53, then?",
+          "busy": true,
+          "panel": "",
+          "clock": 11297.70000000298
+        },
+        {
+          "label": "fade",
+          "requestedAge": 2.25,
+          "path": "/tmp/rpg-nova-v21-burn-burn-boss-fade.png",
+          "attackAge": 2.249999999999996,
+          "diagnostics": {
+            "appearance": "wayfarer",
+            "lastAttack": {
+              "spellId": "ember",
+              "effect": "nova",
+              "options": {
+                "echo": true,
+                "wide": false,
+                "burning": true,
+                "shards": false,
+                "chains": false,
+                "pierce": false,
+                "orbit": false,
+                "summon": false,
+                "itemId": "cinderwand",
+                "kills": 48,
+                "xp": 106
+              }
+            },
+            "lastSpellId": "ember",
+            "lastSpellEffect": "nova",
+            "heroAnimation": "cast",
+            "heroClips": [
+              "idle",
+              "walk",
+              "cleave",
+              "cast"
+            ],
+            "encounter": 5,
+            "region": "embercrypt",
+            "enemies": 0,
+            "articulatedEnemies": 48,
+            "enemyRoster": {
+              "guardian": 7,
+              "revenant": 15,
+              "skeleton": 20,
+              "wraith": 6
+            },
+            "attacking": true,
+            "paused": false,
+            "modelsLoaded": 20,
+            "drawCalls": 195,
+            "triangles": 854238,
+            "particles": 95,
+            "fragments": 0,
+            "hero": [
+              0,
+              0,
+              -98.6
+            ],
+            "softwareRenderer": false,
+            "fps": 54,
+            "quality": "full",
+            "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+          },
+          "viewport": [
+            1440,
+            900
+          ],
+          "canvas": [
+            1440,
+            900
+          ],
+          "state": {
+            "xp": 82305,
+            "totalKills": 740,
+            "encounter": 5
+          },
+          "problemId": "pmtpnqxw0_0",
+          "problem": "53, then?",
+          "busy": true,
+          "panel": "",
+          "clock": 11688.5
+        }
+      ],
+      "after": {
+        "attackAge": 2.8000000000000003,
+        "diagnostics": {
+          "appearance": "wayfarer",
+          "lastAttack": {
+            "spellId": "ember",
+            "effect": "nova",
+            "options": {
+              "echo": true,
+              "wide": false,
+              "burning": true,
+              "shards": false,
+              "chains": false,
+              "pierce": false,
+              "orbit": false,
+              "summon": false,
+              "itemId": "cinderwand",
+              "kills": 48,
+              "xp": 106
+            }
+          },
+          "lastSpellId": "ember",
+          "lastSpellEffect": "nova",
+          "heroAnimation": "cast",
+          "heroClips": [
+            "idle",
+            "walk",
+            "cleave",
+            "cast"
+          ],
+          "encounter": 5,
+          "region": "embercrypt",
+          "enemies": 0,
+          "articulatedEnemies": 48,
+          "enemyRoster": {
+            "guardian": 7,
+            "revenant": 15,
+            "skeleton": 20,
+            "wraith": 6
+          },
+          "attacking": false,
+          "paused": true,
+          "modelsLoaded": 20,
+          "drawCalls": 191,
+          "triangles": 847902,
+          "particles": 83,
+          "fragments": 0,
+          "hero": [
+            0,
+            0,
+            -98.6
+          ],
+          "softwareRenderer": false,
+          "fps": 54,
+          "quality": "full",
+          "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+        },
+        "viewport": [
+          1440,
+          900
+        ],
+        "canvas": [
+          1440,
+          900
+        ],
+        "state": {
+          "xp": 82411,
+          "totalKills": 788,
+          "encounter": 5
+        },
+        "busy": false,
+        "panel": "victory",
+        "clock": 11726.90000000596
+      },
+      "decode": {
+        "failures": [],
+        "models": [
+          {
+            "name": "pillar",
+            "maps": [
+              {
+                "name": "Vault2_Baked_pillar.001",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              }
+            ]
+          },
+          {
+            "name": "hero",
+            "maps": [
+              {
+                "name": "Vault2_Baked_hero.001",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_hero.001",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_hero.001",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_flame.005",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_hero.001",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_amber.005",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              }
+            ]
+          },
+          {
+            "name": "hero-cinder",
+            "maps": [
+              {
+                "name": "Vault2_Baked_hero-cinder",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_cinder rune inlay",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_hero-cinder",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_hero-cinder",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_flame.030",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_hero-cinder",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_cinder rune inlay",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              }
+            ]
+          },
+          {
+            "name": "arch",
+            "maps": [
+              {
+                "name": "Vault2_Baked_arch.001",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              }
+            ]
+          },
+          {
+            "name": "hero-tempest",
+            "maps": [
+              {
+                "name": "Vault2_Baked_hero-tempest",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_tempest rune inlay",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_hero-tempest",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_hero-tempest",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_flame.030",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault_tempest rune inlay",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_hero-tempest",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_tempest rune inlay",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              }
+            ]
+          },
+          {
+            "name": "imp",
+            "maps": [
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_cyan.034",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              }
+            ]
+          },
+          {
+            "name": "crystal",
+            "maps": [
+              {
+                "name": "Vault_cyan.008",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_crystal",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              }
+            ]
+          },
+          {
+            "name": "masonry-pier",
+            "maps": [
+              {
+                "name": "WornPier_BakedReview.004",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              }
+            ]
+          },
+          {
+            "name": "brazier",
+            "maps": [
+              {
+                "name": "Vault_amber.008",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_brazier",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              }
+            ]
+          },
+          {
+            "name": "chest",
+            "maps": [
+              {
+                "name": "Vault_cyan.008",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_chest",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_chest",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              }
+            ]
+          },
+          {
+            "name": "guardian",
+            "maps": [
+              {
+                "name": "Vault2_Baked_guardian.008",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_cyan.037",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_guardian.008",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_cyan.037",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_guardian.008",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_cyan.037",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_guardian.008",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_cyan.037",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_guardian.008",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_cyan.037",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_guardian.008",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_cyan.037",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_guardian.008",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_guardian.008",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_guardian.008",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_guardian.008",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              }
+            ]
+          },
+          {
+            "name": "hero-glacier",
+            "maps": [
+              {
+                "name": "Vault2_Baked_hero-glacier",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_glacier rune inlay",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_hero-glacier",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_hero-glacier",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_flame.030",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_hero-glacier",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_glacier rune inlay",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              }
+            ]
+          },
+          {
+            "name": "broken-wall",
+            "maps": [
+              {
+                "name": "Vault2_Baked_broken-wall.004",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              }
+            ]
+          },
+          {
+            "name": "skeleton",
+            "maps": [
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_cyan.034",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_skeleton.007",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              }
+            ]
+          },
+          {
+            "name": "revenant",
+            "maps": [
+              {
+                "name": "Vault2_Baked_revenant",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_revenant",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_revenant",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_revenant",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_revenant",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_revenant",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_revenant",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_revenant",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault_cyan.034",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_revenant",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_revenant",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_revenant",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_revenant",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              }
+            ]
+          },
+          {
+            "name": "furnace",
+            "maps": [
+              {
+                "name": "Vault_amber.019",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault_flame.019",
+                "map": false,
+                "normal": false,
+                "roughness": false
+              },
+              {
+                "name": "Vault2_Baked_furnace",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              }
+            ]
+          },
+          {
+            "name": "reliquary",
+            "maps": [
+              {
+                "name": "Vault2_Baked_reliquary",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              }
+            ]
+          },
+          {
+            "name": "ice_cluster",
+            "maps": [
+              {
+                "name": "Vault2_Baked_ice_cluster.002",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              }
+            ]
+          },
+          {
+            "name": "wraith",
+            "maps": [
+              {
+                "name": "Vault2_Baked_wraith-candidate",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_wraith-candidate",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_wraith-candidate",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_wraith-candidate",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_wraith-candidate",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_wraith-candidate",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              },
+              {
+                "name": "Vault2_Baked_wraith-candidate",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              }
+            ]
+          },
+          {
+            "name": "wall-bay",
+            "maps": [
+              {
+                "name": "Vault2_Baked_wall-bay.004",
+                "map": true,
+                "normal": true,
+                "roughness": true
+              }
+            ]
+          }
+        ]
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found) {\"url\":\"http://127.0.0.1:5249/favicon.ico\",\"line\":0,\"column\":0,\"lineNumber\":0,\"columnNumber\":0}"
+      ]
+    }
+  ]
+}

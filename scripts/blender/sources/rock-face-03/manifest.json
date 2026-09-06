@@ -1,0 +1,22 @@
+{
+  "Diffuse": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_face_03/rock_face_03_diff_1k.jpg",
+    "sha256": "ea48e0e47ad42c8bd312476178b1248ec66f0eb19156a26a1c222f2a40caaf2d",
+    "bytes": 927082
+  },
+  "Rough": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_face_03/rock_face_03_rough_1k.jpg",
+    "sha256": "9e3d9a2fd75244892e7acb6bab2eaed1279299510a7970672c0ee27ff1c19fea",
+    "bytes": 638904
+  },
+  "Displacement": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_face_03/rock_face_03_disp_1k.jpg",
+    "sha256": "fb053bfd46cef976da9cfee67f045367469cddd69469dcacd67d3fca4bd41545",
+    "bytes": 264231
+  },
+  "nor_gl": {
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_face_03/rock_face_03_nor_gl_1k.jpg",
+    "sha256": "c6423169583f31715cf0636954bad524e806848a5f2861fcea6794275f726ff0",
+    "bytes": 1146788
+  }
+}

@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
 import { readFileSync } from 'node:fs';
-import { Object3D, Vector3 } from 'three';
+import { BufferGeometry, Float32BufferAttribute, Mesh, Object3D, Vector3 } from 'three';
 import { EnemyAnimator } from '../src/rpg/world/EnemyAnimator';
 
 function exportedRig(kind: string): { root: Object3D; nodes: Object3D[]; soles: { node: Object3D; vertices: Vector3[] }[] } {
   const bytes = readFileSync(new URL(`../public/assets/rpg/${kind}.glb`, import.meta.url));
   const gltf = JSON.parse(bytes.subarray(20, 20 + bytes.readUInt32LE(12)).toString());
   const nodes: Object3D[] = gltf.nodes.map((node: any) => {
-    const object = new Object3D(); object.name = node.name; object.userData = node.extras ?? {};
+    const object = node.mesh === undefined ? new Object3D() : new Mesh(new BufferGeometry()); object.name = node.name; object.userData = node.extras ?? {};
     if (node.translation) object.position.fromArray(node.translation);
     if (node.rotation) object.quaternion.fromArray(node.rotation);
     if (node.scale) object.scale.fromArray(node.scale);
@@ -20,7 +20,7 @@ function exportedRig(kind: string): { root: Object3D; nodes: Object3D[]; soles: 
   const binaryStart = 20 + bytes.readUInt32LE(12) + 8;
   const soles: { node: Object3D; vertices: Vector3[] }[] = [];
   gltf.nodes.forEach((node: any, index: number) => {
-    if (node.mesh === undefined || !node.name.startsWith('LegLower')) return;
+    if (node.mesh === undefined) return;
     const vertices: Vector3[] = [];
     for (const primitive of gltf.meshes[node.mesh].primitives) {
       const accessor = gltf.accessors[primitive.attributes.POSITION], view = gltf.bufferViews[accessor.bufferView];
@@ -30,10 +30,100 @@ function exportedRig(kind: string): { root: Object3D; nodes: Object3D[]; soles: 
         vertices.push(new Vector3(bytes.readFloatLE(offset), bytes.readFloatLE(offset + 4), bytes.readFloatLE(offset + 8)));
       }
     }
-    soles.push({ node: nodes[index], vertices });
+    if (nodes[index] instanceof Mesh) (nodes[index] as Mesh).geometry.setAttribute('position', new Float32BufferAttribute(vertices.flatMap(v => v.toArray()), 3));
+    if (node.name.startsWith('LegLower')) soles.push({ node: nodes[index], vertices });
   });
   return { root, nodes, soles };
 }
+
+for (const kind of ['skeleton', 'guardian', 'revenant', 'wraith']) test(`${kind} survivor shoulder recoil retains connected joints and resets into guard`, () => {
+  const { root, nodes } = exportedRig(kind), animator = new EnemyAnimator(root, { kind, phase: .7 });
+  const positions = nodes.map(node => node.position.clone());
+  animator.update(2, { moving: 0, threat: 0 });
+  const baseline = nodes.map(node => node.quaternion.clone());
+  animator.update(2, { moving: 0, threat: 0, recoil: .8, impactSide: -1, brace: .5, injury: .35 });
+  const struck = nodes.map(node => node.quaternion.clone());
+  assert(nodes.some((node, i) => !node.quaternion.equals(baseline[i])), 'The body must visibly react');
+  nodes.forEach((node, i) => { if (!['Body', 'LegUpperL', 'LegUpperR'].includes(node.userData.enemyJoint)) assert(node.position.equals(positions[i]), 'Only the supported hips/torso move; limb attachments stay intact'); });
+  animator.update(2, { moving: 0, threat: 0, injury: .35 });
+  assert(nodes.some((node, i) => !node.quaternion.equals(struck[i])), 'Recoil recovers rather than freezing');
+  root.updateMatrixWorld(true); nodes.forEach(node => assert(node.matrixWorld.elements.every(Number.isFinite)));
+  animator.update(2, { moving: 0, threat: 0 });
+  nodes.forEach((node, i) => assert(node.quaternion.equals(baseline[i]), 'Fresh-health state has no leaked injury pose'));
+});
+
+for (const kind of ['skeleton', 'guardian', 'revenant']) test(`${kind} asymmetric survivor catch keeps an actual support sole on the floor`, () => {
+  const { root, soles } = exportedRig(kind), animator = new EnemyAnimator(root, { kind, phase: .7 }), point = new Vector3();
+  for (const brace of [0, .1, .3, .6, .9]) for (const side of [-1, 1]) {
+    animator.update(2, { moving: 0, threat: 0, brace, injury: .35, impactSide: side }); root.updateMatrixWorld(true);
+    const lowest = Math.min(...soles.flatMap(sole => sole.vertices.map(vertex => point.copy(vertex).applyMatrix4(sole.node.matrixWorld).y)));
+    assert(lowest >= -.025 && lowest <= .035, `Actual supporting sole must remain at floor, received ${lowest}`);
+  }
+});
+
+for (const kind of ['skeleton', 'revenant']) for (const phase of [.7, 2.2]) test(`${kind} grounded fall ${phase} has a low rib support without buried geometry`, () => {
+  const { root, nodes } = exportedRig(kind), animator = new EnemyAnimator(root, { kind, phase }), point = new Vector3();
+  animator.update(2, { deathAge: .85, collapse: 'grounded' }); root.updateMatrixWorld(true);
+  let floor = Infinity, rib = Infinity;
+  for (const node of nodes) if (node instanceof Mesh) {
+    const position = node.geometry.getAttribute('position');
+    for (let i = 0; i < position.count; i++) {
+      node.getVertexPosition(i, point).applyMatrix4(node.matrixWorld); floor = Math.min(floor, point.y);
+      if (node.name.startsWith('Body')) rib = Math.min(rib, point.y);
+    }
+  }
+  assert(floor > -.035, `Body must not be buried; minimum ${floor}`);
+  assert(rib < .18, `Rib cage needs visible ground support, minimum ${rib}`);
+});
+
+for (const kind of ['guardian', 'wraith']) test(`${kind} body-specific settle keeps complete geometry above the floor`, () => {
+  const { root, nodes } = exportedRig(kind), animator = new EnemyAnimator(root, { kind, phase: .7 }), point = new Vector3();
+  for (const age of [.3, .5, .8, 1.2]) {
+    animator.update(2, { deathAge: age, collapse: 'grounded' }); root.updateMatrixWorld(true);
+    let floor = Infinity;
+    for (const node of nodes) if (node instanceof Mesh) {
+      const position = node.geometry.getAttribute('position');
+      for (let i = 0; i < position.count; i++) floor = Math.min(floor, node.getVertexPosition(i, point).applyMatrix4(node.matrixWorld).y);
+    }
+    assert(floor >= -.04, `${kind} at ${age}: geometry below floor ${floor}`);
+    nodes.forEach(node => assert.deepEqual(node.scale.toArray(), [1, 1, 1], 'Settling must not squash the rigid model'));
+  }
+});
+
+test('Wraith cloth folds and rigid attachments reset independently on a new living pose', () => {
+  const { root, nodes } = exportedRig('wraith'), animator = new EnemyAnimator(root, { kind: 'wraith', phase: .7 });
+  const positions = nodes.map(node => node.position.clone());
+  animator.update(2, { deathAge: 1, collapse: 'grounded' });
+  const cloth = nodes.filter(node => node instanceof Mesh && node.morphTargetInfluences?.length) as Mesh[];
+  assert.equal(cloth.length, 4, 'Long upper sleeve panels bend with the robe');
+  assert(cloth.every(node => node.morphTargetInfluences![0] === 1));
+  animator.update(2, { moving: 0, threat: 0 });
+  assert(cloth.every(node => node.morphTargetInfluences![0] === 0));
+  nodes.forEach((node, i) => assert(node.position.equals(positions[i]), 'Head and hands recover their exact rest attachment positions'));
+});
+
+test('Wraith staff hand releases below the bowed head after its failed brace', () => {
+  const { root, nodes } = exportedRig('wraith'), animator = new EnemyAnimator(root, { kind: 'wraith', phase: .7 });
+  const forearm = nodes.find(node => node.userData.enemyJoint === 'ArmLowerL')!, head = nodes.find(node => node.userData.enemyJoint === 'Head')!;
+  // Measured source LeftHand joint relative to the actual exported forearm pivot.
+  const wrist = new Vector3(.43951 - .26465, 1.29083 - 1.26101, .31233 - .14644);
+  animator.update(2, { deathAge: .55, collapse: 'grounded' }); root.updateMatrixWorld(true);
+  const braceY = wrist.clone().applyMatrix4(forearm.matrixWorld).y;
+  animator.update(2, { deathAge: .95, collapse: 'grounded' }); root.updateMatrixWorld(true);
+  const releasedY = wrist.clone().applyMatrix4(forearm.matrixWorld).y;
+  assert(releasedY < braceY - .2, 'Holding hand must visibly lose support after its brace');
+  assert(releasedY < head.getWorldPosition(new Vector3()).y - .12, 'Staff hand must hang below the bowed head');
+});
+
+test('Guardian fatal contact retains shoulder impulse against its planted lower mass', () => {
+  const { root, nodes } = exportedRig('guardian'), animator = new EnemyAnimator(root, { kind: 'guardian', phase: .7 });
+  const body = nodes.find(node => node.userData.enemyJoint === 'Body')!;
+  const lowLeg = nodes.find(node => node.userData.enemyJoint === 'LegLowerL')!, legZ = lowLeg.position.z;
+  const z = body.position.z;
+  animator.update(2, { deathAge: .03, collapse: 'grounded', recoil: .8, impactSide: -1 });
+  assert(body.position.z < z - .12, 'Early fall override must not erase the contact impulse');
+  assert.equal(lowLeg.position.z, legZ, 'Shoulder displacement must not move the planted lower mass with it');
+});
 
 for (const kind of ['skeleton', 'guardian', 'revenant']) for (const phase of [.7, 2.2]) test(`${kind} electric variant ${phase} keeps actual sole geometry grounded through its hold`, () => {
   const { root, soles } = exportedRig(kind), animator = new EnemyAnimator(root, { kind, phase }), point = new Vector3();

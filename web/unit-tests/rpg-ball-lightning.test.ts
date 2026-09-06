@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
 import { Vector3 } from 'three';
-import { ballLightningFilamentGeometry, createBallLightning, createBallLightningContacts } from '../src/rpg/world/ballLightning';
+import { ballLightningFilamentGeometry, createBallLightning, createBallLightningCharge, ballLightningReleasePosition, createBallLightningContacts } from '../src/rpg/world/ballLightning';
 
 test('Electrical volumes use finite, independently phased merged branches within budget', () => {
   for (const seed of [0, 1, 2, 3, 4, 71]) {
@@ -97,4 +97,41 @@ test('Reduced-framebuffer strand coverage preserves authored paths and conservat
       assert(point.distanceTo(mesh.geometry.boundingSphere!.center) <= mesh.geometry.boundingSphere!.radius + 1e-6);
     }
   } finally { for (const orb of [full, reduced, invalid]) for (const layer of orb.layers) { layer.geometry.dispose(); layer.material.dispose(); } }
+});
+
+
+test('Palm charge follows copied anchors and cleans up without changing mature orb scale', () => {
+  const charge = createBallLightningCharge(), mature = createBallLightning();
+  try {
+    for (const age of [0, .04, .08, .18, .23, .28]) {
+      const at = new Vector3(1, 1.8, -4), view = new Vector3(1, 2, 3).normalize();
+      charge.update(at, view, age, 3 + age); at.x = 99;
+      for (const layer of charge.layers) {
+        assert.equal(layer.position.x, 1, 'Moving hand coordinates are copied, not retained by reference');
+        assert(layer.scale.x > 0 && layer.scale.x <= .28);
+        const opacity = layer.material.uniforms.opacity.value;
+        assert(opacity >= 0 && opacity <= .82);
+        if (age === 0 || age === .28) assert.equal(opacity, 0);
+        if (age === .18) assert.equal(opacity, .82);
+      }
+    }
+    assert.equal(mature.layers[0].scale.x, .8); assert.equal(mature.layers[1].scale.x, 1);
+  } finally { for (const visual of [charge, mature]) for (const layer of visual.layers) { layer.geometry.dispose(); layer.material.dispose(); } }
+});
+
+test('Released orbs leave the palm continuously and rejoin the original path before contact', () => {
+  const from = new Vector3(-.3, 1.9, -2), target = new Vector3(3, 1.2, 1), side = new Vector3(1, 0, 0);
+  for (const delay of [0, .018, .036, .054]) {
+    const output = new Vector3();
+    assert.deepEqual(ballLightningReleasePosition(from, target, side, 0, output, delay), from);
+    let previous = from.clone();
+    for (let frame = 1; frame <= 60; frame++) {
+      ballLightningReleasePosition(from, target, side, frame / 120, output, delay);
+      assert(output.toArray().every(Number.isFinite));
+      assert(output.distanceTo(previous) < .3, 'No disconnected spawn or position jump during release');
+      previous.copy(output);
+    }
+    assert(output.distanceTo(target) < 1e-12, 'Existing orbital path resumes well before the .65s target contact');
+  }
+  assert.deepEqual(from, new Vector3(-.3, 1.9, -2)); assert.deepEqual(target, new Vector3(3, 1.2, 1));
 });

@@ -1,0 +1,27 @@
+{
+  "scope": "Full independent source reconstruction, rig/actions, UV material conversion, GLB export and packing; no runtime promotion",
+  "sourceSHA256": "3f48d820b532677426ebae5ad77175faefc55f0ef4b071f523a4a97b5ab253ce",
+  "artifacts": [
+    {
+      "path": "scripts/blender/experiments/exports/hero/hero-packed.glb",
+      "bytes": 8294500,
+      "sha256": "16a409653c8ef3496f16e75d289a690d5c5ef1743d91b2251b179a6f73e85f78"
+    },
+    {
+      "path": "scripts/blender/experiments/exports/hero-rebuild-verification/hero-packed.glb",
+      "bytes": 8294572,
+      "sha256": "1d52166f087c375fa68269628669c8ae7e12e20181f86e9c17e0a1271f840f45"
+    }
+  ],
+  "nonImageBufferPayloadsByteIdentical": true,
+  "all27EmbeddedTexturePixelsIdentical": true,
+  "triangles": 62593,
+  "joints": 19,
+  "clips": {
+    "idle": 3.2,
+    "walk": 0.8,
+    "cast": 1.1,
+    "cleave": 1.1
+  },
+  "difference": "72 bytes of JSON object naming; reviewed export was preserved"
+}

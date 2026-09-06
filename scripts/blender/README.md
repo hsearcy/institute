@@ -17,8 +17,8 @@ the painted concept lighting or detail.
 ## Surfaces and runtime files
 
 `web/public/assets/rpg/manifest.json` records current triangles, draw calls, nodes,
-file sizes, and hero clips. All twenty GLBs are self-contained: embedded albedo,
-tangent normal, and occlusion/roughness/metallic textures; no external URLs or
+file sizes, and hero clips. All 22 GLBs are self-contained: embedded albedo,
+tangent normal, and roughness/metallic textures (legacy kit materials also use AO); no external URLs or
 compression decoder dependency. `imp.glb` aliases the skeleton for compatibility.
 
 The Blender shaders generate stone grain, cracks, cloth weave, worn metal, bone,
@@ -36,7 +36,7 @@ blade edges retain their own materials.
 
 | Files | Authored content |
 | --- | --- |
-| `hero.glb` | Teal hood and folded cape, layered bronze armor, runeblade; eight-bone rig |
+| `hero.glb` | Authored CC0 hooded warrior, fitted etched steel, quilted cloth, leather equipment and closed sword grip;19-joint rig |
 | `hero-cinder.glb`, `hero-glacier.glb`, `hero-tempest.glb` | Progression armor silhouettes, matching rig and clips; transparent appearance portraits |
 | `skeleton.glb`, `imp.glb` | Socketed skull, jaw and teeth, ribs, spine, paired limb bones, rusted armor |
 | `revenant.glb` | Broad armored undead knight, broken left shield and long right blade; twelve rigid joints |
@@ -54,24 +54,43 @@ blade edges retain their own materials.
 Coordinates are **+Y up, +Z front, meters, ground-centered origin**. The renderer
 normalizes the model height for placement. Prefixes `Body_`, `Head_`, `Cape_`,
 `Sword_`, `Lid_`, and `Embers_` identify meaningful parts; ignore numeric suffixes.
-The hero uses four to six meshes; the wraith uses seven. Articulated skeleton/guardian use thirteen
+The default hero has 11 source mesh nodes with separate authored material sets; the older armor variants use four to six meshes, and the wraith uses seven. Articulated skeleton/guardian use thirteen
 and sixteen respectively, shared in instanced batches. Major architecture generally
 uses one.
 
 ## Hero animation
 
-The hero has eight bones: `root`, `chest`, `head`, `arm.L`, `arm.R`, `leg.L`,
-`leg.R`, and `cape`. Connected armor pieces receive rigid island weights; the cloak
-blends between chest and cape. Sword meshes remain separate but are skinned to
-`arm.R`, allowing independent equipment emission.
+The default hero has 19 exact joints: `root`, `pelvis`, `chest`, `head`,
+`cape`, `cape.mid`, `cape.hem`, and paired `arm`, `forearm`, `hand`, `leg`, `shin`,
+`foot` joints. Connected armor retains rigid island weights, with flexible cloth
+and three cape sections. The sword and blade are skinned to `hand.R`; the literal
+`CastOrigin` attachment follows `hand.L`.
 
-`idle` (3.2 seconds) and `walk` (.8 seconds) loop. `cleave` and `cast` (1.13 seconds)
-are single actions with a windup, strike/release, and recovery. Root translation
-stays zero; the game owns movement. Use `SkeletonUtils.clone` for the hero,
-`AnimationMixer`, and a short crossfade. Enemy limbs use rigid articulation for efficient
-instancing. This is a small authored rig, not a full anatomical animation system.
+`idle` lasts 3.2 seconds, `walk` 0.8, and `cast`/`cleave` 1.1. All clips start at 0;
+gather/release keys are 0.08/0.18 seconds. Horizontal root travel belongs to the
+game. The rig authors sole grounding, so the runtime skips legacy body hops and
+Cleave slides. Walk phase follows measured travel distance, with capped speed,
+arrival braking and doorway waypoints. A rapid answer settles hero/camera into
+the active encounter before attack timing, without delaying the next question.
 
-![Hero animation poses](previews/v2/hero-animation.png)
+Use `SkeletonUtils.clone` and `AnimationMixer`. The three older armor variants
+retain their eight-bone rig and their original clip durations. Their geometry
+and limits are independent of the new default hero.
+
+The canonical default rebuild is `detailed/rebuild_authored_hero.py`; it composes
+the reviewed source helpers under `experiments`, preserving authored UV sets and
+material response. Restore the ignored licensed source using
+`python scripts/blender/sources/cc0-hooded-warrior/fetch.py`. Source provenance,
+fixed SHA and CC0 dedication live beside that script. No network/source cache is
+needed to run the bundled game. The full independent rebuild reproduced all
+geometry/animation payloads byte-for-byte and all 27 texture images pixel-for-pixel.
+
+The packed default contains 62,593 triangles and is8,294,568 bytes; its scoped
+budget is 65,000 triangles/9MB with exact19-joint hierarchy and clip validation.
+Its appearance portrait is rendered from the actual packed GLB by
+`detailed/render_authored_hero_portrait.py`.
+
+![Packed hero cast, front and back](previews/v2/authored-hero-packed-export-front-back.png)
 ![Final guardian GLB reimported, front and back](previews/v2/guardian-granite-exported.png)
 
 ## Enemy articulation
@@ -195,17 +214,17 @@ Cinder (level 12) has forged angular pauldrons, amber fissures, and a shortened 
 cloak; Glacier (level 15) adds layered frost plates, a cold steel cuirass, and a
 navy cloak; Tempest (level 18) adds swept pauldrons, a hood crown, ornate chest
 plates, and violet inlays. These are additional geometry and tailored cloth cuts,
-not palette swaps. The default appearance remains the original `hero.glb`.
+not palette swaps. The default appearance uses the separately authored `hero.glb` described above.
 
 Each variant uses the same eight bones (`root`, `chest`, `head`, `arm.L`, `arm.R`,
 `leg.L`, `leg.R`, `cape`) and authored `idle`, `walk`, `cleave`, and `cast` clips.
 The renderer retains control of travel; the clips have no root translation.
-All four heroes share their ground and head bounds. New armor is posed before
+All four heroes normalize to the same runtime height and ground origin. New armor is posed before
 baking and weighted as connected rigid pieces to avoid stretching armor panels.
 
 The optimized variants contain 12,842 / 13,212 / 13,202 triangles, respectively,
-and stay below 2.11 MB each. The complete library contains 20 GLBs, 279,303
-triangles, and 31,946,400 bytes. The validator checks variant skins, clips,
+and stay below 2.11 MB each. The complete library contains 22 GLBs, 347,940
+triangles, and 45,072,840 bytes. The validator checks variant skins, clips,
 embedded materials, portrait presence, and the 25,000-triangle / 4 MB budgets.
 
 `detailed/render_appearances.py` reimports the final optimized GLBs into separate

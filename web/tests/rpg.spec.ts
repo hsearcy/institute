@@ -1,11 +1,29 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type TestInfo } from '@playwright/test';
+import { writeFile } from 'node:fs/promises';
 import type { Problem, RpgState } from '../../shared/src/index';
-import { rpgEncounterKills, rpgNextRelicHunt } from '../../shared/src/rpg';
+import { rpgEncounterCombat, rpgNextRelicHunt } from '../../shared/src/rpg';
+
+import { observePopulationCap, expectPopulationCap, expectWorldHealth } from './rpg-combat-assertions';
 
 const profile = 'rpg-playtest';
+const shaderFailures = new WeakMap<Page, string[]>();
+const assetFailures = new WeakMap<Page, string[]>();
 // Fault tests use the real renderer/simulation at a small software framebuffer;
 // full-quality visuals and frame rate are inspected separately in live Chromium.
 test.beforeEach(async ({page}) => {
+  await observePopulationCap(page);
+  const failures: string[] = [];
+  shaderFailures.set(page, failures);
+  const missingAssets: string[] = [];
+  assetFailures.set(page, missingAssets);
+  page.on('response', response => {
+    const path = new URL(response.url()).pathname;
+    if (response.status() >= 400 && path.startsWith('/assets/rpg/')) missingAssets.push(`${response.status()} ${path}`);
+  });
+  page.on('console', message => {
+    const text = message.text();
+    if (/THREE\.WebGLProgram: Shader Error|VALIDATE_STATUS false|WebGL: INVALID_(?:OPERATION|VALUE)|GL_INVALID_OPERATION:.*(?:program|shader)/i.test(text)) failures.push(text);
+  });
   page.on('load', () => { void (async () => {
     await page.waitForFunction(() => !!(window as any).__game?.world, {timeout:20000});
     await page.evaluate(() => {
@@ -13,6 +31,11 @@ test.beforeEach(async ({page}) => {
       if (world.diagnostics.softwareRenderer) { world.renderer.setPixelRatio(.3); world.renderer.shadowMap.enabled = false; }
     });
   })().catch(() => {}); });
+});
+test.afterEach(async ({page}) => {
+  await expectPopulationCap(page);
+  expect(shaderFailures.get(page) ?? [], 'GPU shaders must compile while gameplay progresses').toEqual([]);
+  expect(assetFailures.get(page) ?? [], 'Bundled RPG art must load without falling back to missing assets').toEqual([]);
 });
 async function state(page: Page): Promise<RpgState> {
   return (await page.request.get(`/rpg/state?profileId=${profile}`)).json();
@@ -50,6 +73,42 @@ async function currentProblem(page: Page, problems: Map<string, Problem>): Promi
   const id = (await page.locator('#rpg-answer-form').getAttribute('data-problem-id'))!;
   await expect.poll(() => problems.has(id)).toBe(true);
   return problems.get(id)!;
+}
+async function captureCombatLayouts(page: Page, info: TestInfo, phase: string): Promise<void> {
+  if (process.env.RPG_CAPTURE_COMBAT_LAYOUT !== '1') return;
+  const original = page.viewportSize()!;
+  try {
+    for (const viewport of [{ width: 390, height: 844 }, { width: 844, height: 390 }]) {
+      await page.setViewportSize(viewport);
+      await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+      const name = `${phase}-${viewport.width}x${viewport.height}`;
+      const geometry = await page.evaluate(() => {
+        const game = (window as any).__game, world = game.world;
+        const rectangles = Object.fromEntries(['#game-canvas', '.rpg-controls', '#rpg-toast', '#rpg-boss', '#rpg-discovery'].map(selector => {
+          const element = document.querySelector(selector) as HTMLElement;
+          const rect = element.getBoundingClientRect();
+          return [selector, { hidden: element.hidden, text: element.textContent, x: rect.x, y: rect.y, width: rect.width, height: rect.height }];
+        }));
+        const canvas = document.querySelector('#game-canvas')!.getBoundingClientRect();
+        const enemies = world.enemies.map((enemy: any) => {
+          const head = enemy.root.position.clone().add({ x: 0, y: enemy.height, z: 0 }).project(world.camera);
+          return { id: enemy.id, hp: enemy.hp, maxHp: enemy.maxHp, dead: enemy.dead,
+            head: { x: canvas.left + (head.x + 1) * canvas.width / 2, y: canvas.top + (1 - head.y) * canvas.height / 2 } };
+        });
+        return { browserTime: performance.now(), viewport: { width: innerWidth, height: innerHeight }, rectangles, enemies, state: game.state, diagnostics: world.diagnostics };
+      });
+      expect(geometry.rectangles['#rpg-discovery'].hidden, 'An earlier relic card must not cover the next cast').toBe(true);
+      const notice = geometry.rectangles['#rpg-toast'], boss = geometry.rectangles['#rpg-boss'];
+      if (!notice.hidden && !boss.hidden) {
+        const overlapWidth = Math.min(notice.x + notice.width, boss.x + boss.width) - Math.max(notice.x, boss.x);
+        const overlapHeight = Math.min(notice.y + notice.height, boss.y + boss.height) - Math.max(notice.y, boss.y);
+        expect(overlapWidth <= 0 || overlapHeight <= 0, 'The combat notice must not overlap the boss name or health meter').toBe(true);
+      }
+      await page.screenshot({ path: info.outputPath(`${name}.png`) });
+      await writeFile(info.outputPath(`${name}.json`), JSON.stringify(geometry, null, 2));
+      await info.attach(`${name}-geometry`, { body: JSON.stringify(geometry, null, 2), contentType: 'application/json' });
+    }
+  } finally { await page.setViewportSize(original); }
 }
 async function solve(page: Page, problems: Map<string, Problem>): Promise<void> {
   await ready(page);
@@ -109,7 +168,56 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
 
   // Roster labels alone would pass if either authored GLB silently fell back
   // to skeletons. Require the actual knight and wraith geometry in live batches.
-  await expect.poll(() => page.evaluate(() => Number((window as any).__game.world.diagnostics.modelsLoaded)), { timeout: 30_000 }).toBeGreaterThanOrEqual(19);
+  await expect.poll(() => page.evaluate(() => Number((window as any).__game.world.diagnostics.modelsLoaded)), { timeout: 30_000 }).toBeGreaterThanOrEqual(21);
+  await expect.poll(() => page.evaluate(() => {
+    const world = (window as any).__game.world, source = world.models.get('masonry-pier');
+    if (!source) return false;
+    const geometry = new Set<unknown>();
+    source.traverse((node: any) => { if (node.isMesh) geometry.add(node.geometry); });
+    const piers = world.propGroup.children.filter((node: any) => node.userData.authoredMasonryPier);
+    const positions = new Set(piers.map((node: any) => `${node.userData.room}:${node.position.x}:${node.position.z}`));
+    return piers.length > 0 && positions.size === piers.length
+      && !world.floorGroup.children.some((node: any) => node.userData.fullPierFallback)
+      && !world.propGroup.children.some((node: any) => node.userData.legacyPierProp)
+      && piers.every((pier: any) => {
+        let authored = false;
+        pier.traverse((node: any) => { if (node.isMesh && geometry.has(node.geometry)) authored = true; });
+        return authored;
+      });
+  }), { timeout: 30_000 }).toBe(true);
+  await expect.poll(() => page.evaluate(() => {
+    const world = (window as any).__game.world, source = world.models.get('masonry-post');
+    if (!source) return false;
+    const geometry = new Set<unknown>();
+    source.traverse((node: any) => { if (node.isMesh) geometry.add(node.geometry); });
+    const posts = world.propGroup.children.filter((node: any) => node.userData.authoredMasonryPost);
+    const all = world.propGroup.children.filter((node: any) => node.userData.authoredMasonryPost || node.userData.authoredMasonryPier);
+    const baseHeights = all.map((object: any) => {
+      object.updateWorldMatrix(true, true);
+      let lowest = Infinity;
+      object.traverse((node: any) => {
+        if (!node.isMesh) return;
+        node.geometry.computeBoundingBox();
+        const box = node.geometry.boundingBox;
+        for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) {
+          const point = world.hero.position.clone().set(x, y, z).applyMatrix4(node.matrixWorld);
+          lowest = Math.min(lowest, point.y);
+        }
+      });
+      return lowest;
+    });
+    return posts.length === 19 && new Set(all.map((node: any) => `${node.userData.room}:${node.position.x}:${node.position.z}`)).size === all.length
+      // Side-wall supports rest on the third aisle step. Other footings stay
+      // at ground height. Check actual mesh bounds, not placement metadata.
+      && baseHeights.filter((height: number) => Math.abs(height - .53) < .002).length === 33
+      && baseHeights.filter((height: number) => Math.abs(height) < .002).length === 30
+      && !world.floorGroup.children.some((node: any) => node.userData.shortPostFallback)
+      && posts.every((post: any) => {
+        let authored = false;
+        post.traverse((node: any) => { if (node.isMesh && geometry.has(node.geometry)) authored = true; });
+        return authored;
+      });
+  }), { timeout: 30_000 }).toBe(true);
   await expect.poll(() => page.evaluate(() => {
     const world = (window as any).__game.world;
     return ['revenant', 'wraith'].every(modelId => {
@@ -132,7 +240,7 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
     return { counts: world.diagnostics.enemyRoster as Record<string, number>, articulated: Number(world.diagnostics.articulatedEnemies) };
   });
   expect(roster.counts.revenant).toBeGreaterThan(0);
-  expect(Object.values(roster.counts).reduce((sum, count) => sum + count, 0)).toBe(rpgEncounterKills(waiting, waiting.expedition!.encounterIndex));
+  expect(Object.values(roster.counts).reduce((sum, count) => sum + count, 0)).toBe(rpgEncounterCombat(waiting).enemies.length);
   expect(roster.articulated).toBe((roster.counts.guardian ?? 0) + (roster.counts.skeleton ?? 0) + roster.counts.revenant! + (roster.counts.wraith ?? 0));
   const masteryBeforeTarget = await (await page.request.get(`/mastery?profileId=${profile}`)).json();
   const targetProblem = await page.locator('#rpg-answer-form').getAttribute('data-problem-id');
@@ -161,6 +269,23 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
   expect(status).toMatchObject({recorded:true,correct:false,solved:true});
 
   await ready(page);
+  const wounded = await state(page);
+  expect(wounded.expedition!.encounterIndex).toBe(waiting.expedition!.encounterIndex);
+  expect(wounded.expedition!.combat!.casts).toBe(1);
+  expect(wounded.expedition!.combat!.enemies.some(enemy => enemy.hp > 0 && enemy.hp < enemy.maxHp)).toBe(true);
+  expect(wounded.totalKills).toBeGreaterThan(waiting.totalKills);
+  expect(wounded.inventory).toEqual(waiting.inventory); // No room-clear relic yet.
+  await expectWorldHealth(page, wounded.expedition!.combat!.enemies);
+  await captureCombatLayouts(page, info, 'wounded-pack');
+  const woundedPrompt = await page.locator('#rpg-answer-form').getAttribute('data-problem-id');
+  await page.reload();
+  await page.getByRole('button', { name: /Continue adventure/ }).click(); await ready(page);
+  expect(await state(page)).toEqual(wounded);
+  await expectWorldHealth(page, wounded.expedition!.combat!.enemies);
+  await expect(page.locator('#rpg-answer-form')).toHaveAttribute('data-problem-id', woundedPrompt!);
+  await solve(page, problems); // Finish this same persistent pack.
+  await ready(page);
+  expect((await state(page)).expedition!.encounterIndex).toBe(1);
   const masteryBeforeEquip = await (await page.request.get(`/mastery?profileId=${profile}`)).json();
   const rewardBeforeEquip = await state(page);
   await expect(page.getByRole('complementary',{name:'New relic'})).toBeVisible();
@@ -178,7 +303,18 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
   await ready(page);
   expect(await page.locator('#rpg-problem').innerText()).toBe(resumePrompt);
   expect((await state(page)).xp).toBe(resumeState.xp);
-  for (let i = 0; i < 6 && !(await state(page)).expedition?.cleared; i++) await solve(page, problems);
+  let capturedBoss = false;
+  for (let casts = 0; casts < 32 && !(await state(page)).expedition?.cleared; casts++) {
+    await solve(page, problems);
+    const current = await state(page);
+    const boss = current.expedition!.combat!.enemies.find(enemy => enemy.id === 'enemy-0')!;
+    if (!capturedBoss && current.expedition!.encounterIndex === 5 && boss.hp > 0 && boss.hp < boss.maxHp) {
+      await ready(page);
+      await captureCombatLayouts(page, info, 'wounded-boss');
+      capturedBoss = true;
+    }
+  }
+  expect((await state(page)).expedition?.cleared, 'A bounded series of real tutor answers must finish the expedition').toBe(true);
   await expect(page.getByRole('button',{name:'Next adventure →',exact:true})).toBeVisible();
   const completed = await state(page);
   expect(completed.expeditionsCompleted).toBe(1);
@@ -255,7 +391,8 @@ test('saved response recovery, worked help, and touch layout remain playable', a
   expect(saved.xp).toBeGreaterThan(before.xp);
   await page.getByRole('button',{name:'Try again',exact:true}).click();
   await ready(page);
-  expect((await state(page)).xp).toBe(saved.xp);
+  expect(await state(page)).toEqual(saved);
+  await expectWorldHealth(page, saved.expedition!.combat!.enemies);
   await page.unroute('**/rpg/resolve');
 
   await page.getByRole('button',{name:'Help me',exact:true}).click();

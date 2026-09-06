@@ -1,0 +1,3450 @@
+{
+  "db": "/tmp/rpg-nova-hud-1788697368569.db",
+  "profile": "rpg-archmage",
+  "browser": "151.0.7922.173",
+  "report": [
+    {
+      "name": "recorded-normal-loop",
+      "evidence": "Real HUD, scratch tutor solve and ordinary animation loop; no manual stepping or timing overrides. Recording cadence is separate from unrecorded cadence, neither is GPU cost.",
+      "loaded": {
+        "programs": 127,
+        "attackAge": 0,
+        "diagnostics": {
+          "appearance": "wayfarer",
+          "drawWarmup": {
+            "programs": 127,
+            "durationMs": 1415.2000000029802
+          },
+          "lastAttack": null,
+          "heroAnimation": "idle",
+          "heroClips": [
+            "idle",
+            "walk",
+            "cast",
+            "cleave"
+          ],
+          "encounter": 0,
+          "region": "embercrypt",
+          "enemies": 48,
+          "articulatedEnemies": 48,
+          "enemyRoster": {
+            "guardian": 7,
+            "skeleton": 21,
+            "revenant": 14,
+            "wraith": 6
+          },
+          "attacking": false,
+          "paused": true,
+          "modelsLoaded": 21,
+          "drawCalls": 337,
+          "triangles": 3012815,
+          "particles": 1,
+          "fragments": 0,
+          "hero": [
+            0,
+            0,
+            1.4
+          ],
+          "softwareRenderer": false,
+          "fps": 1,
+          "quality": "full",
+          "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+        },
+        "viewport": [
+          1440,
+          900
+        ],
+        "canvas": [
+          1440,
+          900
+        ],
+        "warmRestored": {
+          "target": true,
+          "bindings": true
+        },
+        "state": {
+          "xp": 82305,
+          "totalKills": 740,
+          "encounter": 0
+        },
+        "busy": false,
+        "panel": "camp",
+        "clock": 16187
+      },
+      "begun": {
+        "programs": 127,
+        "attackAge": 0,
+        "diagnostics": {
+          "appearance": "wayfarer",
+          "drawWarmup": {
+            "programs": 127,
+            "durationMs": 1415.2000000029802
+          },
+          "lastAttack": null,
+          "heroAnimation": "idle",
+          "heroClips": [
+            "idle",
+            "walk",
+            "cast",
+            "cleave"
+          ],
+          "encounter": 0,
+          "region": "embercrypt",
+          "enemies": 48,
+          "articulatedEnemies": 48,
+          "enemyRoster": {
+            "guardian": 7,
+            "skeleton": 21,
+            "revenant": 14,
+            "wraith": 6
+          },
+          "attacking": false,
+          "paused": false,
+          "modelsLoaded": 21,
+          "drawCalls": 181,
+          "triangles": 1394980,
+          "particles": 32,
+          "fragments": 0,
+          "hero": [
+            0,
+            0,
+            1.4
+          ],
+          "softwareRenderer": false,
+          "fps": 1,
+          "quality": "full",
+          "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+        },
+        "viewport": [
+          1440,
+          900
+        ],
+        "canvas": [
+          1440,
+          900
+        ],
+        "warmRestored": {
+          "target": true,
+          "bindings": true
+        },
+        "state": {
+          "xp": 82305,
+          "totalKills": 740,
+          "encounter": 0
+        },
+        "problemId": "pmtps8o5k_0",
+        "problem": "48, then?",
+        "busy": false,
+        "panel": "",
+        "clock": 16857.90000000596
+      },
+      "before": {
+        "programs": 127,
+        "attackAge": 0,
+        "diagnostics": {
+          "appearance": "wayfarer",
+          "drawWarmup": {
+            "programs": 127,
+            "durationMs": 1415.2000000029802
+          },
+          "lastAttack": null,
+          "heroAnimation": "idle",
+          "heroClips": [
+            "idle",
+            "walk",
+            "cast",
+            "cleave"
+          ],
+          "encounter": 0,
+          "region": "embercrypt",
+          "enemies": 48,
+          "articulatedEnemies": 48,
+          "enemyRoster": {
+            "guardian": 7,
+            "skeleton": 21,
+            "revenant": 14,
+            "wraith": 6
+          },
+          "attacking": false,
+          "paused": false,
+          "modelsLoaded": 21,
+          "drawCalls": 181,
+          "triangles": 1394980,
+          "particles": 76,
+          "fragments": 0,
+          "hero": [
+            0,
+            0,
+            1.4
+          ],
+          "softwareRenderer": false,
+          "fps": 51,
+          "quality": "full",
+          "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+        },
+        "viewport": [
+          1440,
+          900
+        ],
+        "canvas": [
+          1440,
+          900
+        ],
+        "warmRestored": {
+          "target": true,
+          "bindings": true
+        },
+        "state": {
+          "xp": 82305,
+          "totalKills": 740,
+          "encounter": 0
+        },
+        "problemId": "pmtps8o5k_0",
+        "problem": "48, then?",
+        "busy": false,
+        "panel": "",
+        "clock": 18195.90000000596
+      },
+      "after": {
+        "programs": 127,
+        "attackAge": 2.7051000000089402,
+        "diagnostics": {
+          "appearance": "wayfarer",
+          "drawWarmup": {
+            "programs": 127,
+            "durationMs": 1415.2000000029802
+          },
+          "lastAttack": {
+            "spellId": "ball_lightning",
+            "effect": "ball-lightning",
+            "options": {
+              "echo": false,
+              "wide": false,
+              "burning": false,
+              "shards": false,
+              "chains": true,
+              "pierce": false,
+              "orbit": true,
+              "summon": false,
+              "itemId": "moonstaff",
+              "kills": 48,
+              "xp": 32
+            }
+          },
+          "lastSpellId": "ball_lightning",
+          "lastSpellEffect": "ball-lightning",
+          "heroAnimation": "walk",
+          "heroClips": [
+            "idle",
+            "walk",
+            "cast",
+            "cleave"
+          ],
+          "encounter": 1,
+          "region": "embercrypt",
+          "enemies": 48,
+          "articulatedEnemies": 48,
+          "enemyRoster": {
+            "guardian": 7,
+            "skeleton": 23,
+            "revenant": 14,
+            "wraith": 4
+          },
+          "attacking": false,
+          "paused": false,
+          "modelsLoaded": 21,
+          "drawCalls": 183,
+          "triangles": 1442098,
+          "particles": 114,
+          "fragments": 0,
+          "hero": [
+            0,
+            0,
+            -1.056388030000061
+          ],
+          "softwareRenderer": false,
+          "fps": 52,
+          "quality": "full",
+          "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+        },
+        "viewport": [
+          1440,
+          900
+        ],
+        "canvas": [
+          1440,
+          900
+        ],
+        "warmRestored": {
+          "target": true,
+          "bindings": true
+        },
+        "state": {
+          "xp": 82337,
+          "totalKills": 788,
+          "encounter": 1
+        },
+        "problemId": "pmtps8o87_1",
+        "problem": "66, then?",
+        "busy": false,
+        "panel": "",
+        "clock": 22129
+      },
+      "cadence": [
+        {
+          "dt": 7.0999999940395355,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.20000000000073,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.799999999999272,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.799999999999272,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000291,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999709,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000291,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999709,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999709,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999709,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999709,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.39999999999782,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999709,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000291,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999709,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.30000000000291,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999709,
+          "age": 0,
+          "attacking": false
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 0.0275,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0.044299999997019765,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.06640000000596047,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.096,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.1175,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.13920000000298022,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 0.16340000000596044,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.18449999999999997,
+          "attacking": true
+        },
+        {
+          "dt": 50,
+          "age": 0.22410000000894068,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999709,
+          "age": 0.23870000000298022,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 0.2621000000089407,
+          "attacking": true
+        },
+        {
+          "dt": 33.39999999999782,
+          "age": 0.2895,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 0.31240000000596047,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.3344000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.35570000000298024,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.382,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.40920000000298024,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.433,
+          "attacking": true
+        },
+        {
+          "dt": 33.39999999999782,
+          "age": 0.4576000000089407,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 0.4817999999970198,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.5054000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.5339000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.5584000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.5841000000089407,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.6117999999970197,
+          "attacking": true
+        },
+        {
+          "dt": 33.39999999999782,
+          "age": 0.6392000000029802,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 0.6632999999970197,
+          "attacking": true
+        },
+        {
+          "dt": 33.39999999999782,
+          "age": 0.6917999999970197,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 0.718,
+          "attacking": true
+        },
+        {
+          "dt": 33.39999999999782,
+          "age": 0.7434000000059604,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000291,
+          "age": 0.7719000000059604,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 0.7974000000059603,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.8197000000029802,
+          "attacking": true
+        },
+        {
+          "dt": 33.39999999999782,
+          "age": 0.8447999999970197,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 0.8672000000029801,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.8899000000059604,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.9114999999999999,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 0.9367999999970197,
+          "attacking": true
+        },
+        {
+          "dt": 33.39999999999782,
+          "age": 0.9657999999970197,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 0.9932000000029801,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000291,
+          "age": 1.0234000000059604,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 1.0474000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 1.0766000000089406,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.1069000000059603,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.1402999999970196,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 1.1669000000059604,
+          "attacking": true
+        },
+        {
+          "dt": 33.39999999999782,
+          "age": 1.1967999999970198,
+          "attacking": true
+        },
+        {
+          "dt": 33.30000000000291,
+          "age": 1.2235,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 1.2499000000059606,
+          "attacking": true
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 1.2742000000029803,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 1.2997999999970198,
+          "attacking": true
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 1.3275000000000001,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.3564000000059606,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 1.3830000000000002,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.4124000000059607,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.4395000000000002,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 1.465100000008941,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.4942000000029805,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 1.51829999999702,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.5407000000029805,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 1.5669000000059607,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.5895000000000004,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 1.6129000000059608,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.6404000000059609,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 1.6615000000000004,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 1.6842000000029806,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.710400000005961,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 1.7317999999970202,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.756400000005961,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 1.7776000000089411,
+          "attacking": true
+        },
+        {
+          "dt": 16.69999999999709,
+          "age": 1.800400000005961,
+          "attacking": true
+        },
+        {
+          "dt": 33.20000000000073,
+          "age": 1.8235000000000006,
+          "attacking": true
+        },
+        {
+          "dt": 16.799999999999272,
+          "age": 1.8446000000089413,
+          "attacking": true
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 1.8651000000089413,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 1.8857000000029809,
+          "attacking": true
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 1.9082000000029808,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 1.9285000000000005,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 1.9490000000000005,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 1.9741000000089413,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.0015000000000005,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.0286000000089413,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.052700000002981,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.076900000005961,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.0991000000089413,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.121100000008941,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.1435000000000004,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.163600000008941,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.1815,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.2020000000000004,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.219900000005961,
+          "attacking": true
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.238900000005961,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.257100000008941,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.27729999999702,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.2955,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.3129000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.32979999999702,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.3474000000059605,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.3636000000089408,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.3797999999970196,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.396,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.4136000000089406,
+          "attacking": true
+        },
+        {
+          "dt": 16.80000000000291,
+          "age": 2.429,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.4444999999999997,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.45970000000298,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.4764999999999997,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.49120000000298,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.50620000000298,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.5217999999970195,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.53870000000298,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.5582999999970193,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.5717999999970194,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.59120000000298,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.6051000000089406,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.6227999999970195,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.6384999999999996,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.6551000000089404,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.67190000000596,
+          "attacking": true
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.6884999999999994,
+          "attacking": true
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.80000000000291,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 33.19999999999709,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 33.400000000001455,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 33.20000000000073,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999709,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999709,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.600000000002183,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.69999999999709,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 33.20000000000073,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.799999999999272,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 33.29999999999927,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.700000000000728,
+          "age": 2.7051000000089402,
+          "attacking": false
+        },
+        {
+          "dt": 16.599999999998545,
+          "age": 2.7051000000089402,
+          "attacking": false
+        }
+      ],
+      "draws": [
+        {
+          "age": 0.0275,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 13
+        },
+        {
+          "age": 0.044299999997019765,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5
+        },
+        {
+          "age": 0.06640000000596047,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.5999999940395355
+        },
+        {
+          "age": 0.096,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 8.900000005960464
+        },
+        {
+          "age": 0.1175,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.4000000059604645
+        },
+        {
+          "age": 0.13920000000298022,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5
+        },
+        {
+          "age": 0.16340000000596044,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 8.300000011920929
+        },
+        {
+          "age": 0.18449999999999997,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 7.5
+        },
+        {
+          "age": 0.22410000000894068,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 7
+        },
+        {
+          "age": 0.23870000000298022,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 17.599999994039536
+        },
+        {
+          "age": 0.2621000000089407,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 11
+        },
+        {
+          "age": 0.2895,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 7.200000002980232
+        },
+        {
+          "age": 0.31240000000596047,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 7.5
+        },
+        {
+          "age": 0.3344000000059605,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.299999997019768
+        },
+        {
+          "age": 0.35570000000298024,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.399999991059303
+        },
+        {
+          "age": 0.382,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 12.100000008940697
+        },
+        {
+          "age": 0.40920000000298024,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 6.899999991059303
+        },
+        {
+          "age": 0.433,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 9.200000002980232
+        },
+        {
+          "age": 0.4576000000089407,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 14.899999991059303
+        },
+        {
+          "age": 0.4817999999970198,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 9
+        },
+        {
+          "age": 0.5054000000059605,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 10.399999991059303
+        },
+        {
+          "age": 0.5339000000059605,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 8.700000002980232
+        },
+        {
+          "age": 0.5584000000059605,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.799999997019768
+        },
+        {
+          "age": 0.5841000000089407,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 6.9000000059604645
+        },
+        {
+          "age": 0.6117999999970197,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 7
+        },
+        {
+          "age": 0.6392000000029802,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.600000008940697
+        },
+        {
+          "age": 0.6632999999970197,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.799999997019768
+        },
+        {
+          "age": 0.6917999999970197,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 8.5
+        },
+        {
+          "age": 0.718,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 6.5
+        },
+        {
+          "age": 0.7434000000059604,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 8.700000002980232
+        },
+        {
+          "age": 0.7719000000059604,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 10.099999994039536
+        },
+        {
+          "age": 0.7974000000059603,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 6.5
+        },
+        {
+          "age": 0.8197000000029802,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.399999991059303
+        },
+        {
+          "age": 0.8447999999970197,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.399999991059303
+        },
+        {
+          "age": 0.8672000000029801,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 8.799999997019768
+        },
+        {
+          "age": 0.8899000000059604,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 9.200000002980232
+        },
+        {
+          "age": 0.9114999999999999,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 6.0999999940395355
+        },
+        {
+          "age": 0.9367999999970197,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 8.699999988079071
+        },
+        {
+          "age": 0.9657999999970197,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 7.100000008940697
+        },
+        {
+          "age": 0.9932000000029801,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 7.899999991059303
+        },
+        {
+          "age": 1.0234000000059604,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 9.299999997019768
+        },
+        {
+          "age": 1.0474000000059605,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 13
+        },
+        {
+          "age": 1.0766000000089406,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 8.400000005960464
+        },
+        {
+          "age": 1.1069000000059603,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 15.199999988079071
+        },
+        {
+          "age": 1.1402999999970196,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.299999997019768
+        },
+        {
+          "age": 1.1669000000059604,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 14.099999994039536
+        },
+        {
+          "age": 1.1967999999970198,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5
+        },
+        {
+          "age": 1.2235,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 6.4000000059604645
+        },
+        {
+          "age": 1.2499000000059606,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 7
+        },
+        {
+          "age": 1.2742000000029803,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 9.300000011920929
+        },
+        {
+          "age": 1.2997999999970198,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 6.799999997019768
+        },
+        {
+          "age": 1.3275000000000001,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 6.899999991059303
+        },
+        {
+          "age": 1.3564000000059606,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 15.599999994039536
+        },
+        {
+          "age": 1.3830000000000002,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 8.799999997019768
+        },
+        {
+          "age": 1.4124000000059607,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 13.799999997019768
+        },
+        {
+          "age": 1.4395000000000002,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 8.599999994039536
+        },
+        {
+          "age": 1.465100000008941,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 8.700000002980232
+        },
+        {
+          "age": 1.4942000000029805,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 7.100000008940697
+        },
+        {
+          "age": 1.51829999999702,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 3.7000000029802322
+        },
+        {
+          "age": 1.5407000000029805,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.5999999940395355
+        },
+        {
+          "age": 1.5669000000059607,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.5999999940395355
+        },
+        {
+          "age": 1.5895000000000004,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 6
+        },
+        {
+          "age": 1.6129000000059608,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.5999999940395355
+        },
+        {
+          "age": 1.6404000000059609,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.700000002980232
+        },
+        {
+          "age": 1.6615000000000004,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 6.4000000059604645
+        },
+        {
+          "age": 1.6842000000029806,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.200000002980232
+        },
+        {
+          "age": 1.710400000005961,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 6.299999997019768
+        },
+        {
+          "age": 1.7317999999970202,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 6.399999991059303
+        },
+        {
+          "age": 1.756400000005961,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.200000002980232
+        },
+        {
+          "age": 1.7776000000089411,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 7.5999999940395355
+        },
+        {
+          "age": 1.800400000005961,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 3.6000000089406967
+        },
+        {
+          "age": 1.8235000000000006,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.5
+        },
+        {
+          "age": 1.8446000000089413,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.5999999940395355
+        },
+        {
+          "age": 1.8651000000089413,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.700000002980232
+        },
+        {
+          "age": 1.8857000000029809,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.200000002980232
+        },
+        {
+          "age": 1.9082000000029808,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 3.699999988079071
+        },
+        {
+          "age": 1.9285000000000005,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.5999999940395355
+        },
+        {
+          "age": 1.9490000000000005,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.5999999940395355
+        },
+        {
+          "age": 1.9741000000089413,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.700000002980232
+        },
+        {
+          "age": 2.0015000000000005,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 8.299999997019768
+        },
+        {
+          "age": 2.0286000000089413,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 6
+        },
+        {
+          "age": 2.052700000002981,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.299999997019768
+        },
+        {
+          "age": 2.076900000005961,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.800000011920929
+        },
+        {
+          "age": 2.0991000000089413,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.4000000059604645
+        },
+        {
+          "age": 2.121100000008941,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 3.8999999910593033
+        },
+        {
+          "age": 2.1435000000000004,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.800000011920929
+        },
+        {
+          "age": 2.163600000008941,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.4000000059604645
+        },
+        {
+          "age": 2.1815,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.299999997019768
+        },
+        {
+          "age": 2.2020000000000004,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.5
+        },
+        {
+          "age": 2.219900000005961,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 6.5
+        },
+        {
+          "age": 2.238900000005961,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5
+        },
+        {
+          "age": 2.257100000008941,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.699999988079071
+        },
+        {
+          "age": 2.27729999999702,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.100000008940697
+        },
+        {
+          "age": 2.2955,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 6.0999999940395355
+        },
+        {
+          "age": 2.3129000000059605,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.5
+        },
+        {
+          "age": 2.32979999999702,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.700000002980232
+        },
+        {
+          "age": 2.3474000000059605,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.100000008940697
+        },
+        {
+          "age": 2.3636000000089408,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 6.299999997019768
+        },
+        {
+          "age": 2.3797999999970196,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5
+        },
+        {
+          "age": 2.396,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 6
+        },
+        {
+          "age": 2.4136000000089406,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.5999999940395355
+        },
+        {
+          "age": 2.429,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5
+        },
+        {
+          "age": 2.4444999999999997,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 3.7000000029802322
+        },
+        {
+          "age": 2.45970000000298,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 3.7999999970197678
+        },
+        {
+          "age": 2.4764999999999997,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.700000002980232
+        },
+        {
+          "age": 2.49120000000298,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.799999997019768
+        },
+        {
+          "age": 2.50620000000298,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 6.299999997019768
+        },
+        {
+          "age": 2.5217999999970195,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.399999991059303
+        },
+        {
+          "age": 2.53870000000298,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 3
+        },
+        {
+          "age": 2.5582999999970193,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.399999991059303
+        },
+        {
+          "age": 2.5717999999970194,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.9000000059604645
+        },
+        {
+          "age": 2.59120000000298,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.800000011920929
+        },
+        {
+          "age": 2.6051000000089406,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.799999997019768
+        },
+        {
+          "age": 2.6227999999970195,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.9000000059604645
+        },
+        {
+          "age": 2.6384999999999996,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 5.5
+        },
+        {
+          "age": 2.6551000000089404,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 3.2999999970197678
+        },
+        {
+          "age": 2.67190000000596,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 3.3999999910593033
+        },
+        {
+          "age": 2.6884999999999994,
+          "before": 127,
+          "after": 127,
+          "cpuMs": 4.700000002980232
+        }
+      ],
+      "cpuTimings": [
+        {
+          "name": "playHeroAnimation",
+          "start": 18197.20000000298,
+          "ms": 0,
+          "age": 0,
+          "delta": "idle"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 18218.90000000596,
+          "ms": 0,
+          "age": 0,
+          "delta": "idle"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 18231.20000000298,
+          "ms": 0,
+          "age": 0,
+          "delta": "idle"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 18250.30000001192,
+          "ms": 0,
+          "age": 0,
+          "delta": "idle"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 18276.70000000298,
+          "ms": 0,
+          "age": 0,
+          "delta": "idle"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 18300.5,
+          "ms": 0,
+          "age": 0,
+          "delta": "idle"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 18348.5,
+          "ms": 0,
+          "age": 0,
+          "delta": "idle"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 18363.60000000894,
+          "ms": 0,
+          "age": 0,
+          "delta": "idle"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 18388.70000000298,
+          "ms": 0.10000000894069672,
+          "age": 0,
+          "delta": "idle"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 18409.30000001192,
+          "ms": 0,
+          "age": 0,
+          "delta": "idle"
+        },
+        {
+          "name": "setElectricMaterials",
+          "start": 18430.70000000298,
+          "ms": 0.20000000298023224,
+          "age": 0,
+          "delta": true
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 18430.90000000596,
+          "ms": 0.29999999701976776,
+          "age": 0,
+          "delta": "cast"
+        },
+        {
+          "name": "attack",
+          "start": 18428.80000001192,
+          "ms": 7.5,
+          "age": 0,
+          "delta": "ball_lightning"
+        },
+        {
+          "name": "tick",
+          "start": 18436.70000000298,
+          "ms": 15.5,
+          "age": 0.0275,
+          "delta": 0.0275
+        },
+        {
+          "name": "tick",
+          "start": 18453.5,
+          "ms": 7.4000000059604645,
+          "age": 0.044299999997019765,
+          "delta": 0.01679999999701977
+        },
+        {
+          "name": "tick",
+          "start": 18475.60000000894,
+          "ms": 9.599999994039536,
+          "age": 0.06640000000596047,
+          "delta": 0.022100000008940697
+        },
+        {
+          "name": "tick",
+          "start": 18505.20000000298,
+          "ms": 11.900000005960464,
+          "age": 0.096,
+          "delta": 0.029599999994039537
+        },
+        {
+          "name": "tick",
+          "start": 18526.70000000298,
+          "ms": 7.9000000059604645,
+          "age": 0.1175,
+          "delta": 0.0215
+        },
+        {
+          "name": "tick",
+          "start": 18548.40000000596,
+          "ms": 7.700000002980232,
+          "age": 0.13920000000298022,
+          "delta": 0.02170000000298023
+        },
+        {
+          "name": "tick",
+          "start": 18572.60000000894,
+          "ms": 11.700000002980232,
+          "age": 0.16340000000596044,
+          "delta": 0.024200000002980233
+        },
+        {
+          "name": "tick",
+          "start": 18593.80000001192,
+          "ms": 38.69999998807907,
+          "age": 0.18449999999999997,
+          "delta": 0.021099999994039536
+        },
+        {
+          "name": "tick",
+          "start": 18633.30000001192,
+          "ms": 10.299999997019768,
+          "age": 0.22410000000894068,
+          "delta": 0.0396000000089407
+        },
+        {
+          "name": "tick",
+          "start": 18647.90000000596,
+          "ms": 22.5,
+          "age": 0.23870000000298022,
+          "delta": 0.014599999994039535
+        },
+        {
+          "name": "tick",
+          "start": 18671.30000001192,
+          "ms": 15.899999991059303,
+          "age": 0.2621000000089407,
+          "delta": 0.023400000005960465
+        },
+        {
+          "name": "tick",
+          "start": 18698.70000000298,
+          "ms": 9.900000005960464,
+          "age": 0.2895,
+          "delta": 0.027399999991059302
+        },
+        {
+          "name": "tick",
+          "start": 18721.60000000894,
+          "ms": 11.099999994039536,
+          "age": 0.31240000000596047,
+          "delta": 0.022900000005960465
+        },
+        {
+          "name": "tick",
+          "start": 18743.60000000894,
+          "ms": 7.5,
+          "age": 0.3344000000059605,
+          "delta": 0.022
+        },
+        {
+          "name": "tick",
+          "start": 18764.90000000596,
+          "ms": 7.799999997019768,
+          "age": 0.35570000000298024,
+          "delta": 0.02129999999701977
+        },
+        {
+          "name": "tick",
+          "start": 18791.20000000298,
+          "ms": 16.400000005960464,
+          "age": 0.382,
+          "delta": 0.026299999997019766
+        },
+        {
+          "name": "tick",
+          "start": 18818.40000000596,
+          "ms": 9.599999994039536,
+          "age": 0.40920000000298024,
+          "delta": 0.027200000002980233
+        },
+        {
+          "name": "tick",
+          "start": 18842.20000000298,
+          "ms": 12.100000008940697,
+          "age": 0.433,
+          "delta": 0.023799999997019768
+        },
+        {
+          "name": "tick",
+          "start": 18866.80000001192,
+          "ms": 19.399999991059303,
+          "age": 0.4576000000089407,
+          "delta": 0.024600000008940696
+        },
+        {
+          "name": "tick",
+          "start": 18891,
+          "ms": 13.400000005960464,
+          "age": 0.4817999999970198,
+          "delta": 0.02419999998807907
+        },
+        {
+          "name": "tick",
+          "start": 18914.60000000894,
+          "ms": 14.399999991059303,
+          "age": 0.5054000000059605,
+          "delta": 0.0236000000089407
+        },
+        {
+          "name": "tick",
+          "start": 18943.10000000894,
+          "ms": 13.299999997019768,
+          "age": 0.5339000000059605,
+          "delta": 0.0285
+        },
+        {
+          "name": "tick",
+          "start": 18967.60000000894,
+          "ms": 7.5999999940395355,
+          "age": 0.5584000000059605,
+          "delta": 0.0245
+        },
+        {
+          "name": "tick",
+          "start": 18993.30000001192,
+          "ms": 9.299999997019768,
+          "age": 0.5841000000089407,
+          "delta": 0.02570000000298023
+        },
+        {
+          "name": "tick",
+          "start": 19021,
+          "ms": 9.400000005960464,
+          "age": 0.6117999999970197,
+          "delta": 0.02769999998807907
+        },
+        {
+          "name": "tick",
+          "start": 19048.40000000596,
+          "ms": 8.400000005960464,
+          "age": 0.6392000000029802,
+          "delta": 0.027400000005960466
+        },
+        {
+          "name": "tick",
+          "start": 19072.5,
+          "ms": 8.5,
+          "age": 0.6632999999970197,
+          "delta": 0.024099999994039535
+        },
+        {
+          "name": "tick",
+          "start": 19101,
+          "ms": 10.900000005960464,
+          "age": 0.6917999999970197,
+          "delta": 0.0285
+        },
+        {
+          "name": "tick",
+          "start": 19127.20000000298,
+          "ms": 11.600000008940697,
+          "age": 0.718,
+          "delta": 0.02620000000298023
+        },
+        {
+          "name": "tick",
+          "start": 19152.70000000298,
+          "ms": 13,
+          "age": 0.7434000000059604,
+          "delta": 0.025400000005960464
+        },
+        {
+          "name": "tick",
+          "start": 19181.10000000894,
+          "ms": 14,
+          "age": 0.7719000000059604,
+          "delta": 0.0285
+        },
+        {
+          "name": "tick",
+          "start": 19206.60000000894,
+          "ms": 9.200000002980232,
+          "age": 0.7974000000059603,
+          "delta": 0.0255
+        },
+        {
+          "name": "tick",
+          "start": 19228.90000000596,
+          "ms": 8.099999994039536,
+          "age": 0.8197000000029802,
+          "delta": 0.022299999997019766
+        },
+        {
+          "name": "tick",
+          "start": 19254,
+          "ms": 10.700000002980232,
+          "age": 0.8447999999970197,
+          "delta": 0.025099999994039536
+        },
+        {
+          "name": "tick",
+          "start": 19276.40000000596,
+          "ms": 13,
+          "age": 0.8672000000029801,
+          "delta": 0.022400000005960465
+        },
+        {
+          "name": "tick",
+          "start": 19299.20000000298,
+          "ms": 13.200000002980232,
+          "age": 0.8899000000059604,
+          "delta": 0.022700000002980232
+        },
+        {
+          "name": "tick",
+          "start": 19320.70000000298,
+          "ms": 9.799999997019768,
+          "age": 0.9114999999999999,
+          "delta": 0.021599999994039536
+        },
+        {
+          "name": "tick",
+          "start": 19346,
+          "ms": 13,
+          "age": 0.9367999999970197,
+          "delta": 0.02529999999701977
+        },
+        {
+          "name": "tick",
+          "start": 19375,
+          "ms": 11.300000011920929,
+          "age": 0.9657999999970197,
+          "delta": 0.029
+        },
+        {
+          "name": "tick",
+          "start": 19402.40000000596,
+          "ms": 12.200000002980232,
+          "age": 0.9932000000029801,
+          "delta": 0.027400000005960466
+        },
+        {
+          "name": "tick",
+          "start": 19432.60000000894,
+          "ms": 11.5,
+          "age": 1.0234000000059604,
+          "delta": 0.030200000002980232
+        },
+        {
+          "name": "tick",
+          "start": 19456.60000000894,
+          "ms": 18.099999994039536,
+          "age": 1.0474000000059605,
+          "delta": 0.024
+        },
+        {
+          "name": "tick",
+          "start": 19485.80000001192,
+          "ms": 14.699999988079071,
+          "age": 1.0766000000089406,
+          "delta": 0.02920000000298023
+        },
+        {
+          "name": "tick",
+          "start": 19516.10000000894,
+          "ms": 22.899999991059303,
+          "age": 1.1069000000059603,
+          "delta": 0.030299999997019766
+        },
+        {
+          "name": "tick",
+          "start": 19549.5,
+          "ms": 10.100000008940697,
+          "age": 1.1402999999970196,
+          "delta": 0.033399999991059304
+        },
+        {
+          "name": "tick",
+          "start": 19576.10000000894,
+          "ms": 20.899999991059303,
+          "age": 1.1669000000059604,
+          "delta": 0.026600000008940698
+        },
+        {
+          "name": "tick",
+          "start": 19606,
+          "ms": 9.100000008940697,
+          "age": 1.1967999999970198,
+          "delta": 0.029899999991059304
+        },
+        {
+          "name": "tick",
+          "start": 19632.70000000298,
+          "ms": 10.600000008940697,
+          "age": 1.2235,
+          "delta": 0.026700000002980232
+        },
+        {
+          "name": "tick",
+          "start": 19659.20000000298,
+          "ms": 9.600000008940697,
+          "age": 1.2499000000059606,
+          "delta": 0.026400000005960465
+        },
+        {
+          "name": "tick",
+          "start": 19683.40000000596,
+          "ms": 14.400000005960464,
+          "age": 1.2742000000029803,
+          "delta": 0.024299999997019768
+        },
+        {
+          "name": "tick",
+          "start": 19709,
+          "ms": 11,
+          "age": 1.2997999999970198,
+          "delta": 0.025599999994039536
+        },
+        {
+          "name": "tick",
+          "start": 19736.70000000298,
+          "ms": 10.299999997019768,
+          "age": 1.3275000000000001,
+          "delta": 0.027700000002980233
+        },
+        {
+          "name": "tick",
+          "start": 19765.60000000894,
+          "ms": 21.599999994039536,
+          "age": 1.3564000000059606,
+          "delta": 0.028900000005960463
+        },
+        {
+          "name": "tick",
+          "start": 19792.20000000298,
+          "ms": 14.900000005960464,
+          "age": 1.3830000000000002,
+          "delta": 0.026599999994039534
+        },
+        {
+          "name": "tick",
+          "start": 19821.70000000298,
+          "ms": 18.799999997019768,
+          "age": 1.4124000000059607,
+          "delta": 0.029400000005960464
+        },
+        {
+          "name": "tick",
+          "start": 19848.70000000298,
+          "ms": 11.299999997019768,
+          "age": 1.4395000000000002,
+          "delta": 0.027099999994039534
+        },
+        {
+          "name": "tick",
+          "start": 19874.30000001192,
+          "ms": 14,
+          "age": 1.465100000008941,
+          "delta": 0.025600000008940697
+        },
+        {
+          "name": "tick",
+          "start": 19903.40000000596,
+          "ms": 11.700000002980232,
+          "age": 1.4942000000029805,
+          "delta": 0.029099999994039536
+        },
+        {
+          "name": "tick",
+          "start": 19927.5,
+          "ms": 5.600000008940697,
+          "age": 1.51829999999702,
+          "delta": 0.024099999994039535
+        },
+        {
+          "name": "tick",
+          "start": 19949.90000000596,
+          "ms": 6.799999997019768,
+          "age": 1.5407000000029805,
+          "delta": 0.022400000005960465
+        },
+        {
+          "name": "tick",
+          "start": 19976.10000000894,
+          "ms": 7.899999991059303,
+          "age": 1.5669000000059607,
+          "delta": 0.02620000000298023
+        },
+        {
+          "name": "tick",
+          "start": 19998.70000000298,
+          "ms": 9.5,
+          "age": 1.5895000000000004,
+          "delta": 0.022599999994039534
+        },
+        {
+          "name": "tick",
+          "start": 20022.10000000894,
+          "ms": 7.899999991059303,
+          "age": 1.6129000000059608,
+          "delta": 0.023400000005960465
+        },
+        {
+          "name": "tick",
+          "start": 20049.70000000298,
+          "ms": 7.200000002980232,
+          "age": 1.6404000000059609,
+          "delta": 0.0275
+        },
+        {
+          "name": "tick",
+          "start": 20070.70000000298,
+          "ms": 8.600000008940697,
+          "age": 1.6615000000000004,
+          "delta": 0.021099999994039536
+        },
+        {
+          "name": "tick",
+          "start": 20093.40000000596,
+          "ms": 6.5,
+          "age": 1.6842000000029806,
+          "delta": 0.022700000002980232
+        },
+        {
+          "name": "tick",
+          "start": 20119.60000000894,
+          "ms": 8.700000002980232,
+          "age": 1.710400000005961,
+          "delta": 0.02620000000298023
+        },
+        {
+          "name": "tick",
+          "start": 20141,
+          "ms": 9.700000002980232,
+          "age": 1.7317999999970202,
+          "delta": 0.021399999991059303
+        },
+        {
+          "name": "tick",
+          "start": 20165.60000000894,
+          "ms": 7.5999999940395355,
+          "age": 1.756400000005961,
+          "delta": 0.024600000008940696
+        },
+        {
+          "name": "tick",
+          "start": 20186.80000001192,
+          "ms": 9.599999994039536,
+          "age": 1.7776000000089411,
+          "delta": 0.02120000000298023
+        },
+        {
+          "name": "tick",
+          "start": 20209.60000000894,
+          "ms": 6.5,
+          "age": 1.800400000005961,
+          "delta": 0.022799999997019767
+        },
+        {
+          "name": "tick",
+          "start": 20232.70000000298,
+          "ms": 7.200000002980232,
+          "age": 1.8235000000000006,
+          "delta": 0.023099999994039534
+        },
+        {
+          "name": "tick",
+          "start": 20253.80000001192,
+          "ms": 7.699999988079071,
+          "age": 1.8446000000089413,
+          "delta": 0.021100000008940696
+        },
+        {
+          "name": "tick",
+          "start": 20274.30000001192,
+          "ms": 7.899999991059303,
+          "age": 1.8651000000089413,
+          "delta": 0.0205
+        },
+        {
+          "name": "tick",
+          "start": 20294.90000000596,
+          "ms": 7.4000000059604645,
+          "age": 1.8857000000029809,
+          "delta": 0.020599999994039535
+        },
+        {
+          "name": "tick",
+          "start": 20317.40000000596,
+          "ms": 5.5999999940395355,
+          "age": 1.9082000000029808,
+          "delta": 0.0225
+        },
+        {
+          "name": "tick",
+          "start": 20337.70000000298,
+          "ms": 7.299999997019768,
+          "age": 1.9285000000000005,
+          "delta": 0.020299999997019768
+        },
+        {
+          "name": "tick",
+          "start": 20358.20000000298,
+          "ms": 9.799999997019768,
+          "age": 1.9490000000000005,
+          "delta": 0.0205
+        },
+        {
+          "name": "tick",
+          "start": 20383.30000001192,
+          "ms": 8.099999994039536,
+          "age": 1.9741000000089413,
+          "delta": 0.025100000008940696
+        },
+        {
+          "name": "tick",
+          "start": 20410.70000000298,
+          "ms": 11.400000005960464,
+          "age": 2.0015000000000005,
+          "delta": 0.027399999991059302
+        },
+        {
+          "name": "tick",
+          "start": 20437.90000000596,
+          "ms": 9.400000005960464,
+          "age": 2.0286000000089413,
+          "delta": 0.027100000008940698
+        },
+        {
+          "name": "tick",
+          "start": 20461.90000000596,
+          "ms": 8.299999997019768,
+          "age": 2.052700000002981,
+          "delta": 0.024099999994039535
+        },
+        {
+          "name": "tick",
+          "start": 20486.10000000894,
+          "ms": 6.700000002980232,
+          "age": 2.076900000005961,
+          "delta": 0.024200000002980233
+        },
+        {
+          "name": "tick",
+          "start": 20508.30000001192,
+          "ms": 6.5999999940395355,
+          "age": 2.0991000000089413,
+          "delta": 0.02220000000298023
+        },
+        {
+          "name": "tick",
+          "start": 20530.30000001192,
+          "ms": 5.699999988079071,
+          "age": 2.121100000008941,
+          "delta": 0.022
+        },
+        {
+          "name": "tick",
+          "start": 20552.70000000298,
+          "ms": 6.600000008940697,
+          "age": 2.1435000000000004,
+          "delta": 0.022399999991059304
+        },
+        {
+          "name": "tick",
+          "start": 20572.80000001192,
+          "ms": 6.0999999940395355,
+          "age": 2.163600000008941,
+          "delta": 0.020100000008940695
+        },
+        {
+          "name": "tick",
+          "start": 20590.70000000298,
+          "ms": 6.200000002980232,
+          "age": 2.1815,
+          "delta": 0.017899999991059304
+        },
+        {
+          "name": "tick",
+          "start": 20611.30000001192,
+          "ms": 7.199999988079071,
+          "age": 2.2020000000000004,
+          "delta": 0.0205
+        },
+        {
+          "name": "tick",
+          "start": 20629.10000000894,
+          "ms": 8.700000002980232,
+          "age": 2.219900000005961,
+          "delta": 0.017900000005960464
+        },
+        {
+          "name": "tick",
+          "start": 20648.10000000894,
+          "ms": 7,
+          "age": 2.238900000005961,
+          "delta": 0.019
+        },
+        {
+          "name": "tick",
+          "start": 20666.30000001192,
+          "ms": 7.699999988079071,
+          "age": 2.257100000008941,
+          "delta": 0.01820000000298023
+        },
+        {
+          "name": "tick",
+          "start": 20686.5,
+          "ms": 6.600000008940697,
+          "age": 2.27729999999702,
+          "delta": 0.02019999998807907
+        },
+        {
+          "name": "tick",
+          "start": 20704.80000001192,
+          "ms": 7.699999988079071,
+          "age": 2.2955,
+          "delta": 0.01820000000298023
+        },
+        {
+          "name": "tick",
+          "start": 20722.10000000894,
+          "ms": 7.0999999940395355,
+          "age": 2.3129000000059605,
+          "delta": 0.017400000005960464
+        },
+        {
+          "name": "tick",
+          "start": 20739,
+          "ms": 6.300000011920929,
+          "age": 2.32979999999702,
+          "delta": 0.016899999991059303
+        },
+        {
+          "name": "tick",
+          "start": 20756.60000000894,
+          "ms": 5.700000002980232,
+          "age": 2.3474000000059605,
+          "delta": 0.017600000008940696
+        },
+        {
+          "name": "tick",
+          "start": 20772.80000001192,
+          "ms": 7.5999999940395355,
+          "age": 2.3636000000089408,
+          "delta": 0.016200000002980233
+        },
+        {
+          "name": "tick",
+          "start": 20789,
+          "ms": 6.4000000059604645,
+          "age": 2.3797999999970196,
+          "delta": 0.01619999998807907
+        },
+        {
+          "name": "tick",
+          "start": 20805.20000000298,
+          "ms": 7.299999997019768,
+          "age": 2.396,
+          "delta": 0.016200000002980233
+        },
+        {
+          "name": "tick",
+          "start": 20822.80000001192,
+          "ms": 5.899999991059303,
+          "age": 2.4136000000089406,
+          "delta": 0.017600000008940696
+        },
+        {
+          "name": "tick",
+          "start": 20838.20000000298,
+          "ms": 6.100000008940697,
+          "age": 2.429,
+          "delta": 0.015399999991059303
+        },
+        {
+          "name": "tick",
+          "start": 20853.70000000298,
+          "ms": 4.9000000059604645,
+          "age": 2.4444999999999997,
+          "delta": 0.0155
+        },
+        {
+          "name": "tick",
+          "start": 20868.90000000596,
+          "ms": 5,
+          "age": 2.45970000000298,
+          "delta": 0.015200000002980232
+        },
+        {
+          "name": "tick",
+          "start": 20885.70000000298,
+          "ms": 6.200000002980232,
+          "age": 2.4764999999999997,
+          "delta": 0.01679999999701977
+        },
+        {
+          "name": "tick",
+          "start": 20900.40000000596,
+          "ms": 6.200000002980232,
+          "age": 2.49120000000298,
+          "delta": 0.014700000002980232
+        },
+        {
+          "name": "tick",
+          "start": 20915.40000000596,
+          "ms": 7.799999997019768,
+          "age": 2.50620000000298,
+          "delta": 0.015
+        },
+        {
+          "name": "tick",
+          "start": 20931,
+          "ms": 7.5,
+          "age": 2.5217999999970195,
+          "delta": 0.015599999994039536
+        },
+        {
+          "name": "tick",
+          "start": 20947.90000000596,
+          "ms": 4.200000002980232,
+          "age": 2.53870000000298,
+          "delta": 0.016900000005960463
+        },
+        {
+          "name": "tick",
+          "start": 20967.5,
+          "ms": 7,
+          "age": 2.5582999999970193,
+          "delta": 0.019599999994039535
+        },
+        {
+          "name": "tick",
+          "start": 20981.10000000894,
+          "ms": 7.200000002980232,
+          "age": 2.5717999999970194,
+          "delta": 0.0135
+        },
+        {
+          "name": "tick",
+          "start": 21000.40000000596,
+          "ms": 7.4000000059604645,
+          "age": 2.59120000000298,
+          "delta": 0.019400000005960465
+        },
+        {
+          "name": "tick",
+          "start": 21014.30000001192,
+          "ms": 6.0999999940395355,
+          "age": 2.6051000000089406,
+          "delta": 0.013900000005960464
+        },
+        {
+          "name": "tick",
+          "start": 21032,
+          "ms": 7.300000011920929,
+          "age": 2.6227999999970195,
+          "delta": 0.01769999998807907
+        },
+        {
+          "name": "tick",
+          "start": 21047.70000000298,
+          "ms": 7.299999997019768,
+          "age": 2.6384999999999996,
+          "delta": 0.015700000002980233
+        },
+        {
+          "name": "tick",
+          "start": 21064.30000001192,
+          "ms": 4.399999991059303,
+          "age": 2.6551000000089404,
+          "delta": 0.016600000008940696
+        },
+        {
+          "name": "tick",
+          "start": 21081.10000000894,
+          "ms": 4.899999991059303,
+          "age": 2.67190000000596,
+          "delta": 0.01679999999701977
+        },
+        {
+          "name": "tick",
+          "start": 21097.70000000298,
+          "ms": 6,
+          "age": 2.6884999999999994,
+          "delta": 0.016599999994039535
+        },
+        {
+          "name": "tick",
+          "start": 21114.30000001192,
+          "ms": 6.0999999940395355,
+          "age": 2.7051000000089402,
+          "delta": 0.016600000008940696
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21157.70000000298,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21170.60000000894,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21194.10000000894,
+          "ms": 0.09999999403953552,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21215.80000001192,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21236.5,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21264.10000000894,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21287.10000000894,
+          "ms": 0.09999999403953552,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21325.5,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21348.60000000894,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21368.5,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21393.80000001192,
+          "ms": 0.09999999403953552,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21415.30000001192,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21431.90000000596,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21470.10000000894,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21494.80000001192,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21515.80000001192,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21537.10000000894,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21562.30000001192,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21577.5,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21598.80000001192,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21618.80000001192,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21635.30000001192,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21651.30000001192,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21667.60000000894,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21688.20000000298,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21708.10000000894,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21723.5,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21745.80000001192,
+          "ms": 0.09999999403953552,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21766.30000001192,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21782,
+          "ms": 0.10000000894069672,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21798.70000000298,
+          "ms": 0.10000000894069672,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21815.10000000894,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21832.10000000894,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21849.5,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21870.30000001192,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21891.10000000894,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21913.30000001192,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21934.20000000298,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21955.30000001192,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 21978.90000000596,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 22003.10000000894,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 22021.30000001192,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 22038.60000000894,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        },
+        {
+          "name": "playHeroAnimation",
+          "start": 22058.5,
+          "ms": 0,
+          "age": 2.7051000000089402,
+          "delta": "walk"
+        }
+      ],
+      "cpuProfile": null,
+      "nextRoom": null,
+      "errors": [],
+      "videoPath": "/tmp/rpg-next-spell-video/page@1e68c27497ab2ec7cee26c701793953a.webm"
+    }
+  ]
+}

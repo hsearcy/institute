@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
 import { OrthographicCamera, Vector3 } from 'three';
-import { dungeonCameraHalfHeight, dungeonCameraVerticalOffset, dungeonPortraitOffset } from '../src/rpg/world/viewport';
-import { getRoomLayout } from '../src/rpg/world/roomLayout';
+import { dungeonCameraHalfHeight, dungeonCameraVerticalOffset, dungeonPortraitOffset, dungeonCombatFrame } from '../src/rpg/world/viewport';
+import { enemyPositions, getRoomLayout } from '../src/rpg/world/roomLayout';
+import { enemyRoster } from '../src/rpg/world/enemyRoster';
 
 function cameraFor(width: number, height: number, room = 0, separateControls = false) {
   const half = dungeonCameraHalfHeight(width, height, separateControls), aspect = width / height, layout = getRoomLayout(room);
@@ -67,4 +68,47 @@ test('Portrait framing keeps the hero and surrounding spell space above an open 
   assert.equal(dungeonPortraitOffset(390, 844, NaN, 500), 0);
   assert.equal(dungeonPortraitOffset(390, 844, 500, 100), 0);
   assert(dungeonPortraitOffset(390, 844, 118, 484) < dungeonPortraitOffset(390, 844, 118, 650));
+});
+
+test('Complete landscape formations fit below the boss/header and above the dock', () => {
+  for (const [width, height] of [[622,305], [440,275], [368,235]]) for (let room = 0; room < 6; room++) {
+    const camera = cameraFor(width, height, room, true), layout = getRoomLayout(room);
+    const roster = enemyRoster(room, 10), formation = enemyPositions(room, 10);
+    const points = [new Vector3(layout.heroX, 0, layout.heroZ), new Vector3(layout.heroX, 2.1, layout.heroZ),
+      ...formation.flatMap((point, i) => [new Vector3(point.x, 0, point.z), new Vector3(point.x, roster[i].height + .55, point.z)])];
+    const ys = points.map(point => (1 - point.clone().project(camera).y) * height / 2);
+    const top = room === 5 ? 100 : 56, bottom = height - 22;
+    const frame = dungeonCombatFrame(Math.min(...ys), Math.max(...ys), top, bottom, height);
+    const half = dungeonCameraHalfHeight(width, height, true) * frame.scale;
+    const offset = frame.shift * 2 * half / height;
+    camera.left = -half * width / height; camera.right = half * width / height;
+    camera.top = half + offset; camera.bottom = -half + offset; camera.updateProjectionMatrix();
+    for (const point of points) {
+      const y = (1 - point.clone().project(camera).y) * height / 2;
+      assert(y >= top - 1e-7 && y <= bottom + 1e-7, `Room ${room} actor overlaps HUD at ${width}×${height}: ${y}`);
+    }
+    if (Math.max(...ys) - Math.min(...ys) <= bottom - top) assert.equal(frame.scale, 1, 'Keep closer zoom whenever the formation fits');
+  }
+});
+
+test('Portrait framing keeps full shoulder and weapon envelopes inside both edges', () => {
+  for (const [width, height] of [[360,800], [390,844], [430,932]]) for (let room = 0; room < 6; room++) {
+    const camera = cameraFor(width, height, room), layout = getRoomLayout(room);
+    const roster = enemyRoster(room, 10), right = new Vector3(1,0,0).applyQuaternion(camera.quaternion);
+    const points = enemyPositions(room, 10).flatMap((point, index) => {
+      const radius = roster[index].brute ? roster[index].height * .4 : .72;
+      return [-1,1].map(side => new Vector3(point.x, 0, point.z).addScaledVector(right, radius * side));
+    });
+    points.push(...[-1,1].map(side => new Vector3(layout.heroX, 0, layout.heroZ).addScaledVector(right, .65 * side)));
+    const xs = points.map(point => (point.clone().project(camera).x + 1) * width / 2);
+    const fit = dungeonCombatFrame(Math.min(...xs), Math.max(...xs), 18, width - 18, width);
+    const half = dungeonCameraHalfHeight(width, height) * fit.scale, pan = -fit.shift * 2 * half / height;
+    camera.left = -half * width / height + pan; camera.right = half * width / height + pan;
+    camera.top = half; camera.bottom = -half; camera.updateProjectionMatrix();
+    for (const point of points) {
+      const x = (point.clone().project(camera).x + 1) * width / 2;
+      assert(x >= 18 - 1e-7 && x <= width - 18 + 1e-7, `Room ${room} clips at ${width}×${height}: ${x}`);
+    }
+    if (room === 0 || room === 5) assert.equal(fit.scale, 1, 'Starter and boss formations retain the closer portrait zoom');
+  }
 });

@@ -1,14 +1,13 @@
-import { RPG_ITEMS, RPG_SCHOOLS, RPG_SPELLS, rpgEncounterKills, rpgItemApplies, type RpgState } from '@institute/shared';
+import { RPG_ITEMS, RPG_SCHOOLS, RPG_SPELLS, rpgSpellCombatStats, rpgItemApplies, type RpgState } from '@institute/shared';
 import { escapeHtml as esc, icon, relicArt } from './icons';
 
 /** Equipment presentation uses the saved loadout and existing equip handlers. */
 export function renderEquipmentView(state: RpgState, armor: string, playing: boolean): string {
   const equipped = RPG_ITEMS.find(item => item.id === state.equippedItemId) ?? RPG_ITEMS[0];
   const spell = RPG_SPELLS.find(entry => entry.id === state.selectedSpellId)!;
-  const room = state.expedition && !state.expedition.cleared ? state.expedition.encounterIndex : 0;
+  const power = rpgSpellCombatStats(state, spell.id);
   const applies = rpgItemApplies(equipped, spell.id);
-  const description = equipped.description.replace(/ and catch(?:es)? \d+ more monsters\.$/, '.')
-    .replace(/^Every ability catches \d+ more monsters\.$/, 'Strengthens every spell.');
+  const description = equipped.description;
   const scope = equipped.scope === 'all' ? 'Every spell' : equipped.scope === 'school'
     ? `${RPG_SCHOOLS.find(school => school.id === equipped.school)!.name} spells`
     : RPG_SPELLS.find(entry => entry.id === equipped.spellId)!.name;
@@ -18,7 +17,7 @@ export function renderEquipmentView(state: RpgState, armor: string, playing: boo
       <section class="rpg-armory-equipped ${equipped.rarity}" aria-label="Equipped relic">
         <div class="rpg-armory-display"><div class="rpg-armory-bezel">${relicArt(equipped.id)}</div><span aria-hidden="true">◆</span></div>
         <div class="rpg-armory-copy"><small>${equipped.rarity.toUpperCase()} · EQUIPPED</small><h3>${esc(equipped.name)}</h3><p>${esc(description)}</p><span class="rpg-armory-scope">${esc(scope)}</span></div>
-        <div class="rpg-armory-power"><strong>${rpgEncounterKills(state, room)}</strong><span>monsters per cast<small>${esc(spell.name)} · ${room === 0 ? 'first room' : `room ${room + 1}`}</small></span></div>
+        <div class="rpg-armory-power"><strong>${power.damage}</strong><span>damage per target<small>Up to ${power.targets} targets · ${esc(spell.name)}</small></span></div>
         ${!applies ? `<p class="rpg-armory-mismatch">This relic strengthens ${esc(scope)}. Choose a matching spell to use its power.</p>` : ''}
         <button class="rpg-armory-spell-link" data-action="spellbook">Open spellbook <span aria-hidden="true">→</span></button>
       </section>

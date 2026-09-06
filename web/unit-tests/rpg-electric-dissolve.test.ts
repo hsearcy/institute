@@ -1,7 +1,30 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
 import * as THREE from 'three';
-import { createElectricDissolve } from '../src/rpg/world/electricDissolve';
+import { cloneErosionProgramMaterial, createElectricDissolve } from '../src/rpg/world/electricDissolve';
+
+test('Prepared erosion programs retain exact shader hooks after an encounter releases its materials', () => {
+  const geometry = new THREE.BoxGeometry(), source = new THREE.MeshStandardMaterial();
+  const binding = createElectricDissolve(geometry, source, 2);
+  const originals = [binding.materialFor('burn') as THREE.Material, binding.depth];
+  const retained = originals.map(cloneErosionProgramMaterial);
+  let retainedDisposals = 0;
+  retained.forEach(material => material.addEventListener('dispose', () => retainedDisposals++));
+  for (let index = 0; index < originals.length; index++) {
+    const original = originals[index], material = retained[index];
+    assert.notEqual(material, original);
+    assert.equal(material.customProgramCacheKey(), original.customProgramCacheKey());
+    const shader = index ? THREE.ShaderLib.depth : THREE.ShaderLib.standard;
+    const a = { vertexShader: shader.vertexShader, fragmentShader: shader.fragmentShader, uniforms: {} };
+    const b = { vertexShader: shader.vertexShader, fragmentShader: shader.fragmentShader, uniforms: {} };
+    original.onBeforeCompile(a, {} as THREE.WebGLRenderer); material.onBeforeCompile(b, {} as THREE.WebGLRenderer);
+    assert.equal(a.vertexShader, b.vertexShader); assert.equal(a.fragmentShader, b.fragmentShader);
+    assert(b.fragmentShader.includes('electricField()'), 'A retained witness must compile the erosion variant, not a plain material');
+  }
+  binding.dispose(); assert.equal(retainedDisposals, 0);
+  retained.forEach(material => material.dispose()); assert.equal(retainedDisposals, 2);
+  geometry.dispose(); source.dispose();
+});
 
 test('Electric erosion owns its batch resources and leaves cached asset surfaces unchanged', () => {
   const source = new THREE.BoxGeometry(), material = new THREE.MeshStandardMaterial({ color: 0x86949b });
@@ -44,4 +67,24 @@ test('Surface and shadow shaders discard the same world-space erosion and guard 
   assert(shaders[0].fragmentShader.includes('totalEmissiveRadiance+='));
   assert(!shaders[1].fragmentShader.includes('totalEmissiveRadiance+='));
   binding.dispose(); source.dispose(); material.dispose();
+});
+
+test('Burn response caches only its surface variant and preserves electric and shadow erosion', () => {
+  const source = new THREE.BoxGeometry(), material = new THREE.MeshStandardMaterial();
+  const binding = createElectricDissolve(source, material, 2);
+  const electric = binding.material as THREE.Material, burn = binding.materialFor('burn') as THREE.Material;
+  assert.equal(binding.materialFor('electric'), electric);
+  assert.equal(binding.materialFor('burn'), burn, 'Repeated selection reuses the owned surface');
+  assert.notEqual(burn, electric); assert.notEqual(burn.customProgramCacheKey(), electric.customProgramCacheKey());
+  const shaders = [electric, burn].map(surface => {
+    const shader = { ...THREE.ShaderLib.standard, uniforms: {} }; surface.onBeforeCompile(shader, {} as THREE.WebGLRenderer); return shader;
+  });
+  assert.equal(shaders[0].vertexShader, shaders[1].vertexShader);
+  assert.equal(shaders[0].fragmentShader, shaders[1].fragmentShader.replace('vec3(.08,.026,.006)', 'vec3(.015,.05,.08)'), 'Burn changes only the residual hue, preserving accepted erosion');
+  binding.set(0, .8); binding.set(1, .2); binding.set(0, 0); binding.set(1, 0);
+  assert.deepEqual(Array.from(binding.amount.array), [0, 0], 'One shared reset clears both surface variants');
+  let disposed = 0;
+  for (const owned of [binding.geometry, electric, burn, binding.depth]) owned.addEventListener('dispose', () => disposed++);
+  binding.dispose(); assert.equal(disposed, 4);
+  source.dispose(); material.dispose();
 });

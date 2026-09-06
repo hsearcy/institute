@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/'web/public/assets/rpg'
-expected=('hero','hero-cinder','hero-glacier','hero-tempest','imp','guardian','pillar','arch','brazier','crystal','chest','wall','wall-bay','broken-wall','skeleton','revenant','wraith','furnace','reliquary','ice_cluster')
+expected=('hero','hero-cinder','hero-glacier','hero-tempest','imp','guardian','pillar','masonry-pier','masonry-post','arch','brazier','crystal','chest','wall','wall-bay','broken-wall','skeleton','revenant','wraith','furnace','reliquary','ice_cluster')
 stats={}
 for name in expected:
     path=OUT/(name+'.glb');data=path.read_bytes()
@@ -34,7 +34,10 @@ for name in expected:
             material=doc['materials'][primitive['material']]
             if material.get('pbrMetallicRoughness',{}).get('baseColorTexture') is not None:
                 assert 'TEXCOORD_0' in attrs
-                assert 'normalTexture' in material and 'occlusionTexture' in material
+                assert 'normalTexture' in material
+                # The authored hero preserves source PBR response and has no
+                # separate AO sampler; legacy kit atlases still require theirs.
+                if name!='hero':assert 'occlusionTexture' in material
                 assert 'metallicRoughnessTexture' in material['pbrMetallicRoughness']
             accessor=doc['accessors'][attrs['POSITION']]
             assert all(math.isfinite(x) for x in accessor['min']+accessor['max'])
@@ -65,11 +68,22 @@ for name in expected:
     if name=='hero' or name.startswith('hero-'):
         clips=doc.get('animations',[])
         assert {a['name'] for a in clips}=={'idle','walk','cleave','cast'}
-        assert len(doc.get('skins',[]))==1 and len(doc['skins'][0]['joints'])==8
+        assert len(doc.get('skins',[]))==1
+        if name=='hero':
+            assert doc['asset'].get('extras',{}).get('authoredHeroTexturePacking')==1
+            import runpy
+            candidate_validator=runpy.run_path(str(ROOT/'scripts/blender/experiments/validate_authored_hero_candidate.py'))['validate']
+            candidate_validator(path) # Exact19-joint identity/hierarchy, weights and clip timing.
+            assert triangles<=65_000 and len(data)<9_000_000
+            stats[name]['provenance']={'license':'CC0','creator':'Your_Dankest_Meme / GlutamateAntagonist','source':'https://www.reddit.com/r/blender/comments/1hhptp6/please_use_my_models_as_you_see_fit/','sourceSha256':'3f48d820b532677426ebae5ad77175faefc55f0ef4b071f523a4a97b5ab253ce','licenseEvidence':'scripts/blender/sources/cc0-hooded-warrior'}
+            stats[name]['portrait']='/assets/rpg/appearances/wayfarer.png'
+            assert (OUT/'appearances/wayfarer.png').read_bytes()[:8]==b'\x89PNG\r\n\x1a\n'
+        else:
+            assert len(doc['skins'][0]['joints'])==8
         assert all('JOINTS_0' in p['attributes'] and 'WEIGHTS_0' in p['attributes'] for m in doc['meshes'] for p in m['primitives'])
         stats[name]['animations']={a['name']:max(doc['accessors'][s['input']]['max'][0] for s in a['samplers']) for a in clips}
         stats[name]['joints']=[doc['nodes'][i]['name'] for i in doc['skins'][0]['joints']]
-    assert len(data)<8_000_000,(name,len(data))
+    assert len(data)<(9_000_000 if name=='hero' else 8_000_000),(name,len(data))
     if name.startswith('hero-'):
         assert len(data)<4_000_000 and triangles<25_000
         portrait=OUT/'appearances'/(name.removeprefix('hero-')+'.png')
@@ -81,6 +95,10 @@ for name in expected:
         right_forearm=next(n for n in doc['nodes'] if n.get('extras',{}).get('enemyJoint')=='ArmLowerR')
         assert sword in right_forearm['children']
     if name=='ice_cluster':assert len(data)<600_000 and triangles<5000
+    if name in ('masonry-pier','masonry-post'):
+        assert triangles<(6_000 if name=='masonry-post' else 12_000) and primitives==1 and len(doc.get('images',[]))==3
+        assert len(data)<(3_600_000 if name=='masonry-post' else 3_500_000) and not doc.get('skins') and not doc.get('animations')
+        stats[name]['provenance']={'license':'CC0','textureSource':'https://polyhaven.com/a/rock_face_03','source':'scripts/blender/detailed/masonry_pier.py','licenseEvidence':'scripts/blender/sources/rock-face-03'}
 relief_walls=[stats[name] for name in ('wall-bay','broken-wall')]
 assert sum(asset['bytes'] for asset in relief_walls)<5_000_000
 assert sum(asset['triangles'] for asset in relief_walls)<71_173

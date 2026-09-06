@@ -24,7 +24,7 @@ export type RoomLayout = Readonly<{
 /** Floor occupancy only: animated guardian shoulders can extend beyond this radius. */
 export const ENEMY_FOOTPRINT_RADIUS = .48;
 export const MIN_ENEMY_SPACING = 1.02;
-export const MAX_ROOM_ENEMIES = 96;
+export const MAX_ROOM_ENEMIES = 10;
 
 /** The crossing has two real floor openings beside its 9.6m-wide central bridge. */
 export function isCrossingChasm(roomIndex: number, x: number, z: number): boolean {
@@ -103,10 +103,18 @@ function fits(layout: RoomLayout, point: RoomPoint): boolean {
     && layout.landmarks.every(landmark => Math.hypot(point.x - landmark.x, point.z - landmark.z) >= landmark.radius + r);
 }
 
-/** A jittered triangular lattice keeps capacity bounded and avoids random rejection failures.
- * Small packs form loose groups around the anchors; larger packs occupy the remaining
- * open floor before filling gaps. Selection depends on prefix length, never final count.
- */
+/** Approximate screen-space body envelope for the fixed isometric camera.
+ * Guards need shoulder room as well as safe foot placement. */
+export function enemyScreenEnvelope(point: RoomPoint, index: number, roomIndex: number) {
+  const boss = roomIndex === 5 && index === 0, heavy = index % 7 === 0;
+  const height = boss ? 3.8 : heavy ? 2.5 : 1.85;
+  const horizontal = Math.hypot(17, 20), length = Math.hypot(horizontal, 25);
+  return { x: (20 * point.x - 17 * point.z) / horizontal,
+    y: -(17 * point.x + 20 * point.z) * 25 / (horizontal * length) + height * horizontal / length * .5,
+    rx: boss ? 1.28 : heavy ? .92 : .44, ry: height * horizontal / length * .5 + .08 };
+}
+
+/** Stable small formations respect floor, route and projected body clearance. */
 export function enemyPositions(roomIndex: number, count: number): RoomPoint[] {
   const layout = getRoomLayout(roomIndex);
   const wanted = Number.isFinite(count) ? Math.max(0, Math.min(MAX_ROOM_ENEMIES, Math.trunc(count))) : 0;
@@ -123,6 +131,14 @@ export function enemyPositions(roomIndex: number, count: number): RoomPoint[] {
       if (fits(layout, point) && result.every(other => Math.hypot(point.x - other.x, point.z - other.z) >= MIN_ENEMY_SPACING)) candidates.push(point);
     }
   }
+  const separated = (point: RoomPoint) => {
+    const candidate = enemyScreenEnvelope(point, result.length, roomIndex);
+    return result.every((other, index) => {
+      const body = enemyScreenEnvelope(other, index, roomIndex);
+      return Math.abs(candidate.x - body.x) >= candidate.rx + body.rx + .18
+        || Math.abs(candidate.y - body.y) >= candidate.ry + body.ry + .12;
+    });
+  };
   const used = new Set<number>();
   const distanceSquared = (a: RoomPoint, b: RoomPoint) => (a.x - b.x) ** 2 + (a.z - b.z) ** 2;
   const clearance = candidates.map(point => result.length ? Math.min(...result.map(other => distanceSquared(point, other))) : Infinity);
@@ -138,22 +154,19 @@ export function enemyPositions(roomIndex: number, count: number): RoomPoint[] {
     let nearest = -1, distance = Infinity;
     for (let i = 0; i < candidates.length; i++) {
       const next = distanceSquared(anchor, candidates[i]);
-      if (!used.has(i) && next < distance) { nearest = i; distance = next; }
+      if (!used.has(i) && separated(candidates[i]) && next < distance) { nearest = i; distance = next; }
     }
     if (nearest !== -1) select(nearest);
   }
   while (result.length < wanted) {
     let best = -1, score = -Infinity;
-    const grouping = result.length < 24;
     const anchor = layout.hordeAnchors[(result.length - (layout.bossAnchor ? 1 : 0)) % layout.hordeAnchors.length];
     const groupClearance = 1.8;
     for (let i = 0; i < candidates.length; i++) {
       // Capping the attraction to empty space keeps small packs together instead
       // of sending their next member to the farthest corner of the entire room.
-      const next = grouping
-        ? (clearance[i] >= groupClearance ** 2 ? 1 : .01) * weights[i] / (1 + distanceSquared(candidates[i], anchor) * .28)
-        : clearance[i] * weights[i];
-      if (!used.has(i) && next > score) { best = i; score = next; }
+      const next = (clearance[i] >= groupClearance ** 2 ? 1 : .01) * weights[i] / (1 + distanceSquared(candidates[i], anchor) * .18);
+      if (!used.has(i) && clearance[i] >= MIN_ENEMY_SPACING ** 2 && separated(candidates[i]) && next > score) { best = i; score = next; }
     }
     if (best === -1) throw new Error(`Room ${layout.id} cannot fit ${wanted} enemies safely (${result.length} available)`);
     select(best);

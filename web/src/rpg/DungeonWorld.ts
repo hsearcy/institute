@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { RPG_SPELLS, RPG_APPEARANCES, type RpgAppearanceId } from '@institute/shared';
+import { RPG_SPELLS, RPG_APPEARANCES, type RpgAppearanceId, type RpgCombatEnemy, type RpgCombatResult } from '@institute/shared';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js';
@@ -9,26 +9,30 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
-import { dungeonCameraHalfHeight, dungeonCameraVerticalOffset, dungeonPortraitOffset } from './world/viewport';
+import { dungeonCameraHalfHeight, dungeonCameraVerticalOffset, dungeonPortraitOffset, dungeonCombatFrame } from './world/viewport';
 import { crystalClusterGeometry, crystalClusterMaterial } from './world/crystals';
 import { iceShardGeometry, iceShardMaterial } from './world/ice';
 import { lightningGeometry, lightningMaterial } from './world/lightning';
-import { createBallLightning, createBallLightningContacts, ballLightningVolumeMaterial, ballLightningFilamentMaterial, ballLightningContactMaterial } from './world/ballLightning';
+import { createBallLightning, createBallLightningCharge, ballLightningReleasePosition, createBallLightningContacts, ballLightningVolumeMaterial, ballLightningFilamentMaterial, ballLightningContactMaterial } from './world/ballLightning';
+import { createFireNova, createFireNovaContacts, createNovaIgnition, fireNovaFrontMaterial, fireNovaVolumeMaterial } from './world/fireNova';
 import { phoenixWingGeometry, phoenixTailGeometry, stormFilamentsGeometry } from './world/spellShapes';
 import { phoenixFeatherMaterial, stormWispMaterial } from './world/materials';
 import { enemyRoster } from './world/enemyRoster';
 import { EnemyAnimator } from './world/EnemyAnimator';
-import { createElectricDissolve } from './world/electricDissolve';
+import { createHitReaction, sampleHitReaction, type HitReaction, type CombatHit } from './world/hitReactions';
+import { advanceHeroTravel, heroDoorwayRoute, setPlanarHeroHeading, settleHeroTravel } from './world/heroLocomotion';
+import { cloneErosionProgramMaterial, createElectricDissolve } from './world/electricDissolve';
 import { createVaultScenery } from './world/scenery';
+import { brokenGateWallCrown, gateBreach, roomHasTomb } from './world/gateComposition';
 import { createArchitecturalRemnant, ruinGeometry, isRuinFootprintClear, type RuinKind } from './world/ruins';
 import { masonryGeometry, projectStoneUV } from './world/masonry';
 import { getRoomLayout, enemyPositions, isCrossingChasm, roomFloorPatches } from './world/roomLayout';
 import { stoneMaterial, floorRelief, flameMaterial, fireSheetMaterial, firePlumeMaterial, bladeWakeMaterial, ashMaterial, novaMaterial, glowTexture, waveTexture } from './world/materials';
 
-type Enemy = { root: THREE.Group; visual: THREE.Object3D; origin: THREE.Vector3; phase: number; brute: boolean; dead: boolean; modelId: string; height: number; deathAt: number; animator: EnemyAnimator };
+type Enemy = { id: string; hp: number; maxHp: number; root: THREE.Group; visual: THREE.Object3D; origin: THREE.Vector3; phase: number; brute: boolean; dead: boolean; modelId: string; height: number; deathAt: number; animator: EnemyAnimator };
 type Fragment = { position: THREE.Vector3; velocity: THREE.Vector3; rotation: THREE.Vector3; spin: THREE.Vector3; scale: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; hot: boolean; bounced: boolean };
 type Particle = { position: THREE.Vector3; velocity: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; size: number };
-type AttackOptions = { echo?: boolean; wide?: boolean; burning?: boolean; shards?: boolean; chains?: boolean; pierce?: boolean; orbit?: boolean; summon?: boolean; itemId?: string; kills?: number; drop?: { name: string; rarity: string }; xp?: number };
+type AttackOptions = { combat?: RpgCombatResult; echo?: boolean; wide?: boolean; burning?: boolean; shards?: boolean; chains?: boolean; pierce?: boolean; orbit?: boolean; summon?: boolean; itemId?: string; kills?: number; drop?: { name: string; rarity: string }; xp?: number };
 type Effect = { mesh: THREE.Mesh; age: number; duration: number; kind: 'ring' | 'slash' | 'beam' | 'ground' | 'shard' | 'custom'; radius: number; update?: (t: number, delta: number) => void };
 
 /** Presentation only. Time, animations and damage never decide learning or rewards. */
@@ -48,9 +52,12 @@ export class DungeonWorld {
   private heroMixer?: THREE.AnimationMixer;
   private readonly heroActions = new Map<string, THREE.AnimationAction>();
   private heroAnimation = '';
+  private heroUsesAuthoredMotion = false;
   private readonly floorGroup = new THREE.Group();
   private vaultScenery?: THREE.Group;
   private sceneryMeshes: THREE.Object3D[] = [];
+  private readonly masonryPiers: { room: number; x: number; z: number; height: number; baseY: number }[] = [];
+  private readonly masonryPosts: { room: number; x: number; z: number; height: number; baseY: number }[] = [];
   private readonly enemyGroup = new THREE.Group();
   private readonly effectsGroup = new THREE.Group();
   private readonly propGroup = new THREE.Group();
@@ -69,6 +76,7 @@ export class DungeonWorld {
   private readonly materials: Record<string, THREE.MeshStandardMaterial>;
   private readonly models = new Map<string, THREE.Group>();
   private readonly preparedMaterials: THREE.Material[] = [];
+  private drawWarmup?: { programs: number; durationMs: number };
   private readonly particles: Particle[] = [];
   private readonly fragments: Fragment[] = [];
   private readonly fragmentTransform = new THREE.Object3D();
@@ -84,6 +92,7 @@ export class DungeonWorld {
   private readonly livingFlame = flameMaterial();
   private readonly torches: { flame: THREE.Mesh; light?: THREE.PointLight; position: THREE.Vector3; phase: number }[] = [];
   private readonly effects: Effect[] = [];
+  private novaContacts?: ReturnType<typeof createFireNovaContacts>;
   private readonly enemies: Enemy[] = [];
   private readonly enemyInstances: { mesh: THREE.InstancedMesh; sources: THREE.Mesh[]; roots: THREE.Group[]; baseMaterial: THREE.Material | THREE.Material[]; dissolve: ReturnType<typeof createElectricDissolve> }[] = [];
   private lastFrameAt = performance.now();
@@ -103,6 +112,8 @@ export class DungeonWorld {
   private attackDuration = 2.65;
   private lastAttack: { spellId: string; effect: string; options: AttackOptions } | null = null;
   private heroMotion?: (age: number) => THREE.Vector3;
+  private heroTravelSpeed = 0;
+  private heroTravelWaypoints: THREE.Vector3[] = [];
   private readonly summoned: { root: THREE.Group; age: number; duration: number; update: (t: number) => void }[] = [];
   private shake = 0;
   private attackResolve?: () => void;
@@ -193,7 +204,7 @@ export class DungeonWorld {
 
   async load(): Promise<void> {
     const loader = new GLTFLoader();
-    await Promise.all(['hero', 'hero-cinder', 'hero-glacier', 'hero-tempest', 'imp', 'guardian', 'arch', 'pillar', 'brazier', 'crystal', 'chest', 'wall-bay', 'broken-wall', 'skeleton', 'revenant', 'wraith', 'furnace', 'reliquary', 'ice_cluster'].map(async name => {
+    await Promise.all(['hero', 'hero-cinder', 'hero-glacier', 'hero-tempest', 'imp', 'guardian', 'arch', 'pillar', 'masonry-pier', 'masonry-post', 'brazier', 'crystal', 'chest', 'wall-bay', 'broken-wall', 'skeleton', 'revenant', 'wraith', 'furnace', 'reliquary', 'ice_cluster'].map(async name => {
       try {
         const gltf = await loader.loadAsync(`/assets/rpg/${name}.glb`);
         if (this.disposed) return;
@@ -251,12 +262,17 @@ export class DungeonWorld {
     });
     this.batchEnemies();
     this.addModelProps();
+    this.installMasonryPiers();
+    this.installMasonryPosts();
     this.biomeBuilt = ""; this.buildBiome();
     this.renderer.shadowMap.needsUpdate = true;
     // Compile authored actors and uncommon effect programs during loading,
     // before a child's first cast would otherwise pay the shader setup cost.
     const warmup = new THREE.Group(); warmup.position.y = -1000;
-    const warmMaterials: THREE.Material[] = [novaMaterial(), fireSheetMaterial(), firePlumeMaterial(0, 1), bladeWakeMaterial(), ashMaterial(), phoenixFeatherMaterial(), stormWispMaterial(0x7787a4), stormWispMaterial(0xa9bdff, true), lightningMaterial(0xa9bdff), ballLightningVolumeMaterial(), ballLightningFilamentMaterial(), ballLightningContactMaterial(), ballLightningContactMaterial(true)];
+    const warmMaterials: THREE.Material[] = [novaMaterial(), fireSheetMaterial(), firePlumeMaterial(0, 1), bladeWakeMaterial(), ashMaterial(), phoenixFeatherMaterial(), stormWispMaterial(0x7787a4), stormWispMaterial(0xa9bdff, true), lightningMaterial(0xa9bdff), ballLightningVolumeMaterial(), ballLightningFilamentMaterial(), ballLightningContactMaterial(), ballLightningContactMaterial(true), fireNovaFrontMaterial(), fireNovaVolumeMaterial()];
+    const ignitionWarmup = createNovaIgnition();
+    for (const layer of [ignitionWarmup.mesh, ignitionWarmup.seed]) { warmMaterials.push(layer.material); layer.geometry.dispose(); }
+    for (const layer of createFireNovaContacts(1).layers) { warmMaterials.push(layer.material); layer.geometry.dispose(); }
     for (const material of warmMaterials) warmup.add(new THREE.Mesh(new THREE.PlaneGeometry(.01, .01), material));
     const summon = this.model('guardian', 4.5);
     summon?.traverse(object => { if (object instanceof THREE.Mesh && object.material instanceof THREE.MeshStandardMaterial) { object.material = object.material.clone(); object.material.transparent = true; warmMaterials.push(object.material); } });
@@ -264,13 +280,78 @@ export class DungeonWorld {
     this.scene.add(warmup);
     try {
       await this.renderer.compileAsync(this.scene, this.camera);
-      this.setElectricMaterials(true);
-      await this.renderer.compileAsync(this.scene, this.camera);
     } catch { /* Drivers without parallel compilation compile on first render. */ }
-    finally { this.setElectricMaterials(false); }
     this.scene.remove(warmup); this.preparedMaterials.push(...warmMaterials);
     for (const object of warmup.children) if (object instanceof THREE.Mesh) object.geometry.dispose();
+    this.prepareSpellDraws();
     this.loadedAt = performance.now();
+  }
+
+  private prepareSpellDraws(): void {
+    // compileAsync links surface programs but does not draw their instanced
+    // geometry or shadow variants. Prepare those passes behind the loading
+    // screen; no await may expose these temporary bindings to the normal RAF.
+    const started = performance.now(), renderer = this.renderer;
+    const target = this.composer.readBuffer.clone();
+    target.setSize(this.softwareRenderer ? 128 : 512, this.softwareRenderer ? 128 : 512);
+    const previousTarget = renderer.getRenderTarget();
+    const previousFace = renderer.getActiveCubeFace(), previousMip = renderer.getActiveMipmapLevel();
+    const viewport = renderer.getViewport(new THREE.Vector4()), scissor = renderer.getScissor(new THREE.Vector4());
+    const scissorTest = renderer.getScissorTest(), shadowDirty = renderer.shadowMap.needsUpdate;
+    const retainVariant = <T extends THREE.Material>(source: T): T => {
+      const material = cloneErosionProgramMaterial(source);
+      this.preparedMaterials.push(material);
+      return material;
+    };
+    const retainSurface = (source: THREE.Material | THREE.Material[]) => Array.isArray(source) ? source.map(retainVariant) : retainVariant(source);
+    const bindings = this.enemyInstances.map(({ mesh, dissolve }) => ({
+      mesh, material: mesh.material, depth: mesh.customDepthMaterial,
+      electric: retainSurface(dissolve.materialFor('electric')),
+      burn: retainSurface(dissolve.materialFor('burn')),
+      warmDepth: retainVariant(dissolve.depth),
+    }));
+    const origin = this.hero.position.clone(), view = this.camera.getWorldDirection(new THREE.Vector3()).negate();
+    const ignition = createNovaIgnition(), wave = createFireNova(8.8, 1, this.encounter);
+    const contacts = createFireNovaContacts(Math.max(1, this.enemies.length), false, this.encounter);
+    const ball = createBallLightning(1, 1 / renderer.getPixelRatio());
+    const electricalContacts = createBallLightningContacts(Math.max(1, this.enemies.length));
+    const discharge = new THREE.Mesh(lightningGeometry(origin.clone().setY(1.2), origin.clone().add(new THREE.Vector3(1.5, .9, -1)), .03, view, 1), lightningMaterial(0x7abaff));
+    const layers = [ignition.mesh, ignition.seed, ...wave.layers, ...contacts.layers, ...ball.layers, ...electricalContacts.layers, discharge];
+    const hand = origin.clone().setY(1.5), ground = origin.clone().setY(.06);
+    this.heroVisual.getObjectByName('CastOrigin')?.getWorldPosition(hand);
+    ignition.update(hand, ground, .13, new THREE.Vector3(.7, 0, 0));
+    wave.update(origin, view, .3, this.elapsed);
+    contacts.strike(0, origin, view.clone().setY(0).normalize(), this.elapsed, .9);
+    contacts.update(this.elapsed + .07);
+    ball.update(origin.clone().setY(1.2), view, .2, this.elapsed);
+    electricalContacts.strike(0, origin.clone().setY(.9), view, this.elapsed);
+    electricalContacts.update(this.elapsed + .04);
+    this.scene.add(...layers);
+    try {
+      renderer.setRenderTarget(target);
+      renderer.setScissorTest(false);
+      for (const style of [undefined, 'electric', 'burn'] as const) {
+        for (const binding of bindings) {
+          binding.mesh.material = style ? binding[style] : binding.material;
+          binding.mesh.customDepthMaterial = style ? binding.warmDepth : binding.depth;
+        }
+        renderer.shadowMap.needsUpdate = true;
+        renderer.render(this.scene, this.camera);
+      }
+      // Complete first-use driver work before the loading promise resolves.
+      renderer.getContext().finish();
+      this.drawWarmup = { programs: renderer.info.programs?.length ?? 0, durationMs: performance.now() - started };
+    } finally {
+      for (const binding of bindings) { binding.mesh.material = binding.material; binding.mesh.customDepthMaterial = binding.depth; }
+      renderer.setRenderTarget(previousTarget, previousFace, previousMip);
+      renderer.setViewport(viewport); renderer.setScissor(scissor); renderer.setScissorTest(scissorTest);
+      renderer.shadowMap.needsUpdate = shadowDirty;
+      this.scene.remove(...layers);
+      // Keep material references: disposing them here can evict the very
+      // programs that the first real cast should reuse.
+      for (const layer of layers) { layer.geometry.dispose(); this.preparedMaterials.push(layer.material); }
+      target.dispose(); renderer.info.reset();
+    }
   }
 
   private model(name: string, height: number): THREE.Group | undefined {
@@ -347,6 +428,11 @@ export class DungeonWorld {
     // Scenery clones the base stone materials. Recreate it after bundled maps
     // load so rubble uses those surfaces instead of retaining the fallback.
     this.vaultScenery = createVaultScenery(this.materials);
+    for (const object of this.floorGroup.children) {
+      if (object instanceof THREE.Mesh && object.userData.room === 0 && object.userData.floorSurface) {
+        object.material = this.vaultScenery.userData.gateFloorMaterial ?? this.materials.floor;
+      }
+    }
     this.sceneryMeshes = [...this.vaultScenery.children];
     this.floorGroup.add(...this.sceneryMeshes);
   }
@@ -354,7 +440,8 @@ export class DungeonWorld {
   private buildDungeon(): void {
     let state = 932184;
     const random = () => { state = (state * 1664525 + 1013904223) >>> 0; return state / 4294967296; };
-    const batches = new Map<string, { material: THREE.Material; geometries: THREE.BufferGeometry[]; room: number; occluder: boolean }>();
+    let fullPier = false, shortPost = false;
+    const batches = new Map<string, { material: THREE.Material; geometries: THREE.BufferGeometry[]; room: number; occluder: boolean; fullPier: boolean; shortPost: boolean }>();
     const add = (geometry: THREE.BufferGeometry, material: THREE.Material, x: number, y: number, z: number, turn = 0) => {
       const roomIndex = Math.round(-z / 20);
       if (y > -.1 && isCrossingChasm(roomIndex, x, z + roomIndex * 20)) { geometry.dispose(); return; }
@@ -376,8 +463,8 @@ export class DungeonWorld {
       if (normalized !== geometry) geometry.dispose();
       normalized.computeBoundingBox();
       const occluder = normalized.boundingBox!.max.y > .6;
-      const room = Math.round(-z / 20), key = `${material.uuid}:${room}:${occluder}`;
-      if (!batches.has(key)) batches.set(key, { material, geometries: [], room, occluder });
+      const room = Math.round(-z / 20), key = `${material.uuid}:${room}:${occluder}:${fullPier}:${shortPost}`;
+      if (!batches.has(key)) batches.set(key, { material, geometries: [], room, occluder, fullPier, shortPost });
       batches.get(key)!.geometries.push(normalized);
     };
     const block = (w: number, h: number, d: number, material: THREE.Material, x: number, y: number, z: number, turn = 0, bevel = .065) => {
@@ -388,7 +475,7 @@ export class DungeonWorld {
       if (!chipped && (material === this.materials.wall || material === this.materials.trim)) projectStoneUV(geometry, random() * 3, random() * 3);
       add(geometry, material, x, y, z, turn);
     };
-    const pillar = (x: number, z: number, height: number, broken = false) => {
+    const pillar = (x: number, z: number, height: number, broken = false, aisleBase = 0) => {
       if (broken) {
         const geometry = ruinGeometry('column-stump', Math.round(x * 31 + z * 17));
         const size = geometry.boundingBox!.getSize(new THREE.Vector3());
@@ -397,6 +484,12 @@ export class DungeonWorld {
         geometry.scale(1.45 / size.x, height / size.y, 1.45 / size.z);
         add(geometry, this.materials.trim, x, 0, z); return;
       }
+      // Short supports use a separate three-course model at their own scale.
+      fullPier = height + .89 >= 3;
+      shortPost = !fullPier;
+      const placement = { room: Math.round(-z / 20), x, z, height: height + .89, baseY: aisleBase };
+      if (fullPier) this.masonryPiers.push(placement);
+      else this.masonryPosts.push(placement);
       for (let tier = 0; tier < 3; tier++) block(1.8 - tier * .18, .19, 1.8 - tier * .18, this.materials.trim, x, .1 + tier * .18, z);
       for (let layer = 0; layer < Math.ceil(height / .49); layer++) {
         const spread = layer % 3 === 0 ? 1.17 : 1.04;
@@ -407,6 +500,7 @@ export class DungeonWorld {
       }
       block(1.55, .22, 1.55, this.materials.trim, x, height + .62, z);
       block(1.32, .14, 1.32, this.materials.wall, x, height + .82, z);
+      fullPier = shortPost = false;
     };
     for (let room = 0; room < 6; room++) {
       const center = -room * 20, layout = getRoomLayout(room);
@@ -425,26 +519,31 @@ export class DungeonWorld {
         add(darkFloor, this.materials.dark, side * 7.9, -3.8, center);
         for (const edge of [4.8, 11]) for (let row = 0; row < 6; row++) for (let n = 0; n < 8; n++)
           block(.44, .56, .97, this.materials.wall, side * edge, -.5 - row * .56, center - 3.5 + n);
-        for (const z of [-5, 5]) { pillar(side * 5.5, center + z, 1.05); this.addTorch(side * 5.5, 1.96, center + z, false); }
+        for (const z of [-5, 5]) { pillar(side * 5.5, center + z, 1.05); this.addTorch(side * 5.5, 2.12, center + z, false); }
       }
       // Thick walls and stepped side aisles replace the old sparse perimeter.
       for (const side of [-1, 1]) {
         const wallHeight = side < 0 ? layout.wallHeights.left : layout.wallHeights.right;
         for (let row = 0; row < Math.ceil(wallHeight / .57); row++) for (let n = 0; n < 17; n++) {
           const z = center - 9.7 + n * 1.16 + (row % 2) * .5;
+          if (room === 0 && side < 0 && z > gateBreach.minZ && z < gateBreach.maxZ) continue;
           // The frontmost western vault collapsed: staggered upper courses
           // expose an irregular silhouette instead of a continuous square box.
           const brokenHeight = n > 11 ? 1.5 + Math.sin(n * 2.4 + room) * .55 : wallHeight;
           if (side < 0 && row * .57 > brokenHeight) continue;
+          if (room === 0 && side < 0 && row * .57 > brokenGateWallCrown(z - center, wallHeight)) continue;
           if (row > 5 && (n * 13 + row * 7 + room) % 17 === 0) continue;
           block(layout.sideWallWidth, .53, 1.11, this.materials.wall, side * layout.sideWallX + (random() - .5) * .07, .26 + row * .57, z, (random() - .5) * .023);
         }
-        for (let step = 0; step < 3; step++) block(2.0 - step * .38, .2, 19.9, this.materials.wall, side * (11.25 + sideOffset + step * .19), .05 + step * .19, center, 0, .045);
+        for (let step = 0; step < 3; step++) {
+          const spans = room === 0 && side < 0 ? [[-9.95, gateBreach.minZ], [gateBreach.maxZ, 9.95]] : [[-9.95, 9.95]];
+          for (const [start, end] of spans) block(2.0 - step * .38, .2, end - start, this.materials.wall, side * (11.25 + sideOffset + step * .19), .05 + step * .19, center + (start + end) / 2, 0, .045);
+        }
         for (let bay = 0; bay < 4; bay++) {
           const z = center - 7.4 + bay * 5;
-          const brokenPier = (side < 0 && (bay + room) % 3 === 0) || (side > 0 && bay === 3);
+          const brokenPier = (side < 0 && (bay + room) % 3 === 0) || (side > 0 && bay === 3) || (room === 0 && side < 0 && bay === 1);
           const pierHeight = side < 0 ? (bay === 3 ? 2.2 : wallHeight - .7 + Math.sin(bay * 2.3 + room) * .35) : (bay === 0 || bay === 3 ? 3.3 : wallHeight);
-          pillar(side * (11.7 + sideOffset), z, brokenPier ? Math.min(pierHeight, 1.7 + bay * .3) : pierHeight, brokenPier);
+          pillar(side * (11.7 + sideOffset), z, brokenPier ? Math.min(pierHeight, 1.7 + bay * .3) : pierHeight, brokenPier, .53);
           this.addTorch(side * (10.55 + sideOffset), 2.1, z + .7, false);
           const x = side * (9.7 + sideOffset + random() * .55);
           add(crystalClusterGeometry(room * 43 + bay * 11 + side), this.materials.crystalStone, x, 0, z + 1.4, random() * Math.PI * 2);
@@ -452,6 +551,7 @@ export class DungeonWorld {
         // Ruined tombs lie partly buried along the raised aisles, never centred
         // like furniture placed on a grid. Trim catches the torchlight.
         for (let n = 0; n < 3; n++) {
+          if (!roomHasTomb(room, side, n)) continue;
           const x = side * (8.6 + sideOffset + random() * 1.1), z = center - 7 + n * 6.3;
           const turn = (random() - .5) * .55;
           block(1.1, .63, 2.05, this.materials.wall, x, .32, z, turn);
@@ -468,9 +568,15 @@ export class DungeonWorld {
           block(1.08, .54, .95, this.materials.wall, x, .27 + row * .57, center - 9.7, (random() - .5) * .02);
         }
         pillar(layout.doorX + side * 3.4, center - 9.35, layout.wallHeights.back - .5);
-        if (side < 0) for (let step = 0; step < 4; step++) block(6.8 - step * .28, .18, 2.6 - step * .38, this.materials.wall, layout.doorX, .05 + step * .17, center - 8.55 - step * .15);
+        // Travel follows the doorway at floor height. Keep raised approach
+        // steps beside a clear central passage, never across the actor's feet.
+        if (side < 0) for (let step = 0; step < 4; step++) {
+          const width = (6.8 - step * .28 - 2.8) / 2;
+          for (const flank of [-1, 1]) block(width, .18, 2.6 - step * .38, this.materials.wall,
+            layout.doorX + flank * (1.4 + width / 2), .05 + step * .17, center - 8.55 - step * .15);
+        }
         // Foreground remnants frame the action; high pieces sit at the edges.
-        const brokenFront = room !== 3 && (side > 0 ? room % 2 === 0 : room % 2 === 1);
+        const brokenFront = room === 0 || (room !== 3 && (side > 0 ? room % 2 === 0 : room % 2 === 1));
         pillar(side * (8.7 + sideOffset), center + 7.1, room === 3 ? 1.1 : brokenFront ? 1.5 + room % 3 * .2 : side < 0 ? 3.7 : 2.7, brokenFront);
         for (let n = 0; n < 4; n++) block(1.05, .53, .84, this.materials.wall, side * (9.3 + sideOffset + n * .92), .25, center + 7.2, (random() - .5) * .1);
       }
@@ -483,7 +589,11 @@ export class DungeonWorld {
         const geometry = new THREE.DodecahedronGeometry(radius, 0);
         geometry.scale(1 + random(), .32 + random() * .7, .6 + random());
         geometry.rotateX(random() * 2); geometry.rotateZ(random() * 2);
-        add(geometry, n % 4 === 0 ? this.materials.trim : this.materials.wall, x, radius * .26, z, random() * 6);
+        const turn = random() * 6;
+        // Authored fallen courses supply the gate's large stones. Small chips
+        // collect by the breach and foreground collapse instead of lone cubes.
+        if (room === 0 && (n % 11 === 0 || (side < 0 && Math.abs(z + 2) > 3.2 && Math.abs(z - 4.9) > 2.4))) { geometry.dispose(); continue; }
+        add(geometry, n % 4 === 0 ? this.materials.trim : this.materials.wall, x, radius * .26, z, turn);
       }
       // Fallen arch segments form a bank of rubble beneath the broken vault.
       for (let n = 0; n < 85; n++) {
@@ -515,10 +625,13 @@ export class DungeonWorld {
         }
       }
     }
-    for (const { material, geometries, room, occluder } of batches.values()) {
+    for (const { material, geometries, room, occluder, fullPier, shortPost } of batches.values()) {
       const merged = mergeGeometries(geometries, false);
       if (merged) {
         const mesh = this.mesh(merged, material); mesh.castShadow = material !== this.materials.floor && material !== this.materials.dark;
+        mesh.userData.floorSurface = material === this.materials.floor;
+        mesh.userData.fullPierFallback = fullPier;
+        mesh.userData.shortPostFallback = shortPost;
         mesh.userData.room = room; mesh.userData.occluder = occluder; mesh.matrixAutoUpdate = false; mesh.updateMatrix(); this.floorGroup.add(mesh);
       }
       geometries.forEach(geometry => geometry.dispose());
@@ -549,6 +662,7 @@ export class DungeonWorld {
         object.position.x = x; object.position.z = z; object.rotation.y = turn;
         if (name === 'wall-bay' || name === 'arch') { object.rotation.z = Math.sin(x * 1.7 + z * .3) * .022; object.scale.x *= .94 + Math.sin(x + room) * .045; }
         object.userData.room = room; object.userData.occluder = true; this.propGroup.add(object);
+        if (name === 'pillar') object.userData.legacyPierProp = true;
         return object;
       };
       const remnant = (kind: RuinKind, height: number, x: number, z: number, turn = 0) => {
@@ -563,8 +677,12 @@ export class DungeonWorld {
       for (let bay = 0; bay < 4; bay++) {
         if (bay < 2) {
           const x = -11.3 - sideOffset, z = center - 4.9 + bay * 5;
-          const fractured = room !== 3 && (room + bay) % 2 === 0 && remnant('arch-remnant', 3.2 + room % 3 * .25, x - .18, z, Math.PI / 2);
-          if (!fractured) add(room === 3 ? 'broken-wall' : 'wall-bay', room === 3 ? 2.2 : layout.wallHeights.left + .2 + Math.sin(bay * 2 + room) * .3, x, z, Math.PI / 2);
+          if (room === 0) {
+            if (bay === 1) add('broken-wall', 2.1, x, z, Math.PI / 2);
+          } else {
+            const fractured = room !== 3 && (room + bay) % 2 === 0 && remnant('arch-remnant', 3.2 + room % 3 * .25, x - .18, z, Math.PI / 2);
+            if (!fractured) add(room === 3 ? 'broken-wall' : 'wall-bay', room === 3 ? 2.2 : layout.wallHeights.left + .2 + Math.sin(bay * 2 + room) * .3, x, z, Math.PI / 2);
+          }
         }
         if (bay === 2) {
           add('broken-wall', 2.4, -11.35 - sideOffset, center + 5, Math.PI / 2);
@@ -580,7 +698,7 @@ export class DungeonWorld {
           add('brazier', 1.45, brazierX, brazierZ); this.addTorch(brazierX, 1.02, brazierZ, false);
         }
         add('crystal', 1.25, side * (10.2 + sideOffset), center - 6.2);
-        const brokenFront = room !== 3 && (side > 0 ? room % 2 === 0 : room % 2 === 1);
+        const brokenFront = room === 0 || (room !== 3 && (side > 0 ? room % 2 === 0 : room % 2 === 1));
         if (!brokenFront) add(room === 3 ? 'broken-wall' : 'pillar', room === 3 ? 1.0 : room === 2 ? 3.3 : 4.4, side * (8.7 + sideOffset), center + 7.1);
       }
       add('arch', layout.wallHeights.back + .8, layout.doorX, center - 9.4);
@@ -604,7 +722,70 @@ export class DungeonWorld {
     }
   }
 
-  setEncounter(index: number, regionId?: string, enemyCount?: number): void {
+  private installMasonryPiers(): void {
+    // A missing optional asset retains the complete procedural architecture.
+    // Once available, remove the entire old pier batches rather than layering
+    // a new model over their shafts, plinths and capitals.
+    if (!this.models.has('masonry-pier') || this.propGroup.children.some(o => o.userData.authoredMasonryPier)) return;
+    const placements = [...this.masonryPiers];
+    for (const old of this.propGroup.children.filter(o => o.userData.legacyPierProp)) {
+      const shared = placements.some(p => p.room === old.userData.room && Math.hypot(p.x - old.position.x, p.z - old.position.z) < .05);
+      if (!shared) {
+        const bounds = new THREE.Box3().setFromObject(old);
+        placements.push({ room: old.userData.room, x: old.position.x, z: old.position.z, height: bounds.max.y - bounds.min.y, baseY: 0 });
+      }
+    }
+    const replacements = placements.map(p => {
+      const object = this.model('masonry-pier', p.height)!;
+      object.position.x = p.x; object.position.z = p.z;
+      object.position.y += p.baseY;
+      object.userData = { ...object.userData, room: p.room, occluder: true, authoredMasonryPier: true };
+      return object;
+    });
+    for (const object of [...this.floorGroup.children]) {
+      if (!object.userData.fullPierFallback) continue;
+      this.floorGroup.remove(object);
+      if (object instanceof THREE.Mesh) object.geometry.dispose();
+    }
+    for (const object of [...this.propGroup.children]) {
+      if (object.userData.legacyPierProp) this.propGroup.remove(object);
+    }
+    this.propGroup.add(...replacements);
+    this.renderer.shadowMap.needsUpdate = true;
+  }
+
+  private installMasonryPosts(): void {
+    if (!this.models.has('masonry-post') || this.propGroup.children.some(o => o.userData.authoredMasonryPost)) return;
+    const replacements = this.masonryPosts.map(p => {
+      const object = this.model('masonry-post', p.height)!;
+      object.position.x = p.x; object.position.z = p.z;
+      // Wall supports stand on the top aisle step; bridge supports use ground.
+      object.position.y += p.baseY;
+      object.userData = { ...object.userData, room: p.room, occluder: true, authoredMasonryPost: true };
+      return object;
+    });
+    for (const object of [...this.floorGroup.children]) {
+      if (!object.userData.shortPostFallback) continue;
+      this.floorGroup.remove(object);
+      if (object instanceof THREE.Mesh) object.geometry.dispose();
+    }
+    this.propGroup.add(...replacements);
+    this.renderer.shadowMap.needsUpdate = true;
+  }
+
+  setCombatState(health: readonly RpgCombatEnemy[]): void {
+    const byId = new Map(health.map(enemy => [enemy.id, enemy]));
+    for (const enemy of this.enemies) {
+      const current = byId.get(enemy.id);
+      if (!current) continue;
+      enemy.hp = current.hp; enemy.maxHp = current.maxHp;
+      // A restored defeat has no animation to replay. A defeat just presented
+      // by hitEnemy retains its settled body until its own cleanup completes.
+      if (current.hp <= 0 && !enemy.dead) { enemy.dead = true; enemy.root.visible = false; }
+    }
+  }
+
+  setEncounter(index: number, regionId?: string, enemyCount?: number, health?: readonly RpgCombatEnemy[]): void {
     const was = this.encounter;
     this.encounter = Math.max(0, Math.min(5, index));
     if (regionId) this.regionId = regionId;
@@ -613,8 +794,11 @@ export class DungeonWorld {
     this.enemies.length = 0; this.enemyGroup.clear();
     const layout = getRoomLayout(this.encounter);
     this.destination.set(layout.heroX, 0, -this.encounter * 20 + layout.heroZ);
+    this.heroTravelWaypoints = heroDoorwayRoute(was, this.encounter).map(point => new THREE.Vector3(point.x, 0, point.z));
     if (!this.frame || Math.abs(was - this.encounter) > 1) { this.hero.position.copy(this.destination); this.cameraTarget.copy(this.destination); }
-    const count = Math.max(1, Math.min(48, enemyCount ?? (this.encounter === 5 ? 24 : 14 + this.encounter)));
+    if (this.hero.position.distanceToSquared(this.destination) < .025 ** 2) this.heroTravelWaypoints.length = 0;
+    // A hard population limit, independent of spell power and old receipt totals.
+    const count = Math.max(1, Math.min(10, Math.trunc(health?.length ?? enemyCount ?? 10)));
     const formation = enemyPositions(this.encounter, count), roster = enemyRoster(this.encounter, count);
     for (let i = 0; i < count; i++) {
       const { brute, boss, modelId, height } = roster[i];
@@ -622,8 +806,9 @@ export class DungeonWorld {
       const origin = new THREE.Vector3(formation[i].x, 0, -this.encounter * 20 + formation[i].z);
       root.position.copy(origin); root.rotation.y = Math.atan2(this.destination.x - origin.x, this.destination.z - origin.z);
       const visual = this.makeEnemy(brute, boss, modelId, height); root.add(visual); this.enemyGroup.add(root);
-      this.enemies.push({ root, visual, origin, phase: i * 1.77, brute, dead: false, modelId, height, deathAt: 0, animator: new EnemyAnimator(visual, { kind: modelId, phase: i * 1.77 }) });
+      this.enemies.push({ id: `enemy-${i}`, hp: 100, maxHp: 100, root, visual, origin, phase: i * 1.77, brute, dead: false, modelId, height, deathAt: 0, animator: new EnemyAnimator(visual, { kind: modelId, phase: i * 1.77 }) });
     }
+    if (health) this.setCombatState(health);
     const ember = this.regionId.includes('ember') || this.regionId.includes('forge');
     const frost = this.regionId.includes('frost');
     const color = frost ? 0x49a4d2 : this.regionId.includes('storm') ? 0x7562c2 : 0x138cb6;
@@ -644,9 +829,11 @@ export class DungeonWorld {
     this.lightAnchors[0].set(west ? west.x + .4 : -(layout.walkable.maxX + 1.1), west ? 1.8 : 2.3, roomZ + (west ? west.z + 1.2 : -3.8));
     this.lightAnchors[1].set(layout.walkable.maxX + 1.1, 2.3, roomZ + 3.2);
     if (this.encounter === 3) {
-      this.warmLights[0].intensity = 32; this.warmLights[1].intensity = 28;
-      this.lightAnchors[0].set(-5.5, 2.6, roomZ - 5);
-      this.lightAnchors[1].set(5.5, 2.6, roomZ + 5);
+      // Place the source above the flame instead of almost inside the cap.
+      // Inverse-square falloff otherwise turns the stone into a white emitter.
+      this.warmLights[0].intensity = 16; this.warmLights[1].intensity = 14;
+      this.lightAnchors[0].set(-5.5, 3.1, roomZ - 5);
+      this.lightAnchors[1].set(5.5, 3.1, roomZ + 5);
     }
     for (const [index, side] of [-1, 1].entries()) {
       const cluster = crystal(side);
@@ -655,6 +842,7 @@ export class DungeonWorld {
     if (!this.frame) [...this.warmLights, ...this.recessLights].forEach((light, index) => light.position.copy(this.lightAnchors[index]));
     this.buildBiome(); this.biomeGroup.position.z = -this.encounter * 20;
     this.batchEnemies();
+    this.updateCameraProjection(Math.max(1, this.canvas.clientWidth), Math.max(1, this.canvas.clientHeight));
     this.renderer.shadowMap.needsUpdate = true;
   }
 
@@ -779,13 +967,17 @@ export class DungeonWorld {
       const mesh = new THREE.InstancedMesh(dissolve.geometry, material, sources.length);
       mesh.castShadow = true; mesh.receiveShadow = false; mesh.frustumCulled = false;
       mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      if (geometry.morphAttributes.position?.length) {
+        sources.forEach((source, index) => mesh.setMorphAt(index, source));
+        mesh.morphTexture!.needsUpdate = true;
+      }
       this.enemyInstances.push({ mesh, sources, roots, baseMaterial: material, dissolve }); this.enemyGroup.add(mesh);
     }
   }
 
-  private setElectricMaterials(enabled: boolean): void {
+  private setElectricMaterials(enabled: boolean, style: 'electric' | 'burn' = 'electric'): void {
     for (const instance of this.enemyInstances) {
-      instance.mesh.material = enabled ? instance.dissolve.material : instance.baseMaterial;
+      instance.mesh.material = enabled ? instance.dissolve.materialFor(style) : instance.baseMaterial;
       instance.mesh.customDepthMaterial = enabled ? instance.dissolve.depth : undefined;
     }
   }
@@ -822,6 +1014,9 @@ export class DungeonWorld {
     this.heroVisual = new THREE.Group();
     this.heroVisual.position.copy(previousVisual.position); this.heroVisual.quaternion.copy(previousVisual.quaternion); this.heroVisual.scale.copy(previousVisual.scale);
     this.heroVisual.add(model); this.hero.add(this.heroVisual);
+    // New actors author their grounding and strike weight in the skeleton.
+    // Keep the legacy accents only for the older armor rigs.
+    this.heroUsesAuthoredMotion = !!model.getObjectByName('CastOrigin');
     this.heroModelId = modelId; this.appearance = modelId === appearance.modelId ? appearance.id : 'wayfarer';
     this.heroMixer = new THREE.AnimationMixer(this.heroVisual);
     for (const clip of this.heroClipSets.get(modelId) ?? []) this.heroActions.set(clip.name.toLowerCase(), this.heroMixer.clipAction(clip));
@@ -836,13 +1031,16 @@ export class DungeonWorld {
     const glow = /cinder|ember|phoenix/.test(itemId) ? 0xff8c22 : /storm|thunder|tempest/.test(itemId) ? 0x8d9eff : /frost|glacier|winter/.test(itemId) ? 0x87edff : 0xffb64b;
     this.rune.material instanceof THREE.MeshBasicMaterial && this.rune.material.color.setHex(glow);
     this.heroVisual.traverse(object => {
-      if (object instanceof THREE.Mesh && /sword|weapon/i.test(object.name)) {
+      if (object instanceof THREE.Mesh && /sword|weapon|blade/i.test(object.name)) {
         const material = object.material;
         if (material instanceof THREE.MeshStandardMaterial) {
           // Each equipped blade owns its color; creature/prop materials stay shared.
           if (!object.userData.equipmentMaterial) { object.material = material.clone(); object.userData.equipmentMaterial = true; }
           const bladeMaterial = object.material as THREE.MeshStandardMaterial;
-          bladeMaterial.emissive.setHex(glow); bladeMaterial.emissiveIntensity = itemId ? .32 : .08;
+          bladeMaterial.emissive.setHex(glow);
+          bladeMaterial.emissiveIntensity = /^Authored_equipped_blade/.test(object.name)
+            ? itemId && itemId !== 'apprentice' ? .32 : 0
+            : itemId ? .32 : .08;
         }
       }
     });
@@ -852,18 +1050,30 @@ export class DungeonWorld {
 
   async attack(spellId: string, options: AttackOptions = {}): Promise<void> {
     if (this.disposed || this.attacking) return;
+    const hitById = new Map(options.combat?.hits.map(hit => [hit.enemyId, hit]) ?? []);
+    const living = this.enemies.filter(enemy => !enemy.dead);
+    const targets = options.combat ? living.filter(enemy => hitById.has(enemy.id))
+      : living.slice(0, Math.max(0, options.kills ?? living.length));
+    if (!targets.length) return;
+    if ((this.heroUsesAuthoredMotion || this.heroTravelWaypoints.length > 0) && settleHeroTravel(this.hero.position, this.camera.position, this.cameraTarget, this.destination)) {
+      this.heroTravelSpeed = 0; this.heroVisual.position.set(0, 0, 0);
+      setPlanarHeroHeading(this.heroVisual.rotation, Math.PI * .9);
+      this.camera.updateMatrixWorld(); this.renderer.shadowMap.needsUpdate = true;
+    }
+    this.heroTravelWaypoints.length = 0;
     const spell = RPG_SPELLS.find(spell => spell.id === spellId);
     const effect = spell?.effect ?? 'nova', school = spell?.school ?? 'ember';
     const color = school === 'ember' ? 0xff7d19 : school === 'frost' ? 0x8bdef1 : 0x8bacff;
     this.lastAttack = { spellId, effect, options: { ...options } };
-    this.setElectricMaterials(effect === 'ball-lightning');
+    this.novaContacts = undefined;
+    this.setElectricMaterials(true, RPG_SPELLS.find(spell => spell.id === spellId)?.school === 'ember' ? 'burn' : 'electric');
     this.attacking = true; this.attackAge = 0; this.playHeroAnimation(effect === 'cleave' || effect === 'phoenix-dive' ? 'cleave' : 'cast', true);
     this.attackDuration = effect === 'cleave' ? 2.2 : ['firestorm', 'blizzard', 'tempest', 'frost-guardian'].includes(effect) ? 3 : 2.7;
     const origin = this.hero.position.clone().setY(.12);
     const target = origin.clone().add(new THREE.Vector3(.3, 0, -3.8));
-    const resolveHorde = (delay: number) => this.enemies.forEach((enemy, i) => {
+    const resolveHorde = (delay: number) => targets.forEach((enemy, i) => {
       const offset = enemy.root.position.clone().sub(origin).setY(0), distance = offset.length();
-      let contact = delay + i / Math.max(1, this.enemies.length) * .52;
+      let contact = delay + i / Math.max(1, targets.length) * .52;
       if (effect === 'nova') {
         const radius = options.wide ? 10.6 : 8.8;
         contact = 1.3 * (1 - Math.cbrt(1 - Math.min(.97, distance / (radius * 1.01))));
@@ -873,21 +1083,52 @@ export class DungeonWorld {
       } else if (['ice-lance', 'arc-lance', 'glacial-surge', 'phoenix-dive'].includes(effect)) {
         contact = delay + Math.max(0, -offset.z + 1) * .055;
       } else if (effect === 'meteor') contact = .65 + enemy.root.position.distanceTo(target) * .035;
-      this.schedule(contact, () => this.hitEnemy(enemy, color));
+      this.schedule(contact, () => this.hitEnemy(enemy, color, hitById.get(enemy.id)));
     });
-    this.emit(origin.clone().setY(1.3), color, 28, 1.1, .75);
+    if (effect === 'nova') {
+      const ignition = createNovaIgnition(), hand = new THREE.Vector3(), ground = origin.clone().setY(.06);
+      // Keep the cosmetic seed inside the hero's footprint but on its visible
+      // side; the damaging front still originates at the unchanged room point.
+      const towardView = this.camera.position.clone().sub(origin).setY(0).normalize();
+      const screenRight = new THREE.Vector3(towardView.z, 0, -towardView.x);
+      ground.addScaledVector(towardView, .38).addScaledVector(screenRight, .32);
+      const ignitionBend = screenRight.clone().multiplyScalar(.7);
+      const marker = this.heroVisual.getObjectByName('CastOrigin'), legacyArm = this.heroVisual.getObjectByName('arm.L'), started = this.elapsed;
+      this.effect(ignition.seed, .29);
+      this.effect(ignition.mesh, .29, () => {
+        if (marker) marker.getWorldPosition(hand);
+        else if (legacyArm) legacyArm.localToWorld(hand.set(0, Math.hypot(.095, .195, .355), 0));
+        else this.heroVisual.localToWorld(hand.set(-.28, 1.24, .32));
+        const age = this.elapsed - started; ignition.update(hand, ground, age, ignitionBend);
+        if (age < .18) { this.burstLight.position.copy(hand); this.burstLight.color.setHex(0xff923b); this.burstLight.intensity = 12 * THREE.MathUtils.smoothstep(age, 0, .08); }
+      });
+    }
+    if (effect === 'ball-lightning') {
+      const charge = createBallLightningCharge(1 / this.renderer.getPixelRatio()), hand = new THREE.Vector3(), view = new THREE.Vector3();
+      const marker = this.heroVisual.getObjectByName('CastOrigin'), arm = this.heroVisual.getObjectByName('arm.L'), started = this.elapsed;
+      charge.layers.forEach((layer, index) => this.effect(layer, .28, index === 0 ? () => {
+        if (marker) marker.getWorldPosition(hand);
+        else if (arm) arm.localToWorld(hand.set(0, Math.hypot(.095, .195, .355), 0));
+        else this.heroVisual.localToWorld(hand.set(-.28, 1.24, .32));
+        charge.update(hand, this.camera.getWorldDirection(view).negate(), this.elapsed - started, this.elapsed);
+      } : undefined));
+    }
+    if (effect !== 'nova' && effect !== 'ball-lightning') this.emit(origin.clone().setY(1.3), color, 28, 1.1, .75);
     this.schedule(.18, () => {
       this.burstLight.position.copy(origin).setY(2.8); this.burstLight.color.setHex(color); this.burstLight.intensity = 100;
       switch (effect) {
         case 'cleave': {
-          this.heroMotion = age => new THREE.Vector3(Math.sin(Math.min(1, age / .8) * Math.PI) * 1.2, 0, -Math.sin(Math.min(1, age / .8) * Math.PI) * 1.6);
+          // The articulated clip already plants the feet and shifts strike weight.
+          if (!this.heroUsesAuthoredMotion) this.heroMotion = age => new THREE.Vector3(Math.sin(Math.min(1, age / .8) * Math.PI) * 1.2, 0, -Math.sin(Math.min(1, age / .8) * Math.PI) * 1.6);
           this.weaponSweep(origin, 0xffc875, options.wide ? 7.6 : 5.6, .2);
           this.schedule(.35, () => this.weaponSweep(origin.clone().add(new THREE.Vector3(0, 0, -1)), 0xffecbe, 6.8, 2.8));
           resolveHorde(.23); this.shake = .2; break;
         }
         case 'nova': {
-          this.fireNova(origin, options.wide ? 10.6 : 8.8);
-          if (options.echo) this.schedule(.68, () => this.fireNova(origin, 10.8));
+          const contacts = createFireNovaContacts(this.enemies.length, options.burning, this.encounter); this.novaContacts = contacts;
+          contacts.layers.forEach((layer, index) => this.effect(layer, 2.35, index === 0 ? () => contacts.update(this.elapsed) : undefined));
+          this.releaseNova(origin, options.wide ? 10.6 : 8.8);
+          if (options.echo) this.schedule(.68, () => this.releaseNova(origin, 10.8, .68));
           resolveHorde(.25); break;
         }
         case 'meteor': {
@@ -939,13 +1180,13 @@ export class DungeonWorld {
         }
         case 'firestorm': {
           for (let i = 0; i < 9; i++) this.schedule(i * .13, () => {
-            const at = this.enemies[(i * 3) % this.enemies.length].origin;
+            const at = targets[(i * 3) % targets.length].origin;
             this.firePillar(at, 2.4 + (Math.sin(i * 2.7) + 1) * 1.1, 1.25); this.fireContact(at, 1.2);
           });
           resolveHorde(.55); break;
         }
         case 'frostfall': {
-          this.enemies.forEach((enemy, i) => this.schedule(i * .018, () => this.projectile(enemy.origin.clone().add(new THREE.Vector3(-.6, 7 + i % 3, 0)), enemy.origin, 0xabedff, options.shards ? .36 : .23, .42, () => this.impact(enemy.origin, 0xb0efff, .7), true)));
+          targets.forEach((enemy, i) => this.schedule(i * .018, () => this.projectile(enemy.origin.clone().add(new THREE.Vector3(-.6, 7 + i % 3, 0)), enemy.origin, 0xabedff, options.shards ? .36 : .23, .42, () => this.impact(enemy.origin, 0xb0efff, .7), true)));
           if (options.shards) this.schedule(.7, () => this.iceWave(origin, true));
           resolveHorde(.5); break;
         }
@@ -978,8 +1219,8 @@ export class DungeonWorld {
           resolveHorde(.83); break;
         }
         case 'chain-lightning': {
-          this.chainLightning(origin, 0x9ac4ff);
-          if (options.chains) this.schedule(.45, () => this.chainLightning(origin, 0xe1f5ff));
+          this.chainLightning(origin, 0x9ac4ff, targets);
+          if (options.chains) this.schedule(.45, () => this.chainLightning(origin, 0xe1f5ff, targets));
           resolveHorde(.17); break;
         }
         case 'arc-lance': {
@@ -994,7 +1235,7 @@ export class DungeonWorld {
                 this.emit(splinter, 0x9fcdff, 7, 1.5, .45);
               }
             }
-            this.enemies.forEach((enemy, n) => { if (n % 3 === i) this.bolt(end.clone().lerp(origin, .45), enemy.origin.clone().setY(1), 0xb8daff, .035, .4); });
+            targets.forEach((enemy, n) => { if (n % 3 === i) this.bolt(end.clone().lerp(origin, .45), enemy.origin.clone().setY(1), 0xb8daff, .035, .4); });
           });
           resolveHorde(.22); this.shake = .2; break;
         }
@@ -1007,8 +1248,12 @@ export class DungeonWorld {
         case 'ball-lightning': {
           const count = options.orbit ? 4 : 1;
           const started = this.elapsed, view = new THREE.Vector3();
+          const launch = new THREE.Vector3(), orbitTarget = new THREE.Vector3(), towardView = this.camera.position.clone().sub(origin).setY(0).normalize();
+          const side = new THREE.Vector3(towardView.z, 0, -towardView.x);
+          const marker = this.heroVisual.getObjectByName('CastOrigin'), arm = this.heroVisual.getObjectByName('arm.L');
+          let launchCaptured = false;
           let contactLightAt = -Infinity;
-          const contacts = createBallLightningContacts(this.enemies.length);
+          const contacts = createBallLightningContacts(targets.length);
           contacts.layers.forEach((layer, index) => this.effect(layer, 2.15, index === 0 ? () => {
             contacts.update(this.elapsed);
             // A short reflected pulse supports the actual discharge instead of
@@ -1017,50 +1262,57 @@ export class DungeonWorld {
           } : undefined));
           const orbPosition = (orb: number, t: number, at: THREE.Vector3) => {
             const phase = orb * Math.PI * 2 / count;
-            return at.copy(origin).add(new THREE.Vector3(Math.sin(phase + t * 8) * (3 + t * 2.5), 1.2 + Math.sin(t * 14 + orb*.7) * .25, Math.cos(phase + t * 8) * (3 + t * 2.5)));
+            if (!launchCaptured) {
+              // First effect update runs after the hero mixer, so this anchor
+              // is the rendered release pose rather than the preceding frame.
+              if (marker) marker.getWorldPosition(launch);
+              else if (arm) arm.localToWorld(launch.set(0, Math.hypot(.095, .195, .355), 0));
+              else this.heroVisual.localToWorld(launch.set(-.28, 1.24, .32));
+              launchCaptured = true;
+            }
+            orbitTarget.copy(origin).add(new THREE.Vector3(Math.sin(phase + t * 8) * (3 + t * 2.5), 1.2 + Math.sin(t * 14 + orb*.7) * .25, Math.cos(phase + t * 8) * (3 + t * 2.5)));
+            return ballLightningReleasePosition(launch, orbitTarget, side, this.elapsed - started, at, orb * .018);
           };
           const orbs: { at: THREE.Vector3; flashedAt: number }[] = [];
           for (let orb = 0; orb < count; orb++) {
             const visual = createBallLightning(orb + 1, 1 / this.renderer.getPixelRatio()), state = { at: new THREE.Vector3(), flashedAt: -Infinity };
             orbs.push(state);
-            visual.update(orbPosition(orb, 0, state.at), this.camera.getWorldDirection(view).negate(), 0, started);
             visual.layers.forEach((layer, index) => this.effect(layer, 2.15, index === 0 ? t => {
               const progress = THREE.MathUtils.clamp((this.elapsed - started) / 2.15, 0, 1);
               const discharge = Math.exp(-Math.max(0, this.elapsed - state.flashedAt) * 22);
               visual.update(orbPosition(orb, progress, state.at), this.camera.getWorldDirection(view).negate(), t, this.elapsed, discharge);
+              const age = this.elapsed - started, formation = THREE.MathUtils.smoothstep(age, orb * .018, .28 + orb * .018);
+              visual.layers.forEach((part, partIndex) => {
+                part.scale.setScalar((partIndex === 0 ? .8 : 1) * (.28 + .72 * formation));
+                if (formation < 1) {
+                  const separate = orb === 0 ? 1 : THREE.MathUtils.smoothstep(age, .04 + orb * .025, .14 + orb * .025);
+                  part.material.uniforms.opacity.value = Math.max(part.material.uniforms.opacity.value, .82 * (1 - formation)) * separate;
+                }
+              });
             } : undefined));
           }
           // Visible energy reaches each victim at the existing authoritative
           // contact cue. The four-orb upgrade shares those contacts between orbs.
-          this.enemies.forEach((enemy, index) => this.schedule(.65 + index / Math.max(1, this.enemies.length) * .52, () => {
+          targets.forEach((enemy, index) => this.schedule(.65 + index / Math.max(1, targets.length) * .52, () => {
             const orb = index % count, state = orbs[orb]; state.flashedAt = this.elapsed;
             orbPosition(orb, THREE.MathUtils.clamp((this.elapsed - started) / 2.15, 0, 1), state.at);
             const contact = enemy.root.position.clone().add(new THREE.Vector3(0, enemy.brute ? 1.55 : .9, 0));
             contacts.strike(index, contact, contact.clone().sub(state.at), this.elapsed);
             this.bolt(state.at, contact, 0x7abaff, .03, .10);
-            if (options.chains && index % 4 === 0 && index + 1 < this.enemies.length) {
-              const next = this.enemies[index + 1];
+            if (options.chains && index % 4 === 0 && index + 1 < targets.length) {
+              const next = targets[index + 1];
               this.bolt(contact, next.root.position.clone().add(new THREE.Vector3(0, next.brute ? 1.55 : .9, 0)), 0x8abaff, .022, .085);
             }
             contactLightAt = this.elapsed;
             this.burstLight.position.copy(enemy.root.position).y += enemy.height + 1.05; this.burstLight.color.setHex(0x7abaff);
             this.burstLight.intensity = 14;
           }));
-          if (this.encounter === 5) this.schedule(1.4, () => {
-            const boss = this.enemies[0], contact = boss.root.position.clone().add(new THREE.Vector3(0, .45, 0));
-            const from = orbs[0].at;
-            contacts.strike(0, contact, contact.clone().sub(from), this.elapsed);
-            this.bolt(from, contact, 0x8ebeff, .035, .12);
-            contactLightAt = this.elapsed;
-            this.burstLight.position.copy(boss.root.position).y += boss.height + 1.05;
-            this.burstLight.color.setHex(0x7abaff); this.burstLight.intensity = 14;
-          });
           resolveHorde(.65); break;
         }
         case 'tempest': {
           this.cyclone(target, 0x93b2f1, 5.5, 8, 2.45);
           for (let bolt = 0; bolt < 9; bolt++) this.schedule(.15 + bolt * .13, () => {
-            const enemy = this.enemies[(bolt * 7) % this.enemies.length];
+            const enemy = targets[(bolt * 7) % targets.length];
             this.bolt(target.clone().add(new THREE.Vector3(Math.sin(bolt) * 3, 10, Math.cos(bolt) * 3)), enemy.origin.clone().setY(.1), 0xc4ddff, .08, .3);
             this.impact(enemy.origin, 0x7a9fe8, 1.4);
           });
@@ -1069,15 +1321,14 @@ export class DungeonWorld {
       }
       if (options.shards && school === 'frost' && effect !== 'frostfall') this.schedule(.72, () => {
         for (let i = 0; i < 8; i++) {
-          const at = this.enemies[(i * 3) % this.enemies.length].origin;
+          const at = targets[(i * 3) % targets.length].origin;
           this.projectile(at.clone().add(new THREE.Vector3(-1, 6, 0)), at, 0xc0f2ff, effect === 'blizzard' ? .42 : .25, .38, () => this.impact(at, 0x99deff, 1), true);
         }
       });
-      if (options.chains && school === 'storm' && effect !== 'chain-lightning' && effect !== 'ball-lightning') this.schedule(.65, () => this.chainLightning(origin, 0xb2d3ff));
-      if (options.burning && school === 'ember') this.schedule(.85, () => {
+      if (options.chains && school === 'storm' && effect !== 'chain-lightning' && effect !== 'ball-lightning') this.schedule(.65, () => this.chainLightning(origin, 0xb2d3ff, targets));
+      if (options.burning && school === 'ember' && effect !== 'nova') this.schedule(.85, () => {
         for (let i = 0; i < 6; i++) this.impact(origin.clone().add(new THREE.Vector3(Math.sin(i * 2) * 3, .1, Math.cos(i * 2) * 3)), 0xdd4b13, 1.4);
       });
-      if (this.encounter === 5 && effect !== 'ball-lightning') this.schedule(1.4, () => { this.impact(this.enemies[0].origin, 0xffd990, 5); this.debris(this.enemies[0].origin, 22); this.shake = .35; });
       if (options.drop) this.schedule(1.55, () => this.spawnLoot(origin, options.drop!));
     });
     return new Promise(resolve => { this.attackResolve = resolve; });
@@ -1124,6 +1375,14 @@ export class DungeonWorld {
       const tip = arc(span).applyAxisAngle(new THREE.Vector3(0, 1, 0), phase + step * .055 / .57 * turn).add(origin);
       this.debris(tip, 3, true, .7, { direction: new THREE.Vector3(Math.cos(angle), 0, -Math.sin(angle)), spread: .8, lift: .3, grounded: true });
     });
+  }
+
+  private releaseNova(origin: THREE.Vector3, radius: number, heat = 1): void {
+    const wave = createFireNova(radius, heat, this.encounter), view = new THREE.Vector3();
+    wave.update(origin, this.camera.getWorldDirection(view).negate(), 0, this.elapsed);
+    wave.layers.forEach((layer, index) => this.effect(layer, 1.3, index === 0 ? t => wave.update(origin, this.camera.getWorldDirection(view).negate(), t, this.elapsed) : undefined));
+    this.burstLight.position.copy(origin).setY(3); this.burstLight.color.setHex(0xff942d); this.burstLight.intensity = 55 * heat;
+    this.shake = .22 * heat;
   }
 
   private fireNova(origin: THREE.Vector3, radius: number): void {
@@ -1394,23 +1653,35 @@ export class DungeonWorld {
     this.effectsGroup.add(mesh); this.effects.push({ mesh, age: 0, duration, kind, radius });
   }
 
-  private chainLightning(origin: THREE.Vector3, color: number): void {
+  private chainLightning(origin: THREE.Vector3, color: number, targets = this.enemies.filter(enemy => !enemy.dead)): void {
     let previous = origin.clone(); previous.y = 1.1;
-    this.enemies.forEach((enemy, index) => {
+    targets.forEach((enemy, index) => {
       const from = previous.clone(), to = enemy.root.position.clone(); to.y = enemy.brute ? 1.9 : .9; previous = to;
-      this.schedule(.17 + index / Math.max(1, this.enemies.length) * .52, () => {
+      this.schedule(.17 + index / Math.max(1, targets.length) * .52, () => {
         this.bolt(from, to, color, .055, .55);
       });
     });
   }
 
-  private hitEnemy(enemy: Enemy, color: number): void {
-    enemy.dead = true; enemy.deathAt = this.elapsed;
+  private hitEnemy(enemy: Enemy, _color: number, hit?: CombatHit): void {
+    if (enemy.dead) return;
+    const school = RPG_SPELLS.find(spell => spell.id === this.lastAttack?.spellId)?.school;
+    const element = school === 'ember' ? 'fire' : school === 'storm' ? 'electric' : 'other';
+    const reaction = createHitReaction({ at: this.elapsed, x: enemy.root.position.x, z: enemy.root.position.z, sourceX: this.hero.position.x, sourceZ: this.hero.position.z, phase: enemy.phase, heavy: enemy.brute, maxHp: enemy.maxHp, hit, element });
+    enemy.root.userData.hitReaction = reaction;
+    enemy.hp = hit ? hit.hpAfter : 0;
+    enemy.dead = reaction.lethal;
+    if (enemy.dead) {
+      enemy.deathAt = this.elapsed;
+      this.attackDuration = Math.max(this.attackDuration, this.attackAge + reaction.duration + .08);
+    }
     this.renderer.shadowMap.needsUpdate = true;
     const ballLightning = this.lastAttack?.spellId === 'ball_lightning';
-    this.emit(enemy.origin.clone().add(new THREE.Vector3(0, .9, 0)), color, ballLightning ? 0 : enemy.brute ? 35 : 18, 3, 1);
-    this.emit(enemy.origin.clone().add(new THREE.Vector3(0, .35, 0)), 0xc7ae77, ballLightning ? 0 : 8, 1.7, 1.35);
-    if (this.lastAttack?.options.burning || RPG_SPELLS.find(spell => spell.id === this.lastAttack?.spellId)?.school === 'ember') {
+    const nova = this.lastAttack?.spellId === 'ember';
+    // Spell contacts own their element. The body response must remain visible
+    // rather than disappear inside a generic particle explosion.
+    if (nova) this.novaContacts?.strike(this.enemies.indexOf(enemy), enemy.root.position, enemy.origin.clone().sub(this.hero.position).setY(0).normalize(), this.elapsed, enemy.brute ? 1.3 : .85 + Math.abs(Math.sin(enemy.phase)) * .25);
+    if (!nova && (this.lastAttack?.options.burning || RPG_SPELLS.find(spell => spell.id === this.lastAttack?.spellId)?.school === 'ember')) {
       this.fireContact(enemy.root.position, enemy.brute ? 1.35 : .7 + Math.abs(Math.sin(enemy.phase)) * .45);
       const scorch = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.1), new THREE.MeshBasicMaterial({ color: 0x32261b, alphaMap: this.glowMap, transparent: true, opacity: .2, depthWrite: false }));
       scorch.rotation.x = -Math.PI / 2; scorch.position.copy(enemy.origin).y = -.025;
@@ -1418,8 +1689,10 @@ export class DungeonWorld {
     }
     if (enemy.brute) {
       if (ballLightning) this.debris(enemy.origin, 3, false, .3, { direction: enemy.origin.clone().sub(this.hero.position).setY(0), spread: 1, lift: .2, grounded: true });
-      else this.debris(enemy.origin, 9);
-      this.emit(enemy.origin.clone().setY(1.2), 0x8deaff, ballLightning ? 0 : 16, 3.5, .65);
+      // Nova already owns three short-lived cooling contact fragments; do not
+      // leave a second generic stone pool hovering after the ash erosion.
+      else if (!nova) this.debris(enemy.origin, 2, false, .25, { direction: enemy.origin.clone().sub(this.hero.position).setY(0), spread: .65, lift: .12, grounded: true });
+
     }
   }
 
@@ -1459,6 +1732,37 @@ export class DungeonWorld {
     this.camera.left = -halfHeight * ratio; this.camera.right = halfHeight * ratio;
     const verticalOffset = dungeonCameraVerticalOffset(height, separateControls) + dungeonPortraitOffset(width, height, this.combatSafeTop, this.combatSafeBottom);
     this.camera.top = halfHeight + verticalOffset; this.camera.bottom = -halfHeight + verticalOffset; this.camera.updateProjectionMatrix();
+    if (separateControls && this.enemies.length) {
+      // Measure at the destination, so travel and surviving HP never reframe a room.
+      const view = this.camera.clone();
+      view.position.copy(this.destination).add(new THREE.Vector3(17, 25, 20));
+      view.lookAt(this.destination.x, .2, this.destination.z - 1.8); view.updateMatrixWorld();
+      const screenY = (point: THREE.Vector3) => (1 - point.project(view).y) * height * .5;
+      const ys = [screenY(this.destination.clone()), screenY(this.destination.clone().add(new THREE.Vector3(0, 2.1, 0)))];
+      for (const enemy of this.enemies) {
+        ys.push(screenY(enemy.origin.clone()), screenY(enemy.origin.clone().add(new THREE.Vector3(0, enemy.height + .55, 0))));
+      }
+      const fit = dungeonCombatFrame(Math.min(...ys), Math.max(...ys), Math.max(56, this.combatSafeTop), height - 22, height);
+      const half = halfHeight * fit.scale, offset = fit.shift * 2 * half / height;
+      this.camera.left = -half * ratio; this.camera.right = half * ratio;
+      this.camera.top = half + offset; this.camera.bottom = -half + offset; this.camera.updateProjectionMatrix();
+    } else if (width <= 760 && height > width && this.enemies.length) {
+      const view = this.camera.clone();
+      view.position.copy(this.destination).add(new THREE.Vector3(17, 25, 20));
+      view.lookAt(this.destination.x, .2, this.destination.z - 1.8); view.updateMatrixWorld();
+      const pixelScale = height / (2 * halfHeight);
+      const centerX = (point: THREE.Vector3) => (point.project(view).x + 1) * width * .5;
+      const heroX = centerX(this.destination.clone()), xs = [heroX - .65 * pixelScale, heroX + .65 * pixelScale];
+      for (const enemy of this.enemies) {
+        const x = centerX(enemy.origin.clone()), radius = (enemy.brute ? enemy.height * .4 : .72) * pixelScale;
+        xs.push(x - radius, x + radius);
+      }
+      const fit = dungeonCombatFrame(Math.min(...xs), Math.max(...xs), 18, width - 18, width);
+      const half = halfHeight * fit.scale, offsetX = -fit.shift * 2 * half * ratio / width;
+      this.camera.left = -half * ratio + offsetX; this.camera.right = half * ratio + offsetX;
+      this.camera.top = half + verticalOffset * fit.scale; this.camera.bottom = -half + verticalOffset * fit.scale;
+      this.camera.updateProjectionMatrix();
+    }
   }
 
   resize(): void {
@@ -1517,20 +1821,28 @@ export class DungeonWorld {
       this.scheduled.sort((a, b) => a.at - b.at);
     }
     this.elapsed = frameTime;
-    const distance = this.hero.position.distanceTo(this.destination);
+    while (this.heroTravelWaypoints.length && this.hero.position.distanceToSquared(this.heroTravelWaypoints[0]!) <= .025 ** 2) this.heroTravelWaypoints.shift();
+    const travelTarget = this.heroTravelWaypoints[0] ?? this.destination;
+    const distance = this.hero.position.distanceTo(travelTarget);
+    const walking = distance > .025 && !this.attacking;
+    const travel = this.heroUsesAuthoredMotion && walking ? advanceHeroTravel(distance, this.heroTravelSpeed, delta) : undefined;
+    this.heroTravelSpeed = travel?.speed ?? 0;
     if (!this.attacking) this.playHeroAnimation(distance > .025 ? 'walk' : 'idle');
+    if (travel) this.heroActions.get('walk')?.setEffectiveTimeScale(travel.clipRate);
     this.heroMixer?.update(delta);
     const shadowInterval = distance > .08 || this.attacking ? (this.softwareRenderer ? .2 : .065) : .65;
     if (this.elapsed - this.lastShadowUpdate > shadowInterval) {
       this.renderer.shadowMap.needsUpdate = true; this.lastShadowUpdate = this.elapsed;
     }
-    if (distance > .025 && !this.attacking) {
-      this.hero.position.lerp(this.destination, 1 - Math.exp(-delta * 2.1));
-      this.heroVisual.position.y = Math.abs(Math.sin(this.elapsed * 11)) * .09;
-      this.heroVisual.rotation.y = Math.atan2(this.destination.x - this.hero.position.x, this.destination.z - this.hero.position.z);
+    if (walking) {
+      const heading = Math.atan2(travelTarget.x - this.hero.position.x, travelTarget.z - this.hero.position.z);
+      this.hero.position.lerp(travelTarget, travel ? travel.distance / distance : 1 - Math.exp(-delta * 2.1));
+      this.heroVisual.position.y = this.heroUsesAuthoredMotion ? 0 : Math.abs(Math.sin(this.elapsed * 11)) * .09;
+      setPlanarHeroHeading(this.heroVisual.rotation, heading);
     } else {
-      this.heroVisual.position.y = Math.sin(this.elapsed * 2.4) * .018;
-      this.heroVisual.rotation.y = THREE.MathUtils.lerp(this.heroVisual.rotation.y, Math.PI * .9, 1 - Math.exp(-delta * 4));
+      this.heroVisual.position.y = this.heroUsesAuthoredMotion ? 0 : Math.sin(this.elapsed * 2.4) * .018;
+      const heading = THREE.MathUtils.lerp(this.heroVisual.rotation.y, Math.PI * .9, 1 - Math.exp(-delta * 4));
+      setPlanarHeroHeading(this.heroVisual.rotation, heading);
     }
     if (this.attacking) {
       this.attackAge += delta;
@@ -1538,38 +1850,53 @@ export class DungeonWorld {
         const movement = this.heroMotion(this.attackAge);
         this.heroVisual.position.x = movement.x; this.heroVisual.position.z = movement.z; this.heroVisual.position.y += movement.y;
       }
-      this.heroVisual.rotation.y += Math.sin(Math.min(this.attackAge / .7, 1) * Math.PI) * .18;
-      this.heroVisual.position.y += Math.sin(Math.min(this.attackAge / .5, 1) * Math.PI) * .35;
+      if (!this.heroUsesAuthoredMotion) {
+        this.heroVisual.rotation.y += Math.sin(Math.min(this.attackAge / .7, 1) * Math.PI) * .18;
+        this.heroVisual.position.y += Math.sin(Math.min(this.attackAge / .5, 1) * Math.PI) * .35;
+      }
       if (this.attackAge >= this.attackDuration) { this.attacking = false; this.heroMotion = undefined; this.heroVisual.position.x = this.heroVisual.position.z = 0; this.attackResolve?.(); this.attackResolve = undefined; }
     }
     this.rune.rotation.z = this.elapsed * .14;
     this.rune.scale.setScalar(1 + Math.sin(this.elapsed * 2) * .04);
     for (const enemy of this.enemies) {
-      // Once the authored defeat has finished there is no visible pose to
-      // animate. A new encounter creates fresh roots and batches normally.
       if (enemy.dead && !enemy.root.visible) continue;
+      const reaction = enemy.root.userData.hitReaction as HitReaction | undefined;
+      const response = reaction ? sampleHitReaction(reaction, this.elapsed) : undefined;
+      const groundedCollapse = Boolean(reaction);
       if (enemy.dead) {
-        const t = Math.min(1, (this.elapsed - enemy.deathAt) / 1.1);
-        const away = enemy.origin.clone().sub(this.hero.position).setY(0).normalize();
-        const electricalCollapse = this.lastAttack?.spellId === 'ball_lightning';
-        const throwDistance = electricalCollapse ? (enemy.brute ? .3 : .45) : (enemy.brute ? 1 : 1.7);
-        enemy.root.position.copy(enemy.origin).addScaledVector(away, (1 - Math.pow(1 - t, 3)) * throwDistance);
-        enemy.root.position.y = electricalCollapse ? Math.sin(Math.min(1, (this.elapsed - enemy.deathAt) / .22) * Math.PI) * .035 : Math.sin(t * Math.PI) * (enemy.brute ? .45 : .85);
-        enemy.root.rotation.x = electricalCollapse ? 0 : -t * (enemy.animator.articulated ? .24 : 1.35);
-        enemy.root.rotation.z = electricalCollapse ? 0 : Math.sin(enemy.phase) * t * (enemy.animator.articulated ? .13 : .7);
-        if (electricalCollapse) { enemy.visual.position.y *= Math.exp(-delta * 24); enemy.visual.rotation.z *= Math.exp(-delta * 24); }
-        enemy.root.scale.setScalar(electricalCollapse ? 1 : Math.max(.005, 1 - Math.max(0, t - .58) / .42));
-        enemy.root.userData.electricDissolve = electricalCollapse ? THREE.MathUtils.smoothstep(t, .58, 1) : 0;
+        const age = this.elapsed - enemy.deathAt;
+        const t = Math.min(1, age / (reaction?.duration ?? 1.1));
+        const away = reaction ? new THREE.Vector3(reaction.dx, 0, reaction.dz) : enemy.origin.clone().sub(this.hero.position).setY(0).normalize();
+        if (reaction) enemy.root.position.set(reaction.x, 0, reaction.z).addScaledVector(away, response!.displacement);
+        else enemy.root.position.copy(enemy.origin).addScaledVector(away, (1 - Math.pow(1 - t, 3)) * (enemy.brute ? 1 : 1.7));
+        enemy.root.position.y = groundedCollapse ? 0 : Math.sin(t * Math.PI) * (enemy.brute ? .45 : .85);
+        enemy.root.rotation.x = groundedCollapse ? 0 : -t * (enemy.animator.articulated ? .24 : 1.35);
+        enemy.root.rotation.z = groundedCollapse ? 0 : Math.sin(enemy.phase) * t * (enemy.animator.articulated ? .13 : .7);
+        if (groundedCollapse) { enemy.visual.position.y *= Math.exp(-delta * 30); enemy.visual.rotation.z *= Math.exp(-delta * 24); }
+        enemy.root.scale.setScalar(groundedCollapse ? 1 : Math.max(.005, 1 - Math.max(0, t - .58) / .42));
+        enemy.root.userData.electricDissolve = groundedCollapse ? response?.erosion ?? 0 : 0;
         if (t === 1) enemy.root.visible = false;
       } else {
         const approach = this.hero.position.clone().sub(enemy.origin).setY(0).normalize();
         const feint = (.5 + Math.sin(this.elapsed * .8 + enemy.phase) * .5) * (enemy.brute ? .55 : enemy.modelId === 'revenant' ? .62 : .9);
-        enemy.root.position.x = enemy.origin.x + approach.x * feint + Math.sin(this.elapsed * .65 + enemy.phase) * .16;
-        enemy.root.position.z = enemy.origin.z + approach.z * feint + Math.cos(this.elapsed * .72 + enemy.phase) * .16;
-        enemy.visual.position.y = enemy.modelId === 'wraith' ? .14 + Math.sin(this.elapsed * 2 + enemy.phase) * .09 : Math.abs(Math.sin(this.elapsed * 4.7 + enemy.phase)) * (enemy.brute || enemy.modelId === 'revenant' ? .035 : .075);
-        enemy.visual.rotation.z = Math.sin(this.elapsed * 1.5 + enemy.phase) * .035;
+        enemy.root.position.set(enemy.origin.x + approach.x * feint + Math.sin(this.elapsed * .65 + enemy.phase) * .16, 0, enemy.origin.z + approach.z * feint + Math.cos(this.elapsed * .72 + enemy.phase) * .16);
+        if (reaction && response && !response.complete) {
+          const impactPosition = new THREE.Vector3(reaction.x + reaction.dx * response.displacement, 0, reaction.z + reaction.dz * response.displacement);
+          enemy.root.position.lerp(impactPosition, response.control);
+        }
+        enemy.root.rotation.x = enemy.root.rotation.z = 0;
+        enemy.root.scale.setScalar(1); enemy.root.userData.electricDissolve = 0;
+        enemy.visual.position.y = (enemy.modelId === 'wraith' ? .14 + Math.sin(this.elapsed * 2 + enemy.phase) * .09 : Math.abs(Math.sin(this.elapsed * 4.7 + enemy.phase)) * (enemy.brute || enemy.modelId === 'revenant' ? .035 : .075)) * (1 - (response?.control ?? 0));
+        enemy.visual.rotation.z = Math.sin(this.elapsed * 1.5 + enemy.phase) * .035 * (1 - (response?.control ?? 0));
       }
-      enemy.animator.update(this.elapsed, { moving: .35 + Math.abs(Math.cos(this.elapsed * .8 + enemy.phase)) * .4, threat: this.paused ? .25 : .8, deathAge: enemy.dead ? this.elapsed - enemy.deathAt : undefined, collapse: this.lastAttack?.spellId === 'ball_lightning' ? 'electric' : undefined });
+      enemy.animator.update(this.elapsed, {
+        moving: (.35 + Math.abs(Math.cos(this.elapsed * .8 + enemy.phase)) * .4) * (1 - (response?.control ?? 0)),
+        threat: (this.paused ? .25 : .8) * (1 - (response?.control ?? 0)),
+        recoil: response?.recoil, impactSide: reaction?.side, brace: response?.brace, catchStep: response?.catchStep, footOffset: response?.footOffset, footLift: response?.footLift, supportTravel: response?.displacement,
+        injury: enemy.dead ? 0 : 1 - enemy.hp / Math.max(1, enemy.maxHp),
+        deathAge: enemy.dead ? (groundedCollapse ? response?.collapseAge : this.elapsed - enemy.deathAt) : undefined,
+        collapse: groundedCollapse ? 'grounded' : undefined,
+      });
     }
     if (this.enemyInstances.length) {
       this.enemyGroup.updateMatrixWorld(true);
@@ -1581,12 +1908,14 @@ export class DungeonWorld {
         instance.sources.forEach((source, index) => {
           if (instance.roots[index].visible) {
             instance.dissolve.set(count, instance.roots[index].userData.electricDissolve ?? 0);
-            instance.mesh.setMatrixAt(count++, source.matrixWorld);
+            instance.mesh.setMatrixAt(count, source.matrixWorld);
+            if (instance.mesh.morphTexture) instance.mesh.setMorphAt(count, source);
+            count++;
           }
         });
         instance.mesh.count = count;
         instance.mesh.visible = count > 0;
-        if (count > 0) { instance.mesh.instanceMatrix.needsUpdate = true; instance.dissolve.upload(); }
+        if (count > 0) { instance.mesh.instanceMatrix.needsUpdate = true; if (instance.mesh.morphTexture) instance.mesh.morphTexture.needsUpdate = true; instance.dissolve.upload(); }
       });
     }
     this.torches.forEach(torch => {
@@ -1634,6 +1963,20 @@ export class DungeonWorld {
     this.updateFragments(delta);
     this.particleGeometry.setDrawRange(0, this.particles.length); this.particleGeometry.attributes.position.needsUpdate = true; this.particleGeometry.attributes.color.needsUpdate = true; this.particleGeometry.attributes.particleScale.needsUpdate = true;
     this.burstLight.intensity *= Math.exp(-delta * 3); this.shake *= Math.exp(-delta * 7);
+    // Reuse the existing light: no extra per-pixel point-light/shadow programs.
+    // Contact wins briefly over the broad spell light, at the struck shoulder.
+    const recentHit = this.enemies.reduce<Enemy | undefined>((latest, enemy) => {
+      const reaction = enemy.root.userData.hitReaction as HitReaction | undefined;
+      const previous = latest?.root.userData.hitReaction as HitReaction | undefined;
+      return reaction && this.elapsed - reaction.at < .18 && (!previous || reaction.at > previous.at) ? enemy : latest;
+    }, undefined);
+    if (recentHit) {
+      const reaction = recentHit.root.userData.hitReaction as HitReaction;
+      const response = sampleHitReaction(reaction, this.elapsed);
+      this.burstLight.position.copy(recentHit.root.position).add(new THREE.Vector3(-reaction.dx * .35, recentHit.height * .75 + .45, -reaction.dz * .35));
+      this.burstLight.color.setHex(reaction.element === 'fire' ? 0xffa35a : reaction.element === 'electric' ? 0x8abbff : 0xd6dce8);
+      this.burstLight.intensity = 9 * response.light;
+    }
     this.cameraTarget.lerp(this.hero.position, 1 - Math.exp(-delta * 3.7));
     const shake = this.shake;
     this.camera.position.copy(this.cameraTarget).add(new THREE.Vector3(17 + (Math.random() - .5) * shake, 25, 20 + (Math.random() - .5) * shake));
@@ -1665,8 +2008,20 @@ export class DungeonWorld {
     return { x: (projected.x + 1) * this.width * .5, y: (1 - projected.y) * this.height * .5 };
   }
 
+  get bossHealth(): { hp: number; maxHp: number } | null {
+    const boss = this.encounter === 5 ? this.enemies[0] : undefined;
+    return boss ? { hp: boss.hp, maxHp: boss.maxHp } : null;
+  }
+
+  get enemyHealthScreenPositions(): { id: string; hp: number; maxHp: number; x: number; y: number }[] {
+    return this.enemies.filter(enemy => !enemy.dead && enemy.hp < enemy.maxHp).map(enemy => {
+      const at = enemy.root.position.clone().add(new THREE.Vector3(0, enemy.height + .28, 0)).project(this.camera);
+      return { id: enemy.id, hp: enemy.hp, maxHp: enemy.maxHp, x: (at.x + 1) * this.width * .5, y: (1 - at.y) * this.height * .5 };
+    }).filter(at => at.x > 24 && at.x < this.width - 24 && at.y > 12 && at.y < this.height - 12);
+  }
+
   get diagnostics(): Record<string, unknown> {
-    return { appearance: this.appearance, lastAttack: this.lastAttack, lastSpellId: this.lastAttack?.spellId, lastSpellEffect: this.lastAttack?.effect, heroAnimation: this.heroAnimation || 'procedural', heroClips: [...this.heroActions.keys()], encounter: this.encounter, region: this.regionId, enemies: this.enemies.filter(enemy => !enemy.dead).length, articulatedEnemies: this.enemies.filter(enemy => enemy.animator.articulated).length, enemyRoster: this.enemies.reduce<Record<string, number>>((counts, enemy) => { counts[enemy.modelId] = (counts[enemy.modelId] ?? 0) + 1; return counts; }, {}), attacking: this.attacking, paused: this.paused, modelsLoaded: this.loadedModels, drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, particles: this.particles.length, fragments: this.fragments.length, hero: this.hero.position.toArray(), softwareRenderer: this.softwareRenderer, fps: Math.round(this.framesPerSecond), quality: ['full', 'balanced', 'performance'][this.quality], renderer: this.renderer.getContext().getParameter(this.renderer.getContext().VERSION) };
+    return { appearance: this.appearance, drawWarmup: this.drawWarmup, lastAttack: this.lastAttack, lastSpellId: this.lastAttack?.spellId, lastSpellEffect: this.lastAttack?.effect, heroAnimation: this.heroAnimation || 'procedural', heroClips: [...this.heroActions.keys()], encounter: this.encounter, region: this.regionId, enemies: this.enemies.filter(enemy => !enemy.dead).length, articulatedEnemies: this.enemies.filter(enemy => enemy.animator.articulated).length, enemyRoster: this.enemies.reduce<Record<string, number>>((counts, enemy) => { counts[enemy.modelId] = (counts[enemy.modelId] ?? 0) + 1; return counts; }, {}), attacking: this.attacking, paused: this.paused, modelsLoaded: this.loadedModels, drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, particles: this.particles.length, fragments: this.fragments.length, hero: this.hero.position.toArray(), softwareRenderer: this.softwareRenderer, fps: Math.round(this.framesPerSecond), quality: ['full', 'balanced', 'performance'][this.quality], renderer: this.renderer.getContext().getParameter(this.renderer.getContext().VERSION) };
   }
 
   dispose(): void {

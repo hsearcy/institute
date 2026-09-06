@@ -1,0 +1,1 @@
+Corrected UV preparation only. The actual audit reports50.111% atlas occupancy and9.297px minimum chart extent at2048px, with unchanged32,518triangles. Projection batches are derived after explicit UV selection and packing. The color bake is in progress; normal/ORM, exact export/reimport review and native review remain open. No acceptance or installation is implied.

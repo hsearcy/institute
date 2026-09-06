@@ -1,0 +1,19 @@
+{
+  "action": "prepare",
+  "channel": null,
+  "batch": null,
+  "view": "front",
+  "sourceTriangles": 195584,
+  "lowTriangles": 32518,
+  "batches": 8,
+  "atlas": 2048,
+  "uv": {
+    "occupiedFraction": 0.5011064456760641,
+    "charts": 1636,
+    "facesBelowPixelArea": 12626,
+    "minimumChartExtentPixels": 9.29736328125,
+    "chartsNarrowerThanTwoPixels": 0
+  },
+  "seconds": 17.092619875009404,
+  "sceneRestored": "Scene"
+}

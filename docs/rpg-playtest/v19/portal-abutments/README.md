@@ -13,3 +13,5 @@ The active source is [portal_abutments.py](../../../../scripts/blender/experimen
 The study reuses the accepted portal's geometry and actual material node graphs. Ordinary wall faces keep its aged limestone treatment; exposed fracture faces use a separate rougher material with restrained value variation. The source's materials depend on the hash-verified CC0 rock-face-03 maps already documented in `scripts/blender/sources/rock-face-03`.
 
 Do not install this asset based on these source renders. The required next gates are complete source review, reduced mesh/baked texture fidelity, native integration and actual doorway traversal, including the existing cutaway behavior and performance. Global world quality remains 6.5/10.
+
+The first optimized export retained construction8 but scored material/fidelity7. Its source-to-export controls and actual pixel/UV audits are in `export-v1/`. They expose unfilled one-pixel charts and an unselected UV packing operation. V3 preparation corrects that allocation at the same2K texture size; its actual bake and visual review remain pending. No doorway candidate is installed.

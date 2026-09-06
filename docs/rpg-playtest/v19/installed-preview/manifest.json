@@ -1,0 +1,29 @@
+{
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 1200,
+      "sha256": "b7624dde89dd47774dd1556d712e44f81d10fa9bc5459d098509c2b19f86ba53"
+    },
+    {
+      "path": "camp-after-refresh.png",
+      "bytes": 3162109,
+      "sha256": "1b4b0bd6550fa96e69ab5f190950f1f543c4c1a0c4143b2b4df1fd769d6182d2"
+    },
+    {
+      "path": "initial-refresh-api-unavailable.json",
+      "bytes": 2090,
+      "sha256": "3672c15398edb617828607062b866a0b511eb4d689686d21a418dfe03a2718c6"
+    },
+    {
+      "path": "recovered-state-proof.json",
+      "bytes": 4280,
+      "sha256": "879c05b2d19c79d1ba94add09a1413ec5062ca7e2b8a9bfe58b6227749c2eda4"
+    },
+    {
+      "path": "refresh.mjs",
+      "bytes": 2438,
+      "sha256": "0f23f6d0d4ac99ccd2acbd3db8233fa7cc76a87c05989755fbf9abdddd32c050"
+    }
+  ]
+}

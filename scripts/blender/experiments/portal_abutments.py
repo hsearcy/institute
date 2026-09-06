@@ -160,7 +160,7 @@ def build_portal_abutments(repo_root):
     return scene, collection
 
 
-def render_portal_abutments(scene, output):
+def render_portal_abutments(scene, output, *, render_still=True):
     """One neutral elevated source review; no world-lighting or camera changes."""
     caller = bpy.context.window.scene
     try:
@@ -207,7 +207,8 @@ def render_portal_abutments(scene, output):
         scene.view_settings.look = 'AgX - Medium High Contrast'
         scene.render.image_settings.file_format = 'PNG'
         scene.render.filepath = str(Path(output).resolve())
-        bpy.ops.render.render(write_still=True)
+        if render_still:
+            bpy.ops.render.render(write_still=True)
     finally:
         bpy.context.window.scene = caller
 

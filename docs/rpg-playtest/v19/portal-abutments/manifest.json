@@ -1,10 +1,10 @@
 {
-  "status": "v4 shown source construction/material8; export/native pending",
+  "status": "candidate evidence; acceptance scope in README",
   "files": [
     {
       "path": "README.md",
-      "bytes": 3154,
-      "sha256": "ea3b59d60e191caa194c9af25ef36f70d1f77de78780c15c602a313c2cb4c67e"
+      "bytes": 3545,
+      "sha256": "ae45cab04c35d1177f26a5af80ee4d5250d28a6f13b13a490dba5a9aea83e1b0"
     },
     {
       "path": "build-v1.json",
@@ -25,6 +25,271 @@
       "path": "build-v4.json",
       "bytes": 472,
       "sha256": "cccd12f214adb96cdad58888372d7468f159886b9fd46e569be1436eee426fc0"
+    },
+    {
+      "path": "export-v1/README.md",
+      "bytes": 2574,
+      "sha256": "395689bdf32bcebdf8ac42cc292e7b91fe86601cc1af74ab0704b4eddf2a9f19"
+    },
+    {
+      "path": "export-v1/audit-portal-uv.py",
+      "bytes": 1860,
+      "sha256": "a4d18945912b00cb32c8775ee9f2611b37e3fe2b16eb103967e3ff3199002d05"
+    },
+    {
+      "path": "export-v1/bake-albedo-0.json",
+      "bytes": 192,
+      "sha256": "bc221ff659ae983b155b787f5edb3eb49e87bf7d6f6d9a2e553ecd8198cdb2b7"
+    },
+    {
+      "path": "export-v1/bake-albedo-1.json",
+      "bytes": 200,
+      "sha256": "a066bf600a9b248480bf62a8c2f902bb07c45cb6824d90e48dfe6b22fb7196ce"
+    },
+    {
+      "path": "export-v1/bake-albedo-2.json",
+      "bytes": 209,
+      "sha256": "c911b21869f43e42e55932728c14c2d19873c71d324333d7294edfe8d8bfb2c4"
+    },
+    {
+      "path": "export-v1/bake-albedo-3.json",
+      "bytes": 219,
+      "sha256": "05a7cf749e173f3b40a51fde8f498b16ec4ed375e7e8e967e5a56611dabe6ae9"
+    },
+    {
+      "path": "export-v1/bake-albedo-4.json",
+      "bytes": 227,
+      "sha256": "4ff77480647dbd6c00153bfa5ae1321e9555a91dfcc5d41260afd2983976596f"
+    },
+    {
+      "path": "export-v1/bake-albedo-5.json",
+      "bytes": 236,
+      "sha256": "1aa74d4b3c623a447a5e1bb9ccebf44734ac101866df728213e684e511dd3d7e"
+    },
+    {
+      "path": "export-v1/bake-albedo-6.json",
+      "bytes": 245,
+      "sha256": "5a5b3c1f13cef677d854f6ec84e3735bdb1c9c8fc45dfe21c39e98ac961f3df4"
+    },
+    {
+      "path": "export-v1/bake-albedo-7.json",
+      "bytes": 255,
+      "sha256": "3387003482a90785f1ab97c558870a1ab5f9e3f1b6a9f4221baeda40e49f5912"
+    },
+    {
+      "path": "export-v1/bake-masonry.py",
+      "bytes": 18201,
+      "sha256": "1cdcc59c96b082d6810e1065d0ed385e3d5f3924cbd6632f1b840fd37f808fdc"
+    },
+    {
+      "path": "export-v1/bake-normal-0.json",
+      "bytes": 285,
+      "sha256": "6fdf0d70bc240ae41b8286e5b8df2f2a7a5ea7a487214f363e1a82f826984113"
+    },
+    {
+      "path": "export-v1/bake-normal-1.json",
+      "bytes": 295,
+      "sha256": "11b0edcde48f9b433eb5d05d312eeb7ccf7a1bd0ad1596842a118d28193ddb23"
+    },
+    {
+      "path": "export-v1/bake-normal-2.json",
+      "bytes": 303,
+      "sha256": "297935953b0a26cc9541482a0072d99e1a0c9d5e673f2c5fa592b26f71259421"
+    },
+    {
+      "path": "export-v1/bake-normal-3.json",
+      "bytes": 312,
+      "sha256": "0867571d016585e61634bfaa329397823de3d44592b6112ad8488ed797ffad90"
+    },
+    {
+      "path": "export-v1/bake-normal-4.json",
+      "bytes": 322,
+      "sha256": "7ee9fba6bc136e3f8564b22ddea5da0e3dff07cfb9e4686a530932df0460db26"
+    },
+    {
+      "path": "export-v1/bake-normal-5.json",
+      "bytes": 331,
+      "sha256": "3ae01dab23bd17da79840f72afdf53e05809c7c1726a64e87064f5e89777d7d7"
+    },
+    {
+      "path": "export-v1/bake-normal-6.json",
+      "bytes": 340,
+      "sha256": "0e8af7fdfb1b36581dd952a15dafffdf0d097f666ce11832362923cc1c8fa9e1"
+    },
+    {
+      "path": "export-v1/bake-normal-7.json",
+      "bytes": 348,
+      "sha256": "3d3b98cf9d012293c6ebaf1c8f12e1ef498982ac5a9a0d2980816504e569bbcd"
+    },
+    {
+      "path": "export-v1/bake-orm-0.json",
+      "bytes": 373,
+      "sha256": "de2c163dda6e114593e5ef88bed776a872573d28e558cb23d526784224bbd473"
+    },
+    {
+      "path": "export-v1/bake-orm-1.json",
+      "bytes": 382,
+      "sha256": "6ddd321fb6f388a75d8681d616963d264862dcd92a9f580a7b684e9e322ded22"
+    },
+    {
+      "path": "export-v1/bake-orm-2.json",
+      "bytes": 391,
+      "sha256": "41691e27b2f1a6c22f56ca9324f668262907b49b908f1f487dddf4bc3db97696"
+    },
+    {
+      "path": "export-v1/bake-orm-3.json",
+      "bytes": 400,
+      "sha256": "b6c92acff72cde13d497e529c7d45432e369edfe3990f054cfff2ebf42c66ce4"
+    },
+    {
+      "path": "export-v1/bake-orm-4.json",
+      "bytes": 410,
+      "sha256": "e1ae04b54d87174d4bb2afb00655cc8038fc63632658e7fe181b26162d472a43"
+    },
+    {
+      "path": "export-v1/bake-orm-5.json",
+      "bytes": 417,
+      "sha256": "e9d19fc8ef056108950657a0745735da878bd46958e52121fef7315f9dce8b0d"
+    },
+    {
+      "path": "export-v1/bake-orm-6.json",
+      "bytes": 427,
+      "sha256": "00c3de6039eacb25e9ebd28c4c4ed1186853623c4d891efa2260507bfa001c55"
+    },
+    {
+      "path": "export-v1/bake-orm-7.json",
+      "bytes": 436,
+      "sha256": "01b603532a646f4aefbc53a297903186edb2a3cced8056b8b1b38a3a5888ff0b"
+    },
+    {
+      "path": "export-v1/bake-recipe.py",
+      "bytes": 6501,
+      "sha256": "5c2e1fc48bfb1a4ca3ec7683a68e514ae3db35c96cba674b96084deef495bbe9"
+    },
+    {
+      "path": "export-v1/control-flat-joint.json",
+      "bytes": 228,
+      "sha256": "1e1864776c62829a5f8504049e69d839957f3441dadebbf96182a907230f7902"
+    },
+    {
+      "path": "export-v1/control-normal-off-joint.json",
+      "bytes": 241,
+      "sha256": "d515f796b191573cf100bbc0f8fff96b1889cfc73b6b462cb2ff98c51222e57c"
+    },
+    {
+      "path": "export-v1/export-front.png",
+      "bytes": 1388843,
+      "sha256": "0b5de6e2ca5b525f55fa0bfcb40e210cf4ca689ffd347fd04bc207c7be5e7df6"
+    },
+    {
+      "path": "export-v1/export-joint.png",
+      "bytes": 1046480,
+      "sha256": "e05ceb774493cc1c9ac20fb4d31994db033f42b77828e722773c26226f9aeecd"
+    },
+    {
+      "path": "export-v1/export-rear.png",
+      "bytes": 1291855,
+      "sha256": "af1bd79aa508c8bd140487cb699cb9c53559167346f58844accc0e3388defd7d"
+    },
+    {
+      "path": "export-v1/export.json",
+      "bytes": 232,
+      "sha256": "05a4579fb3c677e7ef2d4194e8f2057e6cba066e270c0270dad033448aff0e3b"
+    },
+    {
+      "path": "export-v1/flat-joint.png",
+      "bytes": 952184,
+      "sha256": "5668ff9f9bf349b86d953d2aaedbd668176ec721e02e1b0cc9a1da7dc15e1759"
+    },
+    {
+      "path": "export-v1/glb-audit.json",
+      "bytes": 943,
+      "sha256": "ff1fc78ac8c29733de0811c9adcac73b0aa90bf394a0b4c8c967ac47ba5543e0"
+    },
+    {
+      "path": "export-v1/manifest.json",
+      "bytes": 7208,
+      "sha256": "8b70c9e5c432bd1c059606f07905e368788aec90d45cef9e1272126d41dd4be5"
+    },
+    {
+      "path": "export-v1/normal-off-joint.png",
+      "bytes": 1045674,
+      "sha256": "4c1cfc2107586808c49aa85489ce1441644456c098de21cbe36f54f4e49a4ed2"
+    },
+    {
+      "path": "export-v1/pixel-ray-audit.json",
+      "bytes": 5086,
+      "sha256": "a7c3aec1d1ebbc48bda86914794522642045a37bdaf2236460d60cd0b7c5b521"
+    },
+    {
+      "path": "export-v1/portal-abutments.glb",
+      "bytes": 5503784,
+      "sha256": "822148d0f3ca7368430271537273cf0565afad1beffea3b81557f947b63395be"
+    },
+    {
+      "path": "export-v1/prepare.json",
+      "bytes": 228,
+      "sha256": "ba60f1f9a481c9563d0b8dca9c7b02f9d6a53f30de8f1b3fb1388166399f18ba"
+    },
+    {
+      "path": "export-v1/ray-portal-export.py",
+      "bytes": 2716,
+      "sha256": "9604cee219d237e38a556064b5bc506095065047b62792d50605f85e4117337b"
+    },
+    {
+      "path": "export-v1/reimport.json",
+      "bytes": 192,
+      "sha256": "e0bf50b44d42077f843cdec2f254cecc711de14c20b8865aee69dc4597c29568"
+    },
+    {
+      "path": "export-v1/render-front.json",
+      "bytes": 228,
+      "sha256": "294ac716fa91381be9b2cc5972646091f7f28762907e7fa030c04c4f01af3145"
+    },
+    {
+      "path": "export-v1/render-joint.json",
+      "bytes": 228,
+      "sha256": "6bf671e3941e8a417aa0e3ca8524ed12ae73aa005765a818d4cb63a55788c280"
+    },
+    {
+      "path": "export-v1/render-rear.json",
+      "bytes": 226,
+      "sha256": "496cb005562f9454fc2dce7f3aeb8ff4215794395db0e3016a89ff7420ad29b1"
+    },
+    {
+      "path": "export-v1/uv-chart-audit.json",
+      "bytes": 2892,
+      "sha256": "8239e56057865fef0ec5ad141e7b6c07d69c20a78856290e06f1d2384603e02b"
+    },
+    {
+      "path": "export-v1/worn-pier-review.json",
+      "bytes": 127,
+      "sha256": "03e09fdac6f0b0991e98512559a7b297361a2e492bb25ae593c7f2f1a9cdffc6"
+    },
+    {
+      "path": "export-v3/README.md",
+      "bytes": 369,
+      "sha256": "542fec53b93debfd93b22530b01d0099c20160c434b66a41f5d451c94d012a29"
+    },
+    {
+      "path": "export-v3/bake-masonry.py",
+      "bytes": 18673,
+      "sha256": "b7d96b0430b6c9350c1f6e06823936fd037f8fe025ce7fdbf8677b13c61cc8b4"
+    },
+    {
+      "path": "export-v3/bake-recipe.py",
+      "bytes": 8128,
+      "sha256": "6a4c8d15c5c14f0e74ea07fae42fd55a557a8e8ce796f7b97ef0d1631884e05c"
+    },
+    {
+      "path": "export-v3/manifest.json",
+      "bytes": 671,
+      "sha256": "e3da76160462da63c43f40e694fee744fe762686137c272ef31e02d3c2b481f2"
+    },
+    {
+      "path": "export-v3/prepare.json",
+      "bytes": 426,
+      "sha256": "ff04381bd1c95777f4d09feae45d0da55b2bb0b0a9084f571b02ebfd0e81c7c7"
     },
     {
       "path": "joint-v4.json",

@@ -82,7 +82,10 @@ def widen_subpixel_islands(mesh, minimum_extent):
 
 
 def prepare_bake(scene, source_collection, directory, size=1024, minimum_chart_pixels=0,
-                 preserve_planar_normals=False):
+                 preserve_planar_normals=False, worked_faces_flat=False,
+                 atlas_margin_pixels=None, bake_margin_pixels=5):
+    if worked_faces_flat and not preserve_planar_normals:
+        raise ValueError('Explicit worked-face normals require preserved bake normals')
     directory = Path(directory).resolve()
     if 'public' in directory.parts:
         raise ValueError('Review candidates must be exported outside public assets')
@@ -135,7 +138,11 @@ def prepare_bake(scene, source_collection, directory, size=1024, minimum_chart_p
                 if face.area < .005:
                     continue
                 for index in face.loop_indices:
-                    if Vector(normals[index]).dot(face.normal) < .65:
+                    # Opt-in for broad dressed portal/abutment planes. Preserve
+                    # the curved shaft basis and every small worn bevel facet;
+                    # the identical result is copied into projection batches.
+                    if (worked_faces_flat and 'shaft' not in source.name.lower()
+                            or Vector(normals[index]).dot(face.normal) < .65):
                         normals[index] = tuple(face.normal)
                         repaired += 1
             low.data.normals_split_custom_set(normals)
@@ -159,11 +166,17 @@ def prepare_bake(scene, source_collection, directory, size=1024, minimum_chart_p
     bpy.ops.object.mode_set(mode='OBJECT')
     if minimum_chart_pixels:
         widened = widen_subpixel_islands(low.data, minimum_chart_pixels / size)
+        print('Widened subpixel chart dimensions:', widened)
+    if minimum_chart_pixels or atlas_margin_pixels is not None:
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action='SELECT')
-        bpy.ops.uv.pack_islands(rotate=True, scale=True, margin=.006, margin_method='FRACTION')
+        # Smart projection clears UV selection independently of mesh selection.
+        # Without this, pack_islands can finish without moving any chart.
+        bpy.ops.uv.select_all(action='SELECT')
+        bpy.ops.uv.pack_islands(rotate=True, scale=True,
+                               margin=.006 if atlas_margin_pixels is None else atlas_margin_pixels / size,
+                               margin_method='FRACTION')
         bpy.ops.object.mode_set(mode='OBJECT')
-        print('Widened subpixel chart dimensions:', widened)
 
     runtime = bpy.data.materials.new('WornPier_BakedReview')
     runtime.use_nodes = True
@@ -225,7 +238,7 @@ def prepare_bake(scene, source_collection, directory, size=1024, minimum_chart_p
     scene.render.engine = 'CYCLES'
     scene.cycles.device = 'CPU'
     scene.cycles.samples = 12
-    scene.render.bake.margin = 5
+    scene.render.bake.margin = bake_margin_pixels
     scene.render.bake.use_clear = True
     scene.render.bake.use_selected_to_active = True
     scene.render.bake.cage_extrusion = .045

@@ -1,7 +1,8 @@
 import { CanvasTexture, RepeatWrapping } from 'three';
 
-/** Separate wide stone shoulders from photographic grain and mineral color. */
-export function pavingBevelHeight(heightImage: CanvasImageSource): HTMLCanvasElement {
+/** Photo-registered mortar runs and distance field, shared by relief and
+ * authored paving contour studies. This does not alter the rendered floor. */
+export function pavingJointField(heightImage: CanvasImageSource) {
   const size = 1024, canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const context = canvas.getContext('2d')!;
@@ -80,6 +81,12 @@ export function pavingBevelHeight(heightImage: CanvasImageSource): HTMLCanvasEle
       }
     }
   }
+  return { size, canvas, context, image, source, fine, broad, joints, distance };
+}
+
+/** Separate wide stone shoulders from photographic grain and mineral color. */
+export function pavingBevelHeight(heightImage: CanvasImageSource): HTMLCanvasElement {
+  const { canvas, context, image, source, fine, broad, distance } = pavingJointField(heightImage);
   for (let i = 0; i < source.length; i++) {
     const t = Math.min(1, distance[i] / 10), shoulder = t * t * (3 - 2 * t);
     const grain = (source[i] - fine[i]) / 255 * .018;

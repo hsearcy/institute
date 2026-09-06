@@ -1,0 +1,25 @@
+{
+  "status": "candidate evidence; acceptance scope in README",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 369,
+      "sha256": "542fec53b93debfd93b22530b01d0099c20160c434b66a41f5d451c94d012a29"
+    },
+    {
+      "path": "bake-masonry.py",
+      "bytes": 18673,
+      "sha256": "b7d96b0430b6c9350c1f6e06823936fd037f8fe025ce7fdbf8677b13c61cc8b4"
+    },
+    {
+      "path": "bake-recipe.py",
+      "bytes": 8128,
+      "sha256": "6a4c8d15c5c14f0e74ea07fae42fd55a557a8e8ce796f7b97ef0d1631884e05c"
+    },
+    {
+      "path": "prepare.json",
+      "bytes": 426,
+      "sha256": "ff04381bd1c95777f4d09feae45d0da55b2bb0b0a9084f571b02ebfd0e81c7c7"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "action": "control",
+  "channel": "flat",
+  "batch": null,
+  "view": "joint",
+  "path": "/home/houston/git/institute/tmp/portal-abutments-bake-v1/flat-joint.png",
+  "seconds": 21.83289569700719,
+  "sceneRestored": "Scene"
+}

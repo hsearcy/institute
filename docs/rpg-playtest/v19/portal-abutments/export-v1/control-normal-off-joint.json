@@ -1,0 +1,9 @@
+{
+  "action": "control",
+  "channel": "normal-off",
+  "batch": null,
+  "view": "joint",
+  "path": "/home/houston/git/institute/tmp/portal-abutments-bake-v1/normal-off-joint.png",
+  "seconds": 22.741987396002514,
+  "sceneRestored": "Scene"
+}

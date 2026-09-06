@@ -1,0 +1,500 @@
+{
+  "triangles": 52214,
+  "bytes": 3359172,
+  "joints": [
+    "Body",
+    "Head",
+    "ArmUpperR",
+    "ArmLowerR",
+    "LegUpperR",
+    "LegLowerR",
+    "ArmUpperL",
+    "ArmLowerL",
+    "LegUpperL",
+    "LegLowerL",
+    "Sword"
+  ],
+  "parts": [
+    "Body",
+    "Head",
+    "ArmLowerL",
+    "ArmLowerR",
+    "LegLowerL",
+    "LegLowerR",
+    "LegUpperL",
+    "LegUpperR",
+    "ArmUpperL",
+    "ArmUpperR",
+    "Sword"
+  ],
+  "guardPoseYUp": {
+    "Body": {
+      "position": [
+        0.0,
+        -0.027999937534332275,
+        -0.0
+      ],
+      "quaternion": [
+        0.04997526481747627,
+        -0.012484053149819374,
+        0.0006247233832255006,
+        0.9986722469329834
+      ]
+    },
+    "Head": {
+      "position": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "quaternion": [
+        -0.059817153960466385,
+        -0.06981699168682098,
+        -0.00419405335560441,
+        0.9957559704780579
+      ]
+    },
+    "ArmUpperR": {
+      "position": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "quaternion": [
+        -0.485119491815567,
+        -0.0494505912065506,
+        -0.025647521018981934,
+        0.8726717233657837
+      ]
+    },
+    "ArmLowerR": {
+      "position": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "quaternion": [
+        -0.6042299270629883,
+        -0.33315640687942505,
+        -0.002964632585644722,
+        0.7238123416900635
+      ]
+    },
+    "LegUpperR": {
+      "position": [
+        0.0,
+        -0.027999937534332275,
+        -0.0
+      ],
+      "quaternion": [
+        -0.14275714755058289,
+        -0.004558089189231396,
+        0.020620709285140038,
+        0.9895324110984802
+      ]
+    },
+    "LegLowerR": {
+      "position": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "quaternion": [
+        0.18418341875076294,
+        -0.0004396462463773787,
+        0.012057027779519558,
+        0.9828178882598877
+      ]
+    },
+    "ArmUpperL": {
+      "position": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "quaternion": [
+        0.3114253878593445,
+        0.8592938780784607,
+        -0.052023936063051224,
+        0.402395099401474
+      ]
+    },
+    "ArmLowerL": {
+      "position": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "quaternion": [
+        0.8257816433906555,
+        -0.45531418919563293,
+        -0.004051668103784323,
+        0.3328022360801697
+      ]
+    },
+    "LegUpperL": {
+      "position": [
+        0.0,
+        -0.027999937534332275,
+        -0.0
+      ],
+      "quaternion": [
+        -0.022607827559113503,
+        -4.90999264002312e-06,
+        -0.02147485688328743,
+        0.9995137453079224
+      ]
+    },
+    "LegLowerL": {
+      "position": [
+        0.0,
+        0.0,
+        -0.0
+      ],
+      "quaternion": [
+        0.1909971833229065,
+        0.001913905143737793,
+        -0.010637455619871616,
+        0.9815310835838318
+      ]
+    },
+    "Sword": {
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "quaternion": [
+        0,
+        0,
+        0,
+        1
+      ]
+    }
+  },
+  "atlas": 1024,
+  "sourceSHA256": "d563a0fb2f0044d91737af9b4d57f211e84340c6ff1596a1b9f600aa35f40f2b",
+  "weaponSHA256": "3f48d820b532677426ebae5ad77175faefc55f0ef4b071f523a4a97b5ab253ce",
+  "transfer": {
+    "excludeBoneMicrograin": true,
+    "normalProjectionGroups": 23,
+    "handChartArea": {
+      "before": 0.010759786863541808,
+      "after": 0.088850222402084,
+      "scale": 4,
+      "sources": 40,
+      "bounds": [
+        0.0029999061953276396,
+        0.9964021444320679
+      ]
+    },
+    "nativeShaftComparison": [
+      {
+        "source": "proximal.thumb.R",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.0027846237650626013
+      },
+      {
+        "source": "proximal.thumb.L",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.0027845189488702893
+      },
+      {
+        "source": "proximal.ring.R",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.0027875938818360383
+      },
+      {
+        "source": "proximal.ring.L",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.002787729743868069
+      },
+      {
+        "source": "proximal.middle.R",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.003025012504425644
+      },
+      {
+        "source": "proximal.middle.L",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.00302497048880868
+      },
+      {
+        "source": "proximal.little.R",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.002070018165881012
+      },
+      {
+        "source": "proximal.little.L",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.002070158523980491
+      },
+      {
+        "source": "proximal.index.R",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.002593404990029073
+      },
+      {
+        "source": "proximal.index.L",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.002593349872699415
+      },
+      {
+        "source": "middle.ring.R",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.002186189095010901
+      },
+      {
+        "source": "middle.ring.L",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.0021861539222229184
+      },
+      {
+        "source": "middle.middle.R",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.0021551884911563683
+      },
+      {
+        "source": "middle.middle.L",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.0021551579918949472
+      },
+      {
+        "source": "middle.little.R",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.0016918335388730423
+      },
+      {
+        "source": "middle.little.L",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.001691918475406342
+      },
+      {
+        "source": "middle.index.R",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.002141331270394989
+      },
+      {
+        "source": "middle.index.L",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.002141312860550822
+      },
+      {
+        "source": "metacarpal.thumb.R",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.0033804669948481448
+      },
+      {
+        "source": "metacarpal.thumb.L",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.003380423681605376
+      },
+      {
+        "source": "metacarpal.ring.R",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.003333831193825723
+      },
+      {
+        "source": "metacarpal.ring.L",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.003333779194515319
+      },
+      {
+        "source": "metacarpal.middle.R",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.003560629146682884
+      },
+      {
+        "source": "metacarpal.middle.L",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.0035607563698249888
+      },
+      {
+        "source": "metacarpal.little.R",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.0029826877339754992
+      },
+      {
+        "source": "metacarpal.little.L",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.0029826388678549968
+      },
+      {
+        "source": "metacarpal.index.R",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.003426236229679481
+      },
+      {
+        "source": "metacarpal.index.L",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.003426179969760087
+      },
+      {
+        "source": "leg_tibula.R",
+        "gain": 1.5,
+        "pairGapProtected": true,
+        "maxDisplacement": 0.017476361843733832
+      },
+      {
+        "source": "leg_tibula.L",
+        "gain": 1.5,
+        "pairGapProtected": true,
+        "maxDisplacement": 0.017476309237903
+      },
+      {
+        "source": "leg_fibula.R",
+        "gain": 1.5,
+        "pairGapProtected": true,
+        "maxDisplacement": 0.008224056199151338
+      },
+      {
+        "source": "leg_fibula.L",
+        "gain": 1.5,
+        "pairGapProtected": true,
+        "maxDisplacement": 0.00822408411540911
+      },
+      {
+        "source": "distal.thumb.R",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.0019864257084276607
+      },
+      {
+        "source": "distal.thumb.L",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.001986491531734493
+      },
+      {
+        "source": "distal.ring.R",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.0014175861358337548
+      },
+      {
+        "source": "distal.ring.L",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.001417606175500706
+      },
+      {
+        "source": "distal.middle.R",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.0013975210436559726
+      },
+      {
+        "source": "distal.middle.L",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.001397551126352619
+      },
+      {
+        "source": "distal.little.R",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.001097120548010602
+      },
+      {
+        "source": "distal.little.L",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.0010971964493854617
+      },
+      {
+        "source": "distal.index.R",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.0013878840276158359
+      },
+      {
+        "source": "distal.index.L",
+        "gain": 1.4,
+        "pairGapProtected": false,
+        "maxDisplacement": 0.0013879163411190602
+      },
+      {
+        "source": "arm_ulna.R",
+        "gain": 1.6,
+        "pairGapProtected": true,
+        "maxDisplacement": 0.008774691119100139
+      },
+      {
+        "source": "arm_ulna.L",
+        "gain": 1.6,
+        "pairGapProtected": true,
+        "maxDisplacement": 0.008774616542874198
+      },
+      {
+        "source": "arm_radius.R",
+        "gain": 1.6,
+        "pairGapProtected": true,
+        "maxDisplacement": 0.013159733669590298
+      },
+      {
+        "source": "arm_radius.L",
+        "gain": 1.6,
+        "pairGapProtected": true,
+        "maxDisplacement": 0.01315965967615671
+      }
+    ],
+    "nativeRemnantsTriangles": 4904
+  },
+  "sha256": "3b33296220862af27f26bc273fe26217cf7ad2fcecbbb784aca3e9cbbd21e7fb",
+  "candidate": "scripts/blender/experiments/exports/skeleton-remnants-v15/skeleton-candidate.glb",
+  "status": "Independent exact export construction/fidelity8 and material8; actual native presence/motion and performance pending; public unchanged",
+  "audits": [
+    {
+      "phase": 0.7,
+      "collapse": "grounded",
+      "states": 268,
+      "supportFloor": -8.349725976586342e-05,
+      "worstGeometryY": -0.0001812289700819092,
+      "maxHipGap": 0
+    },
+    {
+      "phase": 3.54,
+      "collapse": "grounded",
+      "states": 268,
+      "supportFloor": -8.349725976586342e-05,
+      "worstGeometryY": -0.0008217247100250624,
+      "maxHipGap": 0
+    },
+    {
+      "phase": 0.7,
+      "collapse": "electric",
+      "states": 268,
+      "supportFloor": -8.349725976586342e-05,
+      "worstGeometryY": -8.349725976605771e-05,
+      "maxHipGap": null
+    }
+  ]
+}

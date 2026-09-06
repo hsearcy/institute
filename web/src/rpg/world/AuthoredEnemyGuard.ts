@@ -147,7 +147,7 @@ export class AuthoredEnemyGuard {
       // differently. Correct each foot against its actual cached sole points.
       for (let iteration = 0; iteration < (leg.sole?.length ? 4 : 1); iteration++) {
         const pose = solvePlanarLeg(lowerJoint.position.y, lowerJoint.position.z, leg.foot.y, leg.foot.z,
-          target.y - upperJoint.object.position.y, target.z - upperJoint.object.position.z);
+          target.y - upperJoint.object.position.y, target.z - upperJoint.object.position.z, this.legPose);
         this.legAngle(upperJoint, pose.upper); this.legAngle(lowerJoint, pose.lower);
         if (leg.sole?.length) {
           let low = Infinity;

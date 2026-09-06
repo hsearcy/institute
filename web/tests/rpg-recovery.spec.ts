@@ -131,6 +131,7 @@ test('reloading and retrying every saved phase keeps learning, XP, shields, and 
     else await route.continue();
   });
   await page.locator('[data-school="ember"][data-view="skills"]').click();
+  await page.locator('[data-skill-select="ember_power"]').click();
   await page.locator('[data-skill="ember_power"]').click();
   await expect(page.getByRole('button', { name: 'Try again', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Try again', exact: true }).click();

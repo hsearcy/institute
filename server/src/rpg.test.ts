@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { RPG_SPELLS, RPG_SPELL_IDS, RPG_SKILLS, RPG_ITEMS, rpgLevel, rpgSpellUnlocked, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgEncounterKills } from '@institute/shared';
+import { RPG_SPELLS, RPG_SPELL_IDS, RPG_SKILLS, RPG_ITEMS, rpgLevel, rpgSpellUnlocked, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgEncounterKills, rpgNextRelicHunt } from '@institute/shared';
 import { ensureRpgSchema, getRpgState, startRpgExpedition, resolveRpgEncounter, createRpgRoutes } from './rpg';
 
 function legacyDb(): Database {
@@ -94,6 +94,58 @@ describe('additive RPG progression on legacy learning data', () => {
     expect(() => resolve(db, 'sam', 'right')).toThrow('already powered');
     expect(db.query('SELECT COUNT(*) AS n FROM rpg_claims').get()).toEqual({ n: 1 });
     db.close();
+  });
+
+  test('region hunt previews match real rewards while preserving profiles, learning and experience', () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    try {
+      const untouched = getRpgState(db, 'sam');
+      for (const [regionId, targetItem] of [['embercrypt', 'cleaver'], ['frostvault', 'glacier'], ['stormspire', 'thunderrod']]) {
+        const profileId = `hunter-${regionId}`, initial = getRpgState(db, profileId);
+        Object.assign(initial, { totalKills: 100, expeditionsCompleted: 3, inventory: ['apprentice', 'cinderwand'] });
+        db.query('INSERT INTO rpg_profiles VALUES (?, ?, ?)').run(profileId, JSON.stringify(initial), 1);
+        const preview = rpgNextRelicHunt(initial, regionId)!;
+        expect(preview).toMatchObject({ itemId: targetItem, encounterIndex: 2 });
+        startRpgExpedition(db, profileId, regionId);
+        for (let room = 0; room <= preview.encounterIndex; room++) {
+          const problemId = `${profileId}-${room}`;
+          solved(db, profileId, problemId);
+          const learning = snapshot(db), current = getRpgState(db, profileId);
+          const request = { profileId, problemId, expeditionId: current.expedition!.id, encounterIndex: room };
+          const result = resolveRpgEncounter(db, request);
+          expect(result.reward.xp).toBe(32);
+          expect(result.reward.item?.id ?? null).toBe(room === 2 ? targetItem : null);
+          expect(resolveRpgEncounter(db, request)).toEqual({ ...result, duplicate: true });
+          expect(snapshot(db)).toBe(learning);
+        }
+        expect(getRpgState(db, profileId).inventory).toEqual(['apprentice', 'cinderwand', targetItem]);
+      }
+      expect(getRpgState(db, 'sam')).toEqual(untouched);
+    } finally { db.close(); }
+  });
+
+  test('a pre-hunt global-pool receipt never rerolls into the new regional reward', () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    try {
+      const initial = startRpgExpedition(db, 'sam');
+      initial.totalKills = 100; initial.inventory = ['apprentice', 'cinderwand']; initial.expedition!.encounterIndex = 2;
+      db.query('UPDATE rpg_profiles SET state_json = ? WHERE profile_id = ?').run(JSON.stringify(initial), 'sam');
+      solved(db, 'sam', 'pre-hunt');
+      const request = { profileId: 'sam', problemId: 'pre-hunt', expeditionId: initial.expedition!.id, encounterIndex: 2 };
+      const prior = resolveRpgEncounter(db, request);
+      expect(prior.reward.item?.id).toBe('cleaver');
+      // The prior global catalogue would have awarded Glacier Fang here.
+      const oldRelic = RPG_ITEMS.find(item => item.id === 'glacier')!;
+      prior.reward.item = oldRelic; prior.reward.newItems = [oldRelic];
+      prior.state.inventory = ['apprentice', 'cinderwand', 'glacier'];
+      db.query('UPDATE rpg_claims SET reward_json = ? WHERE profile_id = ?').run(JSON.stringify(prior.reward), 'sam');
+      db.query('UPDATE rpg_profiles SET state_json = ? WHERE profile_id = ?').run(JSON.stringify(prior.state), 'sam');
+      const saved = db.query('SELECT * FROM rpg_claims').all(), learning = snapshot(db);
+      expect(resolveRpgEncounter(db, request)).toEqual({ ...prior, duplicate: true });
+      expect(db.query('SELECT * FROM rpg_claims').all()).toEqual(saved);
+      expect(getRpgState(db, 'sam')).toEqual(prior.state);
+      expect(snapshot(db)).toBe(learning);
+    } finally { db.close(); }
   });
 
   test('old larger-pack receipts retain earned kills while future encounters use smaller packs', () => {

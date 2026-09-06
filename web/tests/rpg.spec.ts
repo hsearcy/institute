@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import type { Problem, RpgState } from '../../shared/src/index';
-import { rpgEncounterKills } from '../../shared/src/rpg';
+import { rpgEncounterKills, rpgNextRelicHunt } from '../../shared/src/rpg';
 
 const profile = 'rpg-playtest';
 // Fault tests use the real renderer/simulation at a small software framebuffer;
@@ -95,6 +95,11 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
   await page.getByRole('button', { name: 'Back to camp', exact: true }).click();
   expect((await state(page)).appearanceId).toBe('wayfarer');
   expect(await (await page.request.get(`/mastery?profileId=${profile}`)).json()).toEqual(originalMastery);
+  await page.getByRole('button',{name:'Choose an expedition',exact:true}).click();
+  await expect(page.locator('[data-region="embercrypt"] [data-hunt-item="cinderwand"]')).toContainText('Cinderbranch');
+  await expect(page.locator('[data-region="frostvault"] [data-hunt-item]')).toHaveCount(0);
+  await page.screenshot({path:info.outputPath('00-relic-hunt.png')});
+  await page.getByRole('button',{name:'Back to camp',exact:true}).click();
   await page.getByRole('button',{name:/Enter the dungeon/}).click();
   await ready(page);
   await page.screenshot({path:info.outputPath('01-encounter.png')});
@@ -131,7 +136,7 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
   const targetProblem = await page.locator('#rpg-answer-form').getAttribute('data-problem-id');
   await page.getByRole('button', {name:'Open spellbook',exact:true}).click();
   await page.locator('#rpg-dialog-content [data-spell="meteor"]').click();
-  await expect(page.locator('#rpg-dialog-content [data-skill="meteor"]')).toHaveClass(/rpg-target-skill/);
+  await expect(page.locator('#rpg-dialog-content [data-skill-select="meteor"]')).toHaveClass(/rpg-target-skill/);
   await page.getByRole('button', {name:'Return to dungeon',exact:true}).click();
   await expect(page.locator('#rpg-next-spell')).toContainText('Meteor');
   expect(await state(page)).toEqual(waiting);
@@ -141,7 +146,7 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
   await expect(page.locator('#rpg-next-spell')).toContainText('Meteor');
   await expect(page.locator('#rpg-answer-form')).toHaveAttribute('data-problem-id',targetProblem!);
   await page.locator('#rpg-next-spell').click();
-  await expect(page.locator('#rpg-dialog-content [data-skill="ember_power"]')).toHaveClass(/rpg-target-skill/);
+  await expect(page.locator('#rpg-dialog-content [data-skill-select="ember_power"]')).toHaveClass(/rpg-target-skill/);
   await page.getByRole('button',{name:'Return to dungeon',exact:true}).click();
 
   const first = await currentProblem(page, problems);
@@ -181,8 +186,23 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
 
   await page.locator('#rpg-dialog-content [data-action="skills"]').click();
   await page.locator('[data-school="frost"][data-view="skills"]').click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  const pointsBeforeSelecting = (await state(page)).skillPoints;
+  await page.locator('[data-skill-select="frost"]').click();
+  await expect(page.locator('.rpg-rune-summary')).toContainText('Frostfall');
+  await expect(page.locator('.rpg-skill-detail')).toBeHidden();
+  expect((await state(page)).skillPoints).toBe(pointsBeforeSelecting);
+  await page.locator('[data-action="rune-detail"]').click();
+  await expect(page.locator('.rpg-rune-tree')).toBeHidden();
+  await expect(page.locator('.rpg-skill-detail')).toBeVisible();
+  await page.screenshot({path:info.outputPath('03-phone-learn-rune.png')});
   await page.locator('[data-skill="frost"]').click();
   await expect.poll(async () => (await state(page)).skills.frost).toBe(1);
+  expect((await state(page)).skillPoints).toBe(pointsBeforeSelecting - 1);
+  await expect(page.locator('[data-skill="frost"]')).toHaveText('Mastered');
+  await page.locator('[data-action="rune-detail"]').click();
+  await expect(page.locator('.rpg-rune-tree')).toBeVisible();
+  await page.setViewportSize(originalViewport);
   await page.screenshot({path:info.outputPath('03-skills.png')});
   await expect(page.locator('.rpg-learned-goal')).toContainText('Frostfall');
   await page.locator('.rpg-learned-goal').click();
@@ -193,6 +213,14 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
   await expect.poll(async () => (await state(page)).equippedItemId).toBe(ownedItem);
   await page.getByRole('button',{name:'Back to camp',exact:true}).click();
   await page.getByRole('button',{name:'Choose an expedition',exact:true}).click();
+  const huntState = await state(page);
+  const flameHunt = rpgNextRelicHunt(huntState, 'embercrypt')!;
+  const frostHunt = rpgNextRelicHunt(huntState, 'frostvault')!;
+  expect(flameHunt.itemId).not.toBe(frostHunt.itemId);
+  for (const hunt of [flameHunt, frostHunt]) {
+    await expect(page.locator(`[data-region="${hunt.regionId}"] [data-hunt-item="${hunt.itemId}"]`)).toBeVisible();
+  }
+  await page.screenshot({path:info.outputPath('03-regional-hunts.png')});
   await page.locator('[data-region="frostvault"]').click();
   await ready(page);
   await page.locator('[data-spell="frost"]').click();

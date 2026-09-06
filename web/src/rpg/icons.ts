@@ -22,7 +22,7 @@ export function escapeHtml(value: unknown): string {
   return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 }
 
-/** Hand-painted production atlas: five abilities per school, three rows. */
+/** Illustrated production atlas: five abilities per school, three rows. */
 const spellAtlas = ['ember','cleave','meteor','phoenix_dive','firestorm','frost','ice_lance','glacial_surge','blizzard','frost_guardian','storm','arc_lance','thunderclap','ball_lightning','tempest'];
 export function spellArt(id: string): string {
   const index = Math.max(0,spellAtlas.indexOf(id));
@@ -33,4 +33,15 @@ const relicAtlas = ['apprentice','cinderwand','glacier','thunderrod','moonstaff'
 export function relicArt(id: string): string {
   const index = Math.max(0,relicAtlas.indexOf(id));
   return `<span class="rpg-relic-art" aria-hidden="true" style="--art-x:${(index % 6)*20}%;--art-y:${Math.floor(index/6)*100/3}%"></span>`;
+}
+
+// Companion atlas gives each passive and modifier its own readable subject.
+const skillAtlas = ['ember_power','ember_echo','ember_master','cleave','cleave_sweep',
+  'meteor_shower','phoenix_wings','firestorm_inferno','frost_shards','frost_master',
+  'ice_lance_split','glacial_tide','blizzard_hail','guardian_twins','storm_chain',
+  'storm_master','arc_lance_fork','thunderclap_echo','ball_lightning_orbit','tempest_overcharge'];
+export function skillArt(id: string, spellId: string): string {
+  const index = skillAtlas.indexOf(id);
+  if (index < 0) return spellArt(spellId);
+  return `<span class="rpg-spell-art rpg-painted-art rpg-skill-art ${id === 'ember_power' ? 'rpg-wildfire-art' : ''}" aria-hidden="true" style="--art-x:${(index % 5)*25}%;--art-y:${Math.floor(index/5)*100/3}%"></span>`;
 }

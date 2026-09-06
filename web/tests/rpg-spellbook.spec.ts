@@ -1,9 +1,70 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { writeFile } from 'node:fs/promises';
 import { RPG_SPELLS, RPG_SCHOOLS, RPG_SKILLS, rpgSpellUnlocked, rpgEncounterKills, rpgSpellModifiers, type RpgResolveResult, type RpgSpellId, type RpgAppearanceId, type RpgState } from '../../shared/src/rpg';
 import type { Problem } from '../../shared/src/index';
 
 const profile = 'rpg-archmage';
+const captureSequences = process.env.RPG_CAPTURE_SEQUENCE === '1';
 const state = async (page: Page): Promise<RpgState> => (await page.request.get(`/rpg/state?profileId=${profile}`)).json();
+
+async function captureTelemetry(page: Page) {
+  return page.evaluate(() => {
+    const game = (window as any).__game, world = game.world;
+    return { timestamp: new Date().toISOString(), browserEpochMs: performance.timeOrigin + performance.now(), browserMonotonicMs: performance.now(),
+      attackAge: world.attackAge, diagnostics: world.diagnostics, panel: game.panel,
+      viewport: { width: innerWidth, height: innerHeight, pixelRatio: devicePixelRatio },
+      rendererBuffer: { width: world.renderer.domElement.width, height: world.renderer.domElement.height } };
+  });
+}
+
+async function captureMenu(page: Page, info: TestInfo, name: string): Promise<void> {
+  if (!captureSequences) return;
+  await expect.poll(() => page.evaluate(() => !(window as any).__game.busy)).toBe(true);
+  if (name !== 'inventory-relics') await page.locator('#rpg-dialog-title').scrollIntoViewIfNeeded();
+  const before = await captureTelemetry(page), path = info.outputPath(`menu-still-${name}.png`);
+  await page.screenshot({ path });
+  const after = await captureTelemetry(page), metadata = info.outputPath(`menu-still-${name}.json`);
+  await writeFile(metadata, JSON.stringify({ evidence: 'Still image, not video', name, before, after }, null, 2));
+  await info.attach(`menu-still-${name}`, { path, contentType: 'image/png' });
+  await info.attach(`menu-still-${name}-metadata`, { path: metadata, contentType: 'application/json' });
+}
+
+/** Observe a real cast without freezing clocks or changing the renderer/game.
+ * Screenshot readback takes time: record actual before/after times and lateness,
+ * rather than treating requested beats as the moment the pixels were captured.
+ */
+async function captureCastSequence(page: Page, info: TestInfo, index: number, spellId: RpgSpellId): Promise<void> {
+  const observed = await page.waitForFunction(id => {
+    const world = (window as any).__game.world;
+    return world.diagnostics.attacking && world.diagnostics.lastAttack?.spellId === id
+      ? { start: performance.now() - world.attackAge * 1000, observedAge: world.attackAge, observedAt: performance.timeOrigin + performance.now() } : false;
+  }, spellId, { timeout: 15000, polling: 'raf' });
+  const origin = await observed.jsonValue() as { start: number; observedAge: number; observedAt: number };
+  await observed.dispose();
+  const beats = [['anticipation', .12], ['release', .4], ['peak', .8], ['aftermath', 1.6], ['travel', 3.6]] as const;
+  const frames = [];
+  for (const [label, targetSeconds] of beats) {
+    // attackAge stops at cast completion, so the travel still must use elapsed
+    // browser wall time from the observed cast origin, not an impossible age3.6.
+    const threshold = await page.waitForFunction(at => performance.now() >= at, origin.start + targetSeconds * 1000, { timeout: 10000, polling: 'raf' });
+    await threshold.dispose();
+    const before = await captureTelemetry(page);
+    const filename = `sequence-still-${String(index + 1).padStart(2, '0')}-${spellId}-${label}.png`;
+    const path = info.outputPath(filename);
+    await page.screenshot({ path });
+    const after = await captureTelemetry(page);
+    frames.push({ label, filename, path, targetSeconds,
+      actualSecondsBefore: (before.browserMonotonicMs - origin.start) / 1000,
+      actualSecondsAfter: (after.browserMonotonicMs - origin.start) / 1000,
+      latenessMs: before.browserMonotonicMs - origin.start - targetSeconds * 1000,
+      before, after });
+  }
+  const metadata = info.outputPath(`sequence-stills-${String(index + 1).padStart(2, '0')}-${spellId}.json`);
+  await writeFile(metadata, JSON.stringify({ evidence: 'Timed still images, not video; do not establish continuous animation quality or uncaptured frame rate.',
+    spellId, encounterOrdinal: index + 1, origin, frames }, null, 2));
+  await info.attach(`sequence-stills-${index + 1}-${spellId}-metadata`, { path: metadata, contentType: 'application/json' });
+  for (const frame of frames) await info.attach(`sequence-still-${index + 1}-${spellId}-${frame.label}`, { path: frame.path, contentType: 'image/png' });
+}
 async function configureRenderer(page: Page): Promise<void> {
   await expect.poll(() => page.evaluate(() => !!(window as any).__game?.world)).toBe(true);
   await page.evaluate(() => {
@@ -23,7 +84,7 @@ async function ready(page: Page): Promise<void> {
     });
   }, { timeout: 60_000 }).toBe(true);
 }
-async function choose(page: Page, spellId: RpgSpellId): Promise<void> {
+async function choose(page: Page, spellId: RpgSpellId, info: TestInfo): Promise<void> {
   const spell = RPG_SPELLS.find(entry => entry.id === spellId)!;
   await page.locator('button[data-action="spellbook"]:visible').first().click();
   await page.locator(`[data-school="${spell.school}"][data-view="spellbook"]`).click();
@@ -31,14 +92,16 @@ async function choose(page: Page, spellId: RpgSpellId): Promise<void> {
   await page.locator(`#rpg-dialog-content [data-spell="${spellId}"]`).click();
   await expect.poll(async () => (await state(page)).selectedSpellId).toBe(spellId);
   await expect(page.locator(`#rpg-dialog-content [data-spell="${spellId}"]`)).toHaveClass(/selected/);
+  if (['ember', 'frost', 'storm'].includes(spellId)) await captureMenu(page, info, `spellbook-${spell.school}`);
   await page.getByRole('button', { name: 'Return to dungeon', exact: true }).click();
   await ready(page);
   await expect(page.locator(`#rpg-spellbar [data-spell="${spellId}"]`)).toHaveAttribute('aria-pressed', 'true');
 }
-async function equip(page: Page, itemId: string): Promise<void> {
+async function equip(page: Page, itemId: string, info: TestInfo): Promise<void> {
   await page.getByRole('navigation', { name: 'Adventure menu' }).getByRole('button', { name: 'Equipment', exact: true }).click();
   await page.locator(`#rpg-dialog-content [data-item="${itemId}"]`).click();
   await expect.poll(async () => (await state(page)).equippedItemId).toBe(itemId);
+  if (itemId === 'starfall') await captureMenu(page, info, 'inventory-relics');
   await page.getByRole('button', { name: 'Return to dungeon', exact: true }).click();
   await ready(page);
 }
@@ -84,10 +147,12 @@ test('all fifteen spellbook abilities cast distinct effects, honor equipment, an
   for (const school of RPG_SCHOOLS) {
     await page.locator(`[data-school="${school.id}"][data-view="skills"]`).click();
     for (const skill of RPG_SKILLS.filter(skill => skill.school === school.id)) {
+      await page.locator(`[data-skill-select="${skill.id}"]`).click();
       await page.locator(`[data-skill="${skill.id}"]`).click();
       await expect.poll(async () => (await state(page)).skills[skill.id]).toBe(1);
       await expect.poll(() => page.evaluate(() => !(window as any).__game.busy)).toBe(true);
     }
+    await captureMenu(page, info, `skills-${school.id}`);
   }
   const learned = await state(page);
   expect(RPG_SPELLS.filter(spell => rpgSpellUnlocked(spell.id, learned.skills))).toHaveLength(15);
@@ -108,14 +173,15 @@ test('all fifteen spellbook abilities cast distinct effects, honor equipment, an
     if (index > 0 && index % 6 === 0) {
       await expect(page.getByRole('button', { name: 'Next adventure →', exact: true })).toBeVisible();
       await page.getByRole('button', { name: 'Next adventure →', exact: true }).click();
+      if (index === 6) await captureMenu(page, info, 'expedition-map');
       await page.locator(`[data-region="${regions[index / 6]}"]`).click(); await ready(page);
     }
-    await choose(page, spellId);
-    if (spellId === 'meteor') await equip(page, 'starfall');
-    if (spellId === 'frost') await equip(page, 'wintercrown');
-    if (spellId === 'arc_lance') await equip(page, 'arcfang');
-    if (spellId === 'frost_guardian') await equip(page, 'wardenheart');
-    if (spellId === 'ball_lightning') await equip(page, 'stormorbit');
+    await choose(page, spellId, info);
+    if (spellId === 'meteor') await equip(page, 'starfall', info);
+    if (spellId === 'frost') await equip(page, 'wintercrown', info);
+    if (spellId === 'arc_lance') await equip(page, 'arcfang', info);
+    if (spellId === 'frost_guardian') await equip(page, 'wardenheart', info);
+    if (spellId === 'ball_lightning') await equip(page, 'stormorbit', info);
 
     // Selection and the unsolved problem both survive a full reload.
     if (index === 2 || index === 8 || index === 13) {
@@ -150,7 +216,9 @@ test('all fifteen spellbook abilities cast distinct effects, honor equipment, an
     };
     // Observe before the click: API/assertion round trips must not delay the
     // requested animation beat. Screenshots remain evidence for manual review.
-    const captureReady = process.env.RPG_CAPTURE_SPELLS === '1'
+    const sequencePromise = captureSequences ? captureCastSequence(page, info, index, spellId) : null;
+    void sequencePromise?.catch(() => {});
+    const captureReady = process.env.RPG_CAPTURE_SPELLS === '1' && !captureSequences
       ? page.waitForFunction(({ spellId, age }) => {
         const world = (window as any).__game.world;
         return world.diagnostics.attacking && world.diagnostics.lastAttack?.spellId === spellId && world.attackAge >= age;
@@ -189,7 +257,7 @@ test('all fifteen spellbook abilities cast distinct effects, honor equipment, an
     }
     if (capturePromise) {
       await info.attach(`cast-${index + 1}-${spellId}`, { body: await capturePromise, contentType: 'image/png' });
-    } else if (['meteor', 'frost_guardian', 'ball_lightning'].includes(spellId)) {
+    } else if (!captureSequences && ['meteor', 'frost_guardian', 'ball_lightning'].includes(spellId)) {
       await page.screenshot({ path: info.outputPath(`cast-${spellId}.png`) });
     }
     if (result.reward.bossDefeated) {
@@ -205,6 +273,9 @@ test('all fifteen spellbook abilities cast distinct effects, honor equipment, an
         await expect(rewardCard).not.toContainText('DUPLICATE RELIC');
       }
     } else await ready(page);
+    // Gameplay assertions and effect checks run concurrently with observation;
+    // only wait for the travel still after the cast/receipt checks have passed.
+    if (sequencePromise) await sequencePromise;
     });
   }
   expect(seenSpells.size).toBe(15); expect(seenEffects.size).toBe(15);
@@ -217,6 +288,6 @@ test('all fifteen spellbook abilities cast distinct effects, honor equipment, an
   await page.locator('#rpg-dialog-content [data-action="skills"]').click();
   for (const school of RPG_SCHOOLS) {
     await page.locator(`[data-school="${school.id}"][data-view="skills"]`).click();
-    await expect(page.locator('#rpg-dialog-content .rpg-skill-node')).toHaveCount(11);
+    await expect(page.locator('#rpg-dialog-content [data-skill-select]')).toHaveCount(11);
   }
 });

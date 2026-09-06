@@ -2,6 +2,66 @@
 
 Verified September 5, 2026 on `concept/math-dungeon-rpg`. Successive revisions address the gap between the first prototype and the approved concept: textured Gothic architecture, closer combat framing, animated characters, illustrated controls, and substantially more magic and loot. Images below are captured from the implementation, not generated concept art.
 
+## Thirteenth pass — independent art gate, work in progress
+
+The independent [art review](rpg-art-review-v13.md) scores every rendered art
+category against the user's scale: 10 is AAA graphics and every category must
+reach 8. The baseline is approximately 4.5 overall and **fails**. Individual
+failures and missing evidence remain visible; improved code and passing tests
+do not imply visual acceptance. The current wraith, Ball Lightning and skill
+tree revisions are candidates awaiting review and further iteration.
+
+Regional expeditions now prioritize undiscovered eligible relics of their own
+school, while retaining first-reward, encounter, clear-count and legendary
+gates. The map forecasts the next treasure, including duplicate rewards.
+Existing receipts are replayed unchanged; this requires no save migration.
+
+Skills now use illustrated connected nodes and a separate selected-skill
+panel. Selecting a node is free; the Learn or Upgrade button spends the point.
+Upgrade previews report actual extra targets for the current loadout and room,
+including the 48-target limit and already-active modifiers. The underlying
+learning trees, mastery and question selection are unchanged.
+
+Current validation: the production build and 292 CPU tests pass. Desktop/phone
+regressions passed in 1.2 minutes, saved-phase recovery in 1.1 minutes, and all
+fifteen spells across three expeditions in 2.1 minutes. The phone test verifies
+that selecting a rune spends nothing, opening Details exposes the learning
+button, and Learn spends exactly one point. Twenty GLBs validate at 286,791
+triangles and 31,365,188 bytes. These checks do not certify art quality.
+
+The new [upgrade illustrations](rpg-skill-art-v3.md) scored 8 as source art.
+Visible desktop skill-tree partial states reached 8 across all three schools;
+phone trees and lower-node coverage also reached 8 after label refinements.
+Phone detail illustrations also reached 8 after increasing their presentation
+to 144 pixels. This scoped acceptance covers the reviewed skill menu only;
+HUD, other menus, models, world and complete effects retain separate gates.
+Ball Lightning v4 orb forms reached 8 in the desktop full-quality samples;
+complete spell motion, contacts and responsive presentation remain unverified.
+The runtime wraith remains 5. Structural experiments are isolated from the
+reproducible runtime builder and have not been accepted or baked into the game.
+No Ares service or child profile was modified.
+
+![Desktop Storm skill tree, render-only partial-progress fixture](rpg-playtest/v13/rpg-v13-skills4-storm-desktop-partial-fixture.png)
+![Actual phone spell-learning flow](rpg-playtest/v13/phone-learn-rune.png)
+
+Completed enemy defeats now leave the instanced draw batches once their
+existing visibility flag is false. Live and intermediate death-stage comparison
+images are pixel-identical. A 40-enemy cleared room submits 824,152 fewer actor
+triangles; its median GPU time changed from 37.6 to 32.8 ms in the same-browser
+comparison. This does not improve the live-horde baseline or establish an
+acceptable frame rate. New, retried and traveled encounters restore their full
+instance counts.
+
+Further diagnostics isolate most cost in the main scene pass, not bloom.
+Measured GPU clocks were 750–800 MHz; the older 13 ms run has no clock evidence
+and is not a comparable hardware-state baseline. No thermal cause was confirmed
+and no power settings were changed. A point-light shader-branch experiment was
+pixel-identical but did not improve performance, so it was not adopted.
+
+The [corrected timing audit](rpg-playtest/v13/rpg-v13-audit-default.json) distinguishes
+GPU timer queries, fence completion, CPU submission and animation callbacks.
+The older benchmark's interpretation is corrected below.
+
 ## Twelfth closer combat and spell effects pass
 
 The viewport is roughly **30% closer on desktop**, with nearly twice the actor
@@ -59,15 +119,19 @@ Mastery, learning-tree selection, reward XP, levels, unlocks, inventory and save
 history retain their existing rules. There is no save migration for this pass.
 No Ares service or child profile was modified.
 
-A trial screen-space occlusion pass was discarded after comparison: the image
-change was slight while normal-room median render cost rose from 3.2 to 5.0 ms
-and p95 rose from 4.9 to 10.1 ms in that trial. The final reproducible
-[renderer benchmark](rpg-playtest/v12/renderer-benchmark.json), on this machine's
-Intel Iris Xe at 1440×900, measured median render costs of 2.7 ms for 14 enemies,
-3.0 ms for 24, 4.5 ms for a 48-enemy Tempest and 4.9 ms for a 48-enemy Phoenix.
-These are fixed-step renderer timings including GPU synchronization. Observed
-frame intervals were 50–66.7 ms in this desktop session; these measurements do
-not establish smooth player frame rates on another machine.
+A trial screen-space occlusion pass was discarded after comparison because its
+visible benefit was slight. The original v12 benchmark's 2.7–4.9 ms values
+measured CPU submission, **not completed GPU rendering**: a subsequent audit
+found that `gl.finish()` returned before measurable GPU completion in this
+Chromium configuration. Those values must not be interpreted as frame rates.
+
+The corrected v13 benchmark separates CPU work, GPU timer queries, explicit
+fence completion and animation-frame cadence. A short 14-enemy diagnostic on
+this machine measured approximately 13 ms GPU time, 18.8 ms median fence
+completion and 56.6–59.6 animation callbacks per second. Simulation took
+0.4–0.6 ms and enemy animation 0.1–0.2 ms. The graphics backend differed from
+the v12 run; this does not isolate the cause of the older 50–66.7 ms frame
+intervals or establish performance for larger packs or another machine.
 
 The closer view and Phoenix silhouette improve readability and spectacle. The
 concept still has more natural creature anatomy, richer stone detail and more

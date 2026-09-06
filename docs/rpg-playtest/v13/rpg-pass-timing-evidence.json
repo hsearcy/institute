@@ -1,0 +1,1063 @@
+{
+  "method": "Isolated native system Chromium actual-loop 3s/pass case, same Stormspire room0/fullquality1440x900; sequential nonnested EXT GPU queries per RenderPass/Bloom/Output. Sum excludes between-pass host gaps. No recorder/screenshots/fences.",
+  "browserVersion": "151.0.7922.173",
+  "clocks": [
+    {
+      "at": 1788653541960,
+      "phase": "startup",
+      "actualMHz": 750,
+      "requestedMHz": 750
+    },
+    {
+      "at": 1788653542111,
+      "phase": "startup",
+      "actualMHz": 750,
+      "requestedMHz": 750
+    },
+    {
+      "at": 1788653542261,
+      "phase": "startup",
+      "actualMHz": 750,
+      "requestedMHz": 750
+    },
+    {
+      "at": 1788653542411,
+      "phase": "startup",
+      "actualMHz": 750,
+      "requestedMHz": 750
+    },
+    {
+      "at": 1788653542563,
+      "phase": "startup",
+      "actualMHz": 750,
+      "requestedMHz": 750
+    },
+    {
+      "at": 1788653542712,
+      "phase": "startup",
+      "actualMHz": 750,
+      "requestedMHz": 750
+    },
+    {
+      "at": 1788653542862,
+      "phase": "startup",
+      "actualMHz": 750,
+      "requestedMHz": 750
+    },
+    {
+      "at": 1788653543013,
+      "phase": "startup",
+      "actualMHz": 900,
+      "requestedMHz": 900
+    },
+    {
+      "at": 1788653543163,
+      "phase": "startup",
+      "actualMHz": 900,
+      "requestedMHz": 900
+    },
+    {
+      "at": 1788653543314,
+      "phase": "startup",
+      "actualMHz": 900,
+      "requestedMHz": 900
+    },
+    {
+      "at": 1788653543463,
+      "phase": "startup",
+      "actualMHz": 900,
+      "requestedMHz": 900
+    },
+    {
+      "at": 1788653543614,
+      "phase": "startup",
+      "actualMHz": 900,
+      "requestedMHz": 900
+    },
+    {
+      "at": 1788653543764,
+      "phase": "startup",
+      "actualMHz": 900,
+      "requestedMHz": 900
+    },
+    {
+      "at": 1788653543915,
+      "phase": "startup",
+      "actualMHz": 900,
+      "requestedMHz": 867
+    },
+    {
+      "at": 1788653544065,
+      "phase": "startup",
+      "actualMHz": 900,
+      "requestedMHz": 867
+    },
+    {
+      "at": 1788653544214,
+      "phase": "startup",
+      "actualMHz": 900,
+      "requestedMHz": 867
+    },
+    {
+      "at": 1788653544365,
+      "phase": "startup",
+      "actualMHz": 850,
+      "requestedMHz": 833
+    },
+    {
+      "at": 1788653544515,
+      "phase": "startup",
+      "actualMHz": 850,
+      "requestedMHz": 833
+    },
+    {
+      "at": 1788653544666,
+      "phase": "startup",
+      "actualMHz": 850,
+      "requestedMHz": 833
+    },
+    {
+      "at": 1788653544816,
+      "phase": "startup",
+      "actualMHz": 850,
+      "requestedMHz": 817
+    },
+    {
+      "at": 1788653544967,
+      "phase": "startup",
+      "actualMHz": 850,
+      "requestedMHz": 817
+    },
+    {
+      "at": 1788653545118,
+      "phase": "startup",
+      "actualMHz": 850,
+      "requestedMHz": 817
+    },
+    {
+      "at": 1788653545267,
+      "phase": "startup",
+      "actualMHz": 850,
+      "requestedMHz": 817
+    },
+    {
+      "at": 1788653545418,
+      "phase": "startup",
+      "actualMHz": 850,
+      "requestedMHz": 817
+    },
+    {
+      "at": 1788653545568,
+      "phase": "startup",
+      "actualMHz": 850,
+      "requestedMHz": 817
+    },
+    {
+      "at": 1788653545718,
+      "phase": "startup",
+      "actualMHz": 850,
+      "requestedMHz": 817
+    },
+    {
+      "at": 1788653545868,
+      "phase": "startup",
+      "actualMHz": 850,
+      "requestedMHz": 817
+    },
+    {
+      "at": 1788653546019,
+      "phase": "startup",
+      "actualMHz": 850,
+      "requestedMHz": 817
+    },
+    {
+      "at": 1788653546169,
+      "phase": "startup",
+      "actualMHz": 0,
+      "requestedMHz": 817
+    },
+    {
+      "at": 1788653546319,
+      "phase": "startup",
+      "actualMHz": 850,
+      "requestedMHz": 817
+    },
+    {
+      "at": 1788653546470,
+      "phase": "startup",
+      "actualMHz": 0,
+      "requestedMHz": 783
+    },
+    {
+      "at": 1788653546620,
+      "phase": "startup",
+      "actualMHz": 0,
+      "requestedMHz": 783
+    },
+    {
+      "at": 1788653546771,
+      "phase": "startup",
+      "actualMHz": 0,
+      "requestedMHz": 783
+    },
+    {
+      "at": 1788653546922,
+      "phase": "startup",
+      "actualMHz": 0,
+      "requestedMHz": 750
+    },
+    {
+      "at": 1788653547072,
+      "phase": "startup",
+      "actualMHz": 0,
+      "requestedMHz": 750
+    },
+    {
+      "at": 1788653547223,
+      "phase": "startup",
+      "actualMHz": 0,
+      "requestedMHz": 750
+    },
+    {
+      "at": 1788653547373,
+      "phase": "startup",
+      "actualMHz": 0,
+      "requestedMHz": 750
+    },
+    {
+      "at": 1788653547524,
+      "phase": "startup",
+      "actualMHz": 0,
+      "requestedMHz": 750
+    },
+    {
+      "at": 1788653547674,
+      "phase": "startup",
+      "actualMHz": 0,
+      "requestedMHz": 750
+    },
+    {
+      "at": 1788653547825,
+      "phase": "startup",
+      "actualMHz": 750,
+      "requestedMHz": 750
+    },
+    {
+      "at": 1788653547975,
+      "phase": "startup",
+      "actualMHz": 750,
+      "requestedMHz": 750
+    },
+    {
+      "at": 1788653548125,
+      "phase": "startup",
+      "actualMHz": 750,
+      "requestedMHz": 750
+    },
+    {
+      "at": 1788653548276,
+      "phase": "startup",
+      "actualMHz": 750,
+      "requestedMHz": 750
+    },
+    {
+      "at": 1788653548425,
+      "phase": "startup",
+      "actualMHz": 1300,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653548576,
+      "phase": "startup",
+      "actualMHz": 0,
+      "requestedMHz": 883
+    },
+    {
+      "at": 1788653548726,
+      "phase": "startup",
+      "actualMHz": 0,
+      "requestedMHz": 850
+    },
+    {
+      "at": 1788653548877,
+      "phase": "startup",
+      "actualMHz": 850,
+      "requestedMHz": 833
+    },
+    {
+      "at": 1788653549027,
+      "phase": "startup",
+      "actualMHz": 850,
+      "requestedMHz": 833
+    },
+    {
+      "at": 1788653549177,
+      "phase": "startup",
+      "actualMHz": 850,
+      "requestedMHz": 833
+    },
+    {
+      "at": 1788653549328,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653549478,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653549629,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653549779,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653549928,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653550079,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653550229,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653550380,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653550530,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653550679,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653550830,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653550980,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653551130,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653551281,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653551431,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653551582,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653551732,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653551881,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653552032,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653552182,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653552333,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 800
+    },
+    {
+      "at": 1788653552483,
+      "phase": "cleared40-warmup",
+      "actualMHz": 950,
+      "requestedMHz": 950
+    },
+    {
+      "at": 1788653552633,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653552783,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653552934,
+      "phase": "cleared40-warmup",
+      "actualMHz": 850,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653553084,
+      "phase": "cleared40-warmup",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653553235,
+      "phase": "cleared40-warmup",
+      "actualMHz": 800,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653553385,
+      "phase": "cleared40-measure",
+      "actualMHz": 800,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653553536,
+      "phase": "cleared40-measure",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653553686,
+      "phase": "cleared40-measure",
+      "actualMHz": 850,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653553836,
+      "phase": "cleared40-measure",
+      "actualMHz": 800,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653553987,
+      "phase": "cleared40-measure",
+      "actualMHz": 800,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653554137,
+      "phase": "cleared40-measure",
+      "actualMHz": 800,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653554286,
+      "phase": "cleared40-measure",
+      "actualMHz": 800,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653554437,
+      "phase": "cleared40-measure",
+      "actualMHz": 800,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653554587,
+      "phase": "cleared40-measure",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653554737,
+      "phase": "cleared40-measure",
+      "actualMHz": 800,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653554888,
+      "phase": "cleared40-measure",
+      "actualMHz": 800,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653555038,
+      "phase": "cleared40-measure",
+      "actualMHz": 800,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653555189,
+      "phase": "cleared40-measure",
+      "actualMHz": 800,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653555339,
+      "phase": "cleared40-measure",
+      "actualMHz": 850,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653555488,
+      "phase": "cleared40-measure",
+      "actualMHz": 800,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653555639,
+      "phase": "cleared40-measure",
+      "actualMHz": 850,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653555789,
+      "phase": "cleared40-measure",
+      "actualMHz": 800,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653555940,
+      "phase": "cleared40-measure",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653556090,
+      "phase": "cleared40-measure",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653556239,
+      "phase": "cleared40-measure",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653556390,
+      "phase": "cleared40-measure",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653556540,
+      "phase": "normal14-warmup",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653556690,
+      "phase": "normal14-warmup",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653556840,
+      "phase": "normal14-warmup",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653556991,
+      "phase": "normal14-warmup",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653557140,
+      "phase": "normal14-warmup",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653557291,
+      "phase": "normal14-warmup",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653557441,
+      "phase": "normal14-warmup",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653557591,
+      "phase": "normal14-warmup",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653557741,
+      "phase": "normal14-measure",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653557891,
+      "phase": "normal14-measure",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653558040,
+      "phase": "normal14-measure",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653558191,
+      "phase": "normal14-measure",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653558340,
+      "phase": "normal14-measure",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653558491,
+      "phase": "normal14-measure",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653558641,
+      "phase": "normal14-measure",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653558792,
+      "phase": "normal14-measure",
+      "actualMHz": 700,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653558942,
+      "phase": "normal14-measure",
+      "actualMHz": 700,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653559091,
+      "phase": "normal14-measure",
+      "actualMHz": 700,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653559242,
+      "phase": "normal14-measure",
+      "actualMHz": 700,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653559392,
+      "phase": "normal14-measure",
+      "actualMHz": 700,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653559542,
+      "phase": "normal14-measure",
+      "actualMHz": 700,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653559693,
+      "phase": "normal14-measure",
+      "actualMHz": 700,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653559843,
+      "phase": "normal14-measure",
+      "actualMHz": 700,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653559994,
+      "phase": "normal14-measure",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653560144,
+      "phase": "normal14-measure",
+      "actualMHz": 700,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653560293,
+      "phase": "normal14-measure",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653560444,
+      "phase": "normal14-measure",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653560594,
+      "phase": "normal14-measure",
+      "actualMHz": 700,
+      "requestedMHz": 1400
+    },
+    {
+      "at": 1788653560744,
+      "phase": "normal14-measure",
+      "actualMHz": 750,
+      "requestedMHz": 1400
+    }
+  ],
+  "errors": [],
+  "gpuTimerAvailable": true,
+  "renderer": "ANGLE (Intel, Mesa Intel(R) Iris(R) Xe Graphics (ADL GT2), OpenGL ES 3.2)",
+  "results": [
+    {
+      "scenario": "cleared40",
+      "intervalMs": {
+        "count": 81,
+        "median": 33.30000000000109,
+        "p95": 50
+      },
+      "perPass": {
+        "RenderPass": {
+          "all": {
+            "count": 83,
+            "median": 26.692604,
+            "p95": 29.100104
+          },
+          "shadowUpdate": {
+            "count": 5,
+            "median": 29.111354,
+            "p95": 30.599531
+          },
+          "cachedShadow": {
+            "count": 78,
+            "median": 26.606406,
+            "p95": 28.445364
+          }
+        },
+        "UnrealBloomPass": {
+          "all": {
+            "count": 83,
+            "median": 2.387968,
+            "p95": 3.48875
+          },
+          "shadowUpdate": {
+            "count": 0,
+            "median": null,
+            "p95": null
+          },
+          "cachedShadow": {
+            "count": 83,
+            "median": 2.387968,
+            "p95": 3.48875
+          }
+        },
+        "OutputPass": {
+          "all": {
+            "count": 83,
+            "median": 1.480989,
+            "p95": 2.98776
+          },
+          "shadowUpdate": {
+            "count": 0,
+            "median": null,
+            "p95": null
+          },
+          "cachedShadow": {
+            "count": 83,
+            "median": 1.480989,
+            "p95": 2.98776
+          }
+        }
+      },
+      "summedPassGpuMs": {
+        "count": 83,
+        "median": 30.197186000000002,
+        "p95": 32.444009
+      },
+      "pointLightUniformCounts": [
+        "6"
+      ],
+      "disjoint": 0,
+      "unresolved": 0,
+      "diagnostics": {
+        "appearance": "tempest",
+        "lastAttack": {
+          "spellId": "ball_lightning",
+          "effect": "ball-lightning",
+          "options": {
+            "orbit": true,
+            "chains": true,
+            "kills": 40
+          }
+        },
+        "lastSpellId": "ball_lightning",
+        "lastSpellEffect": "ball-lightning",
+        "heroAnimation": "idle",
+        "heroClips": [
+          "idle",
+          "walk",
+          "cleave",
+          "cast"
+        ],
+        "encounter": 0,
+        "region": "stormspire",
+        "enemies": 0,
+        "articulatedEnemies": 35,
+        "enemyRoster": {
+          "guardian": 6,
+          "skeleton": 18,
+          "revenant": 11,
+          "wraith": 5
+        },
+        "attacking": false,
+        "paused": false,
+        "modelsLoaded": 19,
+        "drawCalls": 163,
+        "triangles": 430386,
+        "particles": 86,
+        "fragments": 0,
+        "hero": [
+          0,
+          0,
+          1.4
+        ],
+        "softwareRenderer": false,
+        "fps": 27,
+        "quality": "full",
+        "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "framebuffer": [
+        1440,
+        900
+      ],
+      "composer": [
+        1440,
+        900
+      ],
+      "bloom": [
+        [
+          720,
+          450
+        ],
+        [
+          360,
+          225
+        ],
+        [
+          180,
+          113
+        ],
+        [
+          90,
+          57
+        ],
+        [
+          45,
+          29
+        ]
+      ]
+    },
+    {
+      "scenario": "normal14",
+      "intervalMs": {
+        "count": 70,
+        "median": 49.899999999999636,
+        "p95": 50
+      },
+      "perPass": {
+        "RenderPass": {
+          "all": {
+            "count": 72,
+            "median": 31.77401,
+            "p95": 33.98401
+          },
+          "shadowUpdate": {
+            "count": 0,
+            "median": null,
+            "p95": null
+          },
+          "cachedShadow": {
+            "count": 72,
+            "median": 31.77401,
+            "p95": 33.98401
+          }
+        },
+        "UnrealBloomPass": {
+          "all": {
+            "count": 72,
+            "median": 2.47776,
+            "p95": 4.882656
+          },
+          "shadowUpdate": {
+            "count": 0,
+            "median": null,
+            "p95": null
+          },
+          "cachedShadow": {
+            "count": 72,
+            "median": 2.47776,
+            "p95": 4.882656
+          }
+        },
+        "OutputPass": {
+          "all": {
+            "count": 72,
+            "median": 0.414531,
+            "p95": 2.587812
+          },
+          "shadowUpdate": {
+            "count": 0,
+            "median": null,
+            "p95": null
+          },
+          "cachedShadow": {
+            "count": 72,
+            "median": 0.414531,
+            "p95": 2.587812
+          }
+        }
+      },
+      "summedPassGpuMs": {
+        "count": 72,
+        "median": 35.83406,
+        "p95": 37.656456999999996
+      },
+      "pointLightUniformCounts": [
+        "6"
+      ],
+      "disjoint": 0,
+      "unresolved": 0,
+      "diagnostics": {
+        "appearance": "tempest",
+        "lastAttack": {
+          "spellId": "ball_lightning",
+          "effect": "ball-lightning",
+          "options": {
+            "orbit": true,
+            "chains": true,
+            "kills": 40
+          }
+        },
+        "lastSpellId": "ball_lightning",
+        "lastSpellEffect": "ball-lightning",
+        "heroAnimation": "idle",
+        "heroClips": [
+          "idle",
+          "walk",
+          "cleave",
+          "cast"
+        ],
+        "encounter": 0,
+        "region": "stormspire",
+        "enemies": 14,
+        "articulatedEnemies": 13,
+        "enemyRoster": {
+          "guardian": 2,
+          "skeleton": 7,
+          "revenant": 4,
+          "wraith": 1
+        },
+        "attacking": false,
+        "paused": false,
+        "modelsLoaded": 19,
+        "drawCalls": 209,
+        "triangles": 720970,
+        "particles": 96,
+        "fragments": 0,
+        "hero": [
+          0,
+          0,
+          1.4
+        ],
+        "softwareRenderer": false,
+        "fps": 23,
+        "quality": "full",
+        "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+      },
+      "framebuffer": [
+        1440,
+        900
+      ],
+      "composer": [
+        1440,
+        900
+      ],
+      "bloom": [
+        [
+          720,
+          450
+        ],
+        [
+          360,
+          225
+        ],
+        [
+          180,
+          113
+        ],
+        [
+          90,
+          57
+        ],
+        [
+          45,
+          29
+        ]
+      ]
+    }
+  ]
+}

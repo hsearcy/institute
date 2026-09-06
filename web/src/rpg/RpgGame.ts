@@ -1,15 +1,16 @@
 import type { Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgAppearanceId, RpgReward, Reward } from '@institute/shared';
-import { RPG_APPEARANCES, rpgAppearanceUnlocked, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, RPG_DUPLICATE_ITEM_XP, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgEncounterKills, ProblemSchema } from '@institute/shared';
+import { RPG_APPEARANCES, rpgAppearanceUnlocked, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, RPG_DUPLICATE_ITEM_XP, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgEncounterKills, rpgNextRelicHunt, ProblemSchema } from '@institute/shared';
 import { fetchState, fetchMastery, redeemCrazyCoin, type Demo } from '../game/tutor';
 import { speak } from '../game/audio';
 import * as dungeonSound from './sound';
 import { API, PROFILE } from '../game/config';
 import { getRpgState, setRpgAppearance, mutateRpg, resolveEncounter, attemptStatus, request, ApiError } from './api';
 import { DungeonWorld } from './DungeonWorld';
-import { icon, spellArt, relicArt, escapeHtml as esc } from './icons';
+import { icon, spellArt, skillArt, relicArt, escapeHtml as esc } from './icons';
 import './rpg.css';
 import './ui-v2.css';
 import { nextSpellGoal } from './nextSpell';
+import { skillUpgradePreview } from './skillPreview';
 import { getRoomLayout } from './world/roomLayout';
 
 type Session = {
@@ -62,6 +63,8 @@ export class RpgGame {
   private lootLabelFrame: number | null = null;
   private lootLabelUntil = 0;
   private school: RpgSchoolId = 'ember';
+  private focusedSkill: string | null = null;
+  private skillDetailOpen = false;
   private trackedSpell: RpgSpellId | null = null;
   private favoriteSpells: Record<RpgSchoolId, RpgSpellId> = { ember: 'ember', frost: 'frost', storm: 'storm' };
 
@@ -232,9 +235,9 @@ export class RpgGame {
     if (goal.learned) {
       void this.changeLoadout('spell', { spellId: goal.spell.id }, () => { this.trackSpell(null); this.closeDialog(); }); return;
     }
-    this.school = goal.spell.school; this.showSkills();
+    this.school = goal.spell.school; this.focusedSkill = goal.next?.id ?? goal.spell.skillId; this.showSkills();
     requestAnimationFrame(() => {
-      const node = this.root.querySelector<HTMLElement>(`[data-skill="${goal.next?.id}"]`);
+      const node = this.root.querySelector<HTMLElement>(`[data-skill-select="${goal.next?.id}"]`);
       node?.classList.add('rpg-target-skill'); node?.scrollIntoView({block:'center',behavior:'smooth'});
     });
   }
@@ -468,21 +471,40 @@ export class RpgGame {
       return `<button class="rpg-spell-card ${learned ? 'learned' : 'locked'} ${s.selectedSpellId === spell.id ? 'selected' : ''}" data-spell="${spell.id}" style="--spell-color:${spell.color}">${spellArt(spell.id)}<div><small>${learned ? 'LEARNED SPELL' : `UNLOCK · LEVEL ${skill?.level ?? 1}`}</small><strong>${spell.name}</strong><p>${spell.description}</p><b>${s.selectedSpellId === spell.id ? '✓ Selected' : learned ? 'Select spell →' : this.trackedSpell === spell.id ? '✓ Tracked · View skill tree' : 'Track spell · View skill tree →'}</b></div></button>`;
     }).join('')}</div><div class="rpg-button-row"><button class="rpg-primary" data-action="close">${this.playing ? 'Return to dungeon' : 'Back to camp'}</button><button data-action="skills">Learn new spells</button></div>`, true);
   }
+  private skillPreviewCard(skillId: string): string {
+    if (!this.state) return '';
+    const s = this.state, room = s.expedition && !s.expedition.cleared ? s.expedition.encounterIndex : 0;
+    const previews = skillUpgradePreview(s, skillId, room);
+    if (!previews?.length) return '';
+    const chosen = previews.find(preview => preview.spell.id === s.selectedSpellId) ?? previews[0];
+    const labels = { burn: 'burning ground', 'ice-shards': 'extra ice shards', chain: 'forked lightning', echo: 'a second strike', pierce: 'piercing splinters', wide: 'a wider sweep', orbit: 'orbiting sparks', summon: 'a second guardian' };
+    const targets = chosen.extraTargets > 0 ? `+${chosen.extraTargets} monsters` : chosen.after === 48 ? 'already at the 48-monster limit' : 'same number of monsters';
+    const gained = chosen.newModifiers.map(effect => labels[effect]);
+    const other = previews.filter(preview => preview !== chosen && (preview.extraTargets > 0 || preview.newModifiers.length));
+    const details = gained.length ? ` Adds ${gained.join(' and ')}.` : chosen.existingModifier ? ' Its spell effect is already active.' : '';
+    const alternatives = !chosen.extraTargets && !gained.length && other.length ? ` Still improves ${other.map(preview => preview.spell.name).join(', ')}.` : '';
+    const unchanged = !chosen.extraTargets && !gained.length && !other.length;
+    return `<span class="rpg-skill-preview ${unchanged ? 'unchanged' : ''}"><b>With your relic · ${room === 0 ? 'first room' : `room ${room + 1}`}</b>${esc(chosen.spell.name)}: ${targets}.${esc(details + alternatives)}${unchanged ? ' You can save this point or change relics.' : ''}</span>`;
+  }
   private showSkills(): void {
     if (!this.state) return; const s = this.state;
     const skills = RPG_SKILLS.filter(skill => skill.school === this.school);
+    const school = RPG_SCHOOLS.find(school => school.id === this.school)!;
     const depth = (id: string): number => { const parent = skills.find(skill => skill.id === id)?.parentId; return parent ? 1 + depth(parent) : 0; };
     const order = (id: string): string => { const skill = skills.find(skill => skill.id === id)!; return (skill.parentId ? order(skill.parentId) : '') + String(skills.indexOf(skill)).padStart(2,'0'); };
     const tiers = Array.from({length:Math.max(...skills.map(skill=>depth(skill.id)))+1},(_,tier)=>skills.filter(skill=>depth(skill.id)===tier).sort((a,b)=>order(a.id).localeCompare(order(b.id))));
-    const columns = Math.max(...tiers.map(tier=>tier.length));
-
-    this.showDialog('skills', `<p class="rpg-eyebrow">SHAPE YOUR MAGIC</p><h2 id="rpg-dialog-title">Skill trees <small>${s.skillPoints} skill point${s.skillPoints === 1 ? '' : 's'}</small></h2><p>Follow a branch to learn new spells, or strengthen your favorites.</p>${this.trackedSpell && rpgSpellUnlocked(this.trackedSpell, s.skills) ? `<button class="rpg-goal-card rpg-learned-goal" data-action="spell-goal">${this.spellGoalCard()}</button>` : ''}${this.schoolTabs('skills')}<div class="rpg-skill-trees"><section class="rpg-skill-tree rpg-skill-graph" style="--graph-columns:${columns};--spell-color:${RPG_SCHOOLS.find(school => school.id === this.school)!.color}"><svg class="rpg-skill-links" aria-hidden="true"></svg>${tiers.flat().map(skill => {
+    const chosen = skills.find(skill => skill.id === this.focusedSkill)
+      ?? skills.find(skill => (s.skills[skill.id] ?? 0) < skill.maxRank && (!skill.parentId || !!s.skills[skill.parentId])) ?? skills[0];
+    this.focusedSkill = chosen.id;
+    const rank = s.skills[chosen.id] ?? 0, parent = RPG_SKILLS.find(skill => skill.id === chosen.parentId);
+    const available = s.skillPoints > 0 && s.level >= chosen.level && (!parent || !!s.skills[parent.id]) && rank < chosen.maxRank;
+    const requirement = rank >= chosen.maxRank ? 'Fully learned' : parent && !s.skills[parent.id] ? `First learn ${parent.name}` : s.level < chosen.level ? `Unlocks at level ${chosen.level}` : s.skillPoints < 1 ? 'Gain a level to earn another skill point' : 'Ready to learn';
+    const learned = skills.filter(skill => (s.skills[skill.id] ?? 0) > 0).length;
+    this.showDialog('skills', `<p class="rpg-eyebrow">SHAPE YOUR MAGIC</p><h2 id="rpg-dialog-title">Skill trees <small>${s.skillPoints} skill point${s.skillPoints === 1 ? '' : 's'}</small></h2><p class="rpg-skill-intro">Follow the branches. Shape your magic.</p>${this.trackedSpell && rpgSpellUnlocked(this.trackedSpell, s.skills) ? `<button class="rpg-goal-card rpg-learned-goal" data-action="spell-goal">${this.spellGoalCard()}</button>` : ''}${this.schoolTabs('skills')}<div class="rpg-skill-workbench ${this.skillDetailOpen ? 'detail-open' : ''}" style="--spell-color:${school.color}"><div class="rpg-rune-summary">${skillArt(chosen.id,chosen.spellId)}<div><strong>${esc(chosen.name)}</strong><small>Rank ${rank} / ${chosen.maxRank} · ${chosen.kind === 'unlock' ? 'Spell' : 'Enhancement'}</small></div><button data-action="rune-detail" aria-expanded="${this.skillDetailOpen}">${this.skillDetailOpen ? 'Tree' : 'Details'}</button></div><section class="rpg-rune-tree" aria-label="${school.name} skill branches"><div class="rpg-tree-heading"><span>${school.name}</span><small>${learned} / ${skills.length} runes learned</small></div><div class="rpg-skill-graph rpg-rune-graph"><svg class="rpg-skill-links" aria-hidden="true"></svg>${tiers.flat().map(skill => {
       const rank = s.skills[skill.id] ?? 0;
-      const available = s.skillPoints > 0 && s.level >= skill.level && (!skill.parentId || !!s.skills[skill.parentId]) && rank < skill.maxRank;
-      const parent = RPG_SKILLS.find(k => k.id === skill.parentId);
-      const reason = rank >= skill.maxRank ? 'Mastered' : s.level < skill.level ? `Level ${skill.level}` : parent && !s.skills[parent.id] ? `Learn ${parent.name}` : s.skillPoints < 1 ? 'Earn a skill point' : 'Learn · 1 point';
-      return `<button class="rpg-skill-node ${rank ? 'learned' : ''} ${available ? 'available' : ''}" data-skill="${skill.id}" data-parent="${skill.parentId ?? ''}" style="--node-row:${depth(skill.id)+1};--node-col:${tiers[depth(skill.id)].indexOf(skill)+1};--node-columns:${tiers[depth(skill.id)].length}" ${!available ? 'disabled' : ''}>${spellArt(skill.spellId)}<div><small>${skill.kind === 'unlock' ? 'NEW SPELL' : 'SPELL UPGRADE'}${parent ? ` · ${parent.name}` : ' · Starting branch'}</small><strong>${skill.name}</strong><span>${skill.description}</span><small class="rpg-skill-status">${rank}/${skill.maxRank} <b>${reason}</b></small></div></button>`;
-    }).join('')}</section></div><div class="rpg-button-row"><button class="rpg-primary" data-action="close">${this.playing ? 'Return to dungeon' : 'Back to camp'}</button><button data-action="spellbook">Open spellbook</button><button data-action="respec" ${s.expedition && !s.expedition.cleared ? 'disabled title="Available after this expedition"' : ''}>Reset points at camp · Free</button></div>`, true);
+      const learnable = s.skillPoints > 0 && s.level >= skill.level && (!skill.parentId || !!s.skills[skill.parentId]) && rank < skill.maxRank;
+      return `<button class="rpg-rune-node ${skill.kind === 'unlock' ? 'spell-rune' : 'passive-rune'} ${rank ? 'learned' : ''} ${learnable ? 'available' : ''} ${skill.id === chosen.id ? 'selected' : ''}" data-skill-select="${skill.id}" data-parent="${skill.parentId ?? ''}" aria-pressed="${skill.id === chosen.id}" aria-label="${esc(skill.name)}, rank ${rank} of ${skill.maxRank}" style="--node-row:${depth(skill.id)+1};--node-col:${tiers[depth(skill.id)].indexOf(skill)+1};--node-columns:${tiers[depth(skill.id)].length}"><span class="rpg-rune-medallion">${skillArt(skill.id,skill.spellId)}</span>${learnable ? '<i class="rpg-rune-state available" aria-hidden="true">+</i>' : !rank ? `<i class="rpg-rune-state locked" aria-hidden="true">${icon('lock')}</i>` : ''}<strong>${esc(skill.name)}</strong><span class="rpg-rune-ranks" aria-hidden="true">${Array.from({length:skill.maxRank},(_,i)=>`<i class="${i < rank ? 'filled' : ''}"></i>`).join('')}<small>${rank} / ${skill.maxRank}</small></span></button>`;
+    }).join('')}</div></section><aside class="rpg-skill-detail" aria-label="Selected rune" data-focused-skill="${chosen.id}"><div class="rpg-skill-detail-art">${skillArt(chosen.id,chosen.spellId)}</div><p class="rpg-eyebrow">${chosen.kind === 'unlock' ? 'DISCOVER A SPELL' : 'STRENGTHEN YOUR MAGIC'}</p><h3>${esc(chosen.name)}</h3><span class="rpg-detail-rank">Rank ${rank} / ${chosen.maxRank}</span><p class="rpg-detail-description">${esc(chosen.description)}</p>${chosen.kind !== 'unlock' && rank < chosen.maxRank ? this.skillPreviewCard(chosen.id) : ''}<p class="rpg-detail-requirement">${esc(requirement)}</p><button class="rpg-primary rpg-learn-rune" data-skill="${chosen.id}" ${!available ? 'disabled' : ''}>${rank >= chosen.maxRank ? 'Mastered' : `${rank ? 'Upgrade' : 'Learn'} · 1 point`}</button>${parent ? `<span class="rpg-detail-parent">Branch: ${esc(parent.name)}</span>` : ''}</aside></div><div class="rpg-button-row"><button class="rpg-primary" data-action="close">${this.playing ? 'Return to dungeon' : 'Back to camp'}</button><button data-action="spellbook">Open spellbook</button><button data-action="respec" ${s.expedition && !s.expedition.cleared ? 'disabled title="Available after this expedition"' : ''}>Reset points at camp · Free</button></div>`, true);
     requestAnimationFrame(() => this.drawSkillLinks());
   }
   private drawSkillLinks(): void {
@@ -493,7 +515,7 @@ export class RpgGame {
     const box = graph.getBoundingClientRect();
     svg.setAttribute('viewBox',`0 0 ${box.width} ${box.height}`);
     svg.innerHTML = [...graph.querySelectorAll<HTMLElement>('[data-parent]')].map(node => {
-      const parent = [...graph.querySelectorAll<HTMLElement>('[data-skill]')].find(other => other.dataset.skill === node.dataset.parent);
+      const parent = [...graph.querySelectorAll<HTMLElement>('[data-skill-select]')].find(other => other.dataset.skillSelect === node.dataset.parent);
       if (!parent) return '';
       const from = parent.getBoundingClientRect(), to = node.getBoundingClientRect();
       const x1 = from.x + from.width/2-box.x, y1=from.bottom-box.y;
@@ -524,20 +546,31 @@ export class RpgGame {
       this.toast(`${RPG_APPEARANCES.find(appearance => appearance.id === appearanceId)!.name} worn.`);
     });
   }
+  private relicHuntCard(regionId: string): string {
+    if (!this.state) return '';
+    const hunt = rpgNextRelicHunt(this.state, regionId);
+    if (!hunt) return '';
+    const item = RPG_ITEMS.find(item => item.id === hunt.itemId);
+    if (!item) return '';
+    const region = RPG_REGIONS.find(region => region.id === regionId)!;
+    const collected = RPG_ITEMS.filter(item => item.school === region.relicSchool && this.state!.inventory.includes(item.id)).length;
+    const total = RPG_ITEMS.filter(item => item.school === region.relicSchool).length;
+    return `<span class="rpg-relic-hunt ${item.rarity}" data-hunt-item="${item.id}">${relicArt(item.id)}<span><small>${hunt.duplicate ? 'DUPLICATE TREASURE' : 'NEXT DISCOVERY'}</small><strong>${esc(item.name)}</strong><span>${hunt.encounterIndex === 5 ? 'Guardian treasure' : `Room ${hunt.encounterIndex + 1}`} · ${hunt.duplicate ? `Duplicate becomes +${RPG_DUPLICATE_ITEM_XP} XP` : item.rarity + ' relic'}</span>${!hunt.regional && !hunt.duplicate ? '<span class="rpg-hunt-fallback">Treasure from beyond this vault</span>' : ''}<span class="rpg-hunt-collection">${collected} / ${total} ${RPG_SCHOOLS.find(school => school.id === region.relicSchool)!.name} relics found</span></span></span>`;
+  }
   private showInventory(): void {
     if (!this.state) return; const s = this.state;
     this.showDialog('inventory', `<p class="rpg-eyebrow">RELICS OF THE VAULT</p><h2 id="rpg-dialog-title">Your equipment <small>${s.inventory.length} / ${RPG_ITEMS.length} found</small></h2>${this.armorCards()}<h3 class="rpg-relics-title">Relics</h3><p>Find rare weapons. Change the way your magic looks and strikes.</p><div class="rpg-inventory">${RPG_ITEMS.map(item => {
       const owned = s.inventory.includes(item.id); const equipped = s.equippedItemId === item.id;
       return `<button class="rpg-item ${item.rarity} ${!owned ? 'undiscovered' : ''} ${equipped ? 'equipped' : ''}" data-item="${item.id}" ${!owned ? 'disabled' : ''}>${owned ? relicArt(item.id) : `<span class="rpg-item-art">${icon('lock')}</span>`}<small>${owned ? item.rarity : 'UNDISCOVERED'}</small><strong>${owned ? item.name : 'Hidden relic'}</strong><span>${owned ? item.description : 'Keep exploring the vaults.'}</span><b>${equipped ? '✓ Equipped' : owned ? 'Equip' : item.rarity + ' treasure'}</b></button>`;
-    }).join('')}</div><div class="rpg-button-row"><button class="rpg-primary" data-action="close">${this.playing ? 'Return to dungeon' : 'Back to camp'}</button><a href="?mode=mine" class="rpg-text-button">Visit your gem collection & original shop</a></div>`, true);
+    }).join('')}</div><div class="rpg-button-row"><button class="rpg-primary" data-action="close">${this.playing ? 'Return to dungeon' : 'Back to camp'}</button><button data-action="map">Find your next relic</button><a href="?mode=mine" class="rpg-text-button">Visit your gem collection & original shop</a></div>`, true);
   }
   private showMap(): void {
     if (!this.state) return; const s = this.state;
-    this.showDialog('map', `<p class="rpg-eyebrow">BEYOND THE NEXT GATE</p><h2 id="rpg-dialog-title">Expeditions</h2><p>Six encounters. A guardian. Something worth discovering.</p><div class="rpg-regions">${RPG_REGIONS.map((region, index) => {
+    this.showDialog('map', `<p class="rpg-eyebrow">BEYOND THE NEXT GATE</p><h2 id="rpg-dialog-title">Expeditions</h2><p>Choose a vault to hunt its Flame, Frost, or Storm relics. Six encounters lead to the guardian’s treasure.</p><div class="rpg-regions">${RPG_REGIONS.map((region, index) => {
       const unlocked = s.expeditionsCompleted >= region.requiredClears;
       const active = !!s.expedition && !s.expedition.cleared;
       const current = active && s.expedition!.regionId === region.id;
-      return `<button class="rpg-region-card ${!unlocked ? 'locked' : ''}" style="--region-color:${region.color}" data-region="${region.id}" ${!unlocked || (active && !current) ? 'disabled' : ''}><div class="rpg-region-art">${icon(index === 0 ? 'ember' : index === 1 ? 'frost' : 'storm')}<i></i><i></i><i></i></div><small>EXPEDITION ${['I','II','III'][index]}</small><h3>${region.name}</h3><p>${region.subtitle}</p><span>Guardian · ${region.bossName}</span><b>${current ? `Continue · ${s.expedition!.encounterIndex + 1}/6` : !unlocked ? `Clear ${region.requiredClears} expeditions to unlock` : active ? 'Finish your current expedition first' : 'Enter the dungeon →'}</b></button>`;
+      return `<button class="rpg-region-card ${!unlocked ? 'locked' : ''}" style="--region-color:${region.color}" data-region="${region.id}" ${!unlocked || (active && !current) ? 'disabled' : ''}><div class="rpg-region-art">${icon(index === 0 ? 'ember' : index === 1 ? 'frost' : 'storm')}<i></i><i></i><i></i></div><small>EXPEDITION ${['I','II','III'][index]}</small><h3>${region.name}</h3><p>${region.subtitle}</p><span>Guardian · ${region.bossName}</span>${this.relicHuntCard(region.id)}<b>${current ? `Continue · ${s.expedition!.encounterIndex + 1}/6` : !unlocked ? `Clear ${region.requiredClears} expeditions to unlock` : active ? 'Finish your current expedition first' : 'Enter the dungeon →'}</b></button>`;
     }).join('')}</div><button class="rpg-text-button" data-action="close">${this.playing ? 'Return to dungeon' : 'Back to camp'}</button>`, true);
   }
   private showPause(): void {
@@ -641,16 +674,21 @@ export class RpgGame {
       this.school = rpgSpellSchool(spellId);
       if (!rpgSpellUnlocked(spellId, this.state.skills)) {
         this.trackSpell(spellId);
-        this.showSkills();
         const skillId = RPG_SPELLS.find(spell => spell.id === spellId)?.skillId;
+        this.focusedSkill = skillId ?? null; this.showSkills();
         requestAnimationFrame(() => {
-          const node = this.root.querySelector<HTMLElement>(`[data-skill="${skillId}"]`);
+          const node = this.root.querySelector<HTMLElement>(`[data-skill-select="${skillId}"]`);
           node?.classList.add('rpg-target-skill');
           node?.scrollIntoView({block:'center',behavior:'smooth'});
         });
         return;
       }
       void this.changeLoadout('spell', { spellId }, () => { if (this.trackedSpell === spellId) this.trackSpell(null); if (this.panel === 'spellbook') this.showSpellbook(); else if (this.panel === 'camp') this.showCamp(); }); return;
+    }
+    if (button.dataset.skillSelect) {
+      this.focusedSkill = button.dataset.skillSelect; this.skillDetailOpen = false; this.showSkills();
+      this.root.querySelector<HTMLButtonElement>(`[data-skill-select="${this.focusedSkill}"]`)?.focus({ preventScroll: true });
+      return;
     }
     if (button.dataset.skill) {
       const spell = RPG_SPELLS.find(spell => spell.skillId === button.dataset.skill);
@@ -677,7 +715,8 @@ export class RpgGame {
       case 'begin': void this.begin(); break;
       case 'close': this.closeDialog(); break;
       case 'map': this.showMap(); break;
-      case 'skills': this.showSkills(); break;
+      case 'skills': this.skillDetailOpen = false; this.showSkills(); break;
+      case 'rune-detail': this.skillDetailOpen = !this.skillDetailOpen; this.showSkills(); this.root.querySelector<HTMLElement>('.rpg-dialog')!.scrollTop = 0; break;
       case 'spellbook': this.showSpellbook(); break;
       case 'spell-goal': this.showSpellGoal(); break;
       case 'dismiss-loot': this.discovery = null; this.renderDiscovery(); break;

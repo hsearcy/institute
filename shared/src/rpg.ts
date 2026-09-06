@@ -87,11 +87,11 @@ export const RPG_SKILLS: readonly RpgSkill[] = [
   { id: 'tempest', name: 'Tempest', description: 'Unlock a sky full of lightning strikes.', school: 'storm', spellId: 'tempest', parentId: 'thunderclap', level: 10, maxRank: 1, kind: 'unlock', scope: 'spell', powerPerRank: 0 },
   { id: 'tempest_overcharge', name: 'Overcharge', description: 'Tempest strikes branch across the floor. Catch 4 more monsters per rank.', school: 'storm', spellId: 'tempest', parentId: 'tempest', level: 12, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'chain' },
 ];
-export interface RpgRegion { id: string; name: string; subtitle: string; color: string; requiredClears: number; bossName: string }
+export interface RpgRegion { id: string; name: string; subtitle: string; color: string; requiredClears: number; bossName: string; relicSchool: RpgSchoolId }
 export const RPG_REGIONS: readonly RpgRegion[] = [
-  { id: 'embercrypt', name: 'The Embercrypt', subtitle: 'Break the curse beneath the old keep', color: '#ff9f51', requiredClears: 0, bossName: 'The Hollow King' },
-  { id: 'frostvault', name: 'Frostbound Vault', subtitle: 'Awaken the frozen halls', color: '#74d9ff', requiredClears: 1, bossName: 'The Crystal Warden' },
-  { id: 'stormspire', name: 'The Storm Spire', subtitle: 'Climb into the heart of the storm', color: '#bb9cff', requiredClears: 3, bossName: 'The Thunder Colossus' },
+  { id: 'embercrypt', name: 'The Embercrypt', subtitle: 'Break the curse beneath the old keep', color: '#ff9f51', requiredClears: 0, bossName: 'The Hollow King', relicSchool: 'ember' },
+  { id: 'frostvault', name: 'Frostbound Vault', subtitle: 'Awaken the frozen halls', color: '#74d9ff', requiredClears: 1, bossName: 'The Crystal Warden', relicSchool: 'frost' },
+  { id: 'stormspire', name: 'The Storm Spire', subtitle: 'Climb into the heart of the storm', color: '#bb9cff', requiredClears: 3, bossName: 'The Thunder Colossus', relicSchool: 'storm' },
 ];
 export interface RpgItem {
   id: string; name: string; rarity: RpgRarity; description: string; power: number;
@@ -131,6 +131,55 @@ export interface RpgState {
 }
 export interface RpgReward { xp: number; kills: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; bossDefeated: boolean; spellId: RpgSpellId }
 export interface RpgResolveResult { state: RpgState; reward: RpgReward; duplicate: boolean }
+
+type RelicProgress = Pick<RpgState, 'inventory' | 'expeditionsCompleted' | 'totalKills'>;
+export interface RpgRelicHunt { regionId: string; itemId: string; encounterIndex: number; regional: boolean; duplicate: boolean }
+
+/** Receives progress BEFORE this encounter's kills/reward. Never mutates it.
+ * Region specialties give the destination meaning without withholding any relic
+ * from a player who prefers to keep revisiting one dungeon.
+ */
+export function rpgRelicDrop(state: RelicProgress, regionId: string, encounterIndex: number): RpgItem | null {
+  const region = RPG_REGIONS.find(entry => entry.id === regionId);
+  if (!region || !Number.isInteger(encounterIndex) || encounterIndex < 0 || encounterIndex > 5) return null;
+  if (state.totalKills === 0) return RPG_ITEMS.find(item => item.id === 'cinderwand')!;
+  const boss = encounterIndex === 5;
+  if (encounterIndex !== 2 && !boss) return null;
+  const pool = RPG_ITEMS.filter(item => item.id !== 'apprentice' && item.requiredClears <= state.expeditionsCompleted
+    && (boss || item.rarity !== 'legendary'));
+  const missing = pool.filter(item => !state.inventory.includes(item.id));
+  return missing.find(item => item.school === region.relicSchool)
+    ?? missing.find(item => item.scope === 'all')
+    ?? missing[0]
+    ?? pool[(state.expeditionsCompleted + encounterIndex) % pool.length]
+    ?? null;
+}
+
+/** Exact next new relic in the remaining expedition, or its next duplicate if
+ * nothing new can drop. Completed expeditions preview a fresh six-room trip.
+ */
+export function rpgNextRelicHunt(state: RpgState, regionId: string): RpgRelicHunt | null {
+  const region = RPG_REGIONS.find(entry => entry.id === regionId);
+  if (!region || state.expeditionsCompleted < region.requiredClears) return null;
+  const active = state.expedition && !state.expedition.cleared && state.expedition.regionId === regionId;
+  const firstRoom = active ? state.expedition!.encounterIndex : 0;
+  const progress: RelicProgress = { inventory: [...state.inventory], expeditionsCompleted: state.expeditionsCompleted, totalKills: state.totalKills };
+  let nextDuplicate: RpgRelicHunt | null = null;
+  for (let room = firstRoom; room < 6; room++) {
+    const item = rpgRelicDrop(progress, regionId, room);
+    if (item) {
+      const duplicate = progress.inventory.includes(item.id);
+      const hunt = { regionId, itemId: item.id, encounterIndex: room, regional: item.school === region.relicSchool, duplicate };
+      if (!duplicate) return hunt;
+      nextDuplicate ??= hunt;
+    }
+    // Only the first-ever drop predicate needs simulated kills; no combat,
+    // experience, mastery or real save state participates in this forecast.
+    progress.totalKills++;
+  }
+  return nextDuplicate;
+}
+
 export function rpgLevel(xp: number): { level: number; xpIntoLevel: number; xpForNextLevel: number } {
   let level = 1;
   let remaining = Math.max(0, xp);

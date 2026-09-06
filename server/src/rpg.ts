@@ -2,7 +2,7 @@ import type { Database } from 'bun:sqlite';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
-  RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellUnlocked, rpgEncounterKills,
+  RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellUnlocked, rpgEncounterKills, rpgRelicDrop,
   type RpgState, type RpgReward, type RpgResolveResult,
 } from '@institute/shared';
 
@@ -117,21 +117,9 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
     const kills = rpgEncounterKills(state, expedition.encounterIndex, spellId);
     let xp = bossDefeated ? 90 : 32;
     const oldLevel = state.level;
+    const item = rpgRelicDrop(state, expedition.regionId, expedition.encounterIndex);
     state.totalKills += kills;
     state.selectedSpellId = spellId;
-    // A first rare arrives in the first room. Bosses always drop gear; later
-    // runs progress through the collection before duplicate drops give bonus XP.
-    let item: typeof RPG_ITEMS[number] | null = null;
-    if (state.totalKills === kills || expedition.encounterIndex === 2 || bossDefeated) {
-      const pool = RPG_ITEMS.filter(entry => entry.id !== 'apprentice'
-        && entry.requiredClears <= state.expeditionsCompleted
-        && (bossDefeated || entry.rarity !== 'legendary'));
-      // Every eligible relic is found before that pool repeats. New trophies
-      // keep entering the pool as guardians are defeated, including specialist
-      // weapons for each of the fifteen abilities.
-      item = pool.find(entry => !state.inventory.includes(entry.id))
-        ?? pool[(state.expeditionsCompleted + expedition.encounterIndex) % pool.length]!;
-    }
     const duplicateItem = !!item && state.inventory.includes(item.id);
     if (item && !duplicateItem) state.inventory.push(item.id);
     if (duplicateItem) xp += RPG_DUPLICATE_ITEM_XP;

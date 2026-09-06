@@ -138,3 +138,143 @@
 @media(max-height:500px) and (min-width:761px){
   .rpg-keypad{width:210px;grid-template-columns:repeat(4,1fr);bottom:175px;right:0;}
 }
+
+/* The next treasure makes expedition choice visible before entering a vault. */
+.rpg-region-card>.rpg-relic-hunt{display:flex;align-items:center;gap:12px;width:100%;flex:none;margin:0 0 18px;padding:14px 0;border-top:1px solid #74603d55;color:#b6b8aa;}
+.rpg-relic-hunt>.rpg-relic-art{width:67px;flex:none;filter:drop-shadow(0 3px 6px #0009);}
+.rpg-relic-hunt>span{display:flex;flex-direction:column;gap:6px;min-width:0;}
+.rpg-region-card .rpg-relic-hunt small{font-size:7px;letter-spacing:1.4px;margin:0;color:#92a5a3;}
+.rpg-relic-hunt strong{font:13px 'Cinzel',Georgia,serif;color:#d9bd80;line-height:1.4;}
+.rpg-relic-hunt>span>span{font-size:10px;line-height:1.5;}
+.rpg-relic-hunt .rpg-hunt-collection{color:#8ca39c;}
+.rpg-relic-hunt .rpg-hunt-fallback{font-style:italic;color:#8f928a;}
+#rpg-ui .rpg-skill-node .rpg-skill-preview{font-size:10px;line-height:1.5;color:#a9c5c6;padding-top:8px;border-top:1px solid #708a8733;}
+.rpg-skill-preview>b{display:block;font:8px 'Cinzel',Georgia,serif;letter-spacing:.5px;margin-bottom:5px;color:#a5a699;}
+#rpg-ui .rpg-skill-node .rpg-skill-preview.unchanged{color:#c1af90;}
+@media(max-width:760px){.rpg-relic-hunt>.rpg-relic-art{width:58px;}.rpg-skill-graph .rpg-skill-node .rpg-skill-preview{font-size:11px;}}
+
+/* Illustrated runes form the tree; a single reading panel explains the selected rank. */
+.rpg-skill-intro{max-width:640px;margin-inline:auto!important;}
+.rpg-skill-workbench{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:24px;text-align:left;align-items:start;margin:24px 0;}
+.rpg-rune-tree{position:relative;padding:20px 12px 14px;background:radial-gradient(ellipse at 50% 35%,color-mix(in srgb,var(--spell-color) 7%,transparent),transparent 65%),linear-gradient(130deg,#111717a3,#080b0cdd);border-top:1px solid #8b755055;border-bottom:1px solid #8b755033;}
+.rpg-tree-heading{display:flex;justify-content:space-between;align-items:center;padding:0 8px 21px;gap:12px;}
+.rpg-tree-heading>span{font:22px 'Cinzel',Georgia,serif;color:#d9c69f;}
+.rpg-tree-heading>small{font-size:11px;color:#a09d8d;}
+.rpg-rune-graph{position:relative;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:30px 8px;}
+#rpg-ui .rpg-rune-node{grid-row:var(--node-row);grid-column:calc((var(--node-col) - 1) * (12 / var(--node-columns)) + 1) / span calc(12 / var(--node-columns));display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;z-index:1;padding:0 2px 4px;min-height:130px;border:0;background:none;box-shadow:none;border-radius:0;}
+.rpg-rune-node strong{font:12px/1.35 'Cinzel',Georgia,serif;color:#a29f90;max-width:132px;}
+.rpg-rune-medallion{position:relative;display:grid;place-items:center;width:78px;height:78px;padding:7px;background:linear-gradient(140deg,#797361,#272b27 35%,#090e0f 58%,#605a47);clip-path:polygon(18% 0,82% 0,100% 18%,100% 82%,82% 100%,18% 100%,0 82%,0 18%);box-shadow:inset 0 0 0 2px #b7a475;}
+.rpg-rune-medallion:after{content:'';position:absolute;inset:5px;border:1px solid #9d8b6266;pointer-events:none;}
+.rpg-rune-node .rpg-painted-art{width:64px;opacity:.5;filter:grayscale(.85) brightness(.65);transition:filter .15s,opacity .15s;}
+.rpg-rune-node.learned .rpg-painted-art,.rpg-rune-node.available .rpg-painted-art,.rpg-rune-node.selected .rpg-painted-art{opacity:1;filter:none;}
+.rpg-rune-node.learned strong,.rpg-rune-node.available strong{color:#d6c29b;}
+.rpg-rune-node.selected .rpg-rune-medallion{background:linear-gradient(135deg,#fae4a5,#977445 29%,#41341f 57%,#cfaa64 92%);filter:drop-shadow(0 0 6px #bd934744);}
+.rpg-rune-node.selected strong{color:#f4dfae;}
+.rpg-rune-node:focus-visible{outline:2px solid #d9b866!important;outline-offset:5px!important;}
+.rpg-rune-ranks{display:flex;justify-content:center;gap:5px;height:8px;}
+.rpg-rune-ranks i{width:6px;height:6px;transform:rotate(45deg);border:1px solid #6e6450;background:#0d1414;}
+.rpg-rune-ranks i.filled{background:#c7a969;border-color:#e9d3a0;box-shadow:0 0 6px #c5a35844;}
+.rpg-rune-new{position:absolute;bottom:3px;right:6px;color:#e1ca85;font:17px Georgia,serif;text-shadow:0 1px 5px #000;}
+.rpg-rune-graph .rpg-skill-links{display:block;}
+.rpg-rune-graph .rpg-skill-links path{stroke-width:2;stroke:#655e4b;opacity:.65;}
+.rpg-rune-graph .rpg-skill-links path.learned{stroke:#c4a365;opacity:1;filter:drop-shadow(0 0 3px #d0ad5944);}
+.rpg-skill-detail{position:sticky;top:0;display:flex;flex-direction:column;align-items:center;text-align:center;padding:23px 22px;background:linear-gradient(150deg,#24261bee,#090e10f2 62%),url('/assets/rpg/ui/slate-v2.png');border:1px solid #7e694555;box-shadow:inset 0 1px 0 #c7af7440,0 12px 28px #0006;}
+.rpg-skill-detail-art{padding:8px;margin-bottom:12px;background:linear-gradient(135deg,#938060,#282a22 38%,#0b1010 62%,#736342);box-shadow:0 8px 16px #000a;}
+.rpg-skill-detail-art .rpg-painted-art{width:132px;}
+.rpg-dialog .rpg-skill-detail>.rpg-eyebrow{font-size:8px;letter-spacing:1.5px;margin:10px 0 7px;}
+.rpg-skill-detail h3{font:23px/1.2 'Cinzel',Georgia,serif;color:#efd7a1;margin:0 0 8px;}
+.rpg-detail-rank{font-size:11px;color:#b5a984;}
+.rpg-dialog .rpg-detail-description{font-size:13px;line-height:1.65;margin:15px 0;color:#cec9b9;}
+.rpg-skill-detail .rpg-skill-preview{display:block;font-size:12px;line-height:1.6;color:#aac1c1;padding:13px 0;border-top:1px solid #80745844;text-align:left;}
+.rpg-skill-detail .rpg-skill-preview.unchanged{color:#c8b491;}
+.rpg-skill-detail .rpg-skill-preview>b{font-size:9px;}
+.rpg-dialog .rpg-detail-requirement{font-size:12px;margin:10px 0 13px;color:#b8ac8e;}
+#rpg-ui .rpg-learn-rune{width:100%;min-height:44px;}
+.rpg-detail-parent{font-size:10px;color:#8d958d;margin-top:13px;}
+@media(max-width:1000px) and (min-width:761px){.rpg-skill-workbench{grid-template-columns:minmax(0,1fr) 235px;gap:15px;}.rpg-rune-medallion{width:68px;height:68px;padding:5px;}.rpg-rune-node .rpg-painted-art{width:58px;}.rpg-skill-detail{padding:18px 15px;}.rpg-skill-detail-art .rpg-painted-art{width:110px;}}
+@media(max-width:760px){
+ .rpg-skill-workbench{display:flex;flex-direction:column;gap:20px;}.rpg-rune-tree{width:100%;padding:14px 0;}.rpg-rune-graph{grid-template-columns:repeat(12,minmax(0,1fr));gap:24px 2px;}.rpg-tree-heading{padding-bottom:17px;}.rpg-tree-heading>span{font-size:19px;}.rpg-tree-heading>small{font-size:10px;}
+ #rpg-ui .rpg-rune-node{min-height:110px;padding:0 1px;gap:8px;}.rpg-rune-medallion{width:58px;height:58px;padding:5px;}.rpg-rune-node .rpg-painted-art{width:48px;}.rpg-rune-node strong{font-size:10px;max-width:85px;}.rpg-rune-ranks{gap:4px;}.rpg-rune-ranks i{width:5px;height:5px;}.rpg-rune-new{font-size:13px;}
+ .rpg-skill-detail{position:static;width:100%;padding:22px;}.rpg-skill-detail-art .rpg-painted-art{width:112px;}.rpg-skill-detail h3{font-size:25px;}.rpg-dialog .rpg-detail-description,.rpg-skill-detail .rpg-skill-preview{font-size:13px;}
+}
+/* Rune hierarchy: inset iron for enhancements, pointed reliquaries for spells. */
+#rpg-ui[data-panel="skills"] .rpg-dialog{padding:25px 34px 24px;}
+#rpg-ui[data-panel="skills"] #rpg-dialog-content>.rpg-eyebrow{margin:4px 0 6px;}
+#rpg-ui[data-panel="skills"] h2{margin:0 0 8px;}
+#rpg-ui[data-panel="skills"] .rpg-skill-intro{margin:0;font-size:12px;}
+#rpg-ui[data-panel="skills"] .rpg-school-tabs{margin:16px 0;}
+.rpg-rune-summary{display:none;}
+.rpg-rune-tree{padding-top:15px;}
+.rpg-tree-heading{padding-bottom:16px;}
+.rpg-rune-graph{gap:19px 8px;}
+#rpg-ui .rpg-rune-node{min-height:112px;gap:6px;}
+.rpg-rune-medallion{width:76px;height:76px;padding:6px;background:linear-gradient(145deg,#605d4d 0%,#242b2b 12%,#0a1011 48%,#393c34 80%,#756b4d 94%,#10191a);box-shadow:inset 0 0 0 1px #93815a;clip-path:polygon(9% 0,91% 0,100% 9%,100% 91%,91% 100%,9% 100%,0 91%,0 9%);}
+.rpg-rune-medallion:after{inset:3px;border-color:#8b80634a;box-shadow:inset 0 0 0 2px #080e10,inset 0 0 8px #000;}
+.rpg-rune-node.passive-rune .rpg-rune-medallion{width:68px;height:68px;margin:4px;clip-path:polygon(18% 0,82% 0,100% 18%,100% 82%,82% 100%,18% 100%,0 82%,0 18%);}
+.rpg-rune-node.passive-rune .rpg-painted-art{width:54px;}
+.rpg-rune-node.spell-rune .rpg-rune-medallion{clip-path:polygon(50% 0,63% 5%,94% 5%,94% 36%,100% 50%,94% 64%,94% 95%,63% 95%,50% 100%,37% 95%,6% 95%,6% 64%,0 50%,6% 36%,6% 5%,37% 5%);}
+.rpg-rune-node.spell-rune .rpg-painted-art{width:60px;}
+.rpg-rune-node.selected .rpg-rune-medallion{background:linear-gradient(135deg,#d6bd7d,#655031 16%,#262a22 42%,#a58b50 73%,#edcf81 90%,#494331);filter:drop-shadow(0 0 7px #f3c36980);}
+#rpg-ui .rpg-rune-node.selected{background:radial-gradient(ellipse at 50% 30%,#9a762221,transparent 66%);}
+.rpg-rune-node.selected strong:before{content:'› ';color:#ffe4a5;}.rpg-rune-node.selected strong:after{content:' ‹';color:#ffe4a5;}
+.rpg-rune-node strong{font-size:12px;line-height:1.4;}
+.rpg-rune-ranks i{width:7px;height:7px;}
+@media(max-width:760px){
+ #rpg-ui[data-panel="skills"] .rpg-dialog{padding:25px 16px 18px;}
+ #rpg-ui[data-panel="skills"] #rpg-dialog-content>.rpg-eyebrow{display:none;}
+ #rpg-ui[data-panel="skills"] h2{font-size:23px;margin-right:20px;}
+ #rpg-ui[data-panel="skills"] h2 small{font-size:10px;padding:5px 7px;}
+ #rpg-ui[data-panel="skills"] .rpg-skill-intro{font-size:11px;}
+ #rpg-ui[data-panel="skills"] .rpg-school-tabs{margin:12px 0;}
+ .rpg-skill-workbench{gap:10px;}
+ .rpg-rune-summary{display:flex;align-items:center;gap:9px;width:100%;padding:9px 10px;background:linear-gradient(120deg,#24271fee,#091011);border:1px solid #81704788;text-align:left;}
+ .rpg-rune-summary>.rpg-painted-art{width:36px;}
+ .rpg-rune-summary>div{flex:1;min-width:0;}
+ .rpg-rune-summary strong{display:block;font:12px 'Cinzel',Georgia,serif;color:#eed6a3;}
+ .rpg-rune-summary small{display:block;font-size:10px;color:#b5aa8b;margin-top:5px;}
+ #rpg-ui .rpg-rune-summary button{padding:8px;font-size:11px;min-height:40px;}
+ .rpg-tree-heading{padding:0 3px 13px;}.rpg-tree-heading>span{font-size:17px;}
+ .rpg-rune-tree{padding:10px 0;}.rpg-rune-graph{gap:16px 2px;}
+ #rpg-ui .rpg-rune-node{min-height:101px;gap:6px;}
+ .rpg-rune-medallion{width:60px;height:60px;}
+ .rpg-rune-node.spell-rune .rpg-painted-art{width:48px;}
+ .rpg-rune-node.passive-rune .rpg-rune-medallion{width:52px;height:52px;margin:4px;}
+ .rpg-rune-node.passive-rune .rpg-painted-art{width:42px;}
+ .rpg-rune-node strong{font-size:10.5px;max-width:85px;}
+ .rpg-rune-ranks i{width:6px;height:6px;}
+ .rpg-skill-workbench:not(.detail-open) .rpg-skill-detail{display:none;}
+ .rpg-skill-workbench.detail-open .rpg-rune-tree{display:none;}
+ .rpg-skill-workbench.detail-open .rpg-skill-detail{display:flex;}
+}
+.rpg-skill-art.rpg-painted-art{background-image:url('/assets/rpg/ui/skills-v3.webp');background-size:500% 400%;}
+.rpg-wildfire-art.rpg-painted-art{background-image:url('/assets/rpg/ui/wildfire-v3.webp');background-size:100% 100%;background-position:center;}
+.rpg-skill-detail-art{position:relative;padding:9px;background:linear-gradient(140deg,#6e6954,#292f2b 15%,#0a1112 52%,#3d4338 84%,#87754d);box-shadow:inset 0 0 0 1px #99835e88,inset 0 0 0 4px #121b19,0 8px 16px #000a;}
+.rpg-skill-detail-art:after{content:'';position:absolute;inset:5px;border:1px solid #9b805633;pointer-events:none;}
+.rpg-rune-node.selected .rpg-rune-medallion:before{content:'';position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(#ffe3a1,#ac8550) left top/14px 2px no-repeat,linear-gradient(#ffe3a1,#ac8550) left top/2px 14px no-repeat,linear-gradient(#ffe3a1,#ac8550) right top/14px 2px no-repeat,linear-gradient(#ffe3a1,#ac8550) right top/2px 14px no-repeat,linear-gradient(#ac8550,#ffe3a1) left bottom/14px 2px no-repeat,linear-gradient(#ac8550,#ffe3a1) left bottom/2px 14px no-repeat,linear-gradient(#ac8550,#ffe3a1) right bottom/14px 2px no-repeat,linear-gradient(#ac8550,#ffe3a1) right bottom/2px 14px no-repeat;}
+/* Selection surrounds the art; learnability has its own mark, independent of rank. */
+#rpg-ui .rpg-rune-node{position:relative;}
+.rpg-rune-node.selected:before{content:'';position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:88px;height:88px;pointer-events:none;background:linear-gradient(#f4d998,#c39953) left top/15px 3px no-repeat,linear-gradient(#f4d998,#c39953) left top/3px 15px no-repeat,linear-gradient(#f4d998,#c39953) right top/15px 3px no-repeat,linear-gradient(#f4d998,#c39953) right top/3px 15px no-repeat,linear-gradient(#c39953,#f4d998) left bottom/15px 3px no-repeat,linear-gradient(#c39953,#f4d998) left bottom/3px 15px no-repeat,linear-gradient(#c39953,#f4d998) right bottom/15px 3px no-repeat,linear-gradient(#c39953,#f4d998) right bottom/3px 15px no-repeat;filter:drop-shadow(0 0 5px #e0ac5480);}
+.rpg-rune-state{position:absolute;top:-4px;left:calc(50% + 25px);z-index:3;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;font:700 20px/1 Georgia,serif;box-shadow:0 2px 5px #000;}
+.rpg-rune-state.available{background:#302b19;border:1px solid #dbbb71;color:#fff0b9;}
+.rpg-rune-state.locked{background:#11191a;border:1px solid #67716c;color:#8c9992;}
+.rpg-rune-state .rpg-icon{width:13px;height:13px;}
+.rpg-rune-ranks{height:14px;align-items:center;gap:4px;}
+.rpg-rune-ranks small{font:11px/1.2 sans-serif;color:#c7b99c;margin-left:3px;white-space:nowrap;}
+@media(max-width:760px){
+ .rpg-rune-graph{gap:20px 3px;}
+ #rpg-ui .rpg-rune-node{min-height:120px;gap:7px;}
+ .rpg-rune-node strong{font-size:12px;line-height:1.4;max-width:84px;}
+ .rpg-rune-node.passive-rune .rpg-rune-medallion{width:58px;height:58px;margin:1px;}
+ .rpg-rune-node.passive-rune .rpg-painted-art{width:48px;}
+ .rpg-rune-node.selected:before{width:72px;height:72px;}
+ .rpg-rune-state{left:calc(50% + 18px);width:19px;height:19px;font-size:19px;}
+ .rpg-rune-ranks{gap:3px;}.rpg-rune-ranks small{font-size:11px;}
+}
+@media(max-width:760px){
+ /* Names keep two equal lines; mixed-case serif remains legible in four columns. */
+ .rpg-rune-node strong{display:flex;align-items:center;justify-content:center;width:100%;max-width:calc(100% - 6px);height:34px;min-height:34px;font:600 12px/1.4 Georgia,serif;letter-spacing:0;}
+ .rpg-rune-node.selected strong:before,.rpg-rune-node.selected strong:after{content:none;}
+}
+@media(max-width:760px){
+ .rpg-skill-detail-art .rpg-painted-art{width:144px;}
+}

@@ -13,6 +13,7 @@ import { dungeonCameraHalfHeight, dungeonCameraVerticalOffset } from './world/vi
 import { crystalClusterGeometry, crystalClusterMaterial } from './world/crystals';
 import { iceShardGeometry, iceShardMaterial } from './world/ice';
 import { lightningGeometry, lightningMaterial } from './world/lightning';
+import { createBallLightning, createBallLightningContacts, ballLightningVolumeMaterial, ballLightningFilamentMaterial, ballLightningContactMaterial } from './world/ballLightning';
 import { phoenixWingGeometry, phoenixTailGeometry, stormFilamentsGeometry } from './world/spellShapes';
 import { phoenixFeatherMaterial, stormWispMaterial } from './world/materials';
 import { enemyRoster } from './world/enemyRoster';
@@ -83,7 +84,7 @@ export class DungeonWorld {
   private readonly torches: { flame: THREE.Mesh; light?: THREE.PointLight; position: THREE.Vector3; phase: number }[] = [];
   private readonly effects: Effect[] = [];
   private readonly enemies: Enemy[] = [];
-  private readonly enemyInstances: { mesh: THREE.InstancedMesh; sources: THREE.Mesh[] }[] = [];
+  private readonly enemyInstances: { mesh: THREE.InstancedMesh; sources: THREE.Mesh[]; roots: THREE.Group[] }[] = [];
   private lastFrameAt = performance.now();
   private frame = 0;
   private elapsed = 0;
@@ -252,7 +253,7 @@ export class DungeonWorld {
     // Compile authored actors and uncommon effect programs during loading,
     // before a child's first cast would otherwise pay the shader setup cost.
     const warmup = new THREE.Group(); warmup.position.y = -1000;
-    const warmMaterials: THREE.Material[] = [novaMaterial(), fireSheetMaterial(), firePlumeMaterial(0, 1), bladeWakeMaterial(), ashMaterial(), phoenixFeatherMaterial(), stormWispMaterial(0x7787a4), stormWispMaterial(0xa9bdff, true), lightningMaterial(0xa9bdff)];
+    const warmMaterials: THREE.Material[] = [novaMaterial(), fireSheetMaterial(), firePlumeMaterial(0, 1), bladeWakeMaterial(), ashMaterial(), phoenixFeatherMaterial(), stormWispMaterial(0x7787a4), stormWispMaterial(0xa9bdff, true), lightningMaterial(0xa9bdff), ballLightningVolumeMaterial(), ballLightningFilamentMaterial(), ballLightningContactMaterial(), ballLightningContactMaterial(true)];
     for (const material of warmMaterials) warmup.add(new THREE.Mesh(new THREE.PlaneGeometry(.01, .01), material));
     const summon = this.model('guardian', 4.5);
     summon?.traverse(object => { if (object instanceof THREE.Mesh && object.material instanceof THREE.MeshStandardMaterial) { object.material = object.material.clone(); object.material.transparent = true; warmMaterials.push(object.material); } });
@@ -752,7 +753,7 @@ export class DungeonWorld {
 
   private batchEnemies(): void {
     this.enemyInstances.forEach(instance => { this.enemyGroup.remove(instance.mesh); instance.mesh.dispose(); }); this.enemyInstances.length = 0;
-    const batches = new Map<string, { geometry: THREE.BufferGeometry; material: THREE.Material | THREE.Material[]; sources: THREE.Mesh[] }>();
+    const batches = new Map<string, { geometry: THREE.BufferGeometry; material: THREE.Material | THREE.Material[]; sources: THREE.Mesh[]; roots: THREE.Group[] }>();
     for (const enemy of this.enemies) {
       // Keep procedural actors independent until their authored models arrive.
       if (enemy.visual.userData.procedural) continue;
@@ -760,15 +761,16 @@ export class DungeonWorld {
       enemy.visual.traverse(object => {
         if (!(object instanceof THREE.Mesh)) return;
         const key = object.geometry.uuid;
-        if (!batches.has(key)) batches.set(key, { geometry: object.geometry, material: object.material, sources: [] });
+        if (!batches.has(key)) batches.set(key, { geometry: object.geometry, material: object.material, sources: [], roots: [] });
         batches.get(key)!.sources.push(object);
+        batches.get(key)!.roots.push(enemy.root);
       });
     }
-    for (const { geometry, material, sources } of batches.values()) {
+    for (const { geometry, material, sources, roots } of batches.values()) {
       const mesh = new THREE.InstancedMesh(geometry, material, sources.length);
       mesh.castShadow = true; mesh.receiveShadow = false; mesh.frustumCulled = false;
       mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-      this.enemyInstances.push({ mesh, sources }); this.enemyGroup.add(mesh);
+      this.enemyInstances.push({ mesh, sources, roots }); this.enemyGroup.add(mesh);
     }
   }
 
@@ -980,15 +982,39 @@ export class DungeonWorld {
         }
         case 'ball-lightning': {
           const count = options.orbit ? 4 : 1;
-          for (let orb = 0; orb < count; orb++) {
+          const started = this.elapsed, view = new THREE.Vector3();
+          const contacts = createBallLightningContacts(this.enemies.length);
+          contacts.layers.forEach((layer, index) => this.effect(layer, 2.15, index === 0 ? () => contacts.update(this.elapsed) : undefined));
+          const orbPosition = (orb: number, t: number, at: THREE.Vector3) => {
             const phase = orb * Math.PI * 2 / count;
-            const sphere = new THREE.Mesh(new THREE.SphereGeometry(.36, 12, 10), new THREE.MeshBasicMaterial({ color: 0xb9ddff, transparent: true, blending: THREE.AdditiveBlending, toneMapped: false }));
-            this.effect(sphere, 2.15, t => {
-              sphere.position.copy(origin).add(new THREE.Vector3(Math.sin(phase + t * 8) * (3 + t * 2.5), 1.2 + Math.sin(t * 14) * .25, Math.cos(phase + t * 8) * (3 + t * 2.5)));
-              if (Math.random() < .15) this.bolt(sphere.position, this.enemies[(orb * 5 + Math.floor(t * 10)) % this.enemies.length].origin.clone().setY(1), 0x8fbfff, .035, .2);
-              this.emit(sphere.position, 0x84aaff, 2, .6, .45);
-            });
+            return at.copy(origin).add(new THREE.Vector3(Math.sin(phase + t * 8) * (3 + t * 2.5), 1.2 + Math.sin(t * 14 + orb*.7) * .25, Math.cos(phase + t * 8) * (3 + t * 2.5)));
+          };
+          const orbs: { at: THREE.Vector3; flashedAt: number }[] = [];
+          for (let orb = 0; orb < count; orb++) {
+            const visual = createBallLightning(orb + 1), state = { at: new THREE.Vector3(), flashedAt: -Infinity };
+            orbs.push(state);
+            visual.update(orbPosition(orb, 0, state.at), this.camera.getWorldDirection(view).negate(), 0, started);
+            visual.layers.forEach((layer, index) => this.effect(layer, 2.15, index === 0 ? t => {
+              const progress = THREE.MathUtils.clamp((this.elapsed - started) / 2.15, 0, 1);
+              const discharge = Math.exp(-Math.max(0, this.elapsed - state.flashedAt) * 22);
+              visual.update(orbPosition(orb, progress, state.at), this.camera.getWorldDirection(view).negate(), t, this.elapsed, discharge);
+            } : undefined));
           }
+          // Visible energy reaches each victim at the existing authoritative
+          // contact cue. The four-orb upgrade shares those contacts between orbs.
+          this.enemies.forEach((enemy, index) => this.schedule(.65 + index / Math.max(1, this.enemies.length) * .52, () => {
+            const orb = index % count, state = orbs[orb]; state.flashedAt = this.elapsed;
+            orbPosition(orb, THREE.MathUtils.clamp((this.elapsed - started) / 2.15, 0, 1), state.at);
+            const contact = enemy.root.position.clone().add(new THREE.Vector3(0, enemy.brute ? 1.55 : .9, 0));
+            contacts.strike(index, contact, contact.clone().sub(state.at), this.elapsed);
+            this.bolt(state.at, contact, 0x7abaff, .03, .10);
+            if (options.chains && index % 4 === 0 && index + 1 < this.enemies.length) {
+              const next = this.enemies[index + 1];
+              this.bolt(contact, next.root.position.clone().add(new THREE.Vector3(0, next.brute ? 1.55 : .9, 0)), 0x8abaff, .022, .085);
+            }
+            this.burstLight.position.copy(contact); this.burstLight.color.setHex(0x7abaff);
+            this.burstLight.intensity = Math.max(this.burstLight.intensity, 16);
+          }));
           resolveHorde(.65); break;
         }
         case 'tempest': {
@@ -1007,7 +1033,7 @@ export class DungeonWorld {
           this.projectile(at.clone().add(new THREE.Vector3(-1, 6, 0)), at, 0xc0f2ff, effect === 'blizzard' ? .42 : .25, .38, () => this.impact(at, 0x99deff, 1), true);
         }
       });
-      if (options.chains && school === 'storm' && effect !== 'chain-lightning') this.schedule(.65, () => this.chainLightning(origin, 0xb2d3ff));
+      if (options.chains && school === 'storm' && effect !== 'chain-lightning' && effect !== 'ball-lightning') this.schedule(.65, () => this.chainLightning(origin, 0xb2d3ff));
       if (options.burning && school === 'ember') this.schedule(.85, () => {
         for (let i = 0; i < 6; i++) this.impact(origin.clone().add(new THREE.Vector3(Math.sin(i * 2) * 3, .1, Math.cos(i * 2) * 3)), 0xdd4b13, 1.4);
       });
@@ -1341,15 +1367,16 @@ export class DungeonWorld {
   private hitEnemy(enemy: Enemy, color: number): void {
     enemy.dead = true; enemy.deathAt = this.elapsed;
     this.renderer.shadowMap.needsUpdate = true;
-    this.emit(enemy.origin.clone().add(new THREE.Vector3(0, .9, 0)), color, enemy.brute ? 35 : 18, 3, 1);
-    this.emit(enemy.origin.clone().add(new THREE.Vector3(0, .35, 0)), 0xc7ae77, 8, 1.7, 1.35);
+    const ballLightning = this.lastAttack?.spellId === 'ball_lightning';
+    this.emit(enemy.origin.clone().add(new THREE.Vector3(0, .9, 0)), color, ballLightning ? 0 : enemy.brute ? 35 : 18, 3, 1);
+    this.emit(enemy.origin.clone().add(new THREE.Vector3(0, .35, 0)), 0xc7ae77, ballLightning ? 0 : 8, 1.7, 1.35);
     if (this.lastAttack?.options.burning || RPG_SPELLS.find(spell => spell.id === this.lastAttack?.spellId)?.school === 'ember') {
       this.fireContact(enemy.root.position, enemy.brute ? 1.35 : .7 + Math.abs(Math.sin(enemy.phase)) * .45);
       const scorch = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.1), new THREE.MeshBasicMaterial({ color: 0x32261b, alphaMap: this.glowMap, transparent: true, opacity: .2, depthWrite: false }));
       scorch.rotation.x = -Math.PI / 2; scorch.position.copy(enemy.origin).y = -.025;
       this.effect(scorch, 4, t => { scorch.material.opacity = (1 - t) * .2; });
     }
-    if (enemy.brute) { this.debris(enemy.origin, 9); this.emit(enemy.origin.clone().setY(1.2), 0x8deaff, 16, 3.5, .65); }
+    if (enemy.brute) { this.debris(enemy.origin, 9); this.emit(enemy.origin.clone().setY(1.2), 0x8deaff, ballLightning ? 0 : 16, 3.5, .65); }
   }
 
   private spawnLoot(origin: THREE.Vector3, drop: { name: string; rarity: string }): void {
@@ -1461,6 +1488,9 @@ export class DungeonWorld {
     this.rune.rotation.z = this.elapsed * .14;
     this.rune.scale.setScalar(1 + Math.sin(this.elapsed * 2) * .04);
     for (const enemy of this.enemies) {
+      // Once the authored defeat has finished there is no visible pose to
+      // animate. A new encounter creates fresh roots and batches normally.
+      if (enemy.dead && !enemy.root.visible) continue;
       if (enemy.dead) {
         const t = Math.min(1, (this.elapsed - enemy.deathAt) / 1.1);
         const away = enemy.origin.clone().sub(this.hero.position).setY(0).normalize();
@@ -1482,8 +1512,16 @@ export class DungeonWorld {
     if (this.enemyInstances.length) {
       this.enemyGroup.updateMatrixWorld(true);
       this.enemyInstances.forEach(instance => {
-        instance.sources.forEach((source, index) => instance.mesh.setMatrixAt(index, source.matrixWorld));
-        instance.mesh.instanceMatrix.needsUpdate = true;
+        // Hidden source visuals supply transforms to the batch; the actor root
+        // is the visibility authority. Compact completed defeats out of the
+        // draw rather than submitting their full geometry at a tiny scale.
+        let count = 0;
+        instance.sources.forEach((source, index) => {
+          if (instance.roots[index].visible) instance.mesh.setMatrixAt(count++, source.matrixWorld);
+        });
+        instance.mesh.count = count;
+        instance.mesh.visible = count > 0;
+        if (count > 0) instance.mesh.instanceMatrix.needsUpdate = true;
       });
     }
     this.torches.forEach(torch => {

@@ -1,0 +1,54 @@
+{
+  "build_studies.py.snapshot": {
+    "bytes": 32618,
+    "sha256": "b16667e37b962fb6365d187121d23c31db054e785c83f9ffbcd8bea2c32899b4"
+  },
+  "cleaver-candidate.glb": {
+    "bytes": 769000,
+    "sha256": "ce73fa91196ed91980c9492816ae2acf6dd0fa868cccb1de4e4d7f02b958fc6e"
+  },
+  "cleaver-thumbnail.png": {
+    "bytes": 118379,
+    "sha256": "7654b354c4719af1e148c91cb987c43962dc1d5a2b48c502d0099aaf3db60952"
+  },
+  "exact-back.png": {
+    "bytes": 962625,
+    "sha256": "70eb56055b79941bb43f156cb4285199da38bdad86ad58e00371c732ad12acbf"
+  },
+  "exact-front.png": {
+    "bytes": 967102,
+    "sha256": "80280a29dc7a83f6d7cfa76438b49139a191611e99b224463230453bde5bbe45"
+  },
+  "exact-threequarter.png": {
+    "bytes": 950928,
+    "sha256": "2f632bd363e14504a2c6b2c372d5f4050ff48664ea8d76239d6eb00fa8a5f12b"
+  },
+  "exact-tip.png": {
+    "bytes": 993475,
+    "sha256": "9e2fa6bd3faa74d050fd27048fc9989e534a5976e24c37e36e7dd35b1212b789"
+  },
+  "metal_weapons.py.snapshot": {
+    "bytes": 5590,
+    "sha256": "a0c145291031d4be360eee1820b3bd3a1e44dd681778ddd8233be94ff5805ac1"
+  },
+  "source-back.png": {
+    "bytes": 963048,
+    "sha256": "78fe434b8f3777119f93be3194f9e07a5863b7b7c28e03018a2d6a16d257120a"
+  },
+  "source-front.png": {
+    "bytes": 966394,
+    "sha256": "52fc5cb5b1c3dd6358139dc2e87b0a5a34f99bdac051998908199b35fe2166a4"
+  },
+  "source-threequarter.png": {
+    "bytes": 951402,
+    "sha256": "1741011f7f677caf03a5771311a48c9e0c5ed0f66f25ce180502e3848fbe0093"
+  },
+  "source-tip.png": {
+    "bytes": 1004149,
+    "sha256": "76700999c4b7a94529630969bc5f87823a712d805510d9de6ceb084f6a068c13"
+  },
+  "surfaces.py.snapshot": {
+    "bytes": 14077,
+    "sha256": "bee5b55391332e076d1a1071f2b0800a4f8931ef6c18ee140c16da5dfdc35bf7"
+  }
+}

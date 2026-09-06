@@ -14,7 +14,10 @@ Scores are subjective art-direction judgments, grounded in the listed visible ev
 
 | Accepted scope | Score | Latest reviewed evidence |
 |---|---:|---|
-| Installed Apprentice weapon observed grip/continuity/material and desktop inventory feature/card | 8, weapon only | `docs/rpg-playtest/v15/items/apprentice-v4/{inventory.png,actual-casts.webm,evidence.json}`; decoded native intervals70–135,175–245,275–345. First-use smoothness excluded; Cleave effects/choreography separate. |
+| Ashsplitter v2 shown complete source construction/material | 8, source only | `tmp/item-models/ashsplitter-v2-{front,tip,back,threequarter}.png`; exact export/native pending. |
+| Skeleton v16 shown survivor catch/recovery and connected fall/hold/erosion ordering | 8, scoped motion | `docs/rpg-playtest/v16/skeleton-v10/`; native presence/final slack and arrival excluded. |
+| Doorway v17 shown stone fade, shadow/light continuity, hero visibility and native crossing | 8, candidate and actual production-integrated crossing | `docs/rpg-playtest/v17/` plus integrated proof in EP; other doorways and behind-wall transparency excluded. |
+| Installed Apprentice weapon observed grip/continuity/material and desktop inventory feature/card | 8, weapon only | `docs/rpg-playtest/v15/items/apprentice-v4/{inventory.png,actual-casts.webm,evidence.json}`; decoded native intervals70–135,175–245,275–345. First-use weapon continuity subsequently8 in finalwarm proof (EA); Cleave effects/choreography separate. |
 | Authored skeleton stronger-shaft v10 exact export construction/material fidelity | 8, export only | `tmp/skeleton-native-shafts-v10-export-{detail,high,back}.png`; native1.85 presence/catch/slack still pending. |
 | Apprentice sword shown native attachment/grip/scale and corrected v4 material | 8, static only | `tmp/item-models/native-v1/` pose coverage and `tmp/item-models/native-v3/` corrected idle/Cleave material; actual motion and card deployment remain separate. |
 | Apprentice sword exact optimized export v2 construction/material fidelity | 8, export only | `tmp/item-models/apprentice-export-v2-{front,back,high,hilt}.png`; native guard highlight remains below gate. |
@@ -67,13 +70,14 @@ Scores are subjective art-direction judgments, grounded in the listed visible ev
 
 | Failing or unverified scope | Current grade/status | Main remaining gap / evidence |
 |---|---:|---|
-| Unique equipped models for all23 items | Apprentice source/export and native static attachment8, native static material8; branch wood7.5/coal v14 shape7.5; Glacier v6 form/depth7 and material6.5; Thunder v6 head construction8/material7.5; Ashsplitter construction8/material7.5; other18 unverified | Latest `tmp/item-models/native-v1/`, `cinderbranch-v11-{front,coal}.png`, `glacier-thunder-v3-front.png`. Painted icon acceptance does not approve3D item models. See DG/DI. |
-| Frostfall revised projectile/material/contact | v7 native silhouette/readability6.5 and material6.5; earlier shown contact-fracture8 | `docs/rpg-playtest/v15/combat/frostfall-v5/`; ordered124–171 and235–282 reviewed. Thickness improves, but long parallel internal stripe reads as a blade inset. See DU. |
-| Hero variants, skeleton, revenant, guardian/boss | 3.5–5 runtime baseline; hero source passes separately | Authored anatomy, armor/cloth construction, convincing silhouettes and materials still needed. Individual grades below. |
+| Unique equipped models for all23 items | Apprentice source/export and native static attachment8, native static material8; branch wood7.5/coal v14 shape7.5; Glacier v6 form/depth7 and material6.5; Thunder v6 head construction8/material7.5; Ashsplitter v2 source construction/material8; other18 unverified | Latest `tmp/item-models/native-v1/`, `cinderbranch-v11-{front,coal}.png`, `glacier-thunder-v3-front.png`. Painted icon acceptance does not approve3D item models. See DG/DI. |
+| Frostfall revised projectile/material/contact | v7 native silhouette/readability6.5 and material6.5; earlier shown contact-fracture8 | Latest `tmp/frost-v7-lossless-{native,detail}.png` loses optical mass; earlier actual v6 contact8 remains separate. See EH. |
+| Authored skeleton v16 native presence and final limb slack | 7.5 / 7.5 | `docs/rpg-playtest/v16/skeleton-v10/`; shaft/export8 and shown catch8 do not close fine-wire presence or cocked terminal limbs. See EM. |
+| Hero variants, revenant, guardian/boss | 3.5–5 runtime baseline; hero source passes separately | Authored anatomy, armor/cloth construction, convincing silhouettes and materials still needed. Individual grades below. |
 | World, architecture, floor, lighting, landmarks and props | 4–6; latest gate-v2 composition7, masonry5, floor6.5 | Repeated blocky structures and weak authored material/prop composition remain. Latest native fixture is `docs/rpg-playtest/v14/gate/ordinary.png`; first-room priorities are in candidate review AB below. |
 | Ball/Nova combat impact and complete temporal presentation | Starter Nova v11 shown desktop choreography8; Ball latest wraith/motion update and current mobile/boss impact coverage remain unverified; Ball v8 smoothness not accepted (~18Hz recorded). | Nova v11 closes its observed heavy-contact/wraith-transition blockers. Ball guardian contact/survivor choreography passes in v8 observed frames; no automatic transfer of the latest Nova proof to other variants. Prior complete passes remain withdrawn; see CH. |
 | Other fourteen spells, shared non-Ball impacts/deaths and loot effects | 3–5 baseline or unverified; Nova v18 front/contact/poses/erosion, reviewed HUD context and late residue8; fallback chasm integration8; prior impact/complete motion passes withdrawn after user feedback; visual effect forms remain separate from reopened hit/death feel | Every family has its own unresolved form/contact/temporal gaps; see individual table below. No current complete combat-impact temporal acceptance. |
-| Gateway visibility transition during hero travel | 5 | Gallery-route v5 frames218→219 remove the full gateway abruptly while bases remain; character route acceptance does not approve this environment pop. |
+| Gateway visibility transition broader coverage | Shown integrated crossing8; other coverage unverified | Actual integration resolves abrupt toggle in reviewed crossing; other doorway/biome and behind-wall transparency coverage remain unverified. See EL/EP. |
 | Desktop/portrait combat HUD, notifications | Below gate / full review pending | Safe portrait orbit framing passes separately; accepted landscape presentation does not approve all other HUD layouts or notifications. |
 | Armor selection section | 5 historical; still below gate in current partial view | `docs/rpg-playtest/v13/equipment/rpg-equipment-v3-phone-lower.png`: generic default shield and simplistic character thumbnails remain; accepted relic section does not approve armor. |
 | Animation, reveal transitions, character locomotion/casting/death, performance modes | Unverified for full acceptance | Dense Ball review supports scoped motion components; it does not accept the weak opening or reconstruct missing critical rendered states. Other character/transition motion remains unverified. Recorded rAF timing is separate from visual quality and encoded video FPS. |
@@ -1390,3 +1394,108 @@ Reviewed `tmp/floor-tangent-{bump,normal,native}.png`. Normal transfer now visib
 ## EJ — Skeleton stronger-shaft v10 exact export preserves source fidelity
 
 Reviewed `tmp/skeleton-native-shafts-v10-export-{detail,high,back}.png` against v10 source. **Construction/material fidelity8.** Paired shaft channels, narrow wrist cavities, seated grasp/steel hilt and rear harness/full blade extent are retained. No new visible bake regression in these views. Actual1.85 two-cast trial may proceed; native presence, support-foot catch and final slack remain open. Geometry validation is independent of this visual scope.
+
+
+## EK — Glacier v8 removes opaque-core obstruction but material remains below gate
+
+Reviewed `tmp/item-models/glacier-v8-{front,depth}.png`. **Depth7/material7.** Removing the opaque core clears the nested-strip obstruction and lightens the material. Outer shell still reads as a broad blue face with weak facet-specific reflected structure; inset fault is a faint clean polygon. Preserve the removed-core correction. One controlled broad side-facet reflection beside a darker clear face and less uniform fault boundary is preferable to more alpha lowering or extra layers. No source8/export pass.
+
+## EL — Doorway v17 candidate passes its shown crossing without abrupt removal
+
+Reviewed `docs/rpg-playtest/v17/{candidate,old-cut-same-camera,opaque-same-camera}.png`, README and original `actual-room-crossing.webm`/`uninterrupted-evidence.json`. Motion review used overview19–27.92s, every original25fps frame22.36–24.96s (decoded85–150 in `tmp/cutaway-v17-review/frames/`), and native full105/116/128. **Stone fade8; shown shadow/light continuity8; hero visibility8; observed native crossing transition8.** Front stone surfaces fade without conspicuous stippling or accumulated internal faces; the doorway/floor reveal progresses gradually, hero remains identifiable, and no discrete shadow or torch-light pop is visible. Prior one-frame architecture removal is resolved in this candidate execution. Reported18ms median/25.8ms maximum rendered interval supports cadence but does not earn art points or prove GPU cost;40ms encoded frames limit subframe claims. Other doorways/biomes, transparent effects behind the fade, production integration/loading warmup and broader performance coverage remain separate. Existing installed abrupt rule is not retroactively approved. Global world gate remains failed. Review tools were operational; no current usage block.
+
+
+## EM — Skeleton v16 native catch improves; presence and final slack remain open
+
+Reviewed `docs/rpg-playtest/v16/skeleton-v10/{before.png,after-first.png,actual-two-casts.webm,evidence.json,contact-sheet.png}`, overview of native crop1–301 and every55–120/174–225 from `tmp/skeleton-v16-native-frames/` (original25fps crop, video9.6s origin). **Native presence7.5:** skull/ribs/weapon identify a fine white wire figure with insufficient grouping beside heavier enemies. **Survivor catch/recovery8:** shoulder recoil57–64, distinct knee/back-foot catch65–74 and recovery75–92. **Connected fall/full-size hold/erosion ordering8; final slack7.5:** corpse193–215 retains cocked upper limb and raised bent legs above ribs. Restrained asymmetric shoulder/forearm/pelvis remnants are a useful next presence candidate while preserving bare skull, rib/pelvis gaps and one bare side; gear must not conceal the unresolved corpse pose. Arrival is excluded because this run predates the corrected `traveling` readout.
+
+## EN — Ashsplitter v2 source material closes the bevel-streak blocker
+
+Reviewed all four `tmp/item-models/ashsplitter-v2-{front,tip,back,threequarter}.png`. **Source construction/material8.** Parallel bevel streaks are resolved; broad bevel has controlled softer steel response against darker body/back, with hollow surface and coherent leather/iron/copper assembly retained. Exact bake/export/native acceptance remains separate.
+
+## EO — Thunder v7 material history remains too subtle
+
+Reviewed `tmp/item-models/thunder-v7-{front,back,contact}.png` against v6 contact. **Construction8 retained including rear; material7.5.** Contact ends and rods still read nearly uniform bright copper. Matched image change is real but small (mean absolute difference0.109/255, about1.6% pixels differ by more than2); those numbers do not provide an art score. Intended heat/shelter transition remains unresolved at source scale. Make actual contact face/short neck visibly darker and rougher while preserving clean long middle rods, rather than darkening everything or adding uniform noise. No bake pass.
+
+
+## EP — Production-integrated doorway retains the bounded crossing pass
+
+Reviewed `/tmp/rpg-partial-hit-video/page@a07b640f32a33128806b5d22bd4df6bc.webm` and `/tmp/cutaway-integrated-evidence.json`, overview19–28.28s, every original frame97–144 (PTS22.84–24.72) and full native115/125/135 in `tmp/cutaway-integrated-review/frames/`. **Stone fade8; shown shadow/light continuity8; hero visibility8; observed native transition8.** Production-loaded fade preserves gradual stone/floor reveal without conspicuous stippling, accumulated interior faces or discrete shadow/torch pop. Hero remains readable through the pillar. This closes integration for the shown actual two-Nova crossing;159 unchanged programs and clean error/context telemetry corroborate implementation but do not earn art points. Encoded25fps/40ms frames limit subframe claims. Other doorways/biomes, transparent effects behind fading architecture and broader performance remain separate. Global art gate remains failed.
+
+
+## EQ — Skeleton remnant v11 direction helps grouping but source construction remains plain
+
+Reviewed `tmp/skeleton-remnants-v11/source-{high,back}.png`. **Remnant construction7/material7; presence direction7.5 provisional.** Bare anatomy/gaps and asymmetry remain intact, but the shoulder reads as rectangular flaps below the joint and pelvis cloth as plain polygon sheets with zigzag bottoms. A fitted curved upper shoulder cap, shaped overlapping lower layers and visible strap attachment should create a coherent silhouette group. A few gravity-led folds/thickness near cloth attachments and unequal torn ends are needed; uniform surface noise or full-body coverage is not the target. Existing anatomy/grasp source8 remains separate. Native presence, corpse support/slack and motion are excluded.
+
+
+## ER — Thunder v8 source finish passes; Moonstaff v1 needs a coherent setting
+
+Reviewed `tmp/item-models/thunder-v8-{front,contact}.png` and `moonstaff-v1-{front,head}.png`. **Thunder source material8:** dark rough contact faces now separate from clean copper rod middles; fitted root seats/porcelain separation retained. Combined with prior rear construction8, ready for exact export proof, not native acceptance. **Moonstaff construction6.5/material6:** three cylindrical spokes with small ball-like ends meet a flat oval stone/cup, giving a manufactured mirror-frame appearance. Replace spokes with shaped tapered braces flowing into a proper rim/bezel that cups a domed stone, preserving the open crescent. Uniform pale head/shaft response needs steel/wood/stone separation. Front grip appears to expose pale shaft longitudinally through blue wrap; close evidence is needed. No Moonstaff source pass.
+
+
+## ES — Ashsplitter exact export retains form but introduces localized shading defects
+
+Reviewed `tmp/item-models/cleaver/exact-{front,tip,back,threequarter}.png` and `cleaver-thumbnail.png` against source v2, including matched tip/back. **Construction/silhouette8; export material/fidelity7.5.** Close tip inner bevel boundary has visible stair-step texels. Rear right-side facet has a dark triangular diagonal crease around(637–661,229–251) in1200×800 absent in source back. Flat/no-normal controls should distinguish corner-normal/bake shading before broader texture changes. Hilt/seating and overall controlled bevel response remain8. **Thumbnail silhouette/framing8**, actual inventory-scale material deployment/native excluded. No exact-export acceptance.
+
+
+## ET — Ashsplitter controls keep the rear crease without either texture contribution alone
+
+Reviewed `tmp/item-models/cleaver/diagnostic-no-normal-back.png` and `diagnostic-flat-color-back.png`. Rear facet slash persists in both. This excludes albedo/roughness-only and normal-texture-only explanations; low-mesh corner basis/decimation remains the strongest direction. Controls do not simultaneously remove all maps. A flat/no-normal corrected low-mesh check followed by rebaking against its exact exported basis is appropriate; retain true bevel discontinuities. Export score remains7.5 pending actual correction.
+
+
+## EU — Skeleton terminal v12 corrects lower-body slack; free arm remains active
+
+Reviewed all six controlled native/side death.45/.65/.9 images under `tmp/skeleton-terminal-v12-1788721157984/`. **Pelvis-leg connection and final lower-body slack8; complete terminal slack7.5.** Legs now trail along the floor rather than remaining cocked above ribs. At.9 the free arm forms a high open hook above the rib cage, confirmed by the side view. Let its elbow/forearm descend outward to rest, with wrist/fingers yielding, preserving shoulder attachment and the corrected pelvis/legs; avoid symmetric spread. Key-pose connectedness is coherent but these positive-tick controlled fixtures do not prove actual combat timing. Native presence remains7.5.
+
+
+## EV — Skeleton remnant v12 improves grouping; shoulder attachment needs close proof
+
+Reviewed `tmp/skeleton-remnants-v12/source-{high,back}.png`. **Construction7.5/material7.5.** Curved cap and layered folded cloth improve source grouping. Front shows a projecting loop behind the cap upper-left; rear band appears to bridge open air around the bare shoulder. Close front/back cap-and-band proof is required to distinguish an intentional open shell from a floating retaining strap. Fit band contacts and anchor ends while preserving open joint space; no larger cap/more layers needed. Material remains plain, but attachment/edge thickness has greater value than added generic noise. Native presence remains ungraded for this revision; bone/grasp and terminal lower-body scopes unchanged.
+
+
+## EW — Thunder exact packed v1 preserves accepted source response
+
+Reviewed all five `tmp/item-models/thunderrod/export-v1-{front,back,high,hilt,contact}.png` against approved source. **Construction/export material fidelity8.** Dark oxide contacts, clean controlled copper middle rods, fitted root ferrules and porcelain separation survive. Grip seam/end fittings remain coherent; no new visible transfer-specific blocker in these views. Exact GLB SHA `f5c813c5e8aa5753b1746db0038605414abf829b6ce0784407c45d048875378c`. Native attachment/material, thumbnail/card and motion remain ungraded.
+
+
+## EX — Current world priority is coherent doorway depth
+
+Compared lossless `/tmp/cutaway-integrated-before.png` directly with concept04. **Whole-world6.5; composition7; architecture6.5; floor6.5; lighting7** for this actual frame. Tall pale piers plus thin nested applied arch trims against broad flat walls read as separate kit pieces; concept has coherent deep recessed openings. Highest-return bounded next trial is accepted portalv7 replacing the complete old arch/trim assembly, checking jamb/impost and adjacent courses, not overlaying another asset. Floor remains a large dark matte grid with weak worn bevel response, second priority through existing relief diagnosis. Warm/cool separation already reads; global exposure increase and concept enemy density are not the targets. User limit of10 remains.
+
+## EY — Thunder thumbnail and Moonstaff v2 source scopes
+
+Reviewed `tmp/item-models/thunderrod/thunderrod-v1-thumbnail.png` and `moonstaff-v2-{front,head,grip}.png`. **Thunder thumbnail silhouette/framing/material8** at512px; actual card deployment excluded. **Moonstaff shown head construction7.5/material7:** braces/domelike stone setting improve coherence; silver remains broadly chalky and stone uniformly glazed. Grip has visible bare-shaft gaps at both wrap ends; seat ferrules. Rear/head depth coverage remains needed. Use distinct restrained metal reflection and stone response before added ornament/noise.
+
+## EZ — Skeleton terminal v13 lowering alone leaves the projected hook
+
+Reviewed final.9 native/side in `tmp/skeleton-terminal-v13-1788721637672/` againstv12. **Lower-body8 retained; complete slack7.5.** Free elbow lowering changes projected silhouette only slightly; bent forearm/curled palm still turn upward toward skull. Change actual orientation with modest elbow extension/outward turn and yielding floor-facing wrist, preserving asymmetry/shoulder attachment. Static final pair is sufficient for next silhouette check; no new motion acceptance.
+
+## FA — Ashsplitter corrected exact v4 closes transfer defects
+
+Reviewed all four `tmp/item-models/cleaver/v4/exact-{front,back,threequarter,tip}.png`. **Construction/export material fidelity8.** Rear triangular slash and close inner-bevel stair-step run are resolved; source front/back/hilt hierarchy retained. Exact SHA `338e88f04c4b96d196331908fc2abcbe64f7d900987233a5a11cf3ecf8a81422`. Native mount/material, inventory deployment and motion remain separate.
+
+
+## FB — Thunder actual desktop item presentation and held continuity pass
+
+Reviewed `/tmp/thunder-native-v1-{before,inventory}.png`, evidence/video, overview8–17.96s and every original frame40–79/173–212 in `tmp/thunder-native-review/frames/` (PTS9.56–11.12/14.88–16.44). **Native silhouette/material8; desktop inventory feature/card8; weapon attachment/observed continuity8.** Copper fork remains distinct, grip seated, no flip/detachment/halo across both actual Chain casts.210px feature/92px card retain full silhouette.25fps limits subframe claims; reported cadence/program stability are separate. This does not approve Chain Lightning origin/line/impact art or phone inventory.
+
+## FC — Skeleton remnant v13 shoulder contact passes; cuff remains loose
+
+Reviewed `tmp/skeleton-remnants-v13/{cap-front,cap-back,source-high,source-back}.png`. **Shoulder retaining-contact construction8; complete remnant construction/material7.5.** Band now meets cap edges around humerus. Forearm cuff front reveals a large open ring around radius/ulna; rear strap ends appear unfastened. Tighten bands to bone envelope and anchor on shell while preserving paired-bone gap. Native presence remains pending.
+
+## FD — Ash thumbnail passes; Moonstaff v3 material remains below gate
+
+Reviewed `tmp/item-models/cleaver/v4/cleaver-thumbnail.png` and `moonstaff-v3-{head,back,grip}.png`. **Ash thumbnail framing/silhouette/material8** at512px, native card excluded. **Moonstaff shown construction8/material7.5:** depth/supports and seated ferrules established; silver response improved. Central stone still has uniform blue molded-enamel read with broad highlight resembling metal. A restrained broad mineral/cloud variation under polished surface is the next source material correction; no glitter, uniform noise or extra graphic cracks. Straight shaft striations are secondary. Exact export remains held.
+
+
+## FE — Ashsplitter actual desktop presentation and Cleave weapon continuity pass
+
+Reviewed `/tmp/ashsplitter-native-v4-{before,inventory}.png`, evidence/video, overview8–18.88s and every original frame60–109/190–239 in `tmp/ashsplitter-native-review/frames/` (PTS10.36–12.32/15.56–17.52). **Native silhouette/material8; desktop inventory feature/card8; held weapon continuity8.** Broad blade remains distinct and seated through windup, finish and return; no visible flip/detachment/penetration. Brief strong blade glint atframe200/15.96s does not persist or erase silhouette. Card retains complete readable dark steel.25fps limits subframe claims. Cleave FX/contact/room wash remains excluded; exact candidate ready for installation within item scope.
+
+## FF — Skeleton terminal v14 closes static slack blocker
+
+Reviewed final.9 native/side pair in `tmp/skeleton-terminal-v14-1788722153128/`. **Complete static terminal slack8.** Skull-facing hook is gone; free forearm/hand rests beside torso, legs trail and sword arm remains asymmetric. No visible contact/attachment regression in supplied pair. Preserve pose; actual fall/settle/hold with final remnant candidate still requires motion review. Native presence remains7.5 pending revised model.
+
+## FG — Moonstaff v4 source material passes
+
+Reviewed `tmp/item-models/moonstaff-v4-{head,front}.png`. **Source material8**, construction8 retained from v3 rear/grip. Broad mineral cloud beneath uninterrupted polished stone separates stone from silver bezel/crescent without noisy glitter or graphic cracks. Shaft response is calmer. Complete source ready for exact export fidelity; native attachment/scale, thumbnail and motion remain separate.

@@ -4,7 +4,7 @@ import math
 import bpy
 
 
-def _single_edge(parent, steel, edge):
+def _single_edge(parent, steel, edge, *, low=False):
     # z, sharpened edge, blunt spine, half-depth. The upper blade carries the
     # mass, followed by a clipped corner; it is not the starter sword widened.
     stations=[(.174,-.024,.026,.013),(.240,-.045,.043,.014),
@@ -17,14 +17,19 @@ def _single_edge(parent, steel, edge):
                 t=(z-a[0])/(b[0]-a[0])
                 return tuple(a[i]+(b[i]-a[i])*t for i in (1,2,3))
         return stations[-1][1:]
-    nx,nz=40,140
+    # The low blade follows the same cross-sections with explicit rows at every
+    # profile change. Unconstrained collapse creates long diagonal triangles
+    # across those changes, which showed a crease absent from the source.
+    us=([0,.1,.2,.25,.275,.4,.6,.64,.7,.76,.82,.88,1] if low else [i/40 for i in range(41)])
+    zs=(sorted({*(row[0] for row in stations),.27,.315,.755,.80,
+                *(stations[0][0]+(stations[-1][0]-stations[0][0])*j/32 for j in range(33))})
+        if low else [stations[0][0]+(stations[-1][0]-stations[0][0])*j/140 for j in range(141)])
+    nx,nz=len(us)-1,len(zs)-1
     vertices=[];faces=[];material_ids=[]
     for side in (-1,1):
-        for j in range(nz+1):
-            z=stations[0][0]+(stations[-1][0]-stations[0][0])*j/nz
+        for z in zs:
             cut,spine,depth=section(z)
-            for i in range(nx+1):
-                u=i/nx
+            for u in us:
                 bevel=min(1,u/.27)
                 # A broad honed edge meets the forged flat continuously. A
                 # shallow hollow below the spine leaves a reinforced back.
@@ -40,7 +45,7 @@ def _single_edge(parent, steel, edge):
                 a=side*plane+j*(nx+1)+i
                 face=(a,a+1,a+nx+2,a+nx+1)
                 faces.append(face if side==0 else tuple(reversed(face)))
-                material_ids.append(1 if (i+.5)/nx<.27 else 0)
+                material_ids.append(1 if (us[i]+us[i+1])*.5<.27 else 0)
     for j in range(nz):
         for i in (0,nx):
             a=j*(nx+1)+i;b=a+nx+1

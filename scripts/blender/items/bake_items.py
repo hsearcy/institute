@@ -22,7 +22,7 @@ def load(path,name):
     return result
 
 
-def prepare(source_scene,item_id,size=1024):
+def prepare(source_scene,item_id,size=1024,*,structured_blade=False,split_material_boundaries=False):
     if source_scene.get('diagnosticOnly'):
         raise ValueError('Optical control scenes are not export candidates')
     previous=bpy.context.window.scene
@@ -53,16 +53,31 @@ def prepare(source_scene,item_id,size=1024):
         bpy.context.window.scene=scene
         lows=[]
         for source_id,source in enumerate(sources):
-            low=bpy.data.objects.new(source.name+' low',source.data.copy());destination.objects.link(low)
+            authored_blade=structured_blade and item_id=='cleaver' and source.name.startswith('Forged blade Ashsplitter')
+            if authored_blade:
+                builder=load(ROOT/'scripts/blender/items/metal_weapons.py','item_structured_blade')
+                low=builder._single_edge(None,*source.data.materials,low=True)
+                destination.objects.link(low);scene.collection.objects.unlink(low)
+            else:
+                low=bpy.data.objects.new(source.name+' low',source.data.copy());destination.objects.link(low)
             attr=low.data.attributes.new('item_source_id','INT','FACE')
             for value in attr.data:value.value=source_id
             triangles=helper.triangle_count([low])
-            ratio=.035 if 'grown' in source.name or 'leather wrapped' in source.name else .075 if 'Forged blade' in source.name else .045 if 'charcoal mass' in source.name else .25 if triangles>1500 else 1
+            ratio=1 if authored_blade else .035 if 'grown' in source.name or 'leather wrapped' in source.name else .075 if 'Forged blade' in source.name else .045 if 'charcoal mass' in source.name else .25 if triangles>1500 else 1
             if ratio<1:
                 bpy.ops.object.select_all(action='DESELECT');low.select_set(True);bpy.context.view_layer.objects.active=low
                 modifier=low.modifiers.new('Preserve source silhouette for projection','DECIMATE');modifier.ratio=ratio;modifier.use_collapse_triangulate=True
                 bpy.ops.object.modifier_apply(modifier=modifier.name)
-            lows.append(low)
+            if split_material_boundaries and len(low.data.materials)>1:
+                # A hard steel/bevel color boundary belongs to the mesh seam,
+                # not an antialiased diagonal inside a tiny shared atlas chart.
+                # Separate and rejoin preserves the normals and source IDs but
+                # keeps the UV projector from welding across that boundary.
+                bpy.ops.object.select_all(action='DESELECT');low.select_set(True);bpy.context.view_layer.objects.active=low
+                bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT')
+                bpy.ops.mesh.separate(type='MATERIAL');bpy.ops.object.mode_set(mode='OBJECT')
+                lows.extend(bpy.context.selected_objects)
+            else:lows.append(low)
         bpy.ops.object.select_all(action='DESELECT')
         for obj in lows:obj.select_set(True)
         bpy.context.view_layer.objects.active=lows[0];bpy.ops.object.join();low=lows[0];low.name=item_id+'_Baked'

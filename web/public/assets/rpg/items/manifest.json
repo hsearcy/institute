@@ -83,6 +83,129 @@
         },
         "scope": "Independent scoped art reviews; no other item or general gameplay acceptance inferred."
       }
+    },
+    {
+      "id": "thunderrod",
+      "model": "thunderrod.glb",
+      "thumbnail": "thunderrod.png",
+      "sha256": "f5c813c5e8aa5753b1746db0038605414abf829b6ce0784407c45d048875378c",
+      "candidateSha256": "f5c813c5e8aa5753b1746db0038605414abf829b6ce0784407c45d048875378c",
+      "thumbnailSha256": "b2981ed9bb79177c6b6001a22a830616a996e3a0bf842d4c42f7d1be14d77c7f",
+      "bytes": 1270772,
+      "source": {
+        "recipe": "scripts/blender/items/build_studies.py::thunderrod",
+        "evidence": "docs/rpg-playtest/v18/items/thunder",
+        "materialRevision": "v8 localized contact-face heat and oxidation; reviewed source retained"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "actual palm/grasp center at local(0,0,0)",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "thunderrod_Grip.005",
+        "tipNode": "thunderrod_Tip.005",
+        "transform": "full measured palm socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 9300,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "textureSize": [
+          1024,
+          1024
+        ],
+        "transmission": false,
+        "skinned": false,
+        "drawCallScope": "per item color pass; shadow/depth passes separate"
+      },
+      "review": {
+        "sourceConstruction": 8,
+        "sourceMaterial": 8,
+        "exactExportConstruction": 8,
+        "exactExportMaterial": 8,
+        "nativeStaticAttachmentScale": 8,
+        "nativeStaticMaterial": 8,
+        "standaloneThumbnail": 8,
+        "actualInventoryCard": {
+          "score": 8,
+          "reviewedSizesPx": [
+            210,
+            92
+          ]
+        },
+        "continuousMotion": {
+          "score": 8,
+          "scope": "Weapon-only grip/material continuity through two actual Chain Lightning casts, reviewed at 25fps. Spell effects excluded."
+        },
+        "evidence": "docs/rpg-playtest/v18/items/thunder/runtime",
+        "scope": "Independent bounded reviews; no other item, spell art, or global acceptance."
+      }
+    },
+    {
+      "id": "cleaver",
+      "model": "cleaver.glb",
+      "thumbnail": "cleaver.png",
+      "sha256": "338e88f04c4b96d196331908fc2abcbe64f7d900987233a5a11cf3ecf8a81422",
+      "candidateSha256": "338e88f04c4b96d196331908fc2abcbe64f7d900987233a5a11cf3ecf8a81422",
+      "thumbnailSha256": "dc03505fd8a5d17bd926fe68f12183d87a8a367b3e2cfae7a79a69cec75ae393",
+      "bytes": 827720,
+      "source": {
+        "recipe": "scripts/blender/items/metal_weapons.py::cleaver",
+        "evidence": "docs/rpg-playtest/v18/items/ashsplitter/corrected-v4",
+        "materialRevision": "v2 restrained steel bevel, source retained",
+        "bakeOptions": {
+          "structured_blade": true,
+          "split_material_boundaries": true,
+          "geometry_normals_only": true
+        }
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "actual palm/grasp center at local(0,0,0)",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "cleaver_Grip.005",
+        "tipNode": "cleaver_Tip.005",
+        "transform": "full measured palm socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 5160,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "textureSize": [
+          1024,
+          1024
+        ],
+        "transmission": false,
+        "skinned": false,
+        "drawCallScope": "per item color pass; shadow/depth passes separate"
+      },
+      "review": {
+        "sourceConstruction": 8,
+        "sourceMaterial": 8,
+        "exactExportConstruction": 8,
+        "exactExportMaterial": 8,
+        "nativeStaticAttachmentScale": 8,
+        "nativeStaticMaterial": 8,
+        "standaloneThumbnail": 8,
+        "actualInventoryCard": {
+          "score": 8,
+          "reviewedSizesPx": [
+            210,
+            92
+          ]
+        },
+        "continuousMotion": {
+          "score": 8,
+          "scope": "Weapon-only grip/material continuity through two actual Flame Cleave casts, reviewed at 25fps. Spell effects excluded."
+        },
+        "evidence": "docs/rpg-playtest/v18/items/ashsplitter/runtime",
+        "scope": "Independent bounded reviews; no other item, spell art, or global acceptance."
+      }
     }
   ]
 }

@@ -4,7 +4,8 @@
 gate remains failed.** The reviewer approved its fade, visible shadow/light
 continuity, hero visibility, and observed transition. Review tools are available
 again. RoomCutaway is now integrated into DungeonWorld with preparation during
-loading. The separate integrated recording below is awaiting visual review.
+loading. The separate integrated recording below also passed the same bounded visual
+review at 8/10.
 The new `traveling` readout is installed and tested in actual play.
 
 ## What changed
@@ -93,7 +94,6 @@ the final position. No learning state or reward logic was changed.
 resource isolation, shadow/flame uniforms, reversible lights, and temporary
 prepass lifetime. All gameplay uses disposable local progress.
 
-Review the integrated recording, then verify other doorways and actual browser
-performance. The existing portal
+Verify other doorways and actual browser performance. The existing portal
 model, other world art, characters, all item models and remaining spell effects
 retain their separate unfinished gates.

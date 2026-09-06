@@ -1,0 +1,18 @@
+{
+  "before.png": {
+    "bytes": 1684079,
+    "sha256": "7df45888a6aa12b105f00b8e8908b12b5df750c9f3fa970d3c4309e0ae664696"
+  },
+  "evidence.json": {
+    "bytes": 1011003,
+    "sha256": "683c5c64074df1312cdcbedba1627da3d303d43846bbcd96e5b2398fde7c4890"
+  },
+  "inventory.png": {
+    "bytes": 1584470,
+    "sha256": "27deb1ff0cfd77f073d6fbbe227e113b9707ee092e2b3b7b18ffb5a339480646"
+  },
+  "two-cleave-casts.webm": {
+    "bytes": 3258136,
+    "sha256": "ffa697d122db40429916887151839fbe565b79ff20f4864b09c95eef38840f4f"
+  }
+}

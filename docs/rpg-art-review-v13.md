@@ -8,12 +8,21 @@ Scores are subjective art-direction judgments, grounded in the listed visible ev
 
 ## Current acceptance ledger
 
-**User-directed impact gate remains open: combat must show at most10 enemies, starter attacks must leave survivors, and hits must feel forceful rather than an effect followed by disappearance. Prior complete Ball/Nova passes remain withdrawn. Latest actual-loop v7 review passes skeletal Nova survivor catch/recovery, skeleton/revenant falls, guardian final collapse/settle and cleanup/order at8 in the shown desktop sequences. Guardian initial contact7.5 and wraith death7.5 still fail; Ball survivor response is unverified because its recorded veteran casts clear both low-HP packs. The starter Nova first answer leaves four of six enemies alive, then the second clears. See CE; no complete game-wide or spell-wide impact pass.**
+**User-directed impact gate remains open beyond reviewed scope: combat must show at most10 enemies, starter attacks must leave survivors, and hits must feel forceful rather than an effect followed by disappearance. Prior complete Ball/Nova passes remain withdrawn. Latest actual-loop starter Nova v11 desktop evidence now scores8 for shown contact, skeletal/guardian survivor recovery, all four body types' falls/fold, settled holds, erosion and partial-clear ordering. The first answer leaves four of six alive, then the second clears. All263 decoded frames were reviewed; native40ms sampling does not certify subframe behavior. This closes the specific Nova guardian-contact and wraith-transition blockers in that recording. Ball's newest wraith transition, current mobile/boss impact coverage and other spells remain separate. Latest Ball v8 guardian contact/boss-survivor choreography8 does not imply smoothness at its approximately18Hz recorded cadence. See CU; no game-wide impact pass.**
 
 **Global gate: FAILED. No complete game-wide art or animation acceptance.** A score applies only to the specified evidence and scope. Source/static/layout passes do not transfer to runtime readability, animation, other assets or other viewports.
 
 | Accepted scope | Score | Latest reviewed evidence |
 |---|---:|---|
+| Installed Apprentice weapon observed grip/continuity/material and desktop inventory feature/card | 8, weapon only | `docs/rpg-playtest/v15/items/apprentice-v4/{inventory.png,actual-casts.webm,evidence.json}`; decoded native intervals70–135,175–245,275–345. First-use smoothness excluded; Cleave effects/choreography separate. |
+| Authored skeleton stronger-shaft v10 exact export construction/material fidelity | 8, export only | `tmp/skeleton-native-shafts-v10-export-{detail,high,back}.png`; native1.85 presence/catch/slack still pending. |
+| Apprentice sword shown native attachment/grip/scale and corrected v4 material | 8, static only | `tmp/item-models/native-v1/` pose coverage and `tmp/item-models/native-v3/` corrected idle/Cleave material; actual motion and card deployment remain separate. |
+| Apprentice sword exact optimized export v2 construction/material fidelity | 8, export only | `tmp/item-models/apprentice-export-v2-{front,back,high,hilt}.png`; native guard highlight remains below gate. |
+| Apprentice sword v7 shown source construction and surface, front/back/hilt | 8, source only | `tmp/item-models/apprentice-v7-{front,hilt,back}.png`; low/export/native equipped proof pending. |
+| Starter Nova v11 desktop two-cast impact/body choreography and partial-clear ordering | 8, scoped motion | `docs/rpg-playtest/v15/combat/starter-nova-two-casts-v11.{webm,json}`; all263 decoded frames reviewed, native40ms limits; current Ball/mobile/boss variants excluded. |
+| Wraith v11 controlled final collapse silhouette and shown sleeve/hand connectedness | 8, static only | `/tmp/wraith-terminal-v11-wraith-death-{0_55,0_94,1_1}-{native,side}.png`; ordinary-loop retraction, hold and erosion still pending. |
+| Desktop boss v10 static header/formation/control clearance at1440×900,1280×720,1920×1080 | 8 | `/tmp/desktop-boss-frame-v10-{1440x900,1280x720,1920x1080}.png`; controlled layout only, no outcome or motion claim. |
+| Ball v8 observed guardian initial impulse and genuine boss-survivor choreography | 8, choreography only | `docs/rpg-playtest/v15/combat/ball-v8-{boss-survivor,ordinary-contact}.{webm,json}`; approximately18Hz cadence/duplicates do not establish smoothness. |
 | Equipped authored skeleton v8 shown source construction/silhouette | 8 | `/tmp/authored-skeleton-equipped-v8-{high,arm,native}.png`; rear/hidden-side, optimized export and runtime remain separate. |
 | V7 desktop skeletal Nova survivor catch/recovery; skeleton/revenant falls; guardian final collapse/settle; cleanup/order | 8, scoped motion | `docs/rpg-playtest/v15/combat/{starter-two-casts-v7,veteran-ball-two-casts-v7}.{webm,json}`; all507 decoded frames reviewed with native detail strips. Guardian initial contact, wraith death and Ball survivors excluded. |
 | Compact v4 reward unobstruction and portrait boss framing | 8 | `docs/rpg-playtest/v15/compact-layout/v4-{guardian,boss}-{390x844,844x390}.png`; no floating XP over actors; all ten portrait boss actors fit. Static scope only. |
@@ -58,9 +67,11 @@ Scores are subjective art-direction judgments, grounded in the listed visible ev
 
 | Failing or unverified scope | Current grade/status | Main remaining gap / evidence |
 |---|---:|---|
+| Unique equipped models for all23 items | Apprentice source/export and native static attachment8, native static material8; branch wood7.5/coal v14 shape7.5; Glacier v6 form/depth7 and material6.5; Thunder v6 head construction8/material7.5; Ashsplitter construction8/material7.5; other18 unverified | Latest `tmp/item-models/native-v1/`, `cinderbranch-v11-{front,coal}.png`, `glacier-thunder-v3-front.png`. Painted icon acceptance does not approve3D item models. See DG/DI. |
+| Frostfall revised projectile/material/contact | v7 native silhouette/readability6.5 and material6.5; earlier shown contact-fracture8 | `docs/rpg-playtest/v15/combat/frostfall-v5/`; ordered124–171 and235–282 reviewed. Thickness improves, but long parallel internal stripe reads as a blade inset. See DU. |
 | Hero variants, skeleton, revenant, guardian/boss | 3.5–5 runtime baseline; hero source passes separately | Authored anatomy, armor/cloth construction, convincing silhouettes and materials still needed. Individual grades below. |
 | World, architecture, floor, lighting, landmarks and props | 4–6; latest gate-v2 composition7, masonry5, floor6.5 | Repeated blocky structures and weak authored material/prop composition remain. Latest native fixture is `docs/rpg-playtest/v14/gate/ordinary.png`; first-room priorities are in candidate review AB below. |
-| Ball/Nova combat impact and complete temporal presentation | V7 guardian initial contact7.5; wraith death7.5; Ball wounded-survivor response unverified. | Guardian flashes with insufficient shoulder impulse before its accepted collapse; wraith retains an active-looking reaching hold. Starter Nova partial outcome and other reviewed body responses pass separately. Prior complete passes remain withdrawn; see CE. |
+| Ball/Nova combat impact and complete temporal presentation | Starter Nova v11 shown desktop choreography8; Ball latest wraith/motion update and current mobile/boss impact coverage remain unverified; Ball v8 smoothness not accepted (~18Hz recorded). | Nova v11 closes its observed heavy-contact/wraith-transition blockers. Ball guardian contact/survivor choreography passes in v8 observed frames; no automatic transfer of the latest Nova proof to other variants. Prior complete passes remain withdrawn; see CH. |
 | Other fourteen spells, shared non-Ball impacts/deaths and loot effects | 3–5 baseline or unverified; Nova v18 front/contact/poses/erosion, reviewed HUD context and late residue8; fallback chasm integration8; prior impact/complete motion passes withdrawn after user feedback; visual effect forms remain separate from reopened hit/death feel | Every family has its own unresolved form/contact/temporal gaps; see individual table below. No current complete combat-impact temporal acceptance. |
 | Gateway visibility transition during hero travel | 5 | Gallery-route v5 frames218→219 remove the full gateway abruptly while bases remain; character route acceptance does not approve this environment pop. |
 | Desktop/portrait combat HUD, notifications | Below gate / full review pending | Safe portrait orbit framing passes separately; accepted landscape presentation does not approve all other HUD layouts or notifications. |
@@ -1047,3 +1058,335 @@ All `/tmp/authored-skeleton-equipped-v7-{high,arm,native}.png` inspected. **Visi
 All `/tmp/authored-skeleton-equipped-v8-{high,arm,native}.png` inspected. **Shown equipped-source construction/silhouette8.** Belt now follows the pelvis with a readable closure; blade clears the face, leaving head, opposite claw and weapon as distinct native silhouettes. Existing grasp/wrist continuity is preserved. Proceed to neutral-rest optimized derivation, retaining anatomical pivots and separate runtime guard offsets.
 
 This pass covers the depicted source views only. Rear harness continuation/hidden grip side, actual optimized material fidelity, game lighting, supported articulation and motion need independent evidence. Source pedigree and high polygon count are not reasons for the score. Global impact and art gates remain failed.
+
+
+## CH — Ball v8 guardian impulse and genuine boss survival; wraith still below gate
+
+Durable `docs/rpg-playtest/v15/combat/ball-v8-{boss-survivor,ordinary-contact}.{webm,json}`. Reviewed **all156 boss native decoded frames** (PTS25.00–31.20) and **all151 ordinary frames** (PTS18.20–24.20) in ordered context, with unscaled guardian/boss34–99, ordinary guardian47–87 and wraith61–114 strips. Sources `/tmp/partial-ball-v8-{boss,ordinary}-native/` include PTS files. No direct continuous-playback or sub-frame reconstruction claim.
+
+Boss was reached through six legal answers; actual recorded hit reduces boss52→32 HP, defeats seven and leaves two untouched. It stays in room5 with a new question, maximum10 visible. Ordinary cast defeats six and travels, maximum7. Both traces report no shader/page/network errors and stable program counts. These correctness checks do not raise art scores.
+
+**Observed guardian initial impulse and boss-survivor choreography8.** Boss38→39 and ordinary54→55 now show distinct shoulder/chest displacement over the lower planted mass. The surviving boss catches and returns to a damaged guard while defeated allies settle, making the partial result legible. This closes the missing genuine Ball survivor evidence and the prior visually weak heavy contact in these Ball recordings. The latest shared heavy-contact change has not yet been separately shown in a new Nova recording.
+
+**Smoothness is not accepted.** Recorded active intervals are approximately55ms median, with boss maximum92.7ms and ordinary65ms. The nominal40ms video contains duplicates. Observed states establish readable impulse/catch/recovery order, not smoothly sampled travel through every intermediate pose or a GPU-cost diagnosis. A stable current-loop cadence proof remains necessary for complete temporal acceptance; the earlier v7 cadence cannot certify this changed run.
+
+**Wraith death7.5 remains.** Ordinary86–105 still holds a reaching/prayer-like front arm, with crowned head above the shoulder ridge. Cloth continuity is preserved, but the upper body looks intentionally active during the hold. Keep the cloth bend fixed; make the terminal crown/head visibly yield below the upper-back ridge and let the visible forearm hang nearer vertically beside the skirt. Inspect the actual native terminal pose before another complete recording rather than repeating blanket garment adjustments.
+
+Separate desktop UI observation: boss frame50 places the name/bar across the left supporting guardian's upper-body region. The accepted compact boss framing applies to earlier compact fixtures and does not approve this desktop overlap. No new full-HUD score is assigned from this motion-focused review.
+
+**Global and complete combat-impact gates remain failed.**
+
+
+## CI — First four unique item source studies: no export acceptance
+
+Reviewed `tmp/item-models/early-v1-front.png` and `early-v1-high.png`, left to right Apprentice Runeblade, Cinderbranch, Glacier Fang and Thunder Rod. These are source studies, not actual equipped/native gameplay. All23 items require their own model/construction and integration review; accepted painted catalogue illustrations do not transfer to these meshes.
+
+| Item | Silhouette /10 | Construction /10 | Material /10 | Main deficiency |
+|---|---:|---:|---:|---|
+| Apprentice Runeblade | 6 | 5.5 | 4.5 | Recognizable sword, but shiny cap segments, wire-like grip rings and large dark zigzags expose primitive assembly. Broad blade lacks convincing continuous forged edge/ricasso treatment. |
+| Cinderbranch | 5 | 4 | 4 | Angular extruded struts meet without organic branching growth, and the bright floating orange polygon reads as an unrelated pebble. No coherent wood/char surface. |
+| Glacier Fang | 5.5 | 4.5 | 4 | Distinct cold-blade identity, but huge opaque planar blue faces resemble a pendant/slab rather than formed mineral. Socket is a smooth metal lump; no convincing fracture/depth/inclusion hierarchy. |
+| Thunder Rod | 5.5 | 4.5 | 4.5 | Distinct pronged staff outline, but smooth bent tubing, repeated blue rings and lump-like cup make it a schematic model. Material response does not establish crafted metal, insulator or crystal. |
+
+Highest-return bounded work before export: **Apprentice** needs a coherent forged blade/hilt assembly with distal taper, continuous bevel/ricasso, purposeful guard-to-tang junction and a flat overlapping leather wrap. A compact incised rune group can follow the construction work; extra ornaments are not the solution. **Cinderbranch** needs a genuinely grown fork with unequal continuous taper, swollen junctions, split/charred grain following growth and a recessed coal held by a natural cleft. Replace the strut foundation before adding surface noise. Review those two foundations and their native-scale reads before multiplying the same assembly approach across23 items.
+
+Global gate remains failed. No source export or runtime acceptance is implied.
+
+
+## CJ — Item v2 structural revision improves foundation, still below8
+
+Reviewed `tmp/item-models/early-v2-{front,high}.png`. **Apprentice silhouette7/construction7/material5.5; Cinderbranch silhouette6.5/construction6.5/material4.5.** Sword is now a coherent tapered blade/hilt and branch forks grow from shared junctions; these are meaningful structural improvements, not completed production art.
+
+Sword's conspicuous bright rectangular fuller termination above the ricasso needs a tapered/rounded transition into the blade. Establish distinct restrained steel response on cutting edge, blade flat and guard; the current broad uniform planes still read schematic. Grip overlap should have a thinner flat edge rather than padded diagonal bolsters.
+
+Cinderbranch now resembles a smooth carved antler. Replace one uniform pointed tine with a broken fibrous end and introduce directional bark ridges/splits that turn naturally through the swollen junctions. Char should darken the actual coal cleft; its supported orange core still reads as a gem against uniformly matte brown horns. Preserve the improved fork and avoid added rings/ornament as substitutes for wood construction. Other two v1 models remain rejected and unchanged; no export/runtime acceptance.
+
+
+## CK — Root wraith v9 terminal silhouette remains7.5
+
+Reviewed all six `/tmp/wraith-terminal-v9-wraith-death-{0_55,0_94,1_1}-{native,side}.png`. This study advances positive1/60 ticks from living pose; it is not a real-outcome cadence recording. Numerical crown/forearm conditions do not establish the projected appearance.
+
+**Terminal silhouette7.5.** In native .94/1.1, head/crown around x154–182,y143–170 remains visually above the broad mantle/back ridge around x180–210,y155–177. It projects forward rather than drooping. The lower hand around x156,y193 is lower, but its entire upper-arm/elbow chain reaches forward from the shoulder. A world-vertical forearm alone therefore leaves a pleading/reaching silhouette; side confirms both hands remain in front of the torso. Hang the whole arm beside its shoulder by reducing elbow forward reach, then angle head/crown below the back ridge in the actual game projection. A colored joint/axis diagnostic can verify which mesh/pivot produces the discrepancy before another parameter sweep. Preserve coherent robe panels.
+
+
+## CL — Item v3 remains below gate; surface changes are too subtle
+
+Reviewed `tmp/item-models/early-v3-{front,high}.png`. **Apprentice construction7/material5.5; Cinderbranch construction6.5/material4.5**, unchanged fromv2. Sword fuller bottom now forms a cluster of pale planar facets rather than a continuous forged termination; correct actual surface/normal continuity before further roughness tuning. Branch's tiny tip splinter is insufficient to change the smooth antler impression. A visibly oblique fibrous break and broad raised bark plates flowing around the fork are needed; nearly invisible directional noise does not establish wood construction. Next efficient proof is a close view under raking light paired with the overall angle, to diagnose real surface application before another whole-object iteration. No export/native acceptance.
+
+
+## CM — Optimized skeleton v1 preserves construction, material transfer needs correction
+
+Reviewed all `tmp/skeleton-packed-v1-{high,back,detail,native}.png` against accepted sourcev8, including a direct reread of `/tmp/authored-skeleton-equipped-v8-arm.png`. **Shown construction/silhouette8; export material fidelity7.5.** High/native shape preserves anatomy, grasp and harness; the new rear view shows a coherent strap continuation. However the detail develops thick darker seams around carpals/finger roots, and steel pommel/guard/closure become near-black relative to the source. Diagnose material/normal/AO transfer using the same detail camera before geometry changes or global bone brightening. This is a visible fidelity concern, not an asserted bake-cause diagnosis.
+
+Rear blade tip is clipped, so complete rear extent remains unverified. The192px image is a source-camera proxy, not a dungeon capture; guard metadata playback with pitched feet does not establish floor support. Optimization size/count and valid neutral floor bounds do not change these visual limits. No public/native enemy acceptance.
+
+
+## CN — Desktop boss v10 clearance passes in three viewport sizes
+
+Reviewed `/tmp/desktop-boss-frame-v10-{1440x900,1280x720,1920x1080}.png`. **Static header/formation/control clearance8 at all three sizes.** Actors now sit below the title/health bar and above the question controls, resolving the earlier desktop supporting-guardian overlap. The compact720-height case retains readable actor silhouettes and clear hero/input separation. This is controlled layout evidence; it does not prove live outcome, transient health feedback during hits, animation or source-model quality. Existing broader world/impact failures remain.
+
+
+## CO — Colored wraith diagnostic identifies a mesh-partition mismatch
+
+Reviewed `/tmp/wraith-chain-diagnostic-v9-wraith-death-1_1-colored-{native,side}.png` and `split_wraith_regions` in `scripts/blender/detailed/wraith_cc0.py`. The high pale hood/head-like silhouette is predominantly **Body/light gray**, with a small highest crest in **ArmUpperR/orange**. **Head/cyan** is already displaced down/front. Further lowering that Head joint cannot lower the whole visible hood; it instead risks separating the face from its surrounding assembly. The visible staff/hand is ArmLowerL/green, with ArmUpperL/red sleeve.
+
+The builder partitions each face by summed original bone weights and defaults unmapped neck/shoulder/torso labels to Body. It does not define an explicit coherent hood/crown boundary. This explains why a numeric bound on the object named Head did not match the visible crown silhouette. Correct that partition or author a deliberate upper-Body hood deformation mask before another head-position sweep; preserve continuous sleeve/hand construction. This is an identified implementation-to-art mismatch, **not a new visual pass**. Existing wraith death7.5 remains until corrected native/temporal evidence.
+
+
+## CP — Item v4b resolves blade topology and establishes wood; hilt/coal remain weak
+
+Reviewed `tmp/item-models/early-v4b-front.png` and `early-v4b-raking.png`. Real source detail is now visible in the submitted views; source licensing/polygon count itself earns no score.
+
+**Sword blade construction8:** smooth spoon-ended fuller and continuous bevel resolve the faceted termination. **Whole sword construction7.5/material6.5:** guard/pommel still read as flat extrusions and the grip as uniformly smooth padded bolsters. Preserve the blade and refine the hilt: thin flat overlapping leather edges with compression, shaped guard/pommel bevels and restrained handled wear. More blade noise is not needed.
+
+**Cinderbranch wood/fork construction7.5 and bark material7.5:** growth-aligned raised bark and broken end finally read as wood, improving the earlier antler impression. **Coal/cleft5.5:** the large peach polygon in an insufficiently charred opening still reads as a gem. Use a dark irregular recessed coal mass with sparse incandescent cracks/hot edges and localized char across adjoining bark. Preserve broad wood silhouette; no added ornaments. No complete source/export acceptance for either item.
+
+
+## CQ — Skeleton controls isolate wrist shading; wider rear closes extent coverage
+
+Reviewed `tmp/skeleton-material-controls-v1-no-normal.png`, `skeleton-material-controls-v1-no-ao.png` and `skeleton-packed-wide-v1-back.png`. Removing the normal map removes the thick black carpal outline while preserving actual joint separation; removing AO retains the outline. This supports a normal-transfer problem at the wrist rather than an AO-strength correction. Pommel/guard and buckle stay nearly black without normal, identifying a separate metal-color transfer concern; the proposed base-color emission bake needs its own corrected-export proof.
+
+The wider rear shows the complete blade and coherent rear harness. **Construction/extent coverage8; material fidelity remains7.5.** No global bone brightening or removal of genuine cavities is justified. These controls do not establish runtime grounding.
+
+
+## CR — Wraith v10 improves the hood bend but retains an active reach
+
+Reviewed all six `/tmp/wraith-terminal-v10-wraith-death-{0_55,0_94,1_1}-{native,side}.png`. **Terminal silhouette7.5.** The shared hood/cloth bend improves the high-headed appearance; the head now follows the hunched ridge, so further independent Head lowering is not indicated. The decisive remaining cue is the forward-facing open palm at native approximately154,198 / side154,183: the arm extends toward a threat rather than hanging beside the torso. A second projecting upper/hand chain reinforces the active crouched reach. Release the corresponding complete arm chain, including shoulder/elbow reach, while preserving the coherent hood/back bend. These positive-step controlled poses do not establish ordinary-loop motion acceptance.
+
+
+## CS — Item v5 improves hilt proportions and coal restraint, remains below gate
+
+Reviewed `tmp/item-models/early-v5-front.png` and `early-v5-raking.png`. **Blade construction8 retained. Hilt construction7.5/material7:** thin wrap reads better than padded bolsters, but a conspicuous dark separation remains at the lower guard/grip seat. Uniform red leather and broad clean guard facets still weaken material credibility. Next bounded proof should expose actual seated tang/guard/ferrule construction, subtle pressure/wear variation in the existing leather, and continuous bevel response; do not rework the blade.
+
+**Cinderbranch wood/fork7.5 retained; coal integration7:** recessed dark mass and adjacent char improve the previous gem impression. The prominent hot Y remains a smooth constant-width line across a few large polygon faces. Replace that line with an irregular recessed fracture exposing short interrupted hot interior, keeping the coal predominantly dark. No complete source/export/native acceptance.
+
+
+## CT — Wraith v11 final static collapse reaches8; motion remains open
+
+Reviewed all six `/tmp/wraith-terminal-v11-wraith-death-{0_55,0_94,1_1}-{native,side}.png`. **Final static collapse8:** hands now retract beside the lower robe, elbows no longer project an obvious active reach, and the bowed hood/back reads as a yielded connected mass. The shown sleeve/hand connections have no conspicuous separation. Preserve this construction.
+
+The .55 pose is still active, which can be appropriate before yielding. Three controlled states do not establish the movement between .55 and .94. Ordinary-loop evidence must show smooth arm retraction without pulling through the robe, followed by a coherent settled hold before erosion. No complete death timing or smoothness acceptance is inferred; the previous actual-loop failure remains pending this reproof.
+
+
+## CU — Actual starter Nova v11 closes shown desktop impact/body-motion blockers
+
+Reviewed all263 native decoded frames in `tmp/nova-v11-native/`, from `docs/rpg-playtest/v15/combat/starter-nova-two-casts-v11.webm`, with corresponding JSON. Ordered full-context sheets plus native-pixel strips covered guardian first contact/recovery30–85 and lethal response155–203, skeletal survivors38–82, first deaths43–105, second skeletal falls156–207, and wraith151–213. This is ordered frame inspection, not a claim of direct continuous-video playback.
+
+**Shown desktop contact/body choreography8.** Guardian responds at40–42 and157–160 before its later supported collapse. Skeletal survivors catch weight and recover to damaged guards. Wraith folds continuously169–183, retracts arms beside the robe, holds183–199 and erodes200–206 without visible snapping or pulling through the garment. Skeleton/revenant full-size falls, slack holds and cleanup remain coherent. Four survivors stay in the first room; second cast clears before travel. These close the newest Nova heavy-contact and wraith-transition blockers in this specific ordinary two-cast case.
+
+All original decoded frames were included at25fps/40ms spacing; subframe intersections remain outside evidence resolution. Reported actual runtime active median18.75ms/max40.2ms is separate from the art score and establishes no GPU-cost cause. Outcomes show6→4 survivors→clear, maximum7 visible,10hit events and no reported errors. This does not approve current Ball retraction, boss/mobile impact, replacement skeleton geometry, loot beams or unrelated world/UI art. Global gate remains failed.
+
+
+## CV — Skeleton transfer-v3 restores metal but wrist outline remains
+
+Reviewed `tmp/skeleton-transfer-v3-{detail,high,back,native}.png`. **Construction8; metallic color fidelity8; complete export material7.5.** Hilt/pommel and buckle now have readable steel response, and full rear extent remains coherent. The thick black carpal outlines remain conspicuous in the detail and visible in the larger high view. Earlier no-normal control remains cleaner; numerical basis equality does not erase this visible difference. Inspect the wrist's actual UV footprint/normal texels and compare a same-camera source control before another global bake. Runtime/grounding excluded.
+
+
+## CW — Item v6 fixes hilt seating, exposes pommel and coal surface blockers
+
+Reviewed `tmp/item-models/early-v6-{hilt,coal,front}.png`. **Sword blade/hilt construction8; final surface7.5.** Guard/ferrule seat now joins correctly and leather is sufficient at overall distance. Wheel pommel still shows radial triangle wedges across its continuous convex face; correct shading/surface continuity while retaining deliberate outer bevel. No new ornament or blade rework required.
+
+**Cinderbranch wood7.5; coal7.** Close view shows a clean rectangular-sided zigzag groove with two thin orange bars, reading as an engraved emblem. A geometric recess alone does not establish a fracture. Use unequal broken channel edges/width and small hot interior patches on irregular fracture planes, preserving dark mass. Neither item has complete export/native acceptance.
+
+
+## CX — Apprentice sword v7 source passes; export/native remain separate
+
+Reviewed `tmp/item-models/apprentice-v7-{front,hilt,back}.png`. **Shown source construction and surface8.** Pommel now has continuous convex response without radial wedges. Seated hilt, thin leather overlap, fuller termination and rear assembly remain intact. Proceed to low-target/exact-GLB proof, preserving these geometry/material relationships. This approves neither native equipped attachment/scale nor other catalogue items; Cinderbranch remains below gate.
+
+
+## CY — Frostfall replacement v1 connects hits but retains dull drop-shaped projectiles
+
+Reviewed ordered native-derived intervals43–86 and153–202 in `tmp/frostfall-v1-native/`, native full views45/55/58/60/62/65 and `/tmp/partial-frostfall-v1-evidence.json`. This is a bounded interval review, not an all275-frame cleanup certification. The general concept material hierarchy was rechecked against `06-spells-and-relics.png`; it does not supply a specific Frostfall animation reference.
+
+**Projectile form6/material6; contact hierarchy6.5; observed projectile-to-hit staging7.** Broad rounded shoulders with nearly uniform tapered bottoms read as glass drops/pendants despite internal lines. Use unequal angular wedges with off-axis sharp leading points and a broken secondary shoulder. A few broad readable bright fracture planes against a darker translucent core will establish depth better than fine lines in a dull envelope.
+
+At frame60 the white contact patch erases the struck head. The original large shard vanishes into a small sparkle without readable splitting of its mass. Reduce the white patch, expose a compact directional fracture fan at the torso and keep vapor lower/quieter. Preserve authoritative arrivals, but a sharper terminal descent and2–3 recognizable broken planes continuing the incoming direction would convey impact better than the current suspended-drop impression. Arrival and body response are visibly connected, an improvement over the prior mismatched baseline. Previously accepted body choreography remains a separate scope; no body redesign is requested. Warmup/program compilation remains technically separate and does not increase the art grade.
+
+
+## CZ — Bone micrograin control does not resolve skeleton wrist edging
+
+Reviewed `tmp/skeleton-bone-normal-v4-{detail,high,back,native}.png`. **Export material7.5 remains.** Thick black carpal edging is essentially unchanged when only procedural bone micrograin is excluded from the normal bake. Construction and restored steel remain intact. This control rejects micrograin as a sufficient explanation/fix; it does not establish the sole remaining cause.
+
+Next bounded evidence: same-camera source reference and enlarged hand UV area, while checking that projection cages do not cross neighboring bones. Preserve physical cavities and accepted geometry. The separate Sword joint preserves the shown static appearance but earns no runtime/floor-support approval from these views.
+
+
+## DA — Apprentice exact export v1 preserves shape, amplifies surface grain
+
+Reviewed `tmp/item-models/apprentice-export-v1-{front,back,high,hilt}.png` against sourcev7. **Construction/fidelity8; material transfer7.5.** Full shape, fuller, grip/ferrule seat and smooth pommel geometry survive. Close hilt develops conspicuous sandpaper-like grain on steel pommel, brass ferrules and leather, stronger than the restrained source. Tiny brass flecks beneath the guard also existed in the source and are not the decisive regression. Diagnose normal amplitude/sampling or tangent transfer with a same-camera no-normal control, retaining source-scale detail. No native acceptance.
+
+
+## DB — Same-camera skeleton source confirms carpal transfer regression
+
+Reviewed `tmp/skeleton-source-v8-detail.png`. Source wrist separations are narrow physical cavities; the export's thick black outlines are absent. This confirms the outlines are not required to preserve anatomical source appearance. The artist identified several neighboring carpals inside one hand-center source object; component-isolated projection plus measurable hand UV area is the next targeted control. This diagnostic does not itself raise the export-material7.5 grade.
+
+
+## DC — Cinderbranch v8 removes glyph but softens coal into clay
+
+Reviewed `tmp/item-models/cinderbranch-v8-{front,coal}.png`. **Coal7; wood/fork7.5 retained.** The engraved zigzag is gone, but broad rounded lobes read as dark clay; one triangular hot speck is insufficient at overall scale. Preserve3–5 unequal broken planar faces with crisp fracture lips and narrow deep gaps. One short irregular hot interior seam across adjacent gaps plus a quieter isolated patch should establish ember identity without making the whole mass luminous. Hold the wood while correcting this focal material. No complete source/export acceptance.
+
+
+## DD — Frostfall v2 improves angular form, needs unequal fracture debris
+
+Reviewed ordered intervals25–105 and135–230 in `tmp/frostfall-v2-native/`, plus native full views40/48/55. Durable footage/evidence/contact frames are under `docs/rpg-playtest/v15/combat/frostfall-v2/`. **Form7/material7/contact-fracture7.** Unequal angular wedges resolve the drop/pendant silhouette and smaller white contact preserves actor visibility. Broad similarly pale faces still make intact/broken ice look like opaque blue chips. At48–60 three similar large bright fragments linger around each victim as a decorative cluster. Use one dominant broken wedge continuing the incoming direction and two thinner/darker slivers with unequal tumbling, separation and fade. Narrow fracture-edge highlights should contrast with darker translucent faces; avoid global brightness increases.
+
+**Shown partial-result/cleanup ordering8:** wounded and untouched survivors remain in the room, then second-cast bodies hold/clear before transition. Native detailed joint support is not newly certified from the reduced context sheets, and prior body8 is not automatically extended to this new roster/view. Review covers listed intervals rather than all300 decoded frames. Full Frostfall remains below gate.
+
+
+## DE — Apprentice exact export v2 reaches8 for construction/material fidelity
+
+Reviewed `tmp/item-models/apprentice-export-v2-{front,back,high,hilt}.png`. **Construction/material fidelity8.** The prior sandpaper normal regression is gone while geometric wrap seam and bevel relief survive. Front/back silhouette, steel/leather separation and smooth pommel preserve sourcev7. Ready for native attachment/scale/light proof; no native or other-item acceptance is inferred. The no-normal diagnostic confirmed the prior grain came through normal transfer, but was itself unsuitable because it exposed coarse low-grip relief.
+
+
+## DF — Cinderbranch v9 coal becomes an overly regular segmented block
+
+Reviewed `tmp/item-models/cinderbranch-v9-{front,coal}.png`. **Coal6.5; wood7.5 unchanged.** Two ruler-straight intersecting cuts divide broad uniformly flat plates, producing a manufactured block rather than charcoal. Crispness alone does not improve the material. Replace the long continuous cross with short irregular fracture planes, chipped/scalloped lips and offset depths; seams should terminate/branch instead of bisecting the entire visible face. Coarse surface breakup and sparse hot interiors are secondary to correcting this structure. No complete source pass.
+
+
+## DG — Native Apprentice attachment passes, guard highlight loses material
+
+Reviewed all twelve native/detail views in `tmp/item-models/native-v1/`: idle.3, cast.26/.5 and cleave.2/.4/.66. **Shown attachment/grip/scale8; in-scene material7.5.** The handle sits in the curled glove, guard clears fingers and blade follows the supplied hand poses with readable native scale. During cleave.2/.4 the guard saturates into a white crescent with halo, losing forged-surface definition even at the actual camera. Idle/cast and late cleave retain steel response. Correct the local guard highlight/roughness and supply the same-pose A/B; preserve blade readability and global room/bloom. These are controlled key poses, not proof of interpolation or real attack timing.
+
+
+## DH — Frostfall v3 improves fracture hierarchy but loses visible ice mass
+
+Reviewed every ordered frame95–150 and210–260 in `tmp/frostfall-v3-native/`, plus native110/115/118. **Form7/material6/contact-fracture7.5.** The dominant downward chunk and quieter unequal slivers improve the previous equal bright cluster. Contacts preserve actor visibility. But every triangulation edge glows while broad faces nearly disappear, making intact and broken ice resemble wire cages. Restore varied blue-grey face mass and internal depth, reserving strong highlights for selected actual outer/fracture edges; suppress internal triangulation lines. Preserve unequal fragment trajectories and authoritative timing. Shown survivor/fall ordering remains coherent, but this bounded interval review does not certify all300 frames or a complete Frostfall8.
+
+
+## DI — Cinderbranch v10 and Glacier/Thunder v2 source studies remain below gate
+
+Reviewed `tmp/item-models/cinderbranch-v10-{front,coal}.png` and `glacier-thunder-v2-front.png`. **Cinderbranch coal7/wood7.5.** Clean grid cuts are gone, but a broad smooth slate face with a short hot nick remains heavily obscured by the near fork. Expose its fractured face sufficiently to read at overall scale, retaining layered charcoal edges and a short irregular recessed glow rather than enlarging a luminous gem.
+
+**Glacier form6.5/material5.5:** seated construction is clearer, but the flat opaque cyan blade and uniform pale border lack mineral depth. Use unequal broad depth planes and darker internal fractures distinct from restrained outer highlights. **Thunder construction6.5/material6:** continuous insulator improves assembly, but repeated glossy blue bulbs and smooth copper loops read as a toy apparatus. Silver bead endpoints appear capped on. Credible tapered electrode terminations with formed contact faces and less uniform plastic gloss are the next priorities. These front-only source views provide no export, rear or native acceptance.
+
+
+## DJ — Apprentice model thumbnail framing needs stronger small-cell readability
+
+Reviewed `tmp/item-models/apprentice/apprentice-v2-thumbnail.png`. **Thumbnail presentation7.5.** Full extent and margins are clean, but frontal lighting flattens steel into a pale slab and pommel into a round bead. The slender upright composition offers little useful width in a small inventory cell. A modest three-quarter angle and diagonal placement, with a controlled broad steel highlight revealing bevel/fuller depth, should preserve material and silhouette better. Keep complete tip/pommel margins and review the corrected-ORM result at actual card size. Source/export8 does not transfer to thumbnail deployment.
+
+
+## DK — Frostfall v4 restores mass; contact hierarchy passes, intact material remains flat
+
+Reviewed every ordered frame110–155 and225–270 in `tmp/frostfall-v4-native/`, plus native120/127/135. **Form7.5/material7; shown contact-fracture hierarchy8.** The wire cage is resolved. Unequal fragments visibly break downward while local contact preserves the victim. At120 broad intact faces still have similar pale cloudy values, reading as thin frosted plates with fine surface streaks rather than thick fractured volumes. Establish a few offset internal planes and a darker core behind one lighter face, with visible thickness on the side edge. Several long parallel sides also flatten silhouettes. Avoid global opacity/brightness increases or renewed all-edge glow; preserve contact size, trajectories and timing. Frame135 has conspicuous recording compression and was excluded from fine material judgment. This bounded review does not certify all300 frames, all body-support detail or the complete spell.
+
+
+## DL — Apprentice v3 local material and standalone thumbnail retain8
+
+Reviewed `tmp/item-models/apprentice-export-v3-hilt.png` and `tmp/item-models/apprentice/apprentice-v3-thumbnail.png`. **Shown studio construction/material8; standalone thumbnail presentation8.** Rougher guard preserves forged planes and material hierarchy. Diagonal three-quarter thumbnail exposes bevel/fuller depth and guard thickness with complete tip/pommel margins, resolving the prior frontal slab. Actual inventory-cell readability and native Cleave guard-highlight correction remain separate pending gates.
+
+
+## DM — Apprentice native guard v2 remains overexposed in Cleave
+
+Reviewed all six `tmp/item-models/native-v2/{idle-0.3,cleave-0.2,cleave-0.4}-{native,detail}.png` and prior native-v1 Cleave.2 detail. **Native material7.5 remains; attachment/grip/scale8 retained.** Halo narrows, but the broad guard crescent still clips to white in both Cleave poses without face/bevel separation. Inspect actual hot-guard UV/ORM values and imported multiplier before further source iteration; a localized value/specular adjustment may be necessary. Preserve blade edge and global lighting. Studio8 does not override this actual-light failure.
+
+
+## DN — Skeleton corrected hand-UV v8 closes the export-material regression
+
+Reviewed `tmp/skeleton-hand-uv-v8-{detail,high,back,native}.png` against same-camera `tmp/skeleton-source-v8-detail.png`. **Exact export construction/material fidelity8.** Thick carpal black rings now resolve into narrow natural joint cavities; source bone volumes, steel response and harness remain intact. Rear continuation and complete equipment extent are shown. The192px source-camera proxy does not establish dungeon readability, runtime guard/support or animation. UV area and numerical sweeps explain the implementation but do not supply those missing visual gates.
+
+
+## DO — Coal exposure and item material revisions improve clarity but not construction sufficiently
+
+Reviewed `tmp/item-models/cinderbranch-v11-{front,coal}.png` and `glacier-thunder-v3-front.png`. **Coal7/wood7.5:** exposure improves, but reveals two broad nearly rectangular faces and a short glowing corner nick. A substantial unequal missing corner and stepped brittle layers should break the block perimeter; fine noise alone will not fix this. **Glacier form6.5/material6:** darker region adds contrast but remains graphic color-blocking on a flat blade. Request a three-quarter construction view proving thickness and offset embedded fracture planes before further color tuning. **Thunder construction6.5/material7:** restrained dark glaze improves material, while repeated smooth collars and bent tube tips remain simplistic. Close mounting/termination coverage is needed, with deliberate formed electrode ends. No complete source or export acceptance.
+
+
+## DP — Apprentice darker crossguard v4 preserves studio material8
+
+Reviewed `tmp/item-models/apprentice-export-v4-hilt.png` and `tmp/item-models/apprentice/apprentice-v4-thumbnail.png`. **Studio material and standalone thumbnail8 retained.** Darker crossguard keeps readable metallic planes, bevel and seated assembly, with coherent steel/leather/brass hierarchy. Actual-light Cleave clipping remains pending the identical native poses; studio approval does not close that gate.
+
+
+## DQ — Apprentice v4 native material passes the original Cleave problem poses
+
+Reviewed all six `tmp/item-models/native-v3/{idle-0.3,cleave-0.2,cleave-0.4}-{native,detail}.png`. **Native material8; shown attachment/grip/scale8 retained.** The guard now preserves a grey face and brighter edge without the prior detached white halo, while blade-edge visibility and idle material separation remain intact. This closes the supplied native static material gate. Actual attack interpolation and inventory-card deployment are still separate unverified scopes.
+
+
+## DR — Skeleton v8 native figure loses presence at gameplay size
+
+Reviewed `tmp/skeleton-native-v8-1788711729266/skeleton-native-v8-{before,after-1}.png`. **Native readability/presence7; visible guard/wounded silhouette7.5.** Skull and ribs establish identity, but forearms, shins and fingers collapse into thin near-single-pixel lines. The wounded figure has much less readable mass than adjacent revenant/wraith. Source/export material8 remains a separate fidelity score; fine native material detail is unresolved at this size. First request a same-camera10–15% overall-size A/B before altering anatomy or brightening bones. If insufficient, selectively strengthen paired limb/hand silhouettes while preserving anatomical gaps. Two stills cannot establish grounding or recoil/recovery motion.
+
+
+## DS — Installed Apprentice passes observed weapon continuity and desktop inventory presentation
+
+Reviewed `/tmp/apprentice-v4-motion-inventory.png`, native full frame95 and every native weapon crop70–135,175–245,275–345 from `tmp/apprentice-v4-motion-native/`. **Actual210px feature/93px card presentation8; shown rigid grip/weapon continuity and material8.** Blade remains seated through raised windup, outward finish and return, without detached hilt, orientation flip or renewed guard halo. Full inventory silhouette and steel/leather separation remain clear at both sizes. Later casts provide clearer intermediate sword directions. First windup82–84 is sparsely represented; reported98.9ms runtime gap excludes first-use smoothness certification. This observed-sampling weapon pass neither reconstructs missing poses nor approves Cleave effects, contact or complete choreography.
+
+
+## DT — Skeleton size1.85 improves presence; original motion preserves connected falls but slack/catch remain below gate
+
+Reviewed all four matched `tmp/skeleton-size-v8-1788712061899/skeleton-size-v8-{idle,wounded}-{1.65,1.85}.png`. **Size1.85 native presence7.5**, improved from7 at1.65, but forearms/shins/hands remain wiry. Keep this scale direction; selectively strengthen bone shaft/hand cross-sections while preserving paired gaps, joint taper and grasp rather than further enlarging or brightening the whole actor.
+
+Original1.65 motion review used ordered target-region sheets1–288 from `tmp/skeleton-native-v8-1788711729266/frames/` and native crops30–72/160–215. Post-clear target region is empty, so this is not a whole-scene travel review. **Connected fall/full-size hold/erosion ordering8; survivor catch/recovery readability7.5; final limb slack7.5.** Upper-body impulse is visible34–41, but thin leg geometry obscures the support-foot catch. At174–201 a raised upper limb above the rib mass leaves a cocked final pose instead of fully released limbs. Preserve timing pending stronger silhouette evidence that distinguishes actual support from unresolved thin geometry. Original25fps frames cannot certify subframe intersections. No native model promotion pass.
+
+
+## DU — Frostfall v5 restores shell mass but internal stripes still flatten the mineral read
+
+Reviewed ordered124–171 and235–282 from `tmp/frostfall-v5-native/`, full native120/130/140/150/240 and intact native crop strip. Durable original video, provenance and selected frames are in `docs/rpg-playtest/v15/combat/frostfall-v5/`. **Form7.5/material7.5; shown contact/fracture8 retained.** Shell thickness and interior mass improve, but the dominant long pale inset runs parallel to the outer sides, resembling a fuller in a blue blade. Replace one full-length internal band with a broad oblique fracture ending partway down, visibly behind an opposite face with a darker clear window beside it. Additional parallel planes or surface streaks would preserve the problem. Keep accepted unequal breakup and local contact. Compression in140/150 limits fine material judgment;130/240 are clearer. This is not all300-frame or complete-spell acceptance.
+
+## DV — Lossless floor evidence separates material flatness from compression
+
+Compared `/tmp/apprentice-v4-warm-before.png` with `docs/concepts/math-dungeon-rpg/04-horde-viewport.png`, using Frostfall v5 frame140 only as a compression-limited secondary view. **Floor presentation6.5 retained.** Lossless paving joints and source scale are readable; the severe mud-like blur in140 is not reliable material evidence. The remaining gap is uniformly matte broad tops with little broken grazing-edge response or localized damp catches, leaving a patterned flat-plane impression beside the dimensional piers. First request a floor-only same-camera normal-response control, followed by spatially varied roughness retaining dry tops, dark joints and a few worn/damp patches. Do not brighten the whole room or make it uniformly wet. Loose stones could later concentrate at collapse/edges, but more clutter does not fix surface response. No new source texture or whole-world acceptance follows from this diagnosis.
+
+## DW — Glacier v4 shows depth, but internal construction remains too parallel
+
+Reviewed `tmp/item-models/glacier-v4-{front,depth}.png`. **Form/depth7; material6.5.** Three-quarter evidence establishes thickness and layered overlap, but long nested parallel strips still resemble an extruded blue blade with a decorative inset. Highest-return correction is one broad, short oblique internal fracture at a visibly different depth beside a darker clear window, replacing a full-length parallel lamina. Preserve outer mass and unequal plane directions; neither extra narrow bands nor global brightness will establish mineral fracture. No export/native or complete hilt acceptance.
+
+
+## DX — Floor material A/B favors restrained spatial roughness over more bump
+
+Reviewed all four lossless `tmp/floor-{baseline,relief,roughness,combined}.png` and native matched center crops in `tmp/floor-ab-review.png`. **Baseline6.5; relief-only6.5; roughness7; combined7.** Roughness variation adds warm catches and cool reflected areas while preserving dark joints and actor readability. Raising bump alone produces too little visible benefit to change the grade; combined does not justify that extra strength at this view. Prefer roughness with baseline bump for the next candidate. Remaining issue is broadly distributed, similarly sized blue/white reflective patches across most of the arena. Limit the lowest roughness to fewer connected irregular areas near wall/traffic edges, leaving larger dry central expanses and subtler worn-top response. No global exposure adjustment, extra scatter or full-floor acceptance.
+
+
+## DY — Coal v12, Thunder close v4 and Glacier v5 retain source blockers
+
+Reviewed all five `tmp/item-models/{cinderbranch-v12-front,cinderbranch-v12-coal,thunder-v4-contact,glacier-v5-front,glacier-v5-depth}.png`. **Coal7/wood7.5:** the missing corner is visible, but near-right-angle terraces and a broad flat front preserve a machined-block read. A sloping brittle face with unequal nonparallel edge loss should replace the staircase silhouette, retaining seated dark mass and sparse heat. **Thunder close construction6/material7:** new coverage exposes smooth bent rods entering a soft collar, circular cut terminal faces and an isolated bead-like blue center. This supersedes the less revealing6.5 construction view. A coherent formed electrode assembly needs tapered terminal faces directed toward a shared gap and explicit fitted root seats. **Glacier form/depth7/material6.5:** the oblique fault reads as an opaque zigzag stripe on nested blade planes. Prioritize optical separation: less uniform fault opacity with a sharper broken edge, one narrow outer-facet reflection and a clear darker side window. Preserve shell mass; no additional strips or all-edge glow. No complete source/export acceptance.
+
+
+## DZ — Skeleton v10 stronger shafts preserve shown source anatomy and grasp
+
+Reviewed `tmp/skeleton-native-shafts-v10-{high,detail}.png` against `tmp/skeleton-source-v8-detail.png`. **Bounded source preservation8.** Radius/ulna retain a continuous visible channel, elbow/wrist transitions and carpal cavities remain legible, and the grasp stays seated. Stronger shafts have not become a fused forearm plate. Neutral low derivation and exact bake/export proof may proceed with corrected hand UV allocation and source-matched normals retained. This is not native presence or motion acceptance; the earlier1.85 readability and final slack/catch blockers require new runtime evidence.
+
+
+## EA — Final warmup proof resolves the shown first-Cleave weapon gap
+
+Reviewed overview1–161 and every native hero/weapon crop20–67 from `tmp/apprentice-finalwarm-native/`, original `/tmp/rpg-partial-hit-video/page@a6dacbc9718572cc58ed485de0ddeafa.webm`, provenance `/tmp/apprentice-v4-finalwarm-evidence.json`. **Observed first-use weapon continuity/smoothness8 at captured25fps scope.** Idle27 progresses through lift28, raised29/30, outward31 and lower finish32, then stable seated hold and gradual return43–52. No prior frozen-then-jumped opening, detached hilt, axis flip or guard halo is visible. Reported active rendered median16.8/max23.7ms supports removal of the old first-use98.9ms stall but cannot reconstruct sub40ms encoded poses or establish GPU cost. This closes the shown first-use weapon concern, not Cleave effects, impact or complete choreography. One generic404 remains in provenance, so no fully clean resource claim.
+
+
+## EB — Frostfall v6 contact remains clear; intact material requires lossless isolation
+
+Reviewed ordered148–195 and256–303 from `tmp/frostfall-v6-native/`, full native154/157/267 and overview1–397. Original `/tmp/rpg-partial-hit-video/page@fb0e3818c68bf9a17ad3dfe591f72c7c.webm`. **Form7.5/material7.5; contact/fracture8 retained.** Unequal downward breakup and local impacts remain clear, with survivor/death distinction preserved. The long stripe is reduced, but broad frontal shard faces still read as mostly uniform blue-grey slabs; the short oblique fracture does not establish a clearly separated inner layer at gameplay size. Request a lossless frozen native intact phase and same-light close diagnostic before another material revision, because267 is particularly compressed. Not a complete400-frame or full-spell pass.
+
+## EC — Localized floor dampness preserves a dry center; relief remains unresolved
+
+Reviewed lossless `tmp/floor-localized.png` against prior four-way material controls. **Material/readability7.** Broad scattered wet-blue spots are corrected; dampness beside the right wall is coherent and the center stays dry. Prefer this direction and hold roughness settings. Remaining concept gap is uneven worn edges and broken top-face response. Next diagnostic is a close paving crop under grazing light with bump on/off, to distinguish usable joint/bevel relief from fine grain or painted shading. More roughness changes cannot create missing edge relief. No whole-floor8 or new source acceptance.
+
+
+## ED — Further item source revisions need broader construction and optical evidence
+
+Reviewed all eight `tmp/item-models/cinderbranch-v13-{front,coal}.png`, `thunder-v5-{front,contact}.png`, `glacier-v6-{front,depth}.png`, and `ashsplitter-v1-{front,hilt}.png`. **Coal7/wood7.5:** staircase cut is gone, but an upright rectangular mass, long straight side and broad front dominate. Reshape the exposed perimeter rather than refining only the small scoop; retain seated bottom and sparse heat. **Thunder construction7/material7:** shared discharge gap and seated central insulator improve coherence. Bright irregular root seats resemble putty collars, and the rear terminal remains a circular cut. Fitted ferrule edges/material and consistent formed contact faces remain needed. **Glacier depth7/material6.5:** lowering alpha barely changes the opaque nested-strip appearance; the thin fault outline is graphic. Request shell-only/full-stack controls with a contrasting object behind to identify which layer blocks the window before further scalar tuning. **Ashsplitter shown hilt seating/grip8; complete blade construction/material7.5 provisional:** distinct broad silhouette and restrained seated assembly, but front does not establish hollow-back/thickness. Three-quarter/back and complete tip coverage are needed. No complete new item source/export pass.
+
+
+## EE — Lossless Frostfall v6 confirms flat facet and graphic-interior blockers
+
+Reviewed `tmp/frost-v6-lossless-{native,detail}.png`, frozen actual cast near.56 with same-world/light three-times camera zoom for detail. **Native form/material7.5/7.5 retained.** Compression is not the primary cause: the central close shard is a long broad slab with a roof-like cap and nearly uniform blue front; pale needle-shaped interior triangles read as decals. The right shard proves thickness against the pier, but pale lines still read as surface graphics. Next material target is stronger orientation-dependent outer-facet response—a narrow reflected face/edge beside a darker broad face—and one embedded irregular fracture with mostly clear area and locally catching broken boundary. Avoid additional interior primitives. One asymmetric shoulder/facet transition should interrupt the long capped-blade plane. These are visible diagnoses, not attribution to an uninspected shader line. Prior actual contact/arrival8 remains separate.
+
+
+## EF — Grazing-light paving controls expose weak broad edge relief
+
+Reviewed `tmp/floor-grazing-{off,on,strong}.png` at bump0/.13/.4 and `tmp/floor-source-height.png`. Visible changes are predominantly fine grain and thin joint-edge contrast; even.4 does not establish rounded/chipped bevel shoulders across broad stone tops. The height image contains mottled brightness, bright joint specks and narrow dark outlines rather than a clearly separated low-joint/broad-bevel/top profile. Weak transfer and source signal composition remain plausible; no shader-cause claim follows from images alone. A tangent-normal control from the same height is appropriate before source changes. If that chiefly amplifies gritty outlines, separate a smoother joint/bevel field from much weaker fine grain. Additional diagnostic light/zoom does not raise the current gameplay floor7. No further scalar bump escalation recommended.
+
+
+## EG — Completed blade coverage and optical controls resolve bounded source questions
+
+Reviewed `tmp/item-models/ashsplitter-v1-{threequarter,back,tip}.png`, `glacier-v7-{shell-only-control,full-stack-control}.png`, `cinderbranch-v14-{front,coal}.png`, and `thunder-v6-contact.png`. **Ashsplitter construction8:** complete blade thickness/back/tip now supported; hilt8 retained. **Material7.5:** broad bevel becomes a nearly solid white strip with conspicuous parallel brushed streaks; control its steel reflection and micrograin without changing silhouette. **Glacier diagnostic:** checker remains visible through shell-only, then is blocked by the long opaque core in full stack. Remove/shorten that core and parallel rear strip before another shell-alpha change; normal-light material gate remains6.5 pending new evidence. **Coal shape7.5/wood7.5:** unequal wedge fixes rectangular perimeter, but broad upper/right faces remain smooth beside patterned lower charcoal. Restrained unequal brittle lamination/pitting should continue through those faces, retaining sparse heat. **Thunder shown head construction8/material7.5:** formed terminals and fitted dark seats are coherent; uniform lacquer-like copper response remains. Restrained heat/oxidation at contact ends and sheltered roots, with clean broad middle metal, is the next material correction. No complete new item export acceptance.
+
+
+## EH — Frostfall v7 loses too much optical mass
+
+Reviewed `tmp/frost-v7-lossless-{native,detail}.png` against v6 lossless proof. **Native silhouette/readability6.5; material6.5.** Opaque slab is removed, but shards nearly disappear against floor/columns; close evidence mostly shows faint perimeter and triangular wire lines. Keep asymmetric shoulder geometry. Restore broad blue-grey optical coverage through thicker middle/lower volume while retaining clear windows, and establish one visible side-facet reflection spanning meaningful face area under the actual camera/light. Opposite broad face should remain darker. Test that facet response before adding more internal geometry; avoid a full-length opaque core or all-edge glow. This static material proof does not update contact or temporal scores.
+
+
+## EI — Tangent paving control confirms grain-dominated source response
+
+Reviewed `tmp/floor-tangent-{bump,normal,native}.png`. Normal transfer now visibly works, but the close surface becomes uniformly pebbled/gritty while joints remain narrow grooves. Broad worn bevel shoulders are absent. Native change is texture busyness rather than stronger dimensional paving. Proceed with isolated low-frequency joint/bevel response and restrained top grain. Current gameplay floor7 is unchanged; diagnostic is not an accepted production improvement.
+
+## EJ — Skeleton stronger-shaft v10 exact export preserves source fidelity
+
+Reviewed `tmp/skeleton-native-shafts-v10-export-{detail,high,back}.png` against v10 source. **Construction/material fidelity8.** Paired shaft channels, narrow wrist cavities, seated grasp/steel hilt and rear harness/full blade extent are retained. No new visible bake regression in these views. Actual1.85 two-cast trial may proceed; native presence, support-foot catch and final slack remain open. Geometry validation is independent of this visual scope.

@@ -97,14 +97,16 @@ def add_authored_weapon(root,scene,collection):
     finally:bpy.context.window.scene=prior
 
 
-def build_candidate(root):
+def build_candidate(root,native_shafts=False):
     anatomy=module(Path(root)/'scripts/blender/experiments/authored_enemies.py','equipped_anatomy')
     prior=bpy.context.window.scene
     try:
         scene,collection=anatomy.build_anatomy_study(root)
         bpy.context.window.scene=scene
         collection['equippedStudy']=True
-        anatomy.strengthen_anatomy_visibility(collection);anatomy.curl_anatomical_hands(collection)
+        anatomy.strengthen_anatomy_visibility(collection)
+        if native_shafts:anatomy.strengthen_native_shafts(collection)
+        anatomy.curl_anatomical_hands(collection)
         mat=bone_material()
         for obj in collection.objects:
             if obj.type=='MESH':obj.data.materials.clear();obj.data.materials.append(mat)

@@ -99,7 +99,7 @@ def build_anatomy_study(repo_root, source_scene_name='Authored enemy anatomical 
         bpy.context.window.scene=previous
 
 
-def render_anatomy_study(scene,output,high=False,native=False,detail=False):
+def render_anatomy_study(scene,output,high=False,native=False,detail=False,back=False):
     """Neutral front or actual elevated angle; preserve the caller's scene."""
     from mathutils import Vector
     previous=bpy.context.window.scene
@@ -108,12 +108,15 @@ def render_anatomy_study(scene,output,high=False,native=False,detail=False):
         for obj in list(scene.objects):
             if obj.get('anatomyReviewLight'):bpy.data.objects.remove(obj,do_unlink=True)
         target=Vector((.27,-.13,1.30) if detail else (0,-.01,.91))
+        if back:target.z=1.03
         camera=bpy.data.objects.new('Anatomy review camera',bpy.data.cameras.new('Anatomy review camera'));scene.collection.objects.link(camera)
         camera['anatomyReviewLight']=True
         camera.location=(1.3,-1.6,1.65) if detail else (3,-5,5.8) if high else (2.2,-6,1.95)
+        if back:camera.location=(-2.4,5,3.2)
         camera.rotation_euler=(target-camera.location).to_track_quat('-Z','Y').to_euler();camera.data.type='ORTHO';camera.data.ortho_scale=2.12;scene.camera=camera
         if native:camera.data.ortho_scale=3.2
         if detail:camera.data.ortho_scale=.68
+        if back:camera.data.ortho_scale=2.65
         for name,location,power,color,size in [('key',(-3,-4,5),550,(1,.91,.81),4),('fill',(4,-1,3),350,(.81,.89,1),3),('rim',(-1,3,4),550,(.69,.78,1),3)]:
             data=bpy.data.lights.new('Anatomy '+name,'AREA');data.energy=power;data.color=color;data.shape='DISK';data.size=size
             if native:data.energy*=.38
@@ -323,6 +326,49 @@ def strengthen_anatomy_visibility(collection):
             for vertex,position in zip(obj.data.vertices,altered):vertex.co=position
         obj.data.update()
     collection['visibilityStrengthened']=True
+
+
+def strengthen_native_shafts(collection):
+    """Opt-in native silhouette comparison; keep each anatomical joint intact.
+
+    Apply after the accepted visibility treatment and before finger posing.
+    Only cross-sections change: bone lengths, joint-end surfaces, torso gaps,
+    material response and equipment pivots remain the source reference.
+    """
+    import numpy as np,re
+    if collection.get('nativeShaftComparison'):return
+    if collection.get('handsCurled'):raise ValueError('Strengthen shafts before posing finger chains')
+    objects={re.sub(r'\.\d{3}$','',o.get('anatomicalSource','')):o for o in collection.objects if o.type=='MESH'}
+    centers={name:np.array([list(v.co) for v in o.data.vertices]).mean(axis=0) for name,o in objects.items()}
+    changes=[]
+    for obj in collection.objects:
+        if obj.type!='MESH':continue
+        name=re.sub(r'\.\d{3}$','',obj.get('anatomicalSource',''))
+        gain=1.6 if any(k in name for k in ('arm_ulna','arm_radius')) else 1.5 if any(k in name for k in ('leg_tibula','leg_fibula')) else 1.4 if re.match(r'(metacarpal|proximal|middle|distal)\.[a-z]+\.',name) else 1
+        if gain==1:continue
+        points=np.array([list(v.co) for v in obj.data.vertices]);center=points.mean(axis=0)
+        _,axes=np.linalg.eigh(np.cov((points-center).T));axis=axes[:,-1]
+        distance=(points-center)@axis;span=float(np.ptp(distance))
+        if span<1e-6:raise ValueError('Degenerate anatomical shaft '+name)
+        unit=(distance-distance.min())/span
+        # Leave terminal ten percent exactly unchanged; smooth transition to
+        # the mid-shaft gain preserves condyles, finger contact and wrist fit.
+        fade=np.clip((np.minimum(unit,1-unit)-.10)/.15,0,1)
+        fade=fade*fade*(3-2*fade)
+        along=np.outer(distance,axis);radial=points-center-along
+        expansion=radial*((gain-1)*fade[:,None])
+        paired=name.replace('arm_ulna','arm_radius') if 'arm_ulna' in name else name.replace('arm_radius','arm_ulna') if 'arm_radius' in name else name.replace('leg_tibula','leg_fibula') if 'leg_tibula' in name else name.replace('leg_fibula','leg_tibula') if 'leg_fibula' in name else None
+        if paired:
+            toward=centers[paired]-center;toward-=axis*np.dot(toward,axis);toward/=np.linalg.norm(toward)
+            # The inward face keeps its source position: added silhouette goes
+            # outward/deeper, never across the radius/ulna or tibia/fibula gap.
+            expansion-=np.maximum(expansion@toward,0)[:,None]*toward
+        altered=points+expansion
+        for vertex,position in zip(obj.data.vertices,altered):vertex.co=position
+        obj.data.update()
+        changes.append({'source':name,'gain':gain,'pairGapProtected':bool(paired),'maxDisplacement':float(np.linalg.norm(altered-points,axis=1).max())})
+    collection['nativeShaftComparison']=json.dumps(changes)
+    return changes
 
 
 def curl_anatomical_hands(collection):

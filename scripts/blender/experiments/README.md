@@ -119,10 +119,10 @@ rebuild installs only the accepted full-height variant into public assets.
 `authored_enemies.py` imports the pinned Blender Studio CC0 anatomy cache into
 separate review scenes. The authored rib cage, pelvis, paired limb bones and
 hands passed independent foundation review at8; this does not approve an enemy
-or replace either public skeleton/revenant asset. Guard v5 remains7 for elbow
-readability and intent. The rendered v6 candidate, awaiting independent review, reduces extreme
-elbow flexion, curls original phalanges about adjacent-bone contacts, and turns
-the palms inward. No armor, baking, runtime export or public promotion has run.
+or replace either public skeleton/revenant asset. Guard v6 reached8 for shown
+elbow articulation; its guard intent remained7. The equipped v8 revision below
+is the accepted source successor. Packed v8 now passes shown export construction
+and material fidelity at8; native runtime review and public promotion are pending.
 
 `render_guard_review(repo_root, prefix, window_id, detail=True)` rebuilds from the
 cache, writes high-angle/native-size/close-arm PNGs and pose metadata, and always
@@ -146,21 +146,30 @@ from pathlib import Path
 root = Path('/home/houston/git/institute')
 sys.path.insert(0, str(root / 'scripts/blender/experiments'))
 import bake_authored_enemy as baker
-state = baker.prepare(root, root / 'scripts/blender/experiments/exports/skeleton-candidate')
+source = baker.prepare(root, root / 'scripts/blender/experiments/exports/skeleton-source', size=1024)
+joined = baker.joined_source_comparison(source, root / 'scripts/blender/experiments/exports/skeleton-joined')
+baker.separate_held_weapon(joined)
+expanded = baker.enlarged_hand_chart_comparison(joined, root / 'scripts/blender/experiments/exports/skeleton-hand-charts')
+state = baker.isolated_carpal_normal_control(expanded, root / 'scripts/blender/experiments/exports/skeleton-candidate')
+state['exclude_bone_micrograin'] = True
 bpy.app.driver_namespace['authored_enemy_bake'] = (baker, state)
 ```
 
 Call `baker.bake(state, channel, batch_index)` for each projection group and each
-of `albedo`, `normal`, `orm`; `len(state['batches'])` gives the measured group
-count. Calls restore the previous scene, and completed batches are restart-safe
+of `albedo`, `normal`, `orm`; `len(state['normal_batches'])` gives the normal
+group count and `len(state['batches'])` gives the other channel counts. Calls
+restore the previous scene, and completed batches are restart-safe
 within the same Blender session. Then `baker.finish(state)` exports
 `skeleton-candidate.glb` plus its three original maps and rig/source report into
 that ignored directory. A fresh Blender process must rerun preparation.
 
 The candidate uses neutral anatomical joint bases for the existing foot-support
 solver. Reviewed hand pronation/grasp remains in neutral mesh geometry; guarded
-body/limb transforms are recorded separately as Y-up metadata. Ten rigid joint
-names and part identities survive the atlas join/split; there are no skins.
+body/limb transforms are recorded separately as Y-up metadata. Ten anatomical
+joints keep neutral bases. An eleventh rigid `Sword` joint is parented to
+`ArmLowerR` at the actual grasp, with local Y calibrated along the blade so the
+weapon can settle independently. Part identities survive the atlas join/split;
+there are no skins.
 
 Outside Blender, pack only the explicit candidate (never all public models):
 
@@ -173,6 +182,68 @@ folder = Path('scripts/blender/experiments/exports/skeleton-candidate')
 optimize(folder / 'skeleton-candidate.glb', texture_directory=folder, normal_size=1024)
 ```
 
-This retains2K color, padded1K normals and512px ORM for the first export fidelity
-review. Reimport front/back/three-quarter, neutral pivots, native guarded pose and
+This candidate uses1K color/normals and512px ORM; resolution remains subject to
+export/native review. The earlier2K partial bake remains an isolated comparison.
+Joining each nonadjacent high-source projection group preserves per-object
+Generated shader coordinates in an attribute, along with source UVs/materials.
+The first1K albedo group matched all149,331 covered reference pixels exactly
+while reducing measured bake time from77.13s to2.41s. Geometry is unchanged:
+275,073 high-source triangles and47,310 candidate triangles. These measurements
+do not grant normal-map, final model or runtime acceptance.
+
+The first packed candidate retained construction8 but received material7.5:
+metal hilts darkened and finger-root normal seams became too strong. The baker
+now emits Principled Base Color for albedo instead of baking its diffuse lobe,
+so metallic colors are not attenuated. Isolated groups use zero bake margin;
+the complete atlas is padded globally afterward, preventing a group's dilation
+from overwriting another group's islands. Non-source review meshes are hidden
+during baking so duplicate geometry cannot contaminate AO. The corrected
+material candidate still requires independent export/native review. Excluding
+bone micrograin alone did not remove the wrist seams. The next isolated control,
+`isolated_carpal_normal_control`, splits the seven disconnected carpal components
+inside each hand source for projection; ordinary nonadjacent-object grouping
+cannot isolate those neighboring bones. It preserves geometry and UV coordinates.
+Use its `normal_batches` count for staged normal calls. Retain the same-camera
+source reference when assessing the result; neither control grants acceptance.
+
+The v8 candidate, independently accepted for shown export fidelity at8, starts from a fresh
+joined state with the Sword split, then calls `enlarged_hand_chart_comparison`
+and `isolated_carpal_normal_control` in that order. It sets
+`exclude_bone_micrograin=True`. All three channels must be rebaked after the UV
+change. Forty hand sources receive about35× their original atlas area
+(0.0018591→0.0655849 of the atlas), without changing geometry or map resolution.
+UV selection is explicit before packing; resulting bounds are .003..996.
+Earlier controls exposed stale RNA handles after edit mode and unselected UVs
+leaving islands unpacked. Both preparation and the area check now enforce these
+conditions; the failed v6/v7 controls are excluded from candidate review.
+Durable accepted studio evidence and exact-artifact metadata are retained under
+`docs/rpg-playtest/v15/characters/skeleton-export-v8/`.
+
+`review_authored_enemy.py` reimports the exact candidate into an isolated scene
+and can apply its separate guard metadata. Reimport front/back/three-quarter,
+neutral pivots, native guarded pose and
 actual support/motion checks are still required before canonical/public use.
+
+`web/scripts/audit-authored-enemy.ts` loads actual GLB vertices and runs the
+existing animator's cached opt-in `AuthoredEnemyGuard` hook. From the repo
+root, run `bun web/scripts/audit-authored-enemy.ts candidate.glb report.json`.
+It checks three alive/recoil states and 67 ordered fall samples. This exposed
+an intermediate blade penetration missed by static endpoints; the helper now
+releases the authored Sword toward the ground before the legacy .62s settle.
+Optional fourth/fifth arguments select the actor phase and collapse type; phases
+`.7` and `2.7` cover both fall variants, with `grounded` and `electric` paths.
+This numeric audit complements, and does not replace, native motion review.
+
+The actual v8 dungeon proof is retained under
+`docs/rpg-playtest/v15/characters/skeleton-native-v8/`. Native presence scored 7
+at height 1.65 and 7.5 at 1.85; export 8 does not transfer to this native gate.
+`equipped_skeleton.build_candidate(root, native_shafts=True)` is an opt-in
+comparison that widens only paired forearm/shin and individual hand shafts.
+The inner paired-bone gap and terminal joint surfaces are protected; default
+builders retain the reviewed v8 geometry. Its source and native reviews remain
+pending. For a reviewed comparison, pass `native_shafts=True` into bake `prepare`;
+`source_candidate=(scene, collection, joints, anatomy)` can reuse the exact
+reviewed scene rather than rebuilding it. The exported root then declares
+`authoredEnemyHeight=1.85`; this is a candidate-only height hint, not permission
+to resize legacy actors or install the new skeleton. Retain all standard
+hand-chart, isolated projection, export, vertex-support and native checks.

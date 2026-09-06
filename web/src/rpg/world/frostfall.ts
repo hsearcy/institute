@@ -35,22 +35,39 @@ export function frostfallCrystalGeometry(seed = 1, radius = .26, height = 1.55):
   return geometry;
 }
 
-/** Internal fracture sheets are actual angled surfaces, beneath a restrained glass shell. */
-function crystalInteriorGeometry(radius: number, height: number): THREE.BufferGeometry {
-  // A dark offset core and two broken planes at different depths. Their
-  // unequal spacing and values stay legible through the outer ice surface.
-  const points = [
-    [-.40,-.79,-.31], [.32,-.68,-.15], [.13,-.17,.02],
-    [-.40,-.79,-.31], [.13,-.17,.02], [-.19,-.27,-.07],
-    // One broad diagonal break stops halfway down the crystal. The clear
-    // window below it exposes the darker, offset core instead of a long stripe.
-    [-.56,-.70,.35], [.38,-.40,.25], [.30,-.57,.37],
-    [-.56,-.70,.35], [-.31,-.76,.30], [.30,-.57,.37],
-  ];
+/** One oblique fracture, intersected with the real hull before insetting. */
+function crystalInteriorGeometry(hull: THREE.BufferGeometry, radius: number, height: number, seed: number): THREE.BufferGeometry {
+  const normal = new THREE.Vector3(.62, .19 + Math.sin(seed * 1.7) * .025, .76).normalize();
+  const plane = new THREE.Plane(normal, normal.y * height * .54);
+  const positions = hull.getAttribute('position'), points: THREE.Vector3[] = [];
+  const a = new THREE.Vector3(), b = new THREE.Vector3();
+  const add = (point: THREE.Vector3) => {
+    if (!points.some(existing => existing.distanceToSquared(point) < radius * radius * 1e-10)) points.push(point.clone());
+  };
+  for (let face = 0; face < positions.count; face += 3) {
+    for (let edge = 0; edge < 3; edge++) {
+      a.fromBufferAttribute(positions, face + edge); b.fromBufferAttribute(positions, face + (edge + 1) % 3);
+      const da = plane.distanceToPoint(a), db = plane.distanceToPoint(b);
+      if (Math.abs(da) < 1e-7) add(a);
+      if (da * db < 0) add(a.clone().lerp(b, da / (da - db)));
+    }
+  }
+  if (points.length < 3) throw new Error('Frostfall interior plane misses its crystal hull');
+  const center = points.reduce((sum, point) => sum.add(point), new THREE.Vector3()).divideScalar(points.length);
+  const u = normal.clone().cross(new THREE.Vector3(0, 1, 0)).normalize(), v = normal.clone().cross(u);
+  points.sort((left, right) => Math.atan2(left.clone().sub(center).dot(v), left.clone().sub(center).dot(u))
+    - Math.atan2(right.clone().sub(center).dot(v), right.clone().sub(center).dot(u)));
+  for (const point of points) point.lerp(center, .16);
+  const vertices: number[] = [], uv: number[] = [], rim: number[] = [];
+  for (let edge = 0; edge < points.length; edge++) {
+    for (const [point, depth] of [[center, 1], [points[edge], 0], [points[(edge + 1) % points.length], 0]] as const) {
+      vertices.push(point.x, point.y, point.z); uv.push(point.x / radius, point.y / height + 1); rim.push(depth);
+    }
+  }
   const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(points.flatMap(([x,y,z]) => [x * radius, y * height, z * radius]), 3));
-  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(points.flatMap(([x,y]) => [x, y + 1]), 2));
-  geometry.setAttribute('planeTone', new THREE.Float32BufferAttribute([0,0,0,0,0,0,1,1,1,1,1,1], 1));
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geometry.setAttribute('fractureRim', new THREE.Float32BufferAttribute(rim, 1));
   geometry.computeVertexNormals(); geometry.computeBoundingBox(); geometry.computeBoundingSphere();
   return geometry;
 }
@@ -58,33 +75,43 @@ function crystalInteriorGeometry(radius: number, height: number): THREE.BufferGe
 export function frostfallCrystalMaterial(interior = false, seed = 1): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     uniforms: { opacity: { value: 1 }, time: { value: 0 }, seed: { value: seed } },
-    vertexShader: `varying vec3 vNormal,vView,vLocal;varying vec2 vUv;${interior ? 'attribute float planeTone;varying float vPlaneTone;' : 'attribute vec3 corner;varying vec3 vCorner;'}
-      void main(){vec4 eye=modelViewMatrix*vec4(position,1.);vView=-eye.xyz;vNormal=normalize(normalMatrix*normal);vLocal=position;vUv=uv;${interior ? 'vPlaneTone=planeTone;' : 'vCorner=corner;'}gl_Position=projectionMatrix*eye;}`,
-    fragmentShader: `varying vec3 vNormal,vView,vLocal;varying vec2 vUv;uniform float opacity,time,seed;${interior ? 'varying float vPlaneTone;' : 'varying vec3 vCorner;'}
+    vertexShader: `varying vec3 vWorldNormal,vWorldPosition,vLocal;varying vec2 vUv;${interior ? 'attribute float fractureRim;varying float vFractureRim;' : ''}
+      void main(){vec4 world=modelMatrix*vec4(position,1.);vWorldPosition=world.xyz;vWorldNormal=normalize(mat3(modelMatrix)*normal);vLocal=position;vUv=uv;${interior ? 'vFractureRim=fractureRim;' : ''}gl_Position=projectionMatrix*viewMatrix*world;}`,
+    fragmentShader: `varying vec3 vWorldNormal,vWorldPosition,vLocal;varying vec2 vUv;uniform float opacity,time,seed;${interior ? 'varying float vFractureRim;' : ''}
       float hash(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}
       float noise(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);}
-      void main(){vec3 normal=normalize(vNormal),view=normalize(vView);float facing=abs(dot(normal,view));
-        float reflection=pow(max(0.,dot(reflect(-normalize(vec3(-.3,.75,1.)),normal),view)),65.);
-        float side=pow(1.-facing,3.2);
-        float grain=noise(vLocal*29.);
-        float light=max(0.,dot(normal,normalize(vec3(-.35,.9,.4))));
-        float cloud=smoothstep(.35,.7,noise(vLocal*vec3(7.,2.,7.)+seed*.37));
-        float fissure=abs(vUv.x*.45+sin(vUv.y*11.+seed)*.065-vUv.y*.2+.07);
-        float vein=(1.-smoothstep(.003,max(.022,fwidth(fissure)*.85),fissure))*smoothstep(.12,.26,vUv.y)*(1.-smoothstep(.8,.94,vUv.y));
+      void main(){vec3 normal=normalize(vWorldNormal);
+        vec3 view=isOrthographic?normalize(vec3(viewMatrix[0][2],viewMatrix[1][2],viewMatrix[2][2])):normalize(cameraPosition-vWorldPosition);
+        if(dot(normal,view)<0.)normal=-normal;
+        float facing=max(0.,dot(normal,view));float fresnel=.018+.982*pow(1.-facing,5.);
+        vec3 reflected=reflect(-view,normal);
+        // Fixed WORLD directions form restrained studio/environment reflections.
+        // They move across the facets as a shard turns, rather than remaining
+        // attached to camera-space normals. No scene transmission render.
+        // The isometric camera sees vertical faces reflect the lower hemisphere.
+        // A wide low environment patch catches one side, while the opposing
+        // face keeps a clear darker window. The old overhead lobe missed both.
+        vec3 wideReflection=normalize(vec3(reflected.x*.38,reflected.y,reflected.z));
+        float cool=pow(max(0.,dot(wideReflection,normalize(vec3(-.05,-.60,.80)))),20.);
+        float warm=pow(max(0.,dot(reflected,normalize(vec3(.72,.31,-.62)))),80.);
+        float sky=smoothstep(.12,.85,reflected.y);
+        float cloud=smoothstep(.56,.81,noise(vLocal*vec3(8.,2.3,8.)+seed*.37));
+        float thickness=smoothstep(.03,.27,vUv.y)*(1.-smoothstep(.53,1.,vUv.y));
         ${interior ? `
-          vec3 color=mix(vec3(.012,.042,.065),vec3(.23,.46,.55),vPlaneTone);
-          color+=vec3(.10,.21,.25)*(cloud*.2+light*.15)+vec3(.8,.91,.94)*reflection*.45;
-          gl_FragColor=vec4(color,opacity*(mix(.70,.43,vPlaneTone)+cloud*.10+vein*.12+reflection*.12));
+          float lip=1.-smoothstep(0.,max(.055,fwidth(vFractureRim)*1.3),vFractureRim);
+          float broken=.35+.65*smoothstep(.3,.65,noise(vLocal*24.+seed));
+          float rim=lip*broken;
+          vec3 color=vec3(.028,.068,.089)+vec3(.10,.19,.22)*cloud*.18;
+          color+=vec3(.31,.48,.52)*rim*.45+vec3(.50,.72,.78)*cool*.45;
+          gl_FragColor=vec4(color,opacity*clamp(.10+cloud*.07+rim*.23+cool*.16,.0,.56));
         ` : `
-          vec3 aa=max(fwidth(vCorner),vec3(.0001));
-          vec3 line=smoothstep(vec3(0.),aa*.7,vCorner);
-          float edge=1.-min(line.x,min(line.y,line.z));
-          vec3 color=vec3(.065,.145,.19)+vec3(.08,.17,.22)*(light*.7+grain*.10);
-          color+=vec3(.20,.44,.55)*side*.42+vec3(.75,.95,1.05)*reflection*.55;
-          color+=vec3(.30,.61,.73)*edge*pow(light,4.)*.13;
-          color+=vec3(.13,.25,.30)*cloud*light*.25;
-          color+=vec3(.32,.51,.55)*vein*.08;
-          gl_FragColor=vec4(color,opacity*(.58+side*.15+edge*.05+reflection*.16));
+          // Clear face windows carry most of the background. Density rises at
+          // grazing facets and isolated reflection patches, not every triangle.
+          vec3 color=vec3(.068,.14,.175)+vec3(.035,.065,.075)*thickness+vec3(.07,.14,.18)*sky*fresnel;
+          color+=vec3(.36,.60,.69)*cool*(.38+.42*thickness)+vec3(.46,.31,.17)*warm*.55;
+          color+=vec3(.17,.28,.31)*cloud*.20;
+          float alpha=.20+thickness*.16+fresnel*.35+cloud*.04+cool*.28+warm*.18;
+          gl_FragColor=vec4(color,opacity*clamp(alpha,.0,.84));
         `}
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
@@ -95,29 +122,8 @@ export function frostfallCrystalMaterial(interior = false, seed = 1): THREE.Shad
 
 export function createFrostfallCrystal(seed = 1, scale = 1, widthScale = 1) {
   const radius = .26 * scale * widthScale, height = 1.55 * scale;
-  const inner = new THREE.Mesh(crystalInteriorGeometry(radius, height), frostfallCrystalMaterial(true, seed));
   const shell = new THREE.Mesh(frostfallCrystalGeometry(seed, radius, height), frostfallCrystalMaterial(false, seed));
-  // Each randomized exterior has different broken shoulders. Keep the internal
-  // fracture sheets inside that actual volume rather than piercing the shell.
-  const shellPoints = shell.geometry.getAttribute('position'), shellNormals = shell.geometry.getAttribute('normal');
-  const center = new THREE.Vector3(), point = new THREE.Vector3(), normal = new THREE.Vector3(), anchor = new THREE.Vector3();
-  for (let i = 0; i < shellPoints.count; i++) center.add(point.fromBufferAttribute(shellPoints, i));
-  center.divideScalar(shellPoints.count);
-  const innerPoints = inner.geometry.getAttribute('position');
-  for (let i = 0; i < innerPoints.count; i++) {
-    point.fromBufferAttribute(innerPoints, i);
-    let fraction = 1;
-    for (let face = 0; face < shellPoints.count; face += 3) {
-      normal.fromBufferAttribute(shellNormals, face); anchor.fromBufferAttribute(shellPoints, face);
-      const plane = normal.dot(anchor), outside = normal.dot(point) - plane;
-      if (outside > 0) {
-        const inside = normal.dot(center) - plane;
-        fraction = Math.min(fraction, -inside / (outside - inside) * .97);
-      }
-    }
-    point.lerp(center, 1 - fraction); innerPoints.setXYZ(i, point.x, point.y, point.z);
-  }
-  inner.geometry.computeVertexNormals(); inner.geometry.computeBoundingBox(); inner.geometry.computeBoundingSphere();
+  const inner = new THREE.Mesh(crystalInteriorGeometry(shell.geometry, radius, height, seed), frostfallCrystalMaterial(true, seed));
   inner.renderOrder = 1; shell.renderOrder = 2;
   const layers = [inner, shell], forward = new THREE.Vector3(0, 1, 0), direction = new THREE.Vector3();
   const vertices = shell.geometry.getAttribute('position');

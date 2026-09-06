@@ -1,0 +1,357 @@
+{
+  "version": 1,
+  "coordinates": "Blender meters: grip at origin, +Z toward tip, -Y presentation face. GLTF export converts to +Y tip/+Z face.",
+  "status": "Design catalogue; candidates require independent source, export and native equipped review before installation.",
+  "items": [
+    {
+      "id": "apprentice",
+      "name": "Apprentice's Runeblade",
+      "attachment": "hand.R",
+      "silhouette": "Straight distally tapered double-edged blade, solid swept crossguard, smooth lenticular wheel pommel",
+      "materials": "Forged blue steel bevel and recessed fuller, oxblood flat leather wrap, restrained brass tang seat, blackened forged iron guard",
+      "length": 1.02,
+      "stage": "first",
+      "preview": {
+        "azimuth": 32,
+        "elevation": 12,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb",
+        "roll": 28
+      }
+    },
+    {
+      "id": "cinderwand",
+      "name": "Cinderbranch",
+      "attachment": "hand.R",
+      "silhouette": "Bent charred branch with unequal fork enclosing a small ember, copper repair straps",
+      "materials": "Split charcoal bark, exposed dark warm heartwood, dim ember in protected cavity",
+      "length": 0.91,
+      "stage": "first",
+      "preview": {
+        "azimuth": 20,
+        "elevation": 12,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "glacier",
+      "name": "Glacier Fang",
+      "attachment": "hand.R",
+      "silhouette": "Forward hooked single ice fang held in a steel socket, asymmetrical swept guard",
+      "materials": "Dark cold crystal with unequal fracture planes, selective frosted edge, dull silver and navy grip",
+      "length": 0.94,
+      "stage": "first",
+      "preview": {
+        "azimuth": 20,
+        "elevation": 12,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "thunderrod",
+      "name": "Thunder Rod",
+      "attachment": "hand.R",
+      "silhouette": "Three unequal prongs around a suspended ceramic conductor, segmented brass shaft",
+      "materials": "Tarnished brass, black iron, cobalt ceramic with thin recessed violet channels",
+      "length": 0.99,
+      "stage": "first",
+      "preview": {
+        "azimuth": 20,
+        "elevation": 12,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "moonstaff",
+      "name": "Moonshard Staff",
+      "attachment": "hand.R",
+      "silhouette": "Long slender staff with open crescent cradle and off-center moonstone",
+      "materials": "Silvered ashwood, pewter lunar engravings, pale blue opaque moonstone",
+      "length": 1.48,
+      "preview": {
+        "azimuth": 20,
+        "elevation": 12,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "phoenix",
+      "name": "Phoenix Scepter",
+      "attachment": "hand.R",
+      "silhouette": "Short ceremonial scepter with rising unequal wing blades enclosing a coal heart",
+      "materials": "Aged gilded bronze, red enamel feather recesses, restrained amber core",
+      "length": 1.02,
+      "preview": {
+        "azimuth": 20,
+        "elevation": 12,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "wintercrown",
+      "name": "Staff of Endless Winter",
+      "attachment": "hand.R",
+      "silhouette": "Long twisted steel shaft topped with open crown of unequal icicle tines",
+      "materials": "Dark frost steel, deep blue crystal, white rime restricted to outer tips",
+      "length": 1.56,
+      "preview": {
+        "azimuth": 20,
+        "elevation": 12,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "tempest",
+      "name": "Tempest Caller",
+      "attachment": "hand.R",
+      "silhouette": "Forked curved staff with offset spiral storm vane",
+      "materials": "Storm-dark iron, silver inlay, cold violet recessed crystal",
+      "length": 1.42,
+      "preview": {
+        "azimuth": 20,
+        "elevation": 12,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "cleaver",
+      "name": "Ashsplitter",
+      "attachment": "hand.R",
+      "silhouette": "Broad forward-weighted cleaver with clipped corner and reinforced blunt spine",
+      "materials": "Hammered black steel, exposed honed silver bevel, ash leather and copper rivets",
+      "length": 1.04,
+      "preview": {
+        "azimuth": 20,
+        "elevation": 12,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "starfall",
+      "name": "Starfall Edge",
+      "attachment": "hand.R",
+      "silhouette": "Tapered leaf sword with meteor-iron fragment interrupted fuller and asymmetric guard",
+      "materials": "Pitted dark iron, clean bright cutting edge, tiny molten seam",
+      "length": 1.11,
+      "preview": {
+        "azimuth": 20,
+        "elevation": 12,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "phoenix_talon",
+      "name": "Phoenix Talon",
+      "attachment": "hand.R",
+      "silhouette": "Recurved talon saber with hooked beak pommel and feathered guard",
+      "materials": "Burnished bronze spine, dark steel edge, red leather",
+      "length": 0.98,
+      "preview": {
+        "azimuth": 20,
+        "elevation": 12,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "inferno",
+      "name": "Crown of the Inferno",
+      "attachment": "head",
+      "silhouette": "Open low circlet with five unequal flame-shaped teeth and rear tie band",
+      "materials": "Blackened gold, garnet enamel recesses, restrained ember studs",
+      "length": 0.26,
+      "preview": {
+        "azimuth": 20,
+        "elevation": 22,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "sunforged",
+      "name": "Sunforged Runeblade",
+      "attachment": "hand.R",
+      "silhouette": "Long straight cruciform sword, pierced sun disk guard, tapered broad fuller",
+      "materials": "Warm steel, old gold sun spokes, dark red grip; narrow golden runes",
+      "length": 1.15,
+      "preview": {
+        "azimuth": 20,
+        "elevation": 12,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "icespear",
+      "name": "Rimepiercer",
+      "attachment": "hand.R",
+      "silhouette": "Compact spear with long triangular spike and split frost barbs",
+      "materials": "Dark blue steel, unequal crystal cutting planes, indigo binding",
+      "length": 1.42,
+      "preview": {
+        "azimuth": 20,
+        "elevation": 12,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "tideglass",
+      "name": "Tideglass Blade",
+      "attachment": "hand.R",
+      "silhouette": "Broad flowing wave blade with hooked lower edge and open shell guard",
+      "materials": "Translucency suggested by layered teal depth without transmission, silver edge, sea-dark grip",
+      "length": 1.1,
+      "preview": {
+        "azimuth": 20,
+        "elevation": 12,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "hailcaller",
+      "name": "Hailcaller",
+      "attachment": "hand.R",
+      "silhouette": "Heavy short mace with an offset cluster of three large angular crystal striking faces",
+      "materials": "Dark ice, white fractured impact faces, iron socket and navy leather",
+      "length": 0.94,
+      "preview": {
+        "azimuth": 20,
+        "elevation": 12,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "wardenheart",
+      "name": "Winter Warden's Heart",
+      "attachment": "chest",
+      "silhouette": "Large irregular stone-heart pendant within three articulated iron claws",
+      "materials": "Blue granite, recessed cold seams, dull iron chain",
+      "length": 0.19,
+      "preview": {
+        "azimuth": 20,
+        "elevation": 22,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "winterbranch",
+      "name": "Winterbranch",
+      "attachment": "hand.R",
+      "silhouette": "Crooked pale branch with low fork and drooping unequal crystal buds",
+      "materials": "Weathered pale wood, dark bark seams, smoky blue crystals",
+      "length": 1.03,
+      "preview": {
+        "azimuth": 20,
+        "elevation": 12,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "arcfang",
+      "name": "Arc Fang",
+      "attachment": "hand.R",
+      "silhouette": "Narrow offset dagger with zigzag spine and two unequal conducting teeth",
+      "materials": "Cold silver edge, dark violet iron spine, black leather",
+      "length": 0.86,
+      "preview": {
+        "azimuth": 20,
+        "elevation": 12,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "thunderbell",
+      "name": "Bell of Thunder",
+      "attachment": "belt",
+      "silhouette": "Flared temple bell with scalloped rim, visible clapper and solid mounting loop",
+      "materials": "Patinated bronze, dark cast recesses, purple woven hanger",
+      "length": 0.24,
+      "preview": {
+        "azimuth": 20,
+        "elevation": 22,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "stormorbit",
+      "name": "Orb of the Stormkeeper",
+      "attachment": "belt",
+      "silhouette": "Open three-arm spherical reliquary holding an off-center faceted stormstone",
+      "materials": "Dark silver cage, deep violet crystal, selective bright internal seams",
+      "length": 0.24,
+      "preview": {
+        "azimuth": 20,
+        "elevation": 22,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "skybreaker",
+      "name": "Skybreaker",
+      "attachment": "hand.R",
+      "silhouette": "Long broad lightning-split blade with staggered pronged point and wide wing guard",
+      "materials": "Silver steel over black iron, violet recessed lightning groove",
+      "length": 1.25,
+      "preview": {
+        "azimuth": 20,
+        "elevation": 12,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    },
+    {
+      "id": "stormsilver",
+      "name": "Stormsilver Runeblade",
+      "attachment": "hand.R",
+      "silhouette": "Narrow long sword with swept basket guard and perforated spear-like tip",
+      "materials": "Pale silver, storm-blue enamel fuller, deep navy wrapped grip",
+      "length": 1.16,
+      "preview": {
+        "azimuth": 20,
+        "elevation": 12,
+        "margin": 1.18,
+        "background": "transparent",
+        "derivedFrom": "accepted-item-glb"
+      }
+    }
+  ]
+}

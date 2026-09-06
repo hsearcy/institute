@@ -261,6 +261,7 @@ export class DungeonWorld {
     replacedStoneTextures.forEach(texture => texture.dispose());
     this.setAppearance(this.desiredAppearance);
     this.enemies.forEach(enemy => {
+      enemy.height = this.enemyHeight(enemy.modelId, enemy.height);
       const visual = this.model(enemy.modelId, enemy.height) ?? (enemy.modelId === 'revenant' ? this.model('skeleton', enemy.height) : undefined);
       if (visual) { enemy.root.remove(enemy.visual); this.releaseProcedural(enemy.visual); enemy.visual = visual; enemy.root.add(visual); enemy.animator = new EnemyAnimator(visual, {kind: enemy.modelId, phase: enemy.phase}); }
     });
@@ -372,6 +373,19 @@ export class DungeonWorld {
       for (const layer of layers) { layer.geometry.dispose(); this.preparedMaterials.push(layer.material); }
       target.dispose(); renderer.info.reset();
     }
+  }
+
+  private enemyHeight(modelId: string, fallback: number): number {
+    // Only the authored skeleton opts into a revised silhouette size. Preserve
+    // the separate ordinary/boss and armored sizes supplied by the roster.
+    if (modelId !== 'skeleton') return fallback;
+    let height = fallback;
+    this.models.get(modelId)?.traverse(node => {
+      const proposed = node.userData.authoredEnemyHeight;
+      if (node.userData.authoredEnemy === true && typeof proposed === 'number'
+        && Number.isFinite(proposed) && proposed >= .5 && proposed <= 3) height = proposed;
+    });
+    return height;
   }
 
   private model(name: string, height: number): THREE.Group | undefined {
@@ -821,7 +835,8 @@ export class DungeonWorld {
     const count = Math.max(1, Math.min(10, Math.trunc(health?.length ?? enemyCount ?? 10)));
     const formation = enemyPositions(this.encounter, count), roster = enemyRoster(this.encounter, count);
     for (let i = 0; i < count; i++) {
-      const { brute, boss, modelId, height } = roster[i];
+      const { brute, boss, modelId } = roster[i];
+      const height = this.enemyHeight(modelId, roster[i].height);
       const root = new THREE.Group();
       const origin = new THREE.Vector3(formation[i].x, 0, -this.encounter * 20 + formation[i].z);
       root.position.copy(origin); root.rotation.y = Math.atan2(this.destination.x - origin.x, this.destination.z - origin.z);

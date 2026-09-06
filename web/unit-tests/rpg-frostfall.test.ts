@@ -74,6 +74,31 @@ test('Internal fracture sheets remain inside every randomized exterior', () => {
   }
 });
 
+test('The inset fracture remains one finite broad plane across shard scales', () => {
+  for (const seed of [0, 1, 2, 7, 19]) for (const scale of [.13, 1, 1.15]) {
+    const crystal = createFrostfallCrystal(seed, scale);
+    try {
+      const positions = crystal.layers[0].geometry.getAttribute('position');
+      const a = new THREE.Vector3().fromBufferAttribute(positions, 0);
+      const b = new THREE.Vector3().fromBufferAttribute(positions, 1);
+      const c = new THREE.Vector3().fromBufferAttribute(positions, 2);
+      const normal = b.clone().sub(a).cross(c.clone().sub(a)).normalize();
+      let area = 0;
+      for (let i = 0; i < positions.count; i += 3) {
+        const points = [0, 1, 2].map(offset => new THREE.Vector3().fromBufferAttribute(positions, i + offset));
+        const triangleArea = points[1].clone().sub(points[0]).cross(points[2].clone().sub(points[0])).length() * .5;
+        assert(triangleArea > 1e-10 * scale * scale, 'No collapsed needle triangles');
+        area += triangleArea;
+        for (const point of points) {
+          assert(point.toArray().every(Number.isFinite));
+          assert(Math.abs(normal.dot(point.clone().sub(a))) < 1e-6 * scale, 'Fracture has no folded/clamped quad');
+        }
+      }
+      assert(area > .02 * scale * scale, 'The fracture remains a surface rather than a thin strand');
+    } finally { for (const layer of crystal.layers) { layer.geometry.dispose(); layer.material.dispose(); } }
+  }
+});
+
 test('Impact splinters stay above their floor and the complete study fades on schedule', () => {
   const contact=createFrostfallContact(), origin=new THREE.Vector3(2,0,-5);
   try {

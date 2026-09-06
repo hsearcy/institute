@@ -1,0 +1,15 @@
+{
+  "seconds": 24.831008911132812,
+  "sourceSHA256": {
+    "build_studies.py": "22a8ff3d80e26a99f89168c55dc2bd83f1657a56a2ad54577489a7bffbbbd705",
+    "surfaces.py": "d73ae9976738be3b05726a152cd79dc7640feec390d35c0e49d9d996eeb39981",
+    "metal_weapons.py": "93f28d5797610608d123c62120857d6b3e3de663964ff6b4786acaec10891c8a"
+  },
+  "restoredScene": "Scene",
+  "scope": "V4 material correction head/front only; no export or installation",
+  "tipLocalMeters": [
+    0.0,
+    0.0,
+    0.8360689282417297
+  ]
+}

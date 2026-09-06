@@ -1,0 +1,10 @@
+{
+  "seconds": 34.89306426048279,
+  "sourceSHA256": {
+    "build_studies.py": "b7348f1a47fd5086a375972f3d71bdc49792de038c9c76062cdf0f525fe69f12",
+    "surfaces.py": "30645fdd767addc355ee149d6e54703875bbb12e5becbc6f4646194e83363012",
+    "metal_weapons.py": "93f28d5797610608d123c62120857d6b3e3de663964ff6b4786acaec10891c8a"
+  },
+  "restoredScene": "Scene",
+  "scope": "First source study only; no export or installation"
+}

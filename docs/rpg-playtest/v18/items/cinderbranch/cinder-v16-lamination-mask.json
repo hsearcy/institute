@@ -1,0 +1,8 @@
+{
+  "seconds": 17.40914225578308,
+  "diagnostic": "Reconstructed pre-skew radial direction, predicted geometric lamination amplitude. Blue zero; green0.15; red0.65+. Boolean cut faces use interpolated field, not proof of their displacement.",
+  "nonzeroFraction": 0.23959445037353255,
+  "vertices": 9370,
+  "sourceGeometryRestored": true,
+  "restoredScene": "Scene"
+}

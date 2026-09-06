@@ -1,0 +1,13 @@
+{
+  "seconds": 18.896952629089355,
+  "scope": "Same actual coal geometry/camera under neutral map-free material; projected nominated right-face polygon centers, includes occluded/back faces",
+  "smoothCount": 7233,
+  "faceCount": 7233,
+  "restoredScene": "Scene",
+  "fullFaceAudit": {
+    "path": "cinder-v16-right-flat.json.gz",
+    "originalJSONSHA256": "796a144a7c925dd5bd604d49e23e4eb88b484f16db9c5d698e8c1be997d324cd",
+    "faceCount": 7233,
+    "encoding": "gzip-compressed original JSON, lossless"
+  }
+}

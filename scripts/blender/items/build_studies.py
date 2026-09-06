@@ -552,11 +552,105 @@ def moonstaff(root,p):
         mesh('Swept tapered crescent setting brace',verts,faces,pewter,root,smooth=True)
 
 
+def phoenix(root,p):
+    """A forged wing cradle with a seated garnet heart, built around a real tang."""
+    bronze=material('Phoenix aged gilded bronze',(.24,.115,.033),.82,.35)
+    shadow=material('Phoenix sheltered oxidized bronze',(.042,.023,.011),.60,.54)
+    edge=material('Phoenix handled bronze arris',(.32,.185,.065),.86,.30)
+    enamel=material('Phoenix deep red feather enamel',(.060,.006,.009),.12,.34)
+    enamel.node_tree.nodes.get('Principled BSDF').inputs['Coat Weight'].default_value=.35
+    # Restrained sheltered metal and clean broad middles; no uniform granular
+    # coating that would obscure the convex forged surfaces after projection.
+    nodes,links=bronze.node_tree.nodes,bronze.node_tree.links
+    ao=nodes.new('ShaderNodeAmbientOcclusion');ao.inputs['Distance'].default_value=.018
+    ramp=nodes.new('ShaderNodeValToRGB')
+    ramp.color_ramp.elements[0].color=(.035,.018,.008,1)
+    ramp.color_ramp.elements.new(.5).color=(.20,.095,.028,1)
+    ramp.color_ramp.elements[2].color=(.31,.175,.055,1)
+    wear=nodes.new('ShaderNodeAttribute');wear.attribute_name='PhoenixBronzeWear'
+    shift=nodes.new('ShaderNodeMath');shift.operation='MULTIPLY_ADD';shift.inputs[1].default_value=.5;shift.inputs[2].default_value=.5
+    links.new(wear.outputs['Fac'],shift.inputs[0]);links.new(shift.outputs[0],ramp.inputs[0])
+    sheltered=nodes.new('ShaderNodeMixRGB');sheltered.blend_type='MULTIPLY';sheltered.inputs[0].default_value=.35
+    links.new(ramp.outputs['Color'],sheltered.inputs[1]);links.new(ao.outputs['AO'],sheltered.inputs[2]);links.new(sheltered.outputs[0],nodes.get('Principled BSDF').inputs['Base Color'])
+    rough=nodes.new('ShaderNodeMapRange');rough.inputs['From Min'].default_value=-1;rough.inputs['From Max'].default_value=1
+    rough.inputs['To Min'].default_value=.58;rough.inputs['To Max'].default_value=.30
+    links.new(wear.outputs['Fac'],rough.inputs[0]);links.new(rough.outputs[0],nodes.get('Principled BSDF').inputs['Roughness'])
+    SURFACES.wrapped_hilt(root,p,(.11,.030,.020,1))
+    lathe_z('Phoenix continuous tapered tang',[(-.14,.014),(.137,.014),(.156,.021),(.40,.017),(.48,.027),(.53,.032)],shadow,root,48)
+    for z in (-.109,.120):
+        lathe_z('Phoenix seated grip ferrule',[(z-.007,.019),(z-.004,.024),(z+.004,.024),(z+.007,.020)],bronze,root,48)
+    lathe_z('Phoenix counterweight butt',[(-.169,.006),(-.166,.019),(-.153,.027),(-.133,.027),(-.121,.021),(-.116,.019)],bronze,root,64)
+    lathe_z('Phoenix flared cradle socket',[(.433,.021),(.440,.027),(.456,.028),(.473,.036),(.494,.036),(.514,.027)],bronze,root,64)
+
+    def feather(name,points,widths,thickness,mat):
+        path,widths=curved_path(points,widths,12)
+        vertices=[];faces=[];sides=12
+        for i,(point,width) in enumerate(zip(path,widths)):
+            tangent=(Vector(path[min(i+1,len(path)-1)])-Vector(path[max(0,i-1)])).normalized()
+            across=Vector((-tangent.z,0,tangent.x)).normalized()
+            taper=max(.02,width/max(widths))
+            for j in range(sides):
+                angle=j*math.tau/sides;c,s=math.cos(angle),math.sin(angle)
+                vertices.append(tuple(Vector(point)+across*(math.copysign(abs(c)**.68,c)*width)+Vector((0,math.copysign(abs(s)**.72,s)*thickness*taper,0))))
+        for i in range(len(path)-1):
+            for j in range(sides):
+                a=i*sides+j;b=i*sides+(j+1)%sides;faces.append((a,b,b+sides,a+sides))
+        faces.extend([tuple(reversed(range(sides))),tuple((len(path)-1)*sides+j for j in range(sides))])
+        result=mesh(name,vertices,faces,mat,root,smooth=True)
+        if mat==bronze:
+            wear=result.data.attributes.new('PhoenixBronzeWear','FLOAT','POINT')
+            for i in range(len(path)):
+                t=i/(len(path)-1);root_shade=max(0,1-t/.30)
+                for j in range(sides):
+                    arris=max(0,(abs(math.cos(j*math.tau/sides))-.80)/.20)
+                    wear.data[i*sides+j].value=-.90*root_shade+.50*arris*(1-root_shade)
+        return result
+
+    # Unequal wings are rooted deeply inside the socket. Their broad convex
+    # leading surfaces continue into tapered tips, with open space around the
+    # heart and shorter secondary feathers overlapping on the outer side.
+    for side,points in [(-1,[(0,.003,.484),(-.065,.006,.543),(-.136,.005,.666),(-.173,0,.836)]),(1,[(.006,.005,.488),(.072,.009,.555),(.133,.002,.669),(.153,-.003,.784)])]:
+        feather('Phoenix primary swept wing',points,[.024,.030,.023,.00035],.008,bronze)
+        path,_=curved_path(points,[1,1,1,1],24)
+        # Secondary roots are sampled from the actual primary centerline,
+        # fully enclosed by its broader cross section. Each shorter flight
+        # exits along the outer sweep and has its own unequal free tip.
+        # This preserves layered feathers without inner cut paddles or shared
+        # upper-tip intersections.
+        for u,x,z,width in ((.28,.221,.735,.018),(.46,.203,.792,.015)):
+            origin=Vector(path[round(u*(len(path)-1))])
+            tip=Vector((side*x,.005,z-(.040 if side>0 else 0)))
+            elbow=origin.lerp(tip,.52)+Vector((side*.008,.002,-.010))
+            feather('Phoenix rooted shorter flight feather',[tuple(origin),tuple(elbow),tuple(tip)],[.005,width,.0003],.0045,bronze)
+    for side in (-1,1):
+        # Fitted enamel inset occupies a protected short root panel; it is
+        # recessed behind the leading bronze edge, not painted over the wing.
+        feather('Phoenix protected feather enamel',[(side*.038,-.004,.528),(side*.075,-.003,.576),(side*.105,-.002,.628)],[.004,.008,.0005],.0015,enamel)
+
+    heart=material('Phoenix dark garnet heart',(.040,.004,.007),.02,.22)
+    shader=heart.node_tree.nodes.get('Principled BSDF');shader.inputs['Coat Weight'].default_value=.30
+    nodes,links=heart.node_tree.nodes,heart.node_tree.links
+    coord=nodes.new('ShaderNodeTexCoord');cloud=nodes.new('ShaderNodeTexNoise');cloud.inputs['Scale'].default_value=3.4;cloud.inputs['Detail'].default_value=1
+    links.new(coord.outputs['Generated'],cloud.inputs['Vector'])
+    colors=nodes.new('ShaderNodeValToRGB');colors.color_ramp.elements[0].color=(.010,.0015,.002,1);colors.color_ramp.elements[1].color=(.075,.008,.014,1)
+    links.new(cloud.outputs['Fac'],colors.inputs[0]);links.new(colors.outputs['Color'],shader.inputs['Base Color'])
+    # A deep continuous metal cup cradles the heart. The setting remains
+    # attached through its rear web to the socket, rather than floating.
+    for name,radii,mat,y in [('Phoenix garnet fitted cup',(.047,.025,.061),shadow,.011),('Phoenix polished garnet heart',(.042,.026,.055),heart,-.006)]:
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=48,ring_count=32,location=(0,y,.605))
+        obj=bpy.context.object;obj.name=name;obj.scale=radii;obj.parent=root;obj.data.materials.append(mat)
+        for face in obj.data.polygons:face.use_smooth=True
+    feather('Phoenix rear cup support',[(0,.022,.493),(0,.035,.551),(0,.027,.623)],[.023,.018,.015],.005,shadow)
+    for side in (-1,1):
+        feather('Phoenix fitted heart retaining claw',[(side*.021,.006,.551),(side*.038,-.014,.568),(side*.034,-.026,.584)],[.009,.007,.0025],.004,edge)
+    feather('Phoenix crown retaining claw',[(0,.021,.650),(0,-.003,.665),(0,-.025,.648)],[.008,.009,.003],.004,edge)
+
+
 def cleaver(root,p):
     METAL_WEAPONS.cleaver(root,p,(SURFACES,solid_outline,lathe_z,material))
 
 
-BUILDERS={'apprentice':apprentice,'cinderwand':cinderwand,'glacier':glacier,'thunderrod':thunderrod,'cleaver':cleaver,'moonstaff':moonstaff}
+BUILDERS={'apprentice':apprentice,'cinderwand':cinderwand,'glacier':glacier,'thunderrod':thunderrod,'cleaver':cleaver,'moonstaff':moonstaff,'phoenix':phoenix}
 
 
 def build_study(ids=None):
@@ -574,7 +668,16 @@ def build_study(ids=None):
             for field,default in [('azimuth',20),('elevation',12),('margin',1.18),('roll',0)]:
                 root['preview'+field.capitalize()]=spec['preview'].get(field,default)
             BUILDERS[item_id](root,p)
-            for name,z in (('Grip',0),('Tip',max(v.co.z for o in root.children if o.type=='MESH' for v in o.data.vertices))):
+            # Some authored parts retain local translation/scale (gemstones,
+            # sockets). Their raw vertex coordinates are not item coordinates.
+            bpy.context.view_layer.update()
+            inverse=root.matrix_world.inverted()
+            tip_height=-math.inf
+            for part in root.children:
+                if part.type!='MESH':continue
+                transform=inverse@part.matrix_world
+                tip_height=max(tip_height,max((transform@v.co).z for v in part.data.vertices))
+            for name,z in (('Grip',0),('Tip',tip_height)):
                 marker=bpy.data.objects.new(item_id+'_'+name,None)
                 scene.collection.objects.link(marker);marker.parent=root;marker.location.z=z
                 marker['attachmentRole']=name;root[name.lower()+'Node']=marker.name

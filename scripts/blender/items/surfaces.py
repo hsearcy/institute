@@ -116,19 +116,42 @@ def fractured_coal(root,materials):
         valley=max(0,1-gap/width)
         scallop=.75+.25*math.sin(q.z*35+q.x*23)*math.sin(q.y*29-q.z*17)
         radius=plane-.16*valley**1.6*scallop
-        radius+=.0035*math.sin(q.z*71+q.x*9)*math.sin(q.y*42+q.x*51)
-        radius-=.012*(.5+.5*math.sin(q.z*96+q.x*7))**12*(1-valley)
+        radius+=.0012*math.sin(q.z*71+q.x*9)*math.sin(q.y*42+q.x*51)
+        radius-=.004*(.5+.5*math.sin(q.z*96+q.x*7))**12*(1-valley)
+        # A few broad, interrupted brittle lips cross the exposed planes.
+        # Actual relief catches raking light on the formerly smooth right
+        # face; the lower face no longer relies on dense fine pitting.
+        if index==1:
+            # The diagnosed right-front face needs an actual broad change of
+            # level, not several small wrinkles returning to the same plane.
+            # One sloping shelf cuts across it; unequal missing sections break
+            # its lip while the upper field remains recessed by a real step.
+            # Intersect two genuinely different fracture planes. A radial
+            # height step left both large fields almost parallel in v17.
+            # This oblique upper plane changes the normal by about 25deg;
+            # unequal edge losses interrupt its intersection with the lower.
+            normal=seeds[index]+Vector((-.18,0,.48))
+            offset=.835-.018*max(0,math.sin(q.y*13+q.x*7))**3
+            upper=offset/max(.30,q.dot(normal))
+            radius=min(radius,upper-.16*valley**1.6*scallop)
+        else:
+            layer=q.z+.18*q.x+.035*math.sin(q.y*6)
+            for height,phase in ((-.46,.4),(.035,2.1),(.48,4.3)):
+                d=layer-height-.025*math.sin(q.x*4+phase)
+                coverage=.30+.70*max(0,math.sin(q.y*3+q.x*6+phase))
+                lip=.028*math.exp(-(d/.024)**2)-.045*math.exp(-((d-.038)/.042)**2)
+                radius+=lip*coverage*(1-valley)**1.8
         vertex.co=center+turn@Vector((q.x*.025*radius,q.y*.018*radius,q.z*.035*radius))
         records.append((q,gap))
     charcoal=materials['char'].copy();charcoal.name='Brittle laminated charcoal across exposed faces'
     nodes,links=charcoal.node_tree.nodes,charcoal.node_tree.links;shader=nodes.get('Principled BSDF')
-    broad=nodes.new('ShaderNodeTexNoise');broad.inputs['Scale'].default_value=9;broad.inputs['Detail'].default_value=4
+    broad=nodes.new('ShaderNodeTexNoise');broad.inputs['Scale'].default_value=5;broad.inputs['Detail'].default_value=2
     layers=nodes.new('ShaderNodeTexWave');layers.wave_type='BANDS';layers.bands_direction='Z'
     layers.inputs['Scale'].default_value=12;layers.inputs['Distortion'].default_value=7
     layers.inputs['Detail Scale'].default_value=1.8
-    mixed=nodes.new('ShaderNodeMixRGB');mixed.inputs[0].default_value=.23
+    mixed=nodes.new('ShaderNodeMixRGB');mixed.inputs[0].default_value=.12
     links.new(broad.outputs['Fac'],mixed.inputs[1]);links.new(layers.outputs['Color'],mixed.inputs[2])
-    bump=nodes.new('ShaderNodeBump');bump.inputs['Strength'].default_value=.36;bump.inputs['Distance'].default_value=.001
+    bump=nodes.new('ShaderNodeBump');bump.inputs['Strength'].default_value=.16;bump.inputs['Distance'].default_value=.0006
     prior=shader.inputs['Normal'].links[0].from_socket
     links.new(prior,bump.inputs['Normal']);links.new(mixed.outputs[0],bump.inputs['Height']);links.new(bump.outputs['Normal'],shader.inputs['Normal'])
     ramp=nodes.new('ShaderNodeValToRGB');ramp.color_ramp.elements[0].color=(.006,.007,.008,1);ramp.color_ramp.elements[1].color=(.015,.016,.018,1)

@@ -1,0 +1,39 @@
+{
+  "id": "thunderrod",
+  "triangles": 9300,
+  "bytes": 1270772,
+  "materials": 1,
+  "sha256": "f5c813c5e8aa5753b1746db0038605414abf829b6ce0784407c45d048875378c",
+  "status": "Structural checks only; consult the separately recorded visual review scopes",
+  "sourceSnapshot": "thunder-v8-source.blend",
+  "sourceSHA256": "9ea40eff0b2d62e267b9358192cd3948ee074d1081e429974c88d9fbb4227ab7",
+  "sourceReview": {
+    "construction": 8,
+    "material": 8
+  },
+  "exportReview": {
+    "construction": 8,
+    "material": 8,
+    "scope": "Independent exact packed GLB front/back/high/contact/hilt review; no new transfer blocker visible."
+  },
+  "nativeReview": "pending",
+  "geometryNormalsOnly": true,
+  "textures": {
+    "count": 3,
+    "resolution": 1024
+  },
+  "coordinates": "Meters; local palm Grip origin; glTF +Y tip/+Z front",
+  "images": [
+    "export-v1-front.png",
+    "export-v1-back.png",
+    "export-v1-high.png",
+    "export-v1-hilt.png",
+    "export-v1-contact.png"
+  ],
+  "thumbnailReview": {
+    "score": 8,
+    "scope": "Standalone supplied 512px thumbnail only; actual card and native motion remain separately reviewed by parent."
+  },
+  "motionReview": "pending",
+  "thumbnailSHA256": "b2981ed9bb79177c6b6001a22a830616a996e3a0bf842d4c42f7d1be14d77c7f"
+}

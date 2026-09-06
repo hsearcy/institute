@@ -1,0 +1,13 @@
+{
+  "itemId": "thunderrod",
+  "sourceVersion": 8,
+  "construction": 8,
+  "material": 8,
+  "scope": "v8 front/contact material; v7 front/back/contact construction. Exact export and native equipment remain pending.",
+  "sourceRecipe": {
+    "scripts/blender/items/build_studies.py": "cdee90a6dc72964149d78e53cafa1b89b60023b32cb67bd4b47e937063d4618f",
+    "scripts/blender/items/surfaces.py": "bee5b55391332e076d1a1071f2b0800a4f8931ef6c18ee140c16da5dfdc35bf7",
+    "scripts/blender/items/metal_weapons.py": "a0c145291031d4be360eee1820b3bd3a1e44dd681778ddd8233be94ff5805ac1"
+  },
+  "correction": "Full dark oxide on contact faces and short necks, local roughness .65/metal .42, clean copper middles retained."
+}

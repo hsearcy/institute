@@ -1,0 +1,9 @@
+{
+  "sourceSnapshot": "/home/houston/git/institute/tmp/item-models/thunderrod/thunder-v8-source.blend",
+  "sourceSHA256": "9ea40eff0b2d62e267b9358192cd3948ee074d1081e429974c88d9fbb4227ab7",
+  "normals": "modeled geometric relief; procedural micro-bump excluded, source roughness and color retained",
+  "sourceTriangles": 49028,
+  "lowTriangles": 9300,
+  "projectionGroups": 10,
+  "elapsedSeconds": 24.212512254714966
+}

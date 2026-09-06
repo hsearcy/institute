@@ -1,0 +1,10 @@
+{
+  "seconds": 19.239078044891357,
+  "sourceSHA256": {
+    "scripts/blender/items/build_studies.py": "cdee90a6dc72964149d78e53cafa1b89b60023b32cb67bd4b47e937063d4618f",
+    "scripts/blender/items/surfaces.py": "bee5b55391332e076d1a1071f2b0800a4f8931ef6c18ee140c16da5dfdc35bf7",
+    "scripts/blender/items/metal_weapons.py": "a0c145291031d4be360eee1820b3bd3a1e44dd681778ddd8233be94ff5805ac1"
+  },
+  "recipeUnchangedDuringRender": true,
+  "restoredScene": "Scene"
+}

@@ -1,0 +1,16 @@
+{
+  "seconds": 15.751526594161987,
+  "sourceSHA256": {
+    "build_studies.py": "9883b28b0fb626565d559b6dab394a8214909d0a48def0902f87d1ee313d5333",
+    "surfaces.py": "bee5b55391332e076d1a1071f2b0800a4f8931ef6c18ee140c16da5dfdc35bf7",
+    "metal_weapons.py": "93f28d5797610608d123c62120857d6b3e3de663964ff6b4786acaec10891c8a"
+  },
+  "thumbnailFraming": {
+    "azimuth": 32,
+    "elevation": 12,
+    "roll": 28,
+    "margin": 1.18
+  },
+  "thumbnailGeometry": "exact thunderrod-v1.glb; framing overrides only, GLB unchanged",
+  "restoredScene": "Scene"
+}

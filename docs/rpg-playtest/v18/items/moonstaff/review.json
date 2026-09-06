@@ -1,0 +1,29 @@
+{
+  "sourceVersion": 4,
+  "review": {
+    "construction": 8,
+    "material": 8,
+    "scope": "v4 front/head material; v3 rear/head/grip construction. Source only; exact export and native held size remain pending."
+  },
+  "sourceSHA256": {
+    "build_studies.py": "724e8d0bfb7d8f776dbadd678c543b965abd71ecab29aeb94dacc835429b1d7d",
+    "surfaces.py": "bee5b55391332e076d1a1071f2b0800a4f8931ef6c18ee140c16da5dfdc35bf7",
+    "metal_weapons.py": "93f28d5797610608d123c62120857d6b3e3de663964ff6b4786acaec10891c8a"
+  },
+  "historicalReviews": {
+    "v1": {
+      "construction": 6.5,
+      "material": 6
+    },
+    "v2": {
+      "shownHeadConstruction": 7.5,
+      "material": 7
+    },
+    "v3": {
+      "construction": 8,
+      "material": 7.5
+    }
+  },
+  "sourceOnly": true,
+  "nextGate": "Exact export fidelity, then native held/thumbnail"
+}

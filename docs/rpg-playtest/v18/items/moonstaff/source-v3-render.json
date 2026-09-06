@@ -1,0 +1,16 @@
+{
+  "seconds": 21.707326412200928,
+  "sourceSHA256": {
+    "build_studies.py": "a5c9731967072896f8dd6f4c2e647a6c9a3563a2f4d9c6ea6f204e47a9109bd5",
+    "surfaces.py": "bee5b55391332e076d1a1071f2b0800a4f8931ef6c18ee140c16da5dfdc35bf7",
+    "metal_weapons.py": "93f28d5797610608d123c62120857d6b3e3de663964ff6b4786acaec10891c8a"
+  },
+  "ashGLBSHA256": "338e88f04c4b96d196331908fc2abcbe64f7d900987233a5a11cf3ecf8a81422",
+  "thumbnailFraming": {
+    "azimuth": 32,
+    "elevation": 12,
+    "roll": 28,
+    "margin": 1.18
+  },
+  "restoredScene": "Scene"
+}

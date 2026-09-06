@@ -1,0 +1,203 @@
+[
+  {
+    "object": "Continuous forged paddle electrode.006",
+    "vertices": 984,
+    "attributes": {
+      "ElectrodeHeat": {
+        "domain": "POINT",
+        "type": "FLOAT",
+        "min": 0.0,
+        "max": 0.8600000143051147,
+        "nonzero": 240,
+        "first": [
+          0.0,
+          0.0
+        ],
+        "last": [
+          0.8600000143051147,
+          0.8600000143051147
+        ]
+      },
+      "ElectrodeShelter": {
+        "domain": "POINT",
+        "type": "FLOAT",
+        "min": 0.0,
+        "max": 0.8199999928474426,
+        "nonzero": 192,
+        "first": [
+          0.8199999928474426,
+          0.8199999928474426
+        ],
+        "last": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "material": "Copper electrode with localized heat and sheltered oxidation",
+    "shaderAttributes": [
+      {
+        "name": "ElectrodeHeat",
+        "type": "GEOMETRY",
+        "links": [
+          {
+            "output": "Fac",
+            "to": "Mix (Legacy)"
+          },
+          {
+            "output": "Fac",
+            "to": "Math"
+          }
+        ]
+      },
+      {
+        "name": "ElectrodeShelter",
+        "type": "GEOMETRY",
+        "links": [
+          {
+            "output": "Fac",
+            "to": "Mix (Legacy).001"
+          },
+          {
+            "output": "Fac",
+            "to": "Math"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "object": "Continuous forged paddle electrode.007",
+    "vertices": 984,
+    "attributes": {
+      "ElectrodeHeat": {
+        "domain": "POINT",
+        "type": "FLOAT",
+        "min": 0.0,
+        "max": 0.8600000143051147,
+        "nonzero": 240,
+        "first": [
+          0.0,
+          0.0
+        ],
+        "last": [
+          0.8600000143051147,
+          0.8600000143051147
+        ]
+      },
+      "ElectrodeShelter": {
+        "domain": "POINT",
+        "type": "FLOAT",
+        "min": 0.0,
+        "max": 0.8199999928474426,
+        "nonzero": 192,
+        "first": [
+          0.8199999928474426,
+          0.8199999928474426
+        ],
+        "last": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "material": "Copper electrode with localized heat and sheltered oxidation",
+    "shaderAttributes": [
+      {
+        "name": "ElectrodeHeat",
+        "type": "GEOMETRY",
+        "links": [
+          {
+            "output": "Fac",
+            "to": "Mix (Legacy)"
+          },
+          {
+            "output": "Fac",
+            "to": "Math"
+          }
+        ]
+      },
+      {
+        "name": "ElectrodeShelter",
+        "type": "GEOMETRY",
+        "links": [
+          {
+            "output": "Fac",
+            "to": "Mix (Legacy).001"
+          },
+          {
+            "output": "Fac",
+            "to": "Math"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "object": "Continuous forged paddle electrode.008",
+    "vertices": 984,
+    "attributes": {
+      "ElectrodeHeat": {
+        "domain": "POINT",
+        "type": "FLOAT",
+        "min": 0.0,
+        "max": 0.8600000143051147,
+        "nonzero": 240,
+        "first": [
+          0.0,
+          0.0
+        ],
+        "last": [
+          0.8600000143051147,
+          0.8600000143051147
+        ]
+      },
+      "ElectrodeShelter": {
+        "domain": "POINT",
+        "type": "FLOAT",
+        "min": 0.0,
+        "max": 0.8199999928474426,
+        "nonzero": 192,
+        "first": [
+          0.8199999928474426,
+          0.8199999928474426
+        ],
+        "last": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "material": "Copper electrode with localized heat and sheltered oxidation",
+    "shaderAttributes": [
+      {
+        "name": "ElectrodeHeat",
+        "type": "GEOMETRY",
+        "links": [
+          {
+            "output": "Fac",
+            "to": "Mix (Legacy)"
+          },
+          {
+            "output": "Fac",
+            "to": "Math"
+          }
+        ]
+      },
+      {
+        "name": "ElectrodeShelter",
+        "type": "GEOMETRY",
+        "links": [
+          {
+            "output": "Fac",
+            "to": "Mix (Legacy).001"
+          },
+          {
+            "output": "Fac",
+            "to": "Math"
+          }
+        ]
+      }
+    ]
+  }
+]

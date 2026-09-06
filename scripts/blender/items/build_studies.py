@@ -392,13 +392,16 @@ def thunderrod(root,p):
     copper_roughness=shader.inputs['Roughness'].links[0].from_socket
     heat=nodes.new('ShaderNodeAttribute');heat.attribute_name='ElectrodeHeat'
     shelter=nodes.new('ShaderNodeAttribute');shelter.attribute_name='ElectrodeShelter'
-    warm=nodes.new('ShaderNodeMixRGB');warm.inputs[2].default_value=(.105,.033,.014,1)
+    warm=nodes.new('ShaderNodeMixRGB');warm.inputs[2].default_value=(.032,.013,.008,1)
     links.new(heat.outputs['Fac'],warm.inputs[0]);links.new(copper_color,warm.inputs[1])
     dark=nodes.new('ShaderNodeMixRGB');dark.inputs[2].default_value=(.029,.043,.040,1)
     links.new(shelter.outputs['Fac'],dark.inputs[0]);links.new(warm.outputs[0],dark.inputs[1]);links.new(dark.outputs[0],shader.inputs['Base Color'])
     mask=nodes.new('ShaderNodeMath');mask.operation='MAXIMUM';links.new(heat.outputs['Fac'],mask.inputs[0]);links.new(shelter.outputs['Fac'],mask.inputs[1])
-    rough=nodes.new('ShaderNodeMixRGB');rough.inputs[2].default_value=(.57,.57,.57,1)
+    rough=nodes.new('ShaderNodeMixRGB');rough.inputs[2].default_value=(.65,.65,.65,1)
     links.new(mask.outputs[0],rough.inputs[0]);links.new(copper_roughness,rough.inputs[1]);links.new(rough.outputs[0],shader.inputs['Roughness'])
+    oxide_metal=nodes.new('ShaderNodeMapRange');oxide_metal.inputs['From Min'].default_value=0;oxide_metal.inputs['From Max'].default_value=1
+    oxide_metal.inputs['To Min'].default_value=.82;oxide_metal.inputs['To Max'].default_value=.42
+    links.new(heat.outputs['Fac'],oxide_metal.inputs['Value']);links.new(oxide_metal.outputs['Result'],shader.inputs['Metallic'])
     # Three forged conductors terminate around one common discharge gap. The
     # unequal shoulders remain, but the tips have purposeful opposing faces.
     for angle,reach,top in ((.18,.116,.777),(2.40,.094,.776),(4.50,.102,.779)):
@@ -430,9 +433,11 @@ def thunderrod(root,p):
         shelter_attribute=electrode.data.attributes.new('ElectrodeShelter','FLOAT','POINT')
         for vertex in electrode.data.vertices:
             along=(vertex.index//sides)/(len(points)-1)
-            tip=max(0,min(1,(along-.74)/.26));tip=tip*tip*(3-2*tip)
+            # Full oxide coverage on the formed face and short neck, with a
+            # graduated transition that leaves the long copper shaft clean.
+            tip=max(0,min(1,(along-.76)/.14));tip=tip*tip*(3-2*tip)
             base=max(0,min(1,(.20-along)/.20));base=base*base*(3-2*base)
-            heat_attribute.data[vertex.index].value=tip*.86
+            heat_attribute.data[vertex.index].value=tip
             shelter_attribute.data[vertex.index].value=base*.82
         electrode.data.polygons[-1].use_smooth=False
         foot=Vector(points[0]);axis=(Vector(points[3])-foot).normalized()
@@ -448,11 +453,110 @@ def thunderrod(root,p):
     lathe_z('Rounded weighted rod butt',[(-.169,.005),(-.166,.022),(-.154,.030),(-.134,.030),(-.120,.024),(-.115,.022)],p['brass'],root)
 
 
+def moonstaff(root,p):
+    # A long ash shaft continues through the palm; the crescent is a forged
+    # curved section seated into a split ferrule, rather than a floating icon.
+    ash=material('Silvered ashwood with longitudinal grain',(.12,.14,.145),0,.49)
+    nodes,links=ash.node_tree.nodes,ash.node_tree.links;shader=nodes.get('Principled BSDF')
+    coord=nodes.new('ShaderNodeTexCoord');stretch=nodes.new('ShaderNodeVectorMath');stretch.operation='MULTIPLY';stretch.inputs[1].default_value=(11,11,2.4)
+    links.new(coord.outputs['Generated'],stretch.inputs[0])
+    grain=nodes.new('ShaderNodeTexNoise');grain.inputs['Scale'].default_value=1;grain.inputs['Detail'].default_value=3
+    links.new(stretch.outputs[0],grain.inputs['Vector'])
+    color=nodes.new('ShaderNodeValToRGB');color.color_ramp.elements[0].position=.22;color.color_ramp.elements[0].color=(.024,.032,.030,1);color.color_ramp.elements[1].position=.79;color.color_ramp.elements[1].color=(.085,.112,.103,1)
+    links.new(grain.outputs['Fac'],color.inputs[0]);links.new(color.outputs['Color'],shader.inputs['Base Color'])
+    bump=nodes.new('ShaderNodeBump');bump.inputs['Strength'].default_value=.24;bump.inputs['Distance'].default_value=.00020
+    links.new(grain.outputs['Fac'],bump.inputs['Height']);links.new(bump.outputs['Normal'],shader.inputs['Normal'])
+    lathe_z('Continuous silvered ash shaft',[(-.288,.013),(-.276,.017),(-.145,.018),(-.119,.0135),(.133,.0135),(.15,.018),(.48,.016),(.765,.020),(.833,.018)],ash,root,48)
+    SURFACES.wrapped_hilt(root,dict(p,leather=p['navy']),(.028,.045,.060,1))
+    pewter=material('Handled lunar silver',(.13,.17,.19),.92,.28)
+    # Local occlusion describes sheltered metal at the fitted brace and bezel
+    # junctions; broad exposed silver stays clean and reflective.
+    nodes,links=pewter.node_tree.nodes,pewter.node_tree.links;shader=nodes.get('Principled BSDF')
+    shelter=nodes.new('ShaderNodeAmbientOcclusion');shelter.inputs['Distance'].default_value=.022
+    response=nodes.new('ShaderNodeMapRange');response.inputs['To Min'].default_value=.52;response.inputs['To Max'].default_value=1
+    links.new(shelter.outputs['AO'],response.inputs['Value'])
+    shade=nodes.new('ShaderNodeMixRGB');shade.blend_type='MULTIPLY';shade.inputs[0].default_value=1;shade.inputs[1].default_value=(.13,.17,.19,1)
+    links.new(response.outputs['Result'],shade.inputs[2]);links.new(shade.outputs[0],shader.inputs['Base Color'])
+    recess=material('Sheltered pewter socket',(.052,.072,.084),.67,.48)
+    for z in (-.109,.120):
+        lathe_z('Seated silver grip binding',[(z-.007,.019),(z-.004,.024),(z+.004,.024),(z+.007,.020)],pewter,root,48)
+    lathe_z('Tapered butt ferrule',[(-.301,.008),(-.297,.018),(-.290,.021),(-.264,.021),(-.259,.017)],recess,root,48)
+    lathe_z('Crescent forged socket',[ (.765,.019),(.771,.028),(.789,.028),(.812,.023),(.845,.024),(.862,.014)],pewter,root,64)
+    # Broad, convex front and rear surfaces share one continuous radial profile.
+    # The upper horn reaches farther than the lower, and both thin into points.
+    vertices=[];faces=[];sections=97;sides=16
+    for i in range(sections):
+        t=i/(sections-1);angle=math.radians(43+270*t)
+        taper=max(.025,math.sin(math.pi*t)**.65)
+        radius=.153+.010*math.sin(math.pi*t)
+        width=(.022+.008*math.sin(math.pi*t))*taper
+        depth=(.012+.002*math.sin(math.pi*t))*taper
+        radial=Vector((math.cos(angle),0,math.sin(angle)))
+        center=Vector((-.010,0,1.018))+radial*radius
+        for j in range(sides):
+            a=j*math.tau/sides;c,s=math.cos(a),math.sin(a)
+            # Rounded rectangle gives real broad metal planes and narrow bevels.
+            across=math.copysign(abs(c)**.58,c);front=math.copysign(abs(s)**.58,s)
+            vertices.append(tuple(center+radial*(across*width)+Vector((0,front*depth,0))))
+    for i in range(sections-1):
+        for j in range(sides):
+            a=i*sides+j;b=i*sides+(j+1)%sides;faces.append((a,b,b+sides,a+sides))
+    faces.extend([tuple(reversed(range(sides))),tuple((sections-1)*sides+j for j in range(sides))])
+    moon=mesh('Continuous forged open crescent',vertices,faces,pewter,root,smooth=True)
+    # A dark fitted cup supports the domed stone inside a continuous rim;
+    # two shaped braces preserve the broad open crescent silhouette.
+    stone=material('Opaque pale blue moonstone',(.060,.135,.19),0,.34)
+    shader=stone.node_tree.nodes.get('Principled BSDF');shader.inputs['Coat Weight'].default_value=.50;shader.inputs['Coat Roughness'].default_value=.14
+    # Broad mineral clouds live beneath the uninterrupted polished surface.
+    # No micro-bump, glitter, extra fracture geometry or transmission pass.
+    nodes,links=stone.node_tree.nodes,stone.node_tree.links
+    coord=nodes.new('ShaderNodeTexCoord');cloud=nodes.new('ShaderNodeTexNoise');cloud.inputs['Scale'].default_value=3.1;cloud.inputs['Detail'].default_value=1;cloud.inputs['Roughness'].default_value=.55
+    links.new(coord.outputs['Generated'],cloud.inputs['Vector'])
+    mineral=nodes.new('ShaderNodeValToRGB');mineral.color_ramp.elements[0].position=.30;mineral.color_ramp.elements[0].color=(.023,.071,.12,1)
+    mineral.color_ramp.elements[1].position=.70;mineral.color_ramp.elements[1].color=(.155,.265,.29,1);mineral.color_ramp.interpolation='EASE'
+    links.new(cloud.outputs['Fac'],mineral.inputs[0]);links.new(mineral.outputs['Color'],shader.inputs['Base Color'])
+    center=Vector((.025,-.005,1.033))
+    for name,radii,mat,y in [('Moonstone fitted back cup',(.049,.014,.069),recess,.010),('Lenticular polished moonstone',(.043,.028,.061),stone,-.006)]:
+        bpy.ops.mesh.primitive_uv_sphere_add(segments=48,ring_count=32,location=tuple(center+Vector((0,y,0))))
+        obj=bpy.context.object;obj.name=name;obj.scale=radii;obj.data.materials.append(mat);obj.parent=root
+        for face in obj.data.polygons:face.use_smooth=True
+    # A rolled oval bezel follows the stone rim continuously. The front lip
+    # overlaps the gem edge; the broader rear skirt seats the forged braces.
+    rim_vertices=[];rim_faces=[];ring_count=64
+    for size,y in ((1.00,.020),(1.06,.009),(1.08,-.006),(1.03,-.018),(.93,-.023),(.90,-.017)):
+        for j in range(ring_count):
+            a=j*math.tau/ring_count
+            rim_vertices.append(tuple(center+Vector((.047*size*math.cos(a),y,.067*size*math.sin(a)))))
+    for i in range(5):
+        for j in range(ring_count):
+            a=i*ring_count+j;b=i*ring_count+(j+1)%ring_count
+            rim_faces.append((a,b,b+ring_count,a+ring_count))
+    mesh('Rolled fitted oval moonstone bezel',rim_vertices,rim_faces,pewter,root,smooth=True)
+    for angle,entry in ((math.radians(147),math.radians(146)),(math.radians(253),math.radians(267))):
+        radial=Vector((math.cos(angle),0,math.sin(angle)))
+        start=Vector((-.010,.006,1.018))+radial*.156
+        end=center+Vector((math.cos(entry)*.049,.013,math.sin(entry)*.070))
+        elbow=start.lerp(end,.44)+Vector((.008,.004,-.012))
+        pts,widths=curved_path([tuple(start),tuple(elbow),tuple(end)],[.016,.009,.011],12)
+        verts=[];faces=[];sides=12
+        for i,(point,width) in enumerate(zip(pts,widths)):
+            tangent=(Vector(pts[min(i+1,len(pts)-1)])-Vector(pts[max(0,i-1)])).normalized()
+            across=Vector((-tangent.z,0,tangent.x)).normalized()
+            for j in range(sides):
+                a=j*math.tau/sides;c,q=math.cos(a),math.sin(a)
+                verts.append(tuple(Vector(point)+across*(math.copysign(abs(c)**.58,c)*width)+Vector((0,-math.copysign(abs(q)**.58,q)*.004,0))))
+        for i in range(len(pts)-1):
+            for j in range(sides):
+                a=i*sides+j;b=i*sides+(j+1)%sides;faces.append((a,b,b+sides,a+sides))
+        faces.extend([tuple(reversed(range(sides))),tuple((len(pts)-1)*sides+j for j in range(sides))])
+        mesh('Swept tapered crescent setting brace',verts,faces,pewter,root,smooth=True)
+
+
 def cleaver(root,p):
     METAL_WEAPONS.cleaver(root,p,(SURFACES,solid_outline,lathe_z,material))
 
 
-BUILDERS={'apprentice':apprentice,'cinderwand':cinderwand,'glacier':glacier,'thunderrod':thunderrod,'cleaver':cleaver}
+BUILDERS={'apprentice':apprentice,'cinderwand':cinderwand,'glacier':glacier,'thunderrod':thunderrod,'cleaver':cleaver,'moonstaff':moonstaff}
 
 
 def build_study(ids=None):

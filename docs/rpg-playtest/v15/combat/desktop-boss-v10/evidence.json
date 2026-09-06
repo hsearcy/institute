@@ -1,0 +1,66 @@
+{
+  "label": "desktop-boss-frame-v10",
+  "db": "/tmp/rpg-partial-1788706524334.db",
+  "receipts": [],
+  "errors": [],
+  "poses": [
+    {
+      "fixture": "Controlled desktop boss formation; no progression claim",
+      "boss": {
+        "x": 580,
+        "y": 124,
+        "width": 280,
+        "height": 50
+      },
+      "safeTop": 188,
+      "safeBottom": 655.671875,
+      "camera": [
+        -12.96,
+        12.96,
+        9.749152037176529,
+        -6.45084796282347
+      ],
+      "enemyCount": 10,
+      "path": "/tmp/desktop-boss-frame-v10-1440x900.png"
+    },
+    {
+      "fixture": "Controlled desktop boss formation; no progression claim",
+      "boss": {
+        "x": 500,
+        "y": 124,
+        "width": 280,
+        "height": 50
+      },
+      "safeTop": 188,
+      "safeBottom": 476,
+      "camera": [
+        -16.58194642003748,
+        16.58194642003748,
+        11.236098798062539,
+        -7.418590924479628
+      ],
+      "enemyCount": 10,
+      "path": "/tmp/desktop-boss-frame-v10-1280x720.png"
+    },
+    {
+      "fixture": "Controlled desktop boss formation; no progression claim",
+      "boss": {
+        "x": 820,
+        "y": 124,
+        "width": 280,
+        "height": 50
+      },
+      "safeTop": 188,
+      "safeBottom": 831.953125,
+      "camera": [
+        -14.399999999999999,
+        14.399999999999999,
+        9.185152037176529,
+        -7.01484796282347
+      ],
+      "enemyCount": 10,
+      "path": "/tmp/desktop-boss-frame-v10-1920x1080.png"
+    }
+  ],
+  "success": true
+}

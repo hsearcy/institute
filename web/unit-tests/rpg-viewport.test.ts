@@ -70,16 +70,17 @@ test('Portrait framing keeps the hero and surrounding spell space above an open 
   assert(dungeonPortraitOffset(390, 844, 118, 484) < dungeonPortraitOffset(390, 844, 118, 650));
 });
 
-test('Complete landscape formations fit below the boss/header and above the dock', () => {
-  for (const [width, height] of [[622,305], [440,275], [368,235]]) for (let room = 0; room < 6; room++) {
-    const camera = cameraFor(width, height, room, true), layout = getRoomLayout(room);
+test('Complete landscape and desktop formations fit below the boss/header and above the dock', () => {
+  for (const [width, height] of [[622,305], [440,275], [368,235], [1440,900], [1280,720], [1920,1080]]) for (let room = 0; room < 6; room++) {
+    const separateControls = height < 400;
+    const camera = cameraFor(width, height, room, separateControls), layout = getRoomLayout(room);
     const roster = enemyRoster(room, 10), formation = enemyPositions(room, 10);
     const points = [new Vector3(layout.heroX, 0, layout.heroZ), new Vector3(layout.heroX, 2.1, layout.heroZ),
       ...formation.flatMap((point, i) => [new Vector3(point.x, 0, point.z), new Vector3(point.x, roster[i].height + .55, point.z)])];
     const ys = points.map(point => (1 - point.clone().project(camera).y) * height / 2);
-    const top = room === 5 ? 100 : 56, bottom = height - 22;
+    const top = room === 5 ? (separateControls ? 100 : 200) : (separateControls ? 56 : 118), bottom = separateControls ? height - 22 : height - 225;
     const frame = dungeonCombatFrame(Math.min(...ys), Math.max(...ys), top, bottom, height);
-    const half = dungeonCameraHalfHeight(width, height, true) * frame.scale;
+    const half = dungeonCameraHalfHeight(width, height, separateControls) * frame.scale;
     const offset = frame.shift * 2 * half / height;
     camera.left = -half * width / height; camera.right = half * width / height;
     camera.top = half + offset; camera.bottom = -half + offset; camera.updateProjectionMatrix();

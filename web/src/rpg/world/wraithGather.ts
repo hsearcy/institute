@@ -3,7 +3,9 @@ const cache = new WeakMap<BufferGeometry, BufferGeometry>();
 
 /** Bend cloth around a continuous centerline; retain length instead of compressing height. */
 export function bendWraithPoint(point: Vector3, hem: number, height: number): number {
-  const hinge = hem + height * .16, radius = height * .84 / 1.65;
+  // The hood rim is part of Body, so the final fold must carry that cloth
+  // over the shoulder with the rigid face instead of leaving a second head-like peak.
+  const hinge = hem + height * .16, radius = height * .84 / 2.2;
   const angle = Math.max(0, point.y - hinge) / radius;
   if (!angle) return 0;
   const z = point.z;

@@ -3,6 +3,7 @@ import { solvePlanarLeg } from './legSupport';
 import { bendWraithPoint, wraithGatherGeometry } from './wraithGather';
 import { ConvexHull } from 'three/examples/jsm/math/ConvexHull.js';
 const supportCache = new WeakMap<BufferGeometry, Vector3[]>();
+const spectralReleaseDirections = { L: new Vector3(.12, -1, .06).normalize(), R: new Vector3(-.12, -1, .06).normalize() };
 function supportVertices(mesh: Mesh): Vector3[] {
   const cached = supportCache.get(mesh.geometry); if (cached) return cached;
   const position = mesh.geometry.getAttribute('position'); if (!position) return [];
@@ -346,9 +347,22 @@ export class EnemyAnimator {
       const turn = name === 'ArmLowerR' ? -.08 * settle : (angle + (name === 'Head' ? .35 : name === 'ArmLowerL' ? .4 * slack : 0)) * (name === 'ArmLowerL' ? smooth((age - .08) / .44) : settle);
       this.rotate(name, turn, name === 'Head' ? .10 * settle : 0, name === 'ArmLowerR' ? .12 * settle : 0);
     }
-    // The raised visible hand holds the staff (L); after its failed brace the
-    // whole sleeve/forearm releases down, with the rigid shaft tipping low.
-    const holdingShoulder = this.joints.get('ArmUpperL'); if (holdingShoulder) holdingShoulder.object.position.y -= .24 * slack;
+    // Release the entire reach: shoulders sink, elbows settle beside the robe,
+    // then wrists follow gravity. A vertical wrist with a forward elbow still
+    // reads as a deliberate plea/cast, especially with the fused staff in L.
+    for (const side of ['L', 'R'] as const) {
+      const shoulder = this.joints.get(`ArmUpper${side}`);
+      if (shoulder) shoulder.object.position.y -= .24 * slack;
+      const forearm = this.joints.get(`ArmLower${side}`);
+      if (!forearm || slack <= 0) continue;
+      // Source forearm-to-hand joint vectors, in exported Y-up coordinates.
+      if (side === 'L') this.supportPoint.set(.17486, .02982, .16589);
+      else this.supportPoint.set(-.14077, -.10835, .05901);
+      this.supportPoint.applyQuaternion(forearm.object.quaternion).normalize();
+      this.offset.setFromUnitVectors(this.supportPoint, spectralReleaseDirections[side]).multiply(forearm.object.quaternion);
+      forearm.object.quaternion.slerp(this.offset, slack);
+      forearm.object.position.z -= (side === 'L' ? .38 : .32) * slack;
+    }
     this.rotate('Cape', 0, 0, 0);
   }
 

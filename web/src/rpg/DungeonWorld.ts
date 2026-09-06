@@ -1732,7 +1732,7 @@ export class DungeonWorld {
     this.camera.left = -halfHeight * ratio; this.camera.right = halfHeight * ratio;
     const verticalOffset = dungeonCameraVerticalOffset(height, separateControls) + dungeonPortraitOffset(width, height, this.combatSafeTop, this.combatSafeBottom);
     this.camera.top = halfHeight + verticalOffset; this.camera.bottom = -halfHeight + verticalOffset; this.camera.updateProjectionMatrix();
-    if (separateControls && this.enemies.length) {
+    if ((separateControls || (width > 760 && height > 650)) && this.enemies.length) {
       // Measure at the destination, so travel and surviving HP never reframe a room.
       const view = this.camera.clone();
       view.position.copy(this.destination).add(new THREE.Vector3(17, 25, 20));
@@ -1742,8 +1742,9 @@ export class DungeonWorld {
       for (const enemy of this.enemies) {
         ys.push(screenY(enemy.origin.clone()), screenY(enemy.origin.clone().add(new THREE.Vector3(0, enemy.height + .55, 0))));
       }
-      const fit = dungeonCombatFrame(Math.min(...ys), Math.max(...ys), Math.max(56, this.combatSafeTop), height - 22, height);
-      const half = halfHeight * fit.scale, offset = fit.shift * 2 * half / height;
+      const bottom = separateControls ? height - 22 : (this.combatSafeBottom || height - 22);
+      const fit = dungeonCombatFrame(Math.min(...ys), Math.max(...ys), Math.max(56, this.combatSafeTop), bottom, height);
+      const half = halfHeight * fit.scale, offset = verticalOffset + fit.shift * 2 * half / height;
       this.camera.left = -half * ratio; this.camera.right = half * ratio;
       this.camera.top = half + offset; this.camera.bottom = -half + offset; this.camera.updateProjectionMatrix();
     } else if (width <= 760 && height > width && this.enemies.length) {

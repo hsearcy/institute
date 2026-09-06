@@ -115,6 +115,29 @@ test('Wraith staff hand releases below the bowed head after its failed brace', (
   assert(releasedY < head.getWorldPosition(new Vector3()).y - .12, 'Staff hand must hang below the bowed head');
 });
 
+test('Wraith terminal joint geometry releases the forearm vertically and lowers its Head region', () => {
+  const { root, nodes } = exportedRig('wraith'), animator = new EnemyAnimator(root, { kind: 'wraith', phase: .7 });
+  animator.update(2, { deathAge: 1.1, collapse: 'grounded' }); root.updateMatrixWorld(true);
+  for (const [side, wrist] of [['L', new Vector3(.17486, .02982, .16589)], ['R', new Vector3(-.14077, -.10835, .05901)]] as const) {
+    const forearm = nodes.find(node => node.userData.enemyJoint === `ArmLower${side}`)!;
+    const direction = wrist.applyMatrix4(forearm.matrixWorld).sub(forearm.getWorldPosition(new Vector3())).normalize();
+    assert(direction.y < -.95, 'Both forearms must hang rather than retaining an active off-hand');
+    assert(forearm.position.z < .25, 'Elbows must also return beside the torso instead of preserving the reach');
+  }
+  const top = (object: Object3D) => {
+    let y = -Infinity;
+    object.traverse(node => {
+      if (!(node instanceof Mesh)) return;
+      const point = new Vector3(), count = node.geometry.getAttribute('position').count;
+      for (let i = 0; i < count; i++) y = Math.max(y, node.getVertexPosition(i, point).applyMatrix4(node.matrixWorld).y);
+    });
+    return y;
+  };
+  const head = nodes.find(node => node.userData.enemyJoint === 'Head')!;
+  const mantle = Math.max(...nodes.filter(node => /^(Body|Cape|ArmUpperL|ArmUpperR)_Baked/.test(node.name)).map(top));
+  assert(top(head) < mantle - .05, 'The exported Head region must yield below the folded upper cloth; native silhouette review remains separate');
+});
+
 test('Guardian fatal contact retains shoulder impulse against its planted lower mass', () => {
   const { root, nodes } = exportedRig('guardian'), animator = new EnemyAnimator(root, { kind: 'guardian', phase: .7 });
   const body = nodes.find(node => node.userData.enemyJoint === 'Body')!;

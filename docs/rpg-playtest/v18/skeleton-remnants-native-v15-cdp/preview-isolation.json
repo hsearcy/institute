@@ -1,0 +1,22 @@
+{
+  "before": {
+    "frame": 370593,
+    "paused": true,
+    "playing": false,
+    "stateSHA256": "d7a3f28b8e0423ed203fbff45617acd3427c0528958a070afeb3ec31ba4941bc"
+  },
+  "run": {
+    "code": 0,
+    "stdout": "{\"label\":\"skeleton-remnants-v15-cdp\",\"success\":true,\"video\":\"/home/houston/git/institute/tmp/skeleton-remnants-v15-cdp-1788727730424/video/page@5a4900b82f4f068fd109cd2a1ddc7d94.webm\",\"casts\":[{\"before\":[12,6,8,8,10,6],\"after\":[6,0,2,2,4,0],\"encounter\":0},{\"before\":[6,0,2,2,4,0],\"after\":[12,6,8,8,10,6,6],\"encounter\":1}],\"maxVisible\":7,\"hits\":10}\n",
+    "stderr": ""
+  },
+  "stillHeld": true,
+  "success": true,
+  "restored": {
+    "sameWorld": true,
+    "frame": 373135,
+    "paused": true,
+    "playing": false,
+    "stateSHA256": "d7a3f28b8e0423ed203fbff45617acd3427c0528958a070afeb3ec31ba4941bc"
+  }
+}

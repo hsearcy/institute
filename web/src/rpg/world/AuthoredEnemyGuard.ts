@@ -130,7 +130,10 @@ export class AuthoredEnemyGuard {
       const target = this.targets.get(side)!;
       if (reacting) target.copy(support.toSpace(lower.object, this.point.copy(leg.foot)));
       else target.copy(leg.center);
-      target.z += side === 'R' ? .075 : -.075;
+      // A rearward idle heel folds its shin across the opposite thigh in
+      // near-side game views. Set both idle supports under the forward guard,
+      // retaining a small stagger; the reviewed reaction catch stays intact.
+      target.z += reacting ? (side === 'R' ? .075 : -.075) : (side === 'R' ? .13 : .115);
       let floor = support.floor;
       if (reacting && leg.sole?.length) {
         floor = Infinity;

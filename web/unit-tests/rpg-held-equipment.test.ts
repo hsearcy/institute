@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
-import { Bone, BoxGeometry, Group, Matrix4, Mesh, MeshStandardMaterial } from 'three';
+import { Bone, BoxGeometry, BufferGeometry, Float32BufferAttribute, Group, Matrix4, Mesh, MeshStandardMaterial, Skeleton, SkinnedMesh, Uint16BufferAttribute, Vector3 } from 'three';
 import { authoredHeroGrip, HeldEquipment } from '../src/rpg/world/HeldEquipment';
 
 function fixture() {
@@ -57,4 +57,40 @@ test('Replacing the held model removes its old instance and accepts suffixed gri
   assert.equal(equipment.itemId, 'cinderbranch'); assert.equal(f.hand.children.length, 1);
   assert.equal(f.blade.visible, false);
   equipment.clear(); assert.equal(f.blade.visible, true);
+});
+
+test('Blade samples follow actual tip/grip role nodes through animation and clear with the mount', () => {
+  const f = fixture(), tip = new Group(); tip.position.set(.06, 1.1, -.03); tip.userData.attachmentRole = 'Tip';
+  f.source.children[0].add(tip); f.grip.userData.attachmentRole = 'Grip';
+  const equipment = new HeldEquipment(f.hero, f.hand, authoredHeroGrip()), gripWorld = new Vector3(), tipWorld = new Vector3();
+  assert(equipment.replace(f.source));
+  for (const angle of [-.4, .3, 1.2]) {
+    f.hand.rotation.z = angle; f.hero.updateMatrixWorld(true);
+    assert(equipment.sampleWorldBlade(gripWorld, tipWorld));
+    const actualTip = f.hand.getObjectByName('HeldEquipment')!.children[0].children[0].children.find(node => node.userData.attachmentRole === 'Tip')!;
+    assert(tipWorld.distanceTo(actualTip.getWorldPosition(new Vector3())) < 1e-8);
+    assert(gripWorld.distanceTo(new Vector3().setFromMatrixPosition(new Matrix4().multiplyMatrices(f.hand.matrixWorld, authoredHeroGrip()))) < 1e-8);
+  }
+  equipment.clear(); assert.equal(equipment.sampleWorldBlade(gripWorld, tipWorld), false);
+});
+
+test('A rigid embedded sword caches its real endpoint and follows the hand without a replacement asset', () => {
+  const hero = new Group(), hand = new Bone(); hero.add(hand);
+  const geometry = new BufferGeometry();
+  geometry.setAttribute('position', new Float32BufferAttribute([0, .9, 0, .03, .75, .01, 0, -.12, 0], 3));
+  geometry.setAttribute('skinIndex', new Uint16BufferAttribute(new Array(12).fill(0), 4));
+  geometry.setAttribute('skinWeight', new Float32BufferAttribute([1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0], 4));
+  const blade = new SkinnedMesh(geometry, new MeshStandardMaterial()); blade.userData.sourcePart = 'equipped_sword'; hero.add(blade);
+  hero.updateMatrixWorld(true); blade.bind(new Skeleton([hand]));
+  // Runtime normalizes the loaded actor before creating its equipment helper.
+  hero.scale.setScalar(1.1); hero.position.set(2, .2, -3); hero.rotation.y = .4;
+  const equipment = new HeldEquipment(hero, hand, new Matrix4()), grip = new Vector3(), tip = new Vector3();
+  hero.scale.setScalar(1.35); hero.position.set(3, .2, -4);
+  for (const angle of [-.8, .1, 1.1]) {
+    hand.rotation.x = angle; hand.position.set(.1, 1.2, -.15); hero.updateMatrixWorld(true);
+    assert(equipment.sampleWorldBlade(grip, tip));
+    assert(tip.distanceTo(blade.getVertexPosition(0, new Vector3()).applyMatrix4(blade.matrixWorld)) < 1e-7);
+    assert(grip.distanceTo(hand.getWorldPosition(new Vector3())) < 1e-7);
+  }
+  equipment.clear(); assert(equipment.sampleWorldBlade(grip, tip));
 });

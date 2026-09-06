@@ -1,4 +1,4 @@
-import { Group, Matrix4, Mesh, Object3D } from 'three';
+import { Group, Matrix4, Mesh, Object3D, SkinnedMesh, Vector3 } from 'three';
 
 // Measured against the accepted authored hero (rig_authored_hero.py).
 // Items use +Y toward the tip and +Z for the presentation face. The source
@@ -17,22 +17,54 @@ export function authoredHeroGrip(): Matrix4 {
  */
 export class HeldEquipment {
   private mounted?: Group;
+  private grip?: Object3D;
+  private tip?: Object3D;
+  private embeddedBlade?: { grip: Vector3; tip: Vector3 };
   private readonly embedded: { mesh: Mesh; visible: boolean }[] = [];
 
-  constructor(private readonly hero: Object3D, private readonly hand: Object3D, private readonly socket: Matrix4) {}
+  constructor(private readonly hero: Object3D, private readonly hand: Object3D, private readonly socket: Matrix4) {
+    // The authored embedded sword is rigidly weighted to the holding hand.
+    // Measure its real distal vertex once; do not invent a length/axis for items
+    // whose distinct replacement model has not been installed yet.
+    hero.updateWorldMatrix(true, false); hero.updateMatrixWorld(true);
+    const grip = new Vector3().setFromMatrixPosition(socket), point = new Vector3(), tip = new Vector3();
+    const toHand = hand.matrixWorld.clone().invert(); let farthest = .25 ** 2;
+    hero.traverse(node => {
+      if (!(node instanceof SkinnedMesh) || node.userData.sourcePart !== 'equipped_sword') return;
+      const indices = node.geometry.getAttribute('skinIndex'), weights = node.geometry.getAttribute('skinWeight'), positions = node.geometry.getAttribute('position');
+      if (!indices || !weights || !positions) return;
+      for (let i = 0; i < positions.count; i++) {
+        let sum = 0;
+        for (let component = 0; component < 4; component++) {
+          const weight = weights.getComponent(i, component); sum += weight;
+          if (weight > 1e-6 && node.skeleton.bones[indices.getComponent(i, component)] !== hand) return;
+        }
+        if (Math.abs(sum - 1) > .001) return;
+      }
+      for (let i = 0; i < positions.count; i++) {
+        node.getVertexPosition(i, point).applyMatrix4(node.matrixWorld).applyMatrix4(toHand);
+        const distance = point.distanceToSquared(grip);
+        if (distance > farthest) { farthest = distance; tip.copy(point); }
+      }
+    });
+    if (farthest > .25 ** 2) this.embeddedBlade = { grip, tip };
+  }
 
   /** Invalid candidates leave the currently equipped model intact. */
   replace(source?: Object3D): boolean {
     if (!source) { this.clear(); return true; }
     const clone = source.clone(true);
     let grip: Object3D | undefined;
+    let tip: Object3D | undefined;
     let metadata: Object3D | undefined;
     clone.traverse(node => {
       if (node.userData.attachment === 'hand.R' && typeof node.userData.itemId === 'string') metadata = node;
       if (node.userData.attachmentRole === 'Grip') grip = node;
+      if (node.userData.attachmentRole === 'Tip') tip = node;
     });
     if (!metadata) return false;
     grip ??= clone.getObjectByName(metadata.userData.gripNode);
+    tip ??= clone.getObjectByName(metadata.userData.tipNode);
     if (!grip) return false;
     clone.updateMatrixWorld(true);
     const transform = grip.matrixWorld;
@@ -48,15 +80,30 @@ export class HeldEquipment {
         this.embedded.push({ mesh: node, visible: node.visible }); node.visible = false;
       }
     });
-    this.hand.add(mount); this.mounted = mount;
+    this.hand.add(mount); this.mounted = mount; this.grip = grip; this.tip = tip;
     return true;
   }
 
   clear(): void {
     this.mounted?.removeFromParent(); this.mounted = undefined;
+    this.grip = undefined; this.tip = undefined;
     for (const { mesh, visible } of this.embedded) mesh.visible = visible;
     this.embedded.length = 0;
   }
 
   get itemId(): string | undefined { return this.mounted?.userData.itemId; }
+
+  /** Actual mounted endpoints, including the current hand pose and actor scale.
+   * Caller-owned vectors avoid allocations in a live weapon trail.
+   */
+  sampleWorldBlade(grip: Vector3, tip: Vector3): boolean {
+    if (!this.mounted && this.embeddedBlade) {
+      this.hand.localToWorld(grip.copy(this.embeddedBlade.grip));
+      this.hand.localToWorld(tip.copy(this.embeddedBlade.tip));
+      return true;
+    }
+    if (!this.grip || !this.tip) return false;
+    this.grip.getWorldPosition(grip); this.tip.getWorldPosition(tip);
+    return true;
+  }
 }

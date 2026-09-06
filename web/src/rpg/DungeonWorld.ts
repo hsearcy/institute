@@ -21,6 +21,7 @@ import { phoenixFeatherMaterial, stormWispMaterial } from './world/materials';
 import { enemyRoster } from './world/enemyRoster';
 import { EnemyAnimator } from './world/EnemyAnimator';
 import { HeldEquipment, authoredHeroGrip } from './world/HeldEquipment';
+import { createCleaveStrike, cleaveEdgeMaterial, CLEAVE_RELEASE, CLEAVE_SPEED } from './world/cleave';
 import { RoomCutaway } from './world/RoomCutaway';
 import { ITEM_MODELS } from './itemModels';
 import { createHitReaction, sampleHitReaction, type HitReaction, type CombatHit } from './world/hitReactions';
@@ -58,6 +59,7 @@ export class DungeonWorld {
   private heroAnimation = '';
   private heroUsesAuthoredMotion = false;
   private heldEquipment?: HeldEquipment;
+  private cleaveCandidate = true;
   private readonly floorGroup = new THREE.Group();
   private vaultScenery?: THREE.Group;
   private sceneryMeshes: THREE.Object3D[] = [];
@@ -279,6 +281,7 @@ export class DungeonWorld {
     const warmup = new THREE.Group(); warmup.position.y = -1000;
     const warmMaterials: THREE.Material[] = [novaMaterial(), fireSheetMaterial(), firePlumeMaterial(0, 1), bladeWakeMaterial(), ashMaterial(), phoenixFeatherMaterial(), stormWispMaterial(0x7787a4), stormWispMaterial(0xa9bdff, true), lightningMaterial(0xa9bdff), ballLightningVolumeMaterial(), ballLightningFilamentMaterial(), ballLightningContactMaterial(), ballLightningContactMaterial(true), fireNovaFrontMaterial(), fireNovaVolumeMaterial()];
     warmMaterials.push(frostfallCrystalMaterial(), frostfallCrystalMaterial(true), frostfallContactMaterial());
+    warmMaterials.push(cleaveEdgeMaterial());
     const ignitionWarmup = createNovaIgnition();
     for (const layer of [ignitionWarmup.mesh, ignitionWarmup.seed]) { warmMaterials.push(layer.material); layer.geometry.dispose(); }
     for (const layer of createFireNovaContacts(1).layers) { warmMaterials.push(layer.material); layer.geometry.dispose(); }
@@ -331,12 +334,14 @@ export class DungeonWorld {
     // The live ribbon carries position/UV only. Three keys programs by normal
     // attribute presence even when this unlit shader never reads normals.
     bladeWake.geometry.deleteAttribute('normal');
+    const cuttingEdge = new THREE.Mesh(new THREE.PlaneGeometry(.5, .3), cleaveEdgeMaterial());
+    cuttingEdge.geometry.deleteAttribute('normal');
     const ash = new THREE.Mesh(new THREE.CylinderGeometry(.3, .1, .2, 8, 1, true), ashMaterial());
     const fireStroke = new THREE.Mesh(new THREE.PlaneGeometry(.2, .1), new THREE.MeshBasicMaterial({ color: 0xffc875, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
     const fireFlash = new THREE.Mesh(new THREE.PlaneGeometry(.3, .3), new THREE.MeshBasicMaterial({ color: 0xffebbd, map: this.glowMap, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
     const scorch = new THREE.Mesh(new THREE.PlaneGeometry(.3, .3), new THREE.MeshBasicMaterial({ color: 0x32261b, alphaMap: this.glowMap, transparent: true, opacity: .2, depthWrite: false }));
     const discharge = new THREE.Mesh(lightningGeometry(origin.clone().setY(1.2), origin.clone().add(new THREE.Vector3(1.5, .9, -1)), .03, view, 1), lightningMaterial(0x7abaff));
-    const layers = [ignition.mesh, ignition.seed, ...wave.layers, ...contacts.layers, ...ball.layers, ...electricalContacts.layers, ...frostCrystal.layers, ...frostContact.layers, bladeWake, ash, fireStroke, fireFlash, scorch, discharge];
+    const layers = [ignition.mesh, ignition.seed, ...wave.layers, ...contacts.layers, ...ball.layers, ...electricalContacts.layers, ...frostCrystal.layers, ...frostContact.layers, bladeWake, cuttingEdge, ash, fireStroke, fireFlash, scorch, discharge];
     const hand = origin.clone().setY(1.5), ground = origin.clone().setY(.06);
     this.heroVisual.getObjectByName('CastOrigin')?.getWorldPosition(hand);
     ignition.update(hand, ground, .13, new THREE.Vector3(.7, 0, 0));
@@ -348,8 +353,8 @@ export class DungeonWorld {
     electricalContacts.update(this.elapsed + .04);
     frostCrystal.update(origin.clone().setY(1.8), new THREE.Vector3(.1, -1, 0), this.elapsed);
     frostContact.update(origin.clone().setY(.9), .15, this.elapsed);
-    for (const mesh of [bladeWake, ash, fireStroke, fireFlash, scorch]) mesh.position.copy(origin).y = .8;
-    bladeWake.material.uniforms.opacity.value = .5; ash.material.uniforms.opacity.value = .5;
+    for (const mesh of [bladeWake, cuttingEdge, ash, fireStroke, fireFlash, scorch]) mesh.position.copy(origin).y = .8;
+    bladeWake.material.uniforms.opacity.value = .5; cuttingEdge.material.uniforms.opacity.value = .5; ash.material.uniforms.opacity.value = .5;
     this.scene.add(...layers);
     try {
       renderer.setRenderTarget(target);
@@ -1114,6 +1119,10 @@ export class DungeonWorld {
 
   setPaused(paused: boolean): void { this.paused = paused; }
 
+  /** Review switch for comparing the accepted blade effect with the legacy
+   * fallback. Rigs without measured blade endpoints always use that fallback. */
+  setCleaveCandidate(enabled: boolean): void { this.cleaveCandidate = enabled; }
+
   async attack(spellId: string, options: AttackOptions = {}): Promise<void> {
     if (this.disposed || this.attacking) return;
     const hitById = new Map(options.combat?.hits.map(hit => [hit.enemyId, hit]) ?? []);
@@ -1130,6 +1139,8 @@ export class DungeonWorld {
     const spell = RPG_SPELLS.find(spell => spell.id === spellId);
     const effect = spell?.effect ?? 'nova', school = spell?.school ?? 'ember';
     const color = school === 'ember' ? 0xff7d19 : school === 'frost' ? 0x8bdef1 : 0x8bacff;
+    const bladeGrip = new THREE.Vector3(), bladeTip = new THREE.Vector3();
+    const mountedCleave = effect === 'cleave' && this.cleaveCandidate && !!this.heldEquipment?.sampleWorldBlade(bladeGrip, bladeTip);
     this.lastAttack = { spellId, effect, options: { ...options } };
     this.novaContacts = undefined;
     this.setElectricMaterials(true, RPG_SPELLS.find(spell => spell.id === spellId)?.school === 'ember' ? 'burn' : 'electric');
@@ -1137,6 +1148,23 @@ export class DungeonWorld {
     this.attackDuration = effect === 'cleave' ? 2.2 : ['firestorm', 'blizzard', 'tempest', 'frost-guardian'].includes(effect) ? 3 : 2.7;
     const origin = this.hero.position.clone().setY(.12);
     const target = origin.clone().add(new THREE.Vector3(.3, 0, -3.8));
+    if (mountedCleave) {
+      const started = this.elapsed;
+      const duration = CLEAVE_RELEASE + (Math.max(...targets.map(enemy => enemy.root.position.distanceTo(this.hero.position))) + 3) / CLEAVE_SPEED + .3;
+      this.attackDuration = Math.max(this.attackDuration, duration);
+      const strike = createCleaveStrike(targets.map(enemy => ({
+        position: enemy.root.position, height: enemy.height,
+        contact: (_at: THREE.Vector3, release: THREE.Vector3) => {
+          this.hitEnemy(enemy, color, hitById.get(enemy.id), release);
+          this.shake = Math.max(this.shake, enemy.brute ? .075 : .045);
+        },
+      })), living.filter(enemy => !targets.includes(enemy)).map(enemy => ({ position: enemy.root.position, height: enemy.height })));
+      strike.layers.forEach((layer, index) => this.effect(layer, duration, index === 0 ? () => {
+        this.heldEquipment?.sampleWorldBlade(bladeGrip, bladeTip);
+        strike.update(bladeGrip, bladeTip, this.elapsed - started, this.elapsed);
+      } : undefined));
+      this.schedule(duration - .05, () => strike.finish(bladeGrip, bladeTip));
+    }
     const resolveHorde = (delay: number) => targets.forEach((enemy, i) => {
       const offset = enemy.root.position.clone().sub(origin).setY(0), distance = offset.length();
       let contact = delay + i / Math.max(1, targets.length) * .52;
@@ -1179,11 +1207,12 @@ export class DungeonWorld {
         charge.update(hand, this.camera.getWorldDirection(view).negate(), this.elapsed - started, this.elapsed);
       } : undefined));
     }
-    if (effect !== 'nova' && effect !== 'ball-lightning') this.emit(origin.clone().setY(1.3), color, 28, 1.1, .75);
+    if (effect !== 'nova' && effect !== 'ball-lightning' && !mountedCleave) this.emit(origin.clone().setY(1.3), color, 28, 1.1, .75);
     this.schedule(.18, () => {
-      this.burstLight.position.copy(origin).setY(2.8); this.burstLight.color.setHex(color); this.burstLight.intensity = effect === 'frostfall' ? 24 : 100;
+      this.burstLight.position.copy(origin).setY(2.8); this.burstLight.color.setHex(color); this.burstLight.intensity = mountedCleave ? 12 : effect === 'frostfall' ? 24 : 100;
       switch (effect) {
         case 'cleave': {
+          if (mountedCleave) break;
           // The articulated clip already plants the feet and shifts strike weight.
           if (!this.heroUsesAuthoredMotion) this.heroMotion = age => new THREE.Vector3(Math.sin(Math.min(1, age / .8) * Math.PI) * 1.2, 0, -Math.sin(Math.min(1, age / .8) * Math.PI) * 1.6);
           this.weaponSweep(origin, 0xffc875, options.wide ? 7.6 : 5.6, .2);
@@ -1752,11 +1781,12 @@ export class DungeonWorld {
     });
   }
 
-  private hitEnemy(enemy: Enemy, _color: number, hit?: CombatHit): void {
+  private hitEnemy(enemy: Enemy, _color: number, hit?: CombatHit, bladeOrigin?: THREE.Vector3): void {
     if (enemy.dead) return;
     const school = RPG_SPELLS.find(spell => spell.id === this.lastAttack?.spellId)?.school;
     const element = school === 'ember' ? 'fire' : school === 'storm' ? 'electric' : 'other';
-    const reaction = createHitReaction({ at: this.elapsed, x: enemy.root.position.x, z: enemy.root.position.z, sourceX: this.hero.position.x, sourceZ: this.hero.position.z, phase: enemy.phase, heavy: enemy.brute, maxHp: enemy.maxHp, hit, element });
+    const reactionOrigin = bladeOrigin ?? this.hero.position;
+    const reaction = createHitReaction({ at: this.elapsed, x: enemy.root.position.x, z: enemy.root.position.z, sourceX: reactionOrigin.x, sourceZ: reactionOrigin.z, phase: enemy.phase, heavy: enemy.brute, maxHp: enemy.maxHp, hit, element });
     enemy.root.userData.hitReaction = reaction;
     enemy.hp = hit ? hit.hpAfter : 0;
     enemy.dead = reaction.lethal;
@@ -1770,7 +1800,7 @@ export class DungeonWorld {
     // Spell contacts own their element. The body response must remain visible
     // rather than disappear inside a generic particle explosion.
     if (nova) this.novaContacts?.strike(this.enemies.indexOf(enemy), enemy.root.position, enemy.origin.clone().sub(this.hero.position).setY(0).normalize(), this.elapsed, enemy.brute ? 1.3 : .85 + Math.abs(Math.sin(enemy.phase)) * .25);
-    if (!nova && (this.lastAttack?.options.burning || RPG_SPELLS.find(spell => spell.id === this.lastAttack?.spellId)?.school === 'ember')) {
+    if (!nova && !bladeOrigin && (this.lastAttack?.options.burning || RPG_SPELLS.find(spell => spell.id === this.lastAttack?.spellId)?.school === 'ember')) {
       this.fireContact(enemy.root.position, enemy.brute ? 1.35 : .7 + Math.abs(Math.sin(enemy.phase)) * .45);
       const scorch = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.1), new THREE.MeshBasicMaterial({ color: 0x32261b, alphaMap: this.glowMap, transparent: true, opacity: .2, depthWrite: false }));
       scorch.rotation.x = -Math.PI / 2; scorch.position.copy(enemy.origin).y = -.025;

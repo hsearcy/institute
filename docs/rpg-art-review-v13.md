@@ -14,14 +14,22 @@ Scores are subjective art-direction judgments, grounded in the listed visible ev
 
 | Accepted scope | Score | Latest reviewed evidence |
 |---|---:|---|
-| Ashsplitter v2 shown complete source construction/material | 8, source only | `tmp/item-models/ashsplitter-v2-{front,tip,back,threequarter}.png`; exact export/native pending. |
+| Installed Phoenix source/exact v3 fidelity, thumbnail, native appearance, desktop feature/card and shown held motion | 8, item scope | Corrected exact export HI, thumbnail HK, native/card HL and actual three-cast held motion HP. Installed0d199ac; root reports route-free model switching/actual Cleave/reload checks passed. FX/phone excluded. |
+| Portal abutment v4 complete shown source construction/material | 8, source only | `tmp/portal-abutments-v4-{source,rear,joint}.png`; rear coplanar join and close arch contact pass. Corrected exact export construction/fidelity8 in HN; native composition7.5. See FZ/HJ/HN. |
+| Cleave v5 shown public-roster desktop two partial-cast FX | 8, bounded FX scope | `tmp/cleave-public-v5-1788733664093/`; original25fps162–193/297–336 reviewed. Material/form, bladehandoff, target gaps/termination and contact readability pass; old models and broader deployment excluded. See GS. |
+| Installed Ashsplitter v4 source/export, native weapon appearance, desktop inventory and held Cleave continuity | 8, item scope | `docs/rpg-playtest/v18/items/ashsplitter/{corrected-v4,runtime}/`; actual two casts reviewed in FE. Cleave FX/contact and phone inventory excluded. |
+| Installed Thunder v1 source/export, native weapon appearance, desktop inventory and held cast continuity | 8, item scope | `docs/rpg-playtest/v18/items/thunder/` and `runtime/`; actual two casts reviewed in FB. Chain Lightning FX and phone inventory excluded. |
+| Moonstaff source/exact export, native silhouette/material/attachment, desktop feature/card and observed held motion | 8, scoped | `docs/rpg-playtest/v18/items/moonstaff/`; native v2b stills, v2c and isolated actual sequences. Visible long-shaft clearance and hand continuity pass; lifecycle/reload confirmed separately in telemetry. Candidate installation remains parent-owned. See FG/FQ/FT/FV. |
+| Skeleton v16 shown native idle stance and idle-to-catch transition | 8, pose scope | `docs/rpg-playtest/v18/skeleton-idle-v16/`; native overall presence remains7.5. See GE. |
+| Skeleton v14 static terminal and v15 shown equipped actual fall/slack/hold/cleanup | 8, scoped | `docs/rpg-playtest/v18/skeleton-terminal-v14/`; matched Chromium9222 v15 ordered native frames reviewed in GB. Native idle presence remains7.5. |
+| Skeleton remnant v15 source and exact export construction/material fidelity | 8, source/export only | `docs/rpg-playtest/v18/skeleton-remnants-{source,export}-v15/`; native presence remains7.5; shown equipped reaction/fall motion subsequently8 in GB. See FJ/FX. |
 | Skeleton v16 shown survivor catch/recovery and connected fall/hold/erosion ordering | 8, scoped motion | `docs/rpg-playtest/v16/skeleton-v10/`; native presence/final slack and arrival excluded. |
 | Doorway v17 shown stone fade, shadow/light continuity, hero visibility and native crossing | 8, candidate and actual production-integrated crossing | `docs/rpg-playtest/v17/` plus integrated proof in EP; other doorways and behind-wall transparency excluded. |
 | Installed Apprentice weapon observed grip/continuity/material and desktop inventory feature/card | 8, weapon only | `docs/rpg-playtest/v15/items/apprentice-v4/{inventory.png,actual-casts.webm,evidence.json}`; decoded native intervals70–135,175–245,275–345. First-use weapon continuity subsequently8 in finalwarm proof (EA); Cleave effects/choreography separate. |
-| Authored skeleton stronger-shaft v10 exact export construction/material fidelity | 8, export only | `tmp/skeleton-native-shafts-v10-export-{detail,high,back}.png`; native1.85 presence/catch/slack still pending. |
-| Apprentice sword shown native attachment/grip/scale and corrected v4 material | 8, static only | `tmp/item-models/native-v1/` pose coverage and `tmp/item-models/native-v3/` corrected idle/Cleave material; actual motion and card deployment remain separate. |
-| Apprentice sword exact optimized export v2 construction/material fidelity | 8, export only | `tmp/item-models/apprentice-export-v2-{front,back,high,hilt}.png`; native guard highlight remains below gate. |
-| Apprentice sword v7 shown source construction and surface, front/back/hilt | 8, source only | `tmp/item-models/apprentice-v7-{front,hilt,back}.png`; low/export/native equipped proof pending. |
+| Authored skeleton stronger-shaft v10 exact export construction/material fidelity | 8, export only | `tmp/skeleton-native-shafts-v10-export-{detail,high,back}.png`; native1.85 presence7.5, survivor catch8 and final v14 static slack8 reviewed separately; final equipped motion pending. |
+| Apprentice sword shown native attachment/grip/scale and corrected v4 material | 8, static only | `tmp/item-models/native-v1/` pose coverage and `tmp/item-models/native-v3/` corrected idle/Cleave material; actual motion and desktop card subsequently8 in installed Apprentice row; other viewports separate. |
+| Apprentice sword exact optimized export v2 construction/material fidelity | 8, export only | `tmp/item-models/apprentice-export-v2-{front,back,high,hilt}.png`; subsequent guard-v4 native material8; see installed Apprentice row. |
+| Apprentice sword v7 shown source construction and surface, front/back/hilt | 8, source only | `tmp/item-models/apprentice-v7-{front,hilt,back}.png`; subsequent export/native and desktop motion/card8; see installed Apprentice row. |
 | Starter Nova v11 desktop two-cast impact/body choreography and partial-clear ordering | 8, scoped motion | `docs/rpg-playtest/v15/combat/starter-nova-two-casts-v11.{webm,json}`; all263 decoded frames reviewed, native40ms limits; current Ball/mobile/boss variants excluded. |
 | Wraith v11 controlled final collapse silhouette and shown sleeve/hand connectedness | 8, static only | `/tmp/wraith-terminal-v11-wraith-death-{0_55,0_94,1_1}-{native,side}.png`; ordinary-loop retraction, hold and erosion still pending. |
 | Desktop boss v10 static header/formation/control clearance at1440×900,1280×720,1920×1080 | 8 | `/tmp/desktop-boss-frame-v10-{1440x900,1280x720,1920x1080}.png`; controlled layout only, no outcome or motion claim. |
@@ -70,11 +78,14 @@ Scores are subjective art-direction judgments, grounded in the listed visible ev
 
 | Failing or unverified scope | Current grade/status | Main remaining gap / evidence |
 |---|---:|---|
-| Unique equipped models for all23 items | Apprentice source/export and native static attachment8, native static material8; branch wood7.5/coal v14 shape7.5; Glacier v6 form/depth7 and material6.5; Thunder v6 head construction8/material7.5; Ashsplitter v2 source construction/material8; other18 unverified | Latest `tmp/item-models/native-v1/`, `cinderbranch-v11-{front,coal}.png`, `glacier-thunder-v3-front.png`. Painted icon acceptance does not approve3D item models. See DG/DI. |
+| Unique equipped models for all23 items | Apprentice, installed Thunder and Ashsplitter source/export/native/desktop card/held continuity8; Moonstaff source/export/native/desktop card/observed held continuity8; Cinderbranch wood/coal7.5; Glacier v8 depth/material7; Phoenix complete shown source8, corrected exact v3 construction/material8, standalone thumbnail8, native idle/desktop card8 and shown held motion8; other16 unverified | `docs/rpg-playtest/v18/items/`; individual accepted scopes above. Cinderbranch v18 and Glacier v8 source studies remain below gate. Painted icons do not approve3D models; phone item deployment and remaining variants unverified. |
+| Chain Lightning broader coverage | Shown v4 desktop two-cast FX8; other coverage unverified | Form/material, hand source, hop emphasis/order, contact restraint and decay pass in HM. Phone/boss/modifier and complete terminal-cleanup coverage remain separate. |
+| Cleave broader deployment | Shown v5 public-roster desktop two partial-cast FX8; other coverage unverified | Phone/boss/modifier/equipment-wide coverage remains separate; old enemy model quality remains failed. See GS. |
 | Frostfall revised projectile/material/contact | v7 native silhouette/readability6.5 and material6.5; earlier shown contact-fracture8 | Latest `tmp/frost-v7-lossless-{native,detail}.png` loses optical mass; earlier actual v6 contact8 remains separate. See EH. |
-| Authored skeleton v16 native presence and final limb slack | 7.5 / 7.5 | `docs/rpg-playtest/v16/skeleton-v10/`; shaft/export8 and shown catch8 do not close fine-wire presence or cocked terminal limbs. See EM. |
+| Authored skeleton native presence | Native presence7.5; remnant v15 source/export8, matched shown catch/fall/slack/cleanup8 and idle v16 stance/transition8 | Fine pale anatomy still dominates at native size; existing remnant material grouping remains too modest. Public installation held. See FX/GB/GE; no additional stance or shaft inflation requested. |
 | Hero variants, revenant, guardian/boss | 3.5–5 runtime baseline; hero source passes separately | Authored anatomy, armor/cloth construction, convincing silhouettes and materials still needed. Individual grades below. |
-| World, architecture, floor, lighting, landmarks and props | 4–6; latest gate-v2 composition7, masonry5, floor6.5 | Repeated blocky structures and weak authored material/prop composition remain. Latest native fixture is `docs/rpg-playtest/v14/gate/ordinary.png`; first-room priorities are in candidate review AB below. |
+| Portal abutment native integration | Corrected exact construction/material fidelity8; native composition7.5 | Crown repair passes full front/rear/joint in HN. Native composition and whole-world remain separate; see HJ. |
+| World, architecture, floor, lighting, landmarks and props | Latest whole-world6.5; composition7, architecture6.5, floor6.5, lighting7 | Lossless `/tmp/cutaway-integrated-before.png` versus concept04. Coherent recessed doorway assembly is next priority, then floor bevel/edge relief; accepted portal export and individual masonry do not approve complete world. See EX. |
 | Ball/Nova combat impact and complete temporal presentation | Starter Nova v11 shown desktop choreography8; Ball latest wraith/motion update and current mobile/boss impact coverage remain unverified; Ball v8 smoothness not accepted (~18Hz recorded). | Nova v11 closes its observed heavy-contact/wraith-transition blockers. Ball guardian contact/survivor choreography passes in v8 observed frames; no automatic transfer of the latest Nova proof to other variants. Prior complete passes remain withdrawn; see CH. |
 | Other fourteen spells, shared non-Ball impacts/deaths and loot effects | 3–5 baseline or unverified; Nova v18 front/contact/poses/erosion, reviewed HUD context and late residue8; fallback chasm integration8; prior impact/complete motion passes withdrawn after user feedback; visual effect forms remain separate from reopened hit/death feel | Every family has its own unresolved form/contact/temporal gaps; see individual table below. No current complete combat-impact temporal acceptance. |
 | Gateway visibility transition broader coverage | Shown integrated crossing8; other coverage unverified | Actual integration resolves abrupt toggle in reviewed crossing; other doorway/biome and behind-wall transparency coverage remain unverified. See EL/EP. |
@@ -84,6 +95,7 @@ Scores are subjective art-direction judgments, grounded in the listed visible ev
 | Remaining coverage | Unverified | Remaining large equipped-detail variants, full room/biome coverage, every character under intended lighting and motion, and every effect/modifier on supported viewports. All23 relic collection crops have passed. |
 
 The latest scores supersede historical entries only within their named scope. Technical tests, licensing provenance, polygon counts and implementation effort do not raise visual scores.
+
 
 ## Evidence and limitations
 
@@ -1499,3 +1511,328 @@ Reviewed final.9 native/side pair in `tmp/skeleton-terminal-v14-1788722153128/`.
 ## FG — Moonstaff v4 source material passes
 
 Reviewed `tmp/item-models/moonstaff-v4-{head,front}.png`. **Source material8**, construction8 retained from v3 rear/grip. Broad mineral cloud beneath uninterrupted polished stone separates stone from silver bezel/crescent without noisy glitter or graphic cracks. Shaft response is calmer. Complete source ready for exact export fidelity; native attachment/scale, thumbnail and motion remain separate.
+
+
+## FH — Skeleton remnant v14 closes cuff attachment; materials remain plain
+
+Reviewed `tmp/skeleton-remnants-v14/{cuff-front,cuff-back,source-high}.png`. **Complete remnant construction8; material7.5.** Bands seat on actual bone envelope and shell edges without open hoops; paired-bone channel remains visible and shoulder contact8 retained. Close cap/cuff remain uniformly smooth brown with little distinction between compressed straps, broad leather and worn edges. A restrained material pass should add abrasion at actual lips and darker protected/pressure overlaps while keeping broad faces quiet. Low derivation can proceed; final source material and native presence remain open.
+
+
+## FI — Moonstaff exact v1 head passes; grip transfer introduces broad patches
+
+Reviewed all five `tmp/item-models/moonstaff/export-v1-{front,back,head,head-back,grip}.png`. **Head construction/material fidelity8; complete export fidelity7.5.** Lower wrap above bottom ferrule around(555–638,593–645) in1200×800 grip view has broad dark pillowy patches/ridges absent in sourcev3 grip; smaller ripple appears higher. Request same-camera no-normal control before changing source/material strength. Native held.
+
+## FJ — Skeleton remnant v15 source material passes
+
+Reviewed `tmp/skeleton-remnants-v15/{cap-front,cuff-back,source-high}.png` with prior rear/contact coverage. **Complete source construction/material8.** Restrained wear at actual cap/cuff lips, darker protected overlaps and compressed straps separate broad leather without noisy additions. Ready for exact low/bake fidelity proof. Native presence and final equipped actual-loop death remain separate; terminalv14 static8 retained.
+
+
+## FK — Moonstaff grip and Cinderbranch face coverage remain unresolved
+
+Reviewed `tmp/item-models/moonstaff/export-v1-grip-no-normal.png` and `cinderbranch-v15-{front,coal}.png`. Moonstaff lower dark patch persists with normal disconnected; coarse seam faceting becomes more visible. Flat-material plus no-normal control remains appropriate; no normal-strength workaround. **Cinderbranch coal7.5/wood7.5 retained:** front/lower relief is dense but broad right coal face stays smooth dark slab, with abrupt face-to-face surface character. Continue broad brittle lamination across right plane with unequal broken lips catching light and quieter fine grain below; more uniform micro-pitting is not the target. Native heat/readability remains open.
+
+
+## FL — Portal native v1 needs coherent wall and footing integration
+
+Reviewed `tmp/portal-assembly-v1-{before,portal-only,assembly,assembly-detail}.png`. **Shown portal native form/material7.5; complete assembly integration6.5; whole world6.5.** Deep jointed arch is a better foundation. Portal-only duplicates supports; assembly leaves jambs perched on oversized old approach/plinth steps with an offset second footing at right. Freestanding arch within rectangular wall cutout remains decisive: giant adjacent courses do not meet curved outer stones or share scale, while thin right niche remains mismatched. Proceed uniform-scale portal, bonded adjoining courses/spandrels and matching recessed niche, first establishing continuous wall/arch/base junction. Remove redundant approach slabs while retaining level traversable route; no global darkening. Crown is offscreen in this native view, so detail establishes source shape but complete native doorway/route coverage remains needed.
+
+
+## FM — Portal facade v2 improves joins but wall remains a flat regular plane
+
+Reviewed `tmp/portal-facade-v2-{before,assembly,assembly-detail}.png`. **Assembly construction/integration7; new wall material/relief6.5; shown portal form/material7.5 retained.** Uniform portal/single footing resolve duplicate supports; matched niche is coherent. Broad planar wall and ruler-straight coping remain dominant. Remove overlapping oversized left broken-wall layer, terminate courses into coherent broken return, then introduce a few broad face/course setbacks and unequal damaged coping with rounded/chipped joint shoulders. Avoid random per-block jitter/fine noise. Retain arch contour/usable opening; lighting cannot create missing relief. Whole-world remains6.5; complete native crown/route coverage pending.
+
+
+## FN — Facade v3 matching maps overbrighten the wall without coherent history
+
+Reviewed `tmp/portal-facade-v3-{assembly,matched,assembly-detail}.png`. **Structure/integration7; old wall surface6.5; matched-map presentation6.0.** Left overlay removal helps; coping damage remains a regular staircase of rectangular slabs and face setbacks form scattered notches. Matched wall is paler/more mottled than adjacent portal under same light. Correct reported bevel/coping overlaps, then compare one adjacent wall stone with portal course at matching face orientation before material tuning. Add localized shelter/contact history under coping, recessed joints and lower courses rather than blanket AO darkening. Broad top surfaces should stay quieter; broken coping needs unequal fracture edges instead of repeated clean steps. Source-family reuse is appropriate but current material unaccepted; whole-world6.5 unchanged.
+
+
+## FO — Facade v4 flat control confirms remaining geometric regularity
+
+Reviewed `tmp/portal-facade-v4-{flat-detail,assembly-detail}.png`. **Structure7/material6 retained.** Overlap cleanup is visible; flat control exposes repeated complete coping slabs and alternating square-tooth terminations down wall face. These read as designed brick pattern/unfinished bond rather than damage. Align broad returns and use a few genuinely fractured coping pieces while retaining intact support courses. Actual portal-range albedo calibration should precede shelter history; AO must not compensate for the reported nearly doubled base brightness.
+
+
+## FP — Facade v5 calibrates wall value but crown remains extruded
+
+Reviewed `tmp/portal-facade-v5-{matched,assembly-detail,flat-detail}.png`. **Structure/integration7; calibrated wall material7.** Preserve improved portal-relative value. Crown remains corrugated because each profile repeats across wall depth. Leave most coping intact and use2–3 unequal corner losses with different front/back fracture boundaries and oblique fracture faces. Retain horizontal intact shoulders; align the single left return near arch instead of per-course tiny ends. Localized shelter/base history remains needed after geometry. Wholeworld6.5 unchanged.
+
+## FQ — Moonstaff exact v2 corrects grip fidelity
+
+Reviewed `tmp/item-models/moonstaff/export-v2-{grip,head}.png` against failedv1/source. **Exact export construction/material fidelity8**, combined with unchanged previous full/rear coverage. Lower pillowy patch/faceting resolved; leather seam and seated ferrules match source. Head cloud stone/silver preserved after atlas change. SHA `3bef5aa838a2770636ab5b3cb80f7c0a362c4b77fd7e2ddd082508c99402520b`. Native long-shaft attachment/material, thumbnail/card and motion remain separate.
+
+
+## FR — Moonstaff thumbnail passes; Cinderbranch v16 still misses the right-face blocker
+
+Reviewed `tmp/item-models/moonstaff/moonstaff-v2-thumbnail.png` and `cinderbranch-v16-{front,coal}.png`. **Moonstaff standalone thumbnail framing/silhouette/material8**, card/native excluded. **Cinderbranch coal7.5/wood7.5:** new lips mainly affect lower/front face; broad right face aroundx480–557,y315–488 in1200×800 remains smooth dark slab. Inspect actual lamination face mask with false-color/flat raking control before another beauty pass; target unequal fracture lips on nominated face, not more lower-face detail.
+
+
+## FS — Abutment source v1 unifies materials but spanning cut reads as a roof
+
+Reviewed `tmp/portal-abutments-v1-source.png`. **Construction7/material7.5.** Portal/wall family is more coherent, with lower-course history and real joint depth. Continuous diagonal cut across right courses reads as designed sloping buttress/roof, reinforced by repeated triangular wedge faces. Localize loss to far upper corner within1–2 terminal stones, with unequal front/back fracture depths and mostly horizontal coping/intact supports. Preserve current base material; distinguish exposed fracture response after geometry. Left outer arch-to-wall seam is a conspicuous dark outline requiring close/rear contact verification. No source/export/native pass.
+
+
+## FT — Moonstaff v2b native idle and desktop card pass
+
+Reviewed `/tmp/moonstaff-native-v2b-{before,inventory}.png`. **Native idle silhouette/scale/material8; visible idle attachment8; desktop210px feature/92px card8.** Full shaft/crescent readable, silver-blue head separates from floor without oversized bloom/clipping; inventory complete diagonal profile retained. Fine finger contact and ground clearance through long-shaft swing remain unverified. Interrupted harness does not establish complete sequence/reload; no motion acceptance from these stills.
+
+
+## FU — Abutment v2 localizes damage; remaining corner is overly clean
+
+Reviewed `tmp/portal-abutments-v2-source.png`. **Shown material8; construction7.5.** Wall/portal value and aged/fracture response cohere; long roof cut removed. Far-right corner loss still reads as a large clean chamfer; left wing top beside arch has a thin projecting triangular lip around(547,138). Truncate unsupported point and introduce one unequal secondary fracture facet/chipped lip within current localized loss, preserving intact level coping. Rear/hidden-side and close arch-to-wall contact coverage remain needed; front seam improved. No full-source/export/native pass.
+
+
+## FV — Moonstaff actual held motion closes the candidate weapon art gate
+
+Reviewed overview and every unscaled native crop in `tmp/item-models/moonstaff/motion-review-isolated/native/0030.png`–`0065.png` (PTS12.66–14.06), plus `motion-review-v2c/native/0195.png`–`0245.png` (PTS30.76–32.76) and `0355.png`–`0405.png` (PTS37.16–39.16). Original recordings: `/tmp/rpg-partial-hit-video/page@c04fb6b3bd17d7d8d230f616b62ca779.webm` and `page@888b8a748f48db9de3d5410c38f3db62.webm`. **Visible hand/shaft continuity8; long-shaft clearance8; material/readability through reviewed swings/cast8.** Crescent remains distinct through the raise, outward sweep and recovery; no visible detachment, reversal or floor strike. Isolated first swing supplies intermediate poses missing from the slower concurrent-preview run. Prior source/exact/native idle/desktop card8 retained.
+
+This is ordered25fps frame inspection, not a claim of subframe contact precision or unrestricted smoothness. V2c includes repeated frames under concurrent preview workload; isolated recorded active cadence21.65ms median/29.6ms p95/45.2ms max is separate telemetry, not an art score or GPU benchmark. `/tmp/moonstaff-native-v2c-evidence.json` independently confirms mount retention/unmount/remount, saved and mounted Moonstaff after reload, success and no errors/context events. No Cleave/Nova FX, body, phone, other-spell or global acceptance. Candidate weapon art gate is closed; production installation/check remains parent-owned.
+
+## FW — Abutment v3 front passes; rear assembly remains below gate
+
+Reviewed `tmp/portal-abutments-v3-source.png` and `tmp/portal-abutments-v3-rear.png`. **Shown front construction8/material8; rear construction7.5/material8.** Front unsupported spandrel point is removed and local secondary fracture preserves intact level courses. Rear has a broad dark crescent around left upper archivolt (approximatelyx360–492,y220–370) and abrupt shelf at impost: projecting wall skin reads separate from recessed arch. Align the actual rear wall/arch plane, preserving front, then widen rear framing and inspect close left contact. Top rear corner is clipped. Closed-mesh audits do not waive this visible join defect; complete source, export and native integration remain unaccepted. Wholeworld6.5 unchanged.
+
+
+## FX — Skeleton remnant v15 exact export preserves source construction and response
+
+Reviewed `docs/rpg-playtest/v18/skeleton-remnants-export-v15/exact-{detail,high,back}.png` against source sibling `source-high.png`, `cap-front.png` and `cuff-back.png`. **Shown exact export construction/fidelity8, material8.** Shoulder mass, worn lip/darker retaining strap distinction, short cloth panels and rear connections survive; metal response and narrow wrist cavities retained without thick black carpal rings. No new transfer-specific blocker at the submitted studio coverage. Ready for actual native trial. Studio guard metadata and numerical vertex tests do not prove runtime feet, terminal transition or native presence; the latest native presence score remains7.5 pending new evidence.
+
+
+## FY — Remnant native v15 provides provisional presence diagnosis only
+
+Reviewed `docs/rpg-playtest/v18/skeleton-remnants-native-v15/native-{before,after-1}.png` against the earlier bare v16 view. **Provisional presence/readability7.5**, pending backend-matched Chromium9222 evidence; this fresh browser run omitted renderer identity. Native remnant masses are present but restrained: shoulder contributes a small brown grouping while cuff/cloth largely merge into dark gaps. Diagnostic enlargement confirms their presence rather than an asset-load omission. Idle and wounded skeletons show crossed projected shins/ankles, particularly the wounded actor near(890,300), weakening planted silhouette. Verify this on matched native evidence before adjusting guard support-foot placement; do not infer a need for blanket bone inflation or further texture noise. Non-isolated recording and its severe cadence spikes are excluded from motion acceptance. Source/export8 remain scoped; no new native pass.
+
+
+## FZ — Portal abutment v4 complete shown source passes
+
+Reviewed `tmp/portal-abutments-v4-source.png`, `portal-abutments-v4-rear.png` and `portal-abutments-v4-joint.png`. **Shown source construction8/material8.** Rear wall/arch now meet on a coherent plane: previous overhung black crescent is removed, radial blocks fit the surrounding courses, and complete rear framing exposes the outer corners. Close front view shows scribed courses seating around the molded archivolt, with coherent impost support and limestone value/detail scale. Local corner fracture and mostly level coping remain intact. Ready for low derivation/bake and exact reimport comparison. This is source-only acceptance; optimization/bake fidelity, native wall assembly/lighting and global world6.5 remain unaccepted.
+
+
+## GA — Cinder field coverage and first Phoenix source remain below gate
+
+Reviewed `tmp/item-models/cinder-v16-lamination-mask.png` and `phoenix-v1-{front,head,back}.png`. **Cinder coal7.5 retained:** predicted field reaches the nominated right face through three narrow near-parallel bands, leaving most broad area zero. This is not verification of final displaced Boolean-cut geometry. Next diagnostic should show actual normals/flat raking surface, with one broad interrupted lamination step and unequal chipped lips rather than additional narrow repeated bands.
+
+**Phoenix v1 source construction7/material7.** Distinct wing cradle and seated stone setting, but inner secondary feathers end as blunt triangular paddles beside the stone; outer tip junctions carry small lumps/seams. Taper and overlap feathers along a continuous wing root/sweep, preserving the overall silhouette. Uniform soft satin bronze and molded amber-plastic stone response remain below gate; refine local metal response and mineral depth after structural joins. No export/native approval.
+
+
+## GB — Matched hardware remnant v15 reaction and terminal motion pass; idle presence remains below gate
+
+Reviewed matched Chromium9222 `tmp/skeleton-remnants-v15-cdp-1788727730424/skeleton-remnants-v15-cdp-{before,after-1}.png` and every original25fps native crop `tmp/skeleton-remnants-v15-cdp-frames/frame-0433.png`–`0493.png`, `0605.png`–`0665.png`, plus `0389.png`–`0400.png` and `0497.png`–`0508.png`. **Shown skeleton contact/recoil/catch/recovery8; connected fall/final slack/full-size hold/cleanup8.** First corpse extends legs and lowers rib cage, then lets free arm settle; second repeats coherent support/hold before erosion. Equipment stays attached with no leftover remnant/weapon after body cleanup.
+
+**Native presence/idle silhouette7.5.** Near-facing idle actor389–400 still has crossing projected upper/lower legs; recovered survivor is separated, so the earlier provisional universal crossing implication is not retained. Next bounded correction is near-facing idle foot/stance placement, preserving anatomy and accepted wounded catch, followed by native direction comparison. Equipment contributes modest grouping at roughly80px; no further bone inflation/material rebake justified by this evidence alone. Matched Intel Iris Xe hardware identity and stable159programs are independent instrumentation, not visual scores. Ordered25fps inspection does not certify subframe support/contact or universal smoothness; frame640 has obvious transient capture blur. Arrival/all-facing/phone and global scopes remain separate.
+
+
+## GC — Next world priority is integrated damaged paving at native scale
+
+Recompared `docs/concepts/math-dungeon-rpg/04-horde-viewport.png` with already-reviewed `docs/rpg-playtest/v19/portal-facade-v5/native.png`. **Floor6.5/world6.5 retained; no new candidate score.** Concept paving has broad worn slab shoulders, unequal local joint loss and dirt/rubble connected to damaged wall bases. Current arena reads as a uniformly dark tile carpet with isolated rocks/large detached slabs.
+
+After doorway integration, test one bounded wall/traffic-margin patch of roughly8–12 visible existing-scale stones: shallow modeled rounded/chipped shoulders,2unequal broken/slightly settled slabs, a shallow dirt-filled missing corner and a graded small chip/dust apron connecting to wall base. Preserve a clear level combat footprint. Match existing stone size/albedo; quiet fine top grain and let broad dry gray shoulders catch existing warm/cool lighting. Keep dampness in protected joints/margins. Judge same-camera/light native comparison before selective extension. Global exposure lifts, additional random pebble scatter and further microscopic source texture detail are lower-return responses to this visible gap. Concept enemy count is not a target; user's cap remains10.
+
+
+## GD — Phoenix v2 loses feather silhouette; Cinder final-surface control confirms shallow relief
+
+Reviewed `tmp/item-models/phoenix-v2-{front,head,back}.png` and `cinder-v16-right-flat.png`. **Phoenix construction/silhouette6.5, material7:** continuous geometry removes prior attachment lumps but forms broad soft zigzag bars, reading as antlers/lightning fins instead of swept layered feathers. Restore the continuous primary sweep with two shorter tapered overlapping secondary feathers per side, roots buried and outer tips distinctly unequal. Preserve thickness without widening the whole perimeter.
+
+**Cinder coal7.5 retained.** Actual map-free final surface has shallow narrow wrinkles across a mostly smooth right plane, confirming the prior mask diagnosis. One broad interrupted broken shelf with unequal fracture planes is the next correction; retain current wedge mass, seat and sparse ember slit. No source/export/native closure.
+
+
+## GE — Skeleton idle v16 fixes the projected crossing and preserves catch
+
+Reviewed full before/after stills and every native frame201–212/262–309 plus overview in `tmp/skeleton-idle-v16-frames/`; durable actual single-cast proof `docs/rpg-playtest/v18/skeleton-idle-v16/`. **Shown idle leg separation/stance8, idle-to-catch continuity8.** Former near-facing X projection resolved; transition has no visible foot snap. Prior catch/terminal8 retained. **Overall native presence7.5 remains:** fine pale lattice dominates and existing leather/cloth grouping contributes little at roughly80px. Preserve bones/stance; a future bounded native control could turn an existing torn pelvis panel into a readable oblique plane while preserving open pelvis/ribs and opposite bare leg. No further source work or public promotion implied; parent may prioritize other failed categories.25fps sampled scope.
+
+## GF — Abutment exact v1 preserves silhouette but introduces transfer defects
+
+Reviewed `tmp/portal-abutments-bake-v1/export-{front,rear,joint}.png` against source-v4 trio. **Overall construction/silhouette8; exact fidelity/material7.** New black triangle near(601,225), projecting slivers near(622,459)/(452,588) in900×900 joint image, plus hairline bevel-boundary streaks absent from source. Mineral face structure becomes soft mottled/pillowy, especially wall faces and capitals. Same-camera no-normal/flat controls requested before map/normal changes. Source8 retained; native promotion held.
+
+## GG — Phoenix v3 structure passes; Cinder v17 still lacks distinct fractured planes
+
+Reviewed `tmp/item-models/phoenix-v3-{head,back}.png` and `cinderbranch-v17-{front,coal}.png`. **Phoenix shown head/rear construction8, material7:** continuous swept primary and tapered overlapping secondaries resolve blunt ends and zigzag-bar regression. Uniform satin bronze and glazed orange stone remain weak. Preserve geometry; darken sheltered bronze roots/recesses with restrained worn edge response, and give garnet deeper body/edge color plus broad mineral variation under polish. **Cinder coal7.5/wood7.5 retained:** nominated right face remains smooth dark plane with shallow diagonal crease. Actual ray audit supports near-parallel facet normals; create a genuine separated ledge/facet while preserving seat/mass/sparse heat, rather than more masked microdetail.
+
+
+## GH — Abutment controls locate new marks in material transfer
+
+Reviewed `tmp/portal-abutments-bake-v1/normal-off-joint.png` and `flat-joint.png`. Black triangle/slivers persist without normal, disappear with flat material; broad planes and joints remain coherent. This supports map/projection/UV investigation rather than a visible mesh void or low-normal defect at the nominated pixels. Soft mottled pattern likewise persists without normal. Inspect base/ORM texels, source membership and chart coverage against accepted source before another full bake. Exact fidelity/material7 unchanged pending corrected textured evidence.
+
+
+## GI — Mounted Cleave v1 has a disconnected handoff and misleading edge reach
+
+Reviewed every native crop390–430 in `tmp/cleave-mounted-v1-frames/`, actual single-cast candidate evidence under `tmp/cleave-mounted-v1-1788729809201/`. **Weapon-to-edge connection6; traveling edge form/readability7; contact/spatial clarity6.5; shown body reaction/fall/hold readability8.** A single restrained edge is easier to read than repeated room-wide arcs, but small trace397–401 floats above/right of the still-low blade, then402 jumps to a large distant front. Edge crosses untouched wraith405–407, making affected region ambiguous. Contacts produce small flashes/recoils while the line remains nearly uniformly thin rather than visibly spending/breaking at targets.
+
+Restore actual rendered tip-to-release continuity, then taper/terminate sectors after intended contacts and avoid falsely sweeping unaffected actors. Keep accepted connected body responses; generic contact bursts cannot repair source/space mismatch. Reported cast gaps up to152.5ms and25fps sampled evidence limit temporal conclusions. Default-off candidate has no complete FX acceptance or production promotion.
+
+## GJ — Cleave v2 restores the blade handoff; target-space mismatch remains
+
+Reviewed every original native 25fps crop254–283 and404–433 in `tmp/cleave-mounted-v2-frames/`. **Shown weapon-to-edge connection8; traveling edge7; contact/spatial clarity7; existing visible body response8.** Both openings visibly follow the raised blade through its sweep into one released edge. Preserve this timing and connection. First-cast269–271 carries the right endpoint through the untouched wraith after the nearer skeleton contact;272–274 maintains a broad bridge across directions without hits. Second-cast423–425 makes that same wraith react, exposing the earlier inconsistency.
+
+Next bounded correction: retain one coherent initial release, then divide into short tapered arcs around authoritative target directions, leave gaps over unselected directions and consume each segment at its target depth. Do not add generic particle pools or change accepted body reactions. Reported cast intervals median20.6/p9526.7/max31.3ms support improved sampling but earn no art score; original25fps evidence does not establish subframe contact precision. Complete Cleave FX remains below8.
+
+
+## GK — Phoenix v4 material improves; Cinder v18 still hides the decisive fracture
+
+Reviewed `tmp/item-models/phoenix-v4-{head,front}.png` and `cinderbranch-v18-{coal,front}.png`. **Phoenix shown construction8 retained; material7.5.** Deeper burgundy stone improves the head, but broad bronze wings/socket remain uniformly soft satin. Verify actual rendered root/face material separation, then strengthen sheltered inner roots/overlaps against exposed bronze faces and narrow worn edges, retaining a broad coherent metal reflection. No new ornament or grain required.
+
+**Cinder coal7.5/wood7.5 unchanged.** Right face around x480–550/y330–475 remains a smooth dark curved wall; the new break mainly appears on the light left face. Overall heat remains a pinprick between large limbs. Before another subtle deformation, expose the real new fracture in a final neutral-mesh view, modestly rotating the seated mass if necessary, and verify a broad distinct facet normal. Preserve seat, sparse heat and mass. Neither item is export-ready; whole-game gate remains failed.
+
+## GL — Item controls confirm visible geometry and material coverage gaps
+
+Reviewed `tmp/item-models/cinder-v18-facet-neutral.png` and `item-v18-v4-control.json`. Neutral Cinder exposes the upper fracture but leaves a broad smooth right cheek; dark albedo is not the sole cause. Coal7.5 retained. Break that cheek into two unequal planes with a visible oblique shoulder, then verify the final neutral mesh from the original camera before beauty. Avoid regular stepped terraces or another thin top wrinkle.
+
+Phoenix audit finds sampled visible primary/secondary faces both wear0/base(.20,.095,.028)/roughness.44, while protected vertices sit mostly inside buried joins. This supports extending sheltered material onto visible overlap exits and locally treating socket lips, with a firmer broad metal reflection. Construction8/material7.5 retained pending actual revised renders; parameter intent is not acceptance.
+
+
+## GM — Cleave v3 resolves target-space ambiguity but loses the cutting-edge silhouette
+
+Reviewed every original25fps frame257–288,416–447,555–590 and853–892 in `tmp/cleave-mounted-v3-frames/`, covering four actual releases/contacts across two rooms. **Blade-origin sweep8**, including equipped embedded-blade fallback; **target clarity/individual consumption8; existing shown body response8; traveling segment form/readability7.** First-cast untouched wraith remains outside the segmented paths; later targeted wraith and room1 skeletons receive local arrivals and segments end at contact.
+
+The fragments consistently become tiny triangular ember dashes immediately after the much larger weapon sweep (266–270,424–429,564–570,859–864). They read as thrown sparks rather than cutting arcs. Refine each into a longer shallow swept crescent with one dominant continuous cutting lip and quieter tapered trailing edge. Use safe asymmetric angular widths beside untouched directions; preserve actual gaps and per-target depth termination. Do not increase brightness or add generic particles to conceal the form problem. Complete Cleave FX remains below8. Reported cadence median22.4/p9529.5/max41.9ms and stable programs are separate evidence, not art points or a general device/performance pass.
+
+
+## GN — Phoenix v5 reflection improves without closing material gate; Cinder v19 remains rounded
+
+Reviewed `tmp/item-models/phoenix-v5-{head,front}.png` and `cinder-v19-cheek-neutral.png`. **Phoenix construction8/material7.5 retained.** Narrower reflections are visible, but wings remain nearly uniform ochre satin and the socket a smooth rounded knob. Lower roughness alone does not supply exposed/protected material distinction. A bounded broad irregular sheltered patch at the visible inner root/overlap exit and restrained worn ridge/socket lip is preferable to another global value change; keep middle faces quiet. A raking control can distinguish reflection setup from missing surface contrast.
+
+Cinder neutral shows a small upper-right diagonal facet while most cheek remains smoothly rounded. **Coal7.5 retained; no beauty/export pass.** Verify distinct planar normals after the final skew/deformation before another geometric cut; pre-deformation plane intent is insufficient.
+
+
+## GO — Phoenix v6 shown front/head reaches source8; Cinder final planes verified only as a control
+
+Reviewed `tmp/item-models/phoenix-v6-{head,front}.png` and `cinder-v20-cheek-neutral.png`. **Phoenix shown front/head construction8/material8:** visible protected inner roots/overlap exits separate bronze planes and the socket lip now has a protected/exposed transition, while garnet remains deep and polished. Preserve this treatment. Final rear/head-back and grip/ferrule coverage under the exact recipe remain necessary before complete-source/export progression; no native inference.
+
+Cinder neutral now has genuinely distinct final planes, resolving the deformation diagnosis. Straight vertical valley, level waist and truncated top read as a machined crystal/block; this is an unfinished geometry control. Preserve distinct planes while making ridge/valley oblique and unequal with a few brittle silhouette interruptions, avoiding evenly spaced steps. **Prior finished-source7.5 remains; no diagnostic-based art promotion.**
+
+
+## GP — Phoenix rear passes; final grip coverage exposes angular pommel
+
+Reviewed `tmp/item-models/phoenix-v6-head-back.png` and `phoenix-v6-grip.png`. **Rear head construction/material8:** swept feather roots and cup/support remain coherent; dark rear limits fine surface inspection. **Grip leather/seating8; pommel construction/presentation7.5.** The close view exposes a conspicuously polygonal lower outline and broad angular sides despite a smooth turned-metal finish. Correct only the radial surface/outline while retaining profile and ferrule seat; no inflation or decoration. Front/head8 remains accepted. Complete-source bake gate remains held for this newly covered bounded surface.
+
+
+## GQ — Cleave v4 restores crescent silhouette; mechanical material pattern remains
+
+Reviewed every original25fps native frame181–212 and321–352 in `tmp/cleave-mounted-v4-dpr1-frames/`, from corrected1440×900/DPR1 recording. **Bladehandoff8; target gaps/individual termination8; longer crescent extent/silhouette8; existing shown bodyresponse8. Traveling material finish7.5.** At190–198 and333–339 the long near-white cutting lip stays almost uniformly narrow/bright, with evenly spaced red curls behind it, resembling a glowing ruler with patterned fringe.
+
+Preserve arc lengths, safe gaps and continuous leading lip. Taper both width and luminance toward unequal ends, use a short hottest region instead of whitening the whole edge, and use2–3 unequal swept rear tongues instead of periodic curls. No extra particles, global brightness boost or target changes. Complete FX remains held; route-free public-roster evidence remains pending because this run used the private remnant candidate. Stable161programs and reported17ms median/26ms maximum cast intervals do not confer broader device/performance acceptance.
+
+
+## GR — Phoenix v7 completes the shown source gate
+
+Reviewed `tmp/item-models/phoenix-v7-grip.png`. **Grip/pommel construction/material8:** continuous turned outline resolves polygonal lower sides while retaining shaped shoulder, ferrule seat and leather contact. Combined with accepted v6 front/head/rear, **complete shown Phoenix source8** is closed. Proceed to low derivation/bake/exact packed review; preserve this profile and avoid reintroducing angularity during decimation. Export fidelity, thumbnail, native attachment/material and observed motion remain separate gates.
+
+
+## GS — Cleave v5 closes the shown public-roster desktop FX sequence
+
+Reviewed every original25fps native frame162–193 and297–336 in `tmp/cleave-public-v5-frames/`, two actual partial casts without model routes, evidence under `tmp/cleave-public-v5-1788733664093/`. **Material/form8; bladehandoff8; target gaps/individual consumption8; observed contact timing/readability8.** Unequal taper and localized hottest region remove the uniformly white ruler/fringe appearance while retaining recognizable cutting slivers. Paths remain clear of untouched actors and spend at local visible contacts. Preserve the base finish; no additional shader revision requested.
+
+This closes only the shown desktop two-cast FX scope. Existing enemy model quality remains failed; phone, boss, modifiers, wider equipment coverage and general device/performance acceptance are separate. Original25fps evidence does not establish exact subframe timing.
+
+
+## GT — Recovered portal exact export fixes prior joints but retains one crown notch
+
+Reviewed all three `tmp/portal-abutments-bake-v3-recovery2/export-{front,rear,joint}.png` against all source `tmp/portal-abutments-v4-{source,rear,joint}.png`. **Construction/silhouette8; exact material/fidelity7.5.** Previous joint defects at(601,225),(622,459),(452,588) are resolved. A remaining export-only black notch at approximately(568,210) in the1200×900 front view interrupts the crown molding corner; same-camera enlarged candidate/source comparison confirms source has a clean stone bevel there. Trace that localized chart before another broad bake. Fine mineral structure is softer than source, but the notch is the decisive remaining transfer defect. Overall palette, bonded courses, rear join and outer fracture silhouette remain coherent. SHA44ba0873146a4163de92adf3c68a29108728a0236837ae33c2b6359be800a7d3. Source8 remains separate; native fit, appearance and performance are untested, wholeworld6.5 unchanged.
+
+## GU — Photo-matched paving v2 improves height, still needs irregular shoulder/contact treatment
+
+Reviewed `tmp/paving-strip-v1-source.png` and `tmp/paving-strip-v2-source.png` against `web/public/assets/rpg/dungeon-cobbles-v2.png` and concept04. **V1 construction6.5/material integration7; v2 construction7.5/material integration7.5.** V1 exposes thick black risers beneath nearly every raised slab. V2 shallow relief and photo footprint registration are coherent, but continuous dark outlines and uniform cut shoulders remain conspicuous on the large central and long lower slabs. Vary shoulder width on those two stones, keep most edges near flush, introduce2–3 shallow local losses and seat selected edges in existing joint dirt instead of preserving a continuous exposed side band. Preserve low lift rather than raising the strip. Native placement should give missing-corner fragments an irregular dirt contact apron connected to the wall/traffic margin. A same-camera native A/B after this bounded correction is more valuable than further source microtexture polish. No source8 or native floor/world promotion; floor6.5/world6.5 remain.
+
+
+## GV — Portal crown notch persists in normal-off control
+
+Reviewed exact same-camera `tmp/portal-abutments-bake-v3-recovery2/normal-off-front.png` versus `export-front.png` and source-v4 front, with the crown region enlarged equally. The black corner near(568,210) persists with Normal disconnected; nearby broad-face shading changes, but this defect does not disappear. This does not support a normal-map-only diagnosis. Compare the exact notch footprint in flat-material/albedo-only controls and inspect adjacent corner shading/source membership before changing normal strength. Construction8/fidelity7.5 retained; no new acceptance.
+
+
+## GW — Flat portal crown control isolates a low-mesh shading defect
+
+Reviewed `tmp/portal-abutments-bake-v3-recovery2/flat-front.png` against textured export, normal-off control and source-v4 at the same enlarged crown footprint. The black notch persists with all texture inputs disconnected. This supports low geometry/corner shading or geometry-caused cast/contact shadow, rather than texture transfer at this specific corner. Inspect the low molding corner and corner normals against source while preserving recovered maps/UVs; no broad rebake or material brightening justified by this control. Overall construction silhouette8/fidelity7.5 unchanged.
+
+
+## GX — Chain v1 connects actual bodies but retains wire-like effect presentation
+
+Reviewed every original25fps native frame255–287 and407–439 in `tmp/chain-public-v1-frames/`, actual two-answer public-roster proof `tmp/chain-public-v1-1788734753048/`. **Endpoint connection8; observed hit/recoil ordering8; whole FX form/material6.5; sequential visual emphasis7.5.** The hand-to-first-body and subsequent body links connect coherently. Uniform hairline white zigzags, long sparse straight spans and old links returning at comparable brightness (273–280,423–434) weaken electrical force and current-hop emphasis. Retain endpoints/hit schedule; give the active link a dominant irregular hot core with restrained blue envelope, unequal short branches and a fast leading impulse. Decisively fade completed links so the next contact owns attention. A compact palm buildup would clarify initiation; contact accent should preserve head/torso detail (269 whites out the skeleton head). Shown survivor reactions and connected falls remain readable8 within these intervals; full terminal cleanup and exact subframe behavior are excluded. No complete FX pass; old model quality remains failed.
+
+## GY — Phoenix exact v2 retains construction but loses head material transfer
+
+Reviewed `tmp/item-models/phoenix/v2/export-v2-{front,back,high,head,grip}.png` against accepted source-v6 head and source-v7 grip. **Silhouette/construction8; grip/pommel transfer8; complete material fidelity6.5.** All six feather tips acquire broad jet-black caps with jagged boundaries; enamel inserts and retaining claws become black, unlike their distinct source surfaces. Garnet and broad bronze body remain coherent, and regular leather/curved pommel preserve source form. Same-camera no-normal head control is the next bounded isolation; preserve source design and accepted grip. SHA cf380c75f63b6a6c21c41ad5cc74674f9cba52b4358847996cad952b5f779631. Thumbnail/native held; no aggregate export pass.
+
+
+## GZ — Phoenix normal-off control removes the black head surfaces
+
+Reviewed `tmp/item-models/phoenix/v2/export-v2-head-no-normal.png` against normal-enabled exact head and accepted source-v6 head. All six black feather-tip caps disappear; enamel returns red and claws return bronze. This isolates the visible failure to normal-related transfer/basis rather than absent base color. Artist reports inward face winding on feather-derived parts, a concrete mechanism for the next bounded correction. Preserve vertex positions/material intent, correct affected winding, then compare same-camera source and normal-enabled exact export. Diagnostic normal removal is not final acceptance; exact material fidelity6.5 remains pending corrected proof.
+
+
+## HA — Portal crown notch also survives flat face normals
+
+Reviewed `/tmp/portal-crown-flat-faces.png`, showing textured export, flat material, flat material with all faces flat/custom normals cleared, and source. The third panel retains the same pointed inward corner/shadow, slightly less dark; source retains a clean continuous bevel. Custom-normal smoothing alone therefore does not explain this defect. Compare source and low local contours/triangles/occlusion before rebaking. Recovered maps and prior scoped scores remain unchanged.
+
+
+## HB — Phoenix outward-winding source preserves approved head appearance
+
+Reviewed `tmp/item-models/phoenix-v8-head.png` against accepted `phoenix-v6-head.png`. **Shown construction/material8 retained.** Bronze sweep/overlap hierarchy, enamel color, garnet/claw seating and tip silhouettes remain visually unchanged. This clears the source-side winding correction for a new normal-enabled exact bake comparison; failed export fidelity6.5 remains until corrected output is reviewed.
+
+
+## HC — Chain v2 improves current-hop emphasis, retains uniform core and head wash
+
+Reviewed every original25fps native frame250–280/395–430 in `tmp/chain-public-v2-frames/`. **Endpoint/buildup connection8; current-hop emphasis/decay8; observed hit/recoil order8; whole form/material7.5; contact restraint7.5.** Completed links disappear decisively and electrical force is clearer. The dominant core remains a near-uniform white zigzag with evenly spaced teeth, especially413–414. Use2–3 unequal broad bends with subordinate kinks and localized width/luminance peaks; preserve fast decay and exact endpoints/timing. Skeleton head still blooms to a white cap263–264. Artist confirmed shared final light assignment overrides intended smaller contact light, so no credit is given to the unrendered change. Apply the bounded Chain-only final-light correction. No body change requested; no complete effect pass or subframe/full-cleanup certification.
+
+## HD — Bonded portal native candidate needs peripheral depth and smaller wall mass
+
+Reviewed `tmp/portal-abutments-native-v3-recovery2-{before,assembly,matched,assembly-detail}.png` against concept04. **Shown local construction7.5/native material7.5; complete architecture integration7; wholeworld6.5 retained.** Bonded doorway is more solid than old nested arches, but large uninterrupted wings replace alcove depth with pale wall planes. Long coping/courses dominate; ordinary native frame crops the crown, so detail does not establish complete native silhouette. Keep central structural gate, shorten/lower peripheral runs and restore one smaller deep right alcove with matching masonry, dark recessed backing and localized object/light. Break outer ruin crowns while preserving gate supports; reconcile abrupt new-wing/old-wall course terminations. Global darkening will not fix composition/depth. Source8 and exact silhouette8 do not confer native acceptance.
+
+## HE — Paving v3 is ready for diagnostic native placement, not acceptance
+
+Reviewed `tmp/paving-strip-v3-source.png` against v2. **Source construction/material integration7.5 retained.** Lower center and shallow chips improve seating; continuous dark side lines are quieter but still visible on center/lower pieces. Stop source-only refinement and inspect same-camera native wall-margin placement: useful directional shoulder highlights and an integrated dirt apron now matter more than additional chips/noise. No native floor/world score change.
+
+## HF — Portal high-source flat control retains a clean crown
+
+Reviewed `/tmp/portal-crown-source-flat.png`. High-source flat-material corner remains clean, unlike low export with flat faces. Targeted high-source split-corner-normal transfer onto the two implicated low voussoirs is a valid next diagnostic while preserving low vertices/UVs. It is not yet a demonstrated fix; exact fidelity7.5 remains.
+
+
+## HG — Chain v3 resolves head wash but oversimplifies long bolt spans
+
+Reviewed every original25fps native frame220–250/355–390 in `tmp/chain-public-v3-frames/`. **Contact restraint8; material/core energy8; endpoint/order/decay8 retained; form7.5.** Heads/torso remain legible and localized energy/decisive decay preserve current-hop focus. Long links234–235 and375–378 now resemble clean polygonal cables with long almost-straight spans; subordinate kinks disappear at native size. Preserve broad unequal bends, accepted material/light/timing and break only the longest spans with2–4 unequal asymmetric mid-scale kinks (roughly2–4px native deviation), avoiding the previous regular sawtooth. No global brightness/particles/body changes requested. Complete effect remains held; sampled intervals do not certify full cleanup/subframe motion.
+
+## HH — Source-corner normals remove portal notch on unchanged low geometry
+
+Reviewed `/tmp/portal-crown-source-normals.png`. Transferred high-source corner normals remove the black notch while low vertices/UVs remain unchanged, supporting a normal-basis/shading correction rather than a necessary mesh void. Broad low-face shading is more rounded than high-source control; final normal-enabled localized rebake still needs independent comparison. No new export acceptance.
+
+## HI — Corrected Phoenix exact v3 passes shown export fidelity
+
+Reviewed all five `tmp/item-models/phoenix/v3/export-v3-{front,back,high,head,grip}.png` against source-v8 head/v7 grip and failed exact-v2 views. **Shown construction/material fidelity8.** Normal-enabled export restores complete bronze tip highlights and protected overlaps, red enamel and bronze retaining claws. Garnet/cup seating and continuous leather/grip/pommel response remain coherent; no new transfer/low blocker visible. SHA1114e85036a0670de36b9182bef1a8e795b5f5e705ba715ee8ec14a0ca9cfcc0. Ready for thumbnail/native candidate evidence; no automatic inventory, attachment, motion or global approval.
+
+
+## HJ — Portal composition v2 restores alcove depth but joins/crowns remain unfinished
+
+Reviewed `tmp/portal-composition-v2-{before,matched,assembly-detail}.png` against prior native assembly and concept04. **Architecture integration7.5; shown local construction/material7.5; wholeworld6.5 retained.** Lower wall runs and right alcove restore useful depth/light hierarchy. Outer crowns still consist of complete rectangular blocks forming crisp designed steps. Wall/gate joins terminate in stacked offset plinth ends rather than a continuous lower course. The right alcove backing appears as an exposed black slab above/right of its arch; enclose/trim it to the niche. Next bounded changes: one genuinely fractured terminal crown stone per wing with unequal front/back break, reconcile lower course at two joins, trim backing. Preserve smaller wall mass and lighting. Ordinary camera still crops main crown; route/full silhouette coverage separate. Paving image explicitly excluded because its UV conversion is invalid.
+
+## HK — Phoenix exact-model standalone thumbnail passes
+
+Reviewed `tmp/item-models/phoenix/v3/phoenix-thumbnail.png`. **Standalone framing/material8.** Complete six-tip sweep and pommel have margin; diagonal pose differentiates the silhouette while bronze, enamel and garnet retain readable hierarchy. Shaft connects clearly. Actual inventory background/card scale, native attachment/material and held motion remain separate.
+
+
+## HL — Phoenix actual native idle and desktop inventory pass
+
+Reviewed `/tmp/phoenix-isolated-before.png` and `/tmp/phoenix-isolated-inventory.png`. **Shown native attachment/silhouette/material8; desktop210px feature/92px card8.** Shaft remains connected at the hand and complete bronze wing head reads distinctly without a halo or black caps; inventory retains sweep/garnet hierarchy and full extent. Actual held motion remains pending; no spell-FX or phone claim.
+
+## HM — Chain v4 shown public-roster desktop effect passes
+
+Reviewed every original25fps native frame250–282 and390–425 in `tmp/chain-public-v4-frames/`. **Shown form/material, hand buildup/source connection, hop emphasis/order, restrained contact and decisive decay8.** Long links261–263/407–409 now retain unequal mid-scale bends and subordinate kinks without periodic sawteeth or clean polygonal-cable dominance. Heads and torso remain visible, completed links give way to current impact, and survivor/fall reactions remain legible in the shown intervals. Preserve this finish. Phone/boss/modifier, complete terminal cleanup and subframe behavior remain unverified; public model quality remains separately failed. Hardware/timing telemetry is evidence about the run, not art credit.
+
+## HN — Final normal-enabled crown repair closes portal export fidelity
+
+Reviewed `/tmp/portal-crown-repaired-normal.png` plus `tmp/portal-crown-normal-repair/export-{front,rear,joint}.png` against accepted source and prior failed exact controls. **Shown exact construction/material fidelity8.** Crown black puncture disappears while molded face shading follows source; former close joint slivers remain absent. Slight close-crop smoothing differences are not a conspicuous new defect in the full asset views. Exact SHA f35fdff5ac26953a4b1c52a2ce4302a7fa5c824a553f944465f1e8dfd94930c4. Native composition7.5 and whole-world6.5 remain independent; no automatic runtime promotion.
+
+## HO — Corrected native paving phase proves useful geometry, unfinished integration
+
+Reviewed same-frame `tmp/portal-composition-v2-paving-phase-{matched,paving}.png`. **Visible left-strip geometry usefulness7.5; current integration7; whole floor/world6.5 retained.** Uneven shoulders/broken corner add readable paving relief beside left brazier rubble. Pale tops plus dark outlining still read as an isolated patch. Integrate with a restrained irregular dirt/mortar apron and calibrated cut-edge shading while preserving exact top photo phase. Right foreground strip is substantially obscured by dock/edge and receives no equivalent visibility verdict. Cut/mortar constant controls are unfinished materials; no need for more source microchips before this contact/material proof.
+
+
+## HP — Phoenix actual three-cast held motion passes
+
+Reviewed every original25fps native frame345–425,515–605 and680–765 in `tmp/item-models/phoenix/v3/motion-review/`, from `/tmp/rpg-partial-hit-video/page@8ffab3b25357f493397c56d47bc90429.webm`. **Shown hand/shaft continuity, body/floor clearance and moving weapon material8.** Shaft remains seated through both Cleave windups/sweeps/recoveries and Nova's free-hand cast. Bronze head stays distinguishable under changing illumination without black-cap/grip transfer regression; full weapon remains above floor in the observed poses. Native idle and desktop card8 retained. Evidence JSON records reload saved/mounted Phoenix and no errors, separate from visual judgment. This closes the shown candidate weapon gate; installation remains implementer-owned. Spell FX, phone inventory, all equipment variants and subframe behavior are excluded.
+
+
+## HQ — Native alcove backing overhang corrected
+
+Reviewed `tmp/portal-composition-v3-{matched,assembly-detail}.png` against v2. **Bounded backing fit8.** Former upper/right black rectangular overhang is gone in the native view; dark recess is contained by its stone outline. Full architecture integration7.5 and wholeworld6.5 remain because outer crowns/base-course joins are unchanged. The detail camera places much of the small alcove behind the dock; no new hidden lower-detail approval is claimed.
+
+
+## HR — Guardian v1 broad mass study remains visibly assembled and toy-like
+
+Reviewed `tmp/guardian-slab-v1/source-{high,head}.png` against concept04 and `tmp/portal-abutments-native-v3-recovery2-before.png`. **Source construction6; silhouette6.5; shown flat material5 provisional, not a finished surface submission.** Larger groups improve weight over current pebble-like stacking, but matching polygonal chest lobes, similarly round oversized shoulders, attached eyebrow bars and rectangular muzzle retain a block-toy humanoid read. Highest-return next change is upper-body rock construction: a dominant oblique shoulder slab overlapping a diagonal chest mass, smaller opposing wedges interlocking around a deeply embedded head. Replace separate eyebrows/muzzle with continuous broken brow/cheek sockets and narrow recessed eye fissures. Use unequal fracture planes and one secondary broken edge per major mass; avoid adding ubiquitous microchips. Preserve heavy forearms/feet and articulation pivots. Crystals need irregular split growth beds rather than clean perched cones. No native/grounding approval, and no texture polish requested before this construction proof.

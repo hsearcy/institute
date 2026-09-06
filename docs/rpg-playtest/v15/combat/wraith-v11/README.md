@@ -5,3 +5,5 @@ Independent review accepts the final controlled native/side silhouette at8/10. B
 The .55-second pose is an active intermediate. These six static captures do not establish motion between .55 and .94 seconds: an ordinary cast must still verify smooth retraction, intact cloth connections, a settled hold, and late erosion. No full death/cadence acceptance is claimed.
 
 The disposable fixture advances ordinary positive1/60-second world ticks, with no page/shader errors,134 programs and four morph batches. No live learning or damage outcome is claimed by these controlled states.
+
+The subsequent actual `../starter-nova-two-casts-v11.webm` sequence also passes scoped desktop wraith transition/hold/erosion review at8. It does not establish other-spell, mobile or boss motion acceptance.

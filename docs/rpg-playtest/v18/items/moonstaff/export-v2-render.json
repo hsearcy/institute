@@ -1,0 +1,10 @@
+{
+  "seconds": 24.81850576400757,
+  "candidateSHA256": "3bef5aa838a2770636ab5b3cb80f7c0a362c4b77fd7e2ddd082508c99402520b",
+  "views": [
+    "grip",
+    "head"
+  ],
+  "restoredScene": "Scene",
+  "scope": "Exact exported structured grip correction; same-camera v1 comparisons"
+}

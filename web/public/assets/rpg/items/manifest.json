@@ -206,6 +206,111 @@
         "evidence": "docs/rpg-playtest/v18/items/ashsplitter/runtime",
         "scope": "Independent bounded reviews; no other item, spell art, or global acceptance."
       }
+    },
+    {
+      "id": "moonstaff",
+      "model": "moonstaff.glb",
+      "thumbnail": "moonstaff.png",
+      "sha256": "3bef5aa838a2770636ab5b3cb80f7c0a362c4b77fd7e2ddd082508c99402520b",
+      "candidateSha256": "3bef5aa838a2770636ab5b3cb80f7c0a362c4b77fd7e2ddd082508c99402520b",
+      "thumbnailSha256": "12a97e9cbfb9f13332318eba861e1751989dc25ead36971b23f3df1714452ebb",
+      "bytes": 878972,
+      "source": {
+        "recipe": "scripts/blender/items/build_studies.py::moonstaff",
+        "sourceSnapshotSha256": "244802fdca8a4d8e94c2fb46368693f39b3ea4e2e4e5971ca568f1d88b0880ff",
+        "evidence": "docs/rpg-playtest/v18/items/moonstaff",
+        "sourceRecipeSnapshot": "docs/rpg-playtest/v18/items/moonstaff/source-recipe-v4",
+        "bakeOptions": {
+          "structured_grip": true,
+          "geometry_normals_only": true
+        },
+        "materialRevision": "v4 broad mineral cloud under polished stone, silver setting and restrained navy leather; source unchanged"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "actual palm/grasp center at local(0,0,0)",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "moonstaff_Grip.006",
+        "tipNode": "moonstaff_Tip.006",
+        "transform": "full measured palm socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 11302,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "textureSize": [
+          1024,
+          1024
+        ],
+        "transmission": false,
+        "skinned": false,
+        "drawCallScope": "per item color pass; shadow/depth passes separate"
+      },
+      "review": {
+        "sourceConstruction": 8,
+        "sourceMaterial": 8,
+        "exactExportConstruction": 8,
+        "exactExportMaterial": 8,
+        "nativeStaticAttachmentScale": 8,
+        "nativeStaticMaterial": 8,
+        "standaloneThumbnail": 8,
+        "actualInventoryCard": {
+          "score": 8,
+          "reviewedSizesPx": [
+            210,
+            92
+          ]
+        },
+        "continuousMotion": {
+          "score": 8,
+          "scope": "Weapon-only visible hand continuity, long-shaft clearance and material/readability through two Cleave casts and one Nova cast. Isolated first Cleave shows raise, sweep and recovery at25fps recording sampling. No subframe, FX or general performance acceptance inferred.",
+          "reviewedFrames": {
+            "isolated": [
+              30,
+              65
+            ],
+            "threeCastNova": [
+              195,
+              245
+            ],
+            "threeCastSecondCleave": [
+              355,
+              405
+            ]
+          }
+        },
+        "evidence": "docs/rpg-playtest/v18/items/moonstaff/runtime",
+        "scope": "Independent bounded reviews; no other item, spell art, or global acceptance."
+      },
+      "performance": {
+        "evidence": "docs/rpg-playtest/v18/items/moonstaff/runtime/performance-comparison.json",
+        "scope": "One matched first-Cleave pair on current host,25fps recording; existing preview renderer suspended then exactly restored",
+        "activeMedianMs": 21.65,
+        "activeP95Ms": 29.6,
+        "activeMaximumMs": 45.2,
+        "apprenticeBaselineMedianMs": 20.1,
+        "programCount": 159,
+        "programCountStable": true
+      },
+      "preview": {
+        "thumbnailAzimuth": 32,
+        "thumbnailElevation": 12,
+        "thumbnailRoll": 28,
+        "thumbnailMargin": 1.18,
+        "scope": "Explicit thumbnail framing override; accepted GLB embedded metadata retained"
+      },
+      "validation": {
+        "routeFreeInstalledUiCombatReload": "passed",
+        "fourModelSwitching": "passed",
+        "fullTests": 369,
+        "testFiles": 48,
+        "failures": 0,
+        "productionBuild": "passed",
+        "evidence": "docs/rpg-playtest/v18/items/moonstaff/runtime"
+      }
     }
   ]
 }

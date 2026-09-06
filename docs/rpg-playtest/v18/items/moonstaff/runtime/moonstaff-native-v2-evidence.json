@@ -1,0 +1,7 @@
+{
+  "label": "moonstaff-native-v2",
+  "db": "/tmp/rpg-partial-1788725366019.db",
+  "receipts": [],
+  "errors": [],
+  "failure": "Error: Server unavailable http://127.0.0.1:8961/health"
+}

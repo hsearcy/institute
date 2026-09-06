@@ -1,0 +1,34 @@
+{
+  "runs": [
+    {
+      "label": "moonstaff-isolated",
+      "code": 0,
+      "stdout": "{\"label\":\"moonstaff-isolated\",\"success\":true,\"video\":\"/tmp/rpg-partial-hit-video/page@c04fb6b3bd17d7d8d230f616b62ca779.webm\",\"casts\":[{\"before\":[12,6,8,8,10,6],\"after\":[0,0,0,0,10,6],\"encounter\":0}],\"maxVisible\":6,\"hits\":4}\n",
+      "stderr": ""
+    },
+    {
+      "label": "apprentice-isolated",
+      "code": 0,
+      "stdout": "{\"label\":\"apprentice-isolated\",\"success\":true,\"video\":\"/tmp/rpg-partial-hit-video/page@8645d1da02cbc47f1e73c7ad72a33dfc.webm\",\"casts\":[{\"before\":[12,6,8,8,10,6],\"after\":[0,0,0,0,10,6],\"encounter\":0}],\"maxVisible\":6,\"hits\":4}\n",
+      "stderr": ""
+    }
+  ],
+  "before": {
+    "frame": 249734,
+    "paused": true,
+    "playing": false,
+    "xp": 826,
+    "kills": 48,
+    "encounter": 5
+  },
+  "success": true,
+  "restored": {
+    "sameWorld": true,
+    "frame": 252623,
+    "paused": true,
+    "playing": false,
+    "xp": 826,
+    "kills": 48,
+    "encounter": 5
+  }
+}

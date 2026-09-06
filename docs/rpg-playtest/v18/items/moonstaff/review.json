@@ -3,7 +3,7 @@
   "review": {
     "construction": 8,
     "material": 8,
-    "scope": "v4 front/head material; v3 rear/head/grip construction. Source only; exact export and native held size remain pending."
+    "scope": "v4 front/head material and v3 rear/head/grip construction source gate. Export/native scopes recorded separately below."
   },
   "sourceSHA256": {
     "build_studies.py": "724e8d0bfb7d8f776dbadd678c543b965abd71ecab29aeb94dacc835429b1d7d",
@@ -24,6 +24,91 @@
       "material": 7.5
     }
   },
-  "sourceOnly": true,
-  "nextGate": "Exact export fidelity, then native held/thumbnail"
+  "sourceOnly": false,
+  "nextGate": null,
+  "exactExportV1": {
+    "sha256": "f3bdb81a5d7bcaff321e07cf8a42f1f72213bd093ee89399c6464131605ead93",
+    "headFidelity": 8,
+    "completeFidelity": 7.5,
+    "blocker": "Lower grip broad dark folds persist with normal disabled and with flat map-free material; structured regular-ring low mesh correction prepared."
+  },
+  "exactExportV2": {
+    "sha256": "3bef5aa838a2770636ab5b3cb80f7c0a362c4b77fd7e2ddd082508c99402520b",
+    "triangles": 11302,
+    "bytes": 878972,
+    "materials": 1,
+    "structuralValidation": "passed",
+    "visualReview": {
+      "score": 8,
+      "scope": "Corrected grip/head; prior unchanged full/rear construction coverage. Native, thumbnail/card, motion pending."
+    }
+  },
+  "standaloneThumbnail": {
+    "score": 8,
+    "sha256": "12a97e9cbfb9f13332318eba861e1751989dc25ead36971b23f3df1714452ebb",
+    "framing": {
+      "azimuth": 32,
+      "elevation": 12,
+      "roll": 28,
+      "margin": 1.18
+    },
+    "scope": "512px exact-model render; original GLB preview metadata retained; actual small card pending"
+  },
+  "nativeIdle": {
+    "score": 8,
+    "scope": "1440x900 actual game idle silhouette/scale/material and visible attachment; fine finger contact and swing clearance pending motion"
+  },
+  "actualInventory": {
+    "score": 8,
+    "sizesPx": [
+      210,
+      92
+    ],
+    "scope": "Desktop feature/card; complete diagonal item visible"
+  },
+  "installed": true,
+  "weaponMotion": {
+    "score": 8,
+    "scope": "Weapon-only visible hand continuity, long-shaft clearance and material/readability through two Cleave casts and one Nova cast. Isolated first Cleave shows raise, sweep and recovery at25fps recording sampling. No subframe, FX or general performance acceptance inferred.",
+    "reviewedFrames": {
+      "isolated": [
+        30,
+        65
+      ],
+      "threeCastNova": [
+        195,
+        245
+      ],
+      "threeCastSecondCleave": [
+        355,
+        405
+      ]
+    }
+  },
+  "installedValidation": {
+    "success": true,
+    "source": "runtime/moonstaff-installed-v2-evidence.json",
+    "candidateRoutes": false,
+    "switches": [
+      "apprentice",
+      "thunderrod",
+      "cleaver",
+      "moonstaff"
+    ],
+    "reload": {
+      "xp": 13487,
+      "kills": 744,
+      "encounter": 0,
+      "saved": "moonstaff",
+      "mounted": "moonstaff"
+    },
+    "pageAssetErrors": []
+  },
+  "validation": {
+    "fullTests": 369,
+    "testFiles": 48,
+    "failures": 0,
+    "productionBuild": "passed",
+    "evidence": "runtime/"
+  }
 }

@@ -22,7 +22,30 @@ def load(path,name):
     return result
 
 
-def prepare(source_scene,item_id,size=1024,*,structured_blade=False,split_material_boundaries=False):
+def _structured_grip_low(source):
+    """Retain regular wrap rings so cap shading cannot spread up long triangles."""
+    radial,rows=64,261
+    if len(source.data.vertices)!=radial*rows:
+        raise ValueError('Structured grip expects the reviewed 64 by 261 wrap grid')
+    rings=[0,1,*range(4,257,4),259,260]
+    sides=32
+    vertices=[tuple(source.data.vertices[row*radial+side*2].co)
+              for row in rings for side in range(sides)]
+    faces=[]
+    for row in range(len(rings)-1):
+        for side in range(sides):
+            a=row*sides+side;b=row*sides+(side+1)%sides
+            faces.append((a,b,b+sides,a+sides))
+    faces.extend([tuple(reversed(range(sides))),
+                  tuple((len(rings)-1)*sides+side for side in range(sides))])
+    data=bpy.data.meshes.new('Structured wrapped grip low')
+    data.from_pydata(vertices,[],faces);data.update()
+    for material in source.data.materials:data.materials.append(material)
+    for face in data.polygons:face.use_smooth=face.index<len(faces)-2
+    return bpy.data.objects.new(source.name+' structured low',data)
+
+
+def prepare(source_scene,item_id,size=1024,*,structured_blade=False,split_material_boundaries=False,structured_grip=False):
     if source_scene.get('diagnosticOnly'):
         raise ValueError('Optical control scenes are not export candidates')
     previous=bpy.context.window.scene
@@ -54,16 +77,19 @@ def prepare(source_scene,item_id,size=1024,*,structured_blade=False,split_materi
         lows=[]
         for source_id,source in enumerate(sources):
             authored_blade=structured_blade and item_id=='cleaver' and source.name.startswith('Forged blade Ashsplitter')
+            authored_grip=structured_grip and source.name.startswith('Flat leather wrapped oval grip')
             if authored_blade:
                 builder=load(ROOT/'scripts/blender/items/metal_weapons.py','item_structured_blade')
                 low=builder._single_edge(None,*source.data.materials,low=True)
                 destination.objects.link(low);scene.collection.objects.unlink(low)
+            elif authored_grip:
+                low=_structured_grip_low(source);destination.objects.link(low)
             else:
                 low=bpy.data.objects.new(source.name+' low',source.data.copy());destination.objects.link(low)
             attr=low.data.attributes.new('item_source_id','INT','FACE')
             for value in attr.data:value.value=source_id
             triangles=helper.triangle_count([low])
-            ratio=1 if authored_blade else .035 if 'grown' in source.name or 'leather wrapped' in source.name else .075 if 'Forged blade' in source.name else .045 if 'charcoal mass' in source.name else .25 if triangles>1500 else 1
+            ratio=1 if authored_blade or authored_grip else .035 if 'grown' in source.name or 'leather wrapped' in source.name else .075 if 'Forged blade' in source.name else .045 if 'charcoal mass' in source.name else .25 if triangles>1500 else 1
             if ratio<1:
                 bpy.ops.object.select_all(action='DESELECT');low.select_set(True);bpy.context.view_layer.objects.active=low
                 modifier=low.modifiers.new('Preserve source silhouette for projection','DECIMATE');modifier.ratio=ratio;modifier.use_collapse_triangulate=True

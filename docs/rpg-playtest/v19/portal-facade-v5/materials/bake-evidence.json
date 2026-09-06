@@ -1,0 +1,17 @@
+{
+  "seconds": 0.7796106050082017,
+  "sourceManifest": "/home/houston/git/institute/scripts/blender/sources/rock-face-03/manifest.json",
+  "artifacts": {
+    "albedo": {
+      "path": "tmp/portal-wall-surface-v1/albedo.png",
+      "sha256": "5a82b6d018a1a26421aff0fc8e07fed3f5089b1804a08cf2cdd1061f9390732d",
+      "bytes": 1566533
+    },
+    "roughness": {
+      "path": "tmp/portal-wall-surface-v1/roughness.png",
+      "sha256": "7797dd79971d2daff5ce7e20dfa4d83edb59e2e0529140f8e594de7f0cf80f7c",
+      "bytes": 723460
+    }
+  },
+  "recipe": "same diffuse desaturation/value/mix and roughness remap as masonry_pier.py; placement history remains vertex-based"
+}

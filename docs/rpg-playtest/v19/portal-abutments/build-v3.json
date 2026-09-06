@@ -1,0 +1,23 @@
+{
+  "stage": "source-build-and-audit",
+  "seconds": 7.2497429870127235,
+  "scene": "Root bonded portal abutment source v3",
+  "audit": {
+    "objects": 174,
+    "triangles": 196292,
+    "fractureFaces": 1342,
+    "failures": [],
+    "bounds": {
+      "min": [
+        -4.790281772613525,
+        -0.6228101849555969,
+        -0.0018664821982383728
+      ],
+      "max": [
+        4.7915873527526855,
+        0.6931121349334717,
+        5.995420932769775
+      ]
+    }
+  }
+}

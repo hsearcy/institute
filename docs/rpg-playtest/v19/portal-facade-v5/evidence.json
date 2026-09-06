@@ -1,0 +1,95 @@
+{
+  "label": "portal-facade-v5",
+  "db": "/tmp/portal-facade-v5.db",
+  "errors": [],
+  "assembly": {
+    "removed": {
+      "walls": 12,
+      "arches": 6,
+      "piers": 12,
+      "bays": 5,
+      "oldBackRuin": 7
+    },
+    "groups": 6,
+    "uniformPortalScale": true,
+    "portalSourceHeight": 5.99362826347,
+    "wallTriangles": 286880,
+    "gates": [
+      {
+        "room": 0,
+        "height": 6.8,
+        "minimumPlinthOpening": 3.1767068565204655
+      },
+      {
+        "room": 1,
+        "height": 6.2,
+        "minimumPlinthOpening": 2.8964091927098363
+      },
+      {
+        "room": 2,
+        "height": 7.2,
+        "minimumPlinthOpening": 3.363571965727552
+      },
+      {
+        "room": 3,
+        "height": 6.05,
+        "minimumPlinthOpening": 2.8263347767571787
+      },
+      {
+        "room": 4,
+        "height": 6.5,
+        "minimumPlinthOpening": 3.0365580246151507
+      },
+      {
+        "room": 5,
+        "height": 8.3,
+        "minimumPlinthOpening": 3.8774510160470395
+      }
+    ]
+  },
+  "material": {
+    "changed": 6,
+    "diagnostics": {
+      "appearance": "wayfarer",
+      "drawWarmup": {
+        "programs": 158,
+        "durationMs": 535.3000000119209
+      },
+      "lastAttack": null,
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cast",
+        "cleave"
+      ],
+      "encounter": 0,
+      "region": "embercrypt",
+      "enemies": 6,
+      "articulatedEnemies": 6,
+      "enemyRoster": {
+        "guardian": 1,
+        "skeleton": 3,
+        "revenant": 1,
+        "wraith": 1
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 24,
+      "drawCalls": 331,
+      "triangles": 1349743,
+      "particles": 40,
+      "fragments": 0,
+      "hero": [
+        0,
+        0,
+        1.4
+      ],
+      "softwareRenderer": false,
+      "fps": 2,
+      "quality": "full",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+    }
+  },
+  "success": true
+}

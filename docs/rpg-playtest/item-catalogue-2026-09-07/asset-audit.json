@@ -1,0 +1,239 @@
+{
+  "total": 23,
+  "installed": 23,
+  "missing": [],
+  "errors": [],
+  "items": [
+    {
+      "id": "apprentice",
+      "triangles": 4746,
+      "bytes": 1311748,
+      "materials": 1,
+      "sha256": "843adac02c11ea0d8d7aacba6d8f0eec90cf92e3bb0653a836f39ded73c35761",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "ca884c490f5f2d34c982381b7af9344fb8a86890987a3a23f7106dace2951be1",
+      "attachment": "hand.R"
+    },
+    {
+      "id": "cinderwand",
+      "triangles": 9938,
+      "bytes": 1354744,
+      "materials": 2,
+      "sha256": "8ab19ace6df4782073906af2bf9869bdd0a413e02b252ef5ed1f61a56a670587",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "45c169728a4cb96c1b995e529f7bb65ca0b885f3f9fa152dbbd25282cd94a18b",
+      "attachment": "hand.R"
+    },
+    {
+      "id": "glacier",
+      "triangles": 6452,
+      "bytes": 1931760,
+      "materials": 2,
+      "sha256": "bfa81edad698d1c969cb4fc06ce6608559b9666d350f5ac847d74d9b4ae3568d",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "c4992aa56f5a1c312c786022f2672daa7c9ee45c1cbe33cfa8108d43ac23a5a3",
+      "attachment": "hand.R"
+    },
+    {
+      "id": "thunderrod",
+      "triangles": 9300,
+      "bytes": 1270772,
+      "materials": 1,
+      "sha256": "f5c813c5e8aa5753b1746db0038605414abf829b6ce0784407c45d048875378c",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "117fccff2d828084459817f7d25610f8aac7ddf08c9fed12932ec4188802f5ee",
+      "attachment": "hand.R"
+    },
+    {
+      "id": "moonstaff",
+      "triangles": 11302,
+      "bytes": 878972,
+      "materials": 1,
+      "sha256": "3bef5aa838a2770636ab5b3cb80f7c0a362c4b77fd7e2ddd082508c99402520b",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "00c01bb03cfcdcc3058fa89b872bfd4d3e048424237cffc8d2b0aa3169738799",
+      "attachment": "hand.R"
+    },
+    {
+      "id": "phoenix",
+      "triangles": 11212,
+      "bytes": 1013548,
+      "materials": 1,
+      "sha256": "1114e85036a0670de36b9182bef1a8e795b5f5e705ba715ee8ec14a0ca9cfcc0",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "e2e064567a706b3375ea50311e19d2260c77cec0e48078e38addb0fff56d7994",
+      "attachment": "hand.R"
+    },
+    {
+      "id": "wintercrown",
+      "triangles": 10616,
+      "bytes": 821772,
+      "materials": 1,
+      "sha256": "9e897aea4863c3a5639a5dce2d3c3bda76dac9729ae0f387a683e3b6bbc90d28",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "b26ed4d4a59ae2d16f2d8644c0a62623fb9a7c10665d6dfbdbb4bad67718edd1",
+      "attachment": "hand.R"
+    },
+    {
+      "id": "tempest",
+      "triangles": 9836,
+      "bytes": 850160,
+      "materials": 1,
+      "sha256": "9f1584de5faa0015a5049c92ad6adbff71efa748b5216bb2c8041a1c1fbbf31c",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "b8a297836c11520091f8d41fd9cd5222771cc7669dc2b55182d342633c4cbe41",
+      "attachment": "hand.R"
+    },
+    {
+      "id": "cleaver",
+      "triangles": 5160,
+      "bytes": 827720,
+      "materials": 1,
+      "sha256": "338e88f04c4b96d196331908fc2abcbe64f7d900987233a5a11cf3ecf8a81422",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "c55fbafdde2789efebba4cd6bfa2acfb0e72e1e43293a3c35c38941cdf7c1db1",
+      "attachment": "hand.R"
+    },
+    {
+      "id": "starfall",
+      "triangles": 11967,
+      "bytes": 1025272,
+      "materials": 1,
+      "sha256": "a4ee91943ad99437f2db38c6aa520b825578845b8ecfbeb9425ec286162fa0ef",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "012a502df1ed83db9796cbaa7f6a130c0a9db1a4115a3a5b7bcf12e4eb7196f5",
+      "attachment": "hand.R"
+    },
+    {
+      "id": "phoenix_talon",
+      "triangles": 6602,
+      "bytes": 735096,
+      "materials": 1,
+      "sha256": "0f1b4c17f215ba6cbd5bc615414e52818658a226ab65b2a66275b077628c9b01",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "16aac7955ff55dc258656053cd968469457dee691ac39f574ad0235b2f7e94d5",
+      "attachment": "hand.R"
+    },
+    {
+      "id": "inferno",
+      "triangles": 6220,
+      "bytes": 851556,
+      "materials": 1,
+      "sha256": "1a9e45eeab15f60b78a0380017e0d4190ce3f7fa3d9b34c8d2575db589d23711",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "22e0cbe23583e27edf52b0c2fc985c794d6a059b8c5cef6b0da87f535d5b4fa9",
+      "attachment": "head"
+    },
+    {
+      "id": "sunforged",
+      "triangles": 9978,
+      "bytes": 890936,
+      "materials": 1,
+      "sha256": "e707044e8f4a4670b4dcfad6fa5bae2ecf9604a650f696d9af91eb805a2a847b",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "8ab9e216bedbdc89f096fa8d43283bb3ad1973815bc9f8852e114b89f5834513",
+      "attachment": "hand.R"
+    },
+    {
+      "id": "icespear",
+      "triangles": 6870,
+      "bytes": 611744,
+      "materials": 1,
+      "sha256": "d51260f6bf101e35bf01ca3643f43db8ebe86509a2e7657f654a4178965a95f9",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "7c2c21f760366208f24dc5d21c63ff86f278bfe4e89ee40740e2d838dc6011a3",
+      "attachment": "hand.R"
+    },
+    {
+      "id": "tideglass",
+      "triangles": 5988,
+      "bytes": 508328,
+      "materials": 1,
+      "sha256": "a2b47cfd26087c7f36b3a08de4ef922b3cd76b55e34d965f23b76b06b11b2c9f",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "1df28aa27fd4b87a8c1c62908b300d4ac034fda7f0bc6650fe4b740a876eea16",
+      "attachment": "hand.R"
+    },
+    {
+      "id": "hailcaller",
+      "triangles": 7368,
+      "bytes": 673156,
+      "materials": 1,
+      "sha256": "bb0f47e7eea26190f5835894af2ac57eb125ca319924c8a0f2a525abcf0e235d",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "92911b3501b795787d31d19cf5918940df6b92b1355827f5ee9867e9b8991f50",
+      "attachment": "hand.R"
+    },
+    {
+      "id": "wardenheart",
+      "triangles": 1500,
+      "bytes": 489420,
+      "materials": 1,
+      "sha256": "9103d388ef30b206fbcb6de4d0f26d13b2defee4c8b7d138af89745a5ebef036",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "0a0d0a86b2958a974551d57a732092868b3a127f7fc2aea6278ca1d8c082b43f",
+      "attachment": "chest"
+    },
+    {
+      "id": "winterbranch",
+      "triangles": 11968,
+      "bytes": 1424696,
+      "materials": 1,
+      "sha256": "ed01315eed6c805e590c21fbb873ea14326992d78874dd1c3f6da1d71285b9dc",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "fcde2dbbe4f935f8997321cf537cebe6963e0bf269b9abc44a1a343c67bc022c",
+      "attachment": "hand.R"
+    },
+    {
+      "id": "arcfang",
+      "triangles": 6904,
+      "bytes": 775324,
+      "materials": 1,
+      "sha256": "e6fa8bd65aa5e5ce13a38068260d16d579b34401d3ce674e27fdb84b9d385a04",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "de9988619369e3fc993de45437eb8f4a03ebb9385b41d1a1f7b1866a57cbfaf5",
+      "attachment": "hand.R"
+    },
+    {
+      "id": "thunderbell",
+      "triangles": 11966,
+      "bytes": 1156000,
+      "materials": 1,
+      "sha256": "7fade833c26223956ddf526cc8f38c598eff9485f8eb4b7a2ce783e0efc5e491",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "7e32029be37157c45dc5e9cbe1bca377aaba0333c26c8ede6899d27798adafba",
+      "attachment": "belt"
+    },
+    {
+      "id": "stormorbit",
+      "triangles": 2320,
+      "bytes": 706884,
+      "materials": 1,
+      "sha256": "47f9407ff85dd190f4a3a35c16ced5da4f588bf551a0d0ed762d3f16418f1c9b",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "43f5221e018acf00c870bf776ece652186e2ed409c6d833420547db5537fa394",
+      "attachment": "belt"
+    },
+    {
+      "id": "skybreaker",
+      "triangles": 7468,
+      "bytes": 636556,
+      "materials": 1,
+      "sha256": "cd66df4a500e65669478f8fd75100818120a2887570303c165dda89c1dd2bc88",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "cabb3e117c6f9b80a0f71e62ae33d4ec983c663eb6d7888961b758b75aa0a108",
+      "attachment": "hand.R"
+    },
+    {
+      "id": "stormsilver",
+      "triangles": 11606,
+      "bytes": 781600,
+      "materials": 1,
+      "sha256": "0ccefc37c99b03aa7c34e3f8572cc94f9ea2a503d125b58f47105b673c9acccb",
+      "status": "Structural checks only; consult the separately recorded visual review scopes",
+      "geometrySha256": "d7dbbdbb17863b76844a6240d442c9c1b0dca69803c03be7a576b1ebbc592d97",
+      "attachment": "hand.R"
+    }
+  ],
+  "scope": "Catalogue, payload, unique geometry, attachment metadata and thumbnail checks. Visual quality is reviewed separately."
+}

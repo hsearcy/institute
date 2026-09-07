@@ -191,7 +191,9 @@ def make_builders(h):
                           (2*segments+i,3*segments+i,3*segments+j,2*segments+j),
                           (segments+i,segments+j,3*segments+j,3*segments+i),
                           (i,2*segments+i,2*segments+j,j)])
-        return close_normals(mesh(name,verts,faces,mat,root,bevel=.0007))
+        obj=close_normals(mesh(name,verts,faces,mat,root,bevel=.0007))
+        for face in obj.data.polygons:face.use_smooth=face.index%4 in (0,1)
+        return obj
 
     def worn_materials(p):
         q=materials(p)
@@ -219,17 +221,19 @@ def make_builders(h):
         band(root,'Inferno restrained worn lower rim',.131,.099,-.0095,.004,.008,p['goldedge'])
         # Teeth follow the actual band surface; their lower roots overlap it.
         for index,(angle,height,lean,width) in enumerate([(-2.50,.042,-.009,.024),(-2.05,.062,.014,.027),(-1.57,.083,-.006,.033),(-1.04,.052,-.012,.025),(-.63,.036,.010,.022)]):
-            tooth=outline('Inferno flame tooth '+str(index),
-                [(-width,.006),(-width*.78,.028),(-width*.36,height*.77),
-                 (lean,height),(width*.23,height*.48),(width,.025),(width*.78,.006)],
-                .004,p['gold'],root,.001)
+            tooth=section_solid(root,'Inferno swept forged flame crest '+str(index),
+                [(.004,0,width*.65,.005),(.018,-width*.09,width*.76,.009),
+                 (height*.48,lean*.3,width*.60,.008),
+                 (height*.77,lean+width*.23,width*.28,.004),
+                 (height,lean-width*.13,.0005,.0005)], [p['gold'],p['goldedge']])
             tooth.rotation_euler.z=angle+math.pi/2
             tooth.location=(.126*math.cos(angle),.095*math.sin(angle),0);close_normals(tooth)
-            inset=outline('Inferno recessed garnet flame '+str(index),
-                [(-width*.48,.012),(-width*.37,.03),(lean*.65,height*.75),
-                 (width*.44,.025),(width*.32,.012)],.0013,p['garnet'],root,.0005)
+            inset=section_solid(root,'Inferno seated mineral enamel channel '+str(index),
+                [(.01,0,width*.20,.0015),(.019,-width*.03,width*.28,.0025),
+                 (height*.43,lean*.33,width*.20,.002),(height*.67,lean*.76,.0005,.0005)],
+                [p['garnet'],p['gold']])
             inset.rotation_euler.z=angle+math.pi/2
-            inset.location=(.132*math.cos(angle),.101*math.sin(angle),0);close_normals(inset)
+            inset.location=(.134*math.cos(angle),.103*math.sin(angle),0);close_normals(inset)
         # Rear fastening plate bridges an actual fitted tie band, not a halo.
         close_normals(outline('Inferno rear hammered fastening plate',[(-.027,-.008),(-.028,.01),(.024,.01),(.028,-.008)],.002,p['goldedge'],root,.001)).location.y=.099
         for side in (-1,1):
@@ -242,15 +246,27 @@ def make_builders(h):
         # Heart is deliberately asymmetric stone, not a geometric heart icon.
         shape=[(-.008,-.05),(-.047,-.040),(-.070,-.070),(-.063,-.117),(-.012,-.188),
                (.037,-.155),(.067,-.092),(.048,-.051),(.023,-.043)]
-        stone=outline('Winterheart irregular blue granite heart',shape,.018,p['icebody'],root,.0014);close_normals(stone)
+        center=Vector((-.006,0,-.103));verts=[];faces=[];n=len(shape)
+        verts.extend((x,.015,z) for x,z in shape)
+        verts.extend((x,-.013,z) for x,z in shape)
+        for i,(x,z) in enumerate(shape):
+            verts.append((center.x+(x-center.x)*.63,-.035+.004*math.sin(i*1.8),center.z+(z-center.z)*.69))
+        for i in range(n):
+            j=(i+1)%n;faces.extend([(i,j,n+j,n+i),(n+i,n+j,2*n+j,2*n+i)])
+        faces.extend([tuple(reversed(range(n))),tuple(2*n+i for i in range(n))])
+        stone=close_normals(mesh('Winterheart thick irregular polished granite volume',verts,faces,p['icebody'],root,bevel=.0008))
         stone.data.materials.append(p['iceplane']);stone.data.materials.append(p['icefracture'])
         for face in stone.data.polygons:
             if abs(face.normal.y)<.5:face.material_index=2 if face.center.z<-.11 else 1
         # Quiet mineral color variation, grain subordinate to actual planes.
         nt=p['icebody'].node_tree;bs=nt.nodes.get('Principled BSDF')
-        noise=nt.nodes.new('ShaderNodeTexNoise');noise.inputs['Scale'].default_value=46;noise.inputs['Detail'].default_value=2
-        ramp=nt.nodes.new('ShaderNodeValToRGB');ramp.color_ramp.elements[0].color=(.019,.045,.062,1);ramp.color_ramp.elements[1].color=(.10,.16,.185,1)
+        noise=nt.nodes.new('ShaderNodeTexNoise');noise.inputs['Scale'].default_value=3.2;noise.inputs['Detail'].default_value=1.5
+        ramp=nt.nodes.new('ShaderNodeValToRGB');ramp.color_ramp.elements[0].color=(.009,.027,.04,1);ramp.color_ramp.elements[1].color=(.065,.13,.16,1)
         nt.links.new(noise.outputs['Fac'],ramp.inputs[0]);nt.links.new(ramp.outputs[0],bs.inputs['Base Color'])
+        bs.inputs['Metallic'].default_value=0;bs.inputs['Roughness'].default_value=.25
+        close_normals(tube('Winterheart connected cast bail',[(0,0,-.034),(0,.014,-.045),(0,.021,-.059)],[.004,.006,.006],p['froststeel'],root,10))
+        backing=[(x,.020,z) for x,z in shape]+[(shape[0][0],.020,shape[0][1])]
+        close_normals(tube('Winterheart fitted open rear setting',backing,[.0035]*len(backing),p['froststeel'],root,8))
         for index,pts in enumerate([
             [(-.042,.019,-.044),(-.065,.009,-.066),(-.064,-.023,-.078),(-.047,-.025,-.088)],
             [(.031,.019,-.045),(.060,.009,-.065),(.059,-.023,-.083),(.041,-.025,-.093)],
@@ -263,26 +279,94 @@ def make_builders(h):
     def thunderbell(root,p):
         p=worn_materials(p)
         suspension(root,p,bottom=-.039,mat=p['bronze'],name='Thunderbell')
-        close_normals(outline('Thunderbell purple suspension strap',[(-.013,-.021),(-.014,-.061),(.011,-.071),(.015,-.023)],.004,p['purple'],root,.001))
+        # A folded woven loop passes through the mounting eye and cast lug.
+        # Its front and back are connected by rounded folds, not a box spacer.
+        verts=[];faces=[];n=72
+        for j in range(n):
+            a=j*math.tau/n;y=.008*math.cos(a);z=-.044+.024*math.sin(a)
+            radial=Vector((0,math.cos(a),math.sin(a)))
+            for x,depth in [(-.010,-.0015),(0,-.0015),(.010,-.0015),(.010,.0015),(0,.0015),(-.010,.0015)]:
+                verts.append(tuple(Vector((x,y,z))+radial*depth))
+        for j in range(n):
+            for k in range(6):faces.append((j*6+k,j*6+(k+1)%6,((j+1)%n)*6+(k+1)%6,((j+1)%n)*6+k))
+        hanger=close_normals(mesh('Thunderbell continuous folded woven hanger',verts,faces,p['purple'],root,bevel=.0004))
+        for face in hanger.data.polygons:face.use_smooth=True
+        pressure=hanger.data.attributes.new('HangerEdgePressure','FLOAT','POINT')
+        for vertex in hanger.data.vertices:pressure.data[vertex.index].value=max(0,min(1,(abs(vertex.co.x)-.007)/.003))
+        hn=p['purple'].node_tree.nodes;hl=p['purple'].node_tree.links
+        attr=hn.new('ShaderNodeAttribute');attr.attribute_name='HangerEdgePressure'
+        ramp=hn.new('ShaderNodeValToRGB');ramp.color_ramp.elements[0].color=(.052,.02,.091,1);ramp.color_ramp.elements[1].color=(.017,.005,.031,1)
+        hl.new(attr.outputs['Fac'],ramp.inputs[0]);hl.new(ramp.outputs[0],hn.get('Principled BSDF').inputs['Base Color'])
+        lug=band(root,'Thunderbell cast integral suspension lug',.013,.017,0,.009,.0045,p['bronze'],40)
+        lug.rotation_euler.x=math.pi/2;lug.location.z=-.063
+        close_normals(lathe('Thunderbell lug to shoulder cast foot',[(-.082,.020),(-.074,.019),(-.067,.011)],p['bronze'],root,24))
         # Revolved open bell with inner wall returning to the shoulder: actual
         # hollow mouth, scalloped skirt and variable cast-wall thickness.
-        sections=[(-.059,.016),(-.073,.034),(-.107,.042),(-.15,.049),(-.191,.069),(-.214,.079),(-.219,.079),
-                  (-.217,.071),(-.188,.061),(-.151,.041),(-.109,.034),(-.077,.026),(-.068,.01)]
-        n=64;v=[]
-        for row,(z,r) in enumerate(sections):
+        sections=[(-.073,.020),(-.083,.032),(-.099,.040),(-.15,.049),(-.184,.069),(-.204,.079),(-.210,.079),
+                  (-.208,.071),(-.181,.061),(-.151,.041),(-.101,.032),(-.086,.024),(-.082,.01)]
+        samples=[];steps=24
+        for row,(a,b) in enumerate(zip(sections,sections[1:])):
+            for step in range(steps):
+                t=step/steps;samples.append((a[0]*(1-t)+b[0]*t,a[1]*(1-t)+b[1]*t,row+t))
+        samples.append((*sections[-1],len(sections)-1))
+        n=192;v=[]
+        for z,r,row in samples:
             for i in range(n):
-                a=i*math.tau/n;scallop=.0045*math.cos(7*a) if row in (5,6,7) else 0
+                a=i*math.tau/n;scallop=.0045*math.cos(7*a)*max(0,min(1,row-4,8-row))
                 v.append((r*math.cos(a),r*math.sin(a),z+scallop))
+        # Low cast relief is part of the same continuous shell grid. This
+        # avoids coincident plaque surfaces and fragile intersecting booleans.
+        stroke=[Vector(q) for q in [(-.008,-.115),(.005,-.112),(-.003,-.134),(.009,-.130),(-.009,-.155)]]
         faces=[]
-        for row in range(len(sections)-1):
+        for row in range(len(samples)-1):
             for i in range(n):faces.append((row*n+i,row*n+(i+1)%n,(row+1)*n+(i+1)%n,(row+1)*n+i))
-        faces.extend([tuple(reversed(range(n))),tuple((len(sections)-1)*n+i for i in range(n))])
-        bell=close_normals(mesh('Thunderbell hollow cast body and scalloped mouth',v,faces,p['bronze'],root,bevel=.0006));bell.data.materials.append(p['patina'])
+        faces.extend([tuple(reversed(range(n))),tuple((len(samples)-1)*n+i for i in range(n))])
+        bell=close_normals(mesh('Thunderbell hollow cast body and scalloped mouth',v,faces,p['bronze'],root));bell.data.materials.append(p['patina'])
         for face in bell.data.polygons:
-            face.material_index=1 if 7*n<=face.index<11*n else 0;face.use_smooth=True
+            face.material_index=1 if 7*steps*n<=face.index<11*steps*n else 0;face.use_smooth=True
+        # Refine only the casting patch so the shallow shoulder survives
+        # without increasing the whole bell to submillimeter tessellation.
+        bm=bmesh.new();bm.from_mesh(bell.data)
+        patch_edges=set()
+        for face in bm.faces:
+            c=face.calc_center_median()
+            if abs(c.x)<.022 and -.163<c.z<-.105 and face.normal.y<-.7:
+                patch_edges.update(face.edges)
+        bmesh.ops.subdivide_edges(bm,edges=list(patch_edges),cuts=3,use_grid_fill=True)
+        bm.to_mesh(bell.data);bm.free()
+        for vertex in bell.data.vertices:
+            x,y,z=vertex.co
+            if not (abs(x)<.017 and -.161<z<-.107 and y<-.02):continue
+            outer=.04+(.049-.04)*((-z-.099)/.051) if z>=-.15 else .049+(.069-.049)*((-z-.15)/.034)
+            if math.hypot(x,y)<outer-.002:continue
+            q=Vector((x,z));distance=1
+            for a,b in zip(stroke,stroke[1:]):
+                delta=b-a;t=max(0,min(1,(q-a).dot(delta)/delta.length_squared));distance=min(distance,(q-a-t*delta).length)
+            shoulder=max(0,min(1,(.00125-distance)/.00045))
+            vertex.co.y-=.00065*shoulder*shoulder*(3-2*shoulder)
+        close_normals(bell)
+        bell['sourceRelief']='Continuous shell vertex casting, 0.65mm high, no separate plaque'
         close_normals(tube('Thunderbell visible clapper stem',[(0,0,-.071),(0,0,-.194)],[.003,.004],p['froststeel'],root,10))
         close_normals(lathe('Thunderbell solid swinging clapper',[(-.238,.001),(-.232,.013),(-.22,.017),(-.206,.01),(-.197,.004)],p['bronze'],root,20))
-        for z,r in [(-.092,.039),(-.17,.058)]:band(root,'Thunderbell worn cast raised band',r,r,z,.004,.0025,p['goldedge'])
+        for z,r in [(-.099,.041),(-.17,.061)]:band(root,'Thunderbell worn cast raised band',r,r,z,.004,.0025,p['goldedge'])
+        shelter=bell.data.attributes.new('BellShelteredCasting','FLOAT','POINT')
+        for vertex in bell.data.vertices:
+            x,y,z=vertex.co;angle=math.atan2(y,x)
+            def angular(a,b):return math.atan2(math.sin(a-b),math.cos(a-b))
+            islands=max(strength*math.exp(-(angular(angle,center)/width)**4)
+                        for center,width,strength in [(-2.4,.43,.64),(-1.15,.24,.55),(.35,.31,.32),(2.3,.46,.48)])
+            upper=math.exp(-((z+.103+.00055*math.sin(angle*7))/.00125)**2)
+            lower=math.exp(-((z+.174+.0007*math.sin(angle*5+.9))/.0015)**2)
+            runs=max(.30*math.exp(-(angular(angle,-1.38)/.035)**2-((z+.178)/.003)**2),
+                     .25*math.exp(-(angular(angle,-1.85)/.04)**2-((z+.106)/.0025)**2))
+            shoulder=.28*math.exp(-((z+.080)/.0016)**2)*islands
+            shelter.data[vertex.index].value=min(.72,max(islands*max(upper,lower),shoulder,runs))
+        nt=p['bronze'].node_tree;nodes,links=nt.nodes,nt.links;bs=nodes.get('Principled BSDF')
+        attr=nodes.new('ShaderNodeAttribute');attr.attribute_name='BellShelteredCasting'
+        mix=nodes.new('ShaderNodeMixRGB');mix.inputs[1].default_value=(.23,.099,.030,1);mix.inputs[2].default_value=(.017,.035,.029,1)
+        links.new(attr.outputs['Fac'],mix.inputs[0]);links.new(mix.outputs[0],bs.inputs['Base Color'])
+        rough=nodes.new('ShaderNodeMapRange');rough.inputs['From Min'].default_value=0;rough.inputs['From Max'].default_value=1;rough.inputs['To Min'].default_value=.42;rough.inputs['To Max'].default_value=.72
+        links.new(attr.outputs['Fac'],rough.inputs[0]);links.new(rough.outputs[0],bs.inputs['Roughness'])
         root['attachmentAnchor']='top-suspension';root['distalTip']=[0,0,-.239]
         root['sourceDesign']='Hollow flared bronze temple bell, scalloped rim, exposed clapper and purple hanger'
 
@@ -294,11 +378,22 @@ def make_builders(h):
             pts=[]
             for j in range(19):
                 a=.12+(math.pi-.24)*j/18;r=.087*math.sin(a)
-                pts.append((r*math.cos(angle),r*math.sin(angle),-.131+.087*math.cos(a)))
-            close_normals(tube('Stormorbit forged longitudinal cage arm '+str(index),pts,[.0045+.0015*math.sin(j*math.pi/18) for j in range(19)],p['silver'],root,8))
-        band(root,'Stormorbit irregular equatorial retaining ring',.088,.088,-.135,.006,.004,p['silveredge'],48)
+                phi=angle+(index-1)*.34*math.sin(a)
+                pts.append((r*math.cos(phi),r*math.sin(phi),-.131+.087*math.cos(a)))
+            close_normals(tube('Stormorbit forged unequal meridian arm '+str(index),pts,[(.0058 if index==0 else .0038)+.0011*math.sin(j*math.pi/18) for j in range(19)],p['silver'],root,8))
+        orbit=band(root,'Stormorbit oblique retaining orbit',.088,.088,-.135,.0045,.003,p['silveredge'],48)
+        c=Vector((0,0,-.135));orbit.data.transform(Matrix.Translation(c) @ Matrix.Rotation(.19,4,'X') @ Matrix.Translation(-c))
         close_normals(lathe('Stormorbit lower seated hub',[(-.233,.001),(-.226,.012),(-.217,.017),(-.209,.008)],p['silver'],root,24))
-        crystal=facet_chunk(root,'Stormorbit offset faceted stormstone',(.014,-.010,-.126),(.053,.044,.123),dict(p,icebody=p['violet'],iceplane=p['icebody'],icefracture=p['iceplane']),3)
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2,radius=1,location=(0,0,0))
+        crystal=bpy.context.object;crystal.name='Stormorbit offset spherical mineral volume';crystal.parent=root
+        for vertex in crystal.data.vertices:
+            x,y,z=vertex.co;radial=1+.025*math.sin(x*5+z*3)
+            vertex.co=(.014+x*.059*radial,-.010+max(y,-.82)*.052,-.126+z*.067*radial)
+        crystal.data.materials.append(p['violet']);crystal.data.materials.append(p['icebody'])
+        for face in crystal.data.polygons:
+            face.material_index=1 if face.center.z<-.15 else 0
+            face.use_smooth=True
+        close_normals(crystal)
         for side in (-1,1):
             close_normals(tube('Stormorbit root retaining pin',[(side*.017,0,-.213),(side*.020,-.006,-.168)],[.005,.003],p['silver'],root,8))
         root['attachmentAnchor']='top-suspension';root['distalTip']=[0,0,-.234]

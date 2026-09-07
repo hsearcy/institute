@@ -183,3 +183,54 @@ renders a transparent inventory preview. Current candidate files are
 `tmp/item-models/apprentice/apprentice-v4.glb` and
 `tmp/item-models/apprentice/apprentice-v4-thumbnail.png`; the original rejected
 normal-transfer candidate remains preserved beside them.
+
+## Catalogue delivery runner
+
+`export_catalogue.py` exports the eighteen outstanding IDs using the same source
+builders and PBR projection path. Load it in Blender and call `run_item(item_id)`
+to advance through source preparation, three bake channels and raw export. Its
+45-second limit applies between stages; `run_next(item_id)` performs exactly one
+stage. `run_items(ids)` isolates individual failures and continues the selection.
+
+Each item's source snapshot, stage receipts, topology repair audit and raw export
+are retained in `tmp/item-models/catalogue-v1/<id>`. Closed inward or inconsistent
+source winding is repaired before the independent preflight, with every evaluated
+vertex position preserved. Nonmanifold geometry fails; open surfaces remain open.
+The runtime triangle cap includes emissive and alpha parts, and the final exporter
+preserves the authored distal tip for bent weapons and worn objects.
+Catalogue UV packing uses bounding rectangles and cardinal rotations to avoid
+the unbounded concave packing search; direct legacy bake calls retain their
+original packing options. Stage timing receipts make slow operations visible.
+
+Run `python scripts/blender/items/export_catalogue.py --pack` outside Blender to
+pad and pack completed raw GLBs and produce structural review receipts. Then call
+`thumbnail(item_id)` inside Blender to render the exact packed bytes. These
+commands never install public assets or assign visual acceptance scores. Blender's
+live namespace retains partial bake stages; after restarting Blender an unfinished
+item is rebuilt from its saved source, while completed raw exports remain skipped.
+
+The September 7 catalogue run produced all eighteen missing packed GLBs and
+matching transparent 512px thumbnails. Structural validation passed for every
+candidate: 1,500–11,968 triangles, one or two materials, embedded PBR maps and
+valid attachment markers. The eighteen GLBs total 16,225,004 bytes; thumbnails
+add 2,338,584 bytes. These measurements do not imply an 8/10 art score.
+
+To reproduce in a Blender MCP code call:
+
+```python
+import importlib.util
+from pathlib import Path
+path = Path('/home/houston/git/institute/scripts/blender/items/export_catalogue.py')
+spec = importlib.util.spec_from_file_location('item_catalogue', path)
+runner = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(runner)
+runner.run_items(max_seconds=45)
+```
+
+Repeat the bounded call until `runner.status()` reports all raw exports complete,
+run the CPU `--pack` command above, then call `runner.thumbnail(item_id)` for each
+ID in `runner.ITEMS`. A raw export, packed GLB, thumbnail and exact SHA receipt are
+separate stages. The saved `source.blend` and source winding audit remain beside
+each candidate; the Glacier counterweight required a closed-winding correction.
+`surfaces.py` also accepts both Blender tessellator return formats (vertex indices
+and Vector values), fixing Cinderbranch's cap without changing its authored shape.

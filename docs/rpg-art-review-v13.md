@@ -8,24 +8,29 @@ Scores are subjective art-direction judgments, grounded in the listed visible ev
 
 ## Current acceptance ledger
 
+**Current work scope: items only.** The user stopped scene/character work and prioritized unique models for all23 items. Scene/character historical findings below remain records, not active review tasks. Continue independent source/exact/native item gates.
+
+**Current item presentation correction (IS):** Earlier model-card 8s were too generous about overall visual finish. The actual collection-wide inventory now scores Apprentice7, Thunder6.5, Ashsplitter6, Moonstaff6.5, Phoenix7 and Starfall6 for overall card appeal. Source fidelity, sound construction and observed attachment/motion passes remain scoped evidence; they do not establish whole-item visual8. Current card ratings below supersede older card claims in the history. No new whole-item acceptance.
+
+
 **User-directed impact gate remains open beyond reviewed scope: combat must show at most10 enemies, starter attacks must leave survivors, and hits must feel forceful rather than an effect followed by disappearance. Prior complete Ball/Nova passes remain withdrawn. Latest actual-loop starter Nova v11 desktop evidence now scores8 for shown contact, skeletal/guardian survivor recovery, all four body types' falls/fold, settled holds, erosion and partial-clear ordering. The first answer leaves four of six alive, then the second clears. All263 decoded frames were reviewed; native40ms sampling does not certify subframe behavior. This closes the specific Nova guardian-contact and wraith-transition blockers in that recording. Ball's newest wraith transition, current mobile/boss impact coverage and other spells remain separate. Latest Ball v8 guardian contact/boss-survivor choreography8 does not imply smoothness at its approximately18Hz recorded cadence. See CU; no game-wide impact pass.**
 
 **Global gate: FAILED. No complete game-wide art or animation acceptance.** A score applies only to the specified evidence and scope. Source/static/layout passes do not transfer to runtime readability, animation, other assets or other viewports.
 
 | Accepted scope | Score | Latest reviewed evidence |
 |---|---:|---|
-| Installed Phoenix source/exact v3 fidelity, thumbnail, native appearance, desktop feature/card and shown held motion | 8, item scope | Corrected exact export HI, thumbnail HK, native/card HL and actual three-cast held motion HP. Installed0d199ac; root reports route-free model switching/actual Cleave/reload checks passed. FX/phone excluded. |
+| Installed Phoenix source/exact fidelity and observed native attachment/held motion | 8, bounded scope | HI/HP; installed0d199ac. Current overall inventory appeal7 in IS supersedes earlier card8; no whole-item8. |
 | Portal abutment v4 complete shown source construction/material | 8, source only | `tmp/portal-abutments-v4-{source,rear,joint}.png`; rear coplanar join and close arch contact pass. Corrected exact export construction/fidelity8 in HN; native composition7.5. See FZ/HJ/HN. |
 | Cleave v5 shown public-roster desktop two partial-cast FX | 8, bounded FX scope | `tmp/cleave-public-v5-1788733664093/`; original25fps162–193/297–336 reviewed. Material/form, bladehandoff, target gaps/termination and contact readability pass; old models and broader deployment excluded. See GS. |
-| Installed Ashsplitter v4 source/export, native weapon appearance, desktop inventory and held Cleave continuity | 8, item scope | `docs/rpg-playtest/v18/items/ashsplitter/{corrected-v4,runtime}/`; actual two casts reviewed in FE. Cleave FX/contact and phone inventory excluded. |
-| Installed Thunder v1 source/export, native weapon appearance, desktop inventory and held cast continuity | 8, item scope | `docs/rpg-playtest/v18/items/thunder/` and `runtime/`; actual two casts reviewed in FB. Chain Lightning FX and phone inventory excluded. |
-| Moonstaff source/exact export, native silhouette/material/attachment, desktop feature/card and observed held motion | 8, scoped | `docs/rpg-playtest/v18/items/moonstaff/`; native v2b stills, v2c and isolated actual sequences. Visible long-shaft clearance and hand continuity pass; lifecycle/reload confirmed separately in telemetry. Candidate installation remains parent-owned. See FG/FQ/FT/FV. |
+| Installed Ashsplitter v4 source/export fidelity and observed native attachment/held continuity | 8, bounded scope | FE; current overall inventory appeal6 in IS supersedes earlier card8. |
+| Installed Thunder v1 source/export fidelity and observed native attachment/held continuity | 8, bounded scope | FB; current overall inventory appeal6.5 in IS supersedes earlier card8. |
+| Moonstaff source/exact fidelity and observed native attachment/held continuity | 8, bounded scope | FG/FQ/FT/FV; current overall inventory appeal6.5 in IS supersedes earlier card8. |
 | Skeleton v16 shown native idle stance and idle-to-catch transition | 8, pose scope | `docs/rpg-playtest/v18/skeleton-idle-v16/`; native overall presence remains7.5. See GE. |
 | Skeleton v14 static terminal and v15 shown equipped actual fall/slack/hold/cleanup | 8, scoped | `docs/rpg-playtest/v18/skeleton-terminal-v14/`; matched Chromium9222 v15 ordered native frames reviewed in GB. Native idle presence remains7.5. |
 | Skeleton remnant v15 source and exact export construction/material fidelity | 8, source/export only | `docs/rpg-playtest/v18/skeleton-remnants-{source,export}-v15/`; native presence remains7.5; shown equipped reaction/fall motion subsequently8 in GB. See FJ/FX. |
 | Skeleton v16 shown survivor catch/recovery and connected fall/hold/erosion ordering | 8, scoped motion | `docs/rpg-playtest/v16/skeleton-v10/`; native presence/final slack and arrival excluded. |
 | Doorway v17 shown stone fade, shadow/light continuity, hero visibility and native crossing | 8, candidate and actual production-integrated crossing | `docs/rpg-playtest/v17/` plus integrated proof in EP; other doorways and behind-wall transparency excluded. |
-| Installed Apprentice weapon observed grip/continuity/material and desktop inventory feature/card | 8, weapon only | `docs/rpg-playtest/v15/items/apprentice-v4/{inventory.png,actual-casts.webm,evidence.json}`; decoded native intervals70–135,175–245,275–345. First-use weapon continuity subsequently8 in finalwarm proof (EA); Cleave effects/choreography separate. |
+| Installed Apprentice observed native grip/continuity and scoped material correction | 8, bounded scope | DS/EA; current overall inventory appeal7 in IS supersedes earlier card8. Starter simplicity remains appropriate; finish needs improvement. |
 | Authored skeleton stronger-shaft v10 exact export construction/material fidelity | 8, export only | `tmp/skeleton-native-shafts-v10-export-{detail,high,back}.png`; native1.85 presence7.5, survivor catch8 and final v14 static slack8 reviewed separately; final equipped motion pending. |
 | Apprentice sword shown native attachment/grip/scale and corrected v4 material | 8, static only | `tmp/item-models/native-v1/` pose coverage and `tmp/item-models/native-v3/` corrected idle/Cleave material; actual motion and desktop card subsequently8 in installed Apprentice row; other viewports separate. |
 | Apprentice sword exact optimized export v2 construction/material fidelity | 8, export only | `tmp/item-models/apprentice-export-v2-{front,back,high,hilt}.png`; subsequent guard-v4 native material8; see installed Apprentice row. |
@@ -78,7 +83,7 @@ Scores are subjective art-direction judgments, grounded in the listed visible ev
 
 | Failing or unverified scope | Current grade/status | Main remaining gap / evidence |
 |---|---:|---|
-| Unique equipped models for all23 items | Apprentice, installed Thunder and Ashsplitter source/export/native/desktop card/held continuity8; Moonstaff source/export/native/desktop card/observed held continuity8; Cinderbranch wood/coal7.5; Glacier v8 depth/material7; Phoenix complete shown source8, corrected exact v3 construction/material8, standalone thumbnail8, native idle/desktop card8 and shown held motion8; Starfall complete shown source8 (v4 blade/front/rear plus v5 grip); export/native pending; other15 unverified | `docs/rpg-playtest/v18/items/`; individual accepted scopes above. Cinderbranch v18 and Glacier v8 source studies remain below gate. Painted icons do not approve3D models; phone item deployment and remaining variants unverified. |
+| Unique equipped models for all23 items | Whole-item gate FAILED: current model-card appeal Apprentice7, Thunder6.5, Ashsplitter6, Moonstaff6.5, Phoenix7, Starfall6. Starfall old exactv2 fidelity8 retained; new sourcev7 whole identity6.5/construction7.5. Remaining new source batches5–7; Cinderbranch7.5 and Glacier7 remain held | IS records current card correction; IT–IV record first wearable/fire/storm/frost studies. All23 now have reviewed source/model evidence, but complete construction/material/native gates remain open for unfinished items. Painted icons and technical correctness do not approve model appeal. |
 | Chain Lightning broader coverage | Shown v4 desktop two-cast FX8; other coverage unverified | Form/material, hand source, hop emphasis/order, contact restraint and decay pass in HM. Phone/boss/modifier and complete terminal-cleanup coverage remain separate. |
 | Cleave broader deployment | Shown v5 public-roster desktop two partial-cast FX8; other coverage unverified | Phone/boss/modifier/equipment-wide coverage remains separate; old enemy model quality remains failed. See GS. |
 | Frostfall revised projectile/material/contact | v7 native silhouette/readability6.5 and material6.5; earlier shown contact-fracture8 | Latest `tmp/frost-v7-lossless-{native,detail}.png` loses optical mass; earlier actual v6 contact8 remains separate. See EH. |
@@ -1915,3 +1920,101 @@ Reviewed `tmp/guardian-slab-v6/source-{high,head}.png`. **Stone7; crystals6.5; c
 ## II — Grouped portal source reevaluates exposed stone correctly
 
 Reviewed `tmp/portal-grouped-source-v7/source-front.png`. **Shown front construction/material8.** Exposed level tops and arch outer faces read as the same worn stone family instead of black holes; distinct surviving groups/broken faces are coherent in this source view. Keep geometry fixed for targeted rebake. This confirms source shading after removing former occluders, not corrected low/native material. Rear/hidden changed surfaces remain outside the single-view verdict. Native geometry7.5/material pending/world6.5 retained.
+
+
+## IJ — Guardian mineral controls isolate the shell response
+
+Reviewed `tmp/guardian-mineral-v7-controls/{full-stack,shell-only}.png`. Shell-only still hides backdrop stripe structure and retains broad cyan/white panels; inner-volume changes are minor. Shell response is the primary visible blocker. A near-neutral transmitting shell with blue absorption is an appropriate bounded next control under identical striped backdrop/light. Target refracted depth, blue thickness variation and selective reflection while preserving geometry/core placement. Crystal6.5 unchanged; no source upgrade.
+
+
+## IK — Guardian v8 transmitting shell proves depth; bulk core is detrimental
+
+Reviewed `tmp/guardian-mineral-v8-controls/{full-stack,shell-only}.png`. **Isolated shell-only optical material7.5; full-stack6.5.** Shell now shows refracted stripe displacement, blue thickness variation and coherent facet reflection. Large dark captive core plus pointed bottom reflection dominates the full stack; remove that bulk and first review shell-only on the full guardian. Any later inclusion should be small/partial near growth root, preserving a broad clear window. No additional internal geometry requested before full-source context. Artist reports export attenuation missing from preliminary glTF; fidelity remains a separate unresolved gate.
+
+
+## IL — Starfall exact v1 front/grip preserve source fidelity
+
+Reviewed `tmp/item-models/starfall/v1/export-v1-{front,grip}.png` against source-v4 front/v5 grip. **Shown front/grip fidelity8.** Blade/heel hierarchy, seated ferrules, wrap seams and smooth pommel are preserved without new black edges or transfer speckling. Slight fine-grain loss on leather is not conspicuous. Complete exact gate remains pending back/high/blade coverage.
+
+## IM — Guardian v8 shell-only improves full-body mineral separation; native diagnostic next
+
+Reviewed `tmp/guardian-slab-v8/source-high.png`. **Construction7; stone7; crystals7.5.** Shell depth survives full-body context and separates minerals from stone. Broad pale armor-like stone grouping and cuff/boot-like lower forms remain visible risks, but another studio-only loop will not resolve their native impact. Proceed to a private unpromoted atlas/native-light/guard diagnostic with fixed pivots/geometry/material recipe, full HUD at actual guardian size and same-light detail. This is review progression, not complete source/export/native8 or installation approval.
+
+
+## IN — Starfall complete exact v1 reveals stepped fuller edges
+
+Reviewed remaining `tmp/item-models/starfall/v1/export-v1-{back,high,blade}.png`. **Complete exact fidelity7.5; front/grip8 retained.** Back/high preserve source silhouette/material, but close blade has conspicuous steps on left inner edges near both fuller ends (approximately586,365 and589,690 in1200×800). Show accepted high source from this exact camera before attributing to bake; if source is clean, isolate local normal/color-mask transfer. Preserve remaining blade and hilt, no broad redesign/rebake yet. Native held.
+
+
+## IO — Starfall matching high-source confirms material mask defect; v6 resolves it
+
+Reviewed `tmp/item-models/starfall/v1/source-v5-blade-control.png` against exact-v1 blade. Both contain the same stepped fuller boundaries, establishing a source material-mask defect newly exposed by this camera, rather than export loss. Reviewed corrected `tmp/item-models/starfall-v6-blade.png`: smooth per-point blend removes those steps while preserving channel depth and steel hierarchy. **Corrected complete shown source8 restored.** Exact-v1 remains uncorrected7.5; new packed maps must be reviewed. Prior hilt/heel coverage retained, no additional blade redesign requested. Source SHA2bc45b9edc02c8fe788e4c52a88ce4ced87ea033ac9a250184c42d530f99ab4f.
+
+
+## IP — First frost trio has distinct identities, unfinished construction/material
+
+Reviewed `tmp/item-models/frost-set-v1/source-{front,high}.png`. Source-only scores **silhouette/construction/material: Rimepiercer7/6.5/6; Hailcaller7/6/5.5; Winterbranch7/6.5/5.5.** Rimepiercer needs a fitted tapered forged socket supporting the three points instead of its melted-looking bulb seat. Hailcaller head resembles three broad blue-white boulders: use one dominant oblique fractured mineral mass with two slimmer unequal offshoots seated in a cupped growth bed, avoiding parallel white caps. Winterbranch retains useful organic silhouette, but all-white roughness reads chalk/bone and blue tip beads seem glued on: show bleached wood grain/darker junction fissures and faceted frost growing from split tips. No shaft ornaments or global noise requested. Full corrected silhouettes plus head/junction closes next; rear/export/native remain separate.
+
+## IQ — Corrected Starfall exact v2 closes transfer gate
+
+Reviewed `tmp/item-models/starfall/v2/export-v2-{blade,grip}.png` against corrected source-v6 and prior exact full coverage. **Complete shown exact fidelity8.** Staircase removed; continuous fuller depth/steel hierarchy and seated wrap/ferrules/smooth pommel preserved. Geometry unchanged with prior front/back/high already reviewed; no additional export view required absent a new change. SHA292052f549791a125c8b702331fd4bba9f982897bbb7c10250e44308d9079c53. Thumbnail/native attachment/card/held motion remain separate.
+
+## IR — Phoenix mounting across armor rigs needs a revealing legacy view
+
+Reviewed all four `item-armor-mount-v2-{wayfarer,cinder,glacier,tempest}-{native,fit}.png` under `/tmp`. Wayfarer attachment8 retained. Legacy Cinder/Glacier/Tempest show the Phoenix head directly above the hood while hand/shaft contact is obscured by torso/arm. No obvious duplicate embedded blade is visible; telemetry reports both old pieces hidden. Legacy attachment/clearance score held pending a front/side three-quarter hand/shaft close at idle and one cast. Projection overlap alone is not a confirmed physical intersection. Item mount scope only.
+
+## IS — Actual inventory exposes weak whole-item finish despite successful transfers
+
+Reviewed `/tmp/starfall-native-v1-inventory.png` and `tmp/item-models/starfall/v2/starfall-thumbnail.png`. **Starfall whole thumbnail/card appeal6**, at210px feature and92px card. Upright flat gray leaf, two dark slots, tiny generic guard and plain grip lack metallic depth and epic-item identity. Exact transfer8 remains valid. First improve model-derived three-quarter lighting/framing to reveal honed edge versus forged flats; then one integrated star/meteor focal feature at guard/ricasso/fuller bridge, with restrained contrasting inset/metal. No particle halo or scattered ornament requested.
+
+The same actual collection view gives **Apprentice7, Thunder6.5, Ashsplitter6, Moonstaff6.5, Phoenix7** for overall card appeal. Apprentice's starter simplicity is appropriate but steel finish weak; Thunder's copper fork reads tubing; Ash loses its forged edge into a charcoal paddle; Moonstaff's small monochrome crescent and thin shaft lose mineral/silver contrast; Phoenix retains strongest warm wing identity but remains subdued/small. Earlier card8s were too generous and are superseded for overall presentation. Construction/export fidelity/observed grip-motion passes are preserved. A technically correct model is not automatically finished art.
+
+## IT — First wearable and remaining frost-held studies
+
+Reviewed `tmp/item-models/frost-relics-v1/wearables-front.png`, `held-front.png`, and widened `tmp/item-models/frost-set-v2/remaining-held-full.png`. **Construction/material: Inferno6/5.5; Wardenheart5.5/5; Thunderbell6.5/6; Stormorbit6/5.5.** Inferno has flat red triangular plaques: replace with unequal swept forged flame crests and seated enamel/mineral depth. Wardenheart ring floats over a flat blue shield: connect actual bail/back setting and give mineral coherent thickness. Thunderbell purple block neck is an abrupt spacer; shape a cast lug/shoulder and show bell lip/clapper from below. Stormorbit's low-sided purple/blue barrel needs a spherical mineral volume and purposeful orbit supports/poles.
+
+**Tideglass silhouette7/construction6/material5.5:** distinctive sweep, but opaque blue slab and tubular guard; seated forged root and material depth next. **Endless Winter silhouette6.5/construction6/material5.5:** straight prongs in a bulb seat atop quiet shaft read trident, not frozen branching crown. Build unequal branching crown from a shared root and fit its shaft seat. Full widened view resolves prior clipping only; no source8 or export pass.
+
+## IU — Six new fire/storm source fronts remain blockouts
+
+Reviewed `tmp/item-models/forge-sources-v1/{phoenix_talon,skybreaker}-front.png`. **Construction/material: Talon6/5.5; Sunforged6.5/6; Arc Fang6/5.5; Skybreaker5.5/5.5; Stormsilver6.5/6; Tempest5/6.** Talon needs a continuous recurved forged sweep rather than angled strip. Sunforged sun wheel must integrate into guard/ricasso rather than sit behind generic sword. Arc Fang needs unequal broad bends with continuous ridge/edge thickness. Skybreaker grafted tips need continuous split-tip shoulders/channels. Stormsilver's tubular cage needs fitted forged junctions. Tempest cup/gem visibly floats above fork: connect a deliberate cradle first. Broad material response remains uniform gray/tan and does not establish whole-item8. No bake/native acceptance.
+
+## IV — Frost trio v2 improves seats, keeps mineral/wood deficits
+
+Reviewed `tmp/item-models/frost-set-v2/source-{front,high}.png`. **Rimepiercer construction7/material6; Hailcaller6.5/5.5; Winterbranch6.5/5.5.** Rime socket now supports points coherently; preserve while resolving crystal/metal depth. Hailcaller cup improves attachment but head remains squat blue polygon boulder with a broad white panel; use a more elongated oblique broken growth and narrower subordinate offshoot. Winterbranch is still chalk-pale with capped blue blocks: artist is verifying actual map assignment before another parameter change. No source8.
+
+## IW — Starfall thumbnail lighting controls improve presentation, not whole-item finish
+
+Reviewed all four `tmp/item-thumbnail-studio-v1/{default-angle,metal-angle,metal-angle-restrained,metal-upright}.png` against original. Prefer restrained angled control: presentation direction7, whole Starfall6–6.5 pending source identity/material correction. Diagonal framing and channel-side shading reveal more depth; stronger lighting turns most blade flats pale and reinforces the white cutout/two-slot read. Keep restrained angle as baseline; differentiate broad forged flats from honed edge with controlled narrow reflection and one integrated star/meteor focal construction. No whole-item8 or actual resized-card pass from this512px study.
+
+## IX — Starfall native idle attachment is coherent, identity remains weak
+
+Reviewed `/tmp/starfall-native-v1-before.png`. Shown idle attachment/scale8 for the bounded mechanical scope: no obvious detached hilt or duplicate blade. Edge-on pose reads mainly as a thin bright sword line and does not establish leaf-shaped epic identity at gameplay distance. Overall card/material6 remains held; actual motion remains unreviewed.
+
+## IY — Legacy Phoenix close views resolve grip uncertainty
+
+Reviewed `/tmp/item-legacy-grip-close-v1-legacy-{idle,cleave,cast}-close.png`. **Shown Cinder/Phoenix attachment8:** shaft sits through visible mitten grip, hilt remains connected as pose changes, head is separate from hood, no duplicate blade apparent. Cast shaft projects in front of chest/hood without an obvious penetration. Prior high-camera overlap was projection. Three poses do not certify complete motion or every armor's depth; whole-item appeal remains separate.
+
+## IZ — Starfall live pose samples omit critical motion
+
+Reviewed nine `/tmp/starfall-native-motion-v1-cast-{1,2,3}-pose-{1,2,3}.png` through unscaled original-pixel crops. Visible attachment/clearance8; no whole-motion acceptance. Report ages jump from approximately0.125–0.137s to1.01–1.15s, then1.9–2.07s. Six images are effectively recovered idle; strike interpolation is unseen. Final revised candidate should use consecutive original video frames rather than screenshots taking about one second each.
+
+## JA — Thunderbell v2 proves functional body, finish remains provisional
+
+Reviewed `tmp/item-models/thunderbell-v2/{front,lower-three-quarter}.png`. **Construction7/material6/overall6.5.** Hollow lip/clapper and connected folded hanger resolve ambiguity. Faceted purple strap/rims, pristine broad bronze and thin flat lightning plaque remain conspicuous. Make motif a shallow cast/recessed form following curvature with rounded transitions and sheltered patina; smooth hanger curvature, show compressed strap edges/thickness. Preserve quiet broad bronze and differentiate worn lip/rings from protected areas. No extra ornaments or global brightening requested. Front eye partially cropped; lower view shows complete construction.
+
+## JB — Starfall v7 improves steel but weak meteor identity persists
+
+Reviewed `tmp/item-models/starfall-v7-{front,grip}.png`. **Steel hierarchy7; whole identity6.5; construction7.5.** Orange bridge seam is a flat mark and new triangular pommel looks unworked, regressing the previously finished counterweight. Keep improved steel; create one physically recessed meteor shard with an intentional seat/retaining metal at the central bridge or ricasso, and a fitted worked meteor counterweight if retained. Do not multiply accents. Prior exactv2 remains fidelity8 to old source, not a finished new identity.
+
+## JC — Forge v2 closes gross gaps without reaching finished design
+
+Reviewed `tmp/item-models/forge-sources-v2/corrected-front.png`. **Construction: Talon6.5, Skybreaker6, Tempest6.5; material5.5–6 unchanged.** Talon sweep is smoother, but ordinary curved-strip identity persists. Skybreaker still places tines on a rectangular blunt crossbar; ridge/shoulders should flow into unequal tips. Tempest's floating cup is connected, but the straight kinked post is visually separate from crescent/fork; use a tapered swept cradle belonging to the head construction. No whole-source8.
+
+## JD — Existing sword finish controls remain below whole-item appeal gate
+
+Reviewed all four `tmp/installed-item-finish-v1/{apprentice,cleaver}-{source-finish,installed-control}.png`. **Shown overall starter Apprentice7; uncommon Ashsplitter6.5.** Source finish gains are modest. Apprentice guard edge separates better, but blade is broadly pale, brass seat beige and leather smooth brown at this size. Ash has clearer cutting edge, but broad gray face and soft central groove still suggest molded/painted material. Next bounded control should use a physically reflective studio environment with a broad dark reflection adjacent to a narrow bright strip, holding geometry/material variants fixed. Then introduce material-scale working/abrasion roughness distinction between honed band and forged flats if needed. Avoid diffuse scan noise over everything. No Apprentice shaping change justified yet; assess Ash groove shoulders in reflective control before attributing softness to geometry. No card-size/native/global upgrade from these512px studies.
+
+## JE — Thunderbell v3 integrates relief but substitutes soft dents and painted bands
+
+Reviewed `tmp/item-models/thunderbell-v3/{front,lower-three-quarter}.png`. **Construction7.5/material6/overall6.5.** Smoother connected hanger and relief belonging to the shell improve construction. Lightning now resembles a soft melted dent; broad even green under-ring bands resemble paint. Give the shallow cast motif a crisp shoulder with small rounded transition, and confine patina to narrow irregular sheltered strips with occasional short downward runs interrupted by bronze. Do not add noise across full-width bands. Broad pristine bronze remains secondary. No source8.

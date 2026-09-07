@@ -24,8 +24,11 @@ export function renderEquipmentView(state: RpgState, armor: string, playing: boo
       <section class="rpg-armory-collection" aria-label="Relic collection"><div class="rpg-armory-collection-heading"><h3>Your collection</h3><span>Select a relic to equip it</span></div>
         <div class="rpg-inventory rpg-relic-slots">${RPG_ITEMS.map(item => {
           const owned = state.inventory.includes(item.id), selected = state.equippedItemId === item.id;
-          return `<button class="rpg-item ${item.rarity} ${owned ? '' : 'undiscovered'} ${selected ? 'equipped' : ''}" data-item="${item.id}" aria-pressed="${selected}" aria-label="${owned ? `${esc(item.name)}, ${selected ? 'equipped' : 'equip'}. ${esc(item.description)}` : `Undiscovered ${item.rarity} relic`}" title="${owned ? esc(item.name) : `Undiscovered ${item.rarity} relic`}" ${!owned ? 'disabled' : ''}>
-            ${owned ? relicArt(item.id) : `<span class="rpg-armory-unknown">${icon('lock')}</span>`}<span class="rpg-armory-slot-name">${owned ? esc(item.name) : 'Undiscovered'}</span>${selected ? '<span class="rpg-armory-slot-mark" aria-hidden="true">◆</span>' : ''}
+          const clearsRemaining = Math.max(0, item.requiredClears - state.expeditionsCompleted);
+          const hint = clearsRemaining > 0 ? `Clear ${clearsRemaining} more expedition${clearsRemaining === 1 ? '' : 's'}`
+            : item.rarity === 'legendary' ? 'Guardian treasure' : 'Find in dungeons';
+          return `<button class="rpg-item ${item.rarity} ${owned ? '' : 'undiscovered'} ${selected ? 'equipped' : ''}" data-item="${item.id}" aria-pressed="${selected}" aria-label="${esc(item.name)}, ${owned ? selected ? 'equipped' : 'equip' : `locked. ${hint}`}. ${esc(item.description)}" title="${esc(item.name)}${owned ? '' : ` — Locked. ${hint}. ${esc(item.description)}`}" ${!owned ? 'disabled' : ''}>
+            ${relicArt(item.id)}<span class="rpg-armory-slot-name">${esc(item.name)}</span>${!owned ? `<span class="rpg-armory-slot-lock" aria-hidden="true">${icon('lock')} Locked</span><span class="rpg-armory-slot-hint">${hint}</span>` : ''}${selected ? '<span class="rpg-armory-slot-mark" aria-hidden="true">◆</span>' : ''}
           </button>`;
         }).join('')}</div>
         <button class="rpg-armory-hunt" data-action="map">${icon('map')}<span>Find your next relic<small>Explore the vaults for rare treasures</small></span><span aria-hidden="true">→</span></button>

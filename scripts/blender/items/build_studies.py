@@ -727,6 +727,13 @@ def starfall(root,p):
         outer=smooth((z-.272)/.060)*smooth((.842-z)/.075)
         bridge=smooth((abs(z-.535)-.007)/.053)
         return outer*bridge
+    def meteor_width(z):
+        # A long fitted shard crosses the forged heel, with unequal pointed ends.
+        stations=[(.190,0),(.204,.010),(.244,.013),(.268,.007),(.282,0)]
+        for a,b in zip(stations,stations[1:]):
+            if a[0]<=z<=b[0]:
+                t=(z-a[0])/(b[0]-a[0]);return a[1]+(b[1]-a[1])*t
+        return 0
     nx,nz=48,192;vertices=[];faces=[];materials=[];fuller_shade=[]
     for side in (-1,1):
         for j in range(nz+1):
@@ -739,6 +746,10 @@ def starfall(root,p):
                 across=a/max(.001,.23*math.sqrt(run))
                 channel=.5+.5*math.cos(math.pi*across) if across<1 else 0
                 y-=.0034*channel*run
+                if side==-1:
+                    pocket=meteor_width(z)
+                    if pocket>0:
+                        y-=.007*smooth((pocket-abs(u*width))/.0025)
                 vertices.append((u*width,side*y,z))
                 fuller_shade.append(smooth((.17*run-a)/.055)*smooth(run/.35))
     plane=(nx+1)*(nz+1)
@@ -772,18 +783,31 @@ def starfall(root,p):
     links.new(prior,blend_rough.inputs[1]);links.new(attribute.outputs['Fac'],blend_rough.inputs[0]);links.new(blend_rough.outputs['Color'],shader.inputs['Roughness'])
     metallic=nodes.new('ShaderNodeMapRange');metallic.inputs['To Min'].default_value=.80;metallic.inputs['To Max'].default_value=.67
     links.new(attribute.outputs['Fac'],metallic.inputs['Value']);links.new(metallic.outputs['Result'],shader.inputs['Metallic'])
-    # One quiet meteor seam is set flush across the intact central bridge.
-    # It supplies the sword's fire identity without outlining the entire blade.
-    meteor=material('Starfall sheltered meteor seam',(.24,.060,.012),.62,.33,emission=.30)
-    seam_outline=[(-.023,.532),(-.013,.538),(-.004,.536),(.005,.540),(.020,.537),(.010,.534),(.004,.532),(-.008,.530)]
-    n=len(seam_outline);seam_vertices=[]
-    for inset_depth in (-.00005,.0007):
-        for x,z in seam_outline:
-            seam_vertices.append((x,-section(z)[1]+inset_depth,z))
-    seam_faces=[tuple(reversed(range(n))),tuple(range(n,n*2))]
-    seam_faces.extend((i,(i+1)%n,(i+1)%n+n,i+n) for i in range(n))
-    mesh('Starfall flush sheltered meteor bridge seam',seam_vertices,seam_faces,meteor,root)
     nickel=material('Starfall exposed meteoric nickel planes',(.18,.205,.22),.88,.29)
+    meteor=material('Starfall worked nickel iron inclusion',(.075,.095,.105),.86,.25)
+    meteor_dark=material('Starfall protected mineral cleavage',(.012,.019,.022),.55,.37)
+    # The inlay sits inside a real depression in the front blade grid. A forged
+    # rim has thickness and an inward bevel; neither stone nor metal floats.
+    outline=[(0,.190),(.010,.204),(.013,.244),(.007,.268),(0,.282),(-.007,.264),(-.013,.232),(-.008,.204)]
+    n=len(outline);center=.235
+    loops=[]
+    for scale,depth_offset in ((1.20,-.0015),(.87,.0010),(.87,.0060),(1.20,.0045)):
+        loops.extend((x*scale,-section(center+(z-center)*scale)[1]+depth_offset,center+(z-center)*scale) for x,z in outline)
+    faces=[]
+    for ring in range(4):
+        for i in range(n):
+            j=(i+1)%n;next_ring=(ring+1)%4
+            faces.append((ring*n+i,ring*n+j,next_ring*n+j,next_ring*n+i))
+    rim=mesh('Starfall forged recessed meteor retaining bezel',loops,faces,nickel,root,bevel=.00045)
+    # Two unequal broad polished cleavage planes meet along an offset ridge.
+    verts=[(x*.84,-section(z)[1]+.0024,z) for x,z in outline]
+    verts.extend((x*.84,-section(z)[1]+.0056,z) for x,z in outline)
+    verts.extend([(-.002,-section(.219)[1]+.0006,.219),(.003,-section(.253)[1]+.0009,.253)])
+    faces=[(0,1,16),(1,2,17,16),(2,3,4,17),(4,5,17),(5,6,16,17),(6,7,0,16),tuple(reversed(range(n,n*2)))]
+    faces.extend((i,i+n,(i+1)%n+n,(i+1)%n) for i in range(n))
+    shard=mesh('Starfall seated elongated meteor cleavage',verts,faces,meteor,root)
+    shard.data.materials.append(meteor_dark)
+    for index in (3,4):shard.data.polygons[index].material_index=1
     # A formed oval ferrule seats the compressed wrap beneath the guard;
     # the blade's continuous unsharpened heel passes through the forged root.
     ferrule=lathe_z('Starfall fitted grip shoulder',[(.112,.023),(.116,.026),(.122,.026),(.127,.022)],iron,root)
@@ -797,16 +821,22 @@ def starfall(root,p):
     # touching its center plane; the prior narrow circular lip left a crescent.
     lower=lathe_z('Starfall seated copper lower ferrule',[(-.118,.022),(-.116,.025),(-.113,.027),(-.105,.027),(-.101,.026)],p['copper'],root)
     for vertex in lower.data.vertices:vertex.co.y*=.80
-    # An intentionally faceted, flattened meteor fragment replaces the
-    # generic turned ball. Its broad nickel planes share the hilt's metallurgy.
-    perimeter=[(-.021,-.116),(.021,-.118),(.034,-.142),(.026,-.163),(-.004,-.181),(-.024,-.158),(-.031,-.133)]
-    n=len(perimeter);vertices=[(x,-.011-(i%3)*.001,z) for i,(x,z) in enumerate(perimeter)]
-    vertices.extend((x,.012,z) for x,z in perimeter);vertices.append((-.006,-.023,-.145))
-    faces=[(2*n,(i+1)%n,i) for i in range(n)]
-    faces.append(tuple(range(n,2*n)));faces.extend((i,(i+1)%n,(i+1)%n+n,i+n) for i in range(n))
-    pommel=mesh('Starfall faceted meteor counterweight',vertices,faces,iron,root,bevel=.0008)
-    pommel.data.materials.append(nickel)
-    for i in (1,4):pommel.data.polygons[i].material_index=1
+    # A worked, continuous counterweight seats inside a distinct retaining
+    # collar; its dark polished metal repeats the blade's meteor inclusion.
+    collar=lathe_z('Starfall fitted nickel pommel retaining collar',[(-.132,.020),(-.128,.026),(-.121,.026),(-.116,.023)],nickel,root,64)
+    for v in collar.data.vertices:v.co.y*=.78
+    profile=[]
+    for j in range(65):
+        t=j/64;z=-.177+.056*t
+        r=.006+.024*math.sin(math.pi*(.10+.87*t))**.72
+        profile.append((z,r))
+    pommel=lathe_z('Starfall worked continuous meteor counterweight',profile,meteor,root,80)
+    for v in pommel.data.vertices:v.co.y*=.73
+    # A narrow inset split is bounded by the worked metal, with no bright
+    # painted stripe or low-poly outer silhouette.
+    panel=solid_outline('Starfall recessed pommel cleavage',[(-.006,-.133),(.004,-.137),(.010,-.153),(.002,-.168),(-.008,-.153)],.0015,meteor_dark,root,.0004)
+    panel.location.y=-.019
+
 
 
 BUILDERS={'apprentice':apprentice,'cinderwand':cinderwand,'glacier':glacier,'thunderrod':thunderrod,'cleaver':cleaver,'moonstaff':moonstaff,'phoenix':phoenix,'starfall':starfall}

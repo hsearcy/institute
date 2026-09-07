@@ -22,8 +22,8 @@ export type EquipmentSockets = Partial<Record<Exclude<ItemAttachment, 'hand.R'>,
 export function authoredHeroWearableSockets(hero: Object3D): EquipmentSockets {
   const sockets: EquipmentSockets = {};
   for (const [slot, bone, x, y, z] of [
-    ['head', 'head', 0, .17, 0],
-    ['chest', 'chest', 0, .27, .15],
+    ['head', 'head', 0, .23, 0],
+    ['chest', 'chest', 0, .27, .195],
     ['belt', 'pelvis', .18, .03, .13],
   ] as const) {
     const parent = hero.getObjectByName(bone);
@@ -47,7 +47,7 @@ export function legacyHeroEquipment(hero: Object3D): HeldEquipment | undefined {
   ]);
   const wearables: EquipmentSockets = {};
   for (const [slot, name, x, y, z] of [
-    ['head', 'head', -.035, .255, .018],
+    ['head', 'head', -.035, .345, .018],
     ['chest', 'chest', -.035, .405, .28],
     ['belt', 'root', .18, 1.005, .17],
   ] as const) {

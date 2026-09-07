@@ -7,6 +7,7 @@ import importlib.util
 import json
 import math
 import sys
+import time
 from pathlib import Path
 
 import bpy
@@ -134,11 +135,12 @@ def validate_source_topology(root, graph, directory):
     return report
 
 
-def prepare(source_scene,item_id,size=1024,*,structured_blade=False,split_material_boundaries=False,structured_grip=False,small_mesh_ratio=1):
+def prepare(source_scene,item_id,size=1024,*,structured_blade=False,split_material_boundaries=False,structured_grip=False,small_mesh_ratio=1,max_triangles=None,fast_uv_pack=False):
     if not 0<small_mesh_ratio<=1:raise ValueError('small_mesh_ratio must be within (0,1]')
     if source_scene.get('diagnosticOnly'):
         raise ValueError('Optical control scenes are not export candidates')
     previous=bpy.context.window.scene
+    timings={};step_started=time.monotonic()
     directory=ROOT/'tmp/item-models'/item_id
     directory.mkdir(parents=True,exist_ok=True)
     sys.path.insert(0,str(ROOT/'scripts/blender/experiments'))
@@ -151,6 +153,7 @@ def prepare(source_scene,item_id,size=1024,*,structured_blade=False,split_materi
         source_meta={key:value for key,value in root.items()}
         graph=bpy.context.evaluated_depsgraph_get()
         topology_report=validate_source_topology(root,graph,directory)
+        timings['topology']=round(time.monotonic()-step_started,3);step_started=time.monotonic()
         scene=bpy.data.scenes.new('Item bake '+item_id)
         high=bpy.data.collections.new(item_id+' isolated high');scene.collection.children.link(high)
         destination=bpy.data.collections.new(item_id+' low and projection targets');scene.collection.children.link(destination)
@@ -165,6 +168,7 @@ def prepare(source_scene,item_id,size=1024,*,structured_blade=False,split_materi
                         m.node_tree.nodes.get('Principled BSDF').inputs['Alpha'].default_value<1) for m in data.materials)
             (glows if direct else sources).append(obj)
         bpy.context.window.scene=scene
+        timings['sourceClones']=round(time.monotonic()-step_started,3);step_started=time.monotonic()
         lows=[]
         for source_id,source in enumerate(sources):
             authored_blade=structured_blade and item_id=='cleaver' and source.name.startswith('Forged blade Ashsplitter')
@@ -206,11 +210,35 @@ def prepare(source_scene,item_id,size=1024,*,structured_blade=False,split_materi
         bpy.ops.object.select_all(action='DESELECT')
         for obj in lows:obj.select_set(True)
         bpy.context.view_layer.objects.active=lows[0];bpy.ops.object.join();low=lows[0];low.name=item_id+'_Baked'
+        if max_triangles is not None:
+            # Catalogue export bounds the complete runtime item, including
+            # direct emissive/crystal parts, before UVs and projection copies.
+            direct_triangles=helper.triangle_count(glows)
+            available=max_triangles-direct_triangles-32
+            if available<100:raise ValueError('Direct materials consume the item triangle budget')
+            count=helper.triangle_count([low])
+            if count>available:
+                modifier=low.modifiers.new('Complete item runtime budget','DECIMATE')
+                modifier.ratio=available/count;modifier.use_collapse_triangulate=True
+                bpy.ops.object.modifier_apply(modifier=modifier.name)
+            if helper.triangle_count([low,*glows])>max_triangles:
+                raise ValueError('Complete item remains over runtime triangle budget')
+        timings['lowGeometry']=round(time.monotonic()-step_started,3);step_started=time.monotonic()
         bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.uv.smart_project(angle_limit=math.radians(65),island_margin=.005,correct_aspect=True,scale_to_bounds=True)
         bpy.ops.object.mode_set(mode='OBJECT')
+        timings['uvProject']=round(time.monotonic()-step_started,3);step_started=time.monotonic()
         helper.widen_subpixel_islands(low.data,3/size)
-        bpy.ops.object.mode_set(mode='EDIT');bpy.ops.uv.select_all(action='SELECT');bpy.ops.uv.pack_islands(rotate=True,scale=True,margin=.004,margin_method='FRACTION');bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.mode_set(mode='EDIT');bpy.ops.uv.select_all(action='SELECT')
+        pack_options=dict(rotate=True,scale=True,margin=.004,margin_method='FRACTION')
+        if fast_uv_pack:
+            properties=bpy.ops.uv.pack_islands.get_rna_type().properties
+            for field,value in [('shape_method','AABB'),('rotate_method','CARDINAL')]:
+                if field not in properties or value not in properties[field].enum_items:
+                    raise ValueError('This Blender cannot provide bounded catalogue UV packing: '+field)
+                pack_options[field]=value
+        bpy.ops.uv.pack_islands(**pack_options);bpy.ops.object.mode_set(mode='OBJECT')
+        timings['uvPack']=round(time.monotonic()-step_started,3);step_started=time.monotonic()
         normal_attr=low.data.attributes.new('item_bake_normal','FLOAT_VECTOR','CORNER')
         for value,normal in zip(normal_attr.data,low.data.corner_normals):value.vector=normal.vector
         material=bpy.data.materials.new('Item '+item_id+' baked');material.use_nodes=True
@@ -237,8 +265,9 @@ def prepare(source_scene,item_id,size=1024,*,structured_blade=False,split_materi
         scene.render.bake.use_pass_direct=False;scene.render.bake.use_pass_indirect=False;scene.render.bake.use_pass_color=True
         state=dict(scene=scene,destination=destination,low=low,sources=sources,batches=batches,material=material,target=target,images=images,directory=directory,size=size,completed=set(),channel_batches={},helper=helper,source_triangles=helper.triangle_count(sources),source_topology=topology_report)
         result=joined.joined_source_comparison(state,directory/'baked')
+        timings['projectionTargets']=round(time.monotonic()-step_started,3)
         result.update(item_id=item_id,metadata=source_meta,glows=glows,joined_helper=joined,
-                      geometry_normals_only=item_id=='apprentice')
+                      geometry_normals_only=item_id=='apprentice',prepare_timings=timings)
         print(json.dumps({'item':item_id,'source':result['source_triangles'],'low':helper.triangle_count([result['low']]),'projectionGroups':len(result['batches']),'directEmissiveOrAlphaParts':len(glows)}))
         return result
     finally:bpy.context.window.scene=previous
@@ -350,8 +379,9 @@ def finish(state):
         objects=[]
         for source in [state['low'],*state['glows']]:
             obj=bpy.data.objects.new(source.name+' export',source.data.copy());collection.objects.link(obj);obj.parent=root;objects.append(obj)
-        for role,z in [('Grip',0),('Tip',max(v.co.z for o in objects for v in o.data.vertices))]:
-            node=bpy.data.objects.new(state['item_id']+'_'+role,None);collection.objects.link(node);node.parent=root;node.location.z=z;node['attachmentRole']=role
+        tip=tuple(state['metadata'].get('distalTip',(0,0,max(v.co.z for o in objects for v in o.data.vertices))))
+        for role,position in [('Grip',(0,0,0)),('Tip',tip)]:
+            node=bpy.data.objects.new(state['item_id']+'_'+role,None);collection.objects.link(node);node.parent=root;node.location=position;node['attachmentRole']=role
             root[role.lower()+'Node']=node.name
         bpy.ops.object.select_all(action='DESELECT')
         for obj in collection.objects:obj.select_set(True)

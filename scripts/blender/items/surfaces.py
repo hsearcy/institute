@@ -232,7 +232,10 @@ def fractured_coal(root,materials):
             else:faces.append(quad)
     faces.append(tuple(reversed(range(n))))
     cap=vertices[2*n:];lookup={tuple(v):2*n+i for i,v in enumerate(cap)}
-    faces.extend(tuple(lookup[tuple(v)] for v in triangle) for triangle in geometry.tessellate_polygon([cap]))
+    # Blender versions expose either input vertex indices or Vector values.
+    # Both refer to this cap, so preserve the same authored triangulation.
+    faces.extend(tuple(2*n+v if isinstance(v,int) else lookup[tuple(v)] for v in triangle)
+                 for triangle in geometry.tessellate_polygon([cap]))
     data=bpy.data.meshes.new('Explicit charcoal cheeks shoulder and fracture valley')
     data.from_pydata(vertices,[],faces);data.update()
     obj=bpy.data.objects.new('Thermally fractured charcoal mass',data);bpy.context.scene.collection.objects.link(obj);obj.parent=root

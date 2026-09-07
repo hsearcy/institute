@@ -1,0 +1,2552 @@
+{
+  "db": "/tmp/rpg-item-catalogue-1788785388925.db",
+  "output": "/home/houston/git/institute/tmp/item-catalogue-playtest",
+  "items": [
+    {
+      "id": "apprentice",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.314453125
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.473919403877616,
+            0.9429827396078524,
+            1.3975867980528989
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.2201901940236567,
+            0.9763791917416481,
+            1.1544454254844425
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.3153886493751401,
+            0.9922083668517027,
+            1.3035076663407037
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.021409168607367315,
+            0.9941347185433994,
+            1.070876287531218
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "cinderwand",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.314453125
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.47380373867918113,
+            0.9427292545922341,
+            1.3981504795522257
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.22018123569894968,
+            0.9763791917416481,
+            1.1544373927981386
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.31667638145443777,
+            0.992064139947492,
+            1.3078216943168541
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.25714469528564443,
+            0.9907861569061324,
+            1.1934633778330217
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "glacier",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.314453125
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.47370714094132327,
+            0.9425506770434326,
+            1.3960058709272185
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.22018753262663998,
+            0.9763791917416481,
+            1.1544430390205065
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.3279250312050467,
+            0.9760006027172333,
+            1.3647020606995082
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.31173572419332857,
+            0.9748317672063075,
+            1.2922892351185222
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "thunderrod",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.314453125
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.4732831499773,
+            0.9416845950831711,
+            1.3942167455298293
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.2201795895507471,
+            0.9763791917416481,
+            1.1544359168059044
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.32819320141941133,
+            0.9707400828744254,
+            1.3672892502108303
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.312739550330828,
+            0.9696530236402093,
+            1.295239586347879
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "moonstaff",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.314453125
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.473230897894415,
+            0.9415589368828786,
+            1.3947979175899403
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.22016762710961643,
+            0.9763791917416481,
+            1.154425191473936
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.32568601068275066,
+            0.9731279099781261,
+            1.3479481695302917
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.30199185694200725,
+            0.9717916988480401,
+            1.2674040387100336
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "phoenix",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.314453125,
+          "height": 92.314453125
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.47361189612628196,
+            0.9423285205989415,
+            1.3972037949433342
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.22017606190576344,
+            0.9763791917416481,
+            1.1544327538669672
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.3249455089601951,
+            0.9708381333188795,
+            1.3435094094889084
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.2815790592447808,
+            0.9688866717270584,
+            1.228261815531559
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "wintercrown",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.314453125
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.4740296410755898,
+            0.9432290755780679,
+            1.403172259974323
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.220175307369518,
+            0.9763791917416481,
+            1.1544320773504195
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.324352382949839,
+            0.9691703469424181,
+            1.3401978070263887
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.29924393507521985,
+            0.9679414071599363,
+            1.2613138870312186
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "tempest",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.314453125
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.4739897277444603,
+            0.9431342941543948,
+            1.4024652155956112
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.22017004262889495,
+            0.9763791917416481,
+            1.1544273571049033
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.32532240057599027,
+            0.9706857739477491,
+            1.3457219538563985
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.2998611637789711,
+            0.9693526263042002,
+            1.2626535291068128
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "cleaver",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.314453125
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.4736583631912247,
+            0.9424288547413879,
+            1.3971298335051898
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.22018023930815245,
+            0.9763791917416481,
+            1.1544364993980238
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.32939168736997687,
+            0.9661906473446847,
+            1.4167894878198064
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.3234067001721927,
+            0.9652206079176923,
+            1.3352784665399107
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "starfall",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.314453125
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.47325517585330307,
+            0.9416239708487577,
+            1.3942565225719
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.22017985770705564,
+            0.9763791917416481,
+            1.154436157242576
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.3223927365822815,
+            0.9613495449545332,
+            1.3304033477193071
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.2850364811820071,
+            0.9604531901678269,
+            1.2340633403823271
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "phoenix_talon",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.314453125
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.47318755483439057,
+            0.9415132264684977,
+            1.393089060571856
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.2201770906725011,
+            0.9763791917416481,
+            1.1544336762650764
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.3298192320435549,
+            0.9603163516765566,
+            1.400211622049303
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.31889612051707156,
+            0.9597769449849222,
+            1.3158214105080548
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "inferno",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.314453125,
+          "height": 92.314453125
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "head",
+          "parent": "head",
+          "position": [
+            0.00037478944010594213,
+            1.7184117240712695,
+            1.3988598096308698
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "head",
+          "parent": "head",
+          "position": [
+            0.03466273947261103,
+            1.6633907159297054,
+            1.4031095640714526
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "head",
+          "parent": "head",
+          "position": [
+            0.03463955243466719,
+            1.6785583474526815,
+            1.4033580207841105
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "head",
+          "parent": "head",
+          "position": [
+            0.03464277631521511,
+            1.6540559357974067,
+            1.4033245970634871
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "sunforged",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.314453125
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.4732268930139786,
+            0.9415210989860417,
+            1.396254201587817
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.22016013010373797,
+            0.9763791917416481,
+            1.1544184703150555
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.32673041121825935,
+            0.981750624906032,
+            1.354966579134612
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.30057396377009493,
+            0.9802649688167339,
+            1.2642205357455492
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "icespear",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.314453125
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.4733055090518913,
+            0.9417346307846326,
+            1.3941256540022127
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.22017678890534909,
+            0.9763791917416481,
+            1.1544334056981256
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.32776570638139646,
+            0.9790842893224846,
+            1.3632520431861006
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.30793986054280376,
+            0.9777583437032055,
+            1.2818737417058739
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "tideglass",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.314453125
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.4738107412758973,
+            0.9427366547040329,
+            1.400238915049023
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.2201701230282418,
+            0.9763791917416481,
+            1.1544274291875802
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.3285204156964737,
+            0.9806599375293675,
+            1.370757785988265
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.3100012322624791,
+            0.9793399954014262,
+            1.2873944645879407
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "hailcaller",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.314453125
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.47406742800127566,
+            0.9432942512669067,
+            1.401728426056266
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.22018085646004917,
+            0.9763791917416481,
+            1.1544370527579308
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.3230204406438897,
+            0.9733712658956649,
+            1.3333774397375828
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.29303324643212897,
+            0.9718970684925953,
+            1.2486319482349753
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "wardenheart",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.314453125
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "chest",
+          "parent": "chest",
+          "position": [
+            0.046787264161980965,
+            1.4271901662335704,
+            1.2630357490214232
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "chest",
+          "parent": "chest",
+          "position": [
+            0.11614365536331966,
+            1.3435078811128527,
+            1.1523547194882673
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "chest",
+          "parent": "chest",
+          "position": [
+            0.11783266255821759,
+            1.3602996502013105,
+            1.1531538996149027
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "chest",
+          "parent": "chest",
+          "position": [
+            0.11795325336524241,
+            1.325508808722934,
+            1.1532115001434562
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "winterbranch",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.314453125,
+          "height": 92.314453125
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.4739704114613724,
+            0.9431366477216965,
+            1.405042533033637
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.22015999934902444,
+            0.9763791917416481,
+            1.1544183530954937
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.32908868672007285,
+            0.9942817302317016,
+            1.378059013637719
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.2998569790891549,
+            0.9939821339831406,
+            1.2626443932661715
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "arcfang",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.3046875
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.4740235166398375,
+            0.9432039077405605,
+            1.402182972610318
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.22017348343750268,
+            0.9763791917416481,
+            1.154430442031819
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.32430120103060145,
+            0.9941401190812204,
+            1.3399208720119753
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.29391035269130705,
+            0.9938162058986829,
+            1.250342139563057
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "thunderbell",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.3046875
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "belt",
+          "parent": "pelvis",
+          "position": [
+            -0.12649054973741183,
+            0.978953836277427,
+            1.2248678818321788
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "belt",
+          "parent": "root",
+          "position": [
+            -0.11501515050645328,
+            0.9751579529129504,
+            1.1893570668374382
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "belt",
+          "parent": "root",
+          "position": [
+            -0.11277108360956473,
+            0.9645986343432041,
+            1.1881471906278465
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "belt",
+          "parent": "root",
+          "position": [
+            -0.11261874618370046,
+            0.9842824287714717,
+            1.1880661703612168
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "stormorbit",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.3046875
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "belt",
+          "parent": "pelvis",
+          "position": [
+            -0.12562141104040903,
+            0.978953836277427,
+            1.2242434095829207
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "belt",
+          "parent": "root",
+          "position": [
+            -0.11501372101114524,
+            0.9751579529129504,
+            1.1893562863114118
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "belt",
+          "parent": "root",
+          "position": [
+            -0.11385341193978794,
+            0.9628628370206435,
+            1.1887268812010896
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "belt",
+          "parent": "root",
+          "position": [
+            -0.11363721637367155,
+            0.9917934067148418,
+            1.188610517782476
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "skybreaker",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.3046875
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.47379510006478304,
+            0.9427044706043152,
+            1.4008044269438809
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.2201697098927551,
+            0.9763791917416481,
+            1.1544270587881635
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.32362065684488966,
+            0.9584398803670494,
+            1.3363569243909899
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.297462128075218,
+            0.9586053875011128,
+            1.2575322739331654
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "stormsilver",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210.01953125,
+          "height": 210.01953125
+        },
+        {
+          "width": 92.3046875,
+          "height": 92.3046875
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.4740638109636477,
+            0.9432919534026725,
+            1.4023245231391868
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.22017524187602897,
+            0.9763791917416481,
+            1.154432018629211
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.32760155424353277,
+            0.9585919786580867,
+            1.361816335077501
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.30956123271722874,
+            0.9588231299844835,
+            1.2861904493977692
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    }
+  ],
+  "errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "casts": [
+    {
+      "id": "apprentice",
+      "before": {
+        "xp": 82305,
+        "problem": "pmtr8nbtr_0"
+      },
+      "after": {
+        "xp": 82337,
+        "problem": "pmtr8nbx8_1",
+        "mounted": "apprentice",
+        "visibleEnemies": 7
+      }
+    },
+    {
+      "id": "wintercrown",
+      "before": {
+        "xp": 82337,
+        "problem": "pmtr8nbx8_1"
+      },
+      "after": {
+        "xp": 82369,
+        "problem": "pmtr8pa6m_3",
+        "mounted": "wintercrown",
+        "visibleEnemies": 8
+      }
+    },
+    {
+      "id": "inferno",
+      "before": {
+        "xp": 82369,
+        "problem": "pmtr8pa6m_3"
+      },
+      "after": {
+        "xp": 82417,
+        "problem": "pmtr8pigf_5",
+        "mounted": "inferno",
+        "visibleEnemies": 8
+      }
+    }
+  ],
+  "scope": "Actual installed assets, UI equip/save, all four armor mounts and representative solved-math combat. Visual scores are separate.",
+  "preexistingTabs": [
+    "about:blank"
+  ],
+  "initialProgress": {
+    "xp": 82305,
+    "skills": {
+      "ember_power": 3,
+      "ember_echo": 1,
+      "ember_master": 2,
+      "cleave": 1,
+      "cleave_sweep": 2,
+      "meteor": 1,
+      "meteor_shower": 2,
+      "phoenix_dive": 1,
+      "phoenix_wings": 2,
+      "firestorm": 1,
+      "firestorm_inferno": 2,
+      "frost": 1,
+      "frost_shards": 3,
+      "frost_master": 2,
+      "ice_lance": 1,
+      "ice_lance_split": 2,
+      "glacial_surge": 1,
+      "glacial_tide": 2,
+      "blizzard": 1,
+      "blizzard_hail": 2,
+      "frost_guardian": 1,
+      "guardian_twins": 2,
+      "storm": 1,
+      "storm_chain": 3,
+      "storm_master": 2,
+      "arc_lance": 1,
+      "arc_lance_fork": 2,
+      "thunderclap": 1,
+      "thunderclap_echo": 2,
+      "ball_lightning": 1,
+      "ball_lightning_orbit": 2,
+      "tempest": 1,
+      "tempest_overcharge": 2
+    },
+    "inventory": [
+      "apprentice",
+      "cinderwand",
+      "glacier",
+      "thunderrod",
+      "moonstaff",
+      "phoenix",
+      "wintercrown",
+      "tempest",
+      "cleaver",
+      "starfall",
+      "phoenix_talon",
+      "inferno",
+      "sunforged",
+      "icespear",
+      "tideglass",
+      "hailcaller",
+      "wardenheart",
+      "winterbranch",
+      "arcfang",
+      "thunderbell",
+      "stormorbit",
+      "skybreaker",
+      "stormsilver"
+    ],
+    "kills": 740
+  },
+  "reload": {
+    "saved": "stormsilver",
+    "mounted": "stormsilver",
+    "xp": 82305,
+    "skills": {
+      "ember_power": 3,
+      "ember_echo": 1,
+      "ember_master": 2,
+      "cleave": 1,
+      "cleave_sweep": 2,
+      "meteor": 1,
+      "meteor_shower": 2,
+      "phoenix_dive": 1,
+      "phoenix_wings": 2,
+      "firestorm": 1,
+      "firestorm_inferno": 2,
+      "frost": 1,
+      "frost_shards": 3,
+      "frost_master": 2,
+      "ice_lance": 1,
+      "ice_lance_split": 2,
+      "glacial_surge": 1,
+      "glacial_tide": 2,
+      "blizzard": 1,
+      "blizzard_hail": 2,
+      "frost_guardian": 1,
+      "guardian_twins": 2,
+      "storm": 1,
+      "storm_chain": 3,
+      "storm_master": 2,
+      "arc_lance": 1,
+      "arc_lance_fork": 2,
+      "thunderclap": 1,
+      "thunderclap_echo": 2,
+      "ball_lightning": 1,
+      "ball_lightning_orbit": 2,
+      "tempest": 1,
+      "tempest_overcharge": 2
+    }
+  },
+  "lockedCollection": [
+    {
+      "id": "apprentice",
+      "disabled": false,
+      "thumbnail": true,
+      "name": "Apprentice's Runeblade",
+      "lock": false
+    },
+    {
+      "id": "cinderwand",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Cinderbranch",
+      "lock": true,
+      "hint": "Find in dungeons"
+    },
+    {
+      "id": "glacier",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Glacier Fang",
+      "lock": true,
+      "hint": "Find in dungeons"
+    },
+    {
+      "id": "thunderrod",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Thunder Rod",
+      "lock": true,
+      "hint": "Find in dungeons"
+    },
+    {
+      "id": "moonstaff",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Moonshard Staff",
+      "lock": true,
+      "hint": "Clear 1 more expedition"
+    },
+    {
+      "id": "phoenix",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Phoenix Scepter",
+      "lock": true,
+      "hint": "Clear 2 more expeditions"
+    },
+    {
+      "id": "wintercrown",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Staff of Endless Winter",
+      "lock": true,
+      "hint": "Clear 3 more expeditions"
+    },
+    {
+      "id": "tempest",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Tempest Caller",
+      "lock": true,
+      "hint": "Clear 4 more expeditions"
+    },
+    {
+      "id": "cleaver",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Ashsplitter",
+      "lock": true,
+      "hint": "Find in dungeons"
+    },
+    {
+      "id": "starfall",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Starfall Edge",
+      "lock": true,
+      "hint": "Clear 1 more expedition"
+    },
+    {
+      "id": "phoenix_talon",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Phoenix Talon",
+      "lock": true,
+      "hint": "Clear 2 more expeditions"
+    },
+    {
+      "id": "inferno",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Crown of the Inferno",
+      "lock": true,
+      "hint": "Clear 5 more expeditions"
+    },
+    {
+      "id": "sunforged",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Sunforged Runeblade",
+      "lock": true,
+      "hint": "Clear 2 more expeditions"
+    },
+    {
+      "id": "icespear",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Rimepiercer",
+      "lock": true,
+      "hint": "Find in dungeons"
+    },
+    {
+      "id": "tideglass",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Tideglass Blade",
+      "lock": true,
+      "hint": "Clear 1 more expedition"
+    },
+    {
+      "id": "hailcaller",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Hailcaller",
+      "lock": true,
+      "hint": "Clear 2 more expeditions"
+    },
+    {
+      "id": "wardenheart",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Winter Warden's Heart",
+      "lock": true,
+      "hint": "Clear 5 more expeditions"
+    },
+    {
+      "id": "winterbranch",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Winterbranch",
+      "lock": true,
+      "hint": "Clear 2 more expeditions"
+    },
+    {
+      "id": "arcfang",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Arc Fang",
+      "lock": true,
+      "hint": "Find in dungeons"
+    },
+    {
+      "id": "thunderbell",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Bell of Thunder",
+      "lock": true,
+      "hint": "Clear 1 more expedition"
+    },
+    {
+      "id": "stormorbit",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Orb of the Stormkeeper",
+      "lock": true,
+      "hint": "Clear 2 more expeditions"
+    },
+    {
+      "id": "skybreaker",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Skybreaker",
+      "lock": true,
+      "hint": "Clear 5 more expeditions"
+    },
+    {
+      "id": "stormsilver",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Stormsilver Runeblade",
+      "lock": true,
+      "hint": "Clear 2 more expeditions"
+    }
+  ],
+  "failure": "AssertionError [ERR_ASSERTION]: Failed to load resource: the server responded with a status of 404 (Not Found)\n\n1 !== 0\n"
+}

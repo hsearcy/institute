@@ -205,6 +205,27 @@ export function cast(spellId: RpgSpellId): void {
 }
 export function loot(): void { play('loot', .035); }
 export function levelUp(): void { play('level-up'); }
+/** A bright ascending reward chord; shares gesture unlock, mute, and teardown. */
+export function rewardFanfare(kind: 'quest' | 'level' | 'daily-board'): void {
+  if (!canPlay() || !context || !master) return;
+  if (kind === 'level') play('level-up');
+  else play('loot');
+  const c = context;
+  const notes = kind === 'level' ? [392, 494, 587, 784] : kind === 'daily-board' ? [523, 659, 784, 1047] : [523, 659, 784];
+  notes.forEach((frequency, index) => {
+    if (voices.size >= 12) return;
+    const source = c.createOscillator(), gain = c.createGain();
+    const at = c.currentTime + index * .115;
+    source.type = 'triangle';
+    source.frequency.setValueAtTime(frequency, at);
+    gain.gain.setValueAtTime(0, at);
+    gain.gain.linearRampToValueAtTime(.036, at + .012);
+    gain.gain.exponentialRampToValueAtTime(.0001, at + .66);
+    source.connect(gain).connect(master!);
+    track(source, gain);
+    source.start(at); source.stop(at + .7);
+  });
+}
 /** Stone collapse followed by a warm victory interval; call on boss defeat. */
 export function boss(): void { play('boss-defeat'); }
 export function footstep(): void { play('footstep', .16); }

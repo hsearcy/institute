@@ -1,0 +1,52 @@
+/* A reward is a brief spectacle above the adventure, never a blocking dialog. */
+.rpg-celebrations{position:absolute;inset:0;z-index:35;pointer-events:none;overflow:hidden;isolation:isolate;}
+.rpg-celebrations *{pointer-events:none!important;box-sizing:border-box;}
+.rpg-reward-announcer{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
+.rpg-reward-reveal{--reward-light:#f9c663;position:absolute;top:clamp(98px,17vh,180px);left:50%;width:min(550px,calc(100vw - 24px));transform:translateX(-50%);text-align:center;animation:rpg-reward-lifetime 3.4s both;}
+.rpg-reward-reveal[data-kind="level"]{--reward-light:#82e8f4;}
+.rpg-reward-aura{position:absolute;z-index:-2;inset:-100px -90px -40px;background:radial-gradient(ellipse at 50% 39%,color-mix(in srgb,var(--reward-light) 30%,transparent),transparent 64%);animation:rpg-reward-aura 1.1s ease-out both;}
+.rpg-reward-rays{position:absolute;left:50%;top:57px;width:480px;aspect-ratio:1;translate:-50% -50%;background:repeating-conic-gradient(from 6deg,transparent 0 17deg,color-mix(in srgb,var(--reward-light) 17%,transparent) 18deg 21deg,transparent 22deg 36deg);mask-image:radial-gradient(circle,#0002 9%,#000 22%,transparent 66%);animation:rpg-reward-rays 3.4s ease-out both;}
+.rpg-reward-ring{position:absolute;left:50%;top:56px;width:130px;aspect-ratio:1;border:2px solid #fff0c7;border-radius:50%;box-shadow:0 0 22px var(--reward-light),inset 0 0 12px var(--reward-light);animation:rpg-reward-ring 1s .05s cubic-bezier(.15,.6,.25,1) both;}
+.rpg-reward-medal{position:relative;width:114px;height:114px;margin:0 auto -5px;z-index:2;filter:drop-shadow(0 5px 8px #0009) drop-shadow(0 0 20px color-mix(in srgb,var(--reward-light) 45%,transparent));animation:rpg-reward-medal .68s cubic-bezier(.2,1.4,.35,1) both;}
+.rpg-reward-medal svg{width:100%;height:100%;}
+.rpg-reward-medal-glint{position:absolute;inset:-12px;background:linear-gradient(110deg,transparent 40%,#fff8d1aa 49%,#fff 50%,transparent 57%);clip-path:circle(39%);mix-blend-mode:screen;animation:rpg-reward-glint .65s .52s both;}
+.rpg-reward-level-number{position:absolute;inset:0;display:grid;place-items:center;color:#fff5d8;font:700 49px/1 'Cinzel',Georgia,serif;text-shadow:0 3px 2px #362218,0 0 14px #efc36b99;animation:rpg-reward-number .65s .15s cubic-bezier(.15,1.5,.4,1) both;}
+.rpg-reward-banner{position:relative;padding:17px 38px 19px;background:linear-gradient(90deg,transparent,#07151bef 10%,#10232bf5 50%,#07151bef 90%,transparent);border-block:1px solid transparent;border-image:linear-gradient(90deg,transparent,#d7a85588,#fff1bbaa,#d7a85588,transparent) 1;box-shadow:0 16px 40px -18px #000c;animation:rpg-reward-banner .45s .12s ease-out both;}
+.rpg-reward-banner:before,.rpg-reward-banner:after{content:'';position:absolute;top:-3px;width:5px;height:5px;rotate:45deg;background:#ffe0a1;box-shadow:0 0 9px #ebac51;}
+.rpg-reward-banner:before{left:22%;}.rpg-reward-banner:after{right:22%;}
+.rpg-reward-kicker{display:block;color:#e7ce99;font:700 10px/1.3 'DM Sans',sans-serif;text-transform:uppercase;letter-spacing:3.3px;}
+#rpg-ui .rpg-reward-banner h2{margin:5px 0 5px;color:#ffefc4;font:700 clamp(26px,3.3vw,42px)/1.12 'Cinzel',Georgia,serif;letter-spacing:-.7px;text-shadow:0 2px 2px #382716,0 0 25px #e6a94288;}
+.rpg-reward-reveal[data-kind="level"] .rpg-reward-banner h2{color:#e1fcff;text-shadow:0 2px 2px #112d3a,0 0 25px #5dced999;}
+#rpg-ui .rpg-reward-banner p{margin:7px 0 0;color:#e2e7d7;font:500 14px/1.4 'DM Sans',sans-serif;text-wrap:balance;}
+.rpg-reward-prize{display:inline-flex;justify-content:center;align-items:center;gap:12px;max-width:100%;margin:13px 0 0;padding:7px 18px;border:1px solid #bc955155;background:linear-gradient(90deg,#976b1510,#d6a94c29,#976b1510);color:#fff0b6;box-shadow:inset 0 1px #ffeec41c;animation:rpg-reward-prize .5s .36s cubic-bezier(.2,1.3,.4,1) both;}
+.rpg-reward-prize strong{font:700 15px/1.35 'DM Sans',sans-serif;}
+.rpg-reward-prize-gem{flex:none;width:8px;height:11px;clip-path:polygon(50% 0,100% 30%,80% 75%,50% 100%,20% 75%,0 30%);background:linear-gradient(120deg,#fffce0 10%,#f7d883 47%,#a76b2e 48%,#eec26d);filter:drop-shadow(0 0 6px #fbd470);}
+.rpg-reward-particles{position:absolute;left:50%;top:58px;z-index:3;}
+.rpg-reward-spark{position:absolute;display:block;width:var(--spark-size);height:calc(var(--spark-size) * 1.8);background:linear-gradient(135deg,#fffbd8,#ffd27b 55%,#b47a35);box-shadow:0 0 5px #f6d88199;animation:rpg-reward-spark 1.9s var(--spark-delay) cubic-bezier(.16,.55,.35,1) both;}
+.rpg-reward-spark.is-gem{background:linear-gradient(135deg,#e5ffff,#7be6f0 50%,#297a94);clip-path:polygon(50% 0,100% 35%,65% 100%,35% 100%,0 35%);}
+@keyframes rpg-reward-lifetime{0%{opacity:0}7%,87%{opacity:1}100%{opacity:0;translate:0 -10px}}
+@keyframes rpg-reward-aura{0%{opacity:0;scale:.3}35%{opacity:1}100%{opacity:.7;scale:1}}
+@keyframes rpg-reward-rays{from{rotate:-14deg;scale:.6;opacity:0}15%{opacity:1}to{rotate:12deg;scale:1.08;opacity:.3}}
+@keyframes rpg-reward-ring{from{transform:translate(-50%,-50%) scale(.5);opacity:.9}to{transform:translate(-50%,-50%) scale(3.1);opacity:0}}
+@keyframes rpg-reward-medal{from{opacity:0;transform:translateY(22px) scale(.4) rotate(-14deg)}to{opacity:1;transform:translateY(0) scale(1) rotate(0)}}
+@keyframes rpg-reward-number{from{opacity:0;scale:.3}to{opacity:1;scale:1}}
+@keyframes rpg-reward-glint{from{translate:-75% 0;opacity:0}40%{opacity:1}to{translate:75% 0;opacity:0}}
+@keyframes rpg-reward-banner{from{opacity:0;transform:translateY(10px) scaleX(.8)}to{opacity:1;transform:none}}
+@keyframes rpg-reward-prize{from{opacity:0;transform:translateY(8px) scale(.8)}to{opacity:1;transform:none}}
+@keyframes rpg-reward-spark{0%{opacity:0;transform:translate(0,0) scale(.3)}12%{opacity:1}65%{opacity:1}100%{opacity:0;transform:translate(var(--spark-x),calc(var(--spark-y) + 65px)) rotate(var(--spark-turn)) scale(.4)}}
+@media(max-width:600px){.rpg-reward-reveal{top:clamp(95px,18vh,145px);width:calc(100vw - 14px)}.rpg-reward-medal{width:92px;height:92px}.rpg-reward-level-number{font-size:39px}.rpg-reward-banner{padding:15px 21px}.rpg-reward-kicker{font-size:9px;letter-spacing:2.4px}#rpg-ui .rpg-reward-banner h2{font-size:29px}#rpg-ui .rpg-reward-banner p{font-size:12px}.rpg-reward-prize{margin-top:10px;padding:6px 11px;gap:8px}.rpg-reward-prize strong{font-size:13px}.rpg-reward-rays{width:360px;top:44px}.rpg-reward-ring,.rpg-reward-particles{top:44px}}
+@media(max-height:600px) and (min-width:601px){.rpg-reward-reveal{top:75px;width:480px}.rpg-reward-medal{width:68px;height:68px;margin-bottom:-8px}.rpg-reward-level-number{font-size:30px}.rpg-reward-banner{padding:12px 25px}.rpg-reward-kicker{font-size:8px}#rpg-ui .rpg-reward-banner h2{font-size:28px}#rpg-ui .rpg-reward-banner p{font-size:12px}.rpg-reward-prize{margin-top:8px;padding:4px 12px}.rpg-reward-rays,.rpg-reward-ring,.rpg-reward-particles{top:34px}.rpg-reward-rays{width:300px}}
+@media(max-width:1000px) and (max-height:500px) and (min-aspect-ratio:3/2){
+ .rpg-celebrations{right:var(--rpg-side-width,222px);}
+ .rpg-reward-reveal{top:58px;width:min(480px,calc(100% - 24px));}
+ .rpg-reward-medal{width:60px;height:60px;margin-bottom:-7px;}
+ .rpg-reward-level-number{font-size:28px;}
+ .rpg-reward-banner{padding:10px 16px;}
+ #rpg-ui .rpg-reward-banner h2{font-size:26px;}
+ #rpg-ui .rpg-reward-banner p{font-size:11px;margin-top:5px;}
+ .rpg-reward-kicker{font-size:8px;letter-spacing:2px;}
+ .rpg-reward-prize{margin-top:6px;padding:3px 10px;}
+ .rpg-reward-prize strong{font-size:12px;}
+ .rpg-reward-rays,.rpg-reward-ring,.rpg-reward-particles{top:30px;}
+}
+@media(prefers-reduced-motion:reduce){.rpg-celebrations *{animation:none!important}.rpg-reward-rays,.rpg-reward-ring,.rpg-reward-particles,.rpg-reward-medal-glint{display:none}.rpg-reward-aura{opacity:.45}.rpg-reward-reveal{opacity:1}.rpg-reward-medal{filter:drop-shadow(0 3px 6px #0009)}}

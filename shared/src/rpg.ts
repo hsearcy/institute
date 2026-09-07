@@ -33,7 +33,7 @@ export const RPG_SCHOOLS: readonly { id: RpgSchoolId; name: string; description:
 export interface RpgSpell { id: RpgSpellId; school: RpgSchoolId; name: string; description: string; color: string; skillId: string | null; effect: RpgSpellEffect; power: number }
 export const RPG_SPELLS: readonly RpgSpell[] = [
   { id: 'ember', school: 'ember', name: 'Fire Nova', description: 'Send a ring of flame outward in every direction.', color: '#ff994f', skillId: null, effect: 'nova', power: 0 },
-  { id: 'cleave', school: 'ember', name: 'Flame Cleave', description: 'Sweep your runeblade through a burning arc. Deal 2 extra damage per target.', color: '#ffb46d', skillId: null, effect: 'cleave', power: 2 },
+  { id: 'cleave', school: 'ember', name: 'Heavy Cleave', description: 'Swing your sword through up to three nearby monsters. Deal 2 extra damage per target.', color: '#e8d9b7', skillId: null, effect: 'cleave', power: 2 },
   { id: 'meteor', school: 'ember', name: 'Meteor', description: 'Call down a blazing rock that bursts on impact. Deal 6 extra damage per target.', color: '#ff7849', skillId: 'meteor', effect: 'meteor', power: 6 },
   { id: 'phoenix_dive', school: 'ember', name: 'Phoenix Dive', description: 'Become a fiery phoenix and charge through the horde. Deal 8 extra damage per target.', color: '#ffc264', skillId: 'phoenix_dive', effect: 'phoenix-dive', power: 8 },
   { id: 'firestorm', school: 'ember', name: 'Firestorm', description: 'Raise a field of flame pillars that erupt in sequence. Deal 12 extra damage per target.', color: '#ff653d', skillId: 'firestorm', effect: 'firestorm', power: 12 },
@@ -58,8 +58,8 @@ export const RPG_SKILLS: readonly RpgSkill[] = [
   { id: 'ember_power', name: 'Wildfire', description: 'All Flame abilities deal 2 more damage per target per rank.', school: 'ember', spellId: 'ember', parentId: null, level: 2, maxRank: 3, kind: 'power', scope: 'school', powerPerRank: 2 },
   { id: 'ember_echo', name: 'Twin Nova', description: 'Fire Nova erupts twice and deals 4 more damage per target.', school: 'ember', spellId: 'ember', parentId: 'ember_power', level: 4, maxRank: 1, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'echo' },
   { id: 'ember_master', name: 'Phoenix Heart', description: 'All Flame abilities deal 6 more damage per target per rank.', school: 'ember', spellId: 'ember', parentId: 'ember_echo', level: 6, maxRank: 2, kind: 'power', scope: 'school', powerPerRank: 6 },
-  { id: 'cleave', name: 'Heavy Cleave', description: 'Flame Cleave deals 2 more damage per target.', school: 'ember', spellId: 'cleave', parentId: null, level: 2, maxRank: 1, kind: 'power', scope: 'spell', powerPerRank: 2 },
-  { id: 'cleave_sweep', name: 'Blazing Reach', description: 'Widen Flame Cleave. Deal 2 more damage per target per rank.', school: 'ember', spellId: 'cleave', parentId: 'cleave', level: 3, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 2, effect: 'wide' },
+  { id: 'cleave', name: 'Sharpened Edge', description: 'Heavy Cleave deals 2 more damage per target.', school: 'ember', spellId: 'cleave', parentId: null, level: 2, maxRank: 1, kind: 'power', scope: 'spell', powerPerRank: 2 },
+  { id: 'cleave_sweep', name: 'Blazing Reach', description: 'Widen Heavy Cleave. Deal 2 more damage per target per rank.', school: 'ember', spellId: 'cleave', parentId: 'cleave', level: 3, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 2, effect: 'wide' },
   { id: 'meteor', name: 'Meteor', description: 'Unlock a falling star and its explosive impact.', school: 'ember', spellId: 'meteor', parentId: 'ember_power', level: 4, maxRank: 1, kind: 'unlock', scope: 'spell', powerPerRank: 0 },
   { id: 'meteor_shower', name: 'Meteor Shower', description: 'Split Meteor into repeated impacts. Deal 3 more damage per target per rank.', school: 'ember', spellId: 'meteor', parentId: 'meteor', level: 5, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 3, effect: 'echo' },
   { id: 'phoenix_dive', name: 'Phoenix Dive', description: 'Unlock a fiery charge through the dungeon.', school: 'ember', spellId: 'phoenix_dive', parentId: 'cleave', level: 6, maxRank: 1, kind: 'unlock', scope: 'spell', powerPerRank: 0 },
@@ -109,7 +109,7 @@ export const RPG_ITEMS: readonly RpgItem[] = [
   { id: 'phoenix', name: 'Phoenix Scepter', rarity: 'legendary', description: 'Fire Nova erupts twice and deals 8 more damage per target.', power: 8, effect: 'echo', spellId: 'ember', school: 'ember', scope: 'spell', requiredClears: 2 },
   { id: 'wintercrown', name: 'Staff of Endless Winter', rarity: 'legendary', description: 'Frostfall rains giant shards and deals 8 more damage per target.', power: 8, effect: 'ice-shards', spellId: 'frost', school: 'frost', scope: 'spell', requiredClears: 3 },
   { id: 'tempest', name: 'Tempest Caller', rarity: 'legendary', description: 'Chain Lightning arcs twice and deals 8 more damage per target.', power: 8, effect: 'chain', spellId: 'storm', school: 'storm', scope: 'spell', requiredClears: 4 },
-  { id: 'cleaver', name: 'Ashsplitter', rarity: 'rare', description: 'Flame Cleave cuts a wider arc and deals 4 more damage per target.', power: 4, effect: 'wide', spellId: 'cleave', school: 'ember', scope: 'spell', requiredClears: 0 },
+  { id: 'cleaver', name: 'Ashsplitter', rarity: 'rare', description: 'Heavy Cleave cuts a wider arc and deals 4 more damage per target.', power: 4, effect: 'wide', spellId: 'cleave', school: 'ember', scope: 'spell', requiredClears: 0 },
   { id: 'starfall', name: 'Starfall Edge', rarity: 'epic', description: 'Meteor splits into a shower and deals 8 more damage per target.', power: 8, effect: 'echo', spellId: 'meteor', school: 'ember', scope: 'spell', requiredClears: 1 },
   { id: 'phoenix_talon', name: 'Phoenix Talon', rarity: 'epic', description: 'Phoenix Dive leaves burning ground and deals 7 more damage per target.', power: 7, effect: 'burn', spellId: 'phoenix_dive', school: 'ember', scope: 'spell', requiredClears: 2 },
   { id: 'inferno', name: 'Crown of the Inferno', rarity: 'legendary', description: 'Firestorm leaves lasting embers and deals 12 more damage per target.', power: 12, effect: 'burn', spellId: 'firestorm', school: 'ember', scope: 'spell', requiredClears: 5 },
@@ -248,14 +248,18 @@ export function rpgSpellCombatStats(state: RpgLoadout, spellId = state.selectedS
 }
 
 /** Deterministic current-room health. Returns a copy and never rewrites a save. */
-export function rpgEncounterCombat(state: Pick<RpgState, 'expedition'>, encounterIndex = state.expedition?.encounterIndex ?? 0): RpgCombatState {
+export function rpgEncounterCombat(state: Pick<RpgState, 'expedition'> & Partial<Pick<RpgState, 'level'>>, encounterIndex = state.expedition?.encounterIndex ?? 0): RpgCombatState {
   const room = Math.max(0, Math.min(5, Math.floor(encounterIndex)));
   const saved = state.expedition?.combat;
   if (saved?.version === 1 && saved.encounterIndex === room) {
     return { ...saved, enemies: saved.enemies.map(enemy => ({ ...enemy })) };
   }
   const region = Math.max(0, RPG_REGIONS.findIndex(entry => entry.id === state.expedition?.regionId));
-  const count = [6, 7, 8, 8, 9, 10][room];
+  // Ease new heroes into a horde: three enemies at level one, then one more
+  // per level. Saved rooms above return untouched, even after a level-up.
+  const levelCap = state.level !== undefined && Number.isFinite(state.level)
+    ? Math.max(3, Math.min(10, Math.floor(state.level) + 2)) : 10;
+  const count = Math.min([6, 7, 8, 8, 9, 10][room], levelCap);
   return { version: 1, encounterIndex: room, casts: 0, enemies: Array.from({ length: count }, (_, index) => {
     const boss = room === 5 && index === 0;
     const baseHp = (boss ? 36 : index % 7 === 0 ? 12 : [6, 6, 8, 8, 10][index % 5]) + region * (boss ? 8 : 2) + Math.floor(room / 2) * (boss ? 0 : 2);
@@ -278,6 +282,6 @@ export function rpgApplyCombat(state: RpgLoadout, combat: RpgCombatState, spellI
 }
 
 /** Legacy call sites receive a bounded preview of real defeats, not population. */
-export function rpgEncounterKills(state: RpgLoadout & Partial<Pick<RpgState, 'expedition'>>, encounterIndex: number, spellId = state.selectedSpellId): number {
-  return rpgApplyCombat(state, rpgEncounterCombat({ expedition: state.expedition ?? null }, encounterIndex), spellId).result.defeatedIds.length;
+export function rpgEncounterKills(state: RpgLoadout & Partial<Pick<RpgState, 'expedition' | 'level'>>, encounterIndex: number, spellId = state.selectedSpellId): number {
+  return rpgApplyCombat(state, rpgEncounterCombat({ expedition: state.expedition ?? null, level: state.level }, encounterIndex), spellId).result.defeatedIds.length;
 }

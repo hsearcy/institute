@@ -1,0 +1,1038 @@
+{
+  "output": "/home/houston/git/institute/tmp/rpg-starter-playtest",
+  "dbPath": "/tmp/rpg-starter-1788790279651.db",
+  "errors": [],
+  "checks": [
+    "Fresh hero starts at XP 0 / level 1 with Heavy Cleave selected, a sword-only camp selector, and three visible monsters on desktop and phone",
+    "First actual correct answer uses Heavy Cleave: two kills and one wounded survivor, not a full-pack wipe",
+    "Second actual answer clears room one, awards a relic and forge materials, and starts another three-enemy room",
+    "Level two is earned through real answers and survives reload; the current three-enemy room is preserved",
+    "Next fresh room at level two has four enemies in saved combat and the actual rendered scene"
+  ],
+  "receipts": [
+    {
+      "state": {
+        "profileId": "rpg-playtest",
+        "xp": 32,
+        "level": 1,
+        "xpIntoLevel": 32,
+        "xpForNextLevel": 90,
+        "skillPoints": 0,
+        "skills": {},
+        "inventory": [
+          "apprentice"
+        ],
+        "equippedItemId": "apprentice",
+        "selectedSpellId": "cleave",
+        "appearanceId": "wayfarer",
+        "totalKills": 2,
+        "expeditionsCompleted": 0,
+        "expedition": {
+          "id": "298aaadf-871c-45cb-b284-8c979a4e5c3b",
+          "regionId": "embercrypt",
+          "tier": 1,
+          "encounterIndex": 0,
+          "encountersTotal": 6,
+          "cleared": false,
+          "startedAt": 1788790289022,
+          "combat": {
+            "version": 1,
+            "encounterIndex": 0,
+            "casts": 1,
+            "enemies": [
+              {
+                "id": "enemy-0",
+                "hp": 3,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              }
+            ]
+          }
+        },
+        "loot": [
+          {
+            "id": "legacy:apprentice",
+            "itemId": "apprentice",
+            "bonusPower": 0,
+            "upgradeLevel": 0
+          }
+        ],
+        "equippedLootId": "legacy:apprentice",
+        "forgeDust": 0,
+        "bestTier": 0,
+        "dungeonTier": 1,
+        "goal": null
+      },
+      "reward": {
+        "xp": 32,
+        "kills": 2,
+        "levelUp": false,
+        "levelsGained": 0,
+        "item": null,
+        "newItems": [],
+        "duplicateItem": false,
+        "bossDefeated": false,
+        "spellId": "cleave",
+        "combat": {
+          "damage": 9,
+          "coverage": 3,
+          "enemiesBefore": [
+            {
+              "id": "enemy-0",
+              "hp": 12,
+              "maxHp": 12
+            },
+            {
+              "id": "enemy-1",
+              "hp": 6,
+              "maxHp": 6
+            },
+            {
+              "id": "enemy-2",
+              "hp": 8,
+              "maxHp": 8
+            }
+          ],
+          "enemiesAfter": [
+            {
+              "id": "enemy-0",
+              "hp": 3,
+              "maxHp": 12
+            },
+            {
+              "id": "enemy-1",
+              "hp": 0,
+              "maxHp": 6
+            },
+            {
+              "id": "enemy-2",
+              "hp": 0,
+              "maxHp": 8
+            }
+          ],
+          "hits": [
+            {
+              "enemyId": "enemy-0",
+              "damage": 9,
+              "hpBefore": 12,
+              "hpAfter": 3
+            },
+            {
+              "enemyId": "enemy-1",
+              "damage": 6,
+              "hpBefore": 6,
+              "hpAfter": 0
+            },
+            {
+              "enemyId": "enemy-2",
+              "damage": 8,
+              "hpBefore": 8,
+              "hpAfter": 0
+            }
+          ],
+          "defeatedIds": [
+            "enemy-1",
+            "enemy-2"
+          ],
+          "encounterCleared": false,
+          "remainingEnemies": 1
+        },
+        "forgeDust": 0,
+        "tier": 1
+      },
+      "duplicate": false
+    },
+    {
+      "state": {
+        "profileId": "rpg-playtest",
+        "xp": 64,
+        "level": 1,
+        "xpIntoLevel": 64,
+        "xpForNextLevel": 90,
+        "skillPoints": 0,
+        "skills": {},
+        "inventory": [
+          "apprentice",
+          "cinderwand"
+        ],
+        "equippedItemId": "apprentice",
+        "selectedSpellId": "cleave",
+        "appearanceId": "wayfarer",
+        "totalKills": 3,
+        "expeditionsCompleted": 0,
+        "expedition": {
+          "id": "298aaadf-871c-45cb-b284-8c979a4e5c3b",
+          "regionId": "embercrypt",
+          "tier": 1,
+          "encounterIndex": 1,
+          "encountersTotal": 6,
+          "cleared": false,
+          "startedAt": 1788790289022,
+          "combat": {
+            "version": 1,
+            "encounterIndex": 1,
+            "casts": 0,
+            "enemies": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              }
+            ]
+          }
+        },
+        "loot": [
+          {
+            "id": "legacy:apprentice",
+            "itemId": "apprentice",
+            "bonusPower": 0,
+            "upgradeLevel": 0
+          },
+          {
+            "id": "0c4ccc9f-6f10-4010-b98e-51aa9b91ea71",
+            "itemId": "cinderwand",
+            "bonusPower": 4,
+            "upgradeLevel": 0
+          }
+        ],
+        "equippedLootId": "legacy:apprentice",
+        "forgeDust": 3,
+        "bestTier": 0,
+        "dungeonTier": 1,
+        "goal": null
+      },
+      "reward": {
+        "xp": 32,
+        "kills": 1,
+        "levelUp": false,
+        "levelsGained": 0,
+        "item": {
+          "id": "cinderwand",
+          "name": "Cinderbranch",
+          "rarity": "rare",
+          "description": "Fire Nova leaves burning embers and deals 3 more damage per target.",
+          "power": 3,
+          "effect": "burn",
+          "spellId": "ember",
+          "school": "ember",
+          "scope": "spell",
+          "requiredClears": 0
+        },
+        "newItems": [
+          {
+            "id": "cinderwand",
+            "name": "Cinderbranch",
+            "rarity": "rare",
+            "description": "Fire Nova leaves burning embers and deals 3 more damage per target.",
+            "power": 3,
+            "effect": "burn",
+            "spellId": "ember",
+            "school": "ember",
+            "scope": "spell",
+            "requiredClears": 0
+          }
+        ],
+        "duplicateItem": false,
+        "bossDefeated": false,
+        "spellId": "cleave",
+        "combat": {
+          "damage": 9,
+          "coverage": 3,
+          "enemiesBefore": [
+            {
+              "id": "enemy-0",
+              "hp": 3,
+              "maxHp": 12
+            },
+            {
+              "id": "enemy-1",
+              "hp": 0,
+              "maxHp": 6
+            },
+            {
+              "id": "enemy-2",
+              "hp": 0,
+              "maxHp": 8
+            }
+          ],
+          "enemiesAfter": [
+            {
+              "id": "enemy-0",
+              "hp": 0,
+              "maxHp": 12
+            },
+            {
+              "id": "enemy-1",
+              "hp": 0,
+              "maxHp": 6
+            },
+            {
+              "id": "enemy-2",
+              "hp": 0,
+              "maxHp": 8
+            }
+          ],
+          "hits": [
+            {
+              "enemyId": "enemy-0",
+              "damage": 3,
+              "hpBefore": 3,
+              "hpAfter": 0
+            }
+          ],
+          "defeatedIds": [
+            "enemy-0"
+          ],
+          "encounterCleared": true,
+          "remainingEnemies": 0
+        },
+        "loot": {
+          "id": "0c4ccc9f-6f10-4010-b98e-51aa9b91ea71",
+          "itemId": "cinderwand",
+          "bonusPower": 4,
+          "upgradeLevel": 0
+        },
+        "forgeDust": 3,
+        "tier": 1
+      },
+      "duplicate": false
+    },
+    {
+      "state": {
+        "profileId": "rpg-playtest",
+        "xp": 96,
+        "level": 2,
+        "xpIntoLevel": 6,
+        "xpForNextLevel": 135,
+        "skillPoints": 1,
+        "skills": {},
+        "inventory": [
+          "apprentice",
+          "cinderwand"
+        ],
+        "equippedItemId": "apprentice",
+        "selectedSpellId": "cleave",
+        "appearanceId": "wayfarer",
+        "totalKills": 5,
+        "expeditionsCompleted": 0,
+        "expedition": {
+          "id": "298aaadf-871c-45cb-b284-8c979a4e5c3b",
+          "regionId": "embercrypt",
+          "tier": 1,
+          "encounterIndex": 1,
+          "encountersTotal": 6,
+          "cleared": false,
+          "startedAt": 1788790289022,
+          "combat": {
+            "version": 1,
+            "encounterIndex": 1,
+            "casts": 1,
+            "enemies": [
+              {
+                "id": "enemy-0",
+                "hp": 3,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              }
+            ]
+          }
+        },
+        "loot": [
+          {
+            "id": "legacy:apprentice",
+            "itemId": "apprentice",
+            "bonusPower": 0,
+            "upgradeLevel": 0
+          },
+          {
+            "id": "0c4ccc9f-6f10-4010-b98e-51aa9b91ea71",
+            "itemId": "cinderwand",
+            "bonusPower": 4,
+            "upgradeLevel": 0
+          }
+        ],
+        "equippedLootId": "legacy:apprentice",
+        "forgeDust": 3,
+        "bestTier": 0,
+        "dungeonTier": 1,
+        "goal": null
+      },
+      "reward": {
+        "xp": 32,
+        "kills": 2,
+        "levelUp": true,
+        "levelsGained": 1,
+        "item": null,
+        "newItems": [],
+        "duplicateItem": false,
+        "bossDefeated": false,
+        "spellId": "cleave",
+        "combat": {
+          "damage": 9,
+          "coverage": 3,
+          "enemiesBefore": [
+            {
+              "id": "enemy-0",
+              "hp": 12,
+              "maxHp": 12
+            },
+            {
+              "id": "enemy-1",
+              "hp": 6,
+              "maxHp": 6
+            },
+            {
+              "id": "enemy-2",
+              "hp": 8,
+              "maxHp": 8
+            }
+          ],
+          "enemiesAfter": [
+            {
+              "id": "enemy-0",
+              "hp": 3,
+              "maxHp": 12
+            },
+            {
+              "id": "enemy-1",
+              "hp": 0,
+              "maxHp": 6
+            },
+            {
+              "id": "enemy-2",
+              "hp": 0,
+              "maxHp": 8
+            }
+          ],
+          "hits": [
+            {
+              "enemyId": "enemy-0",
+              "damage": 9,
+              "hpBefore": 12,
+              "hpAfter": 3
+            },
+            {
+              "enemyId": "enemy-1",
+              "damage": 6,
+              "hpBefore": 6,
+              "hpAfter": 0
+            },
+            {
+              "enemyId": "enemy-2",
+              "damage": 8,
+              "hpBefore": 8,
+              "hpAfter": 0
+            }
+          ],
+          "defeatedIds": [
+            "enemy-1",
+            "enemy-2"
+          ],
+          "encounterCleared": false,
+          "remainingEnemies": 1
+        },
+        "forgeDust": 0,
+        "tier": 1
+      },
+      "duplicate": false
+    },
+    {
+      "state": {
+        "profileId": "rpg-playtest",
+        "xp": 128,
+        "level": 2,
+        "xpIntoLevel": 38,
+        "xpForNextLevel": 135,
+        "skillPoints": 1,
+        "skills": {},
+        "inventory": [
+          "apprentice",
+          "cinderwand"
+        ],
+        "equippedItemId": "apprentice",
+        "selectedSpellId": "cleave",
+        "appearanceId": "wayfarer",
+        "totalKills": 6,
+        "expeditionsCompleted": 0,
+        "expedition": {
+          "id": "298aaadf-871c-45cb-b284-8c979a4e5c3b",
+          "regionId": "embercrypt",
+          "tier": 1,
+          "encounterIndex": 2,
+          "encountersTotal": 6,
+          "cleared": false,
+          "startedAt": 1788790289022,
+          "combat": {
+            "version": 1,
+            "encounterIndex": 2,
+            "casts": 0,
+            "enemies": [
+              {
+                "id": "enemy-0",
+                "hp": 14,
+                "maxHp": 14
+              },
+              {
+                "id": "enemy-1",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-2",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-3",
+                "hp": 10,
+                "maxHp": 10
+              }
+            ]
+          }
+        },
+        "loot": [
+          {
+            "id": "legacy:apprentice",
+            "itemId": "apprentice",
+            "bonusPower": 0,
+            "upgradeLevel": 0
+          },
+          {
+            "id": "0c4ccc9f-6f10-4010-b98e-51aa9b91ea71",
+            "itemId": "cinderwand",
+            "bonusPower": 4,
+            "upgradeLevel": 0
+          }
+        ],
+        "equippedLootId": "legacy:apprentice",
+        "forgeDust": 6,
+        "bestTier": 0,
+        "dungeonTier": 1,
+        "goal": null
+      },
+      "reward": {
+        "xp": 32,
+        "kills": 1,
+        "levelUp": false,
+        "levelsGained": 0,
+        "item": null,
+        "newItems": [],
+        "duplicateItem": false,
+        "bossDefeated": false,
+        "spellId": "cleave",
+        "combat": {
+          "damage": 9,
+          "coverage": 3,
+          "enemiesBefore": [
+            {
+              "id": "enemy-0",
+              "hp": 3,
+              "maxHp": 12
+            },
+            {
+              "id": "enemy-1",
+              "hp": 0,
+              "maxHp": 6
+            },
+            {
+              "id": "enemy-2",
+              "hp": 0,
+              "maxHp": 8
+            }
+          ],
+          "enemiesAfter": [
+            {
+              "id": "enemy-0",
+              "hp": 0,
+              "maxHp": 12
+            },
+            {
+              "id": "enemy-1",
+              "hp": 0,
+              "maxHp": 6
+            },
+            {
+              "id": "enemy-2",
+              "hp": 0,
+              "maxHp": 8
+            }
+          ],
+          "hits": [
+            {
+              "enemyId": "enemy-0",
+              "damage": 3,
+              "hpBefore": 3,
+              "hpAfter": 0
+            }
+          ],
+          "defeatedIds": [
+            "enemy-0"
+          ],
+          "encounterCleared": true,
+          "remainingEnemies": 0
+        },
+        "forgeDust": 3,
+        "tier": 1
+      },
+      "duplicate": false
+    }
+  ],
+  "frames": [
+    {
+      "level": 1,
+      "selected": "cleave",
+      "enemies": [
+        {
+          "id": "enemy-0",
+          "hp": 12,
+          "dead": false,
+          "visible": true
+        },
+        {
+          "id": "enemy-1",
+          "hp": 6,
+          "dead": false,
+          "visible": true
+        },
+        {
+          "id": "enemy-2",
+          "hp": 8,
+          "dead": false,
+          "visible": true
+        }
+      ],
+      "attack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 9,
+            "coverage": 3,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 3,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 9,
+                "hpBefore": 12,
+                "hpAfter": 3
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-1",
+              "enemy-2"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": false,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "apprentice",
+          "kills": 2,
+          "xp": 32
+        }
+      },
+      "age": 0.15
+    },
+    {
+      "level": 1,
+      "selected": "cleave",
+      "enemies": [
+        {
+          "id": "enemy-0",
+          "hp": 12,
+          "dead": false,
+          "visible": true
+        },
+        {
+          "id": "enemy-1",
+          "hp": 6,
+          "dead": false,
+          "visible": true
+        },
+        {
+          "id": "enemy-2",
+          "hp": 8,
+          "dead": false,
+          "visible": true
+        }
+      ],
+      "attack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 9,
+            "coverage": 3,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 3,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 9,
+                "hpBefore": 12,
+                "hpAfter": 3
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-1",
+              "enemy-2"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": false,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "apprentice",
+          "kills": 2,
+          "xp": 32
+        }
+      },
+      "age": 0.4
+    },
+    {
+      "level": 1,
+      "selected": "cleave",
+      "enemies": [
+        {
+          "id": "enemy-0",
+          "hp": 12,
+          "dead": false,
+          "visible": true
+        },
+        {
+          "id": "enemy-1",
+          "hp": 0,
+          "dead": true,
+          "visible": true
+        },
+        {
+          "id": "enemy-2",
+          "hp": 8,
+          "dead": false,
+          "visible": true
+        }
+      ],
+      "attack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 9,
+            "coverage": 3,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 3,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 9,
+                "hpBefore": 12,
+                "hpAfter": 3
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-1",
+              "enemy-2"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": false,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "apprentice",
+          "kills": 2,
+          "xp": 32
+        }
+      },
+      "age": 0.65
+    },
+    {
+      "level": 1,
+      "selected": "cleave",
+      "enemies": [
+        {
+          "id": "enemy-0",
+          "hp": 3,
+          "dead": false,
+          "visible": true
+        },
+        {
+          "id": "enemy-1",
+          "hp": 0,
+          "dead": true,
+          "visible": true
+        },
+        {
+          "id": "enemy-2",
+          "hp": 0,
+          "dead": true,
+          "visible": true
+        }
+      ],
+      "attack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 9,
+            "coverage": 3,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 3,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 9,
+                "hpBefore": 12,
+                "hpAfter": 3
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-1",
+              "enemy-2"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": false,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "apprentice",
+          "kills": 2,
+          "xp": 32
+        }
+      },
+      "age": 0.9
+    }
+  ],
+  "preexistingTabs": [
+    "about:blank"
+  ],
+  "success": true
+}

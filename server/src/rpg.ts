@@ -64,7 +64,7 @@ export function getRpgState(db: Database, profileId: string): RpgState {
   }
   return rpgNormalizeLoot({
     profileId, xp: 0, ...rpgLevel(0), skillPoints: 0, skills: {}, inventory: ['apprentice'],
-    equippedItemId: 'apprentice', selectedSpellId: 'ember', appearanceId: 'wayfarer', totalKills: 0, expeditionsCompleted: 0, expedition: null,
+    equippedItemId: 'apprentice', selectedSpellId: 'cleave', appearanceId: 'wayfarer', totalKills: 0, expeditionsCompleted: 0, expedition: null,
   });
 }
 

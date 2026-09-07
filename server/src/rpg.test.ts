@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { RPG_SPELLS, RPG_SPELL_IDS, RPG_SKILLS, RPG_ITEMS, rpgLevel, rpgSpellUnlocked, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgEncounterKills, rpgSpellCombatStats, rpgNextRelicHunt, rpgNormalizeLoot } from '@institute/shared';
+import { RPG_SPELLS, RPG_SPELL_IDS, RPG_SKILLS, RPG_ITEMS, rpgLevel, rpgSpellUnlocked, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgEncounterKills, rpgEncounterCombat, rpgSpellCombatStats, rpgNextRelicHunt, rpgNormalizeLoot } from '@institute/shared';
 import { ensureRpgSchema, getRpgState, startRpgExpedition, resolveRpgEncounter, createRpgRoutes } from './rpg';
 
 function legacyDb(): Database {
@@ -51,6 +51,8 @@ describe('additive RPG progression on legacy learning data', () => {
     const db = legacyDb(); ensureRpgSchema(db);
     try {
       const initial = startRpgExpedition(db, 'sam');
+      expect(initial.selectedSpellId).toBe('cleave');
+      expect(initial.expedition!.combat!.enemies).toHaveLength(3);
       solved(db, 'sam', 'cast-one'); solved(db, 'sam', 'cast-two');
       const learning = snapshot(db);
       const request = { profileId: 'sam', problemId: 'cast-one', expeditionId: initial.expedition!.id, encounterIndex: 0 };
@@ -62,8 +64,8 @@ describe('additive RPG progression on legacy learning data', () => {
       expect(rpgNextRelicHunt(saved, 'embercrypt')).toMatchObject({ itemId: 'cinderwand', encounterIndex: 0 });
       const second = resolveRpgEncounter(db, { ...request, problemId: 'cast-two' });
       expect(second.reward.combat!.enemiesBefore).toEqual(first.reward.combat!.enemiesAfter);
-      expect(second.reward).toMatchObject({ kills: 4, xp: 32, item: { id: 'cinderwand' }, combat: { encounterCleared: true } });
-      expect(second.state).toMatchObject({ xp: 64, totalKills: 6, expedition: { encounterIndex: 1, combat: { casts: 0 } } });
+      expect(second.reward).toMatchObject({ kills: 1, xp: 32, item: { id: 'cinderwand' }, combat: { encounterCleared: true } });
+      expect(second.state).toMatchObject({ xp: 64, totalKills: 3, expedition: { encounterIndex: 1, combat: { casts: 0 } } });
       const lateRetry = resolveRpgEncounter(db, request);
       expect(lateRetry.reward).toEqual(first.reward);
       expect(lateRetry.state).toEqual(second.state);
@@ -79,12 +81,13 @@ describe('additive RPG progression on legacy learning data', () => {
     try {
       const state = startRpgExpedition(db, 'sam');
       state.xp = 420; state.totalKills = 177; state.expedition!.encounterIndex = 4;
+      Object.assign(state, rpgLevel(state.xp));
       delete state.expedition!.combat;
       const oldJson = JSON.stringify(state);
       db.query('UPDATE rpg_profiles SET state_json = ? WHERE profile_id = ?').run(oldJson, 'sam');
       const before = snapshot(db), read = getRpgState(db, 'sam');
       expect(read).toMatchObject({ xp: 420, totalKills: 177, expedition: { encounterIndex: 4, combat: { casts: 0, version: 1 } } });
-      expect(read.expedition!.combat!.enemies).toHaveLength(9);
+      expect(read.expedition!.combat!.enemies).toHaveLength(6);
       expect(getRpgState(db, 'sam')).toEqual(read);
       expect((db.query('SELECT state_json FROM rpg_profiles WHERE profile_id = ?').get('sam') as any).state_json).toBe(oldJson);
       expect(snapshot(db)).toBe(before);
@@ -233,6 +236,9 @@ describe('additive RPG progression on legacy learning data', () => {
     try {
       const initial = startRpgExpedition(db, 'sam');
       Object.assign(initial, { selectedSpellId: 'firestorm', skills: Object.fromEntries(RPG_SKILLS.map(skill => [skill.id, skill.maxRank])), equippedItemId: 'apprentice' });
+      initial.xp = 82305; Object.assign(initial, rpgLevel(initial.xp));
+      delete initial.expedition!.combat;
+      initial.expedition!.combat = rpgEncounterCombat(initial);
       db.query('UPDATE rpg_profiles SET state_json = ? WHERE profile_id = ?').run(JSON.stringify(initial), 'sam');
       solved(db, 'sam', 'capped-pack');
       const learning = snapshot(db), request = { profileId: 'sam', problemId: 'capped-pack', expeditionId: initial.expedition!.id, encounterIndex: 0 };

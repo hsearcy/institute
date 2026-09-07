@@ -1,4 +1,4 @@
-import { AdditiveBlending, BufferAttribute, BufferGeometry, DoubleSide, DynamicDrawUsage, Mesh, ShaderMaterial, Vector3 } from 'three';
+import { AdditiveBlending, NormalBlending, BufferAttribute, BufferGeometry, DoubleSide, DynamicDrawUsage, Mesh, ShaderMaterial, Vector3 } from 'three';
 import { bladeWakeMaterial } from './materials';
 
 // The authored hero's strike is frame 10 at 50 fps: (10 - 1) / 50 = .18s.
@@ -15,12 +15,12 @@ export type CleaveTarget = { position: Vector3; height: number; contact: (at: Ve
 type CleaveBlocker = { position: Vector3; height: number };
 type Ray = { angle: number; left: number; right: number; distance: number; y: number; target: CleaveTarget; hit: boolean };
 
-/** A continuous cutting lip carries the silhouette; broken heat stays behind it. */
-export function cleaveEdgeMaterial(): ShaderMaterial {
+/** A steel cutting lip at base; earned elemental modifiers add its heat tail. */
+export function cleaveEdgeMaterial(elemental = false): ShaderMaterial {
   return new ShaderMaterial({
-    uniforms: { time: { value: 0 }, opacity: { value: 1 } },
+    uniforms: { time: { value: 0 }, opacity: { value: 1 }, elemental: { value: elemental ? 1 : 0 } },
     vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-    fragmentShader: `varying vec2 vUv;uniform float time;uniform float opacity;
+    fragmentShader: `varying vec2 vUv;uniform float time;uniform float opacity;uniform float elemental;
       float tongue(float u,float v,float root,float reach,float bend,float width){
         float q=(.88-v)/reach;if(q<0.||q>1.)return 0.;
         float center=root+bend*q*q,halfWidth=width*(1.-q);
@@ -28,6 +28,17 @@ export function cleaveEdgeMaterial(): ShaderMaterial {
           *smoothstep(0.,.09,q)*(1.-smoothstep(.72,1.,q));
       }
       void main(){float u=vUv.x,v=vUv.y;
+        if(elemental<.5){
+          // A thin curved leading edge and layered slipstream. Constant lip
+          // thickness avoids turning the tapered ribbon into a luminous wedge.
+          float taper=pow(max(0.,sin(u*3.14159)),.6);
+          float core=exp(-pow((v-.91)/.052,2.));
+          float slip=exp(-pow((v-.7)/.22,2.))*.3;
+          float strand=exp(-pow((v-(.52+sin(u*8.-time*6.)*.035))/.019,2.))*.19;
+          float a=(core*.85+slip+strand)*taper*opacity;
+          vec3 steel=mix(vec3(.24,.3,.37),vec3(.7,.79,.87),core);
+          gl_FragColor=vec4(steel,a);return;
+        }
         float taper=smoothstep(0.,.22,u)*(1.-smoothstep(.55,1.,u));
         float aa=max(fwidth(v)*.6,.018),width=mix(.012,.11,taper);
         float lip=1.-smoothstep(width*.3,width+aa,abs(v-(1.-width)));
@@ -41,11 +52,25 @@ export function cleaveEdgeMaterial(): ShaderMaterial {
         vec3 ember=vec3(.65,.105,.008);
         vec3 steelHeat=mix(vec3(1.,.34,.055),vec3(1.75,1.03,.3),hot);
         gl_FragColor=vec4(mix(ember,steelHeat,lip),a);}`,
+    transparent: true, blending: elemental ? AdditiveBlending : NormalBlending, depthWrite: false, side: DoubleSide, toneMapped: false,
+  });
+}
+
+export function steelBladeWakeMaterial(): ShaderMaterial {
+  return new ShaderMaterial({
+    uniforms: { time: { value: 0 }, opacity: { value: 1 } },
+    vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+    fragmentShader: `varying vec2 vUv;uniform float opacity;
+      void main(){float u=vUv.x,v=vUv.y;
+        float ends=smoothstep(0.,.025,u)*(1.-smoothstep(.55,1.,u));
+        float edge=exp(-abs(v-.96)*55.);
+        float sheen=exp(-abs(v-.74)*6.)*.22;
+        gl_FragColor=vec4(vec3(.9,1.02,1.13),(edge*.6+sheen)*ends*opacity);}`,
     transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide, toneMapped: false,
   });
 }
 
-function ribbon(segments: number, cutting = false) {
+function ribbon(segments: number, cutting = false, elemental = false) {
   const geometry = new BufferGeometry(), positions = new Float32Array((segments + 1) * 6), uv = new Float32Array((segments + 1) * 4), indices: number[] = [];
   for (let i = 0; i <= segments; i++) {
     uv.set([i / segments, 0, i / segments, 1], i * 4);
@@ -53,7 +78,7 @@ function ribbon(segments: number, cutting = false) {
   }
   geometry.setAttribute('position', new BufferAttribute(positions, 3).setUsage(DynamicDrawUsage));
   geometry.setAttribute('uv', new BufferAttribute(uv, 2)); geometry.setIndex(indices);
-  const mesh = new Mesh(geometry, cutting ? cleaveEdgeMaterial() : bladeWakeMaterial()); mesh.frustumCulled = false; mesh.visible = false;
+  const mesh = new Mesh(geometry, cutting ? cleaveEdgeMaterial(elemental) : elemental ? bladeWakeMaterial() : steelBladeWakeMaterial()); mesh.frustumCulled = false; mesh.visible = false;
   return { mesh, positions, upload: () => { geometry.attributes.position.needsUpdate = true; } };
 }
 
@@ -61,8 +86,8 @@ function ribbon(segments: number, cutting = false) {
  * cutting edge. Target callbacks report visual arrival only; damage is supplied
  * by the server and this effect never chooses targets or rolls outcomes.
  */
-export function createCleaveStrike(targets: CleaveTarget[], blockers: CleaveBlocker[] = []) {
-  const blade = ribbon(HISTORY - 1), front = ribbon(Math.max(1, targets.length) * (SAMPLES + 1) - 1, true);
+export function createCleaveStrike(targets: CleaveTarget[], blockers: CleaveBlocker[] = [], elemental = false) {
+  const blade = ribbon(HISTORY - 1, false, elemental), front = ribbon(Math.max(1, targets.length) * (SAMPLES + 1) - 1, true, elemental);
   const frontUV = front.mesh.geometry.attributes.uv;
   for (let i = 0; i < frontUV.count; i++) frontUV.setXY(i, (Math.floor(i / 2) % (SAMPLES + 1)) / SAMPLES, i % 2);
   const origin = new Vector3(), average = new Vector3(), offset = new Vector3();
@@ -142,7 +167,7 @@ export function createCleaveStrike(targets: CleaveTarget[], blockers: CleaveBloc
           const index = rayIndex * (SAMPLES + 1) + i;
           // Zero-width ends also make the indexed join between segments
           // degenerate, so no hidden connector spans their independent paths.
-          const width = Math.pow(Math.sin(u * Math.PI), .7) * .38 * remaining;
+          const width = Math.pow(Math.sin(u * Math.PI), .7) * (elemental ? .38 : .7) * remaining;
           for (let side = 0; side < 2; side++) {
             const r = Math.max(0, radius - (1 - side) * width), blend = clamp(r / Math.max(.01, ray.distance));
             put(front.positions, index * 6 + side * 3, origin.x + Math.sin(angle) * r, origin.y + (ray.y - origin.y) * blend, origin.z + Math.cos(angle) * r);

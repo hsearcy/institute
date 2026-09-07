@@ -3,6 +3,20 @@ import { RPG_ITEMS, RPG_SKILLS, RPG_SPELLS, rpgEncounterCombat, rpgApplyCombat, 
 
 const plain = { skills: {}, equippedItemId: 'apprentice', selectedSpellId: 'ember' as const };
 
+test('new heroes meet three monsters, with gradual growth and persistent current rooms', () => {
+  for (let room = 0; room < 6; room++) {
+    expect(rpgEncounterCombat({ expedition: null, level: 1 }, room).enemies).toHaveLength(3);
+    expect(rpgEncounterCombat({ expedition: null, level: 2 }, room).enemies).toHaveLength(4);
+    expect(rpgEncounterCombat({ expedition: null, level: 3 }, room).enemies).toHaveLength(5);
+  }
+  const combat = rpgEncounterCombat({ expedition: null, level: 1 });
+  const wounded = rpgApplyCombat({ ...plain, selectedSpellId: 'cleave' }, combat).combat;
+  const expedition = { id: 'intro', regionId: 'embercrypt', encounterIndex: 0, encountersTotal: 6, cleared: false, startedAt: 0, combat: wounded };
+  expect(rpgEncounterCombat({ expedition, level: 2 })).toEqual(wounded);
+  expect(rpgEncounterCombat({ expedition: null, level: 8 }, 5).enemies).toHaveLength(10);
+  expect(rpgEncounterCombat({ expedition: null, level: 60 }, 5).enemies).toHaveLength(10);
+});
+
 test('fixed packs and guardian/boss health are independent of spell power', () => {
   const packs = Array.from({ length: 6 }, (_, room) => rpgEncounterCombat({ expedition: null }, room));
   expect(packs.map(pack => pack.enemies.length)).toEqual([6, 7, 8, 8, 9, 10]);

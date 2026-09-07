@@ -78,7 +78,7 @@ Scores are subjective art-direction judgments, grounded in the listed visible ev
 
 | Failing or unverified scope | Current grade/status | Main remaining gap / evidence |
 |---|---:|---|
-| Unique equipped models for all23 items | Apprentice, installed Thunder and Ashsplitter source/export/native/desktop card/held continuity8; Moonstaff source/export/native/desktop card/observed held continuity8; Cinderbranch wood/coal7.5; Glacier v8 depth/material7; Phoenix complete shown source8, corrected exact v3 construction/material8, standalone thumbnail8, native idle/desktop card8 and shown held motion8; other16 unverified | `docs/rpg-playtest/v18/items/`; individual accepted scopes above. Cinderbranch v18 and Glacier v8 source studies remain below gate. Painted icons do not approve3D models; phone item deployment and remaining variants unverified. |
+| Unique equipped models for all23 items | Apprentice, installed Thunder and Ashsplitter source/export/native/desktop card/held continuity8; Moonstaff source/export/native/desktop card/observed held continuity8; Cinderbranch wood/coal7.5; Glacier v8 depth/material7; Phoenix complete shown source8, corrected exact v3 construction/material8, standalone thumbnail8, native idle/desktop card8 and shown held motion8; Starfall v2 silhouette7.5/construction7.5/material6.5; other15 unverified | `docs/rpg-playtest/v18/items/`; individual accepted scopes above. Cinderbranch v18 and Glacier v8 source studies remain below gate. Painted icons do not approve3D models; phone item deployment and remaining variants unverified. |
 | Chain Lightning broader coverage | Shown v4 desktop two-cast FX8; other coverage unverified | Form/material, hand source, hop emphasis/order, contact restraint and decay pass in HM. Phone/boss/modifier and complete terminal-cleanup coverage remain separate. |
 | Cleave broader deployment | Shown v5 public-roster desktop two partial-cast FX8; other coverage unverified | Phone/boss/modifier/equipment-wide coverage remains separate; old enemy model quality remains failed. See GS. |
 | Frostfall revised projectile/material/contact | v7 native silhouette/readability6.5 and material6.5; earlier shown contact-fracture8 | Latest `tmp/frost-v7-lossless-{native,detail}.png` loses optical mass; earlier actual v6 contact8 remains separate. See EH. |
@@ -1836,3 +1836,50 @@ Reviewed `tmp/portal-composition-v3-{matched,assembly-detail}.png` against v2. *
 ## HR — Guardian v1 broad mass study remains visibly assembled and toy-like
 
 Reviewed `tmp/guardian-slab-v1/source-{high,head}.png` against concept04 and `tmp/portal-abutments-native-v3-recovery2-before.png`. **Source construction6; silhouette6.5; shown flat material5 provisional, not a finished surface submission.** Larger groups improve weight over current pebble-like stacking, but matching polygonal chest lobes, similarly round oversized shoulders, attached eyebrow bars and rectangular muzzle retain a block-toy humanoid read. Highest-return next change is upper-body rock construction: a dominant oblique shoulder slab overlapping a diagonal chest mass, smaller opposing wedges interlocking around a deeply embedded head. Replace separate eyebrows/muzzle with continuous broken brow/cheek sockets and narrow recessed eye fissures. Use unequal fracture planes and one secondary broken edge per major mass; avoid adding ubiquitous microchips. Preserve heavy forearms/feet and articulation pivots. Crystals need irregular split growth beds rather than clean perched cones. No native/grounding approval, and no texture polish requested before this construction proof.
+
+
+## HS — Starfall Edge first source has distinct outline but unfinished steel construction
+
+Reviewed `tmp/item-models/starfall-v1-{front,depth}.png`. **Silhouette7.5; construction7; material6.5.** Broad leaf outline distinguishes the item and oblique view shows actual honed-edge depth. The interrupted fuller leaves a pale rectangular central bridge; box collar and narrow angular guard read as assembled parts. Next integrate blade/guard transition through a tapered ricasso and seated forged guard root, and smoothly taper both fuller terminations into blade thickness. Preserve the leaf profile. Current front steel is uniformly blue-gray and visually inert; directional reflection should distinguish honed edge, fuller recess and broad face without added glowing ornament. Leather remains plain. Same front plus fuller/guard close required; depth view clips tip/grip, so complete hidden-side/grip coverage remains unverified. Source only; no export/native approval.
+
+
+## HT — Guardian v2 improves hierarchy but still reads as stone armor
+
+Reviewed `tmp/guardian-slab-v2/source-{high,head}.png`. **Construction7; silhouette7; provisional material5 unchanged.** Diagonal torso/unequal shoulders and removal of attached face bars improve mass hierarchy. Regular extruded octagonal head with a uniform-depth slit reads as helmet/robot visor; chest retains a clean kite-like exposed perimeter. Next break one jaw/cheek corner with unequal intersecting fracture planes, narrow/terminate the eye fissure irregularly within stone, and tuck the chest's shoulder-facing edge beneath its larger neighbor. One broad broken plane on dominant outer shoulder is more useful than ubiquitous small chips. Crystal beds currently resemble clean raised sockets; sink roots into an irregular flanked split. Preserve improved hierarchy and articulation pivots. Source only, no native/export acceptance.
+
+
+## HU — Native wall alignment resolves exposed portal joins
+
+Reviewed `tmp/portal-composition-v4-r1-{matched,assembly-detail}.png` against v3 and concept04. **Shown wall/portal alignment8.** Front plane and belt/base courses now continue into the doorway without former stacked offset ledges; right alcove wall fits its surround more coherently. Repaired crown shading remains clean. Complete architecture integration7.5 and wholeworld6.5 remain: long complete courses and squared stepped terminal crowns still dominate the ruin silhouette. Preserve alignment/material for the next bounded terminal-fracture proof; no global wall recoloring requested. Detail hides lower right behind dock, so hidden joins remain outside this score.
+
+
+## HV — Guardian v3 shoulder cleft regresses into manufactured holder
+
+Reviewed `tmp/guardian-slab-v3/source-{high,head}.png`. **Silhouette7 retained; construction6.5; provisional material5.** Chest overlap improves, but dominant shoulder becomes a tall rectangular block with a roof-like V slot, reading as manufactured crystal holder. Head remains a closed angular visor; eyes nearly disappear at the high angle. Decisive next direction is one irregular overhanging brow rock above an offset smaller cheek/jaw with a partial recessed fissure, eliminating the circumferential shell. Keep eyes visible through actual opening at high view, not increased glow. Reshape dominant shoulder as oblique broad rock with a split exiting one side at unequal front/back depths, not a symmetric V through a rectangular top. Preserve chest improvement and pivots; no further lip-only refinement or texture concealment. Source only.
+
+
+## HW — Starfall v2 improves fuller/root, retains square bevel stop
+
+Reviewed `tmp/item-models/starfall-v2-{front,junction}.png`. **Construction7.5; silhouette7.5; material6.5.** Tapered fuller beds and continuous heel/seated root improve construction. Bright bevel ends square above ricasso and becomes a black strip, producing a sleeve-like transition. Taper geometry/material boundary together over a short forged transition, preserving heel/root/fullers; broad steel response and full rear/grip coverage remain separate. No export approval.
+
+## HX — Native v5 terminal notches introduce dark slots without broader ruin shape
+
+Reviewed `tmp/portal-composition-v5-{matched,paving,paving-contact,assembly-detail}.png` against v4 and concept04. **Terminal construction6.5/material6.5; architecture integration7; wholeworld6.5.** Accepted base/plane alignment8 remains. Four small saw-cut notches leave the intact stepped silhouette dominant, while source-wing/procedural-wall junction reads as a black slot (detail approximately330,390; native1230,185). Inspect visible cut cap/shading locally, preserving accepted atlas. Next decisive shape is an irregular termination dropping through1–2 upper courses per outer run with unequal front/back fractures; do not add more tiny notches along level coping. **Paving integration7, visible geometry usefulness7, floor6.5.** Actual dry material fits better than prior bright patch, but relief and dust-apron difference are subtle at native size. Concentrate irregular settled dirt/fragment contact around left rubble edge, preserving top phase. Right foreground remains substantially obscured. No native installation or complete material pass.
+
+## HY — Guardian v4 split rocks recover construction, eyes remain unseated
+
+Reviewed `tmp/guardian-slab-v4/source-{high,head}.png`. **Construction7; silhouette7; provisional material5.** Oblique shoulder and separate unequal brow/jaw recover v3 regression. Cyan discs sit on the jaw's top ledge with a wide empty slot behind, reading as loose lights. Seat them within a shallow front-facing dark stone recess beneath brow, reduce lateral void, and preserve unequal outlines without recreating a circumferential helmet. After this face correction, a same-form rock-face-03 material sample is appropriate; no further whole-body gray loop or tiny chips requested first. Source only; native presence unproved.
+
+
+## HZ — Starfall v3 resolves the square bevel finish cutoff
+
+Reviewed `tmp/item-models/starfall-v3-{front,junction}.png`. **Bounded bevel/ricasso transition8.** Honed finish now fades coherently into forged heel instead of stopping at a square black strip. Preserve this correction; complete construction7.5, silhouette7.5 and broad material6.5 remain pending rear/grip coverage and steel reflection study. No export approval.
+
+## IA — Portal v6 recovers cap shading but creates continuous ramp form
+
+Reviewed `tmp/portal-composition-v6-color-{matched,assembly-detail}.png`. **Terminal construction7/material7; architecture integration7.5; wholeworld6.5.** Black cap surfaces are resolved and lower asymmetric envelope improves native silhouette. Right wing now has a continuous diagonal ramp-like cap; left wing repeats sloped teeth/shingles. Stop clipping every crown stone with one continuous profile. Preserve lower envelope but divide right termination into2–3 distinct surviving/broken groups: a recessed missing block, short retained level course, and unequal oblique fractures across adjacent stone depths. Replace left repeated teeth with one broader irregular missing section. This is a construction/silhouette correction, not a request for noise/microchips. Accepted arch and aligned lower courses remain fixed.
+
+
+## IB — Guardian v5 gray control seats eyes in the face recess
+
+Reviewed `tmp/guardian-slab-v5/source-head-gray.png`. **Shown face construction7.5; whole-source construction7 retained.** Eye discs now sit against a continuous recessed bed and lateral void is contained; previous loose-lights/empty-slot defect is resolved. Brow/jaw remain pristine faceted solids, so proceed with genuine same-form rock material evidence before another shape adjustment. No material score change: attempted texture application selected zero materials and this image is explicitly gray.

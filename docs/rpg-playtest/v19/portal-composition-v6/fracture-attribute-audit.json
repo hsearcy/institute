@@ -1,0 +1,75 @@
+{
+  "assetSHA256": "ebe47b22944934ee6d4851cedd7e33d9c6a0bd6763773bec09241f4d754a09be",
+  "primitives": [
+    {
+      "material": "Portal repaired normal atlas",
+      "attributes": [
+        "POSITION",
+        "NORMAL",
+        "TEXCOORD_0"
+      ],
+      "vertices": 32942,
+      "normalAxisRanges": [
+        [
+          -1.0,
+          0.9999998807907104
+        ],
+        [
+          -0.9999998807907104,
+          1.0
+        ],
+        [
+          -1.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "material": "Portal_Fracture_Control.001",
+      "attributes": [
+        "POSITION",
+        "NORMAL",
+        "TEXCOORD_0"
+      ],
+      "vertices": 582,
+      "normalAxisRanges": [
+        [
+          -0.5447272062301636,
+          0.649366021156311
+        ],
+        [
+          0.7550604939460754,
+          0.8253412246704102
+        ],
+        [
+          -0.14860741794109344,
+          0.09059526026248932
+        ]
+      ]
+    },
+    {
+      "material": "Portal repaired normal atlas",
+      "attributes": [
+        "POSITION",
+        "NORMAL",
+        "TEXCOORD_0"
+      ],
+      "vertices": 21512,
+      "normalAxisRanges": [
+        [
+          -0.9999991655349731,
+          0.9999997615814209
+        ],
+        [
+          -0.9999998807907104,
+          1.0
+        ],
+        [
+          -0.9999998807907104,
+          0.9999998807907104
+        ]
+      ]
+    }
+  ],
+  "finding": "Fracture primitive lacks COLOR_0. Native clone must disable inherited wall.vertexColors. Normal Y is positive on all fracture cap vertices."
+}

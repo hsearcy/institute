@@ -17,7 +17,21 @@ def load_authored_warrior(root):
         if hashlib.file_digest(stream, 'sha256').hexdigest() != SOURCE_SHA:
             raise ValueError('Authored warrior source differs from the reviewed file')
     with bpy.data.libraries.load(str(path), link=False) as (source, target):
+        # Blender uniquifies imported datablock names when another workshop is
+        # open. Preserve the library identities before that happens: numeric
+        # suffixes such as head_lowpoly_sdiv2.002 are meaningful source parts,
+        # so stripping .NNN from a loaded name cannot recover them safely.
+        object_names = tuple(source.objects)
+        material_names = tuple(source.materials)
         target.scenes = source.scenes
+        target.objects = list(object_names)
+        target.materials = list(material_names)
+    for original_name, obj in zip(object_names, target.objects):
+        if obj is not None:
+            obj['authoredSourceName'] = original_name
+    for original_name, material in zip(material_names, target.materials):
+        if material is not None:
+            material['authoredSourceName'] = original_name
     scene = target.scenes[0]
     scene.name = 'Authored CC0 hero adaptation workshop'
     bpy.context.window.scene = scene
@@ -45,14 +59,15 @@ def source_review(scene, name='authored-hero-candidate', height=1.85):
     collection = bpy.data.collections.new('Vault_'+name)
     scene.collection.children.link(collection)
     for source in list(scene.objects):
-        if source.type != 'MESH' or source.name.startswith('Plane'):
+        source_name = source.get('authoredSourceName', source.name)
+        if source.type != 'MESH' or source_name.startswith('Plane'):
             continue
         evaluated = source.evaluated_get(depsgraph)
         mesh = bpy.data.meshes.new_from_object(evaluated, depsgraph=depsgraph)
         mesh.transform(evaluated.matrix_world)
         obj = bpy.data.objects.new(source.name+'_review', mesh)
         collection.objects.link(obj)
-        obj['sourcePart'] = source.name
+        obj['sourcePart'] = source_name
     low = min(v.co.z for obj in collection.objects for v in obj.data.vertices)
     high = max(v.co.z for obj in collection.objects for v in obj.data.vertices)
     factor = height/(high-low)

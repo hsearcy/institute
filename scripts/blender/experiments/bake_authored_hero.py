@@ -149,6 +149,7 @@ def bake_hero_collection_materials(collection,directory,converted=None):
             p.inputs['Transmission Weight'].default_value=0
             p.inputs['Alpha'].default_value=0
             material['gltfAlphaMode']='MASK';material['gltfAlphaCutoff']=.4
+            material['authoredHeroMaterialRole']='cornea'
             p.inputs['IOR'].default_value=1.45
             converted[source]=material
             continue

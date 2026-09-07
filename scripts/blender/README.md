@@ -77,20 +77,27 @@ Use `SkeletonUtils.clone` and `AnimationMixer`. The three older armor variants
 retain their eight-bone rig and their original clip durations. Their geometry
 and limits are independent of the new default hero.
 
-The canonical default rebuild is `detailed/rebuild_authored_hero.py`; it composes
-the reviewed source helpers under `experiments`, preserving authored UV sets and
-material response. Restore the ignored licensed source using
-`python scripts/blender/sources/cc0-hooded-warrior/fetch.py`. Source provenance,
-fixed SHA and CC0 dedication live beside that script. No network/source cache is
-needed to run the bundled game. The full independent rebuild reproduced all
-geometry/animation payloads byte-for-byte and all 27 texture images pixel-for-pixel.
+The canonical default rebuild is `detailed/rebuild_authored_hero.py`; it runs
+`detailed/teal_hero.py` with the approved teal/gold character reference in
+`docs/concepts/math-dungeon-rpg/07-teal-hero.png`. The cape, shoulder cowl, split
+tabard, pouches, belt, hair fringe, knee guards and fitted armor details are
+built in Blender; the licensed anatomical/armor foundation retains its UVs.
+Restore that ignored source using
+`python scripts/blender/sources/cc0-hooded-warrior/fetch.py`. Provenance, fixed SHA
+and CC0 dedication live beside the fetch script. No source cache is needed to
+run the bundled game. Repeated library loads preserve canonical source-part
+identities even when Blender adds name suffixes.
 
-The packed default contains 62,593 triangles and is8,294,568 bytes; its scoped
-budget is 65,000 triangles/9MB with exact19-joint hierarchy and clip validation.
-Its appearance portrait is rendered from the actual packed GLB by
-`detailed/render_authored_hero_portrait.py`.
+The packed teal hero contains 64,169 triangles and is 6,553,964 bytes, within the
+65,000-triangle/9 MB budget. Its 19-joint hierarchy, normalized skin weights,
+CastOrigin, equipment metadata and four original animation clips are validated.
+An independent full scripted rebuild also passed that contract. Its portrait
+is rendered from the actual packed GLB by `detailed/render_authored_hero_portrait.py`.
+The user accepted this version; independent visual scores and remaining polish
+are recorded in `docs/rpg-teal-hero-review.md`.
 
-![Packed hero cast, front and back](previews/v2/authored-hero-packed-export-front-back.png)
+![Packed teal hero](previews/v2/teal-hero-front.png)
+![Packed teal hero, rear](previews/v2/teal-hero-back.png)
 ![Final guardian GLB reimported, front and back](previews/v2/guardian-granite-exported.png)
 
 ## Enemy articulation

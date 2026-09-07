@@ -1,4 +1,4 @@
-"""Canonical default hero, preserving the reviewed authored source and UVs.
+"""Canonical teal/gold default hero, preserving the authored rig and source UVs.
 
 The legacy armor variants retain their independent builder. Missing licensed
 source caches fail with fetch instructions; never replace this hero with a
@@ -10,7 +10,7 @@ import runpy,shutil
 
 def rebuild_authored_hero(repo_root, portrait=True):
     root=Path(repo_root);source=root/'scripts/blender'
-    build=runpy.run_path(str(source/'experiments/build_authored_hero_candidate.py'))['build_authored_hero_candidate']
+    build=runpy.run_path(str(source/'detailed/teal_hero.py'))['build_teal_hero']
     candidate=build(root,source/'experiments/exports/hero-canonical')
     output=root/'web/public/assets/rpg/hero.glb'
     temporary=output.with_suffix('.glb.tmp')

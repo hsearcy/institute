@@ -16,9 +16,13 @@ def simplify_cornea(doc):
     expensive extension after the canonical material builder has been fixed.
     Geometry, UVs, textures, skin weights and clips are untouched.
     """
-    corneas=[m for m in doc.get('materials',[]) if m.get('name')=='AuthoredHero cornea']
+    corneas=[m for m in doc.get('materials',[]) if m.get('name')=='AuthoredHero cornea'
+             or m.get('extras',{}).get('authoredHeroMaterialRole')=='cornea']
     if len(corneas)!=1:raise ValueError('Expected one authored hero cornea material')
     cornea=corneas[0]
+    # Repeated Blender imports can suffix display names. The exported role is
+    # stable; keep the packed runtime identity compatible with existing assets.
+    cornea['name']='AuthoredHero cornea'
     color=cornea.setdefault('pbrMetallicRoughness',{}).setdefault('baseColorFactor',[1,1,1,1])
     color[3]=0
     cornea['alphaMode']='MASK';cornea['alphaCutoff']=.4

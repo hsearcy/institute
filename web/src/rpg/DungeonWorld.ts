@@ -1066,6 +1066,8 @@ export class DungeonWorld {
     if (this.heroModelId === modelId) return;
     const model = this.model(modelId, 1.8);
     if (!model) return; // Keep the procedural hero until authored models arrive.
+    // The brighter teal cloth and satin silver need a softer personal fill.
+    this.heroLight.intensity = modelId === 'hero' ? 18 : 32;
     const previousVisual = this.heroVisual;
     const previousAnimation = this.heroAnimation || 'idle';
     const previousTime = this.heroActions.get(previousAnimation)?.time ?? 0;

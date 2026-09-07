@@ -350,3 +350,5 @@ export type ShopState = z.infer<typeof ShopStateSchema>;
 export * from "./topics.ts";
 
 export * from "./rpg";
+export * from "./rpgLoot";
+export * from "./rpgEconomy";

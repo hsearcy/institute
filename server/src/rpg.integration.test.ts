@@ -81,3 +81,38 @@ test('an exhausted RPG problem preserves the legacy shield outcome exactly once 
   }));
   expect(rejected.status).toBe(400);
 });
+
+test('adventure shop shares the old gem wallet and preserves daily/weekly quests and learning', async () => {
+  const profileId = 'rpg-camp-wallet-integration';
+  // Earn through the real legacy reward route, including its quest rewards.
+  let legacy = await call(`/state?profileId=${profileId}`);
+  const camp = await call(`/rpg/camp?profileId=${profileId}`);
+  const offer = camp.offers.find((entry: any) => entry.itemId === 'cinderwand');
+  expect(offer).toBeDefined();
+  for (let i = 0; legacy.gems < offer.price && i < 100; i++) {
+    const problem = await call('/tutor/first', { profileId });
+    await call('/tutor/attempt', {
+      profileId, problemId: problem.id, skill: problem.skill, topicId: problem.topicId,
+      difficulty: problem.difficulty, correct: true, solveMs: 5000,
+    });
+    legacy = await call(`/state?profileId=${profileId}`);
+  }
+  expect(legacy.gems).toBeGreaterThanOrEqual(offer.price);
+  expect(legacy.quests.some((quest: any) => quest.progress > 0)).toBe(true);
+  const mastery = await call(`/mastery?profileId=${profileId}`);
+  const purchase = { profileId, itemId: 'cinderwand', requestId: 'wallet-purchase-once' };
+  const bought = await call('/rpg/shop/buy', purchase);
+  expect(bought.state.inventory).toContain('cinderwand');
+  expect(bought.gems).toBe(legacy.gems - offer.price);
+  await call('/rpg/shop/buy', purchase);
+  const after = await call(`/state?profileId=${profileId}`);
+  expect(after.gems).toBe(bought.gems);
+  expect(after.lifetimeGems).toBe(legacy.lifetimeGems);
+  expect(after.quests).toEqual(legacy.quests);
+  expect(after.weeklyQuest).toEqual(legacy.weeklyQuest);
+  expect(after.equipped).toBe(legacy.equipped);
+  expect(await call(`/mastery?profileId=${profileId}`)).toEqual(mastery);
+  expect((await call(`/shop?profileId=${profileId}`)).gems).toBe(bought.gems);
+  const reloaded = await call(`/rpg/state?profileId=${profileId}`);
+  expect(reloaded.loot.filter((item: any) => item.itemId === 'cinderwand')).toHaveLength(1);
+});

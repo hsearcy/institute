@@ -23,3 +23,5 @@ export const setRpgAppearance = (appearanceId: RpgAppearanceId) => request<RpgSt
 export const resolveEncounter = (body: Record<string, unknown>) => request<RpgResolveResult>('/rpg/resolve', body);
 export type AttemptStatus = { recorded: boolean; correct: boolean | null; solved: boolean; skipped: boolean };
 export const attemptStatus = (problemId: string) => request<AttemptStatus>(`/rpg/attempt-status?profileId=${encodeURIComponent(PROFILE)}&problemId=${encodeURIComponent(problemId)}`);
+
+export const getRpgCamp = () => request<import('@institute/shared').RpgCampState>(`/rpg/camp?profileId=${encodeURIComponent(PROFILE)}`);

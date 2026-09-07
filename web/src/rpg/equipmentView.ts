@@ -1,4 +1,5 @@
 import { RPG_ITEMS, RPG_SCHOOLS, RPG_SPELLS, rpgSpellCombatStats, rpgItemApplies, type RpgState } from '@institute/shared';
+import { renderLootCards } from './campView';
 import { escapeHtml as esc, icon, relicArt } from './icons';
 
 /** Equipment presentation uses the saved loadout and existing equip handlers. */
@@ -34,6 +35,8 @@ export function renderEquipmentView(state: RpgState, armor: string, playing: boo
         <button class="rpg-armory-hunt" data-action="map">${icon('map')}<span>Find your next relic<small>Explore the vaults for rare treasures</small></span><span aria-hidden="true">→</span></button>
       </section>
     </div>
+    ${RPG_ITEMS.some(item => !state.inventory.includes(item.id)) ? `<details class="rpg-collection-goals"><summary>Pin a relic to discover</summary><div>${RPG_ITEMS.filter(item => !state.inventory.includes(item.id)).map(item => `<button data-pin-kind="item" data-pin-id="${item.id}" aria-pressed="${state.goal?.kind === 'item' && state.goal.id === item.id}">${relicArt(item.id)}<span>${esc(item.name)}<small>${item.rarity === 'legendary' ? 'Guardian treasure' : 'Dungeon discovery or merchant'}</small></span></button>`).join('')}</div></details>` : ''}
+    <section class="rpg-loot-collection"><div class="rpg-workshop-heading"><h3>Your relic rolls</h3><button data-action="forge">Visit the blacksmith →</button></div><p>Compare extra power and skill bonuses. Each find can be different.</p>${renderLootCards(state)}</section>
     ${armor}
     <footer class="rpg-button-row rpg-armory-footer"><button class="rpg-primary" data-action="close">${playing ? 'Return to dungeon' : 'Back to camp'}</button><a href="?mode=mine" class="rpg-text-button">Gem collection & original shop</a></footer>
   </div>`;

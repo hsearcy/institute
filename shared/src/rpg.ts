@@ -1,3 +1,5 @@
+import { rpgEffectiveSkills, rpgEquippedLoot, rpgLootPower, rpgTier } from './rpgLoot';
+
 /** Adventure content only. Never used by tutor selection, mastery, or review. */
 export const RPG_DUPLICATE_ITEM_XP = 16;
 export const RPG_APPEARANCE_IDS = ['wayfarer', 'cinder', 'glacier', 'tempest'] as const;
@@ -131,13 +133,19 @@ export interface RpgCombatResult {
   defeatedIds: string[]; encounterCleared: boolean; remainingEnemies: number;
   damage: number; coverage: number;
 }
-export interface RpgExpedition { id: string; regionId: string; encounterIndex: number; encountersTotal: number; cleared: boolean; startedAt: number; combat?: RpgCombatState }
+export interface RpgExpedition { id: string; regionId: string; encounterIndex: number; encountersTotal: number; cleared: boolean; startedAt: number; combat?: RpgCombatState; tier?: number }
+export interface RpgLootInstance {
+  id: string; itemId: string; bonusPower: number; bonusSkillId?: string; bonusSkillRanks?: number; upgradeLevel: number;
+}
+export interface RpgGoal { kind: 'item' | 'upgrade' | 'skill'; id: string }
 export interface RpgState {
   profileId: string; xp: number; level: number; xpIntoLevel: number; xpForNextLevel: number; skillPoints: number;
   skills: Record<string, number>; inventory: string[]; equippedItemId: string; selectedSpellId: RpgSpellId; appearanceId: RpgAppearanceId;
   totalKills: number; expeditionsCompleted: number; expedition: RpgExpedition | null;
+  loot?: RpgLootInstance[]; equippedLootId?: string | null; forgeDust?: number;
+  dungeonTier?: number; bestTier?: number; goal?: RpgGoal | null;
 }
-export interface RpgReward { xp: number; kills: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; bossDefeated: boolean; spellId: RpgSpellId; combat?: RpgCombatResult }
+export interface RpgReward { xp: number; kills: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; bossDefeated: boolean; spellId: RpgSpellId; combat?: RpgCombatResult; loot?: RpgLootInstance; forgeDust?: number; tier?: number }
 export interface RpgResolveResult { state: RpgState; reward: RpgReward; duplicate: boolean }
 
 type RelicProgress = Pick<RpgState, 'inventory' | 'expeditionsCompleted' | 'totalKills'>;
@@ -211,18 +219,20 @@ function skillApplies(skill: RpgSkill, spellId: RpgSpellId): boolean {
   return skill.scope === 'school' ? skill.school === rpgSpellSchool(spellId) : skill.spellId === spellId;
 }
 /** Modifiers are renderer instructions, shared so equipment and skill descriptions stay true. */
-export function rpgSpellModifiers(state: Pick<RpgState, 'skills' | 'equippedItemId' | 'selectedSpellId'>, spellId = state.selectedSpellId): RpgModifier[] {
-  const effects = RPG_SKILLS.filter(skill => skill.effect && (state.skills[skill.id] ?? 0) > 0 && skillApplies(skill, spellId)).map(skill => skill.effect!);
+export function rpgSpellModifiers(state: RpgLoadout, spellId = state.selectedSpellId): RpgModifier[] {
+  const skills = rpgEffectiveSkills(state);
+  const effects = RPG_SKILLS.filter(skill => skill.effect && (skills[skill.id] ?? 0) > 0 && skillApplies(skill, spellId)).map(skill => skill.effect!);
   const item = RPG_ITEMS.find(entry => entry.id === state.equippedItemId);
   if (item?.effect && rpgItemApplies(item, spellId)) effects.push(item.effect);
   return [...new Set(effects)];
 }
-type RpgLoadout = Pick<RpgState, 'skills' | 'equippedItemId' | 'selectedSpellId'>;
+export type RpgLoadout = Pick<RpgState, 'skills' | 'equippedItemId' | 'selectedSpellId'> & Partial<Pick<RpgState, 'loot' | 'equippedLootId'>>;
 /** A spell changes damage and coverage, never the number of monsters spawned. */
 export function rpgSpellCombatStats(state: RpgLoadout, spellId = state.selectedSpellId): { damage: number; targets: number } {
   const item = RPG_ITEMS.find(entry => entry.id === state.equippedItemId);
-  const gearPower = item && rpgItemApplies(item, spellId) ? item.power : 0;
-  const skillPower = RPG_SKILLS.filter(skill => skillApplies(skill, spellId)).reduce((total, skill) => total + Math.max(0, Math.min(skill.maxRank, state.skills[skill.id] ?? 0)) * skill.powerPerRank, 0);
+  const gearPower = (item && rpgItemApplies(item, spellId) ? item.power : 0) + rpgLootPower(rpgEquippedLoot(state));
+  const skills = rpgEffectiveSkills(state);
+  const skillPower = RPG_SKILLS.filter(skill => skillApplies(skill, spellId)).reduce((total, skill) => total + (skills[skill.id] ?? 0) * skill.powerPerRank, 0);
   const abilityPower = RPG_SPELLS.find(spell => spell.id === spellId)?.power ?? 0;
   const bases: Record<RpgSpellId, [number, number]> = {
     ember: [6, 6], cleave: [7, 3], meteor: [8, 5], phoenix_dive: [7, 6], firestorm: [7, 8],
@@ -230,7 +240,11 @@ export function rpgSpellCombatStats(state: RpgLoadout, spellId = state.selectedS
     storm: [7, 4], arc_lance: [8, 4], thunderclap: [7, 7], ball_lightning: [8, 6], tempest: [8, 8],
   };
   const power = abilityPower + gearPower + skillPower, [damage, coverage] = bases[spellId];
-  return { damage: damage + power, targets: Math.min(10, coverage + Math.floor(power / 6)) };
+  // Equipment makes hits stronger. Wider coverage belongs to a learned spell
+  // modifier, so a powerful blade never turns every basic spell into a full-room wipe.
+  const extraTargets = Math.min(2, RPG_SKILLS.filter(skill => skill.kind === 'modifier' && skillApplies(skill, spellId))
+    .reduce((total, skill) => total + (skills[skill.id] ?? 0), 0));
+  return { damage: damage + power, targets: Math.min(10, coverage + extraTargets) };
 }
 
 /** Deterministic current-room health. Returns a copy and never rewrites a save. */
@@ -244,7 +258,8 @@ export function rpgEncounterCombat(state: Pick<RpgState, 'expedition'>, encounte
   const count = [6, 7, 8, 8, 9, 10][room];
   return { version: 1, encounterIndex: room, casts: 0, enemies: Array.from({ length: count }, (_, index) => {
     const boss = room === 5 && index === 0;
-    const maxHp = (boss ? 36 : index % 7 === 0 ? 12 : [6, 6, 8, 8, 10][index % 5]) + region * (boss ? 8 : 2) + Math.floor(room / 2) * (boss ? 0 : 2);
+    const baseHp = (boss ? 36 : index % 7 === 0 ? 12 : [6, 6, 8, 8, 10][index % 5]) + region * (boss ? 8 : 2) + Math.floor(room / 2) * (boss ? 0 : 2);
+    const maxHp = Math.ceil(baseHp * (1.4 ** (rpgTier(state.expedition?.tier) - 1)));
     return { id: `enemy-${index}`, hp: maxHp, maxHp };
   }) };
 }

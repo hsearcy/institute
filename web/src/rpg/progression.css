@@ -1,0 +1,105 @@
+/* Camp uses the armory's existing dark stone, brass and parchment palette. */
+.rpg-workshop { text-align:left; max-width:1080px; margin:auto; }
+.rpg-wallet,.rpg-workshop-tabs,.rpg-workshop-heading,.rpg-quest-card>div { display:flex; gap:16px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+.rpg-wallet { justify-content:flex-start; color:#eac88d; padding:13px 0 20px; border-bottom:1px solid #a17a3a50; }
+.rpg-wallet b { font-size:24px; }
+.rpg-workshop-tabs { justify-content:flex-start; margin:20px 0; gap:8px; }
+.rpg-workshop-tabs button[aria-pressed=true] { border-color:#cfaa65; color:#ffe6b8; background:#6b491b55; }
+.rpg-workshop h3 { font-family:Georgia,serif; color:#eed7ae; font-weight:normal; }
+.rpg-workshop-note { font-size:13px; color:#c3b29a; line-height:1.6; }
+.rpg-quest-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.rpg-quest-card { border:1px solid #ae874b55; border-radius:7px; padding:18px; margin:12px 0; background:linear-gradient(130deg,#2a2929,#161c23); }
+.rpg-quest-card h3 { margin:0; font-size:18px; }
+.rpg-quest-card.complete { border-color:#7a9b6970; }
+.rpg-quest-card.complete>div>span { color:#c3df9b; }
+.rpg-quest-card progress { width:100%; height:7px; margin:16px 0 10px; accent-color:#cda762; }
+.rpg-quest-card small,.rpg-market-card small,.rpg-loot-card small { display:block; font-size:12px; color:#bfb3a2; line-height:1.6; }
+.rpg-merchant-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:15px; }
+.rpg-market-card { display:grid; grid-template-columns:108px minmax(0,1fr); gap:14px; padding:17px; border:1px solid #9d7b4555; border-radius:8px; background:radial-gradient(at top left,#43404388,transparent 65%),#141b23; }
+.rpg-market-card>.rpg-relic-art { width:108px; height:132px; display:block; }
+.rpg-market-card h3,.rpg-loot-card h3 { margin:4px 0 7px; font-size:19px; }
+.rpg-market-card p { font-size:13px; line-height:1.55; margin:0 0 10px; }
+.rpg-market-card b { color:#ebc987; }
+.rpg-market-actions { grid-column:1/-1; display:flex; gap:8px; flex-wrap:wrap; }
+.rpg-market-actions button { flex:1; }
+.rpg-pinned-goal { display:flex; width:100%; gap:15px; align-items:center; text-align:left; padding:14px 18px!important; margin:16px 0; border-color:#bb985b80!important; background:linear-gradient(100deg,#6a4c202f,#18252b)!important; }
+.rpg-pinned-goal>.rpg-icon { width:35px; height:35px; color:#deb979; flex-shrink:0; }
+.rpg-pinned-goal>span { display:grid; gap:4px; }
+.rpg-pinned-goal small { letter-spacing:2px; font-size:10px; color:#dfb978; }
+.rpg-pinned-goal strong { font-size:17px; color:#f5dfb8; font-family:Georgia,serif; font-weight:normal; }
+.rpg-pinned-goal span>span { font-size:12px; color:#c6c0b3; }
+.rpg-loot-card { display:grid; grid-template-columns:85px minmax(0,1fr) auto; gap:16px; padding:17px; margin:12px 0; text-align:left; background:#17202bf2; border:1px solid #8c745355; border-radius:7px; }
+.rpg-loot-card.equipped { border-color:#d1ab65; box-shadow:inset 3px 0 #d1ab65; }
+.rpg-loot-card>.rpg-relic-art { width:85px; height:105px; display:block; }
+.rpg-loot-card .rpg-affixes { color:#9ed6df; font-size:13px; line-height:1.55; margin:5px 0; }
+.rpg-loot-actions { display:flex; flex-direction:column; gap:7px; justify-content:center; max-width:210px; }
+.rpg-loot-actions button { font-size:12px; padding:8px 12px; }
+.rpg-loot-collection { margin:28px 0; text-align:left; }
+.rpg-tier-choice { display:flex; flex-wrap:wrap; gap:7px; align-items:center; margin:20px 0; }
+.rpg-tier-choice span { width:100%; text-align:left; color:#d7c49e; }
+.rpg-tier-choice button { padding:9px 13px; }
+.rpg-tier-choice button[aria-pressed=true] { background:#78582a; border-color:#deb878; }
+.rpg-tier-reward { font-size:13px!important; color:#c5d3cf!important; }
+.rpg-next-dungeon { text-align:left; margin:22px 0; padding:20px; border:1px solid #ae8d4c88; border-radius:8px; background:linear-gradient(125deg,#38402c66,#171e27); }
+.rpg-next-dungeon>small { display:block; color:#c9bba0; font-size:11px; letter-spacing:.4px; }
+.rpg-next-dungeon h3 { color:#edd4a8; font:24px Georgia,serif; margin:10px 0; }
+.rpg-next-dungeon p { font-size:14px; line-height:1.6; color:#c9c7bd; }
+.rpg-next-dungeon>button { width:100%; margin:8px 0 14px; }
+.rpg-camp-menu { flex-wrap:wrap; }
+.rpg-goal-clear { font-size:12px!important; padding:5px!important; }
+@media(max-width:680px) { .rpg-merchant-grid,.rpg-quest-grid { grid-template-columns:minmax(0,1fr); } .rpg-loot-card { grid-template-columns:65px minmax(0,1fr); gap:10px; padding:13px; } .rpg-loot-card>.rpg-relic-art { width:65px; height:92px; } .rpg-loot-actions { grid-column:1/-1; flex-direction:row; flex-wrap:wrap; max-width:none; } .rpg-loot-actions button { flex:1 1 42%; } .rpg-market-card { grid-template-columns:82px minmax(0,1fr); } .rpg-market-card>.rpg-relic-art { width:82px; height:114px; } .rpg-wallet b { font-size:20px; } .rpg-workshop-tabs { flex-wrap:nowrap; } .rpg-workshop-tabs button { flex:1; padding:10px 7px; font-size:12px; } .rpg-next-dungeon { padding:16px; } }
+.rpg-collection-goals { margin:20px 0; text-align:left; border-top:1px solid #ad894c55; padding-top:16px; }
+.rpg-collection-goals summary { color:#d9bd87; cursor:pointer; }
+.rpg-collection-goals>div { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px; margin-top:16px; }
+.rpg-collection-goals button { display:flex; align-items:center; gap:9px; text-align:left; font-size:13px; }
+.rpg-collection-goals .rpg-relic-art { display:block; flex-shrink:0; width:50px; height:55px; }
+.rpg-collection-goals small { display:block; color:#b7ae9e; font-size:10px; margin-top:4px; }
+/* Visible selection and a compact goal leave room for the next useful action. */
+#rpg-ui .rpg-workshop-tabs { align-items:stretch; }
+#rpg-ui .rpg-workshop-tabs button { min-height:44px; }
+#rpg-ui .rpg-workshop-tabs button[aria-pressed=true] { border-color:#e3bb75; color:#fff0ce; background:linear-gradient(#695029,#3c2e1b); box-shadow:inset 0 -3px #dab271; }
+.rpg-pinned-wrap { position:relative; }
+#rpg-ui .rpg-pinned-wrap .rpg-pinned-goal { padding-right:56px!important; }
+#rpg-ui .rpg-pinned-wrap .rpg-goal-clear { position:absolute; top:8px; right:6px; padding:4px 6px!important; background:transparent; border:0; color:#c8bb9e; font-size:10px!important; }
+#rpg-ui .rpg-loot-actions .rpg-primary { line-height:1.35; }
+#rpg-ui .rpg-loot-actions .rpg-primary small { color:#f0dcb6; font:10px/1.5 'Nunito',sans-serif; letter-spacing:0; }
+#rpg-ui .rpg-loot-card { grid-template-columns:110px minmax(0,1fr) auto; }
+#rpg-ui .rpg-loot-card>.rpg-relic-art { width:110px; height:125px; }
+#rpg-ui .rpg-treasure-copy>span { color:#e0e4d6; font-size:14px; }
+#rpg-ui .rpg-treasure-copy>small { color:#c3dedf; }
+#rpg-ui .rpg-treasure-copy>p { color:#d4d1bb; font-size:13px; margin:5px 0; }
+#rpg-ui .rpg-treasure-heading h2 em { display:inline; font-size:inherit; }
+#rpg-ui .rpg-treasure-heading>p:last-child { display:none; }
+#rpg-ui .rpg-treasure-reward { grid-template-columns:170px minmax(0,1fr); padding:12px; margin-top:16px; gap:20px; }
+#rpg-ui .rpg-treasure-growth { padding:13px 10px; }
+#rpg-ui .rpg-treasure-skill { padding:9px 12px; margin-top:10px; }
+#rpg-ui .rpg-next-dungeon { margin-top:14px; padding:14px 18px; }
+#rpg-ui .rpg-next-dungeon h3 { margin:7px 0; }
+#rpg-ui .rpg-next-dungeon p { margin:9px 0; }
+#rpg-ui .rpg-treasure-actions { position:sticky; bottom:-22px; z-index:2; margin:12px -10px -8px; padding:10px; background:#101916f5; border-top:1px solid #8d7748; box-shadow:0 -8px 18px #0c1413d9; }
+#rpg-ui .rpg-treasure-actions>div { margin-top:4px; }
+#rpg-ui .rpg-treasure-actions>small { display:none; }
+@media(max-width:680px) {
+ #rpg-ui[data-panel="quests"] .rpg-dialog,#rpg-ui[data-panel="merchant"] .rpg-dialog,#rpg-ui[data-panel="forge"] .rpg-dialog { padding-top:19px; }
+ #rpg-ui .rpg-workshop>.rpg-eyebrow { margin:6px 0; font-size:8px; }
+ #rpg-ui .rpg-workshop>h2 { margin:8px 0 10px; }
+ #rpg-ui .rpg-wallet { padding:5px 0 12px; gap:14px; }
+ #rpg-ui .rpg-workshop-tabs { margin:12px 0; gap:6px; }
+ #rpg-ui .rpg-workshop-tabs button { white-space:nowrap; padding:8px 5px; font-size:11px; }
+ #rpg-ui .rpg-workshop>.rpg-pinned-wrap .rpg-pinned-goal { margin:12px 0; padding:11px!important; padding-right:46px!important; gap:9px; }
+ #rpg-ui .rpg-pinned-goal strong { font-size:15px; }
+ #rpg-ui .rpg-pinned-goal>.rpg-icon { width:25px; height:25px; }
+ #rpg-ui .rpg-workshop>p:not(.rpg-eyebrow) { font-size:12px; line-height:1.5; margin:12px 0; }
+ #rpg-ui .rpg-loot-card { grid-template-columns:72px minmax(0,1fr); padding:11px; }
+ #rpg-ui .rpg-loot-card>.rpg-relic-art { width:72px; height:100px; }
+ #rpg-ui .rpg-loot-card h3 { font-size:18px; }
+ #rpg-ui .rpg-loot-card small { font-size:11px; }
+ #rpg-ui .rpg-treasure-heading h2 { font-size:20px; line-height:1.3; }
+ #rpg-ui .rpg-treasure-reward { display:grid; grid-template-columns:104px minmax(0,1fr); gap:12px; text-align:left; padding:10px; }
+ #rpg-ui .rpg-treasure-reward .rpg-treasure-display { width:104px; padding:3px; }
+ #rpg-ui .rpg-treasure-copy>strong { font-size:17px; }
+ #rpg-ui .rpg-treasure-copy>span { font-size:12px; }
+ #rpg-ui .rpg-treasure-copy>small { font-size:8px; }
+ #rpg-ui .rpg-treasure-copy>p { font-size:11px; }
+ #rpg-ui .rpg-treasure-actions { bottom:-19px; }
+}

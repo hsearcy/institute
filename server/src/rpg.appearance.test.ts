@@ -3,7 +3,7 @@ import { expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { RPG_APPEARANCES, rpgLevel } from '@institute/shared';
+import { RPG_APPEARANCES, rpgLevel, rpgNormalizeLoot } from '@institute/shared';
 import { createRpgRoutes, ensureRpgSchema, getRpgState, startRpgExpedition } from './rpg';
 
 function database() {
@@ -42,9 +42,10 @@ test('Legacy saves default appearance in memory without rewriting progress or sc
     startRpgExpedition(db, 'sam');
     const { state, json } = seed(db, 'sam', xpAtLevel(18));
     const beforeLearning = learning(db), beforeSchema = db.query('SELECT sql FROM sqlite_master ORDER BY name').all();
-    expect(getRpgState(db, 'sam')).toEqual({ ...state, appearanceId: 'wayfarer' });
+    const expected = rpgNormalizeLoot({ ...state, appearanceId: 'wayfarer' });
+    expect(getRpgState(db, 'sam')).toEqual(expected);
     const response = await createRpgRoutes(db).request('/state?profileId=sam');
-    expect(await response.json()).toEqual({ ...state, appearanceId: 'wayfarer' });
+    expect(await response.json()).toEqual(expected);
     expect(row(db)).toEqual({ profile_id: 'sam', state_json: json, updated_at: 123 });
     expect(getRpgState(db, 'new-child').appearanceId).toBe('wayfarer');
     expect(row(db, 'new-child')).toBeNull();

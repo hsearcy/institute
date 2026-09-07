@@ -6,6 +6,7 @@
 //  - POST /tts            → ElevenLabs reads text aloud
 import { Hono, type Context } from "hono";
 import { ensureRpgSchema, createRpgRoutes } from "./rpg.ts";
+import { createRpgEconomyRoutes } from "./rpgEconomy.ts";
 import { cors } from "hono/cors";
 import { Database } from "bun:sqlite";
 import Anthropic from "@anthropic-ai/sdk";
@@ -953,6 +954,7 @@ function localBranches(profileId: string, current: Problem): { right: Problem; w
 const app = new Hono();
 app.use("*", cors());
 app.route("/rpg", createRpgRoutes(db, applyMiss));
+app.route("/rpg", createRpgEconomyRoutes(db));
 
 app.get("/health", (c) => c.json({ ok: true, model: TUTOR_MODEL, voice: ELEVEN_VOICE }));
 

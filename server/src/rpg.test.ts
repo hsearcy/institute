@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { RPG_SPELLS, RPG_SPELL_IDS, RPG_SKILLS, RPG_ITEMS, rpgLevel, rpgSpellUnlocked, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgEncounterKills, rpgSpellCombatStats, rpgNextRelicHunt } from '@institute/shared';
+import { RPG_SPELLS, RPG_SPELL_IDS, RPG_SKILLS, RPG_ITEMS, rpgLevel, rpgSpellUnlocked, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgEncounterKills, rpgSpellCombatStats, rpgNextRelicHunt, rpgNormalizeLoot } from '@institute/shared';
 import { ensureRpgSchema, getRpgState, startRpgExpedition, resolveRpgEncounter, createRpgRoutes } from './rpg';
 
 function legacyDb(): Database {
@@ -376,7 +376,7 @@ describe('expanded spellbook compatibility and authority', () => {
       db.query('INSERT INTO rpg_profiles VALUES (?, ?, ?)').run(state.profileId, oldJson, Date.now());
       const learning = snapshot(db);
       ensureRpgSchema(db);
-      expect(getRpgState(db, state.profileId)).toEqual(state);
+      expect(getRpgState(db, state.profileId)).toEqual(rpgNormalizeLoot(state));
       expect(rpgSpellUnlocked(selectedSpellId, state.skills)).toBe(true);
       expect(rpgSpellUnlocked('meteor', state.skills)).toBe(false);
       expect((await call(db, '/spell', { profileId: state.profileId, spellId: 'meteor' })).status).toBe(400);
@@ -406,7 +406,7 @@ describe('expanded spellbook compatibility and authority', () => {
     startRpgExpedition(db, 'sam'); solved(db, 'sam', 'meteor-test');
     const learning = snapshot(db);
     const result = resolve(db, 'sam', 'meteor-test', { spellId: 'meteor' });
-    expect(result.reward).toMatchObject({ spellId: 'meteor', kills: 6, xp: 32 });
+    expect(result.reward).toMatchObject({ spellId: 'meteor', kills: 5, xp: 32 });
     expect(snapshot(db)).toBe(learning);
     db.close();
   });

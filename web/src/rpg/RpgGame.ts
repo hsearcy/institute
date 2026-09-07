@@ -26,6 +26,9 @@ import { getRoomLayout } from './world/roomLayout';
 import { Celebrations, type CelebrationEvent } from './Celebrations';
 import './hud-rewards.css';
 import { AnswerClock } from './AnswerClock';
+import { RPG_TUTORIAL_PAGES, RPG_TUTORIAL_VERSION, startTutorial as newTutorialState, advanceTutorial, type TutorialState } from './tutorial';
+import { TutorialOverlay } from './TutorialOverlay';
+import { TutorialNarrator } from './TutorialNarrator';
 
 type Session = {
   expeditionId: string; encounterIndex: number; problem: Problem; firstAttempt: boolean | null;
@@ -95,6 +98,15 @@ export class RpgGame {
   private focusedSkill: string | null = null;
   private skillDetailOpen = false;
   private trackedSpell: RpgSpellId | null = null;
+  private tutorialState: TutorialState | null = null;
+  private tutorialOverlay: TutorialOverlay | null = null;
+  private tutorialHost: HTMLElement | null = null;
+  private readonly tutorialNarrator = new TutorialNarrator(API);
+  private tutorialInert = new Map<HTMLElement, boolean>();
+  private tutorialSnapshot: {
+    panel: string; html: string; wide: boolean; scroll: number; controlsHidden: boolean;
+    problem: string; topic: string; school: RpgSchoolId; focusedSkill: string | null; detail: boolean;
+  } | null = null;
   private favoriteSpells: Record<RpgSchoolId, RpgSpellId> = { ember: 'cleave', frost: 'frost', storm: 'storm' };
 
   constructor(canvas: HTMLCanvasElement) {
@@ -148,11 +160,11 @@ export class RpgGame {
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
         this.stopClock(); this.saveSession();
-        if (this.playing && !this.panel && !this.busy) this.showPause();
+        if (this.playing && !this.panel && !this.busy && !this.tutorialState) this.showPause();
       } else this.startClock();
     }, { signal: this.abort.signal });
     window.addEventListener('pagehide', () => { this.stopClock(); this.saveSession(); }, { signal: this.abort.signal });
-    window.addEventListener('resize', () => { this.world.resize(); updateCombatSafeArea(); this.drawSkillLinks(); }, { signal: this.abort.signal });
+    window.addEventListener('resize', () => { this.world.resize(); updateCombatSafeArea(); this.drawSkillLinks(); if (this.tutorialState) this.showTutorialPage(); }, { signal: this.abort.signal });
     this.muted = localStorage.getItem('institute:rpg:muted') === 'true';
     try {
       const favorites = JSON.parse(localStorage.getItem(`${sessionKey}:favorites`) ?? '{}');
@@ -180,6 +192,7 @@ export class RpgGame {
       this.campState = camp; this.legacyState = legacy;
       await modelsReady;
       this.restoreSession(); this.renderState(); this.busy = false; this.showCamp();
+      try { if (!localStorage.getItem(this.tutorialKey)) this.launchTutorial(); } catch { /* Replay remains available when local storage is blocked. */ }
       if (this.economyPending) this.toast('A camp purchase is waiting to reconnect. Open the merchant or blacksmith to finish saving it.');
     });
   }
@@ -214,7 +227,7 @@ export class RpgGame {
   }
   private stopClock(): void { this.answerClock.stop(); this.checkpointClock(); this.clockRunning = false; }
   private startClock(): void {
-    if (this.disposed || this.busy || this.panel || !this.playing || document.hidden || !this.session || this.session.pending || this.session.walkthrough) return;
+    if (this.disposed || this.tutorialState || this.busy || this.panel || !this.playing || document.hidden || !this.session || this.session.pending || this.session.walkthrough) return;
     if (!this.speechDepth) this.answerClock.start();
     if (this.clockRunning || this.session.firstAttempt !== null) return;
     this.shownAt = performance.now(); this.clockRunning = true;
@@ -329,7 +342,7 @@ export class RpgGame {
     this.stopClock(); this.saveSession(); this.playing = false; this.el('rpg-controls').hidden = true;
     const resume = s.expedition && !s.expedition.cleared;
     if (resume) this.setEncounter();
-    this.showDialog('camp', `<div class="rpg-seal">${icon('sword')}</div><p class="rpg-eyebrow">INSTITUTE PRESENTS</p><h2 id="rpg-dialog-title" class="rpg-title">The Sunken<br><em>Vault</em></h2><p class="rpg-camp-story">Ancient halls. Hidden relics.<br>A little magic goes a long way.</p><div class="rpg-camp-stats"><span>LEVEL <b>${s.level}</b></span><span>RELICS <b>${s.inventory.length}</b></span><span>GUARDIANS <b>${s.expeditionsCompleted}</b></span></div>${s.totalKills === 0 ? `<div class="rpg-starter-spells" aria-label="Your starting sword attack">${(['cleave'] as RpgSpellId[]).map(id => `<button data-spell="${id}" aria-pressed="${s.selectedSpellId === id}" class="${s.selectedSpellId === id ? 'selected' : ''}">${spellArt(id)}<span>${RPG_SPELLS.find(spell => spell.id === id)!.name}</span></button>`).join('')}</div>` : ''}${s.goal ? renderPinnedGoal(s, this.campState) : this.spellGoalCard() ? `<button class="rpg-goal-card" data-action="spell-goal">${this.spellGoalCard()}</button>` : ''}<button class="rpg-primary rpg-large" data-action="begin">${resume ? 'Continue adventure' : 'Enter the dungeon'} <span>→</span></button><button class="rpg-text-button" data-action="map">Choose an expedition</button><div class="rpg-camp-menu"><button data-action="quests">${icon('ring')} Quest board</button><button data-action="merchant">◆ Merchant${this.campState ? ` · ${this.campState.gems} gems` : ''}</button><button data-action="forge">${icon('sword')} Blacksmith</button><button data-action="spellbook">${icon('storm')} Spellbook</button><button data-action="skills">${icon('tree')} Skill trees${s.skillPoints ? ` · ${s.skillPoints} new` : ''}</button><button data-action="inventory">${icon('bag')} Equipment</button><button data-action="parent">Parent journal</button></div><button class="rpg-armor-progress" data-action="inventory">${icon('shield')}${this.armorProgressText()}</button><p class="rpg-camp-note">Solve to unleash your spells. Take all the time you need.</p>`);
+    this.showDialog('camp', `<div class="rpg-seal">${icon('sword')}</div><p class="rpg-eyebrow">INSTITUTE PRESENTS</p><h2 id="rpg-dialog-title" class="rpg-title">The Sunken<br><em>Vault</em></h2><p class="rpg-camp-story">Ancient halls. Hidden relics.<br>A little magic goes a long way.</p><div class="rpg-camp-stats"><span>LEVEL <b>${s.level}</b></span><span>RELICS <b>${s.inventory.length}</b></span><span>GUARDIANS <b>${s.expeditionsCompleted}</b></span></div>${s.totalKills === 0 ? `<div class="rpg-starter-spells" aria-label="Your starting sword attack">${(['cleave'] as RpgSpellId[]).map(id => `<button data-spell="${id}" aria-pressed="${s.selectedSpellId === id}" class="${s.selectedSpellId === id ? 'selected' : ''}">${spellArt(id)}<span>${RPG_SPELLS.find(spell => spell.id === id)!.name}</span></button>`).join('')}</div>` : ''}${s.goal ? renderPinnedGoal(s, this.campState) : this.spellGoalCard() ? `<button class="rpg-goal-card" data-action="spell-goal">${this.spellGoalCard()}</button>` : ''}<button class="rpg-primary rpg-large" data-action="begin">${resume ? 'Continue adventure' : 'Enter the dungeon'} <span>→</span></button><button class="rpg-text-button" data-action="map">Choose an expedition</button><button class="rpg-text-button" data-action="tutorial">${icon('help')} How to play · Story & tour</button><div class="rpg-camp-menu"><button data-action="quests">${icon('ring')} Quest board</button><button data-action="merchant">◆ Merchant${this.campState ? ` · ${this.campState.gems} gems` : ''}</button><button data-action="forge">${icon('sword')} Blacksmith</button><button data-action="spellbook">${icon('storm')} Spellbook</button><button data-action="skills">${icon('tree')} Skill trees${s.skillPoints ? ` · ${s.skillPoints} new` : ''}</button><button data-action="inventory">${icon('bag')} Equipment</button><button data-action="parent">Parent journal</button></div><button class="rpg-armor-progress" data-action="inventory">${icon('shield')}${this.armorProgressText()}</button><p class="rpg-camp-note">Solve to unleash your spells. Take all the time you need.</p>`);
   }
   private async begin(regionId?: string, tier?: number): Promise<void> {
     if (!this.state || this.busy) return;
@@ -805,7 +818,7 @@ export class RpgGame {
   private showPause(): void {
     if (!this.state || this.busy) return;
     this.saveSession();
-    this.showDialog('pause', `<div class="rpg-seal">${icon('shield')}</div><p class="rpg-eyebrow">A MOMENT BY THE FIRE</p><h2 id="rpg-dialog-title">Adventure saved</h2><p>Your spells, treasures, and progress will be here.</p><div class="rpg-button-row"><button class="rpg-primary" data-action="close">Keep exploring</button><button data-action="camp">Save & leave</button></div><button class="rpg-text-button" data-action="retreat">Choose an easier expedition</button><button class="rpg-text-button" data-action="parent">Open parent journal</button>`);
+    this.showDialog('pause', `<div class="rpg-seal">${icon('shield')}</div><p class="rpg-eyebrow">A MOMENT BY THE FIRE</p><h2 id="rpg-dialog-title">Adventure saved</h2><p>Your spells, treasures, and progress will be here.</p><div class="rpg-button-row"><button class="rpg-primary" data-action="close">Keep exploring</button><button data-action="camp">Save & leave</button></div><button class="rpg-text-button" data-action="tutorial">${icon('help')} How to play · Story & tour</button><button class="rpg-text-button" data-action="retreat">Choose an easier expedition</button><button class="rpg-text-button" data-action="parent">Open parent journal</button>`);
   }
   private async showParent(): Promise<void> {
     this.showDialog('parent', '<h2 id="rpg-dialog-title">Learning journal</h2><p>Loading your existing learning progress…</p>', true);
@@ -813,6 +826,102 @@ export class RpgGame {
     if (this.panel !== 'parent') return;
     const topics = mastery?.topics ?? [];
     this.el('rpg-dialog-content').innerHTML = `<p class="rpg-eyebrow">PARENT JOURNAL · ${esc(PROFILE)}</p><h2 id="rpg-dialog-title">The learning journey</h2><p>Character levels and math mastery grow independently. The same adaptive tutor chooses every problem.</p><div class="rpg-journal-stats"><span><b>${topics.filter(t => t.state === 'mastered').length}</b>topics mastered</span><span><b>${legacy?.gems ?? '…'}</b>gems kept</span><span><b>${mastery?.crazyCoins ?? '…'}</b>Crazy Coins</span><span><b>${this.state?.expeditionsCompleted ?? 0}</b>expeditions cleared</span></div><details><summary>Daily quests & rewards</summary><div class="rpg-quest-list">${(legacy?.quests ?? []).map(q => `<p><span>${esc(q.label)}</span><b>${q.progress} / ${q.target} ${q.done ? '✓' : ''}</b></p>`).join('') || 'Could not load daily quests.'}</div><button data-action="redeem" ${(mastery?.crazyCoins ?? 0) < 1 ? 'disabled' : ''}>Redeem one Crazy Coin · 15 minutes</button></details><div class="rpg-mastery-list">${topics.map(t => `<details><summary><span class="rpg-mastery-state ${t.state}">${t.state === 'mastered' ? '◆' : t.unlocked ? '◇' : '○'}</span><strong>${esc(t.kidLabel)}</strong><span>${t.state === 'mastered' ? 'Mastered' : t.unlocked ? 'Learning' : 'Not yet unlocked'} · ${t.correct}/${t.attempts}</span></summary><p>${esc(t.assessmentPrompt)}</p><p>Prerequisites: ${t.prereqs.length ? t.prereqs.map(id => esc(topics.find(other => other.id === id)?.kidLabel ?? id)).join(', ') : 'Starting skill'}${t.fluentMs ? ` · Fluency target: ${t.fluentMs / 1000}s` : ''}</p></details>`).join('') || '<p>Could not load the learning graph. Your saved data has not changed.</p>'}</div><div class="rpg-button-row"><button class="rpg-primary" data-action="close">Back</button><a class="rpg-text-button" href="?mode=mine">Original mine, shops & detailed statistics</a></div>`;
+  }
+
+  private get tutorialKey(): string { return `${sessionKey}:tutorial:v${RPG_TUTORIAL_VERSION}`; }
+
+  private launchTutorial(): void {
+    if (!this.state || this.busy || this.tutorialState || this.disposed) return;
+    const dialog = this.root.querySelector<HTMLElement>('.rpg-dialog')!;
+    this.tutorialSnapshot = {
+      panel: this.panel, html: this.el('rpg-dialog-content').innerHTML,
+      wide: dialog.classList.contains('wide'), scroll: dialog.scrollTop,
+      controlsHidden: !!this.el('rpg-controls').hidden,
+      problem: this.el('rpg-problem').textContent ?? '', topic: this.el('rpg-topic').textContent ?? '',
+      school: this.school, focusedSkill: this.focusedSkill, detail: this.skillDetailOpen,
+    };
+    this.tutorialState = newTutorialState();
+    this.stopClock(); this.saveSession(); this.world.setPaused(true);
+    this.tutorialHost = document.createElement('div');
+    this.tutorialHost.id = 'rpg-tutorial-host'; this.root.append(this.tutorialHost);
+    for (const child of this.root.children) {
+      if (child instanceof HTMLElement && child !== this.tutorialHost) {
+        this.tutorialInert.set(child, child.inert); child.inert = true;
+      }
+    }
+    this.tutorialOverlay = new TutorialOverlay(this.tutorialHost, {
+      onNext: () => this.moveTutorial('next'), onBack: () => this.moveTutorial('back'),
+      onSkip: () => this.moveTutorial('skip'), onSpeak: () => { void this.readTutorial(); },
+    });
+    this.showTutorialPage();
+  }
+
+  private showTutorialPage(): void {
+    if (!this.tutorialState || !this.tutorialOverlay) return;
+    this.tutorialNarrator.stop();
+    const page = RPG_TUTORIAL_PAGES[this.tutorialState.index];
+    this.root.dataset.tutorialPanel = page.panel ?? '';
+    this.root.dataset.tutorialPage = page.id;
+    this.panel = ''; this.root.dataset.panel = ''; this.el('rpg-overlay').hidden = true;
+    this.el('rpg-controls').hidden = page.phase === 'story';
+    // A display-only example before the first lesson. Never request or answer a
+    // tutor problem just to explain the controls, and never spend rewards here.
+    this.el('rpg-problem').textContent = this.session?.problem.prompt ?? '2 + 1';
+    this.el('rpg-topic').textContent = this.session ? this.tutorialSnapshot!.topic : 'YOUR MATH GOES HERE';
+    if (page.panel === 'skills') {
+      this.school = 'ember'; this.focusedSkill = null;
+      this.skillDetailOpen = page.id === 'learn-skill'; this.showSkills();
+    } else if (page.panel === 'spellbook') this.showSpellbook();
+    else if (page.panel === 'inventory') this.showInventory();
+    else if (page.panel === 'map') this.showMap();
+    else if (page.panel) {
+      // showWorkshop also retries pending purchases; a tour must only render.
+      if (this.campState && this.legacyState) {
+        this.showDialog(page.panel, renderCampWorkshop(this.state!, this.campState, this.legacyState, page.panel), true);
+      } else {
+        this.showDialog(page.panel, `<h2 id="rpg-dialog-title">${esc(page.title)}</h2><p>Camp rewards are reconnecting. You can still finish the tour.</p>`);
+      }
+    }
+    this.world.setPaused(true);
+    this.root.querySelector<HTMLElement>('.rpg-dialog')!.scrollTop = 0;
+    let anchor = page.focus ? this.root.querySelector<HTMLElement>(page.focus) : null;
+    if (anchor?.getClientRects().length) anchor.scrollIntoView({ block: page.panel ? 'start' : 'nearest', inline: 'nearest' });
+    else anchor = page.panel ? this.el('rpg-dialog-content') : null;
+    this.tutorialOverlay.show(page, this.tutorialState.index, RPG_TUTORIAL_PAGES.length, anchor);
+    this.tutorialOverlay.focusFirst();
+  }
+
+  private async readTutorial(): Promise<void> {
+    const current = this.tutorialState;
+    if (!current) return;
+    const page = RPG_TUTORIAL_PAGES[current.index];
+    const heard = await this.tutorialNarrator.speak(`${page.title}. ${page.body} ${page.cue}`);
+    if (!heard && this.tutorialState === current) this.toast('The voice is resting. You can keep going with Next.');
+  }
+
+  private moveTutorial(action: 'next' | 'back' | 'skip'): void {
+    if (!this.tutorialState) return;
+    this.tutorialState = advanceTutorial(this.tutorialState, action);
+    if (!this.tutorialState.finished) { this.showTutorialPage(); return; }
+    this.tutorialNarrator.stop(); this.tutorialOverlay?.destroy(); this.tutorialOverlay = null;
+    this.tutorialHost?.remove(); this.tutorialHost = null;
+    for (const [element, inert] of this.tutorialInert) element.inert = inert;
+    this.tutorialInert.clear();
+    delete this.root.dataset.tutorialPanel; delete this.root.dataset.tutorialPage;
+    const saved = this.tutorialSnapshot!;
+    this.school = saved.school; this.focusedSkill = saved.focusedSkill; this.skillDetailOpen = saved.detail;
+    this.el('rpg-problem').textContent = saved.problem; this.el('rpg-topic').textContent = saved.topic;
+    this.el('rpg-controls').hidden = saved.controlsHidden;
+    if (saved.panel) {
+      this.showDialog(saved.panel, saved.html, saved.wide);
+      this.root.querySelector<HTMLElement>('.rpg-dialog')!.scrollTop = saved.scroll;
+    } else {
+      this.panel = ''; this.root.dataset.panel = ''; this.el('rpg-overlay').hidden = true;
+      this.world.setPaused(!this.playing);
+    }
+    this.tutorialState = null; this.tutorialSnapshot = null;
+    try { localStorage.setItem(this.tutorialKey, action === 'skip' ? 'skipped' : 'completed'); } catch { /* Optional local preference. */ }
+    this.startClock(); this.updatePower();
   }
 
   private showDialog(name: string, html: string, wide = false): void {
@@ -907,6 +1016,7 @@ export class RpgGame {
     button.setAttribute('aria-label', this.muted ? 'Enable tutor voice' : 'Mute tutor voice');
   }
   private onClick = (event: MouseEvent): void => {
+    if (this.tutorialState) return;
     void dungeonSound.unlock();
     const button = (event.target as Element).closest<HTMLButtonElement>('button');
     if (!button || button.disabled) return;
@@ -988,6 +1098,7 @@ export class RpgGame {
     switch (action) {
       case 'begin': void this.begin(); break;
       case 'close': this.closeDialog(); break;
+      case 'tutorial': this.launchTutorial(); break;
       case 'map': this.showMap(); break;
       case 'skills': this.skillDetailOpen = false; this.showSkills(); break;
       case 'rune-detail': this.skillDetailOpen = !this.skillDetailOpen; this.showSkills(); this.root.querySelector<HTMLElement>('.rpg-dialog')!.scrollTop = 0; break;
@@ -1021,6 +1132,7 @@ export class RpgGame {
     }
   };
   private onKey = (event: KeyboardEvent): void => {
+    if (this.tutorialState) return;
     void dungeonSound.unlock();
     if (this.panel) {
       if (event.key === 'Escape') { event.preventDefault(); this.closeDialog(); }
@@ -1046,6 +1158,7 @@ export class RpgGame {
     if (event.key === 'Enter') { event.preventDefault(); void this.submit(); }
   };
   dispose(): void {
+    this.tutorialNarrator.dispose(); this.tutorialOverlay?.destroy(); this.tutorialHost?.remove();
     this.stopClock(); this.saveSession(); this.disposed = true; this.abort.abort(); this.panelResolve?.();
     this.combatLayoutObserver.disconnect();
     if (this.toastTimer) clearTimeout(this.toastTimer);

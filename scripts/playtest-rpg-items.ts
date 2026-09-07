@@ -54,6 +54,8 @@ try {
   await page.addInitScript(() => localStorage.setItem('institute:rpg:muted', 'true'));
   const loaded = () => page.waitForFunction(() => !!(window as any).__game?.world?.loadedAt && !(window as any).__game.busy, undefined, { timeout: 90000 });
   await page.goto(`http://127.0.0.1:${webPort}/`); await loaded();
+  const guide = page.getByRole('button', { name: 'Skip guide', exact: true });
+  if (await guide.isVisible()) await guide.click();
   const initial = await page.evaluate(() => (window as any).__game.state);
   report.initialProgress = { xp: initial.xp, skills: initial.skills, inventory: initial.inventory, kills: initial.totalKills };
   const ready = async () => {

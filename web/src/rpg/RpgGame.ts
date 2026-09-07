@@ -26,6 +26,7 @@ import { getRoomLayout } from './world/roomLayout';
 import { Celebrations, type CelebrationEvent } from './Celebrations';
 import './hud-rewards.css';
 import { AnswerClock } from './AnswerClock';
+import { newRequestId } from './requestId';
 import { RPG_TUTORIAL_PAGES, RPG_TUTORIAL_VERSION, startTutorial as newTutorialState, advanceTutorial, type TutorialState } from './tutorial';
 import { TutorialOverlay } from './TutorialOverlay';
 import { TutorialNarrator } from './TutorialNarrator';
@@ -779,7 +780,7 @@ export class RpgGame {
   private async economyAction(action: string, body: Record<string, unknown>): Promise<void> {
     if (this.busy || !this.state) return;
     // Keep one intent and one id through a lost response, retry, or page reload.
-    const pending = this.economyPending ?? { action, body, requestId: crypto.randomUUID() };
+    const pending = this.economyPending ?? { action, body, requestId: newRequestId() };
     this.economyPending = pending; sessionStorage.setItem(`${sessionKey}:economy`, JSON.stringify(pending));
     await this.runSafely(async () => {
       let result: RpgEconomyResult;
@@ -992,7 +993,7 @@ export class RpgGame {
   }
   private async changeLoadout(action: string, body: Record<string, unknown>, after: () => void): Promise<void> {
     if (this.busy) return;
-    const payload = action === 'upgrade' ? { ...body, requestId: crypto.randomUUID() } : body;
+    const payload = action === 'upgrade' ? { ...body, requestId: newRequestId() } : body;
     await this.runSafely(async () => {
       this.state = await mutateRpg(action, payload); this.renderState();
       if (this.state.expedition && !this.state.expedition.cleared) this.setEncounter();

@@ -1,0 +1,7 @@
+# Grouped portal high-source v7
+
+Independent shown-front construction/material8. This is the actual high source corresponding to native v7's surviving groups and six cuts.131 meshes,159,008 triangles; each object individually has positive signed volume, no nonmanifold edge and no zero-area face. Original source scene and original baked maps remain untouched.
+
+The new scene evaluates existing source material graphs against only the surviving geometry. Previously covered top faces now render as worn stone, confirming that refreshed source shading is necessary after changing the surrounding masonry. Current exported/native atlas still contains old shelter color and occlusion and remains unaccepted. This single front view does not certify hidden/rear changed faces, low export fidelity, native composition, traversal, or performance. Preserve this geometry for the next bake comparison.
+
+Blender driver namespace cache: root_portal_grouped_source_v7, containing scene, collection, objects keyed by original source ID, and sourceIds. Source created0.31s, front render46.25s, original caller Scene restored. The preparation script requires the accepted original source cache root_portal_crown_normal_repair plus native v7 metadata; it refuses duplicate preparation. The included2,451,538-byte source.blend contains only this new scene and its dependencies, saved using bpy.data.libraries.write in0.03s. It avoids serializing the accumulated Blender session; existing repo texture paths remain dependencies.

@@ -78,7 +78,7 @@ Scores are subjective art-direction judgments, grounded in the listed visible ev
 
 | Failing or unverified scope | Current grade/status | Main remaining gap / evidence |
 |---|---:|---|
-| Unique equipped models for all23 items | Apprentice, installed Thunder and Ashsplitter source/export/native/desktop card/held continuity8; Moonstaff source/export/native/desktop card/observed held continuity8; Cinderbranch wood/coal7.5; Glacier v8 depth/material7; Phoenix complete shown source8, corrected exact v3 construction/material8, standalone thumbnail8, native idle/desktop card8 and shown held motion8; Starfall v2 silhouette7.5/construction7.5/material6.5; other15 unverified | `docs/rpg-playtest/v18/items/`; individual accepted scopes above. Cinderbranch v18 and Glacier v8 source studies remain below gate. Painted icons do not approve3D models; phone item deployment and remaining variants unverified. |
+| Unique equipped models for all23 items | Apprentice, installed Thunder and Ashsplitter source/export/native/desktop card/held continuity8; Moonstaff source/export/native/desktop card/observed held continuity8; Cinderbranch wood/coal7.5; Glacier v8 depth/material7; Phoenix complete shown source8, corrected exact v3 construction/material8, standalone thumbnail8, native idle/desktop card8 and shown held motion8; Starfall complete shown source8 (v4 blade/front/rear plus v5 grip); export/native pending; other15 unverified | `docs/rpg-playtest/v18/items/`; individual accepted scopes above. Cinderbranch v18 and Glacier v8 source studies remain below gate. Painted icons do not approve3D models; phone item deployment and remaining variants unverified. |
 | Chain Lightning broader coverage | Shown v4 desktop two-cast FX8; other coverage unverified | Form/material, hand source, hop emphasis/order, contact restraint and decay pass in HM. Phone/boss/modifier and complete terminal-cleanup coverage remain separate. |
 | Cleave broader deployment | Shown v5 public-roster desktop two partial-cast FX8; other coverage unverified | Phone/boss/modifier/equipment-wide coverage remains separate; old enemy model quality remains failed. See GS. |
 | Frostfall revised projectile/material/contact | v7 native silhouette/readability6.5 and material6.5; earlier shown contact-fracture8 | Latest `tmp/frost-v7-lossless-{native,detail}.png` loses optical mass; earlier actual v6 contact8 remains separate. See EH. |
@@ -1883,3 +1883,35 @@ Reviewed `tmp/portal-composition-v6-color-{matched,assembly-detail}.png`. **Term
 ## IB — Guardian v5 gray control seats eyes in the face recess
 
 Reviewed `tmp/guardian-slab-v5/source-head-gray.png`. **Shown face construction7.5; whole-source construction7 retained.** Eye discs now sit against a continuous recessed bed and lateral void is contained; previous loose-lights/empty-slot defect is resolved. Brow/jaw remain pristine faceted solids, so proceed with genuine same-form rock material evidence before another shape adjustment. No material score change: attempted texture application selected zero materials and this image is explicitly gray.
+
+
+## IC — Guardian v5 genuine rock maps improve surface, not complete material hierarchy
+
+Reviewed `tmp/guardian-slab-v5/source-{high,head}-textured.png` against gray control. **Construction7 retained; stone material6.5; crystals5; overall shown material6.** Genuine mineral pattern improves gray solids, but pale/even coverage flattens hierarchy and also lightens the eye recess. Restore dark stone in that recess and localized mineral/shelter deposits beneath brow/chest overlap and within crystal clefts, keeping broad faces quiet and select fracture faces lighter. No global brightness/noise change requested. Opaque cyan prisms with drawn white lines remain a separate major blocker: unequal growth/broken tips, darker optical interiors and selective facet reflection are needed. Preserve stone mass/pivots while surface hierarchy is tested. No export/native acceptance.
+
+
+## ID — Starfall v4 blade hierarchy passes, close grip reveals assembly defects
+
+Reviewed `tmp/item-models/starfall-v4-{front,rear,grip}.png`. **Shown blade construction/material8; complete source7.5.** Honed perimeter, dark fuller and broad reflected face separate clearly in front/rear while heel correction remains coherent. Lower wrap ends above ferrule at right, leaving a visible black crescent; pommel lower contour/shoulder has conspicuous octagonal steps. Seat wrap consistently into ferrule and use continuous shaped pommel profile/normals, preserving dimensions. Leather7.5 is restrained/readable; additional scratches do not address gap. No blade redesign or export approval.
+
+## IE — Portal v7 grouped breaks improve silhouette, shading still obstructs final judgment
+
+Reviewed `tmp/portal-composition-v7-{matched,assembly-detail}.png` and `tmp/portal-composition-v7-ao-ao-control.png`. **Shown geometry7.5; material final score held; wholeworld6.5 retained.** Left repeated teeth are removed and right has distinct surviving groups instead of one ramp. Keep geometry fixed while diagnosing shading. AO-only control cleans arch outer bands, but two broad exposed level tops remain almost black. Normal-off control is appropriate; no material pass or final architecture increase yet. Once those surfaces read correctly, remaining regularity can be judged without confusing black tops with holes.
+
+
+## IF — Starfall v5 grip closes complete shown source gate
+
+Reviewed `tmp/item-models/starfall-v5-grip.png` against v4 close and prior front/rear. **Complete shown source construction/material8.** Ferrule now seats the whole wrap termination; pommel contour is continuous without octagonal steps. Prior blade/heel hierarchy remains accepted. Preserve source for exact low/export proof; no bake/native/card acceptance transfers.
+
+## IG — Portal normal-off control retains dark exposed tops
+
+Reviewed `tmp/portal-composition-v7-normal-normal-control.png`. Broad level tops remain dark without normal map, consistent with root's identified old shelter tint embedded in source Base Color. Targeted rebake with removed blocks absent is the appropriate next control, preserving current geometry and unaffected charts. Geometry7.5/world6.5 held; no material approval.
+
+## IH — Guardian v6 improves stone hierarchy, crystal optics remain flat
+
+Reviewed `tmp/guardian-slab-v6/source-{high,head}.png`. **Stone7; crystals6.5; construction7; overall material6.5.** Dark eye bed/quiet stone coverage improve hierarchy; unequal broken crystal ends and removal of drawn lines improve minerals. Large crystal faces still read as opaque cyan/white panels. Isolate one dominant crystal shell-only versus complete inner-volume stack under the same light with visible background before another opacity/roughness sweep. Preserve stone treatment for later native-light evidence. Artist disclosed internal-rock RNG changed inherited joint jitter; isolate it before comparison/export. No source8/native acceptance.
+
+
+## II — Grouped portal source reevaluates exposed stone correctly
+
+Reviewed `tmp/portal-grouped-source-v7/source-front.png`. **Shown front construction/material8.** Exposed level tops and arch outer faces read as the same worn stone family instead of black holes; distinct surviving groups/broken faces are coherent in this source view. Keep geometry fixed for targeted rebake. This confirms source shading after removing former occluders, not corrected low/native material. Rear/hidden changed surfaces remain outside the single-view verdict. Native geometry7.5/material pending/world6.5 retained.

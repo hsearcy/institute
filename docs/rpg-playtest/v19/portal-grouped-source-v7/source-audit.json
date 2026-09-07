@@ -1,0 +1,1189 @@
+{
+  "objects": 131,
+  "triangles": 159008,
+  "sourceIds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91,
+    92,
+    93,
+    95,
+    96,
+    98,
+    118,
+    119,
+    120,
+    121,
+    122,
+    123,
+    124,
+    125,
+    126,
+    127,
+    128,
+    129,
+    130,
+    131,
+    132,
+    133,
+    134,
+    135,
+    136,
+    137,
+    138,
+    139,
+    140,
+    141,
+    142,
+    143,
+    144,
+    145,
+    146,
+    147,
+    148,
+    149,
+    151,
+    154
+  ],
+  "audits": [
+    {
+      "sourceId": 0,
+      "name": "Grouped v7 Stepped portal plinth",
+      "triangles": 752,
+      "signedVolume": 0.23628669286524165,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 1,
+      "name": "Grouped v7 Stepped portal plinth.001",
+      "triangles": 752,
+      "signedVolume": 0.1399439996632419,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 2,
+      "name": "Grouped v7 Stepped portal plinth.002",
+      "triangles": 752,
+      "signedVolume": 0.10283453698528196,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 3,
+      "name": "Grouped v7 Through jamb bed",
+      "triangles": 752,
+      "signedVolume": 0.21601223859081184,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 4,
+      "name": "Grouped v7 Jointed portal shaft",
+      "triangles": 1436,
+      "signedVolume": 0.013605781866128337,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 5,
+      "name": "Grouped v7 Bonded deep jamb",
+      "triangles": 752,
+      "signedVolume": 0.12910633138197689,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 6,
+      "name": "Grouped v7 Bonded deep jamb.001",
+      "triangles": 752,
+      "signedVolume": 0.12786749950295953,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 7,
+      "name": "Grouped v7 Jointed portal shaft.001",
+      "triangles": 1436,
+      "signedVolume": 0.016755622635855692,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 8,
+      "name": "Grouped v7 Through jamb bed.001",
+      "triangles": 752,
+      "signedVolume": 0.2379957313293155,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 9,
+      "name": "Grouped v7 Jointed portal shaft.002",
+      "triangles": 1436,
+      "signedVolume": 0.014955156400874733,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 10,
+      "name": "Grouped v7 Bonded deep jamb.002",
+      "triangles": 752,
+      "signedVolume": 0.13126988621487237,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 11,
+      "name": "Grouped v7 Bonded deep jamb.003",
+      "triangles": 752,
+      "signedVolume": 0.13176898151958644,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 12,
+      "name": "Grouped v7 Jointed portal shaft.003",
+      "triangles": 1436,
+      "signedVolume": 0.017146575326468926,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 13,
+      "name": "Grouped v7 Through jamb bed.002",
+      "triangles": 752,
+      "signedVolume": 0.23013815871656818,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 14,
+      "name": "Grouped v7 Jointed portal shaft.004",
+      "triangles": 1436,
+      "signedVolume": 0.014471882166067552,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 15,
+      "name": "Grouped v7 Bonded deep jamb.004",
+      "triangles": 752,
+      "signedVolume": 0.09734934575694637,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 16,
+      "name": "Grouped v7 Bonded deep jamb.005",
+      "triangles": 752,
+      "signedVolume": 0.09706853148265743,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 17,
+      "name": "Grouped v7 Jointed portal shaft.005",
+      "triangles": 1436,
+      "signedVolume": 0.012682915050825576,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 18,
+      "name": "Grouped v7 Load-bearing impost",
+      "triangles": 752,
+      "signedVolume": 0.0795258328096765,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 19,
+      "name": "Grouped v7 Load-bearing impost.001",
+      "triangles": 752,
+      "signedVolume": 0.08685623314858353,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 20,
+      "name": "Grouped v7 Stepped portal plinth.003",
+      "triangles": 752,
+      "signedVolume": 0.23501822104297895,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 21,
+      "name": "Grouped v7 Stepped portal plinth.004",
+      "triangles": 752,
+      "signedVolume": 0.13930297409845813,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 22,
+      "name": "Grouped v7 Stepped portal plinth.005",
+      "triangles": 752,
+      "signedVolume": 0.10350310232535584,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 23,
+      "name": "Grouped v7 Through jamb bed.003",
+      "triangles": 752,
+      "signedVolume": 0.21520368025194336,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 24,
+      "name": "Grouped v7 Jointed portal shaft.006",
+      "triangles": 1436,
+      "signedVolume": 0.013589151149622985,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 25,
+      "name": "Grouped v7 Bonded deep jamb.006",
+      "triangles": 752,
+      "signedVolume": 0.1278838509639515,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 26,
+      "name": "Grouped v7 Bonded deep jamb.007",
+      "triangles": 752,
+      "signedVolume": 0.12818283211185896,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 27,
+      "name": "Grouped v7 Jointed portal shaft.007",
+      "triangles": 1436,
+      "signedVolume": 0.016785820577623033,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 28,
+      "name": "Grouped v7 Through jamb bed.004",
+      "triangles": 752,
+      "signedVolume": 0.23691506918891714,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 29,
+      "name": "Grouped v7 Jointed portal shaft.008",
+      "triangles": 1436,
+      "signedVolume": 0.014977978396797244,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 30,
+      "name": "Grouped v7 Bonded deep jamb.008",
+      "triangles": 752,
+      "signedVolume": 0.13133495709312018,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 31,
+      "name": "Grouped v7 Bonded deep jamb.009",
+      "triangles": 752,
+      "signedVolume": 0.13084649828290065,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 32,
+      "name": "Grouped v7 Jointed portal shaft.009",
+      "triangles": 1436,
+      "signedVolume": 0.01719711029697071,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 33,
+      "name": "Grouped v7 Through jamb bed.005",
+      "triangles": 752,
+      "signedVolume": 0.23110713660269747,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 34,
+      "name": "Grouped v7 Jointed portal shaft.010",
+      "triangles": 1436,
+      "signedVolume": 0.014485756080648213,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 35,
+      "name": "Grouped v7 Bonded deep jamb.010",
+      "triangles": 752,
+      "signedVolume": 0.09692800659595183,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 36,
+      "name": "Grouped v7 Bonded deep jamb.011",
+      "triangles": 752,
+      "signedVolume": 0.09816719483700748,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 37,
+      "name": "Grouped v7 Jointed portal shaft.011",
+      "triangles": 1436,
+      "signedVolume": 0.012684303430898635,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 38,
+      "name": "Grouped v7 Load-bearing impost.002",
+      "triangles": 752,
+      "signedVolume": 0.07983206384292858,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 39,
+      "name": "Grouped v7 Load-bearing impost.003",
+      "triangles": 752,
+      "signedVolume": 0.08813786182747159,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 40,
+      "name": "Grouped v7 Jointed molded voussoir",
+      "triangles": 3204,
+      "signedVolume": 0.18162851822384127,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 41,
+      "name": "Grouped v7 Jointed molded voussoir.001",
+      "triangles": 3204,
+      "signedVolume": 0.1806538000264653,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 42,
+      "name": "Grouped v7 Jointed molded voussoir.002",
+      "triangles": 3204,
+      "signedVolume": 0.18219083168754446,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 43,
+      "name": "Grouped v7 Jointed molded voussoir.003",
+      "triangles": 3204,
+      "signedVolume": 0.1795761025587683,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 44,
+      "name": "Grouped v7 Jointed molded voussoir.004",
+      "triangles": 3204,
+      "signedVolume": 0.1789431724792413,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 45,
+      "name": "Grouped v7 Jointed molded voussoir.005",
+      "triangles": 3204,
+      "signedVolume": 0.18113856449861343,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 46,
+      "name": "Grouped v7 Jointed molded voussoir.006",
+      "triangles": 3204,
+      "signedVolume": 0.17866097353915283,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 47,
+      "name": "Grouped v7 Jointed molded voussoir.007",
+      "triangles": 3204,
+      "signedVolume": 0.18080915500588018,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 48,
+      "name": "Grouped v7 Jointed molded voussoir.008",
+      "triangles": 3204,
+      "signedVolume": 0.18132687146074786,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 49,
+      "name": "Grouped v7 Jointed molded voussoir.009",
+      "triangles": 3204,
+      "signedVolume": 0.17901547062436204,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 50,
+      "name": "Grouped v7 Jointed molded voussoir.010",
+      "triangles": 2144,
+      "signedVolume": 0.28477746823068606,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 51,
+      "name": "Grouped v7 Jointed molded voussoir.011",
+      "triangles": 3204,
+      "signedVolume": 0.1801746098542861,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 52,
+      "name": "Grouped v7 Jointed molded voussoir.012",
+      "triangles": 3204,
+      "signedVolume": 0.1792642082249875,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 53,
+      "name": "Grouped v7 Jointed molded voussoir.013",
+      "triangles": 3204,
+      "signedVolume": 0.1814209949872774,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 54,
+      "name": "Grouped v7 Jointed molded voussoir.014",
+      "triangles": 3204,
+      "signedVolume": 0.18006272453083239,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 55,
+      "name": "Grouped v7 Jointed molded voussoir.015",
+      "triangles": 3204,
+      "signedVolume": 0.18073452647261834,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 56,
+      "name": "Grouped v7 Jointed molded voussoir.016",
+      "triangles": 3204,
+      "signedVolume": 0.18150853542975803,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 57,
+      "name": "Grouped v7 Jointed molded voussoir.017",
+      "triangles": 3204,
+      "signedVolume": 0.17897471367773132,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 58,
+      "name": "Grouped v7 Jointed molded voussoir.018",
+      "triangles": 3204,
+      "signedVolume": 0.18054169485169758,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 59,
+      "name": "Grouped v7 Jointed molded voussoir.019",
+      "triangles": 3204,
+      "signedVolume": 0.18163092159910407,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 60,
+      "name": "Grouped v7 Jointed molded voussoir.020",
+      "triangles": 3204,
+      "signedVolume": 0.1797849131645371,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 61,
+      "name": "Grouped v7 Jointed molded voussoir.021",
+      "triangles": 2146,
+      "signedVolume": 0.28504017445482643,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 62,
+      "name": "Grouped v7 Portal wall bonded bed -1 00",
+      "triangles": 752,
+      "signedVolume": 0.10331144381238185,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 63,
+      "name": "Grouped v7 Portal wall bonded bed -1 01",
+      "triangles": 752,
+      "signedVolume": 0.0933524554438898,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 64,
+      "name": "Grouped v7 Portal wall bonded bed -1 02",
+      "triangles": 752,
+      "signedVolume": 0.11538610962524666,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 65,
+      "name": "Grouped v7 Portal wall bonded bed -1 03",
+      "triangles": 752,
+      "signedVolume": 0.06926406122435516,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 66,
+      "name": "Grouped v7 Portal wall bonded bed -1 04",
+      "triangles": 752,
+      "signedVolume": 0.07544793147520107,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 67,
+      "name": "Grouped v7 Portal wall bonded bed -1 05",
+      "triangles": 752,
+      "signedVolume": 0.06196845502144129,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 68,
+      "name": "Grouped v7 Portal wall bonded bed -1 06",
+      "triangles": 752,
+      "signedVolume": 0.06209667665610928,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 69,
+      "name": "Grouped v7 Portal wall bonded bed -1 07",
+      "triangles": 752,
+      "signedVolume": 0.056583462688821765,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 70,
+      "name": "Grouped v7 Portal wall bonded bed -1 08",
+      "triangles": 752,
+      "signedVolume": 0.06830859356246508,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 71,
+      "name": "Grouped v7 Portal wall bonded bed -1 09",
+      "triangles": 752,
+      "signedVolume": 0.2159152598782089,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 72,
+      "name": "Grouped v7 Portal wall bonded bed -1 10",
+      "triangles": 752,
+      "signedVolume": 0.19323485157623282,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 73,
+      "name": "Grouped v7 Portal wall bonded bed -1 11",
+      "triangles": 752,
+      "signedVolume": 0.1584792476259316,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 74,
+      "name": "Grouped v7 Portal wall bonded bed -1 12",
+      "triangles": 752,
+      "signedVolume": 0.2667242020602298,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 75,
+      "name": "Grouped v7 Portal wall bonded bed -1 13",
+      "triangles": 752,
+      "signedVolume": 0.19715472977830814,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 76,
+      "name": "Grouped v7 Portal wall bonded bed -1 14",
+      "triangles": 752,
+      "signedVolume": 0.23987343641056666,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 77,
+      "name": "Grouped v7 Portal wall bonded bed -1 15",
+      "triangles": 752,
+      "signedVolume": 0.23696527499220071,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 78,
+      "name": "Grouped v7 Portal wall bonded bed -1 16",
+      "triangles": 752,
+      "signedVolume": 0.21303397930381085,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 79,
+      "name": "Grouped v7 Portal wall bonded bed -1 17",
+      "triangles": 752,
+      "signedVolume": 0.17484953734571934,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 80,
+      "name": "Grouped v7 Portal wall bonded bed -1 18",
+      "triangles": 752,
+      "signedVolume": 0.2737933335657416,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 81,
+      "name": "Grouped v7 Portal wall bonded bed -1 19",
+      "triangles": 752,
+      "signedVolume": 0.20256309972977976,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 82,
+      "name": "Grouped v7 Portal wall bonded bed -1 20",
+      "triangles": 752,
+      "signedVolume": 0.24621680159947537,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 83,
+      "name": "Grouped v7 Portal wall bonded bed -1 21",
+      "triangles": 752,
+      "signedVolume": 0.2299432437995264,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 84,
+      "name": "Grouped v7 Portal wall bonded bed -1 22",
+      "triangles": 752,
+      "signedVolume": 0.2068317336922996,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 85,
+      "name": "Grouped v7 Portal wall bonded bed -1 23",
+      "triangles": 752,
+      "signedVolume": 0.170113966121046,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 86,
+      "name": "Grouped v7 Portal wall bonded bed -1 24",
+      "triangles": 752,
+      "signedVolume": 0.20120013935983297,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 87,
+      "name": "Grouped v7 Portal wall bonded bed -1 25",
+      "triangles": 752,
+      "signedVolume": 0.14821126487910052,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 88,
+      "name": "Grouped v7 Portal wall bonded bed -1 26",
+      "triangles": 752,
+      "signedVolume": 0.18076234598525376,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 89,
+      "name": "Grouped v7 Portal wall bonded bed -1 27",
+      "triangles": 752,
+      "signedVolume": 0.10012570243806322,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 90,
+      "name": "Grouped v7 Portal wall bonded bed -1 28",
+      "triangles": 752,
+      "signedVolume": 0.1069123996593722,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 91,
+      "name": "Grouped v7 Portal wall bonded bed -1 29",
+      "triangles": 558,
+      "signedVolume": 0.06464550310924445,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 92,
+      "name": "Grouped v7 Portal wall bonded bed -1 30",
+      "triangles": 928,
+      "signedVolume": 0.31304125959891277,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 93,
+      "name": "Grouped v7 Portal wall bonded bed -1 31",
+      "triangles": 752,
+      "signedVolume": 0.19153808158752741,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 95,
+      "name": "Grouped v7 Portal wall bonded bed -1 33",
+      "triangles": 928,
+      "signedVolume": 0.36486970175510985,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 96,
+      "name": "Grouped v7 Portal wall bonded bed -1 34",
+      "triangles": 692,
+      "signedVolume": 0.24459312376722753,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 98,
+      "name": "Grouped v7 Portal wall bonded bed -1 36",
+      "triangles": 856,
+      "signedVolume": 0.3700429090296327,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 118,
+      "name": "Grouped v7 Portal wall bonded bed 1 00",
+      "triangles": 752,
+      "signedVolume": 0.1030395506519042,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 119,
+      "name": "Grouped v7 Portal wall bonded bed 1 01",
+      "triangles": 752,
+      "signedVolume": 0.0932196046546195,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 120,
+      "name": "Grouped v7 Portal wall bonded bed 1 02",
+      "triangles": 752,
+      "signedVolume": 0.11332037355748116,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 121,
+      "name": "Grouped v7 Portal wall bonded bed 1 03",
+      "triangles": 752,
+      "signedVolume": 0.06956277535680974,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 122,
+      "name": "Grouped v7 Portal wall bonded bed 1 04",
+      "triangles": 752,
+      "signedVolume": 0.07598552445211616,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 123,
+      "name": "Grouped v7 Portal wall bonded bed 1 05",
+      "triangles": 752,
+      "signedVolume": 0.06226946878867725,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 124,
+      "name": "Grouped v7 Portal wall bonded bed 1 06",
+      "triangles": 752,
+      "signedVolume": 0.06260086226312911,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 125,
+      "name": "Grouped v7 Portal wall bonded bed 1 07",
+      "triangles": 752,
+      "signedVolume": 0.056491338745897776,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 126,
+      "name": "Grouped v7 Portal wall bonded bed 1 08",
+      "triangles": 752,
+      "signedVolume": 0.06799032331054952,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 127,
+      "name": "Grouped v7 Portal wall bonded bed 1 09",
+      "triangles": 752,
+      "signedVolume": 0.215585922403791,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 128,
+      "name": "Grouped v7 Portal wall bonded bed 1 10",
+      "triangles": 752,
+      "signedVolume": 0.19205635191233186,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 129,
+      "name": "Grouped v7 Portal wall bonded bed 1 11",
+      "triangles": 752,
+      "signedVolume": 0.15801404025356244,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 130,
+      "name": "Grouped v7 Portal wall bonded bed 1 12",
+      "triangles": 752,
+      "signedVolume": 0.2667564415648727,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 131,
+      "name": "Grouped v7 Portal wall bonded bed 1 13",
+      "triangles": 752,
+      "signedVolume": 0.19708046668060133,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 132,
+      "name": "Grouped v7 Portal wall bonded bed 1 14",
+      "triangles": 752,
+      "signedVolume": 0.2402761134421782,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 133,
+      "name": "Grouped v7 Portal wall bonded bed 1 15",
+      "triangles": 752,
+      "signedVolume": 0.2373960095178751,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 134,
+      "name": "Grouped v7 Portal wall bonded bed 1 16",
+      "triangles": 752,
+      "signedVolume": 0.21410961166820075,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 135,
+      "name": "Grouped v7 Portal wall bonded bed 1 17",
+      "triangles": 752,
+      "signedVolume": 0.17519436972787997,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 136,
+      "name": "Grouped v7 Portal wall bonded bed 1 18",
+      "triangles": 752,
+      "signedVolume": 0.27473757726479237,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 137,
+      "name": "Grouped v7 Portal wall bonded bed 1 19",
+      "triangles": 752,
+      "signedVolume": 0.20357980758761332,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 138,
+      "name": "Grouped v7 Portal wall bonded bed 1 20",
+      "triangles": 752,
+      "signedVolume": 0.2465073542297665,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 139,
+      "name": "Grouped v7 Portal wall bonded bed 1 21",
+      "triangles": 752,
+      "signedVolume": 0.23046598102155344,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 140,
+      "name": "Grouped v7 Portal wall bonded bed 1 22",
+      "triangles": 752,
+      "signedVolume": 0.20664247810385838,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 141,
+      "name": "Grouped v7 Portal wall bonded bed 1 23",
+      "triangles": 752,
+      "signedVolume": 0.16929142037298855,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 142,
+      "name": "Grouped v7 Portal wall bonded bed 1 24",
+      "triangles": 752,
+      "signedVolume": 0.2003334101069898,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 143,
+      "name": "Grouped v7 Portal wall bonded bed 1 25",
+      "triangles": 752,
+      "signedVolume": 0.1483895725189787,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 144,
+      "name": "Grouped v7 Portal wall bonded bed 1 26",
+      "triangles": 644,
+      "signedVolume": 0.17161300008197955,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 145,
+      "name": "Grouped v7 Portal wall bonded bed 1 27",
+      "triangles": 752,
+      "signedVolume": 0.09966295772311051,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 146,
+      "name": "Grouped v7 Portal wall bonded bed 1 28",
+      "triangles": 752,
+      "signedVolume": 0.10589293009155042,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 147,
+      "name": "Grouped v7 Portal wall bonded bed 1 29",
+      "triangles": 752,
+      "signedVolume": 0.08729730086255187,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 148,
+      "name": "Grouped v7 Portal wall bonded bed 1 30",
+      "triangles": 928,
+      "signedVolume": 0.31291536194430286,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 149,
+      "name": "Grouped v7 Portal wall bonded bed 1 31",
+      "triangles": 692,
+      "signedVolume": 0.1756329719229216,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 151,
+      "name": "Grouped v7 Portal wall bonded bed 1 33",
+      "triangles": 928,
+      "signedVolume": 0.36501374615436194,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    },
+    {
+      "sourceId": 154,
+      "name": "Grouped v7 Portal wall bonded bed 1 36",
+      "triangles": 828,
+      "signedVolume": 0.36735583631119434,
+      "nonmanifoldEdges": 0,
+      "zeroAreaFaces": 0
+    }
+  ],
+  "seconds": 0.3101910660043359,
+  "scope": "New high-source scene matches grouped v7 survival/cuts. Original source and baked textures untouched. Material AO evaluates only surviving geometry."
+}

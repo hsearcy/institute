@@ -84,13 +84,50 @@ test('A rigid embedded sword caches its real endpoint and follows the hand witho
   hero.updateMatrixWorld(true); blade.bind(new Skeleton([hand]));
   // Runtime normalizes the loaded actor before creating its equipment helper.
   hero.scale.setScalar(1.1); hero.position.set(2, .2, -3); hero.rotation.y = .4;
-  const equipment = new HeldEquipment(hero, hand, new Matrix4()), grip = new Vector3(), tip = new Vector3();
+  const head = new Bone(); hero.add(head);
+  const equipment = new HeldEquipment(hero, hand, new Matrix4(), { head: { parent: head, transform: new Matrix4() } }), grip = new Vector3(), tip = new Vector3();
+  const crown = new Group(), anchor = new Group(), crownTip = new Group();
+  anchor.userData.attachmentRole = 'Grip'; crownTip.userData.attachmentRole = 'Tip'; crownTip.position.y = .2;
+  crown.userData = { attachment: 'head', itemId: 'inferno' }; crown.add(anchor, crownTip);
+  assert(equipment.replace(crown)); assert.equal(blade.visible, true);
   hero.scale.setScalar(1.35); hero.position.set(3, .2, -4);
   for (const angle of [-.8, .1, 1.1]) {
     hand.rotation.x = angle; hand.position.set(.1, 1.2, -.15); hero.updateMatrixWorld(true);
     assert(equipment.sampleWorldBlade(grip, tip));
     assert(tip.distanceTo(blade.getVertexPosition(0, new Vector3()).applyMatrix4(blade.matrixWorld)) < 1e-7);
     assert(grip.distanceTo(hand.getWorldPosition(new Vector3())) < 1e-7);
+    assert(tip.distanceTo(crownTip.getWorldPosition(new Vector3())) > .1, 'A worn crown does not replace the sword endpoint');
   }
   equipment.clear(); assert(equipment.sampleWorldBlade(grip, tip));
+});
+
+test('Wearables follow their own animated socket, retain the sword, and swap cleanly with held weapons', () => {
+  for (const slot of ['head', 'chest', 'belt'] as const) {
+    const f = fixture(), bone = new Bone(); f.hero.add(bone);
+    const socket = new Matrix4().makeTranslation(.02, .16, .08);
+    const equipment = new HeldEquipment(f.hero, f.hand, authoredHeroGrip(), { [slot]: { parent: bone, transform: socket } });
+    assert(equipment.replace(f.source)); assert.equal(f.blade.visible, false);
+    const relic = f.source.clone(true); relic.children[0].userData.attachment = slot;
+    relic.children[0].userData.itemId = 'wearable';
+    assert(equipment.replace(relic)); assert.equal(f.blade.visible, true);
+    assert.equal(f.hand.children.length, 0); assert.equal(bone.children.length, 1);
+    for (const angle of [-.7, .2, 1.1]) {
+      bone.rotation.set(angle, .3, -.2); f.hero.updateMatrixWorld(true);
+      const actual = bone.getObjectByName(f.grip.name)!.matrixWorld;
+      const expected = new Matrix4().multiplyMatrices(bone.matrixWorld, socket);
+      assert(actual.elements.every((value, i) => Math.abs(value - expected.elements[i]) < 1e-7));
+    }
+    assert.equal(equipment.sampleWorldBlade(new Vector3(), new Vector3()), false, 'A wearable marker is never a blade endpoint');
+    assert(equipment.replace(f.source)); assert.equal(bone.children.length, 0); assert.equal(f.blade.visible, false);
+    equipment.clear(); assert.equal(f.blade.visible, true);
+  }
+});
+
+test('An unavailable wearable socket preserves the equipped weapon', () => {
+  const f = fixture(), equipment = new HeldEquipment(f.hero, f.hand, authoredHeroGrip());
+  assert(equipment.replace(f.source));
+  const crown = f.source.clone(true); crown.children[0].userData.attachment = 'head';
+  assert.equal(equipment.replace(crown), false);
+  assert.equal(equipment.itemId, 'apprentice'); assert.equal(f.blade.visible, false);
+  assert.equal(f.hand.children.length, 1);
 });

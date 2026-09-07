@@ -22,8 +22,12 @@ def validate(path,item_id):
     meta=roots[0]['extras'];assert meta['attachment']==spec['attachment']
     assert meta['sourceUnits']=='meters'
     markers={role:next(node for node in doc['nodes'] if node['name']==meta[role.lower()+'Node']) for role in ('Grip','Tip')}
-    assert markers['Grip'].get('translation',[0,0,0])==[0,0,0],'Grip must be actual local palm center'
-    assert markers['Tip'].get('translation',[0,0,0])[1]>0,'Exported +Y must point toward tip'
+    assert markers['Grip'].get('translation',[0,0,0])==[0,0,0],'Grip must be the local palm center or wearable anchor'
+    tip=markers['Tip'].get('translation',[0,0,0])
+    assert len(tip)==3 and all(math.isfinite(value) for value in tip)
+    assert sum(value*value for value in tip)>1e-8,'Tip must identify a distinct physical extremity'
+    if spec['attachment']=='hand.R':
+        assert tip[1]>0,'Exported +Y must point toward the held weapon tip'
     assert not doc.get('skins') and not doc.get('animations'),'Rigid item must follow hero mount'
     assert 'KHR_materials_transmission' not in doc.get('extensionsUsed',[])
     assert all('bufferView' in image and 'uri' not in image for image in doc.get('images',[]))

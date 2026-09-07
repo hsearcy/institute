@@ -12,6 +12,26 @@ export function authoredHeroGrip(): Matrix4 {
   ]);
 }
 
+export type ItemAttachment = 'hand.R' | 'head' | 'chest' | 'belt';
+export interface EquipmentSocket { parent: Object3D; transform: Matrix4 }
+export type EquipmentSockets = Partial<Record<Exclude<ItemAttachment, 'hand.R'>, EquipmentSocket>>;
+
+/** Local frames on the authored rig. Wearables use an upright +Y axis and
+ * +Z front, with the source Grip marker at the band center or suspension point.
+ */
+export function authoredHeroWearableSockets(hero: Object3D): EquipmentSockets {
+  const sockets: EquipmentSockets = {};
+  for (const [slot, bone, x, y, z] of [
+    ['head', 'head', 0, .17, 0],
+    ['chest', 'chest', 0, .27, .15],
+    ['belt', 'pelvis', .18, .03, .13],
+  ] as const) {
+    const parent = hero.getObjectByName(bone);
+    if (parent) sockets[slot] = { parent, transform: new Matrix4().makeTranslation(x, y, z) };
+  }
+  return sockets;
+}
+
 /** A rigid item follows its measured palm socket through every animation.
  * Geometry, textures and materials remain owned by the source asset cache.
  */
@@ -22,7 +42,8 @@ export class HeldEquipment {
   private embeddedBlade?: { grip: Vector3; tip: Vector3 };
   private readonly embedded: { mesh: Mesh; visible: boolean }[] = [];
 
-  constructor(private readonly hero: Object3D, private readonly hand: Object3D, private readonly socket: Matrix4) {
+  constructor(private readonly hero: Object3D, private readonly hand: Object3D, private readonly socket: Matrix4,
+    private readonly wearableSockets: EquipmentSockets = {}) {
     // The authored embedded sword is rigidly weighted to the holding hand.
     // Measure its real distal vertex once; do not invent a length/axis for items
     // whose distinct replacement model has not been installed yet.
@@ -58,11 +79,14 @@ export class HeldEquipment {
     let tip: Object3D | undefined;
     let metadata: Object3D | undefined;
     clone.traverse(node => {
-      if (node.userData.attachment === 'hand.R' && typeof node.userData.itemId === 'string') metadata = node;
+      if (['hand.R', 'head', 'chest', 'belt'].includes(node.userData.attachment) && typeof node.userData.itemId === 'string') metadata = node;
       if (node.userData.attachmentRole === 'Grip') grip = node;
       if (node.userData.attachmentRole === 'Tip') tip = node;
     });
     if (!metadata) return false;
+    const attachment = metadata.userData.attachment as ItemAttachment;
+    const target = attachment === 'hand.R' ? { parent: this.hand, transform: this.socket } : this.wearableSockets[attachment];
+    if (!target || !target.transform.elements.every(Number.isFinite) || Math.abs(target.transform.determinant()) < 1e-8) return false;
     grip ??= clone.getObjectByName(metadata.userData.gripNode);
     tip ??= clone.getObjectByName(metadata.userData.tipNode);
     if (!grip) return false;
@@ -71,16 +95,20 @@ export class HeldEquipment {
     if (!transform.elements.every(Number.isFinite) || Math.abs(transform.determinant()) < 1e-8) return false;
     const mount = new Group(); mount.name = 'HeldEquipment';
     mount.userData.itemId = metadata.userData.itemId;
+    mount.userData.attachment = attachment;
     mount.matrixAutoUpdate = false;
-    mount.matrix.copy(this.socket).multiply(transform.clone().invert());
+    mount.matrix.copy(target.transform).multiply(transform.clone().invert());
     mount.add(clone);
     this.clear();
-    this.hero.traverse(node => {
+    if (attachment === 'hand.R') this.hero.traverse(node => {
       if (node instanceof Mesh && node.userData.sourcePart === 'equipped_sword') {
         this.embedded.push({ mesh: node, visible: node.visible }); node.visible = false;
       }
     });
-    this.hand.add(mount); this.mounted = mount; this.grip = grip; this.tip = tip;
+    target.parent.add(mount); this.mounted = mount;
+    // A worn relic augments the hero's embedded weapon. Its markers must never
+    // turn a crown or pendant into the endpoints of the Cleave blade trail.
+    if (attachment === 'hand.R') { this.grip = grip; this.tip = tip; }
     return true;
   }
 
@@ -97,7 +125,7 @@ export class HeldEquipment {
    * Caller-owned vectors avoid allocations in a live weapon trail.
    */
   sampleWorldBlade(grip: Vector3, tip: Vector3): boolean {
-    if (!this.mounted && this.embeddedBlade) {
+    if ((!this.mounted || this.mounted.userData.attachment !== 'hand.R') && this.embeddedBlade) {
       this.hand.localToWorld(grip.copy(this.embeddedBlade.grip));
       this.hand.localToWorld(tip.copy(this.embeddedBlade.tip));
       return true;

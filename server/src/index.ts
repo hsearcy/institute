@@ -31,7 +31,7 @@ import {
 
 const PORT = Number(process.env.PORT ?? 8787);
 const TUTOR_MODEL = process.env.TUTOR_MODEL ?? "claude-sonnet-5";
-const ELEVEN_VOICE = process.env.ELEVENLABS_VOICE_ID ?? "21m00Tcm4TlvDq8ikWAM";
+const ELEVEN_VOICE = process.env.ELEVENLABS_VOICE_ID ?? "0T1vZaJAzLvhFnhCwAAh";
 
 // ---- DB --------------------------------------------------------------------
 const db = new Database(process.env.DB_PATH ?? "data/institute.db", { create: true });

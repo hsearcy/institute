@@ -35,6 +35,10 @@
 .rpg-loot-actions { display:flex; flex-direction:column; gap:7px; justify-content:center; max-width:210px; }
 .rpg-loot-actions button { font-size:12px; padding:8px 12px; }
 .rpg-loot-collection { margin:28px 0; text-align:left; }
+.rpg-copy-strength{display:flex;align-items:center;flex-wrap:wrap;gap:15px;margin:10px 0 5px;padding-top:9px;border-top:1px solid #859e8640;}
+.rpg-copy-strength>strong{font:32px/1 'Cinzel',Georgia,serif;color:#ffe4ad;}
+.rpg-copy-strength>strong>span{font:10px 'Nunito',sans-serif;letter-spacing:1px;margin-left:7px;color:#c7cab6;}
+.rpg-copy-label{display:inline-block;margin-left:7px;padding:1px 7px;border:1px solid #a2a68a55;border-radius:3px;color:#d9ddc7;}
 .rpg-tier-choice { display:flex; flex-wrap:wrap; gap:7px; align-items:center; margin:20px 0; }
 .rpg-tier-choice span { width:100%; text-align:left; color:#d7c49e; }
 .rpg-tier-choice button { padding:9px 13px; }

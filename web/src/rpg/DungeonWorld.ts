@@ -12,6 +12,8 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { dungeonCameraHalfHeight, dungeonCameraVerticalOffset, dungeonPortraitOffset, dungeonCombatFrame } from './world/viewport';
 import { crystalClusterGeometry, crystalClusterMaterial } from './world/crystals';
 import { iceShardGeometry, iceShardMaterial } from './world/ice';
+import { createDirectedFlight, directionalFlightDuration, sampleGroundBranch, targetHeading } from './world/directional';
+import { createIceLanceWake, arcLanceGeometry, arcLanceMaterial } from './world/directionalVisuals';
 import { lightningGeometry, lightningMaterial } from './world/lightning';
 import { createBallLightning, createBallLightningCharge, ballLightningReleasePosition, createBallLightningContacts, ballLightningVolumeMaterial, ballLightningFilamentMaterial, ballLightningContactMaterial } from './world/ballLightning';
 import { createFireNova, createFireNovaContacts, createNovaIgnition, fireNovaFrontMaterial, fireNovaVolumeMaterial } from './world/fireNova';
@@ -120,6 +122,7 @@ export class DungeonWorld {
   private combatSafeBottom = 0;
   private attacking = false;
   private attackAge = 0;
+  private attackHeading?: number;
   private attackDuration = 2.65;
   private lastAttack: { spellId: string; effect: string; options: AttackOptions } | null = null;
   private heroMotion?: (age: number) => THREE.Vector3;
@@ -1165,6 +1168,35 @@ export class DungeonWorld {
     this.attackDuration = effect === 'cleave' ? 2.2 : ['firestorm', 'blizzard', 'tempest', 'frost-guardian'].includes(effect) ? 3 : 2.7;
     const origin = this.hero.position.clone().setY(.12);
     const target = origin.clone().add(new THREE.Vector3(.3, 0, -3.8));
+    const directional = ['ice-lance', 'arc-lance', 'glacial-surge', 'phoenix-dive'].includes(effect);
+    this.attackHeading = directional ? targetHeading(origin, targets[0].root.position) : undefined;
+    if (this.attackHeading !== undefined) setPlanarHeroHeading(this.heroVisual.rotation, this.attackHeading);
+    const castOrigin = () => {
+      const at = new THREE.Vector3(), marker = this.heroVisual.getObjectByName('CastOrigin');
+      if (marker) marker.getWorldPosition(at);
+      else this.heroVisual.localToWorld(at.set(-.28, 1.24, .32));
+      return at;
+    };
+    const frostContact = (enemy: Enemy, index: number, at: THREE.Vector3, from: THREE.Vector3, scale = .8) => {
+      const contact = createFrostfallContact(index + this.encounter * 11, scale, at.clone().sub(from)), started = this.elapsed;
+      const frozen = at.clone();
+      contact.update(frozen, 0, this.elapsed);
+      contact.layers.forEach((layer, n) => this.effect(layer, .92, n === 0 ? () => contact.update(frozen, this.elapsed - started, this.elapsed) : undefined));
+      // A compact contact glint makes the exact struck surface legible at the
+      // gameplay viewport; the existing broken crystal carries the aftermath.
+      const glint = new THREE.Mesh(new THREE.PlaneGeometry(.62 * scale, .62 * scale), new THREE.MeshBasicMaterial({ color: 0xc2f1ff, map: this.glowMap, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+      glint.position.copy(frozen); glint.quaternion.copy(this.camera.quaternion);
+      this.effect(glint, .12, t => { glint.scale.setScalar(.8 + t * .3); glint.material.opacity = (1 - THREE.MathUtils.smoothstep(t, .28, 1)) * .92; });
+      const incoming = at.clone().sub(from).normalize();
+      for (let chip = 0; chip < 4; chip++) {
+        const splinter = new THREE.Mesh(new THREE.TetrahedronGeometry(.045 + chip % 2 * .014), new THREE.MeshBasicMaterial({ color: chip % 2 ? 0xa3deef : 0xe3faff, transparent: true, toneMapped: false }));
+        const velocity = new THREE.Vector3(Math.sin(index * 2 + chip * 2.4) * 1.7, .7 + chip * .23, Math.cos(index * 2 + chip * 2.4) * 1.7).addScaledVector(incoming, -.7);
+        splinter.position.copy(frozen);
+        this.effect(splinter, .24, t => { splinter.position.copy(frozen).addScaledVector(velocity, t * .24); splinter.position.y -= t * t * .09; splinter.rotation.set(t * 7 + chip, t * 4, chip); splinter.material.opacity = 1 - THREE.MathUtils.smoothstep(t, .35, 1); });
+      }
+      this.hitEnemy(enemy, color, hitById.get(enemy.id), from);
+      this.shake = Math.max(this.shake, enemy.brute ? .12 : .055);
+    };
     if (mountedCleave) {
       const started = this.elapsed;
       const duration = CLEAVE_RELEASE + (Math.max(...targets.map(enemy => enemy.root.position.distanceTo(this.hero.position))) + 3) / CLEAVE_SPEED + .3;
@@ -1215,8 +1247,6 @@ export class DungeonWorld {
       } else if (effect === 'cleave') {
         const sweepAngle = (Math.atan2(offset.x, offset.z) - .2 + Math.PI * 2) % (Math.PI * 2);
         contact = .08 + sweepAngle / (Math.PI * 2) * .5;
-      } else if (['ice-lance', 'arc-lance', 'glacial-surge', 'phoenix-dive'].includes(effect)) {
-        contact = delay + Math.max(0, -offset.z + 1) * .055;
       } else if (effect === 'meteor') contact = .65 + enemy.root.position.distanceTo(target) * .035;
       this.schedule(contact, () => this.hitEnemy(enemy, color, hitById.get(enemy.id)));
     });
@@ -1250,7 +1280,7 @@ export class DungeonWorld {
     }
     if (effect !== 'nova' && effect !== 'ball-lightning' && !physicalCleave && !mountedCleave && !anchoredChain) this.emit(origin.clone().setY(1.3), color, 28, 1.1, .75);
     this.schedule(.18, () => {
-      this.burstLight.position.copy(origin).setY(2.8); this.burstLight.color.setHex(color); this.burstLight.intensity = anchoredChain ? 0 : mountedCleave ? 12 : effect === 'frostfall' ? 24 : 100;
+      this.burstLight.position.copy(origin).setY(2.8); this.burstLight.color.setHex(color); this.burstLight.intensity = anchoredChain ? 0 : mountedCleave ? 12 : effect === 'frostfall' || effect === 'ice-lance' || effect === 'glacial-surge' ? 24 : effect === 'arc-lance' ? 28 : 100;
       switch (effect) {
         case 'cleave': {
           if (mountedCleave) break;
@@ -1276,11 +1306,14 @@ export class DungeonWorld {
           resolveHorde(.72); break;
         }
         case 'phoenix-dive': {
-          const flightStarted = this.elapsed;
+          const flightStarted = this.elapsed, landing = targets[0].root.position.clone().setY(0);
+          const flightHeading = targetHeading(origin, landing), travel = landing.clone().sub(origin).setY(0);
           const flightProgress = () => THREE.MathUtils.clamp((this.elapsed - flightStarted) / 1.15, 0, 1);
           const flightDisplacement = () => {
-            const flight = Math.sin(flightProgress() * Math.PI);
-            return new THREE.Vector3(flight * 1.7, flight * 2, -flight * 5.5);
+            const t = flightProgress(), outbound = t <= .55;
+            const phase = outbound ? t / .55 : (t - .55) / .45;
+            const distance = outbound ? THREE.MathUtils.smoothstep(phase, 0, 1) : 1 - THREE.MathUtils.smoothstep(phase, 0, 1);
+            return travel.clone().multiplyScalar(distance).setY(Math.sin(phase * Math.PI) * (outbound ? 2 : .65));
           };
           // Scheduled effects start after the attack windup. Use that same clock
           // for the rider, then attach feathers after the rider's hop/idle pose.
@@ -1291,6 +1324,7 @@ export class DungeonWorld {
             this.effect(wing, 1.15, () => {
               const t = flightProgress();
               this.heroVisual.getWorldPosition(wing.position);
+              wing.rotation.y = flightHeading + Math.PI;
               wing.rotation.z = side * (.11 * Math.sin(t * Math.PI * 2) - .05);
               wing.scale.x = .62 + .38 * Math.sin(Math.min(1, t * 1.8) * Math.PI * .5);
               material.uniforms.time.value = this.elapsed + side * .7;
@@ -1299,7 +1333,7 @@ export class DungeonWorld {
           }
           for (const smoke of [false, true]) {
             const material = smoke ? stormWispMaterial(0x66504b) : phoenixFeatherMaterial();
-            const tail = new THREE.Mesh(phoenixTailGeometry(), material); tail.position.copy(origin);
+            const tail = new THREE.Mesh(phoenixTailGeometry(), material); tail.position.copy(origin); tail.rotation.y = flightHeading + Math.PI;
             if (smoke) tail.scale.set(1.45, 1.05, 1.13);
             this.effect(tail, smoke ? 1.45 : 1.15, t => {
               this.heroVisual.getWorldPosition(tail.position);
@@ -1311,8 +1345,30 @@ export class DungeonWorld {
           for (let plume = 0; plume < 5; plume++) this.schedule(.12 + plume * .14, () => {
             this.emit(origin.clone().add(flightDisplacement()).add(new THREE.Vector3(0, 1.5, 0)), 0xf68b25, 11, 1.4, .7);
           });
-          for (let i = 0; i < 7; i++) this.schedule(.18 + i * .06, () => this.impact(origin.clone().add(new THREE.Vector3(Math.sin(i) * 1.1, .15, -i * 1.25)), 0xff8c25, 1.6));
-          resolveHorde(.48); this.shake = .3; break;
+          this.schedule(1.15 * .55, () => {
+            const at = targets[0].root.position.clone();
+            this.impact(at, 0xff8c25, 1.8);
+            this.hitEnemy(targets[0], color, hitById.get(targets[0].id), origin);
+            this.shake = .2;
+            // The dive lands on its primary victim; burning feathers visibly
+            // branch from that landing to every remaining authoritative hit.
+            targets.slice(1).forEach((enemy, index) => this.schedule(index * .045, () => {
+              const from = at.clone().setY(.9), duration = directionalFlightDuration(from, enemy.root.position, 22), started = this.elapsed;
+              const material = phoenixFeatherMaterial(), feather = new THREE.Mesh(phoenixTailGeometry().translate(0, -1.7, 1.6), material);
+              feather.scale.setScalar(.34); feather.name = `phoenix-strike:${enemy.id}`; feather.userData.targetId = enemy.id;
+              const flight = createDirectedFlight(from, duration, to => to.copy(enemy.root.position).add(new THREE.Vector3(0, enemy.height * .5, 0)),
+                (contact, release) => { this.hitEnemy(enemy, color, hitById.get(enemy.id), release); this.emit(contact, 0xffb953, 6, .7, .3); });
+              const update = () => {
+                const age = this.elapsed - started; flight.update(age);
+                feather.position.copy(flight.tip);
+                feather.rotation.y = targetHeading(flight.from, flight.to) + Math.PI;
+                material.uniforms.time.value = this.elapsed;
+                material.uniforms.opacity.value = Math.min(1, age * 20) * (1 - THREE.MathUtils.smoothstep(age, duration, duration + .07));
+              };
+              update(); this.effect(feather, duration + .08, update); this.schedule(duration, update);
+            }));
+          });
+          break;
         }
         case 'firestorm': {
           for (let i = 0; i < 9; i++) this.schedule(i * .13, () => {
@@ -1350,16 +1406,49 @@ export class DungeonWorld {
           break;
         }
         case 'ice-lance': {
-          const directions = options.pierce ? [-.48, 0, .48] : [0];
-          for (const angle of directions) {
-            const end = origin.clone().add(new THREE.Vector3(Math.sin(angle) * 10, .5, -Math.cos(angle) * 10));
-            this.projectile(origin.clone().setY(1.25), end, 0xc7f6ff, .48, .48, () => this.impact(end, 0x8bddff, 2.3), true);
-            this.stroke([origin.clone().setY(1), end], 0x58bfe6, .055, 1.05);
-          }
-          resolveHorde(.32); break;
+          // The server may select victims on either side of the hero. Every
+          // selected body gets an aimed lance, rather than a cosmetic forward
+          // cone followed by unrelated off-screen damage cues.
+          targets.forEach((enemy, index) => this.schedule(index * .055, () => {
+            const from = castOrigin(), duration = directionalFlightDuration(from, enemy.root.position);
+            const started = this.elapsed, shard = createFrostfallCrystal(index + this.encounter * 11, options.pierce ? 1.2 : 1.05, .28);
+            const wake = createIceLanceWake(), view = this.camera.getWorldDirection(new THREE.Vector3()).negate();
+            const flight = createDirectedFlight(from, duration, to => to.copy(enemy.root.position).add(new THREE.Vector3(0, enemy.height * .55, 0)),
+              (at, release) => frostContact(enemy, index, at, release, options.pierce ? .95 : .75));
+            const update = () => {
+              const age = this.elapsed - started; flight.update(age);
+              const opacity = 1 - THREE.MathUtils.smoothstep(age, duration, duration + .055);
+              shard.update(flight.tip, flight.direction, this.elapsed, opacity);
+              wake.update(flight.tip, flight.direction, view, Math.min(1, age * 16) * opacity, flight.tip.distanceTo(flight.from));
+            };
+            update(); this.effect(wake.mesh, duration + .065);
+            shard.layers.forEach((layer, n) => {
+              layer.name = `ice-lance:${enemy.id}`; layer.userData.targetId = enemy.id;
+              this.effect(layer, duration + .065, n === 0 ? update : undefined);
+            });
+            // Same flight update establishes the final visible tip and contact,
+            // including frames that skipped past the mesh's visual lifetime.
+            this.schedule(duration, update);
+          }));
+          break;
         }
         case 'glacial-surge': {
-          this.iceWave(origin, Boolean(options.wide)); resolveHorde(.42); this.shake = .28; break;
+          targets.forEach((enemy, index) => {
+            const from = origin.clone(), to = enemy.root.position.clone().setY(.04);
+            const duration = directionalFlightDuration(from, to, 14);
+            const steps = Math.max(3, Math.ceil(from.distanceTo(to) / 1.15));
+            for (let step = 1; step <= steps; step++) this.schedule(duration * step / steps, () => {
+              // The terminal crystal erupts at the live body, never at a
+              // former idle position or on the opposite side of the caster.
+              if (step === steps) to.copy(enemy.root.position).setY(.04);
+              const progress = step === steps ? 1 : THREE.MathUtils.clamp((step + Math.sin(step * 3.13 + index) * .24) / steps, 0, 1);
+              const at = sampleGroundBranch(from, to, progress, index);
+              const height = (.5 + Math.abs(Math.sin(step * 3.73 + index * 2.31)) * .65 + progress * .22) * (options.wide ? 1.12 : 1);
+              this.glacialShard(at, targetHeading(from, to), height, index * 13 + step, enemy.id);
+              if (step === steps) this.schedule(.11, () => frostContact(enemy, index, enemy.root.position.clone().add(new THREE.Vector3(0, enemy.height * .45, 0)), from, .9));
+            });
+          });
+          this.shake = .12; break;
         }
         case 'blizzard': {
           this.cyclone(origin, 0x86c4e2, 7.5, 2.9, 2.4, true);
@@ -1384,20 +1473,23 @@ export class DungeonWorld {
           resolveHorde(.17); break;
         }
         case 'arc-lance': {
-          const end = origin.clone().add(new THREE.Vector3(0, .8, -13));
-          for (let i = 0; i < 3; i++) this.schedule(i * .16, () => {
-            this.bolt(origin.clone().setY(1.2), end, 0x91bcff, .1, .5);
-            if (options.pierce) {
-              const split = origin.clone().lerp(end, .58).setY(1.1);
-              for (const side of [-1, 1]) {
-                const splinter = end.clone().add(new THREE.Vector3(side * 4.2, .2, 2.1));
-                this.bolt(split, splinter, 0xd5edff, .075, .48);
-                this.emit(splinter, 0x9fcdff, 7, 1.5, .45);
-              }
-            }
-            targets.forEach((enemy, n) => { if (n % 3 === i) this.bolt(end.clone().lerp(origin, .45), enemy.origin.clone().setY(1), 0xb8daff, .035, .4); });
-          });
-          resolveHorde(.22); this.shake = .2; break;
+          targets.forEach((enemy, index) => this.schedule(.13 + index * .065, () => {
+            const from = castOrigin(), at = enemy.root.position.clone().add(new THREE.Vector3(0, enemy.height * .55, 0));
+            // The bright backbone terminates at its actual victim. Piercing
+            // creates a narrower branch from the preceding struck body.
+            const previous = options.pierce && index > 0 ? targets[index - 1].root.position.clone().add(new THREE.Vector3(0, targets[index - 1].height * .55, 0)) : from;
+            const view = this.camera.getWorldDirection(new THREE.Vector3()).negate(), material = arcLanceMaterial();
+            const discharge = new THREE.Mesh(arcLanceGeometry(previous, at, view, index + this.encounter * 17), material);
+            this.effect(discharge, .3, t => { material.uniforms.progress.value = t; });
+            const bolt = this.effects[this.effects.length - 1].mesh; bolt.name = `arc-lance:${enemy.id}`; bolt.userData.targetId = enemy.id;
+            this.hitEnemy(enemy, color, hitById.get(enemy.id), previous);
+            this.emit(at, 0xb9dcff, 8, .75, .22);
+            const flash = new THREE.Mesh(new THREE.PlaneGeometry(.75, .75), new THREE.MeshBasicMaterial({ color: 0x7caaff, map: this.glowMap, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+            flash.position.copy(at); flash.quaternion.copy(this.camera.quaternion);
+            this.effect(flash, .15, t => { flash.scale.setScalar(.45 + t); flash.material.opacity = Math.pow(1 - t, 2) * .8; });
+            this.shake = Math.max(this.shake, enemy.brute ? .095 : .05);
+          }));
+          break;
         }
         case 'thunderclap': {
           this.bolt(target.clone().setY(13), target.clone().setY(.1), 0xe0efff, .2, .45);
@@ -1703,6 +1795,35 @@ export class DungeonWorld {
       material.opacity = 1 - THREE.MathUtils.smoothstep(t, .87, 1);
     } else material.opacity = .94 * (1 - THREE.MathUtils.smoothstep(t, .78, 1)); this.emit(mesh.position, color, ice ? 2 : 3, size * .8, .6); });
     this.schedule(duration, hit);
+  }
+
+  private glacialShard(at: THREE.Vector3, heading: number, height: number, seed: number, targetId: string): void {
+    const crystal = createFrostfallCrystal(seed, height / 1.55, .95);
+    const direction = new THREE.Vector3(Math.sin(heading) * (.18 + Math.sin(seed) * .08), 1, Math.cos(heading) * .2).normalize();
+    const tip = at.clone();
+    crystal.layers.forEach((layer, index) => {
+      layer.name = `glacial-surge:${targetId}`; layer.userData.targetId = targetId;
+      this.effect(layer, 1.05, index === 0 ? t => {
+        const emergence = THREE.MathUtils.smoothstep(t, 0, .13);
+        tip.copy(at).addScaledVector(direction, height * emergence - Math.max(0, t - .65) * height * 1.5);
+        crystal.update(tip, direction, this.elapsed, (1 - THREE.MathUtils.smoothstep(t, .68, 1)) * .96);
+        // Scale the emergence rather than translating a full shard through
+        // the floor, which would leave transparent crystal under the tiles.
+        crystal.layers.forEach(part => part.scale.set(1, emergence, 1));
+      } : undefined);
+    });
+    // Sparse broken chips keep each crown irregular without multiplying the
+    // expensive clear-crystal layers for every decorative satellite.
+    if (seed % 2 === 0) {
+      const chip = new THREE.Mesh(iceShardGeometry(.15, height * .37, seed + 7), iceShardMaterial());
+      chip.position.copy(at).add(new THREE.Vector3(Math.cos(seed) * .23, 0, Math.sin(seed) * .23));
+      chip.rotation.set(Math.sin(seed) * .35, seed, .3);
+      this.effect(chip, .94, t => { chip.scale.y = THREE.MathUtils.smoothstep(t, 0, .14); chip.material.opacity = 1 - THREE.MathUtils.smoothstep(t, .6, 1); });
+    }
+    const frost = new THREE.Mesh(new THREE.PlaneGeometry(.8, .7), new THREE.MeshBasicMaterial({ color: 0x50869b, map: this.glowMap, transparent: true, opacity: .25, depthWrite: false }));
+    frost.position.copy(at).y = .035; frost.rotation.set(-Math.PI / 2, 0, heading + seed);
+    this.effect(frost, .9, t => { frost.material.opacity = Math.sin(t * Math.PI) * .28; });
+    this.emit(at.clone().setY(.16), 0xafd9e2, 3, .65, .35);
   }
 
   private iceWave(origin: THREE.Vector3, wide: boolean): void {
@@ -2018,7 +2139,8 @@ export class DungeonWorld {
       setPlanarHeroHeading(this.heroVisual.rotation, heading);
     } else {
       this.heroVisual.position.y = this.heroUsesAuthoredMotion ? 0 : Math.sin(this.elapsed * 2.4) * .018;
-      const heading = THREE.MathUtils.lerp(this.heroVisual.rotation.y, Math.PI * .9, 1 - Math.exp(-delta * 4));
+      const heading = this.attacking && this.attackHeading !== undefined ? this.attackHeading
+        : THREE.MathUtils.lerp(this.heroVisual.rotation.y, Math.PI * .9, 1 - Math.exp(-delta * 4));
       setPlanarHeroHeading(this.heroVisual.rotation, heading);
     }
     if (this.attacking) {

@@ -1,6 +1,7 @@
 import { expect, test } from 'bun:test';
 import { RPG_ITEMS, rpgNormalizeLoot, rpgCampOffers, type RpgState, type State, type RpgCampState } from '@institute/shared';
-import { renderCampWorkshop, renderLootCards, renderPinnedGoal, renderNextDungeonReward, goalSummary, collectionLootChoice } from '../src/rpg/campView';
+import { renderCampWorkshop, renderLootCards, renderPinnedGoal, renderNextDungeonReward, goalSummary, collectionLootChoice, lootComparison } from '../src/rpg/campView';
+import { renderEquipmentView } from '../src/rpg/equipmentView';
 import { renderVictoryView } from '../src/rpg/victoryView';
 
 function fixture(): RpgState {
@@ -34,7 +35,10 @@ test('rolled gear compares actual spell damage and protects equipped and last co
   const html = renderLootCards(state, 100, true);
   expect(html).toContain('+6 power');
   expect(html).toContain('Crystal Shards (learn to activate)');
-  expect(html).toContain('(+6 vs equipped)');
+  expect(html).toContain('↑ +6 damage');
+  expect(html).toContain('Copy 2 of 2');
+  expect(html).toContain('Copy 1 of 2');
+  expect(html).toContain('Only copy');
   expect(html).toMatch(/data-salvage-loot="legacy:apprentice" disabled/);
   expect(html).toMatch(/data-salvage-loot="legacy:cinderwand" disabled/);
   expect(html).toMatch(/data-salvage-loot="better"  title/);
@@ -83,4 +87,35 @@ test('switching collection items chooses the copy with best actual spell damage'
   expect(collectionLootChoice(state, 'cinderwand')?.id).toBe('skill-bonus');
   expect(collectionLootChoice(state, 'missing')).toBeUndefined();
   expect(state.equippedLootId).toBe('legacy:apprentice');
+});
+
+
+test('equipment preview respects spell affinity and copy bonuses without mutating saved loadout', () => {
+  const state = fixture();
+  state.loot!.push({ id: 'duplicate', itemId: 'cinderwand', bonusPower: 4, upgradeLevel: 1 });
+  const before = JSON.stringify(state), copy = state.loot!.at(-1)!;
+  // Cinderbranch adds 3 Fire Nova power; its rolled +6 also works with Heavy Cleave.
+  expect(lootComparison(state, 'cinderwand', copy).delta).toBe(9);
+  expect(lootComparison({ ...state, selectedSpellId: 'cleave' }, 'cinderwand', copy).delta).toBe(6);
+  const html = renderEquipmentView(state, '', true);
+  expect(html).toContain('↑ +9 damage');
+  expect(html).toContain('2 copies');
+  expect(html).toContain('their powers do not add together');
+  expect(html).toContain('Your equipped copy and last copy are protected');
+  expect(JSON.stringify(state)).toBe(before);
+});
+
+test('an equipped relic advertises a stronger owned copy without silently equipping it', () => {
+  const state = fixture();
+  state.loot!.push({ id: 'upgrade-copy', itemId: 'apprentice', bonusPower: 2, upgradeLevel: 2 });
+  const originalId = state.equippedLootId;
+  const html = renderEquipmentView(state, '', true);
+  expect(html).toContain('Stronger copy below');
+  expect(html).toContain('↑ +6 damage waiting');
+  expect(html).toContain('href="#rpg-loot-upgrade-copy"');
+  expect(html).toContain('id="rpg-loot-upgrade-copy"');
+  expect(collectionLootChoice(state, 'apprentice')?.id).toBe(originalId);
+  expect(state.equippedLootId).toBe(originalId);
+  state.equippedLootId = 'upgrade-copy';
+  expect(renderEquipmentView(state, '', true)).not.toContain('Stronger copy below');
 });

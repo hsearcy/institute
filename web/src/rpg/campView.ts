@@ -1,4 +1,4 @@
-import { RPG_ITEMS, RPG_SKILLS, RPG_REGIONS, RPG_MAX_ITEM_UPGRADE, rpgForgeCost, rpgLootPower, rpgEquippedLoot, rpgSalvageValue, rpgUnlockedTier, rpgDungeonForgeDust, rpgNextRelicHunt, rpgSpellCombatStats, type RpgState, type RpgLootInstance, type RpgCampState, type State, type Quest } from '@institute/shared';
+import { RPG_ITEMS, RPG_SPELLS, RPG_SKILLS, RPG_REGIONS, RPG_MAX_ITEM_UPGRADE, rpgForgeCost, rpgLootPower, rpgEquippedLoot, rpgSalvageValue, rpgUnlockedTier, rpgDungeonForgeDust, rpgNextRelicHunt, rpgSpellCombatStats, type RpgState, type RpgLootInstance, type RpgCampState, type State, type Quest } from '@institute/shared';
 import { escapeHtml as esc, relicArt, icon } from './icons';
 
 export type CampTab = 'quests' | 'merchant' | 'forge';
@@ -60,18 +60,27 @@ export function collectionLootChoice(state: RpgState, itemId: string): RpgLootIn
     return damage(loot) > damage(best) ? loot : best;
   }, undefined);
 }
+/** Compare real combat output, including scoped relic bonuses and learned bonus ranks. */
+export function lootComparison(state: RpgState, itemId: string, loot?: RpgLootInstance) {
+  const preview = rpgSpellCombatStats({ ...state, equippedItemId: itemId, equippedLootId: loot?.id ?? null });
+  return { ...preview, delta: preview.damage - rpgSpellCombatStats(state).damage };
+}
+export function damageComparisonLabel(delta: number): string {
+  return delta > 0 ? `↑ +${delta} damage` : delta < 0 ? `↓ ${delta} damage` : 'Same damage';
+}
 export function renderLootCards(state: RpgState, gems?: number, forge = false): string {
   const equipped = rpgEquippedLoot(state);
-  const currentDamage = rpgSpellCombatStats(state).damage;
-  return [...(state.loot ?? [])].sort((a, b) => Number(b.id === state.equippedLootId) - Number(a.id === state.equippedLootId) || rpgLootPower(b) - rpgLootPower(a)).map(loot => {
+  const spellName = RPG_SPELLS.find(spell => spell.id === state.selectedSpellId)!.name;
+  return [...(state.loot ?? [])].sort((a, b) => Number(b.id === state.equippedLootId) - Number(a.id === state.equippedLootId) || lootComparison(state, b.itemId, b).damage - lootComparison(state, a.itemId, a).damage).map(loot => {
     const item = RPG_ITEMS.find(item => item.id === loot.itemId)!;
     const selected = equipped?.id === loot.id;
     const cost = rpgForgeCost(loot), maxed = loot.upgradeLevel >= RPG_MAX_ITEM_UPGRADE;
-    const canSalvage = !selected && state.loot!.filter(other => other.itemId === loot.itemId).length > 1;
-    const preview = rpgSpellCombatStats({ ...state, equippedItemId: loot.itemId, equippedLootId: loot.id }).damage;
-    const delta = preview - currentDamage;
+    const copies = state.loot!.filter(other => other.itemId === loot.itemId);
+    const copyNumber = copies.findIndex(other => other.id === loot.id) + 1;
+    const canSalvage = !selected && copies.length > 1;
+    const { damage: preview, delta, targets } = lootComparison(state, loot.itemId, loot);
     const pinned = state.goal?.kind === 'upgrade' && state.goal.id === loot.id;
-    return `<article class="rpg-loot-card ${item.rarity} ${selected ? 'equipped' : ''}" data-loot-card="${esc(loot.id)}">${relicArt(item.id)}<div><small>${selected ? 'EQUIPPED' : item.rarity.toUpperCase()}</small><h3>${esc(item.name)}</h3><p class="rpg-affixes">${esc(lootStats(loot, state))}</p><small>${preview} damage with your current spell${selected ? '' : ` (${delta > 0 ? '+' : ''}${delta} vs equipped)`}</small>${forge ? `<small>${maxed ? 'Fully forged · 5/5' : `Next forge: ${cost.gems} gems + ${cost.dust} dust → +2 power`}</small>` : ''}</div><div class="rpg-loot-actions"><button data-loot-equip="${esc(loot.id)}" ${selected ? 'disabled' : ''}>${selected ? '✓ Equipped' : 'Equip this roll'}</button>${forge ? `<button class="rpg-primary" data-forge-loot="${esc(loot.id)}" ${maxed || gems === undefined || gems < cost.gems || (state.forgeDust ?? 0) < cost.dust ? 'disabled' : ''}>${maxed ? 'Maxed' : `Upgrade to +${loot.upgradeLevel + 1}<small>${cost.gems} gems · ${cost.dust} dust</small>`}</button>${!maxed ? `<button data-pin-kind="upgrade" data-pin-id="${esc(loot.id)}" aria-pressed="${pinned}">${pinned ? '✓ Your goal' : 'Work toward upgrade'}</button>` : ''}<button data-salvage-loot="${esc(loot.id)}" ${canSalvage ? '' : 'disabled'} title="${selected ? 'Your equipped relic is protected' : !canSalvage ? 'Keep the last copy of each relic' : 'Review before reclaiming'}">Reclaim · ${rpgSalvageValue(loot)} dust</button>` : ''}</div></article>`;
+    return `<article class="rpg-loot-card ${item.rarity} ${selected ? 'equipped' : ''}" id="rpg-loot-${esc(loot.id)}" data-loot-card="${esc(loot.id)}">${relicArt(item.id)}<div><small>${selected ? '✓ EQUIPPED' : item.rarity.toUpperCase()} <span class="rpg-copy-label">${copies.length > 1 ? `Copy ${copyNumber} of ${copies.length}` : 'Only copy'}</span></small><h3>${esc(item.name)}</h3><div class="rpg-copy-strength"><strong>${preview}<span>DAMAGE</span></strong><span class="rpg-damage-delta ${delta > 0 ? 'better' : delta < 0 ? 'lower' : 'same'}">${selected ? 'In use' : damageComparisonLabel(delta)}</span></div><small>${esc(spellName)} · per target · up to ${targets} targets</small><p class="rpg-affixes">${esc(lootStats(loot, state))}</p>${forge ? `<small>${maxed ? 'Fully forged · 5/5' : `Next forge: ${cost.gems} gems + ${cost.dust} dust → +2 power`}</small>` : ''}</div><div class="rpg-loot-actions"><button data-loot-equip="${esc(loot.id)}" ${selected ? 'disabled' : ''}>${selected ? '✓ Equipped' : 'Equip this copy'}</button>${forge ? `<button class="rpg-primary" data-forge-loot="${esc(loot.id)}" ${maxed || gems === undefined || gems < cost.gems || (state.forgeDust ?? 0) < cost.dust ? 'disabled' : ''}>${maxed ? 'Maxed' : `Upgrade to +${loot.upgradeLevel + 1}<small>${cost.gems} gems · ${cost.dust} dust</small>`}</button>${!maxed ? `<button data-pin-kind="upgrade" data-pin-id="${esc(loot.id)}" aria-pressed="${pinned}">${pinned ? '✓ Your goal' : 'Work toward upgrade'}</button>` : ''}<button data-salvage-loot="${esc(loot.id)}" ${canSalvage ? '' : 'disabled'} title="${selected ? 'Your equipped relic is protected' : !canSalvage ? 'Keep the last copy of each relic' : 'Review before reclaiming'}">Reclaim · ${rpgSalvageValue(loot)} dust</button>` : ''}</div></article>`;
   }).join('');
 }
 export function renderNextDungeonReward(state: RpgState, camp?: RpgCampState | null): string {

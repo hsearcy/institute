@@ -30,3 +30,26 @@
  .rpg-inventory.rpg-relic-slots{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;}.rpg-armory-collection-heading h3{font-size:16px;}.rpg-armory-collection-heading>span{font-size:8px;}.rpg-relic-slots .rpg-item .rpg-armory-slot-name{font-size:12px;min-height:34px;}
 }
 @media(max-width:380px){.rpg-armory-equipped{grid-template-columns:120px minmax(0,1fr);gap:10px;padding:13px 10px;}.rpg-armory-display{width:120px;}.rpg-armory-copy h3{font-size:16px;}.rpg-dialog .rpg-armory-copy p{font-size:10px;}.rpg-relic-slots .rpg-item .rpg-armory-slot-name{font-size:11px;}}
+
+/* Strength and copy counts are visible before opening a relic. */
+.rpg-inventory.rpg-relic-slots{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
+#rpg-ui .rpg-relic-slots .rpg-item{padding:6px 6px 10px;}
+.rpg-relic-slots .rpg-item .rpg-slot-strength{display:block;flex:none;width:100%;margin:6px 0;font:9px 'Nunito',sans-serif;letter-spacing:.6px;color:#d5c8ab;}
+.rpg-slot-strength strong{font:27px/1 'Cinzel',Georgia,serif;color:#ffe5ad;margin-right:3px;}
+.rpg-relic-slots .rpg-item .rpg-slot-copies{display:block;flex:none;font:10px 'Nunito',sans-serif;color:#bfc8b5;margin-top:7px;}
+.rpg-damage-delta{display:inline-block;font:600 11px/1.5 'Nunito',sans-serif;color:#cbd0bd;}
+.rpg-damage-delta.better{color:#a8f0ad;}.rpg-damage-delta.lower{color:#f3b1a0;}
+.rpg-relic-slots .rpg-item .rpg-damage-delta{flex:none;font-size:10px;}
+.rpg-locked-gallery{margin-top:17px;}.rpg-locked-gallery summary{cursor:pointer;color:#cabb99;font-size:12px;padding:10px 0;}
+.rpg-locked-gallery[open] summary{margin-bottom:8px;}
+.rpg-dialog .rpg-armory-copy .rpg-equipped-affixes{color:#b8e5dc;}
+.rpg-dialog .rpg-copy-explainer{padding:13px 16px;border-left:3px solid #a58b56;background:#192720;color:#d0d6c4;font-size:13px;line-height:1.7;}
+.rpg-copy-explainer strong{display:block;color:#ecd8b2;}
+.rpg-dialog .rpg-copy-sort{font-size:12px;color:#b3bfab;}
+.rpg-relic-slots .rpg-item .rpg-stronger-copy-badge{display:block;flex:none;width:100%;margin-top:7px;padding:6px 2px;background:#2a56384d;border:1px solid #8fd8a255;color:#b0f5bc;font:600 11px/1.4 'Nunito',sans-serif;}
+.rpg-stronger-copy-badge small{display:block;font-size:9px;font-weight:normal;}
+.rpg-stronger-copy-link{display:block;grid-column:1/-1;padding:10px 12px;margin-bottom:12px;background:#23452f66;border:1px solid #8fd8a255;color:#b0f5bc;font-size:13px;text-decoration:none;}
+.rpg-stronger-copy-link small{display:block;margin-top:4px;color:#d0e2bf;font-size:11px;}
+.rpg-stronger-copy-link:focus-visible{outline:2px solid #e2ca92;outline-offset:3px;}
+.rpg-loot-card:target{outline:2px solid #a8e8af;outline-offset:3px;scroll-margin-top:20px;}
+@media(max-width:680px){.rpg-inventory.rpg-relic-slots{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;}.rpg-slot-strength strong{font-size:24px;}.rpg-armory-collection-heading{flex-wrap:wrap;}.rpg-armory-collection-heading>span{font-size:11px;}}

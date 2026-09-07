@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
-import { RPG_ITEMS, RPG_SKILLS, rpgEncounterCombat, rpgSpellCombatStats, rpgSpellModifiers, rpgSpellUnlocked, type RpgState } from './rpg';
-import { rpgCreateLoot, rpgNormalizeLoot, rpgEffectiveSkills, rpgForgeCost, rpgDungeonForgeDust, rpgUnlockedTier } from './rpgLoot';
+import { RPG_ITEMS, RPG_SKILLS, RPG_SPELLS, rpgEncounterCombat, rpgSpellCombatStats, rpgSpellModifiers, rpgSpellUnlocked, type RpgState, type RpgLootInstance } from './rpg';
+import { rpgCreateLoot, rpgNormalizeLoot, rpgEffectiveSkills, rpgForgeCost, rpgDungeonForgeDust, rpgUnlockedTier, rpgLootAffixes } from './rpgLoot';
 
 const oldSave: RpgState = {
   profileId: 'old', xp: 500, level: 4, xpIntoLevel: 95, xpForNextLevel: 225, skillPoints: 2,
@@ -29,6 +29,12 @@ test('random rolls are bounded and provide school-relevant learned skill bonuses
     expect(result.bonusPower).toBeGreaterThanOrEqual(1);
     expect(result.bonusPower).toBeLessThanOrEqual(12);
     expect(result.upgradeLevel).toBe(0);
+    const affixes = rpgLootAffixes(result);
+    expect([affixes.targets, affixes.spellPower, affixes.schoolPower].filter(Boolean).length).toBeLessThanOrEqual(1);
+    expect(affixes.targets).toBeLessThanOrEqual(2); expect(affixes.spellPower).toBeLessThanOrEqual(12); expect(affixes.schoolPower).toBeLessThanOrEqual(8);
+    if (affixes.spellId && item.spellId) expect(affixes.spellId).toBe(item.spellId);
+    if (affixes.spellId && item.school) expect(RPG_SPELLS.find(spell => spell.id === affixes.spellId)!.school).toBe(item.school);
+    if (affixes.schoolId && item.school) expect(affixes.schoolId).toBe(item.school);
     if (result.bonusSkillId) {
       const skill = RPG_SKILLS.find(entry => entry.id === result.bonusSkillId)!;
       expect(skill.kind).not.toBe('unlock');
@@ -37,6 +43,64 @@ test('random rolls are bounded and provide school-relevant learned skill bonuses
     }
   }
   expect(rpgCreateLoot('cinderwand', 1, () => 0).id).not.toBe(rpgCreateLoot('cinderwand', 1, () => 0).id);
+});
+
+test('new specialized rolls append after old power/rank draws and each branch is deterministic', () => {
+  const roll = (values: number[], tier = 1, item = 'cinderwand') => {
+    let index = 0;
+    const result = rpgCreateLoot(item, tier, () => {
+      if (index >= values.length) throw new Error('Unexpected RNG draw');
+      return values[index++];
+    });
+    expect(index).toBe(values.length); return result;
+  };
+  expect(roll([.25, .99, .99])).toMatchObject({ bonusPower: 2, upgradeLevel: 0 });
+  expect(roll([.25, .99, 0, 0])).toMatchObject({ bonusPower: 2, bonusTargets: 1 });
+  expect(roll([.25, .99, 0, 0, 0], 5).bonusTargets).toBe(2);
+  expect(roll([.25, .99, 0, 0, .99], 5).bonusTargets).toBe(1);
+  expect(roll([.25, .99, 0, .5, 0, .99])).toMatchObject({ bonusSpellId: 'ember', bonusSpellPower: 6 });
+  expect(roll([.25, .99, 0, .9, 0, .99])).toMatchObject({ bonusSchoolId: 'ember', bonusSchoolPower: 3 });
+  const retained = roll([.25, 0, 0, .99, .99], 4);
+  expect(retained).toMatchObject({ bonusPower: 3, bonusSkillId: 'ember_power', bonusSkillRanks: 1 });
+  expect(rpgLootAffixes(retained)).toEqual({ targets: 0, spellPower: 0, schoolPower: 0 });
+  expect(roll([.25, .99, 0, .5, .99, .99], 10, 'winterbranch')).toMatchObject({ bonusSpellId: 'frost_guardian', bonusSpellPower: 12 });
+});
+
+test('named affixes affect only their spell or school on the exact equipped copy without unlocking skills', () => {
+  const state = rpgNormalizeLoot(oldSave);
+  state.loot!.push({ id: 'moon-a', itemId: 'moonstaff', bonusPower: 0, upgradeLevel: 0 }, { id: 'moon-b', itemId: 'moonstaff', bonusPower: 0, upgradeLevel: 0, bonusTargets: 2 });
+  state.inventory.push('moonstaff'); state.equippedItemId = 'moonstaff'; state.equippedLootId = 'moon-a';
+  const active = state.loot!.find(item => item.id === 'moon-a')!, before = structuredClone(state);
+  const base = Object.fromEntries(RPG_SPELLS.map(spell => [spell.id, rpgSpellCombatStats(state, spell.id)]));
+  active.bonusSpellId = 'ice_lance'; active.bonusSpellPower = 6;
+  for (const spell of RPG_SPELLS) expect(rpgSpellCombatStats(state, spell.id)).toEqual({ ...base[spell.id], damage: base[spell.id].damage + (spell.id === 'ice_lance' ? 6 : 0) });
+  expect(rpgSpellUnlocked('ice_lance', state.skills)).toBe(false);
+  expect(state.skills).toEqual(before.skills); expect(rpgEffectiveSkills(state)).toEqual(rpgEffectiveSkills(before));
+  delete active.bonusSpellId; delete active.bonusSpellPower;
+  active.bonusSchoolId = 'frost'; active.bonusSchoolPower = 4;
+  for (const spell of RPG_SPELLS) expect(rpgSpellCombatStats(state, spell.id)).toEqual({ ...base[spell.id], damage: base[spell.id].damage + (spell.school === 'frost' ? 4 : 0) });
+  state.equippedLootId = 'moon-b';
+  expect(rpgSpellCombatStats(state, 'ice_lance')).toEqual({ damage: base.ice_lance.damage, targets: base.ice_lance.targets + 2 });
+  state.skills = Object.fromEntries(RPG_SKILLS.map(skill => [skill.id, skill.maxRank]));
+  expect(rpgSpellCombatStats(state, 'firestorm').targets).toBe(10);
+  expect(rpgSpellCombatStats(state, 'cleave').targets).toBe(7);
+  state.equippedLootId = 'not-owned';
+  expect(rpgSpellCombatStats(state, 'cleave').targets).toBe(5);
+});
+
+test('affix reading sanitizes unsafe values and preserves old saves without adding or rerolling fields', () => {
+  const original: RpgLootInstance = { id: 'existing', itemId: 'cinderwand', bonusPower: 3, bonusSkillId: 'ember_power', bonusSkillRanks: 1, upgradeLevel: 2 };
+  const state = { ...oldSave, loot: [original] }, before = JSON.stringify(state);
+  expect(rpgLootAffixes(original)).toEqual({ targets: 0, spellPower: 0, schoolPower: 0 });
+  rpgNormalizeLoot(state); rpgSpellCombatStats(state);
+  expect(JSON.stringify(state)).toBe(before); expect(Object.hasOwn(original, 'bonusTargets')).toBe(false);
+  expect(rpgLootAffixes({ ...original, bonusTargets: 999, bonusSpellId: 'ember', bonusSpellPower: 999, bonusSchoolId: 'ember', bonusSchoolPower: 999 })).toEqual({ targets: 2, spellId: 'ember', spellPower: 12, schoolId: 'ember', schoolPower: 8 });
+  for (const invalid of [NaN, Infinity, -Infinity, -3]) {
+    expect(rpgLootAffixes({ ...original, bonusTargets: invalid, bonusSpellId: 'ember', bonusSpellPower: invalid, bonusSchoolId: 'ember', bonusSchoolPower: invalid })).toEqual({ targets: 0, spellPower: 0, schoolPower: 0 });
+    expect(Number.isFinite(rpgCreateLoot('cinderwand', 1, () => invalid).bonusPower)).toBe(true);
+  }
+  expect(rpgLootAffixes({ ...original, bonusTargets: 1.9, bonusSpellId: 'ice_lance', bonusSpellPower: 6, bonusSchoolId: 'frost', bonusSchoolPower: 4 })).toEqual({ targets: 1, spellPower: 0, schoolPower: 0 });
+  expect(rpgLootAffixes({ ...original, itemId: 'invalid', bonusTargets: 2 })).toEqual({ targets: 0, spellPower: 0, schoolPower: 0 });
 });
 
 test('rolls and forging change authoritative damage; skill affixes never unlock unlearned abilities or modifiers', () => {

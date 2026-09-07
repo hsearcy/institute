@@ -1,5 +1,5 @@
 import { Database } from 'bun:sqlite';
-import { expect, test } from 'bun:test';
+import { expect, spyOn, test } from 'bun:test';
 import { rpgDungeonForgeDust } from '@institute/shared';
 import { createRpgRoutes, ensureRpgSchema, getRpgState, resolveRpgEncounter, saveRpgState, startRpgExpedition } from './rpg';
 
@@ -24,21 +24,26 @@ const post = (db: Database, path: string, body: unknown) => createRpgRoutes(db).
 });
 
 test('rolled drop and guaranteed material receipt survive retries without granting another instance', () => {
-  const db = fixture();
+  const db = fixture(), random = spyOn(Math, 'random').mockReturnValue(0);
   try {
     startRpgExpedition(db, 'sam');
     const { result, request } = finishRoom(db, 'first');
     expect(result.reward.loot?.itemId).toBe('cinderwand');
     expect(result.reward.loot!.bonusPower).toBeGreaterThan(0);
+    expect(result.reward.loot!.bonusTargets).toBe(1);
     expect(result.reward.forgeDust).toBe(3);
     const before = db.query('SELECT state_json FROM rpg_profiles').get() as { state_json: string };
+    const solves = db.query('SELECT * FROM daily_solves').all(), attempts = db.query('SELECT * FROM attempts').all();
+    random.mockImplementation(() => { throw new Error('A receipt must never reroll loot'); });
     const retry = resolveRpgEncounter(db, request);
     expect(retry.duplicate).toBe(true);
     expect(retry.reward).toEqual(result.reward);
     expect(retry.state.loot).toEqual(result.state.loot);
     expect(retry.state.forgeDust).toBe(3);
     expect(db.query('SELECT state_json FROM rpg_profiles').get()).toEqual(before);
-  } finally { db.close(); }
+    expect(db.query('SELECT * FROM daily_solves').all()).toEqual(solves);
+    expect(db.query('SELECT * FROM attempts').all()).toEqual(attempts);
+  } finally { random.mockRestore(); db.close(); }
 });
 
 test('repeat item discoveries keep an independently equippable roll after collection completion', () => {

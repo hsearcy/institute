@@ -1,6 +1,6 @@
 import { Database } from 'bun:sqlite';
 import { describe, expect, test } from 'bun:test';
-import { rpgForgeCost, rpgMerchantPrice, RPG_ITEMS } from '@institute/shared';
+import { rpgForgeCost, rpgMerchantPrice, RPG_ITEMS, type RpgLootInstance } from '@institute/shared';
 import { getRpgState, saveRpgState } from './rpg';
 import { createRpgEconomyRoutes, ensureRpgEconomySchema, getRpgCamp, mutateRpgEconomy } from './rpgEconomy';
 
@@ -118,6 +118,26 @@ describe('RPG merchant and forge preserve legacy progress', () => {
       expect(getRpgState(db, 'sam').loot!.find(item => item.id === 'first')!.upgradeLevel).toBe(0);
       expect(rpgForgeCost(state.loot![1]!)).toEqual({ gems: 25, dust: 5 });
     } finally { db.close(); }
+  });
+  test('forging and receipt replay preserve every specialized roll and learning progress', () => {
+    const affixes: Partial<RpgLootInstance>[] = [
+      { bonusTargets: 2 }, { bonusSpellId: 'ember', bonusSpellPower: 6 }, { bonusSchoolId: 'ember', bonusSchoolPower: 4 },
+    ];
+    for (const affix of affixes) {
+      const db = fixture();
+      try {
+        const state = seedForge(db), item = state.loot!.find(item => item.id === 'first')!;
+        Object.assign(item, affix); saveRpgState(db, state);
+        const original = structuredClone(item), learning = db.query('SELECT * FROM topic_mastery').all();
+        const result = mutateRpgEconomy(db, 'sam', 'affix-forge', 'upgrade', 'first');
+        expect(result.state.loot!.find(item => item.id === 'first')).toEqual({ ...original, upgradeLevel: 1 });
+        const retry = mutateRpgEconomy(db, 'sam', 'affix-forge', 'upgrade', 'first');
+        expect(retry.duplicate).toBe(true); expect(retry.gems).toBe(result.gems); expect(retry.forgeDust).toBe(result.forgeDust);
+        expect(getRpgState(db, 'sam').loot!.find(item => item.id === 'first')).toEqual({ ...original, upgradeLevel: 1 });
+        expect(db.query('SELECT * FROM topic_mastery').all()).toEqual(learning);
+        expect(getRpgState(db, 'sam').skills).toEqual(state.skills);
+      } finally { db.close(); }
+    }
   });
   test('salvaging is retry-safe, protects equipped and final copies, and cannot recreate salvageable legacy loot', () => {
     const db = fixture();

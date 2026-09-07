@@ -1,4 +1,4 @@
-import { rpgEffectiveSkills, rpgEquippedLoot, rpgLootPower, rpgTier } from './rpgLoot';
+import { rpgEffectiveSkills, rpgEquippedLoot, rpgLootAffixes, rpgLootPower, rpgTier } from './rpgLoot';
 
 /** Adventure content only. Never used by tutor selection, mastery, or review. */
 export const RPG_DUPLICATE_ITEM_XP = 16;
@@ -136,6 +136,8 @@ export interface RpgCombatResult {
 export interface RpgExpedition { id: string; regionId: string; encounterIndex: number; encountersTotal: number; cleared: boolean; startedAt: number; combat?: RpgCombatState; tier?: number }
 export interface RpgLootInstance {
   id: string; itemId: string; bonusPower: number; bonusSkillId?: string; bonusSkillRanks?: number; upgradeLevel: number;
+  bonusTargets?: number; bonusSpellId?: RpgSpellId; bonusSpellPower?: number;
+  bonusSchoolId?: RpgSchoolId; bonusSchoolPower?: number;
 }
 export interface RpgGoal { kind: 'item' | 'upgrade' | 'skill'; id: string }
 export interface RpgState {
@@ -230,7 +232,10 @@ export type RpgLoadout = Pick<RpgState, 'skills' | 'equippedItemId' | 'selectedS
 /** A spell changes damage and coverage, never the number of monsters spawned. */
 export function rpgSpellCombatStats(state: RpgLoadout, spellId = state.selectedSpellId): { damage: number; targets: number } {
   const item = RPG_ITEMS.find(entry => entry.id === state.equippedItemId);
-  const gearPower = (item && rpgItemApplies(item, spellId) ? item.power : 0) + rpgLootPower(rpgEquippedLoot(state));
+  const equipped = rpgEquippedLoot(state), affixes = rpgLootAffixes(equipped);
+  const namedPower = (affixes.spellId === spellId ? affixes.spellPower : 0)
+    + (affixes.schoolId === rpgSpellSchool(spellId) ? affixes.schoolPower : 0);
+  const gearPower = (item && rpgItemApplies(item, spellId) ? item.power : 0) + rpgLootPower(equipped) + namedPower;
   const skills = rpgEffectiveSkills(state);
   const skillPower = RPG_SKILLS.filter(skill => skillApplies(skill, spellId)).reduce((total, skill) => total + (skills[skill.id] ?? 0) * skill.powerPerRank, 0);
   const abilityPower = RPG_SPELLS.find(spell => spell.id === spellId)?.power ?? 0;
@@ -240,11 +245,11 @@ export function rpgSpellCombatStats(state: RpgLoadout, spellId = state.selectedS
     storm: [7, 4], arc_lance: [8, 4], thunderclap: [7, 7], ball_lightning: [8, 6], tempest: [8, 8],
   };
   const power = abilityPower + gearPower + skillPower, [damage, coverage] = bases[spellId];
-  // Equipment makes hits stronger. Wider coverage belongs to a learned spell
-  // modifier, so a powerful blade never turns every basic spell into a full-room wipe.
+  // Ordinary power still changes only damage. A specific rolled coverage affix
+  // can reach up to two more victims, independently of learned modifiers.
   const extraTargets = Math.min(2, RPG_SKILLS.filter(skill => skill.kind === 'modifier' && skillApplies(skill, spellId))
     .reduce((total, skill) => total + (skills[skill.id] ?? 0), 0));
-  return { damage: damage + power, targets: Math.min(10, coverage + extraTargets) };
+  return { damage: damage + power, targets: Math.min(10, coverage + extraTargets + affixes.targets) };
 }
 
 /** Deterministic current-room health. Returns a copy and never rewrites a save. */

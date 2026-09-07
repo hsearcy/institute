@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { RPG_ITEMS, rpgNormalizeLoot, rpgCampOffers, type RpgState, type State, type RpgCampState } from '@institute/shared';
-import { renderCampWorkshop, renderLootCards, renderPinnedGoal, renderNextDungeonReward, goalSummary, collectionLootChoice, lootComparison } from '../src/rpg/campView';
+import { renderCampWorkshop, renderLootCards, renderPinnedGoal, renderNextDungeonReward, goalSummary, collectionLootChoice, lootComparison, lootStats, alternateLootChoices } from '../src/rpg/campView';
 import { renderEquipmentView } from '../src/rpg/equipmentView';
 import { renderVictoryView } from '../src/rpg/victoryView';
 
@@ -110,12 +110,47 @@ test('an equipped relic advertises a stronger owned copy without silently equipp
   state.loot!.push({ id: 'upgrade-copy', itemId: 'apprentice', bonusPower: 2, upgradeLevel: 2 });
   const originalId = state.equippedLootId;
   const html = renderEquipmentView(state, '', true);
-  expect(html).toContain('Stronger copy below');
-  expect(html).toContain('↑ +6 damage waiting');
+  expect(html).toContain('Compare copies below ↓');
+  expect(html).toContain('↑ +6 damage · Same targets');
   expect(html).toContain('href="#rpg-loot-upgrade-copy"');
   expect(html).toContain('id="rpg-loot-upgrade-copy"');
   expect(collectionLootChoice(state, 'apprentice')?.id).toBe(originalId);
   expect(state.equippedLootId).toBe(originalId);
   state.equippedLootId = 'upgrade-copy';
-  expect(renderEquipmentView(state, '', true)).not.toContain('Stronger copy below');
+  expect(renderEquipmentView(state, '', true)).not.toContain('Compare copies below ↓');
+});
+
+
+test('loot shows base affinity and named random modifiers, including inactive skill scope', () => {
+  const state = fixture();
+  state.inventory.push('moonstaff');
+  const copy = { id: 'named', itemId: 'moonstaff', bonusPower: 2, upgradeLevel: 0, bonusSpellId: 'ice_lance' as const, bonusSpellPower: 6, bonusSkillId: 'frost_master', bonusSkillRanks: 2 };
+  state.loot!.push(copy);
+  const stats = lootStats(copy, state);
+  expect(stats).toContain('+6 power · Ice Lance');
+  expect(stats).toContain('+2 Winter Crown (learn to activate) · All Frost spells');
+  expect(stats).toContain('+2 power · Every spell');
+  const html = renderEquipmentView(state, '', true);
+  expect(html).toContain('Base bonus · Fire Nova');
+  expect(html).toContain('Base bonus · Every spell');
+  expect(html).toContain('+6 power · Ice Lance');
+  expect(lootStats({ ...copy, bonusSpellId: undefined, bonusSchoolId: 'frost', bonusSchoolPower: 4 }, state)).toContain('+4 power · All Frost spells');
+});
+
+test('lower-damage wider copies remain discoverable with both sides of the tradeoff', () => {
+  const state = fixture();
+  state.selectedSpellId = 'cleave';
+  state.loot![0].bonusPower = 6;
+  const wide = { id: 'wide', itemId: 'apprentice', bonusPower: 3, upgradeLevel: 0, bonusTargets: 2 };
+  state.loot!.push(wide);
+  expect(lootComparison(state, 'apprentice', wide)).toMatchObject({ delta: -3, targetDelta: 2, targets: 5 });
+  expect(alternateLootChoices(state, 'apprentice').map(choice => choice.copy.id)).toEqual(['wide']);
+  const html = renderEquipmentView(state, '', true);
+  expect(html).toContain('↓ -3 damage · ↑ +2 targets');
+  expect(html).toContain('href="#rpg-loot-wide"');
+  expect(html).toContain('+2 targets · Every spell (max 10)');
+  expect(collectionLootChoice(state, 'apprentice')?.id).toBe('legacy:apprentice');
+  state.equippedItemId = 'cinderwand'; state.equippedLootId = 'legacy:cinderwand';
+  state.loot![0].bonusPower = 3;
+  expect(collectionLootChoice(state, 'apprentice')?.id).toBe('wide');
 });

@@ -1,0 +1,11 @@
+{
+  "candidate": "/home/houston/git/institute/tmp/item-models/starfall/v1/starfall-candidate.glb",
+  "sha256": "8901d1d824b5e7d8c7e66b816155607370878fefecf90cd142050725e6febabf",
+  "seconds": 31.86611032485962,
+  "outputs": [
+    "/home/houston/git/institute/tmp/item-models/starfall/v1/export-v1-back.png",
+    "/home/houston/git/institute/tmp/item-models/starfall/v1/export-v1-high.png",
+    "/home/houston/git/institute/tmp/item-models/starfall/v1/export-v1-blade.png"
+  ],
+  "restoredScene": "Scene"
+}

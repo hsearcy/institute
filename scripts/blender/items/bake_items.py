@@ -45,6 +45,61 @@ def _structured_grip_low(source):
     return bpy.data.objects.new(source.name+' structured low',data)
 
 
+def _structured_starfall_low(source):
+    """Sample the reviewed leaf grid and turned pommel without diagonal collapse."""
+    vertices=[];faces=[];material_ids=[]
+    if source.name.startswith('Starfall continuous leaf-shaped'):
+        width,rows=49,193;plane=width*rows
+        if len(source.data.vertices)!=2*plane:
+            raise ValueError('Starfall blade expects its reviewed 48 by 192 grid')
+        columns=[0,4,7,8,12,16,18,20,21,22,23,24,25,26,27,28,30,32,36,40,41,44,48]
+        selected_rows=sorted(set(range(0,193,5)) | {192} | {
+            round((z-.127)/(.94-.127)*192)
+            for z in (.170,.225,.272,.332,.475,.482,.528,.535,.542,.588,.595,.767,.842)})
+        stride=len(columns);layer=stride*len(selected_rows)
+        for side in range(2):
+            vertices.extend(tuple(source.data.vertices[side*plane+row*width+column].co)
+                            for row in selected_rows for column in columns)
+            for j in range(len(selected_rows)-1):
+                for i in range(stride-1):
+                    a=side*layer+j*stride+i
+                    face=(a,a+1,a+stride+1,a+stride)
+                    faces.append(face if side==0 else tuple(reversed(face)))
+                    row=(selected_rows[j]+selected_rows[j+1])//2
+                    column=(columns[i]+columns[i+1])//2
+                    material_ids.append(source.data.polygons[side*192*48+row*48+column].material_index)
+        for j in range(len(selected_rows)-1):
+            for i in (0,stride-1):
+                a=j*stride+i;b=a+stride;face=(a,b,b+layer,a+layer)
+                faces.append(face if i==0 else tuple(reversed(face)));material_ids.append(1)
+        for j in (0,len(selected_rows)-1):
+            for i in range(stride-1):
+                a=j*stride+i;face=(a,a+layer,a+layer+1,a+1)
+                faces.append(face if j==0 else tuple(reversed(face)));material_ids.append(0)
+    elif source.name.startswith('Starfall continuous turned counterweight'):
+        if len(source.data.vertices)!=97*96:
+            raise ValueError('Starfall pommel expects its reviewed 96 by 96 turned grid')
+        selected_rows=[0,1,*range(6,91,6),95,96];sides=32
+        vertices=[tuple(source.data.vertices[row*96+side*3].co)
+                  for row in selected_rows for side in range(sides)]
+        for row in range(len(selected_rows)-1):
+            for side in range(sides):
+                a=row*sides+side;b=row*sides+(side+1)%sides
+                faces.append((a,b,b+sides,a+sides));material_ids.append(0)
+        faces.extend([tuple(reversed(range(sides))),
+                      tuple((len(selected_rows)-1)*sides+i for i in range(sides))])
+        material_ids.extend([0,0])
+    else:
+        raise ValueError('Unsupported structured Starfall source part')
+    data=bpy.data.meshes.new(source.name+' regular low');data.from_pydata(vertices,[],faces);data.update()
+    for material in source.data.materials:data.materials.append(material)
+    for face,index in zip(data.polygons,material_ids):
+        face.material_index=index;face.use_smooth=True
+    if source.name.startswith('Starfall continuous turned'):
+        for face in data.polygons[-2:]:face.use_smooth=False
+    return bpy.data.objects.new(source.name+' structured low',data)
+
+
 def validate_source_topology(root, graph, directory):
     """Reject invalid closed sources before cloning, atlas work or any bake.
 
@@ -113,11 +168,14 @@ def prepare(source_scene,item_id,size=1024,*,structured_blade=False,split_materi
         lows=[]
         for source_id,source in enumerate(sources):
             authored_blade=structured_blade and item_id=='cleaver' and source.name.startswith('Forged blade Ashsplitter')
+            authored_starfall=structured_blade and item_id=='starfall' and source.name.startswith(('Starfall continuous leaf-shaped','Starfall continuous turned counterweight'))
             authored_grip=structured_grip and source.name.startswith('Flat leather wrapped oval grip')
             if authored_blade:
                 builder=load(ROOT/'scripts/blender/items/metal_weapons.py','item_structured_blade')
                 low=builder._single_edge(None,*source.data.materials,low=True)
                 destination.objects.link(low);scene.collection.objects.unlink(low)
+            elif authored_starfall:
+                low=_structured_starfall_low(source);destination.objects.link(low)
             elif authored_grip:
                 low=_structured_grip_low(source);destination.objects.link(low)
             else:
@@ -125,11 +183,11 @@ def prepare(source_scene,item_id,size=1024,*,structured_blade=False,split_materi
             attr=low.data.attributes.new('item_source_id','INT','FACE')
             for value in attr.data:value.value=source_id
             triangles=helper.triangle_count([low])
-            ratio=1 if authored_blade or authored_grip else .035 if 'grown' in source.name or 'leather wrapped' in source.name else .075 if 'Forged blade' in source.name else .045 if 'charcoal mass' in source.name else .25 if triangles>1500 else 1
+            ratio=1 if authored_blade or authored_starfall or authored_grip else .035 if 'grown' in source.name or 'leather wrapped' in source.name else .075 if 'Forged blade' in source.name else .045 if 'charcoal mass' in source.name else .25 if triangles>1500 else 1
             # Multi-part heads can exceed the complete-item budget while each
             # individual feather stays below the usual reduction threshold.
             # Opt in per candidate; accepted items retain the original default.
-            if not authored_blade and not authored_grip and 80<=triangles<=1500:
+            if not authored_blade and not authored_starfall and not authored_grip and 80<=triangles<=1500:
                 ratio=min(ratio,small_mesh_ratio)
             if ratio<1:
                 bpy.ops.object.select_all(action='DESELECT');low.select_set(True);bpy.context.view_layer.objects.active=low

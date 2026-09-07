@@ -684,8 +684,20 @@ def cleaver(root,p):
 
 def starfall(root,p):
     """Leaf-shaped meteor iron with a continuous sharpened perimeter and tang."""
-    iron=material('Starfall dense meteoric iron',(.043,.052,.061),.78,.39,grain=.00012)
-    edge=material('Starfall restrained honed perimeter',(.24,.29,.33),.90,.36)
+    iron=material('Starfall dense meteoric iron',(.033,.040,.047),.74,.48)
+    blade_iron=material('Starfall ground meteoric blade flats',(.055,.068,.080),.80,.43)
+    # Restrained longitudinal grinding changes roughness, not the steel color.
+    # Broad faces retain a coherent reflection instead of mottled grey noise.
+    nodes,links=blade_iron.node_tree.nodes,blade_iron.node_tree.links
+    coordinate=nodes.new('ShaderNodeTexCoord');stretch=nodes.new('ShaderNodeVectorMath');stretch.operation='MULTIPLY'
+    stretch.inputs[1].default_value=(62,25,2.5)
+    links.new(coordinate.outputs['Generated'],stretch.inputs[0])
+    grain=nodes.new('ShaderNodeTexNoise');grain.inputs['Scale'].default_value=1;grain.inputs['Detail'].default_value=1
+    links.new(stretch.outputs['Vector'],grain.inputs['Vector'])
+    roughness=nodes.new('ShaderNodeMapRange');roughness.inputs['To Min'].default_value=.39;roughness.inputs['To Max'].default_value=.47
+    links.new(grain.outputs['Fac'],roughness.inputs['Value'])
+    links.new(roughness.outputs['Result'],nodes.get('Principled BSDF').inputs['Roughness'])
+    edge=material('Starfall restrained honed perimeter',(.29,.33,.36),.94,.22)
     inset=material('Starfall dark interrupted fuller',(.021,.027,.033),.67,.49)
     # The honed finish emerges over the same heel interval as the bevel.
     # Generated Z spans this blade's .127..94 m extent; there is no square
@@ -695,9 +707,9 @@ def starfall(root,p):
     links.new(coordinate.outputs['Generated'],axis.inputs[0])
     ramp=nodes.new('ShaderNodeValToRGB');ramp.color_ramp.interpolation='EASE'
     ramp.color_ramp.elements[0].position=(.170-.127)/(.94-.127)
-    ramp.color_ramp.elements[0].color=(.043,.052,.061,1)
+    ramp.color_ramp.elements[0].color=(.055,.068,.080,1)
     ramp.color_ramp.elements[1].position=(.225-.127)/(.94-.127)
-    ramp.color_ramp.elements[1].color=(.24,.29,.33,1)
+    ramp.color_ramp.elements[1].color=(.29,.33,.36,1)
     links.new(axis.outputs['Z'],ramp.inputs[0])
     links.new(ramp.outputs['Color'],nodes.get('Principled BSDF').inputs['Base Color'])
     SURFACES.wrapped_hilt(root,p,(.042,.044,.051,1))
@@ -715,7 +727,7 @@ def starfall(root,p):
         outer=smooth((z-.272)/.060)*smooth((.842-z)/.075)
         bridge=smooth((abs(z-.535)-.007)/.053)
         return outer*bridge
-    nx,nz=48,192;vertices=[];faces=[];materials=[]
+    nx,nz=48,192;vertices=[];faces=[];materials=[];fuller_shade=[]
     for side in (-1,1):
         for j in range(nz+1):
             z=.127+(.94-.127)*j/nz;width,depth=section(z)
@@ -728,6 +740,7 @@ def starfall(root,p):
                 channel=.5+.5*math.cos(math.pi*across) if across<1 else 0
                 y-=.0034*channel*run
                 vertices.append((u*width,side*y,z))
+                fuller_shade.append(smooth((.17*run-a)/.055)*smooth(run/.35))
     plane=(nx+1)*(nz+1)
     for side in range(2):
         for j in range(nz):
@@ -736,16 +749,41 @@ def starfall(root,p):
                 a=side*plane+j*(nx+1)+i;face=(a,a+1,a+nx+2,a+nx+1)
                 faces.append(face if side==0 else tuple(reversed(face)))
                 u=-1+2*(i+.5)/nx
-                materials.append(1 if abs(u)>.68 else 2 if abs(u)<.14*fuller(z) and fuller(z)>.35 else 0)
+                materials.append(1 if abs(u)>.68 else 0)
     for j in range(nz):
         for i in (0,nx):
             a=j*(nx+1)+i;b=a+nx+1;face=(a,b,b+plane,a+plane);faces.append(face if i==0 else tuple(reversed(face)));materials.append(1)
     for j in (0,nz):
         for i in range(nx):
             a=j*(nx+1)+i;face=(a,a+plane,a+plane+1,a+1);faces.append(face if j==0 else tuple(reversed(face)));materials.append(0)
-    blade=mesh('Starfall continuous leaf-shaped fullered blade',vertices,faces,iron,root,smooth=True)
+    blade=mesh('Starfall continuous leaf-shaped fullered blade',vertices,faces,blade_iron,root,smooth=True)
     blade.data.materials.append(edge);blade.data.materials.append(inset)
     for face,index in zip(blade.data.polygons,materials):face.material_index=index
+    # A continuous depression mask replaces the per-polygon dark stripe,
+    # whose stepped edge became visible only in the exact blade close view.
+    shade=blade.data.attributes.new('StarfallFullerShade','FLOAT','POINT')
+    for value,weight in zip(shade.data,fuller_shade):value.value=weight
+    nodes,links=blade_iron.node_tree.nodes,blade_iron.node_tree.links
+    shader=nodes.get('Principled BSDF');attribute=nodes.new('ShaderNodeAttribute');attribute.attribute_name='StarfallFullerShade'
+    color=nodes.new('ShaderNodeMixRGB');color.inputs[1].default_value=(.055,.068,.080,1);color.inputs[2].default_value=(.021,.027,.033,1)
+    links.new(attribute.outputs['Fac'],color.inputs[0]);links.new(color.outputs['Color'],shader.inputs['Base Color'])
+    blend_rough=nodes.new('ShaderNodeMixRGB');blend_rough.inputs[2].default_value=(.49,.49,.49,1)
+    prior=shader.inputs['Roughness'].links[0].from_socket
+    links.new(prior,blend_rough.inputs[1]);links.new(attribute.outputs['Fac'],blend_rough.inputs[0]);links.new(blend_rough.outputs['Color'],shader.inputs['Roughness'])
+    metallic=nodes.new('ShaderNodeMapRange');metallic.inputs['To Min'].default_value=.80;metallic.inputs['To Max'].default_value=.67
+    links.new(attribute.outputs['Fac'],metallic.inputs['Value']);links.new(metallic.outputs['Result'],shader.inputs['Metallic'])
+    # One quiet meteor seam is set flush across the intact central bridge.
+    # It supplies the sword's fire identity without outlining the entire blade.
+    meteor=material('Starfall sheltered meteor seam',(.24,.060,.012),.62,.33,emission=.30)
+    seam_outline=[(-.023,.532),(-.013,.538),(-.004,.536),(.005,.540),(.020,.537),(.010,.534),(.004,.532),(-.008,.530)]
+    n=len(seam_outline);seam_vertices=[]
+    for inset_depth in (-.00005,.0007):
+        for x,z in seam_outline:
+            seam_vertices.append((x,-section(z)[1]+inset_depth,z))
+    seam_faces=[tuple(reversed(range(n))),tuple(range(n,n*2))]
+    seam_faces.extend((i,(i+1)%n,(i+1)%n+n,i+n) for i in range(n))
+    mesh('Starfall flush sheltered meteor bridge seam',seam_vertices,seam_faces,meteor,root)
+    nickel=material('Starfall exposed meteoric nickel planes',(.18,.205,.22),.88,.29)
     # A formed oval ferrule seats the compressed wrap beneath the guard;
     # the blade's continuous unsharpened heel passes through the forged root.
     ferrule=lathe_z('Starfall fitted grip shoulder',[(.112,.023),(.116,.026),(.122,.026),(.127,.022)],iron,root)
@@ -753,11 +791,36 @@ def starfall(root,p):
     guard=solid_outline('Starfall seated swept forged guard',[(-.128,.187),(-.115,.185),(-.083,.170),(-.055,.157),(-.031,.150),(-.017,.152),(.017,.153),(.034,.143),(.063,.124),(.070,.115),(.066,.108),(.055,.112),(.030,.128),(.015,.131),(-.020,.130),(-.037,.134),(-.062,.144),(-.090,.158),(-.126,.173)],.020,iron,root,.0035)
     for vertex in guard.data.vertices:
         vertex.co.y*=1-.48*min(1,abs(vertex.co.x)/.10)
-    lathe_z('Starfall seated copper lower ferrule',[(-.118,.022),(-.114,.026),(-.108,.026),(-.104,.022)],p['copper'],root)
-    lathe_z('Starfall low peened counterweight',[(-.173,.006),(-.169,.021),(-.156,.030),(-.137,.028),(-.122,.021),(-.116,.021)],iron,root)
+    guard.data.materials.append(nickel)
+    guard.modifiers['Forged edge bevel'].material=1
+    # The ferrule overlaps the complete oval wrap end rather than merely
+    # touching its center plane; the prior narrow circular lip left a crescent.
+    lower=lathe_z('Starfall seated copper lower ferrule',[(-.118,.022),(-.116,.025),(-.113,.027),(-.105,.027),(-.101,.026)],p['copper'],root)
+    for vertex in lower.data.vertices:vertex.co.y*=.80
+    # An intentionally faceted, flattened meteor fragment replaces the
+    # generic turned ball. Its broad nickel planes share the hilt's metallurgy.
+    perimeter=[(-.021,-.116),(.021,-.118),(.034,-.142),(.026,-.163),(-.004,-.181),(-.024,-.158),(-.031,-.133)]
+    n=len(perimeter);vertices=[(x,-.011-(i%3)*.001,z) for i,(x,z) in enumerate(perimeter)]
+    vertices.extend((x,.012,z) for x,z in perimeter);vertices.append((-.006,-.023,-.145))
+    faces=[(2*n,(i+1)%n,i) for i in range(n)]
+    faces.append(tuple(range(n,2*n)));faces.extend((i,(i+1)%n,(i+1)%n+n,i+n) for i in range(n))
+    pommel=mesh('Starfall faceted meteor counterweight',vertices,faces,iron,root,bevel=.0008)
+    pommel.data.materials.append(nickel)
+    for i in (1,4):pommel.data.polygons[i].material_index=1
 
 
 BUILDERS={'apprentice':apprentice,'cinderwand':cinderwand,'glacier':glacier,'thunderrod':thunderrod,'cleaver':cleaver,'moonstaff':moonstaff,'phoenix':phoenix,'starfall':starfall}
+ITEM_MODULES=[]
+for filename in ('forge_and_storm.py','frost_and_relics.py'):
+    path=ROOT/'scripts/blender/items'/filename
+    spec=importlib.util.spec_from_file_location('item_'+path.stem,path)
+    module=importlib.util.module_from_spec(spec)
+    source_bytes=path.read_bytes();exec(compile(source_bytes,str(path),'exec'),module.__dict__)
+    module.item_recipe_bytes=source_bytes
+    additions=module.make_builders(globals())
+    if BUILDERS.keys() & additions.keys():raise ValueError('Duplicate item builders')
+    BUILDERS.update(additions);ITEM_MODULES.append(module)
+
 
 
 def build_study(ids=None):
@@ -784,16 +847,20 @@ def build_study(ids=None):
                 if part.type!='MESH':continue
                 transform=inverse@part.matrix_world
                 tip_height=max(tip_height,max((transform@v.co).z for v in part.data.vertices))
-            for name,z in (('Grip',0),('Tip',tip_height)):
+            tip=tuple(root.get('distalTip',(0,0,tip_height)))
+            if len(tip)!=3 or not all(math.isfinite(v) for v in tip):
+                raise ValueError('distalTip must contain three finite item-local coordinates')
+            for name,position in (('Grip',(0,0,0)),('Tip',tip)):
                 marker=bpy.data.objects.new(item_id+'_'+name,None)
-                scene.collection.objects.link(marker);marker.parent=root;marker.location.z=z
+                scene.collection.objects.link(marker);marker.parent=root;marker.location=position
                 marker['attachmentRole']=name;root[name.lower()+'Node']=marker.name
             root.location.x=(index-(len(ids)-1)/2)*.49
         scene['item_ids']=','.join(ids)
         scene['itemSourceOwner']='scripts/blender/items'
         scene['itemRecipeSha256']=hashlib.sha256(
             Path(__file__).read_bytes()+Path(SURFACES.__file__).read_bytes()
-            +Path(METAL_WEAPONS.__file__).read_bytes()).hexdigest()
+            +Path(METAL_WEAPONS.__file__).read_bytes()
+            +b''.join(module.item_recipe_bytes for module in ITEM_MODULES)).hexdigest()
         OUT.mkdir(parents=True,exist_ok=True)
     finally:bpy.context.window.scene=previous
     return scene

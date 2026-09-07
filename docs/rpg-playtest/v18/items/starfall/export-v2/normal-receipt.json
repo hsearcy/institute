@@ -1,0 +1,17 @@
+{
+  "channel": "normal",
+  "seconds": 1.5190284252166748,
+  "checkpoint": "/home/houston/git/institute/tmp/item-models/starfall/v2/baked/starfall-normal-checkpoint.png",
+  "sha256": "449914990134e88eb4452ad6e36d54c21e6cf411b34f7cb0166dea82a22d8901",
+  "rgbMax": [
+    0.8588235974311829,
+    0.9137255549430847,
+    1.0
+  ],
+  "nonzeroPixels": 1048576,
+  "completed": [
+    "albedo",
+    "normal"
+  ],
+  "restoredScene": "Scene"
+}

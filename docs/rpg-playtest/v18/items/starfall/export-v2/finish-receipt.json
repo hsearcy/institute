@@ -1,0 +1,19 @@
+{
+  "seconds": 0.23662638664245605,
+  "output": "/home/houston/git/institute/tmp/item-models/starfall/v2/baked/starfall-raw.glb",
+  "immutableInputs": {
+    "albedo": {
+      "path": "/home/houston/git/institute/tmp/item-models/starfall/v2/baked/starfall-albedo-checkpoint.png",
+      "sha256": "f8dc18e87d99efadfc6764899dfb4fc19283fc3328d06027aa718608f399bf54"
+    },
+    "normal": {
+      "path": "/home/houston/git/institute/tmp/item-models/starfall/v2/baked/starfall-normal-checkpoint.png",
+      "sha256": "449914990134e88eb4452ad6e36d54c21e6cf411b34f7cb0166dea82a22d8901"
+    },
+    "orm": {
+      "path": "/home/houston/git/institute/tmp/item-models/starfall/v2/baked/starfall-orm-checkpoint.png",
+      "sha256": "d6b4f41b9c13276c3eb2da9d07ef092e9a89d5d890d1c614609d4721bbe05792"
+    }
+  },
+  "restoredScene": "Scene"
+}

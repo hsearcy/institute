@@ -1,0 +1,110 @@
+{
+  "itemId": "skybreaker",
+  "parts": [
+    {
+      "name": "Flat leather wrapped oval grip.030",
+      "components": [
+        {
+          "faces": 16642,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.00030272155294642806,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Skybreaker broad winged guard.002",
+      "components": [
+        {
+          "faces": 161,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.00023033675819998284,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Skybreaker continuous forged blade.002",
+      "components": [
+        {
+          "faces": 866,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.0020585248274724863,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Skybreaker seated lower ferrule.002",
+      "components": [
+        {
+          "faces": 194,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 2.8921736470828102e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Skybreaker seated upper ferrule.002",
+      "components": [
+        {
+          "faces": 194,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 3.040102491806741e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Skybreaker turned pear counterweight.002",
+      "components": [
+        {
+          "faces": 2562,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 7.493934949902145e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    }
+  ],
+  "openParts": [],
+  "rejectedParts": [],
+  "scope": "Topology preflight only; no source geometry changed and no visual acceptance"
+}

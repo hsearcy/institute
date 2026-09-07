@@ -1,0 +1,14 @@
+{
+  "seconds": 23.03330135345459,
+  "scope": "Meteor identity upgrade with unchanged leaf and fuller coordinates; source whole-item appeal pending; no export or installation",
+  "sourceSHA256": {
+    "build_studies.py": "4625f0b8ca1bcf1ce3eb73c1f5bb3715214376a8d837630073a1748066ed45f3",
+    "surfaces.py": "0182e936616c99534984bd67d0e19ebff0234db5b5c8dfd7130548a88294d6e1",
+    "metal_weapons.py": "93f28d5797610608d123c62120857d6b3e3de663964ff6b4786acaec10891c8a"
+  },
+  "topology": {
+    "rejectedParts": [],
+    "openParts": []
+  },
+  "restoredScene": "Scene"
+}

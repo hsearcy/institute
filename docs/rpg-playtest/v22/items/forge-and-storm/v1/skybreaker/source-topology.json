@@ -1,0 +1,144 @@
+{
+  "itemId": "skybreaker",
+  "parts": [
+    {
+      "name": "Flat leather wrapped oval grip.019",
+      "components": [
+        {
+          "faces": 16642,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.00030272155294642806,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Skybreaker broad winged guard",
+      "components": [
+        {
+          "faces": 161,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.00023033675819998284,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Skybreaker continuous forged blade",
+      "components": [
+        {
+          "faces": 514,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.0019929991450275096,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Skybreaker left split point continuous forged blade",
+      "components": [
+        {
+          "faces": 194,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 5.804068423079054e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Skybreaker right split point continuous forged blade",
+      "components": [
+        {
+          "faces": 194,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 3.975568145710414e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Skybreaker seated lower ferrule",
+      "components": [
+        {
+          "faces": 194,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 2.8921736470828102e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Skybreaker seated upper ferrule",
+      "components": [
+        {
+          "faces": 194,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 3.040102491806741e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Skybreaker turned pear counterweight",
+      "components": [
+        {
+          "faces": 2562,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 7.493934949902145e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    }
+  ],
+  "openParts": [],
+  "rejectedParts": [],
+  "scope": "Topology preflight only; no source geometry changed and no visual acceptance"
+}

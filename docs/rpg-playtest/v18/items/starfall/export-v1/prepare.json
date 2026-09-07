@@ -1,0 +1,14 @@
+{
+  "seconds": 3.7317991256713867,
+  "sourceRecipe": "3fbbe4a410a5cc42441d959d7f6b7ce2d7d4d3e92abf2831646bb1bb6ef39c33",
+  "sourceSnapshotSHA256": "d1b4ca73a2eaab0302c2561623fbb4596be841f20b3733189517215858dbc829",
+  "sourceTriangles": 91452,
+  "lowTriangles": 11852,
+  "projectionGroups": 3,
+  "atlasSize": 1024,
+  "geometryNormalsOnly": true,
+  "structuredGrip": true,
+  "structuredBlade": true,
+  "splitMaterialBoundaries": true,
+  "restoredScene": "Scene"
+}

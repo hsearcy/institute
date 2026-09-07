@@ -1,0 +1,178 @@
+{
+  "itemId": "tempest",
+  "parts": [
+    {
+      "name": "Flat leather wrapped oval grip.021",
+      "components": [
+        {
+          "faces": 16642,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.00030272155294642806,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Tempest Caller continuous storm staff",
+      "components": [
+        {
+          "faces": 258,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.0014190268046640592,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Tempest Caller fitted stormstone foot",
+      "components": [
+        {
+          "faces": 129,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 4.8624287750372575e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Tempest Caller grown forged fork",
+      "components": [
+        {
+          "faces": 450,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.00019287334286677697,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Tempest Caller grown forged fork.001",
+      "components": [
+        {
+          "faces": 450,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.0001928733428667771,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Tempest Caller seated lower ferrule",
+      "components": [
+        {
+          "faces": 194,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 2.8921736470828102e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Tempest Caller seated stormstone",
+      "components": [
+        {
+          "faces": 640,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.00010001587913108309,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Tempest Caller seated upper ferrule",
+      "components": [
+        {
+          "faces": 194,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 3.040102491806741e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Tempest Caller tapered spiral storm vane",
+      "components": [
+        {
+          "faces": 1346,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.0002595483979819021,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Tempest Caller turned pear counterweight",
+      "components": [
+        {
+          "faces": 2562,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 7.493934949902145e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    }
+  ],
+  "openParts": [],
+  "rejectedParts": [],
+  "scope": "Topology preflight only; no source geometry changed and no visual acceptance"
+}

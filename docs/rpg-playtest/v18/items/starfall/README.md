@@ -1,4 +1,10 @@
-# Starfall Edge first source study
+# Starfall Edge source and candidate review
+
+Current state: v6 source and v2 exact construction/material transfer pass 8,
+but actual inventory whole-item appeal scored 6. Installation is held. Version
+7 explores a coherent meteor identity and stronger material separation; its
+whole-item review is pending. Correctness and transfer scores do not establish
+whole-item appeal. Historical source iterations follow.
 
 The initial source uses a broad leaf blade, continuous honed perimeter,
 interrupted shallow fuller and asymmetric swept guard. Its front and depth
@@ -18,8 +24,8 @@ so neither complete rear construction nor grip has passed review.
 
 Two initially inward cap/edge strips were corrected before the first render.
 Reusable topology preflight accepts this closed source without changing its
-geometry. That check is not an art pass. No low target, export, thumbnail,
-native proof or public installation has been made. Existing five accepted
+geometry. That check is not an art pass. At that first-study stage no low target, export, thumbnail,
+native proof or public installation had been made. Existing five accepted
 models are untouched; Cinderbranch remains 7.5 and Glacier Fang 7.
 
 ## Subsequent bounded correction
@@ -34,4 +40,25 @@ independent 8, with the fuller and root correction preserved.
 Complete shown source remains construction 7.5, silhouette 7.5 and material
 6.5. Next useful evidence is full rear plus grip/pommel coverage and a broad
 steel reflection study. Both versions passed topology preflight with no open
-or rejected parts. No low target or public installation was made.
+or rejected parts. No low target or public installation was made during that correction.
+
+## Source approval
+
+Version 4 preserves all version 3 geometry and gives the blade a clean steel
+base with restrained directional roughness. Front/rear blade construction
+and material pass independent 8. New grip coverage exposed a ferrule gap
+and stepped pommel contour. Version 5 seats the ferrule over the entire oval
+wrap end and uses a continuous turned pommel inside the prior size envelope.
+That close view passes 8, completing the shown source construction/material
+gate. Exact export, thumbnail and native acceptance remain separate.
+
+## Whole-item appeal correction
+
+The actual inventory exposed a separate failure despite exact transfer 8:
+Starfall reads as a plain gray leaf sword with generic fittings. Version 7
+preserves all blade vertices/fullers, adds one sheltered meteor seam at the
+central bridge, differentiates forged flats/polished edges and nickel guard
+bevels, and substitutes a flattened faceted counterweight. This is unapproved
+source work. Root owns shared thumbnail lighting and native presentation.
+
+Independent v7 review: steel hierarchy 7, whole identity 6.5, construction 7.5. The orange mark and unfinished faceted pommel remain blockers. No installation or source-appeal pass.

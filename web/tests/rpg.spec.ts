@@ -395,14 +395,13 @@ test('saved response recovery, worked help, and touch layout remain playable', a
   await expectWorldHealth(page, saved.expedition!.combat!.enemies);
   await page.unroute('**/rpg/resolve');
 
-  await page.getByRole('button',{name:'Help me',exact:true}).click();
-  await page.getByRole('button',{name:/I'm not sure yet/}).click();
-  await expect(page.getByRole('button',{name:'Cast together & continue',exact:true})).toBeVisible();
+  await page.locator('[data-action=walkthrough]').click();
+  await expect(page.getByRole('button',{name:'Next question',exact:true})).toBeVisible();
   const assistedBefore = await state(page);
   await page.screenshot({path:info.outputPath('05-worked-help.png')});
-  await page.getByRole('button',{name:'Cast together & continue',exact:true}).click();
-  await expect.poll(async () => (await state(page)).xp).toBeGreaterThan(assistedBefore.xp);
+  await page.getByRole('button',{name:'Next question',exact:true}).click();
   await ready(page);
+  expect(await state(page)).toEqual(assistedBefore);
   const dismissRelic = page.getByRole('button',{name:'Dismiss new relic',exact:true});
   if (await dismissRelic.isVisible()) await dismissRelic.click();
   await page.getByRole('button',{name:'Toggle number pad',exact:true}).click();

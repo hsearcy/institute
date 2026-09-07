@@ -131,7 +131,7 @@ export interface RpgCombatResult {
   enemiesBefore: RpgCombatEnemy[]; enemiesAfter: RpgCombatEnemy[];
   hits: { enemyId: string; damage: number; hpBefore: number; hpAfter: number }[];
   defeatedIds: string[]; encounterCleared: boolean; remainingEnemies: number;
-  damage: number; coverage: number;
+  damage: number; coverage: number; powerPercent?: number;
 }
 export interface RpgExpedition { id: string; regionId: string; encounterIndex: number; encountersTotal: number; cleared: boolean; startedAt: number; combat?: RpgCombatState; tier?: number }
 export interface RpgLootInstance {
@@ -268,17 +268,29 @@ export function rpgEncounterCombat(state: Pick<RpgState, 'expedition'> & Partial
   }) };
 }
 
+/** Combat-only response quality; learning time and mastery remain independent.
+ * Reading finishes before this clock starts. Time alone never goes below 50%;
+ * each wrong answer removes ten percentage points, with a combined 30% floor. */
+export function rpgAnswerPower(answerMs = 0, wrongCount = 0): number {
+  const elapsed = Number.isFinite(answerMs) ? Math.max(0, answerMs) : 0;
+  const mistakes = Number.isFinite(wrongCount) ? Math.max(0, Math.floor(wrongCount)) : 0;
+  const timedPower = Math.max(50, 100 - Math.floor(elapsed / 5000) * 10);
+  return Math.max(30, timedPower - mistakes * 10);
+}
+
 /** Pure authoritative cast preview; callers persist the returned state atomically. */
-export function rpgApplyCombat(state: RpgLoadout, combat: RpgCombatState, spellId = state.selectedSpellId): { combat: RpgCombatState; result: RpgCombatResult } {
+export function rpgApplyCombat(state: RpgLoadout, combat: RpgCombatState, spellId = state.selectedSpellId, powerPercent = 100): { combat: RpgCombatState; result: RpgCombatResult } {
   const stats = rpgSpellCombatStats(state, spellId);
+  const power = Number.isFinite(powerPercent) ? Math.max(30, Math.min(100, powerPercent)) : 100;
+  const damage = Math.max(1, Math.round(stats.damage * power / 100));
   const next: RpgCombatState = { ...combat, casts: combat.casts + 1, enemies: combat.enemies.map(enemy => ({ ...enemy })) };
   const hits = next.enemies.filter(enemy => enemy.hp > 0).slice(0, stats.targets).map(enemy => {
     const hpBefore = enemy.hp;
-    enemy.hp = Math.max(0, enemy.hp - stats.damage);
+    enemy.hp = Math.max(0, enemy.hp - damage);
     return { enemyId: enemy.id, damage: hpBefore - enemy.hp, hpBefore, hpAfter: enemy.hp };
   });
   const remainingEnemies = next.enemies.filter(enemy => enemy.hp > 0).length;
-  return { combat: next, result: { damage: stats.damage, coverage: stats.targets, enemiesBefore: combat.enemies.map(enemy => ({ ...enemy })), enemiesAfter: next.enemies.map(enemy => ({ ...enemy })), hits, defeatedIds: hits.filter(hit => hit.hpAfter === 0).map(hit => hit.enemyId), encounterCleared: remainingEnemies === 0, remainingEnemies } };
+  return { combat: next, result: { damage, powerPercent: power, coverage: stats.targets, enemiesBefore: combat.enemies.map(enemy => ({ ...enemy })), enemiesAfter: next.enemies.map(enemy => ({ ...enemy })), hits, defeatedIds: hits.filter(hit => hit.hpAfter === 0).map(hit => hit.enemyId), encounterCleared: remainingEnemies === 0, remainingEnemies } };
 }
 
 /** Legacy call sites receive a bounded preview of real defeats, not population. */

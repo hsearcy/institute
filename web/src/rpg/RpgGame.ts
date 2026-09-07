@@ -1,5 +1,5 @@
 import type { Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgAppearanceId, RpgReward, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
-import { RPG_APPEARANCES, rpgAppearanceUnlocked, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgEncounterCombat, rpgNextRelicHunt, rpgUnlockedTier, rpgDungeonForgeDust, rpgSalvageValue, ProblemSchema } from '@institute/shared';
+import { RPG_APPEARANCES, rpgAppearanceUnlocked, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgEncounterCombat, rpgNextRelicHunt, rpgUnlockedTier, rpgDungeonForgeDust, rpgSalvageValue, rpgAnswerPower, ProblemSchema } from '@institute/shared';
 import { fetchState, fetchMastery, redeemCrazyCoin, type Demo } from '../game/tutor';
 import { speak } from '../game/audio';
 import * as dungeonSound from './sound';
@@ -25,14 +25,15 @@ import { skillUpgradePreview } from './skillPreview';
 import { getRoomLayout } from './world/roomLayout';
 import { Celebrations, type CelebrationEvent } from './Celebrations';
 import './hud-rewards.css';
+import { AnswerClock } from './AnswerClock';
 
 type Session = {
   expeditionId: string; encounterIndex: number; problem: Problem; firstAttempt: boolean | null;
-  wrongCount: number; demoSeen: boolean; elapsedMs?: number; branches?: Branches; walkthrough?: boolean;
+  wrongCount: number; demoSeen: boolean; elapsedMs?: number; answerMs?: number; branches?: Branches; walkthrough?: boolean;
   rewardShown?: boolean;
   celebrationsShown?: boolean;
   celebrations?: CelebrationEvent[];
-  pending?: { correct: boolean; assisted: boolean; solveMs: number; spellId?: RpgSpellId };
+  pending?: { correct: boolean; assisted: boolean; solveMs: number; answerMs?: number; wrongCount?: number; spellId?: RpgSpellId };
 };
 const sessionKey = `institute:rpg:problem:v1:${API}:${PROFILE}`;
 const roomNames = Array.from({length:6}, (_, index) => getRoomLayout(index).name);
@@ -73,6 +74,8 @@ export class RpgGame {
   private abort = new AbortController();
   private combatLayoutObserver: ResizeObserver;
   private clockRunning = false;
+  private readonly answerClock = new AnswerClock();
+  private powerRefresh: ReturnType<typeof setInterval> | null = null;
   private retrying = false;
   private storageReady = false;
   private speechDepth = 0;
@@ -106,7 +109,7 @@ export class RpgGame {
       <div id="rpg-toast" class="rpg-toast" role="status" aria-live="polite" hidden></div><aside id="rpg-discovery" class="rpg-discovery" aria-label="New relic" aria-live="polite" hidden></aside><div id="rpg-floating-xp" class="rpg-floating-xp" aria-hidden="true"></div><div id="rpg-world-loot" class="rpg-world-loot" aria-hidden="true" hidden></div>
       <section class="rpg-controls" id="rpg-controls" hidden aria-label="Spell controls">
         <div class="rpg-hint" id="rpg-hint" role="status" hidden></div>
-        <form id="rpg-answer-form" class="rpg-answer-panel" autocomplete="off"><div class="rpg-question"><span id="rpg-topic" class="rpg-eyebrow">POWER YOUR SPELL</span><label for="rpg-answer" id="rpg-problem">Preparing your next spell…</label></div><input id="rpg-answer" aria-label="Your answer" inputmode="none" autocomplete="off" maxlength="3" pattern="[0-9]*" type="text"><button class="rpg-primary" id="rpg-cast" type="submit">Unleash <span>↵</span></button><div class="rpg-help-buttons"><button type="button" data-action="hear" aria-label="Read problem aloud" title="Hear the problem">${icon('sound')}</button><button type="button" data-action="explain" class="rpg-direct-help">${icon('help')}<span>Hint</span></button><button type="button" data-action="walkthrough" class="rpg-direct-help"><span>I don't know</span></button><button type="button" data-action="keypad" aria-label="Toggle number pad" title="Number pad">⌨</button></div></form>
+        <form id="rpg-answer-form" class="rpg-answer-panel" autocomplete="off"><div class="rpg-question"><span id="rpg-topic" class="rpg-eyebrow">POWER YOUR SPELL</span><label for="rpg-answer" id="rpg-problem">Preparing your next spell…</label></div><input id="rpg-answer" aria-label="Your answer" inputmode="none" autocomplete="off" maxlength="3" pattern="[0-9]*" type="text"><button class="rpg-primary" id="rpg-cast" type="submit">Unleash <span id="rpg-power">100%</span></button><div class="rpg-help-buttons"><button type="button" data-action="hear" aria-label="Read problem aloud" title="Hear the problem">${icon('sound')}</button><button type="button" data-action="explain" class="rpg-direct-help">${icon('help')}<span>Hint</span></button><button type="button" data-action="walkthrough" class="rpg-direct-help"><span>I don't know</span></button><button type="button" data-action="keypad" aria-label="Toggle number pad" title="Number pad">⌨</button></div></form>
         <div id="rpg-keypad" class="rpg-keypad" hidden>${[1,2,3,4,5,6,7,8,9,'⌫',0,'✓'].map(n => `<button type="button" data-digit="${n}" aria-label="${n === '⌫' ? 'Delete digit' : n === '✓' ? 'Submit answer' : n}">${n}</button>`).join('')}</div>
         <footer class="rpg-hotbar"><div class="rpg-hud-art" aria-hidden="true"></div><div class="rpg-level-orb"><span>LEVEL</span><strong id="rpg-level">1</strong></div><div class="rpg-spellbar" id="rpg-spellbar"></div><span class="rpg-compact-spell-name" id="rpg-compact-spell-name" aria-hidden="true"></span><button class="rpg-gear-button" data-action="inventory" aria-label="Open equipment">${icon('sword')}<span id="rpg-equipped">Equipment</span></button><button class="rpg-magic-orb" data-action="spellbook" aria-label="Open spellbook"><span>SPELLS</span><strong id="rpg-spell-count">2</strong><small>Spellbook · B</small></button></footer>
         <div class="rpg-xp"><div class="rpg-xp-heading"><strong id="rpg-xp-next">Next: Level 2</strong><span id="rpg-xp-label">0 / 90 XP</span></div><div class="rpg-xp-track" id="rpg-xp-track" role="progressbar" aria-label="Experience toward next level" aria-valuemin="0" aria-valuemax="90" aria-valuenow="0"><i id="rpg-xp-fill"></i><span id="rpg-xp-gain" aria-hidden="true"></span></div></div>
@@ -162,6 +165,7 @@ export class RpgGame {
     this.trackedSpell = RPG_SPELLS.find(spell => spell.id === tracked)?.id ?? null;
     try { this.economyPending = JSON.parse(sessionStorage.getItem(`${sessionKey}:economy`) ?? 'null'); } catch { /* No pending purchase. */ }
     this.updateSound();
+    this.powerRefresh = setInterval(() => this.updatePower(), 200);
   }
 
   private el<T extends HTMLElement = HTMLElement>(id: string): T { return this.root.querySelector<T>(`#${id}`)!; }
@@ -195,19 +199,24 @@ export class RpgGame {
         && Number.isInteger(saved.wrongCount) && saved.wrongCount >= 0 && saved.wrongCount <= 3) {
         this.session = saved;
         this.session.elapsedMs = Math.max(0, Number(saved.elapsedMs) || 0);
+        this.session.answerMs = Math.max(0, Number(saved.answerMs ?? saved.elapsedMs) || 0);
       } else { this.session = null; localStorage.removeItem(sessionKey); }
     } catch { this.session = null; }
+    this.answerClock.restore(this.session?.answerMs ?? 0);
     this.branches = null; this.storageReady = true;
   }
   private checkpointClock(): void {
+    if (this.session) this.session.answerMs = this.answerClock.elapsed();
     if (!this.clockRunning || !this.session) return;
     const now = performance.now();
     this.session.elapsedMs = (this.session.elapsedMs ?? 0) + Math.max(0, now - this.shownAt);
     this.shownAt = now;
   }
-  private stopClock(): void { this.checkpointClock(); this.clockRunning = false; }
+  private stopClock(): void { this.answerClock.stop(); this.checkpointClock(); this.clockRunning = false; }
   private startClock(): void {
-    if (this.clockRunning || this.busy || this.panel || !this.playing || document.hidden || !this.session || this.session.firstAttempt !== null) return;
+    if (this.disposed || this.busy || this.panel || !this.playing || document.hidden || !this.session || this.session.pending || this.session.walkthrough) return;
+    if (!this.speechDepth) this.answerClock.start();
+    if (this.clockRunning || this.session.firstAttempt !== null) return;
     this.shownAt = performance.now(); this.clockRunning = true;
   }
   private saveSession(): void {
@@ -341,7 +350,8 @@ export class RpgGame {
     if (this.disposed) return;
     this.stopClock();
     const expedition = this.state!.expedition!;
-    if (!restoring) this.session = { expeditionId: expedition.id, encounterIndex: expedition.encounterIndex, problem: p, firstAttempt: null, wrongCount: 0, demoSeen: false, elapsedMs: 0 };
+    if (!restoring) this.session = { expeditionId: expedition.id, encounterIndex: expedition.encounterIndex, problem: p, firstAttempt: null, wrongCount: 0, demoSeen: false, elapsedMs: 0, answerMs: 0 };
+    this.answerClock.restore(this.session!.answerMs ?? 0);
     this.saveSession(); this.busy = true;
     const session = this.session!;
     if (p.newTopic && p.topicId && !session.demoSeen && !this.demoTopics.has(p.topicId)) {
@@ -368,8 +378,9 @@ export class RpgGame {
     if (session.walkthrough || session.wrongCount >= 3) { await this.walkthrough(); return; }
     this.busy = false;
     const previousElapsed = session.elapsedMs ?? 0;
-    this.startClock();
-    void this.say(p.spoken).then(() => {
+    const narration = this.say(p.spoken);
+    this.startClock(); this.updatePower();
+    void narration.then(() => {
       if (this.session === session && session.firstAttempt === null && !this.entered) {
         session.elapsedMs = previousElapsed; this.shownAt = performance.now(); this.saveSession();
       }
@@ -383,10 +394,18 @@ export class RpgGame {
     await this.showProblem(p);
   }
   private updateAnswer(): void { this.el<HTMLInputElement>('rpg-answer').value = this.entered; }
+  private updatePower(): void {
+    if (!this.session) return;
+    const pending = this.session.pending;
+    const percent = rpgAnswerPower(pending?.answerMs ?? this.answerClock.elapsed(), pending?.wrongCount ?? this.session.wrongCount);
+    const label = this.el('rpg-power');
+    if (label.textContent !== `${percent}%`) label.textContent = `${percent}%`;
+    this.el('rpg-cast').title = `Attack power: ${percent}%. Quick answers hit harder; each wrong try costs 10%.`;
+  }
   private async submit(): Promise<void> {
     if (!this.session || this.busy || this.panel || !this.entered || !this.playing) return;
     this.stopClock(); this.busy = true;
-    this.session.pending = { correct: Number(this.entered) === this.session.problem.answer, assisted: false, solveMs: Math.round(this.session.elapsedMs ?? 0), spellId: this.state!.selectedSpellId };
+    this.session.pending = { correct: Number(this.entered) === this.session.problem.answer, assisted: false, solveMs: Math.round(this.session.elapsedMs ?? 0), answerMs: Math.floor(this.session.answerMs ?? 0), wrongCount: this.session.wrongCount, spellId: this.state!.selectedSpellId };
     this.saveSession();
     await this.runSafely(() => this.finishPending());
   }
@@ -415,9 +434,16 @@ export class RpgGame {
       const retry = await request<{ reward: Reward }>('/reward/retry-solve', { problemId: p.id });
       this.recordLearningReward(retry.reward);
     }
-    if (pending.correct || pending.assisted) {
+    if (pending.assisted) {
+      // Worked examples keep the tutor’s adaptive branch, but never resolve combat.
+      // A pre-change assisted receipt may already have advanced the saved room.
+      if (this.state!.expedition?.encounterIndex !== session.encounterIndex) this.setEncounter();
+      await this.nextProblem();
+      return;
+    }
+    if (pending.correct) {
       const spellId = pending.spellId ?? this.state!.selectedSpellId;
-      const result = await resolveEncounter({ problemId: p.id, expeditionId: session.expeditionId, encounterIndex: session.encounterIndex, spellId, assisted: pending.assisted });
+      const result = await resolveEncounter({ problemId: p.id, expeditionId: session.expeditionId, encounterIndex: session.encounterIndex, spellId, answerMs: pending.answerMs ?? pending.solveMs, wrongCount: pending.wrongCount ?? session.wrongCount });
       const item = RPG_ITEMS.find(i => i.id === this.state!.equippedItemId)!;
       const applies = rpgItemApplies(item, result.reward.spellId);
       const modifiers = rpgSpellModifiers(this.state!,result.reward.spellId);
@@ -469,6 +495,7 @@ export class RpgGame {
       this.saveSession(); this.entered = ''; this.updateAnswer(); this.busy = false;
       this.hint(session.wrongCount > 1 ? (p.hint ?? 'Try a different way, or ask me to show you.') : 'Almost. Try again, or let’s work it out together.');
       if (session.wrongCount >= 3) await this.walkthrough();
+      else { this.startClock(); this.updatePower(); }
     }
   }
   private showReward(reward: RpgReward, session: Session): void {
@@ -584,7 +611,7 @@ export class RpgGame {
     }
     const text = await request<{ text: string }>('/tutor/walkthrough', { problem: p }).then(result => result.text).catch(() => null) ?? `The answer is ${p.answer}. ${p.hint ?? 'We can try another together.'}`;
     if (this.disposed) return;
-    this.el('rpg-dialog-content').innerHTML = `<p class="rpg-eyebrow">LET’S LEARN THIS TOGETHER</p><h2 id="rpg-dialog-title">Here’s how</h2><div class="rpg-demo-equation">${esc(p.prompt)} <span>→ ${p.answer}</span></div><p class="rpg-teaching-text">${esc(text)}</p><button class="rpg-primary" data-action="assisted-go">Cast together & continue</button><button class="rpg-text-button" data-action="demo-hear">Hear it again</button>`;
+    this.el('rpg-dialog-content').innerHTML = `<p class="rpg-eyebrow">LET’S LEARN THIS TOGETHER</p><h2 id="rpg-dialog-title">Here’s how</h2><div class="rpg-demo-equation">${esc(p.prompt)} <span>→ ${p.answer}</span></div><p class="rpg-teaching-text">${esc(text)}</p><button class="rpg-primary" data-action="assisted-go">Next question</button><button class="rpg-text-button" data-action="demo-hear">Hear it again</button>`;
     this.busy = false; void this.say(text);
   }
 
@@ -865,9 +892,13 @@ export class RpgGame {
   }
   private async say(text: string): Promise<void> {
     if (this.muted || this.disposed) return;
+    this.answerClock.stop();
     this.speechDepth++; dungeonSound.setDucked(true);
     try { await speak(text); }
-    finally { this.speechDepth--; if (!this.speechDepth) dungeonSound.setDucked(false); }
+    finally {
+      this.speechDepth--;
+      if (!this.speechDepth) { dungeonSound.setDucked(false); this.startClock(); }
+    }
   }
   private updateSound(): void {
     dungeonSound.setMuted(this.muted);
@@ -1021,6 +1052,7 @@ export class RpgGame {
     if (this.lootLabelFrame !== null) cancelAnimationFrame(this.lootLabelFrame);
     if (this.healthFrame !== null) cancelAnimationFrame(this.healthFrame);
     if (this.xpGainTimer) clearTimeout(this.xpGainTimer);
+    if (this.powerRefresh) clearInterval(this.powerRefresh);
     this.celebrations.dispose(); dungeonSound.dispose(); this.world.dispose(); this.root.remove(); document.body.classList.remove('rpg-mode');
   }
 }

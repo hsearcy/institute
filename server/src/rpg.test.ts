@@ -264,15 +264,76 @@ describe('additive RPG progression on legacy learning data', () => {
     db.close();
   });
 
-  test('assisted skips progress the adventure with identical rewards and no learning rewrite', () => {
+  test('skips and walkthrough answers never cast, claim rewards, or rewrite learning', () => {
     const db = legacyDb(); ensureRpgSchema(db); startRpgExpedition(db, 'sam');
     db.query('INSERT INTO attempts (profile_id,problem_id,correct,skipped,created_at) VALUES (?, ?, 0, 1, ?)').run('sam', 'help', Date.now());
     expect(() => resolve(db, 'sam', 'help')).toThrow('Finish this problem');
+    expect(() => resolve(db, 'sam', 'help', { assisted: true })).toThrow('Finish this problem');
+    solved(db, 'sam', 'help');
+    solved(db, 'sam', 'walkthrough');
     const before = snapshot(db);
-    const result = resolve(db, 'sam', 'help', { assisted: true });
-    expect(result.reward.xp).toBe(32);
+    const beforeState = getRpgState(db, 'sam');
+    expect(() => resolve(db, 'sam', 'help')).toThrow('Finish this problem');
+    expect(() => resolve(db, 'sam', 'walkthrough', { assisted: true })).toThrow('Finish this problem');
+    expect(getRpgState(db, 'sam')).toEqual(beforeState);
+    expect(db.query('SELECT COUNT(*) AS n FROM rpg_cast_claims').get()).toEqual({ n: 0 });
     expect(snapshot(db)).toBe(before);
     db.close();
+  });
+
+  test('timing and mistakes scale server damage while correct-answer XP and immutable retries stay intact', () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    try {
+      const initial = startRpgExpedition(db, 'sam');
+      db.query('INSERT INTO attempts (profile_id,problem_id,correct,skipped,created_at) VALUES (?, ?, 0, 0, ?)').run('sam', 'slow-retry', Date.now());
+      solved(db, 'sam', 'slow-retry');
+      const before = snapshot(db);
+      const body = { profileId: 'sam', problemId: 'slow-retry', expeditionId: initial.expedition!.id, encounterIndex: 0, answerMs: 30000, wrongCount: 2 };
+      const result = resolveRpgEncounter(db, body);
+      expect(result.reward).toMatchObject({ xp: 32, kills: 0, combat: { damage: 3, powerPercent: 30, coverage: 3 } });
+      expect(result.state.expedition!.combat!.enemies.map(enemy => enemy.hp)).toEqual([9, 3, 5]);
+      expect(getRpgState(db, 'sam')).toEqual(result.state);
+      expect(resolveRpgEncounter(db, { ...body, answerMs: 0, wrongCount: 0 })).toEqual({ ...result, duplicate: true });
+      expect(snapshot(db)).toBe(before);
+    } finally { db.close(); }
+  });
+
+  test('an already claimed assisted reward remains a read-only historical receipt', () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    try {
+      const state = startRpgExpedition(db, 'sam');
+      db.query('INSERT INTO attempts (profile_id,problem_id,correct,skipped,created_at) VALUES (?, ?, 0, 1, ?)').run('sam', 'old-help', Date.now());
+      const reward = { xp: 32, kills: 0, levelUp: false, levelsGained: 0, item: null, newItems: [], duplicateItem: false, bossDefeated: false, spellId: 'cleave' };
+      db.query('INSERT INTO rpg_cast_claims VALUES (?,?,?,?,?,?)').run('sam', 'old-help', state.expedition!.id, 0, JSON.stringify(reward), Date.now());
+      const before = snapshot(db), claims = db.query('SELECT * FROM rpg_cast_claims').all();
+      expect(resolve(db, 'sam', 'old-help', { assisted: true, answerMs: 90000, wrongCount: 2 })).toEqual({ state, reward, duplicate: true });
+      expect(snapshot(db)).toBe(before);
+      expect(db.query('SELECT * FROM rpg_cast_claims').all()).toEqual(claims);
+      expect(getRpgState(db, 'sam')).toEqual(state);
+    } finally { db.close(); }
+  });
+
+  test('recorded wrong first attempts enforce a penalty even when an older client omits retry metadata', () => {
+    const db = legacyDb(); ensureRpgSchema(db); startRpgExpedition(db, 'sam');
+    try {
+      db.query('INSERT INTO attempts (profile_id,problem_id,correct,skipped,created_at) VALUES (?, ?, 0, 0, ?)').run('sam', 'retry-power', Date.now());
+      solved(db, 'sam', 'retry-power');
+      const before = snapshot(db);
+      expect(resolve(db, 'sam', 'retry-power').reward.combat).toMatchObject({ damage: 8, powerPercent: 90 });
+      expect(snapshot(db)).toBe(before);
+    } finally { db.close(); }
+  });
+
+  test('invalid response timing and mistake counters are rejected before combat changes', async () => {
+    const db = legacyDb(); ensureRpgSchema(db); const state = startRpgExpedition(db, 'sam');
+    try {
+      solved(db, 'sam', 'valid-solve');
+      const body = { profileId: 'sam', problemId: 'valid-solve', expeditionId: state.expedition!.id, encounterIndex: 0 };
+      for (const extra of [{ answerMs: -1 }, { answerMs: 'fast' }, { wrongCount: -1 }, { wrongCount: 1.5 }]) {
+        expect((await call(db, '/resolve', { ...body, ...extra })).status).toBe(400);
+      }
+      expect(getRpgState(db, 'sam')).toEqual(state);
+    } finally { db.close(); }
   });
 
   test('six encounters award a boss, persist the checkpoint, unlock region and allow free respec', async () => {

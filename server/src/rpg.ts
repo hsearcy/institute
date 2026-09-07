@@ -2,7 +2,7 @@ import type { Database } from 'bun:sqlite';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
-  RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellUnlocked, rpgEncounterCombat, rpgApplyCombat, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER,
+  RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellUnlocked, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER,
   type RpgState, type RpgReward, type RpgResolveResult,
 } from '@institute/shared';
 
@@ -95,11 +95,12 @@ const ResolveSchema = z.object({
   profileId: z.string().min(1).max(100), problemId: z.string().min(1).max(200),
   expeditionId: z.string().min(1).max(100), encounterIndex: z.number().int().min(0).max(5),
   spellId: z.enum(RPG_SPELL_IDS).optional(), assisted: z.boolean().optional(),
+  answerMs: z.number().finite().min(0).optional(), wrongCount: z.number().int().min(0).optional(),
 });
 
 /** One recorded learning outcome can trigger one cast, even after reloads or HTTP retries.
  * Correctness remains the existing tutor's responsibility. This module reads its receipts only.
- * Assisted outcomes give the same adventure progress without changing any mastery records. */
+ * Assisted outcomes cannot cast. Old claims still replay their original rewards. */
 export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveSchema>): RpgResolveResult {
   const body = ResolveSchema.parse(input);
   return db.transaction(() => {
@@ -126,12 +127,16 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
     if (!rpgSpellUnlocked(spellId, state.skills)) throw new RpgError('Unlock this spell in your skill tree first.');
     const solve = db.query('SELECT solved_at FROM daily_solves WHERE profile_id = ? AND problem_id = ?')
       .get(body.profileId, body.problemId) as { solved_at: number } | null;
-    const assisted = body.assisted ? db.query(`SELECT created_at FROM attempts WHERE profile_id = ? AND problem_id = ?
-      AND (correct = 0 OR skipped = 1) ORDER BY id DESC LIMIT 1`).get(body.profileId, body.problemId) as { created_at: number } | null : null;
-    const receiptTime = solve?.solved_at ?? assisted?.created_at;
-    if (receiptTime === undefined || receiptTime < expedition.startedAt) throw new RpgError('Finish this problem with your tutor before casting.');
+    const skipped = db.query('SELECT 1 FROM attempts WHERE profile_id = ? AND problem_id = ? AND skipped = 1 LIMIT 1')
+      .get(body.profileId, body.problemId);
+    if (body.assisted || skipped || !solve || solve.solved_at < expedition.startedAt) throw new RpgError('Finish this problem with your tutor before casting.');
+    // The tutor records the first try; further retries are intentionally not
+    // mastery attempts. Preserve that distinction while enforcing its known miss.
+    const recordedWrong = db.query(`SELECT COUNT(*) AS count FROM attempts WHERE profile_id = ? AND problem_id = ?
+      AND correct = 0 AND COALESCE(skipped, 0) = 0`).get(body.profileId, body.problemId) as { count: number };
+    const powerPercent = rpgAnswerPower(body.answerMs, Math.max(body.wrongCount ?? 0, recordedWrong.count));
     const before = rpgEncounterCombat(state);
-    const cast = rpgApplyCombat(state, before, spellId);
+    const cast = rpgApplyCombat(state, before, spellId, powerPercent);
     expedition.combat = cast.combat;
     const bossDefeated = cast.result.encounterCleared && expedition.encounterIndex === expedition.encountersTotal - 1;
     const kills = cast.result.defeatedIds.length;

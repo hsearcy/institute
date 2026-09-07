@@ -127,6 +127,7 @@ test('reloading and retrying every saved phase keeps learning, XP, shields, and 
   // reply is lost and the worked-example screen is restored after a reload.
   const struggling = await current(page);
   const shields = (await legacy(page)).shields;
+  const beforeWalkthroughRpg = await state(page);
   let lostMiss = false;
   await page.route('**/rpg/miss', async route => {
     if (!lostMiss) { lostMiss = true; await route.fetch(); await route.abort('failed'); }
@@ -139,12 +140,12 @@ test('reloading and retrying every saved phase keeps learning, XP, shields, and 
   }
   await expect(page.getByRole('button', { name: 'Try again', exact: true })).toBeVisible();
   await page.reload(); await continueAdventure(page);
-  await expect(page.getByRole('button', { name: 'Cast together & continue', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Next question', exact: true })).toBeVisible();
   expect((await legacy(page)).shields).toBe(shields - 1);
   expect(await status(page, struggling)).toMatchObject({ correct: false, solved: false, skipped: false });
-  await page.getByRole('button', { name: 'Cast together & continue', exact: true }).click();
+  await page.getByRole('button', { name: 'Next question', exact: true }).click();
   await ready(page);
-  expect((await state(page)).xp).toBe(96);
+  expect(await state(page)).toEqual(beforeWalkthroughRpg);
   await page.unroute('**/rpg/miss');
 
   await selectFlameSpell(page, 'ember');

@@ -15,7 +15,7 @@ const call = async (path: string, body?: unknown) => {
   return response.json() as Promise<any>;
 };
 
-test('real tutor first answer, retry solve and skip all power RPG without changing learning outcomes', async () => {
+test('real tutor correct answers power RPG, retries weaken hits, and skips never attack or change learning outcomes', async () => {
   const profileId = 'rpg-integration-child';
   const start = await call('/rpg/start', { profileId });
   for (const outcome of ['correct', 'retry', 'skip'] as const) {
@@ -29,17 +29,31 @@ test('real tutor first answer, retry solve and skip all power RPG without changi
     }
     const beforeMastery = await call(`/mastery?profileId=${profileId}`);
     const beforeRewards = await call(`/state?profileId=${profileId}`);
-    const body = { profileId, problemId: problem.id, expeditionId: start.expedition.id, encounterIndex: state.expedition.encounterIndex, assisted: outcome === 'skip' };
+    const body = { profileId, problemId: problem.id, expeditionId: start.expedition.id, encounterIndex: state.expedition.encounterIndex, assisted: outcome === 'skip', answerMs: 3000, wrongCount: outcome === 'retry' ? 1 : 0 };
+    if (outcome === 'skip') {
+      for (const assisted of [true, false]) {
+        const response = await server.fetch(new Request('http://test/rpg/resolve', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, assisted }),
+        }));
+        expect(response.status).toBe(400);
+      }
+      expect(await call(`/rpg/state?profileId=${profileId}`)).toEqual(state);
+      expect(await call(`/mastery?profileId=${profileId}`)).toEqual(beforeMastery);
+      expect(await call(`/state?profileId=${profileId}`)).toEqual(beforeRewards);
+      continue;
+    }
     const result = await call('/rpg/resolve', body);
     const retry = await call('/rpg/resolve', body);
     expect(result.reward.xp).toBe(32);
+    expect(result.reward.combat.powerPercent).toBe(outcome === 'retry' ? 90 : 100);
+    expect(result.reward.combat.damage).toBe(outcome === 'retry' ? 8 : 9);
     expect(retry.duplicate).toBe(true);
     expect(retry.state).toEqual(result.state);
     expect(await call(`/mastery?profileId=${profileId}`)).toEqual(beforeMastery);
     expect(await call(`/state?profileId=${profileId}`)).toEqual(beforeRewards);
   }
   const state = await call(`/rpg/state?profileId=${profileId}`);
-  expect(state).toMatchObject({ xp: 96, level: 2, skillPoints: 1, expedition: { encounterIndex: 1 } });
+  expect(state).toMatchObject({ xp: 64, level: 1, skillPoints: 0, expedition: { encounterIndex: 1 } });
 });
 
 test('a lost tutor response can be reconciled without reposting or double-counting mastery', async () => {

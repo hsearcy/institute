@@ -1,7 +1,35 @@
 import { expect, test } from 'bun:test';
-import { RPG_ITEMS, RPG_SKILLS, RPG_SPELLS, rpgEncounterCombat, rpgApplyCombat, rpgSpellCombatStats, rpgEncounterKills } from './rpg';
+import { RPG_ITEMS, RPG_SKILLS, RPG_SPELLS, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgSpellCombatStats, rpgEncounterKills } from './rpg';
 
 const plain = { skills: {}, equippedItemId: 'apprentice', selectedSpellId: 'ember' as const };
+
+test('answer power steps every five seconds, with separate time and mistake floors', () => {
+  for (const [ms, percent] of [[0, 100], [4999, 100], [5000, 90], [9999, 90], [10000, 80], [15000, 70], [20000, 60], [25000, 50], [900000, 50]]) {
+    expect(rpgAnswerPower(ms)).toBe(percent);
+    expect(rpgAnswerPower(ms, 1)).toBe(Math.max(30, percent - 10));
+    expect(rpgAnswerPower(ms, 2)).toBe(Math.max(30, percent - 20));
+  }
+  expect(rpgAnswerPower(0, 1)).toBe(90);
+  expect(rpgAnswerPower(0, 2)).toBe(80);
+  expect(rpgAnswerPower(0, 50)).toBe(30);
+  expect(rpgAnswerPower(-100, -1)).toBe(100);
+  expect(rpgAnswerPower()).toBe(100);
+});
+
+test('answer power scales actual persisted damage, preserves coverage and keeps upgrades valuable', () => {
+  const initial = rpgEncounterCombat({ expedition: null, level: 1 });
+  const original = JSON.stringify(initial);
+  const full = rpgApplyCombat(plain, initial, 'cleave');
+  const slow = rpgApplyCombat(plain, initial, 'cleave', rpgAnswerPower(30000));
+  const retry = rpgApplyCombat(plain, initial, 'cleave', rpgAnswerPower(30000, 2));
+  const better = rpgApplyCombat({ ...plain, equippedItemId: 'cleaver' }, initial, 'cleave', 30);
+  expect(full.result).toMatchObject({ damage: 9, powerPercent: 100, coverage: 3 });
+  expect(slow.result).toMatchObject({ damage: 5, powerPercent: 50, coverage: 3, defeatedIds: [] });
+  expect(retry.result).toMatchObject({ damage: 3, powerPercent: 30, coverage: 3, defeatedIds: [] });
+  expect(better.result.damage).toBeGreaterThan(retry.result.damage);
+  expect(retry.combat.enemies.map(enemy => enemy.hp)).toEqual([9, 3, 5]);
+  expect(JSON.stringify(initial)).toBe(original);
+});
 
 test('new heroes meet three monsters, with gradual growth and persistent current rooms', () => {
   for (let room = 0; room < 6; room++) {

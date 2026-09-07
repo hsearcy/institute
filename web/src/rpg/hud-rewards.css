@@ -1,4 +1,7 @@
 /* Direct learning help and a reward meter large enough to follow at a glance. */
+#rpg-ui #rpg-cast #rpg-power {
+  display:inline; font:inherit; font-variant-numeric:tabular-nums; white-space:nowrap;
+}
 #rpg-ui .rpg-help-buttons {
   display:flex; flex:none; justify-content:center; align-items:center;
   gap:4px; padding:0; border:0;

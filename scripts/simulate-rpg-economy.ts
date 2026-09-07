@@ -60,7 +60,7 @@ const costs = Array.from({ length: 5 }, (_, upgradeLevel) => ({ level: upgradeLe
 const totalGems = costs.reduce((sum, cost) => sum + cost.gems, 0);
 const totalDust = costs.reduce((sum, cost) => sum + cost.dust, 0);
 const rows = loadouts.map(({ name, state }) => ({ name, stats: rpgSpellCombatStats(state), tiers: [1, 4, 7, 10].map(tier => simulate(state, tier)) }));
-console.log(JSON.stringify({ assumptions: 'Six-room Embercrypt; fixed loadouts and levels (one plus spent skill ranks), without mid-run leveling; existing HP, costs and dust; no quest or hoard gems; one solve per cast, including assisted solves.',
+console.log(JSON.stringify({ assumptions: 'Six-room Embercrypt; fixed loadouts and levels (one plus spent skill ranks), without mid-run leveling; existing HP, costs and dust; no quest or hoard gems; one fast correct solve per full-power cast. Skips do not cast; slower answers and wrong attempts need more casts.',
   merchant: RPG_ITEMS.flatMap(item => { const gems = rpgMerchantPrice(item); return gems === null ? [] : [{ item: item.name, gems }]; }),
   upgradeCosts: costs, completeForgeLadder: { gems: totalGems, dust: totalDust,
     solvesAtOneGem: totalGems, solvesAtSustainedStreakApprox: Math.ceil(totalGems / 3),

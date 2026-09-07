@@ -32,6 +32,34 @@ export function authoredHeroWearableSockets(hero: Object3D): EquipmentSockets {
   return sockets;
 }
 
+/** The three progression armors use the original eight-bone rig. Measured
+ * from characters.py's forged grip midpoint after its authored body pose,
+ * then transformed into arm.R space. Their sword meshes are separate parts.
+ */
+export function legacyHeroEquipment(hero: Object3D): HeldEquipment | undefined {
+  const arm = hero.getObjectByName('armR');
+  if (!arm) return undefined;
+  const socket = new Matrix4().fromArray([
+    .3810421550, .1253900453, .9160154817, 0,
+    .9233177003, -.1029034613, -.3699937167, 0,
+    .0478676146, .9867564482, -.1549854183, 0,
+    -.0689967104, .3802823301, .0045418245, 1,
+  ]);
+  const wearables: EquipmentSockets = {};
+  for (const [slot, name, x, y, z] of [
+    ['head', 'head', -.035, .255, .018],
+    ['chest', 'chest', -.035, .405, .28],
+    ['belt', 'root', .18, 1.005, .17],
+  ] as const) {
+    const parent = hero.getObjectByName(name);
+    if (parent) wearables[slot] = { parent, transform: new Matrix4().makeTranslation(x, y, z) };
+  }
+  hero.traverse(node => {
+    if (node instanceof Mesh && /^Sword_(Baked|Glow)(?:\.|\d|$)/.test(node.name)) node.userData.sourcePart = 'equipped_sword';
+  });
+  return new HeldEquipment(hero, arm, socket, wearables);
+}
+
 /** A rigid item follows its measured palm socket through every animation.
  * Geometry, textures and materials remain owned by the source asset cache.
  */

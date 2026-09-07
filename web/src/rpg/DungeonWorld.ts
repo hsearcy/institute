@@ -20,7 +20,7 @@ import { phoenixWingGeometry, phoenixTailGeometry, stormFilamentsGeometry } from
 import { phoenixFeatherMaterial, stormWispMaterial } from './world/materials';
 import { enemyRoster } from './world/enemyRoster';
 import { EnemyAnimator } from './world/EnemyAnimator';
-import { HeldEquipment, authoredHeroGrip, authoredHeroWearableSockets } from './world/HeldEquipment';
+import { HeldEquipment, authoredHeroGrip, authoredHeroWearableSockets, legacyHeroEquipment } from './world/HeldEquipment';
 import { createCleaveStrike, cleaveEdgeMaterial, CLEAVE_RELEASE, CLEAVE_SPEED } from './world/cleave';
 import { createChainSequence, chainLightningGeometry, chainLightningMaterial, createChainCharge, CHAIN_BOLT_LIFETIME } from './world/chain';
 import { RoomCutaway } from './world/RoomCutaway';
@@ -1089,6 +1089,7 @@ export class DungeonWorld {
     // GLTFLoader sanitizes the authored hand.R bone name to handR.
     const hand = model.getObjectByName('handR');
     if (hand && this.heroUsesAuthoredMotion) this.heldEquipment = new HeldEquipment(model, hand, authoredHeroGrip(), authoredHeroWearableSockets(model));
+    else this.heldEquipment = legacyHeroEquipment(model);
     this.heroModelId = modelId; this.appearance = modelId === appearance.modelId ? appearance.id : 'wayfarer';
     this.heroMixer = new THREE.AnimationMixer(this.heroVisual);
     for (const clip of this.heroClipSets.get(modelId) ?? []) this.heroActions.set(clip.name.toLowerCase(), this.heroMixer.clipAction(clip));

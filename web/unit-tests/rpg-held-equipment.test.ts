@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
 import { Bone, BoxGeometry, BufferGeometry, Float32BufferAttribute, Group, Matrix4, Mesh, MeshStandardMaterial, Skeleton, SkinnedMesh, Uint16BufferAttribute, Vector3 } from 'three';
-import { authoredHeroGrip, HeldEquipment } from '../src/rpg/world/HeldEquipment';
+import { authoredHeroGrip, HeldEquipment, legacyHeroEquipment } from '../src/rpg/world/HeldEquipment';
 
 function fixture() {
   const hero = new Group(), hand = new Bone(); hero.add(hand);
@@ -130,4 +130,18 @@ test('An unavailable wearable socket preserves the equipped weapon', () => {
   assert.equal(equipment.replace(crown), false);
   assert.equal(equipment.itemId, 'apprentice'); assert.equal(f.blade.visible, false);
   assert.equal(f.hand.children.length, 1);
+});
+
+test('Original armor rigs hide both imported sword parts and restore them after item removal', () => {
+  const f = fixture(); f.hand.name = 'armR';
+  const sword = new Mesh(new BoxGeometry(), new MeshStandardMaterial()); sword.name = 'Sword_Baked';
+  const glow = sword.clone(); glow.name = 'Sword_Glow003'; // GLTFLoader removes Blender's dot suffix.
+  const armor = sword.clone(); armor.name = 'Body_Baked063';
+  f.hero.add(sword, glow, armor);
+  const equipment = legacyHeroEquipment(f.hero)!;
+  assert(equipment); assert(equipment.replace(f.source));
+  assert.equal(sword.visible, false); assert.equal(glow.visible, false); assert.equal(armor.visible, true);
+  assert.equal(f.hand.children.length, 1);
+  equipment.clear(); assert.equal(sword.visible, true); assert.equal(glow.visible, true);
+  assert.equal(legacyHeroEquipment(new Group()), undefined);
 });

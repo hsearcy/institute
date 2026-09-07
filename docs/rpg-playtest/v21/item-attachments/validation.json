@@ -1,0 +1,291 @@
+{
+  "label": "item-armor-mount-v2",
+  "success": true,
+  "errors": [],
+  "equipmentLifecycle": {
+    "sameItemRetainsInstance": true,
+    "unmountRestoresEmbeddedSword": true,
+    "remount": true,
+    "itemId": "phoenix",
+    "attachment": "hand.R"
+  },
+  "armorMounts": [
+    {
+      "appearance": "wayfarer",
+      "mounted": "phoenix",
+      "parent": "handR",
+      "gripWorld": [
+        0.4740680907726352,
+        0.9432903712044135,
+        1.399195171928168
+      ],
+      "embedded": [
+        false,
+        false
+      ],
+      "center": {
+        "x": 658.5058165639883,
+        "y": 473.7106199079733
+      }
+    },
+    {
+      "appearance": "cinder",
+      "mounted": "phoenix",
+      "parent": "armR",
+      "gripWorld": [
+        -0.22019004468544656,
+        0.9763791917416481,
+        1.1544452915720957
+      ],
+      "embedded": [
+        false,
+        false
+      ],
+      "center": {
+        "x": 658.5058165639883,
+        "y": 473.7106199079733
+      }
+    },
+    {
+      "appearance": "glacier",
+      "mounted": "phoenix",
+      "parent": "armR",
+      "gripWorld": [
+        -0.21854528038270582,
+        0.9636065644923891,
+        1.1529803023398
+      ],
+      "embedded": [
+        false,
+        false
+      ],
+      "center": {
+        "x": 658.5058165639883,
+        "y": 473.7106199079733
+      }
+    },
+    {
+      "appearance": "tempest",
+      "mounted": "phoenix",
+      "parent": "armR",
+      "gripWorld": [
+        -0.21892256691551348,
+        0.9939803178726111,
+        1.153314612705141
+      ],
+      "embedded": [
+        false,
+        false
+      ],
+      "center": {
+        "x": 658.5058165639883,
+        "y": 473.7106199079733
+      }
+    }
+  ],
+  "inventory": [
+    {
+      "width": 0,
+      "height": 0,
+      "image": "url(\"http://127.0.0.1:5261/assets/rpg/items/phoenix.png\")"
+    },
+    {
+      "width": 210.01953125,
+      "height": 210.01953125,
+      "image": "url(\"http://127.0.0.1:5261/assets/rpg/items/phoenix.png\")"
+    },
+    {
+      "width": 92.314453125,
+      "height": 92.314453125,
+      "image": "url(\"http://127.0.0.1:5261/assets/rpg/items/phoenix.png\")"
+    }
+  ],
+  "casts": [
+    {
+      "spell": "cleave",
+      "before": {
+        "clock": 14991,
+        "problemId": "pmtqjm43n_0",
+        "encounter": 0,
+        "xp": 13455,
+        "kills": 740,
+        "attacking": false,
+        "traveling": false,
+        "enemies": [
+          {
+            "id": "enemy-0",
+            "hp": 12,
+            "maxHp": 12,
+            "dead": false,
+            "visible": true,
+            "position": [
+              -3.4979715935904743,
+              0,
+              -2.4242247580403413
+            ]
+          },
+          {
+            "id": "enemy-1",
+            "hp": 6,
+            "maxHp": 6,
+            "dead": false,
+            "visible": true,
+            "position": [
+              3.431119848712529,
+              0,
+              -2.0095108771847325
+            ]
+          },
+          {
+            "id": "enemy-2",
+            "hp": 8,
+            "maxHp": 8,
+            "dead": false,
+            "visible": true,
+            "position": [
+              0.008448937536060297,
+              0,
+              -4.020425899966592
+            ]
+          },
+          {
+            "id": "enemy-3",
+            "hp": 8,
+            "maxHp": 8,
+            "dead": false,
+            "visible": true,
+            "position": [
+              -1.7813595903788455,
+              0,
+              -3.0764837899465807
+            ]
+          },
+          {
+            "id": "enemy-4",
+            "hp": 10,
+            "maxHp": 10,
+            "dead": false,
+            "visible": true,
+            "position": [
+              3.8093695052258028,
+              0,
+              -4.2189356120509505
+            ]
+          },
+          {
+            "id": "enemy-5",
+            "hp": 6,
+            "maxHp": 6,
+            "dead": false,
+            "visible": true,
+            "position": [
+              -0.08534233943435596,
+              0,
+              -6.067729150573562
+            ]
+          }
+        ],
+        "programs": 165
+      },
+      "after": {
+        "clock": 18838.20000001788,
+        "problemId": "pmtqjm453_1",
+        "encounter": 0,
+        "xp": 13487,
+        "kills": 744,
+        "attacking": false,
+        "traveling": false,
+        "enemies": [
+          {
+            "id": "enemy-0",
+            "hp": 0,
+            "maxHp": 12,
+            "dead": true,
+            "visible": false,
+            "position": [
+              -3.7540969881004167,
+              0,
+              -2.5705323886926723
+            ]
+          },
+          {
+            "id": "enemy-1",
+            "hp": 0,
+            "maxHp": 6,
+            "dead": true,
+            "visible": false,
+            "position": [
+              3.4758531020283563,
+              0,
+              -2.017685979109591
+            ]
+          },
+          {
+            "id": "enemy-2",
+            "hp": 0,
+            "maxHp": 8,
+            "dead": true,
+            "visible": false,
+            "position": [
+              0.10023979239801635,
+              0,
+              -4.517001824582276
+            ]
+          },
+          {
+            "id": "enemy-3",
+            "hp": 0,
+            "maxHp": 8,
+            "dead": true,
+            "visible": false,
+            "position": [
+              -1.9813668358831318,
+              0,
+              -3.608018149219728
+            ]
+          },
+          {
+            "id": "enemy-4",
+            "hp": 10,
+            "maxHp": 10,
+            "dead": false,
+            "visible": true,
+            "position": [
+              3.219330819566156,
+              0,
+              -3.278181922728615
+            ]
+          },
+          {
+            "id": "enemy-5",
+            "hp": 6,
+            "maxHp": 6,
+            "dead": false,
+            "visible": true,
+            "position": [
+              0.21834993377257317,
+              0,
+              -6.770761696737956
+            ]
+          }
+        ],
+        "programs": 165
+      }
+    }
+  ],
+  "reload": {
+    "xp": 13487,
+    "kills": 744,
+    "encounter": 0,
+    "saved": "phoenix",
+    "mounted": "phoenix"
+  },
+  "contextEvents": [],
+  "previewRestored": {
+    "sameWorld": true,
+    "sameState": true,
+    "samePlaying": true,
+    "samePaused": true,
+    "rafResumed": true
+  }
+}

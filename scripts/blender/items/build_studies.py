@@ -687,36 +687,56 @@ def starfall(root,p):
     iron=material('Starfall dense meteoric iron',(.043,.052,.061),.78,.39,grain=.00012)
     edge=material('Starfall restrained honed perimeter',(.24,.29,.33),.90,.36)
     inset=material('Starfall dark interrupted fuller',(.021,.027,.033),.67,.49)
+    # The honed finish emerges over the same heel interval as the bevel.
+    # Generated Z spans this blade's .127..94 m extent; there is no square
+    # material boundary or separate dark sleeve above the guard.
+    nodes,links=edge.node_tree.nodes,edge.node_tree.links
+    coordinate=nodes.new('ShaderNodeTexCoord');axis=nodes.new('ShaderNodeSeparateXYZ')
+    links.new(coordinate.outputs['Generated'],axis.inputs[0])
+    ramp=nodes.new('ShaderNodeValToRGB');ramp.color_ramp.interpolation='EASE'
+    ramp.color_ramp.elements[0].position=(.170-.127)/(.94-.127)
+    ramp.color_ramp.elements[0].color=(.043,.052,.061,1)
+    ramp.color_ramp.elements[1].position=(.225-.127)/(.94-.127)
+    ramp.color_ramp.elements[1].color=(.24,.29,.33,1)
+    links.new(axis.outputs['Z'],ramp.inputs[0])
+    links.new(ramp.outputs['Color'],nodes.get('Principled BSDF').inputs['Base Color'])
     SURFACES.wrapped_hilt(root,p,(.042,.044,.051,1))
-    stations=[(.174,.025,.012),(.25,.034,.013),(.46,.057,.014),(.61,.062,.012),(.76,.049,.009),(.865,.027,.005),(.94,.0004,.0004)]
+    stations=[(.127,.020,.015),(.146,.022,.014),(.174,.025,.012),(.25,.034,.013),(.46,.057,.014),(.61,.062,.012),(.76,.049,.009),(.865,.027,.005),(.94,.0004,.0004)]
     def section(z):
         for a,b in zip(stations,stations[1:]):
             if z<=b[0]:
                 t=(z-a[0])/(b[0]-a[0]);return a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t
         return stations[-1][1:]
-    nx,nz=40,144;vertices=[];faces=[];materials=[]
+    def smooth(t):
+        t=max(0,min(1,t));return t*t*(3-2*t)
+    def fuller(z):
+        # Each bed closes as a spoon in both width and depth. The narrow
+        # intact bridge has no rectangular material boundary or raised cap.
+        outer=smooth((z-.272)/.060)*smooth((.842-z)/.075)
+        bridge=smooth((abs(z-.535)-.007)/.053)
+        return outer*bridge
+    nx,nz=48,192;vertices=[];faces=[];materials=[]
     for side in (-1,1):
         for j in range(nz+1):
-            z=.174+(.94-.174)*j/nz;width,depth=section(z)
-            run=min(1,max(0,(z-.27)/.06))*min(1,max(0,(.84-z)/.065))
+            z=.127+(.94-.127)*j/nz;width,depth=section(z)
+            run=fuller(z)
             for i in range(nx+1):
                 u=-1+2*i/nx;a=abs(u)
-                y=.0003+(depth-.0003)*min(1,(1-a)/.32)
-                channel=max(0,1-a/max(.001,.22*math.sqrt(run)))
-                # A shallow fullered bed ends continuously before the tip;
-                # an intact central bridge interrupts it beneath the iron scar.
-                bridge=max(0,1-abs(z-.535)/.030)
-                y-=.0030*channel**1.4*run*(1-bridge)
+                cut=smooth((z-.170)/.055)
+                y=depth-cut*(depth-.0003)*max(0,(a-.68)/.32)
+                across=a/max(.001,.23*math.sqrt(run))
+                channel=.5+.5*math.cos(math.pi*across) if across<1 else 0
+                y-=.0034*channel*run
                 vertices.append((u*width,side*y,z))
     plane=(nx+1)*(nz+1)
     for side in range(2):
         for j in range(nz):
-            z=.174+(.94-.174)*(j+.5)/nz
+            z=.127+(.94-.127)*(j+.5)/nz
             for i in range(nx):
                 a=side*plane+j*(nx+1)+i;face=(a,a+1,a+nx+2,a+nx+1)
                 faces.append(face if side==0 else tuple(reversed(face)))
                 u=-1+2*(i+.5)/nx
-                materials.append(1 if abs(u)>.68 else 2 if abs(u)<.15 and .31<z<.79 and abs(z-.535)>.024 else 0)
+                materials.append(1 if abs(u)>.68 else 2 if abs(u)<.14*fuller(z) and fuller(z)>.35 else 0)
     for j in range(nz):
         for i in (0,nx):
             a=j*(nx+1)+i;b=a+nx+1;face=(a,b,b+plane,a+plane);faces.append(face if i==0 else tuple(reversed(face)));materials.append(1)
@@ -726,8 +746,13 @@ def starfall(root,p):
     blade=mesh('Starfall continuous leaf-shaped fullered blade',vertices,faces,iron,root,smooth=True)
     blade.data.materials.append(edge);blade.data.materials.append(inset)
     for face,index in zip(blade.data.polygons,materials):face.material_index=index
-    solid_outline('Starfall close fitted ricasso seat',[(-.026,.117),(-.030,.153),(-.025,.181),(.025,.181),(.031,.149),(.027,.117)],.018,iron,root,.002)
-    solid_outline('Starfall unequal swept crossguard',[(-.128,.187),(-.112,.183),(-.071,.158),(-.027,.146),(.030,.147),(.069,.121),(.066,.108),(.052,.112),(.019,.126),(-.033,.127),(-.080,.146),(-.126,.171)],.014,iron,root,.003)
+    # A formed oval ferrule seats the compressed wrap beneath the guard;
+    # the blade's continuous unsharpened heel passes through the forged root.
+    ferrule=lathe_z('Starfall fitted grip shoulder',[(.112,.023),(.116,.026),(.122,.026),(.127,.022)],iron,root)
+    for vertex in ferrule.data.vertices:vertex.co.y*=.76
+    guard=solid_outline('Starfall seated swept forged guard',[(-.128,.187),(-.115,.185),(-.083,.170),(-.055,.157),(-.031,.150),(-.017,.152),(.017,.153),(.034,.143),(.063,.124),(.070,.115),(.066,.108),(.055,.112),(.030,.128),(.015,.131),(-.020,.130),(-.037,.134),(-.062,.144),(-.090,.158),(-.126,.173)],.020,iron,root,.0035)
+    for vertex in guard.data.vertices:
+        vertex.co.y*=1-.48*min(1,abs(vertex.co.x)/.10)
     lathe_z('Starfall seated copper lower ferrule',[(-.118,.022),(-.114,.026),(-.108,.026),(-.104,.022)],p['copper'],root)
     lathe_z('Starfall low peened counterweight',[(-.173,.006),(-.169,.021),(-.156,.030),(-.137,.028),(-.122,.021),(-.116,.021)],iron,root)
 

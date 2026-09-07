@@ -21,3 +21,17 @@ Reusable topology preflight accepts this closed source without changing its
 geometry. That check is not an art pass. No low target, export, thumbnail,
 native proof or public installation has been made. Existing five accepted
 models are untouched; Cinderbranch remains 7.5 and Glacier Fang 7.
+
+## Subsequent bounded correction
+
+Version 2 tapers both fuller beds in width and depth, extends the blade into
+a continuous ricasso, and replaces the box collar with a seated forged guard
+root and fitted ferrule. Construction rose to 7.5; its straight finish cutoff
+still made the heel look sleeved. Version 3 matches the honed finish to the
+geometric bevel emergence over 0.170–0.225 m. That bounded transition passes
+independent 8, with the fuller and root correction preserved.
+
+Complete shown source remains construction 7.5, silhouette 7.5 and material
+6.5. Next useful evidence is full rear plus grip/pommel coverage and a broad
+steel reflection study. Both versions passed topology preflight with no open
+or rejected parts. No low target or public installation was made.

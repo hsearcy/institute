@@ -1,0 +1,110 @@
+{
+  "itemId": "starfall",
+  "parts": [
+    {
+      "name": "Flat leather wrapped oval grip.006",
+      "components": [
+        {
+          "faces": 16642,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.00030272155294642806,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Starfall continuous leaf-shaped fullered blade.001",
+      "components": [
+        {
+          "faces": 18912,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.001355609156562102,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Starfall fitted grip shoulder",
+      "components": [
+        {
+          "faces": 194,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 2.2280369355793387e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Starfall low peened counterweight.001",
+      "components": [
+        {
+          "faces": 322,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.00011618194155630378,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Starfall seated copper lower ferrule.001",
+      "components": [
+        {
+          "faces": 194,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 2.720850926298424e-05,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    },
+    {
+      "name": "Starfall seated swept forged guard",
+      "components": [
+        {
+          "faces": 220,
+          "closed": true,
+          "boundaryEdges": 0,
+          "nonManifoldEdges": 0,
+          "windingConflictEdges": 0,
+          "signedVolume": 0.00010133304863286777,
+          "rejected": false,
+          "reasons": []
+        }
+      ],
+      "openComponents": 0,
+      "rejected": false
+    }
+  ],
+  "openParts": [],
+  "rejectedParts": [],
+  "scope": "Topology preflight only; no source geometry changed and no visual acceptance"
+}

@@ -1,4 +1,4 @@
-import { rpgEffectiveSkills, rpgEquippedLoot, rpgLootAffixes, rpgLootPower, rpgTier } from './rpgLoot';
+import { rpgEffectiveSkills, rpgEquippedLoot, rpgLootAffixes, rpgLootSkillBonus, rpgLootPower, rpgTier } from './rpgLoot';
 
 /** Adventure content only. Never used by tutor selection, mastery, or review. */
 export const RPG_DUPLICATE_ITEM_XP = 16;
@@ -87,7 +87,7 @@ export const RPG_SKILLS: readonly RpgSkill[] = [
   { id: 'ball_lightning', name: 'Ball Lightning', description: 'Unlock a roaming orb of electricity.', school: 'storm', spellId: 'ball_lightning', parentId: 'arc_lance', level: 7, maxRank: 1, kind: 'unlock', scope: 'spell', powerPerRank: 0 },
   { id: 'ball_lightning_orbit', name: 'Orbiting Sparks', description: 'Ball Lightning releases satellite orbs. Deal 4 more damage per target per rank.', school: 'storm', spellId: 'ball_lightning', parentId: 'ball_lightning', level: 9, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'orbit' },
   { id: 'tempest', name: 'Tempest', description: 'Unlock a sky full of lightning strikes.', school: 'storm', spellId: 'tempest', parentId: 'thunderclap', level: 10, maxRank: 1, kind: 'unlock', scope: 'spell', powerPerRank: 0 },
-  { id: 'tempest_overcharge', name: 'Overcharge', description: 'Tempest strikes branch across the floor. Deal 4 more damage per target per rank.', school: 'storm', spellId: 'tempest', parentId: 'tempest', level: 12, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'chain' },
+  { id: 'tempest_overcharge', name: 'Overcharge', description: 'Tempest gains follow-up chain lightning. Deal 4 more damage per target per rank.', school: 'storm', spellId: 'tempest', parentId: 'tempest', level: 12, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'chain' },
 ];
 export interface RpgRegion { id: string; name: string; subtitle: string; color: string; requiredClears: number; bossName: string; relicSchool: RpgSchoolId }
 export const RPG_REGIONS: readonly RpgRegion[] = [
@@ -101,29 +101,29 @@ export interface RpgItem {
   scope: 'all' | 'school' | 'spell'; requiredClears: number;
 }
 export const RPG_ITEMS: readonly RpgItem[] = [
-  { id: 'apprentice', name: "Apprentice's Runeblade", rarity: 'common', description: 'Your first spark of adventure.', power: 0, spellId: null, school: null, scope: 'all', requiredClears: 0 },
-  { id: 'cinderwand', name: 'Cinderbranch', rarity: 'rare', description: 'Fire Nova leaves burning embers and deals 3 more damage per target.', power: 3, effect: 'burn', spellId: 'ember', school: 'ember', scope: 'spell', requiredClears: 0 },
-  { id: 'glacier', name: 'Glacier Fang', rarity: 'rare', description: 'Frostfall scatters extra shards and deals 3 more damage per target.', power: 3, effect: 'ice-shards', spellId: 'frost', school: 'frost', scope: 'spell', requiredClears: 0 },
-  { id: 'thunderrod', name: 'Thunder Rod', rarity: 'rare', description: 'Chain Lightning forks and deals 3 more damage per target.', power: 3, effect: 'chain', spellId: 'storm', school: 'storm', scope: 'spell', requiredClears: 0 },
-  { id: 'moonstaff', name: 'Moonshard Staff', rarity: 'epic', description: 'Every ability deals 4 more damage per target.', power: 4, spellId: null, school: null, scope: 'all', requiredClears: 1 },
-  { id: 'phoenix', name: 'Phoenix Scepter', rarity: 'legendary', description: 'Fire Nova erupts twice and deals 8 more damage per target.', power: 8, effect: 'echo', spellId: 'ember', school: 'ember', scope: 'spell', requiredClears: 2 },
-  { id: 'wintercrown', name: 'Staff of Endless Winter', rarity: 'legendary', description: 'Frostfall rains giant shards and deals 8 more damage per target.', power: 8, effect: 'ice-shards', spellId: 'frost', school: 'frost', scope: 'spell', requiredClears: 3 },
-  { id: 'tempest', name: 'Tempest Caller', rarity: 'legendary', description: 'Chain Lightning arcs twice and deals 8 more damage per target.', power: 8, effect: 'chain', spellId: 'storm', school: 'storm', scope: 'spell', requiredClears: 4 },
-  { id: 'cleaver', name: 'Ashsplitter', rarity: 'rare', description: 'Heavy Cleave cuts a wider arc and deals 4 more damage per target.', power: 4, effect: 'wide', spellId: 'cleave', school: 'ember', scope: 'spell', requiredClears: 0 },
-  { id: 'starfall', name: 'Starfall Edge', rarity: 'epic', description: 'Meteor splits into a shower and deals 8 more damage per target.', power: 8, effect: 'echo', spellId: 'meteor', school: 'ember', scope: 'spell', requiredClears: 1 },
-  { id: 'phoenix_talon', name: 'Phoenix Talon', rarity: 'epic', description: 'Phoenix Dive leaves burning ground and deals 7 more damage per target.', power: 7, effect: 'burn', spellId: 'phoenix_dive', school: 'ember', scope: 'spell', requiredClears: 2 },
-  { id: 'inferno', name: 'Crown of the Inferno', rarity: 'legendary', description: 'Firestorm leaves lasting embers and deals 12 more damage per target.', power: 12, effect: 'burn', spellId: 'firestorm', school: 'ember', scope: 'spell', requiredClears: 5 },
-  { id: 'sunforged', name: 'Sunforged Runeblade', rarity: 'epic', description: 'All Flame abilities leave embers and deal 5 more damage per target.', power: 5, effect: 'burn', spellId: null, school: 'ember', scope: 'school', requiredClears: 2 },
-  { id: 'icespear', name: 'Rimepiercer', rarity: 'rare', description: 'Ice Lance splinters through the horde and deals 4 more damage per target.', power: 4, effect: 'pierce', spellId: 'ice_lance', school: 'frost', scope: 'spell', requiredClears: 0 },
-  { id: 'tideglass', name: 'Tideglass Blade', rarity: 'epic', description: 'Glacial Surge widens and deals 7 more damage per target.', power: 7, effect: 'wide', spellId: 'glacial_surge', school: 'frost', scope: 'spell', requiredClears: 1 },
-  { id: 'hailcaller', name: 'Hailcaller', rarity: 'epic', description: 'Blizzard rains giant crystals and deals 8 more damage per target.', power: 8, effect: 'ice-shards', spellId: 'blizzard', school: 'frost', scope: 'spell', requiredClears: 2 },
-  { id: 'wardenheart', name: "Winter Warden's Heart", rarity: 'legendary', description: 'Frost Guardian calls a second giant and deals 12 more damage per target.', power: 12, effect: 'summon', spellId: 'frost_guardian', school: 'frost', scope: 'spell', requiredClears: 5 },
-  { id: 'winterbranch', name: 'Winterbranch', rarity: 'epic', description: 'All Frost abilities scatter shards and deal 5 more damage per target.', power: 5, effect: 'ice-shards', spellId: null, school: 'frost', scope: 'school', requiredClears: 2 },
-  { id: 'arcfang', name: 'Arc Fang', rarity: 'rare', description: 'Arc Lance splinters through the horde and deals 4 more damage per target.', power: 4, effect: 'pierce', spellId: 'arc_lance', school: 'storm', scope: 'spell', requiredClears: 0 },
-  { id: 'thunderbell', name: 'Bell of Thunder', rarity: 'epic', description: 'Thunderclap echoes a second time and deals 7 more damage per target.', power: 7, effect: 'echo', spellId: 'thunderclap', school: 'storm', scope: 'spell', requiredClears: 1 },
-  { id: 'stormorbit', name: 'Orb of the Stormkeeper', rarity: 'epic', description: 'Ball Lightning gains orbiting sparks and deals 8 more damage per target.', power: 8, effect: 'orbit', spellId: 'ball_lightning', school: 'storm', scope: 'spell', requiredClears: 2 },
-  { id: 'skybreaker', name: 'Skybreaker', rarity: 'legendary', description: 'Tempest forks its lightning strikes and deals 12 more damage per target.', power: 12, effect: 'chain', spellId: 'tempest', school: 'storm', scope: 'spell', requiredClears: 5 },
-  { id: 'stormsilver', name: 'Stormsilver Runeblade', rarity: 'epic', description: 'All Storm abilities fork their lightning and deal 5 more damage per target.', power: 5, effect: 'chain', spellId: null, school: 'storm', scope: 'school', requiredClears: 2 },
+  { id: 'apprentice', name: "Apprentice's Runeblade", rarity: 'common', description: 'A trusty starter blade. Your first dungeon treasures can make it stronger.', power: 0, spellId: null, school: null, scope: 'all', requiredClears: 0 },
+  { id: 'cinderwand', name: 'Cinderbranch', rarity: 'rare', description: 'All Flame attacks deal 3 more damage to each enemy.', power: 3, spellId: null, school: 'ember', scope: 'school', requiredClears: 0 },
+  { id: 'glacier', name: 'Glacier Fang', rarity: 'rare', description: 'All Frost attacks deal 3 more damage to each enemy.', power: 3, spellId: null, school: 'frost', scope: 'school', requiredClears: 0 },
+  { id: 'thunderrod', name: 'Thunder Rod', rarity: 'rare', description: 'All Storm attacks deal 3 more damage to each enemy.', power: 3, spellId: null, school: 'storm', scope: 'school', requiredClears: 0 },
+  { id: 'moonstaff', name: 'Moonshard Staff', rarity: 'epic', description: 'Every attack deals 4 more damage to each enemy.', power: 4, spellId: null, school: null, scope: 'all', requiredClears: 1 },
+  { id: 'phoenix', name: 'Phoenix Scepter', rarity: 'legendary', description: 'All Flame attacks deal 8 more damage to each enemy.', power: 8, spellId: null, school: 'ember', scope: 'school', requiredClears: 2 },
+  { id: 'wintercrown', name: 'Staff of Endless Winter', rarity: 'legendary', description: 'All Frost attacks deal 8 more damage to each enemy.', power: 8, spellId: null, school: 'frost', scope: 'school', requiredClears: 3 },
+  { id: 'tempest', name: 'Tempest Caller', rarity: 'legendary', description: 'All Storm attacks deal 8 more damage to each enemy.', power: 8, spellId: null, school: 'storm', scope: 'school', requiredClears: 4 },
+  { id: 'cleaver', name: 'Ashsplitter', rarity: 'rare', description: 'All Flame attacks deal 4 more damage to each enemy.', power: 4, spellId: null, school: 'ember', scope: 'school', requiredClears: 0 },
+  { id: 'starfall', name: 'Starfall Edge', rarity: 'epic', description: 'All Flame attacks deal 8 more damage to each enemy.', power: 8, spellId: null, school: 'ember', scope: 'school', requiredClears: 1 },
+  { id: 'phoenix_talon', name: 'Phoenix Talon', rarity: 'epic', description: 'All Flame attacks deal 7 more damage to each enemy.', power: 7, spellId: null, school: 'ember', scope: 'school', requiredClears: 2 },
+  { id: 'inferno', name: 'Crown of the Inferno', rarity: 'legendary', description: 'All Flame attacks deal 12 more damage to each enemy.', power: 12, spellId: null, school: 'ember', scope: 'school', requiredClears: 5 },
+  { id: 'sunforged', name: 'Sunforged Runeblade', rarity: 'epic', description: 'All Flame attacks deal 5 more damage to each enemy.', power: 5, spellId: null, school: 'ember', scope: 'school', requiredClears: 2 },
+  { id: 'icespear', name: 'Rimepiercer', rarity: 'rare', description: 'All Frost attacks deal 4 more damage to each enemy.', power: 4, spellId: null, school: 'frost', scope: 'school', requiredClears: 0 },
+  { id: 'tideglass', name: 'Tideglass Blade', rarity: 'epic', description: 'All Frost attacks deal 7 more damage to each enemy.', power: 7, spellId: null, school: 'frost', scope: 'school', requiredClears: 1 },
+  { id: 'hailcaller', name: 'Hailcaller', rarity: 'epic', description: 'All Frost attacks deal 8 more damage to each enemy.', power: 8, spellId: null, school: 'frost', scope: 'school', requiredClears: 2 },
+  { id: 'wardenheart', name: "Winter Warden's Heart", rarity: 'legendary', description: 'All Frost attacks deal 12 more damage to each enemy.', power: 12, spellId: null, school: 'frost', scope: 'school', requiredClears: 5 },
+  { id: 'winterbranch', name: 'Winterbranch', rarity: 'epic', description: 'All Frost attacks deal 5 more damage to each enemy.', power: 5, spellId: null, school: 'frost', scope: 'school', requiredClears: 2 },
+  { id: 'arcfang', name: 'Arc Fang', rarity: 'rare', description: 'All Storm attacks deal 4 more damage to each enemy.', power: 4, spellId: null, school: 'storm', scope: 'school', requiredClears: 0 },
+  { id: 'thunderbell', name: 'Bell of Thunder', rarity: 'epic', description: 'All Storm attacks deal 7 more damage to each enemy.', power: 7, spellId: null, school: 'storm', scope: 'school', requiredClears: 1 },
+  { id: 'stormorbit', name: 'Orb of the Stormkeeper', rarity: 'epic', description: 'All Storm attacks deal 8 more damage to each enemy.', power: 8, spellId: null, school: 'storm', scope: 'school', requiredClears: 2 },
+  { id: 'skybreaker', name: 'Skybreaker', rarity: 'legendary', description: 'All Storm attacks deal 12 more damage to each enemy.', power: 12, spellId: null, school: 'storm', scope: 'school', requiredClears: 5 },
+  { id: 'stormsilver', name: 'Stormsilver Runeblade', rarity: 'epic', description: 'All Storm attacks deal 5 more damage to each enemy.', power: 5, spellId: null, school: 'storm', scope: 'school', requiredClears: 2 },
 ];
 export interface RpgCombatEnemy { id: string; hp: number; maxHp: number }
 export interface RpgCombatState { version: 1; encounterIndex: number; casts: number; enemies: RpgCombatEnemy[] }
@@ -211,6 +211,13 @@ export function rpgSpellSchool(spellId: RpgSpellId): RpgSchoolId {
 export function rpgSpellUnlocked(spellId: RpgSpellId, skills: Record<string, number>): boolean {
   const spell = RPG_SPELLS.find((entry) => entry.id === spellId);
   return !!spell && (!spell.skillId || (skills[spell.skillId] ?? 0) > 0);
+}
+/** Gear can lend its associated spell without purchasing or changing a tree
+ * rank. Availability disappears when that exact bonus copy is unequipped. */
+export function rpgSpellAvailable(state: RpgLoadout, spellId: RpgSpellId = state.selectedSpellId): boolean {
+  if (rpgSpellUnlocked(spellId, state.skills)) return true;
+  const bonus = rpgLootSkillBonus(rpgEquippedLoot(state));
+  return !!bonus && RPG_SKILLS.some(skill => skill.id === bonus.skillId && skill.spellId === spellId);
 }
 /** Fallback keeps old serialized reward items readable after upgrading. */
 export function rpgItemApplies(item: Pick<RpgItem, 'spellId'> & Partial<Pick<RpgItem, 'scope' | 'school'>>, spellId: RpgSpellId): boolean {

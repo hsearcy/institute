@@ -1,14 +1,14 @@
 import { expect, test } from 'bun:test';
 import { skillUpgradePreview } from '../src/rpg/skillPreview';
 
-test('learning a modifier widens coverage without promising an already equipped effect', () => {
+test('learning a modifier widens coverage and adds its effect to an elemental weapon', () => {
   const state = { selectedSpellId: 'firestorm' as const, equippedItemId: 'inferno', skills: { ember_power: 3, ember_echo: 1, ember_master: 2, meteor: 1, firestorm: 1 } };
   const original = JSON.stringify(state);
   const [preview] = skillUpgradePreview(state, 'firestorm_inferno', 0)!;
   expect(preview.before).toBe(8); expect(preview.after).toBe(9);
   expect(preview.beforeDamage).toBe(49); expect(preview.afterDamage).toBe(53); expect(preview.extraDamage).toBe(4);
-  expect(preview.extraTargets).toBe(1); expect(preview.newModifiers).toEqual([]);
-  expect(preview.existingModifier).toBe(true);
+  expect(preview.extraTargets).toBe(1); expect(preview.newModifiers).toEqual(['burn']);
+  expect(preview.existingModifier).toBe(false);
   expect(JSON.stringify(state)).toBe(original);
 });
 

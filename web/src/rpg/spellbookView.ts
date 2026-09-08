@@ -1,5 +1,5 @@
 import {
-  RPG_SCHOOLS, RPG_SKILLS, RPG_SPELLS, rpgSpellCombatStats, rpgSpellModifiers, rpgSpellUnlocked,
+  RPG_SCHOOLS, RPG_SKILLS, RPG_SPELLS, rpgSpellCombatStats, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable,
   type RpgModifier, type RpgSchoolId, type RpgSpellId, type RpgState,
 } from '@institute/shared';
 import { escapeHtml as esc, icon, spellArt } from './icons';
@@ -27,11 +27,14 @@ export function renderSpellbookView({ state, school: schoolId, trackedSpell, pla
   const school = RPG_SCHOOLS.find(entry => entry.id === schoolId) ?? RPG_SCHOOLS[0];
   const spells = RPG_SPELLS.filter(spell => spell.school === school.id);
   const isLearned = (id: RpgSpellId) => rpgSpellUnlocked(id, state.skills);
+  const isAvailable = (id: RpgSpellId) => rpgSpellAvailable(state, id);
+  const relicCount = RPG_SPELLS.filter(spell => isAvailable(spell.id) && !isLearned(spell.id)).length;
   const focus = spells.find(spell => spell.id === state.selectedSpellId)
     ?? spells.find(spell => spell.id === trackedSpell)
-    ?? spells.find(spell => spell.id === favoriteSpell && isLearned(spell.id))
+    ?? spells.find(spell => spell.id === favoriteSpell && isAvailable(spell.id))
     ?? spells[0];
-  const learned = isLearned(focus.id);
+  const learned = isAvailable(focus.id);
+  const fromRelic = learned && !isLearned(focus.id);
   const selected = state.selectedSpellId === focus.id;
   const unlock = RPG_SKILLS.find(skill => skill.id === focus.skillId);
   const parent = RPG_SKILLS.find(skill => skill.id === unlock?.parentId);
@@ -44,7 +47,7 @@ export function renderSpellbookView({ state, school: schoolId, trackedSpell, pla
   return `<div class="rpg-grimoire" style="--spell-color:${school.color}">
     <header class="rpg-grimoire-title">
       <p class="rpg-eyebrow">THE GRIMOIRE</p>
-      <h2 id="rpg-dialog-title">Your spells <small>${learnedCount} / ${RPG_SPELLS.length} learned</small></h2>
+      <h2 id="rpg-dialog-title">Your spells <small>${learnedCount} / ${RPG_SPELLS.length} learned${relicCount ? ` · ${relicCount} from relic` : ''}</small></h2>
       <p>Choose a spell for your next cast.</p>
     </header>
     <div class="rpg-school-tabs" role="group" aria-label="Magic school">${RPG_SCHOOLS.map(entry => `<button data-school="${entry.id}" data-view="spellbook" class="${entry.id === school.id ? 'active' : ''}" style="--spell-color:${entry.color}" aria-pressed="${entry.id === school.id}">${spellArt(entry.id)}<span>${esc(entry.name)}</span></button>`).join('')}</div>
@@ -53,9 +56,9 @@ export function renderSpellbookView({ state, school: schoolId, trackedSpell, pla
         <div class="rpg-grimoire-chapter"><span>CHAPTER ${chapter}</span><b>${esc(school.name)}</b><span>${String(spells.indexOf(focus) + 1).padStart(2, '0')} / 05</span></div>
         <div class="rpg-grimoire-portrait"><div class="rpg-grimoire-bezel">${spellArt(focus.id)}</div><span class="rpg-grimoire-portrait-mark" aria-hidden="true">◆</span></div>
         <div class="rpg-grimoire-feature-copy">
-          <span class="rpg-grimoire-feature-state">${selected ? 'SELECTED SPELL' : learned ? 'LEARNED SPELL' : trackedSpell === focus.id ? 'YOUR NEXT SPELL' : 'UNDISCOVERED SPELL'}</span>
+          <span class="rpg-grimoire-feature-state">${fromRelic ? selected ? 'SELECTED · FROM RELIC' : 'FROM RELIC' : selected ? 'SELECTED SPELL' : learned ? 'LEARNED SPELL' : trackedSpell === focus.id ? 'YOUR NEXT SPELL' : 'UNDISCOVERED SPELL'}</span>
           <h3 id="rpg-featured-spell">${esc(focus.name)}</h3>
-          <p class="rpg-grimoire-description">${esc(description)}</p>
+          <p class="rpg-grimoire-description">${esc(description)}</p>${fromRelic ? '<p class="rpg-grimoire-requirement">From relic · available while equipped.<br>Learn it in the skill tree to keep it.</p>' : ''}
         </div>
         <div class="rpg-grimoire-feature-bottom">
           ${engraving}
@@ -65,12 +68,13 @@ export function renderSpellbookView({ state, school: schoolId, trackedSpell, pla
       <section class="rpg-grimoire-index" aria-label="${esc(school.name)} spells">
         <div class="rpg-grimoire-index-heading"><h3>${esc(school.name)} spells</h3><span>${spells.filter(spell => isLearned(spell.id)).length} / 5 learned</span></div>
         <div class="rpg-spell-library">${spells.map((spell, index) => {
-          const unlocked = isLearned(spell.id);
+          const unlocked = isAvailable(spell.id);
+          const borrowed = unlocked && !isLearned(spell.id);
           const chosen = state.selectedSpellId === spell.id;
           const focused = focus.id === spell.id;
           const tracked = trackedSpell === spell.id;
           const skill = RPG_SKILLS.find(entry => entry.id === spell.skillId);
-          const status = chosen ? 'Selected' : unlocked ? 'Select spell' : tracked ? 'Tracked · View skill tree' : `Level ${skill?.level ?? 1} · Track spell`;
+          const status = borrowed ? chosen ? 'Selected · From relic' : 'From relic · Select spell' : chosen ? 'Selected' : unlocked ? 'Select spell' : tracked ? 'Tracked · View skill tree' : `Level ${skill?.level ?? 1} · Track spell`;
           return `<button class="rpg-spell-card rpg-grimoire-entry ${unlocked ? 'learned' : 'locked'} ${chosen ? 'selected' : ''} ${focused ? 'focused' : ''} ${tracked && !unlocked ? 'tracked' : ''}" data-spell="${spell.id}" style="--spell-color:${spell.color}" aria-pressed="${chosen}" ${focused ? 'aria-describedby="rpg-featured-spell"' : ''} aria-label="${esc(spell.name)}, ${focused && !chosen ? 'viewing, ' : ''}${esc(status)}">
             <span class="rpg-grimoire-entry-number" aria-hidden="true">${String(index + 1).padStart(2, '0')}</span>
             <span class="rpg-grimoire-entry-art">${spellArt(spell.id)}${!unlocked ? `<span class="rpg-grimoire-entry-lock">${icon('lock')}</span>` : ''}</span>

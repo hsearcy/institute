@@ -7,6 +7,7 @@ import { Database } from 'bun:sqlite';
 import { chromium } from '../web/node_modules/@playwright/test/index.mjs';
 import { createServer } from '../web/node_modules/vite/dist/node/index.js';
 import { rpgSpellCombatStats } from '../shared/src/rpg';
+import { rpgEffectiveSkills } from '../shared/src/rpgLoot';
 
 const root = resolve(import.meta.dir, '..'), stamp = Date.now();
 const output = process.env.QA_OUTPUT ?? `/tmp/rpg-loot-affixes-${stamp}`;
@@ -34,6 +35,7 @@ try {
   seed.loot.push({ id: 'qa:spell', itemId: 'moonstaff', bonusPower: 3, bonusSpellId: 'ice_lance', bonusSpellPower: 6, upgradeLevel: 0 });
   seed.loot.push({ id: 'qa:school', itemId: 'moonstaff', bonusPower: 3, bonusSchoolId: 'frost', bonusSchoolPower: 4, upgradeLevel: 0 });
   seed.loot.push({ id: 'qa:unlearned', itemId: 'moonstaff', bonusPower: 3, bonusSkillId: 'frost_master', bonusSkillRanks: 2, upgradeLevel: 0 });
+  seed.skills.frost_master = 0; // Exercise a temporary rank with no permanent ownership.
   seed.equippedItemId = 'moonstaff'; seed.equippedLootId = 'qa:moonstaff'; seed.selectedSpellId = 'ice_lance';
   seed.bestTier = 9; seed.dungeonTier = 10; seed.forgeDust = 50;
   const db = new Database(dbPath);
@@ -54,13 +56,14 @@ try {
   const shot = async (name: string) => page.screenshot({ path: resolve(output, `${name}.png`) });
   const top = () => page.locator('.rpg-dialog').evaluate((node: Element) => { node.scrollTop = 0; });
   await top(); await shot('inventory-desktop');
-  assert.match(await page.locator('[data-item="icespear"]').textContent(), /Ice Lance/);
-  assert.match(await page.locator('[data-item="cinderwand"]').textContent(), /Fire Nova/);
+  assert.match(await page.locator('[data-item="icespear"]').textContent(), /\+4 Frost power/);
+  assert.match(await page.locator('[data-item="cinderwand"]').textContent(), /\+3 Flame power/);
   for (const id of ['qa:wide', 'qa:spell', 'qa:school', 'qa:unlearned']) {
     await page.locator(`[data-loot-card="${id}"]`).scrollIntoViewIfNeeded(); await shot(`${id.replace('qa:', '')}-desktop`);
   }
-  assert.match(await page.locator('[data-loot-card="qa:unlearned"]').textContent(), /Winter Crown/);
-  assert.match(await page.locator('[data-loot-card="qa:unlearned"]').textContent(), /learn|inactive/i);
+  const temporaryCopyText = await page.locator('[data-loot-card="qa:unlearned"]').textContent();
+  assert.match(temporaryCopyText, /\+2 Winter Crown/);
+  assert.doesNotMatch(temporaryCopyText, /inactive|learn to activate/i);
   await page.setViewportSize({ width: 390, height: 844 }); await top(); await shot('inventory-phone');
   await page.locator('[data-item="icespear"]').scrollIntoViewIfNeeded(); await shot('collection-phone');
   for (const id of ['qa:wide', 'qa:unlearned']) {
@@ -73,7 +76,13 @@ try {
     await page.waitForFunction(id => (window as any).__game.state.equippedLootId === id && !(window as any).__game.busy, id);
   };
   await equip('qa:unlearned'); await top(); await shot('skill-affinity-desktop');
-  assert.match(await page.locator('[data-item="moonstaff"] .rpg-slot-bonuses').textContent(), /Winter Crown.*Inactive.*Learn Winter Crown/);
+  assert.match(await page.locator('[data-item="moonstaff"] .rpg-slot-bonuses').textContent(), /\+2 Winter Crown/);
+  const temporaryState = await state();
+  assert.equal(temporaryState.skills.frost_master ?? 0, 0, 'Equipment must leave the permanent tree unchanged');
+  assert.equal(rpgEffectiveSkills(temporaryState).frost_master, 2, 'Equipped ranks work immediately');
+  const withoutRanks = { ...temporaryState, loot: temporaryState.loot.map((copy: any) => copy.id === 'qa:unlearned' ? { ...copy, bonusSkillRanks: 0 } : copy) };
+  assert.equal(rpgSpellCombatStats(temporaryState).damage - rpgSpellCombatStats(withoutRanks).damage, 12);
+  assert.deepEqual(learning(), beforeLearning);
   assert(await page.locator('.rpg-relic-slots .rpg-relic-art').evaluateAll((nodes: Element[]) => nodes.every(node => {
     const box = node.getBoundingClientRect(); return Math.abs(box.width - box.height) < 2;
   })), 'Collection thumbnails keep square frames when some copies have more bonuses');
@@ -112,7 +121,7 @@ try {
     assert.equal(receipt.reward.combat.hits.length, Math.min(expected.targets, receipt.reward.combat.enemiesBefore.filter((enemy: any) => enemy.hp > 0).length));
     report.casts.push({ lootId: id, expected, combat: receipt.reward.combat });
   }
-  assert.equal((await state()).skills.frost_master ?? 0, 0, 'Rolled skill must not learn the skill');
+  assert.equal((await state()).skills.frost_master ?? 0, 0, 'Temporary equipment ranks must not purchase permanent skill ranks');
   await page.locator('[data-action="inventory"]').first().click();
   await page.locator('#rpg-dialog-content [data-action="forge"]').click();
   await page.waitForFunction(() => (window as any).__game.panel === 'forge' && !(window as any).__game.busy);
@@ -121,7 +130,7 @@ try {
   await page.waitForFunction(() => (window as any).__game.state.loot.find((copy: any) => copy.id === 'qa:wide').upgradeLevel === 1);
   const forged = (await state()).loot.find((copy: any) => copy.id === 'qa:wide');
   assert.equal(forged.bonusTargets, 2); assert.equal(forged.bonusPower, 3); assert.deepEqual(learning(), beforeForge);
-  report.checks.push('Four genuine tutor casts match preview damage/coverage; inactive rank stays unlearned; forging keeps random affixes');
+  report.checks.push('Four genuine tutor casts match preview damage/coverage; temporary ranks work without changing the permanent tree; forging keeps random affixes');
   }
   assert.deepEqual(report.errors, []); report.success = true;
 } catch (error) { report.failure = String(error); throw error; }

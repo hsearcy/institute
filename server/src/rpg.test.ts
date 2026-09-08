@@ -258,7 +258,7 @@ describe('additive RPG progression on legacy learning data', () => {
     solved(db, 'other-kid', 'other-solve');
     expect(() => resolve(db, 'sam', 'other-solve')).toThrow('Finish this problem');
     solved(db, 'sam', 'real');
-    expect(() => resolve(db, 'sam', 'real', { spellId: 'storm' })).toThrow('Unlock this spell');
+    expect(() => resolve(db, 'sam', 'real', { spellId: 'storm' })).toThrow('Learn this spell');
     expect(() => resolve(db, 'sam', 'real', { encounterIndex: 5 })).toThrow('moved on');
     expect(getRpgState(db, 'sam').xp).toBe(0);
     db.close();
@@ -410,7 +410,7 @@ describe('additive RPG progression on legacy learning data', () => {
 
 
 describe('expanded spellbook compatibility and authority', () => {
-  test('fifteen distinct abilities have complete, acyclic unlock trees and specialist equipment', () => {
+  test('fifteen distinct abilities have complete, acyclic unlock trees and matching school equipment', () => {
     expect(RPG_SPELLS).toHaveLength(15);
     expect(RPG_SKILLS.length).toBeGreaterThanOrEqual(27);
     expect(RPG_ITEMS.length).toBeGreaterThanOrEqual(20);
@@ -428,7 +428,7 @@ describe('expanded spellbook compatibility and authority', () => {
         if (node.parentId) { expect(parent).toBeDefined(); expect(parent!.level).toBeLessThanOrEqual(node.level); }
         node = parent;
       }
-      expect(RPG_ITEMS.some(item => item.scope === 'spell' && item.spellId === spell.id)).toBe(true);
+      expect(RPG_ITEMS.some(item => item.scope === 'school' && rpgItemApplies(item, spell.id))).toBe(true);
     }
   });
 
@@ -500,19 +500,19 @@ describe('expanded spellbook compatibility and authority', () => {
     db.close();
   });
 
-  test('school gear and specialist modifiers affect only their documented abilities', () => {
+  test('broad school gear and learned specialist modifiers affect their documented abilities', () => {
     const item = (id: string) => RPG_ITEMS.find(entry => entry.id === id)!;
     expect(rpgItemApplies(item('sunforged'), 'meteor')).toBe(true);
     expect(rpgItemApplies(item('sunforged'), 'ice_lance')).toBe(false);
     expect(rpgItemApplies(item('starfall'), 'meteor')).toBe(true);
-    expect(rpgItemApplies(item('starfall'), 'ember')).toBe(false);
+    expect(rpgItemApplies(item('starfall'), 'ember')).toBe(true);
     expect(rpgItemApplies(item('tempest'), 'storm')).toBe(true);
-    expect(rpgItemApplies(item('tempest'), 'tempest')).toBe(false); // old item ID is retained; its target is Chain Lightning.
+    expect(rpgItemApplies(item('tempest'), 'tempest')).toBe(true); // Retained ID now boosts its whole school.
     const state = { skills: { ember_power: 1, ember_echo: 1, meteor: 1, meteor_shower: 1 }, equippedItemId: 'starfall', selectedSpellId: 'meteor' as const };
     expect(rpgSpellModifiers(state)).toEqual(['echo']);
     expect(rpgSpellModifiers(state, 'ice_lance')).toEqual([]);
     expect(rpgSpellCombatStats(state).damage).toBe(27); // 8 base + 6 Meteor + 2 Wildfire + 3 shower + 8 gear.
-    expect(rpgSpellCombatStats(state, 'cleave').damage).toBe(11); // 7 base + 2 Cleave + 2 school power.
+    expect(rpgSpellCombatStats(state, 'cleave').damage).toBe(19); // 7 base + 2 Cleave + 2 school power + 8 school gear.
     expect(rpgSpellSchool('frost_guardian')).toBe('frost');
     expect(rpgSpellSchool('ball_lightning')).toBe('storm');
   });
@@ -529,4 +529,48 @@ describe('expanded spellbook compatibility and authority', () => {
     expect(new Set(getRpgState(db, 'collector').inventory)).toEqual(new Set(RPG_ITEMS.map(item => item.id)));
     db.close();
   });
+});
+
+test('a relic grants its spell only while equipped, without permanent ranks or duplicate rewards', async () => {
+  const db = legacyDb(); ensureRpgSchema(db);
+  try {
+    const state = getRpgState(db, 'sam');
+    Object.assign(state, { xp: 15000, ...rpgLevel(15000), skillPoints: 2 });
+    state.inventory.push('tempest');
+    state.loot!.push({ id: 'borrowed-tempest', itemId: 'tempest', bonusPower: 0, upgradeLevel: 0, bonusSkillId: 'tempest_overcharge', bonusSkillRanks: 1 });
+    db.query('INSERT INTO rpg_profiles VALUES (?, ?, ?)').run('sam', JSON.stringify(state), Date.now());
+    const learningBefore = snapshot(db);
+    expect((await call(db, '/spell', { profileId: 'sam', spellId: 'tempest' })).status).toBe(400);
+    expect((await call(db, '/equip', { profileId: 'sam', lootId: 'borrowed-tempest' })).status).toBe(200);
+    expect((await call(db, '/spell', { profileId: 'sam', spellId: 'tempest' })).status).toBe(200);
+    const borrowed = getRpgState(db, 'sam');
+    expect(borrowed.selectedSpellId).toBe('tempest');
+    expect(borrowed.skills).toEqual({}); expect(borrowed.skillPoints).toBe(2);
+    const upgrade = await call(db, '/upgrade', { profileId: 'sam', skillId: 'tempest_overcharge' });
+    expect(upgrade.status).toBe(400);
+    expect(await upgrade.json()).toMatchObject({ error: 'Learn the connected skill first.' });
+    expect(snapshot(db)).toBe(learningBefore);
+    const started = startRpgExpedition(db, 'sam');
+    solved(db, 'sam', 'relic-cast');
+    const learning = snapshot(db);
+    const cast = { profileId: 'sam', problemId: 'relic-cast', expeditionId: started.expedition!.id, encounterIndex: 0, spellId: 'tempest' as const };
+    const first = resolveRpgEncounter(db, cast);
+    expect(first.reward.spellId).toBe('tempest');
+    expect(first.reward.combat!.hits[0].damage).toBeGreaterThan(0);
+    expect((await call(db, '/equip', { profileId: 'sam', lootId: 'legacy:apprentice' })).status).toBe(200);
+    expect(getRpgState(db, 'sam').selectedSpellId).toBe('cleave');
+    expect((await call(db, '/spell', { profileId: 'sam', spellId: 'tempest' })).status).toBe(400);
+    const replay = resolveRpgEncounter(db, cast);
+    expect(replay.duplicate).toBe(true); expect(replay.reward).toEqual(first.reward);
+    expect(replay.state.xp).toBe(first.state.xp);
+    expect(replay.state.selectedSpellId).toBe('cleave');
+    expect(replay.state.skills).toEqual({});
+    expect(snapshot(db)).toBe(learning);
+    const learned = getRpgState(db, 'sam'); learned.skills.tempest = 1;
+    db.query('UPDATE rpg_profiles SET state_json=? WHERE profile_id=?').run(JSON.stringify(learned), 'sam');
+    await call(db, '/equip', { profileId: 'sam', lootId: 'borrowed-tempest' });
+    await call(db, '/spell', { profileId: 'sam', spellId: 'tempest' });
+    await call(db, '/equip', { profileId: 'sam', lootId: 'legacy:apprentice' });
+    expect(getRpgState(db, 'sam').selectedSpellId).toBe('tempest');
+  } finally { db.close(); }
 });

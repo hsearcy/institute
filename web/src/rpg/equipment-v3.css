@@ -61,25 +61,14 @@
 .rpg-relic-slots .rpg-item .rpg-stronger-copy-badge{font-size:10px;}
 @media(max-width:680px){.rpg-inventory.rpg-relic-slots{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;}.rpg-slot-strength strong{font-size:24px;}.rpg-armory-collection-heading{flex-wrap:wrap;}.rpg-armory-collection-heading>span{font-size:11px;}}
 
-/* Read the relic's effects directly; the preview already includes active bonuses. */
-.rpg-inventory.rpg-owned-slots{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:12px;}
-#rpg-ui .rpg-owned-slots .rpg-item{display:grid;grid-template-columns:74px minmax(0,1fr);gap:12px;padding:14px;text-align:left;align-content:start;}
-.rpg-owned-slots .rpg-item .rpg-relic-art{width:74px;height:74px;}
-.rpg-owned-slots .rpg-item .rpg-armory-slot-name{align-self:center;margin:0;min-height:0;font-size:17px;line-height:1.4;color:#eee0c3;}
-.rpg-owned-slots .rpg-armory-slot-name small{display:block;font:11px/1.5 'Nunito',sans-serif;color:#b9c6b3;margin-top:7px;text-transform:capitalize;}
-.rpg-slot-preview{grid-column:1/-1;display:block;padding:12px 0;border-block:1px solid #8198884d;}
-.rpg-slot-preview-title{display:block;font:600 12px/1.5 'Nunito',sans-serif;color:#dfd1ad;margin-bottom:10px;}
-.rpg-slot-preview-numbers{display:grid;grid-template-columns:1fr 1fr;gap:12px;font:11px/1.5 'Nunito',sans-serif;color:#d4ddca;}
-.rpg-slot-preview-numbers strong{font:25px/1.1 'Cinzel',Georgia,serif;color:#ffe5ad;}
-.rpg-slot-preview-numbers small{display:block;margin-top:6px;}
-.rpg-owned-slots .rpg-item .rpg-slot-affinity{grid-column:1/-1;margin:0;min-height:0;font-size:13px;line-height:1.65;color:#e1e6d6;}
-.rpg-slot-inactive{grid-column:1/-1;font:12px/1.6 'Nunito',sans-serif;color:#d8be98;}
-.rpg-owned-slots .rpg-item .rpg-slot-bonuses{grid-column:1/-1;margin:0;padding-top:12px;gap:12px;}
-.rpg-owned-slots .rpg-slot-bonuses>span{font-size:12px;line-height:1.65;overflow-wrap:normal;}
-.rpg-owned-slots .rpg-slot-affinity>small,.rpg-owned-slots .rpg-slot-bonuses>small{display:block;color:#b5bcaa;font:10px/1.4 'Nunito',sans-serif;letter-spacing:.7px;}
-.rpg-owned-slots .rpg-slot-affinity>small{margin-bottom:7px;}
-.rpg-owned-slots .rpg-stronger-copy-badge{grid-column:1/-1;}
-.rpg-dialog .rpg-armory-copy .rpg-equipped-affixes p{padding-top:10px;border-top:1px solid #81988833;color:#bde2dc;}
-@media(max-width:950px){.rpg-inventory.rpg-owned-slots{grid-template-columns:1fr;}}
-@media(max-width:760px){.rpg-armory-equipped{grid-template-columns:100px minmax(0,1fr);align-items:start;}.rpg-armory-display{width:100px;}.rpg-armory-copy .rpg-equipped-affixes{margin-top:12px;}.rpg-inventory.rpg-owned-slots{grid-template-columns:repeat(2,minmax(0,1fr));}}
-@media(max-width:580px){.rpg-inventory.rpg-owned-slots{grid-template-columns:1fr;}.rpg-armory-equipped{display:block;}.rpg-armory-display{float:left;width:95px;margin:0 14px 10px 0;}.rpg-armory-copy .rpg-equipped-affixes{clear:both;}.rpg-dialog .rpg-armory-copy p{font-size:12px;line-height:1.7;}}
+/* Compact, visible stat lists keep the collection quick to compare. */
+.rpg-inventory.rpg-relic-slots{grid-template-columns:repeat(3,minmax(0,1fr));}
+.rpg-compact-stats{display:grid;gap:7px;text-align:left;font:12px/1.5 'Nunito',sans-serif;color:#c7e5d8;}
+.rpg-compact-stats>[role="listitem"]{display:block;position:relative;padding-left:11px;overflow-wrap:normal;}
+.rpg-compact-stats>[role="listitem"]::before{content:'•';position:absolute;left:0;color:#c5b57e;}
+.rpg-relic-slots .rpg-item .rpg-slot-bonuses{margin-top:10px;padding:10px 5px 0;}
+.rpg-relic-slots .rpg-item .rpg-compact-stats{font-size:11px;line-height:1.5;}
+.rpg-armory-copy>.rpg-compact-stats{margin:14px 0;}
+.rpg-relic-slots .rpg-item .rpg-slot-switch{font:10px/1.5 'Nunito',sans-serif;color:#dfc793;margin:6px 0;}
+.rpg-loot-card .rpg-affixes .rpg-compact-stats{margin:9px 0;}
+@media(max-width:680px){.rpg-inventory.rpg-relic-slots{grid-template-columns:repeat(2,minmax(0,1fr));}.rpg-relic-slots .rpg-item .rpg-compact-stats{font-size:11px;}.rpg-armory-copy>.rpg-compact-stats{font-size:11px;}}

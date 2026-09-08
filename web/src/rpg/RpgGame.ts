@@ -1,5 +1,5 @@
 import type { Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgAppearanceId, RpgReward, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
-import { RPG_APPEARANCES, rpgAppearanceUnlocked, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgEncounterCombat, rpgNextRelicHunt, rpgUnlockedTier, rpgDungeonForgeDust, rpgSalvageValue, rpgAnswerPower, ProblemSchema } from '@institute/shared';
+import { RPG_APPEARANCES, rpgAppearanceUnlocked, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, rpgEncounterCombat, rpgNextRelicHunt, rpgUnlockedTier, rpgDungeonForgeDust, rpgSalvageValue, rpgAnswerPower, ProblemSchema } from '@institute/shared';
 import { fetchState, fetchMastery, redeemCrazyCoin, type Demo } from '../game/tutor';
 import { speak } from '../game/audio';
 import * as dungeonSound from './sound';
@@ -280,15 +280,17 @@ export class RpgGame {
     this.el('rpg-points').hidden = s.skillPoints === 0;
     this.el('rpg-points').textContent = String(s.skillPoints);
     this.favoriteSpells[rpgSpellSchool(s.selectedSpellId)] = s.selectedSpellId;
-    for (const school of RPG_SCHOOLS) if (!rpgSpellUnlocked(this.favoriteSpells[school.id],s.skills)) this.favoriteSpells[school.id] = school.id;
+    for (const school of RPG_SCHOOLS) if (!rpgSpellAvailable(s, this.favoriteSpells[school.id])) this.favoriteSpells[school.id] = RPG_SPELLS.find(spell => spell.school === school.id && rpgSpellAvailable(s, spell.id))?.id ?? school.id;
     localStorage.setItem(`${sessionKey}:favorites`,JSON.stringify(this.favoriteSpells));
-    this.el('rpg-spell-count').textContent = String(RPG_SPELLS.filter(spell => rpgSpellUnlocked(spell.id, s.skills)).length);
+    this.el('rpg-spell-count').textContent = String(RPG_SPELLS.filter(spell => rpgSpellAvailable(s, spell.id)).length);
     this.el('rpg-compact-spell-name').textContent = RPG_SPELLS.find(spell => spell.id === s.selectedSpellId)!.name;
     this.el('rpg-spellbar').innerHTML = (['ember','frost','storm'] as RpgSchoolId[]).map((school, i) => {
       const favorite = this.favoriteSpells[school];
-      const spell = RPG_SPELLS.find(entry => entry.id === favorite && rpgSpellUnlocked(entry.id,s.skills)) ?? RPG_SPELLS.find(entry => entry.id === school)!;
-      const unlocked = rpgSpellUnlocked(spell.id, s.skills);
-      return `<button data-spell="${spell.id}" class="rpg-spell ${s.selectedSpellId === spell.id ? 'selected' : ''} ${!unlocked ? 'locked' : ''}" style="--spell-color:${spell.color}" aria-label="${spell.name}${!unlocked ? ', unlock in skill tree' : ''}" aria-pressed="${s.selectedSpellId === spell.id}">${spellArt(spell.id)}<span>${spell.name}</span>${!unlocked ? `<i class="rpg-spell-lock">${icon('lock')}</i>` : ''}<kbd>${['Q','W','E'][i]}</kbd></button>`;
+      const spell = RPG_SPELLS.find(entry => entry.id === favorite && entry.school === school && rpgSpellAvailable(s, entry.id))
+        ?? RPG_SPELLS.find(entry => entry.school === school && rpgSpellAvailable(s, entry.id))
+        ?? RPG_SPELLS.find(entry => entry.id === school)!;
+      const unlocked = rpgSpellAvailable(s, spell.id);
+      return `<button data-spell="${spell.id}" class="rpg-spell ${s.selectedSpellId === spell.id ? 'selected' : ''} ${!unlocked ? 'locked' : ''}" style="--spell-color:${spell.color}" aria-label="${spell.name}${!unlocked ? ', unlock in skill tree' : !rpgSpellUnlocked(spell.id, s.skills) ? ', from relic while equipped' : ''}" aria-pressed="${s.selectedSpellId === spell.id}">${spellArt(spell.id)}<span>${spell.name}</span>${!unlocked ? `<i class="rpg-spell-lock">${icon('lock')}</i>` : ''}<kbd>${['Q','W','E'][i]}</kbd></button>`;
     }).join('') + `<button class="rpg-spell rpg-tree-button" data-action="skills" aria-label="Skill trees">${icon('tree')}<span>Skill trees</span>${s.skillPoints ? `<i>${s.skillPoints} new</i>` : '<kbd>K</kbd>'}</button>`;
     const item = RPG_ITEMS.find(i => i.id === s.equippedItemId)!;
     this.el('rpg-equipped').textContent = item.name;
@@ -656,8 +658,9 @@ export class RpgGame {
     const other = previews.filter(preview => preview !== chosen && (preview.extraDamage > 0 || preview.extraTargets > 0 || preview.newModifiers.length));
     const details = gained.length ? ` Adds ${gained.join(' and ')}.` : chosen.existingModifier ? ' Its spell effect is already active.' : '';
     const alternatives = !chosen.extraDamage && !chosen.extraTargets && !gained.length && other.length ? ` Still improves ${other.map(preview => preview.spell.name).join(', ')}.` : '';
-    const unchanged = !chosen.extraDamage && !chosen.extraTargets && !gained.length && !other.length;
-    return `<span class="rpg-skill-preview ${unchanged ? 'unchanged' : ''}"><b>With your relic · ${room === 0 ? 'first room' : `room ${room + 1}`}</b>${esc(chosen.spell.name)}: ${targets}.${esc(details + alternatives)}${unchanged ? ' You can save this point or change relics.' : ''}</span>`;
+    const permanentUnlock = chosen.unlocked && RPG_SKILLS.find(skill => skill.id === skillId)?.kind === 'unlock';
+    const unchanged = !chosen.extraDamage && !chosen.extraTargets && !gained.length && !other.length && !permanentUnlock;
+    return `<span class="rpg-skill-preview ${unchanged ? 'unchanged' : ''}"><b>With your relic · ${room === 0 ? 'first room' : `room ${room + 1}`}</b>${esc(chosen.spell.name)}: ${targets}.${esc(details + alternatives)}${permanentUnlock ? ' Keeps this spell available after changing relics.' : ''}${unchanged ? ' You can save this point or change relics.' : ''}</span>`;
   }
   private showSkills(): void {
     if (!this.state) return; const s = this.state;
@@ -1036,7 +1039,7 @@ export class RpgGame {
       if (this.busy || !this.state) return;
       const spellId = button.dataset.spell as RpgSpellId;
       this.school = rpgSpellSchool(spellId);
-      if (!rpgSpellUnlocked(spellId, this.state.skills)) {
+      if (!rpgSpellAvailable(this.state, spellId)) {
         this.trackSpell(spellId);
         const skillId = RPG_SPELLS.find(spell => spell.id === spellId)?.skillId;
         this.focusedSkill = skillId ?? null; this.showSkills();

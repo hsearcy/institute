@@ -1,4 +1,4 @@
-import { RPG_ITEMS, RPG_SCHOOLS, RPG_SPELLS, RPG_SKILLS, rpgLootAffixes, RPG_REGIONS, RPG_MAX_ITEM_UPGRADE, rpgForgeCost, rpgLootPower, rpgEquippedLoot, rpgSalvageValue, rpgUnlockedTier, rpgDungeonForgeDust, rpgNextRelicHunt, rpgSpellCombatStats, type RpgItem, type RpgState, type RpgLootInstance, type RpgCampState, type State, type Quest } from '@institute/shared';
+import { RPG_ITEMS, rpgSpellAvailable, rpgLootSkillBonus, RPG_SCHOOLS, RPG_SPELLS, RPG_SKILLS, rpgLootAffixes, RPG_REGIONS, RPG_MAX_ITEM_UPGRADE, rpgForgeCost, rpgLootPower, rpgEquippedLoot, rpgSalvageValue, rpgUnlockedTier, rpgDungeonForgeDust, rpgNextRelicHunt, rpgSpellCombatStats, type RpgItem, type RpgState, type RpgLootInstance, type RpgCampState, type State, type Quest } from '@institute/shared';
 import { escapeHtml as esc, relicArt, icon } from './icons';
 
 export type CampTab = 'quests' | 'merchant' | 'forge';
@@ -7,56 +7,34 @@ export function itemAffinity(item: RpgItem): string {
     ? `All ${RPG_SCHOOLS.find(school => school.id === item.school)!.name} spells`
     : RPG_SPELLS.find(spell => spell.id === item.spellId)!.name;
 }
-/** Keep the action and its benefit together; these sentences are visible on
- * inventory cards, discovery rewards and forge comparisons. */
+/** Compact stat lines. Specific spell damage only appears on copies that rolled it. */
 export function itemBaseBonusLabel(item: RpgItem): string {
-  if (!item.power && !item.effect) return 'Starter blade. No extra damage bonuses.';
-  const spell = RPG_SPELLS.find(spell => spell.id === item.spellId);
-  let label = item.description.replace(/damage per target/g, 'damage to each enemy')
-    .replace(/Every ability/g, 'Every attack').replace(/ abilities/g, ' attacks');
-  if (spell) label = label.replace(spell.name, `Your ${spell.name} ${spell.id === 'cleave' ? 'attack' : 'spell'}`);
-  return label;
+  const school = item.scope === 'school' ? RPG_SCHOOLS.find(school => school.id === item.school)?.name : undefined;
+  return item.power ? `+${item.power} ${school ? school + ' ' : ''}power` : 'No bonus power';
 }
-function bonusAttackScope(spellId?: string, schoolId?: string): string {
-  if (schoolId) return `all ${RPG_SCHOOLS.find(school => school.id === schoolId)!.name} attacks`;
-  if (!spellId) return 'every attack';
-  const spell = RPG_SPELLS.find(spell => spell.id === spellId)!;
-  return `your ${spell.name} ${spell.id === 'cleave' ? 'attack' : 'spell'}`;
-}
-export function lootBonusLabels(loot: RpgLootInstance, state: RpgState, includePower = true): string[] {
-  const skill = RPG_SKILLS.find(skill => skill.id === loot.bonusSkillId && skill.kind !== 'unlock');
-  const affixes = rpgLootAffixes(loot);
+export function lootBonusLabels(loot: RpgLootInstance, _state: RpgState, includePower = true): string[] {
+  const affixes = rpgLootAffixes(loot), bonus = rpgLootSkillBonus(loot);
   const labels: string[] = [];
-  if (includePower && rpgLootPower(loot)) labels.push(`+${rpgLootPower(loot)} damage to each enemy with every attack.`);
-  const ranks = Number.isFinite(loot.bonusSkillRanks) ? Math.max(0, Math.min(2, loot.bonusSkillRanks!)) : 0;
-  if (skill && ranks) {
-    const learned = (state.skills[skill.id] ?? 0) > 0;
-    const scope = bonusAttackScope(skill.scope === 'spell' ? skill.spellId : undefined, skill.scope === 'school' ? skill.school : undefined);
-    // Compare this copy against itself without the bonus ranks, keeping all
-    // other rolls. For an inactive bonus, show the benefit after learning its
-    // first rank without treating the item as a free skill unlock.
-    const previewSkills = learned ? state.skills : { ...state.skills, [skill.id]: 1 };
-    const preview = (copy: RpgLootInstance) => rpgSpellCombatStats({ ...state, skills: previewSkills,
-      equippedItemId: loot.itemId, equippedLootId: loot.id,
-      loot: [...(state.loot ?? []).filter(item => item.id !== loot.id), copy],
-    }, skill.spellId);
-    const without = preview({ ...loot, bonusSkillId: undefined, bonusSkillRanks: undefined });
-    const withBonus = preview({ ...loot, bonusSkillRanks: ranks });
-    const damage = withBonus.damage - without.damage, enemies = withBonus.targets - without.targets;
-    const benefits = [`+${damage} damage to each enemy`];
-    if (enemies > 0) benefits.push(`can hit ${enemies} extra ${enemies === 1 ? 'enemy' : 'enemies'}`);
-    let label = `${skill.name} upgrade for ${scope}: ${benefits.join(' and ')} (${ranks} bonus ${ranks === 1 ? 'rank' : 'ranks'}).`;
-    if (!learned) label += ` Inactive. Learn ${skill.name} in the skill tree to activate this bonus.`;
-    else if (skill.kind === 'modifier' && !enemies) label += ' The extra-enemy limit is already reached.';
-    labels.push(label);
-  }
-  if (affixes.targets) labels.push(`Each attack can hit ${affixes.targets} extra ${affixes.targets === 1 ? 'enemy' : 'enemies'}, up to 10 total.`);
-  if (affixes.spellId) labels.push(`+${affixes.spellPower} damage to each enemy with ${bonusAttackScope(affixes.spellId)}.`);
-  if (affixes.schoolId) labels.push(`+${affixes.schoolPower} damage to each enemy with ${bonusAttackScope(undefined, affixes.schoolId)}.`);
+  if (includePower && rpgLootPower(loot)) labels.push(`+${rpgLootPower(loot)} power`);
+  if (bonus) labels.push(`+${bonus.ranks} ${RPG_SKILLS.find(skill => skill.id === bonus.skillId)!.name}`);
+  if (affixes.spellId) labels.push(`${RPG_SPELLS.find(spell => spell.id === affixes.spellId)!.name}: +${affixes.spellPower} damage per target`);
+  if (affixes.schoolId) labels.push(`+${affixes.schoolPower} ${RPG_SCHOOLS.find(school => school.id === affixes.schoolId)!.name} power`);
+  if (affixes.targets) labels.push(`+${affixes.targets} ${affixes.targets === 1 ? 'target' : 'targets'}`);
   return labels;
 }
+export function relicStatLabels(item: RpgItem, loot: RpgLootInstance | undefined, state: RpgState): string[] {
+  if (item.scope === 'all') {
+    const power = item.power + rpgLootPower(loot);
+    return [...(power ? [`+${power} power`] : []), ...(loot ? lootBonusLabels(loot, state, false) : [])];
+  }
+  return [...(item.power ? [itemBaseBonusLabel(item)] : []), ...(loot ? lootBonusLabels(loot, state) : [])];
+}
+export function renderRelicStats(item: RpgItem, loot: RpgLootInstance | undefined, state: RpgState): string {
+  const labels = relicStatLabels(item, loot, state);
+  return `<span class="rpg-compact-stats" role="list" aria-label="Relic stats">${(labels.length ? labels : ['No bonus stats']).map(label => `<span role="listitem">${esc(label)}</span>`).join('')}</span>`;
+}
 export function lootStats(loot: RpgLootInstance, state: RpgState): string {
-  return [...lootBonusLabels(loot, state), ...(loot.upgradeLevel ? [`Forged ${Math.min(RPG_MAX_ITEM_UPGRADE, loot.upgradeLevel)} of ${RPG_MAX_ITEM_UPGRADE} times.`] : [])].join(' ') || 'Original copy. No extra bonuses.';
+  return [...lootBonusLabels(loot, state), ...(loot.upgradeLevel ? [`Forge ${loot.upgradeLevel}/${RPG_MAX_ITEM_UPGRADE}`] : [])].join(' · ') || 'Original copy · no extra bonuses';
 }
 export function goalSummary(state: RpgState, gems?: number): { title: string; detail: string; action: string } | null {
   const goal = state.goal;
@@ -108,16 +86,17 @@ export function collectionLootChoice(state: RpgState, itemId: string): RpgLootIn
   if (state.equippedItemId === itemId && selected) return selected;
   return copies.reduce<RpgLootInstance | undefined>((best, loot) => {
     if (!best) return loot;
-    const stats = (copy: RpgLootInstance) => rpgSpellCombatStats({ ...state, equippedItemId: itemId, equippedLootId: copy.id });
+    const stats = (copy: RpgLootInstance) => lootComparison(state, itemId, copy);
     const candidate = stats(loot), current = stats(best);
     return candidate.damage > current.damage || (candidate.damage === current.damage && candidate.targets > current.targets) ? loot : best;
   }, undefined);
 }
 /** Compare real combat output, including scoped relic bonuses and learned bonus ranks. */
 export function lootComparison(state: RpgState, itemId: string, loot?: RpgLootInstance) {
-  const preview = rpgSpellCombatStats({ ...state, equippedItemId: itemId, equippedLootId: loot?.id ?? null });
-  const current = rpgSpellCombatStats(state);
-  return { ...preview, delta: preview.damage - current.damage, targetDelta: preview.targets - current.targets };
+  const loadout = { ...state, equippedItemId: itemId, equippedLootId: loot?.id ?? null };
+  const spellId = rpgSpellAvailable(loadout) ? state.selectedSpellId : 'cleave';
+  const preview = rpgSpellCombatStats(loadout, spellId), current = rpgSpellCombatStats(state);
+  return { ...preview, spellId, delta: preview.damage - current.damage, targetDelta: preview.targets - current.targets };
 }
 export function damageComparisonLabel(delta: number): string {
   return delta > 0 ? `↑ +${delta} damage` : delta < 0 ? `↓ ${delta} damage` : 'Same damage';
@@ -134,7 +113,6 @@ export function alternateLootChoices(state: RpgState, itemId: string) {
 }
 export function renderLootCards(state: RpgState, gems?: number, forge = false): string {
   const equipped = rpgEquippedLoot(state);
-  const spellName = RPG_SPELLS.find(spell => spell.id === state.selectedSpellId)!.name;
   return [...(state.loot ?? [])].sort((a, b) => Number(b.id === state.equippedLootId) - Number(a.id === state.equippedLootId) || lootComparison(state, b.itemId, b).damage - lootComparison(state, a.itemId, a).damage || lootComparison(state, b.itemId, b).targets - lootComparison(state, a.itemId, a).targets).map(loot => {
     const item = RPG_ITEMS.find(item => item.id === loot.itemId)!;
     const selected = equipped?.id === loot.id;
@@ -142,9 +120,10 @@ export function renderLootCards(state: RpgState, gems?: number, forge = false): 
     const copies = state.loot!.filter(other => other.itemId === loot.itemId);
     const copyNumber = copies.findIndex(other => other.id === loot.id) + 1;
     const canSalvage = !selected && copies.length > 1;
-    const { damage: preview, delta, targets, targetDelta } = lootComparison(state, loot.itemId, loot);
+    const { damage: preview, delta, targets, targetDelta, spellId } = lootComparison(state, loot.itemId, loot);
+    const spellName = RPG_SPELLS.find(spell => spell.id === spellId)!.name;
     const pinned = state.goal?.kind === 'upgrade' && state.goal.id === loot.id;
-    return `<article class="rpg-loot-card ${item.rarity} ${selected ? 'equipped' : ''}" id="rpg-loot-${esc(loot.id)}" data-loot-card="${esc(loot.id)}">${relicArt(item.id)}<div><small>${selected ? '✓ EQUIPPED' : item.rarity.toUpperCase()} <span class="rpg-copy-label">${copies.length > 1 ? `Copy ${copyNumber} of ${copies.length}` : 'Only copy'}</span></small><h3>${esc(item.name)}</h3><p class="rpg-base-affinity">${esc(itemBaseBonusLabel(item))}</p><div class="rpg-copy-strength"><strong>${preview}<span>DAMAGE PER ENEMY</span></strong><span class="rpg-damage-delta ${delta > 0 ? 'better' : delta < 0 ? 'lower' : 'same'}">${selected ? 'In use' : damageComparisonLabel(delta)}</span></div><div class="rpg-copy-targets">Hits up to <strong>${targets}</strong> enemies <span class="rpg-damage-delta ${targetDelta > 0 ? 'better' : targetDelta < 0 ? 'lower' : 'same'}">${selected ? 'In use' : targetComparisonLabel(targetDelta)}</span></div><small>${esc(spellName)} with this copy · bonuses already included</small><div class="rpg-affixes"><small>COPY BONUSES</small>${lootBonusLabels(loot, state).map(label => `<p>${esc(label)}</p>`).join('') || '<p>No extra bonuses</p>'}${loot.upgradeLevel ? `<p>Forge ${loot.upgradeLevel}/${RPG_MAX_ITEM_UPGRADE}</p>` : ''}</div>${forge ? `<small>${maxed ? 'Fully forged · 5/5' : `Next forge: ${cost.gems} gems + ${cost.dust} dust → +2 power`}</small>` : ''}</div><div class="rpg-loot-actions"><button data-loot-equip="${esc(loot.id)}" ${selected ? 'disabled' : ''}>${selected ? '✓ Equipped' : 'Equip this copy'}</button>${forge ? `<button class="rpg-primary" data-forge-loot="${esc(loot.id)}" ${maxed || gems === undefined || gems < cost.gems || (state.forgeDust ?? 0) < cost.dust ? 'disabled' : ''}>${maxed ? 'Maxed' : `Upgrade to +${loot.upgradeLevel + 1}<small>${cost.gems} gems · ${cost.dust} dust</small>`}</button>${!maxed ? `<button data-pin-kind="upgrade" data-pin-id="${esc(loot.id)}" aria-pressed="${pinned}">${pinned ? '✓ Your goal' : 'Work toward upgrade'}</button>` : ''}<button data-salvage-loot="${esc(loot.id)}" ${canSalvage ? '' : 'disabled'} title="${selected ? 'Your equipped relic is protected' : !canSalvage ? 'Keep the last copy of each relic' : 'Review before reclaiming'}">Reclaim · ${rpgSalvageValue(loot)} dust</button>` : ''}</div></article>`;
+    return `<article class="rpg-loot-card ${item.rarity} ${selected ? 'equipped' : ''}" id="rpg-loot-${esc(loot.id)}" data-loot-card="${esc(loot.id)}">${relicArt(item.id)}<div><small>${selected ? '✓ EQUIPPED' : item.rarity.toUpperCase()} <span class="rpg-copy-label">${copies.length > 1 ? `Copy ${copyNumber} of ${copies.length}` : 'Only copy'}</span></small><h3>${esc(item.name)}</h3><div class="rpg-copy-strength"><strong>${preview}<span>DAMAGE PER ENEMY</span></strong><span class="rpg-damage-delta ${delta > 0 ? 'better' : delta < 0 ? 'lower' : 'same'}">${selected ? 'In use' : damageComparisonLabel(delta)}</span></div><div class="rpg-copy-targets">Hits up to <strong>${targets}</strong> enemies <span class="rpg-damage-delta ${targetDelta > 0 ? 'better' : targetDelta < 0 ? 'lower' : 'same'}">${selected ? 'In use' : targetComparisonLabel(targetDelta)}</span></div><small>${spellId !== state.selectedSpellId ? 'Switches to ' : ''}${esc(spellName)} · bonuses included</small><div class="rpg-affixes"><small>THIS COPY’S STATS</small>${renderRelicStats(item, loot, state)}${loot.upgradeLevel ? `<p>Forge ${loot.upgradeLevel}/${RPG_MAX_ITEM_UPGRADE}</p>` : ''}</div>${forge ? `<small>${maxed ? 'Fully forged · 5/5' : `Next forge: ${cost.gems} gems + ${cost.dust} dust → +2 power`}</small>` : ''}</div><div class="rpg-loot-actions"><button data-loot-equip="${esc(loot.id)}" ${selected ? 'disabled' : ''}>${selected ? '✓ Equipped' : 'Equip this copy'}</button>${forge ? `<button class="rpg-primary" data-forge-loot="${esc(loot.id)}" ${maxed || gems === undefined || gems < cost.gems || (state.forgeDust ?? 0) < cost.dust ? 'disabled' : ''}>${maxed ? 'Maxed' : `Upgrade to +${loot.upgradeLevel + 1}<small>${cost.gems} gems · ${cost.dust} dust</small>`}</button>${!maxed ? `<button data-pin-kind="upgrade" data-pin-id="${esc(loot.id)}" aria-pressed="${pinned}">${pinned ? '✓ Your goal' : 'Work toward upgrade'}</button>` : ''}<button data-salvage-loot="${esc(loot.id)}" ${canSalvage ? '' : 'disabled'} title="${selected ? 'Your equipped relic is protected' : !canSalvage ? 'Keep the last copy of each relic' : 'Review before reclaiming'}">Reclaim · ${rpgSalvageValue(loot)} dust</button>` : ''}</div></article>`;
   }).join('');
 }
 export function renderNextDungeonReward(state: RpgState, camp?: RpgCampState | null): string {

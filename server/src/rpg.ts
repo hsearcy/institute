@@ -2,7 +2,7 @@ import type { Database } from 'bun:sqlite';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
-  RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellUnlocked, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER,
+  RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellAvailable, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER,
   type RpgState, type RpgReward, type RpgResolveResult,
 } from '@institute/shared';
 
@@ -59,6 +59,7 @@ export function getRpgState(db: Database, profileId: string): RpgState {
     // Existing JSON saves gain a default only in the response. Reading never
     // rewrites the profile or changes any earned learning/adventure progress.
     state.appearanceId = rpgAppearanceUnlocked(state.appearanceId, rpgLevel(state.xp).level) ? state.appearanceId : 'wayfarer';
+    if (!rpgSpellAvailable(state)) state.selectedSpellId = 'cleave';
     if (state.expedition && !state.expedition.cleared) state.expedition.combat = rpgEncounterCombat(state);
     return state;
   }
@@ -124,7 +125,7 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
       throw new RpgError('Your adventure has moved on. Reload its saved checkpoint.', 409);
     }
     const spellId = body.spellId ?? state.selectedSpellId;
-    if (!rpgSpellUnlocked(spellId, state.skills)) throw new RpgError('Unlock this spell in your skill tree first.');
+    if (!rpgSpellAvailable(state, spellId)) throw new RpgError('Learn this spell or equip a relic that grants it.');
     const solve = db.query('SELECT solved_at FROM daily_solves WHERE profile_id = ? AND problem_id = ?')
       .get(body.profileId, body.problemId) as { solved_at: number } | null;
     const skipped = db.query('SELECT 1 FROM attempts WHERE profile_id = ? AND problem_id = ? AND skipped = 1 LIMIT 1')
@@ -260,6 +261,8 @@ export function createRpgRoutes(db: Database, applyMiss?: (profileId: string) =>
     if (!loot || (itemId && loot.itemId !== itemId) || !state.inventory.includes(loot.itemId)) throw new RpgError('Find this item before equipping it.');
     state.equippedItemId = loot.itemId;
     state.equippedLootId = loot.id;
+    // Relic-granted spells last only while their copy is equipped.
+    if (!rpgSpellAvailable(state)) state.selectedSpellId = 'cleave';
     saveRpgState(db, state);
     return c.json(state);
   });
@@ -279,7 +282,7 @@ export function createRpgRoutes(db: Database, applyMiss?: (profileId: string) =>
   app.post('/spell', async (c) => {
     const { profileId, spellId } = ProfileSchema.extend({ spellId: z.enum(RPG_SPELL_IDS) }).parse(await c.req.json());
     const state = getRpgState(db, profileId);
-    if (!rpgSpellUnlocked(spellId, state.skills)) throw new RpgError('Unlock this spell in your skill tree first.');
+    if (!rpgSpellAvailable(state, spellId)) throw new RpgError('Learn this spell or equip a relic that grants it.');
     state.selectedSpellId = spellId;
     saveRpgState(db, state);
     return c.json(state);

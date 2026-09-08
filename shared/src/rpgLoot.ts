@@ -9,6 +9,15 @@ export const RPG_MAX_LOOT_SCHOOL_POWER = 8;
 
 const boundedBonus = (value: number | undefined, cap: number): number => Number.isFinite(value) ? Math.max(0, Math.min(cap, Math.floor(value!))) : 0;
 
+/** A temporary equipment rank, including direct spell unlock ranks. The
+ * original serialized roll is never changed by reading this normalized value. */
+export function rpgLootSkillBonus(loot?: RpgLootInstance): { skillId: string; ranks: number } | undefined {
+  if (!loot || !RPG_ITEMS.some(item => item.id === loot.itemId)) return undefined;
+  const skill = RPG_SKILLS.find(skill => skill.id === loot.bonusSkillId);
+  const ranks = boundedBonus(loot.bonusSkillRanks, 2);
+  return skill && ranks ? { skillId: skill.id, ranks } : undefined;
+}
+
 export interface RpgLootAffixes {
   targets: number; spellId?: RpgSpellId; spellPower: number; schoolId?: RpgSchoolId; schoolPower: number;
 }
@@ -68,25 +77,25 @@ export function rpgCreateLoot(itemId: string, tier = 1, random: () => number = M
   const level = rpgTier(tier);
   const bonusPower = Math.min(12, 1 + Math.floor(unit() * (3 + level)) + Math.floor((level - 1) / 3));
   const result: RpgLootInstance = { id: crypto.randomUUID(), itemId, bonusPower, upgradeLevel: 0 };
-  if (unit() < 0.45 + (level - 1) * 0.025) {
-    const skills = RPG_SKILLS.filter(skill => skill.kind !== 'unlock' && (!item.school || skill.school === item.school));
+  const progress = (level - 1) / 9;
+  if (unit() < .10 + progress * .08) {
+    const skills = RPG_SKILLS.filter(skill => !item.school || skill.school === item.school);
     const skill = skills[Math.floor(unit() * skills.length)];
-    if (skill) { result.bonusSkillId = skill.id; result.bonusSkillRanks = level >= 4 && unit() < 0.25 ? 2 : 1; }
+    if (skill) { result.bonusSkillId = skill.id; result.bonusSkillRanks = skill.kind !== 'unlock' && level >= 4 && unit() < 0.25 ? 2 : 1; }
   }
-  // Append new draws after the original power/rank sequence. Existing rolls
-  // remain intact, and each new copy gets at most one specialized extra.
-  if (unit() < Math.min(.9, .55 + (level - 1) * .04)) {
-    const kind = Math.floor(unit() * 3);
-    if (kind === 0) result.bonusTargets = level >= 5 && unit() < .12 + (level - 5) * .02 ? 2 : 1;
-    else if (kind === 1) {
-      const spells = RPG_SPELLS.filter(spell => (!item.school || spell.school === item.school) && (!item.spellId || item.spellId === spell.id));
-      result.bonusSpellId = spells[Math.floor(unit() * spells.length)]!.id;
-      result.bonusSpellPower = Math.min(RPG_MAX_LOOT_SPELL_POWER, 2 + Math.floor(unit() * (4 + level)));
-    } else {
-      const schools = RPG_SCHOOLS.filter(school => !item.school || school.id === item.school);
-      result.bonusSchoolId = schools[Math.floor(unit() * schools.length)]!.id;
-      result.bonusSchoolPower = Math.min(RPG_MAX_LOOT_SCHOOL_POWER, 1 + Math.floor(unit() * (2 + Math.ceil(level * .6))));
-    }
+  // Most extras are useful across a school or every attack. Named damage is
+  // a rare 5–10% roll, while temporary skill ranks above occur on 10–18%.
+  // Only newly committed drops enter this code; saved receipts never reroll.
+  const extra = unit(), targetChance = .25 + progress * .10, schoolChance = .25 + progress * .15;
+  if (extra < targetChance) result.bonusTargets = level >= 5 && unit() < .12 + (level - 5) * .02 ? 2 : 1;
+  else if (extra < targetChance + schoolChance) {
+    const schools = RPG_SCHOOLS.filter(school => !item.school || school.id === item.school);
+    result.bonusSchoolId = schools[Math.floor(unit() * schools.length)]!.id;
+    result.bonusSchoolPower = Math.min(RPG_MAX_LOOT_SCHOOL_POWER, 1 + Math.floor(unit() * (2 + Math.ceil(level * .6))));
+  } else if (extra < targetChance + schoolChance + .05 + progress * .05) {
+    const spells = RPG_SPELLS.filter(spell => !item.school || spell.school === item.school);
+    result.bonusSpellId = spells[Math.floor(unit() * spells.length)]!.id;
+    result.bonusSpellPower = Math.min(RPG_MAX_LOOT_SPELL_POWER, 2 + Math.floor(unit() * (4 + level)));
   }
   return result;
 }
@@ -98,13 +107,13 @@ export function rpgLootPower(item?: RpgLootInstance): number {
   return item ? boundedBonus(item.bonusPower, 12) + boundedBonus(item.upgradeLevel, RPG_MAX_ITEM_UPGRADE) * RPG_UPGRADE_POWER : 0;
 }
 
-/** Bonus ranks may exceed a learned skill's normal cap by two. They cannot
- * unlock a skill, satisfy a tree prerequisite, or be refunded as skill points. */
+/** Equipped ranks work immediately, including unlearned skills. They may
+ * exceed a learned cap by two, but never purchase permanent tree ranks,
+ * satisfy tree prerequisites, or become refundable skill points. */
 export function rpgEffectiveSkills(state: Pick<RpgLoadout, 'skills' | 'equippedItemId' | 'loot' | 'equippedLootId'>): Record<string, number> {
-  const ranks = Object.fromEntries(RPG_SKILLS.map(skill => [skill.id, Math.max(0, Math.min(skill.maxRank, state.skills[skill.id] ?? 0))]));
-  const item = rpgEquippedLoot(state);
-  const skill = RPG_SKILLS.find(entry => entry.id === item?.bonusSkillId && entry.kind !== 'unlock');
-  if (skill && ranks[skill.id] > 0) ranks[skill.id] += Math.max(0, Math.min(2, item?.bonusSkillRanks ?? 0));
+  const ranks = Object.fromEntries(RPG_SKILLS.map(skill => [skill.id, boundedBonus(state.skills[skill.id], skill.maxRank)]));
+  const bonus = rpgLootSkillBonus(rpgEquippedLoot(state));
+  if (bonus) ranks[bonus.skillId] += bonus.ranks;
   return ranks;
 }
 export function rpgForgeCost(instance: Pick<RpgLootInstance, 'upgradeLevel'>): { gems: number; dust: number } {

@@ -4,6 +4,7 @@ import { resolve, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import { TOPICS, RPG_ITEMS, RPG_SKILLS, rpgLevel } from '../shared/src/index';
 import { getRpgState } from '../server/src/rpg';
+import { addDemoLoot } from './rpg-demo-loot';
 
 export async function seedRpgDemo() {
   const path = resolve(process.env.RPG_TEST_DB ?? '/tmp/institute-rpg-playtest.db');
@@ -58,6 +59,7 @@ export async function seedRpgDemo() {
           state.equippedItemId = profileId === 'rpg-archmage' ? 'moonstaff' : 'phoenix';
           state.totalKills = 740;
           state.expeditionsCompleted = 5;
+          addDemoLoot(state);
           db.query('INSERT INTO rpg_profiles (profile_id,state_json,updated_at) VALUES (?, ?, ?)').run(profileId, JSON.stringify(state), now);
         }
       }

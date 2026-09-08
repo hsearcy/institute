@@ -1,0 +1,69 @@
+/* One scroll surface: the dialog. Topic rows remain expanded and readable. */
+.rpg-parent-journal{max-width:1040px;margin:auto;text-align:left;}
+.rpg-parent-journal .rpg-journal-heading>p:last-child{max-width:650px;color:#bdcbbb;font-size:14px;line-height:1.7;}
+.rpg-parent-journal .rpg-journal-heading h2{margin-bottom:12px;}
+.rpg-parent-journal .rpg-journal-stats{padding:17px 20px;background:#13231e;border:1px solid #71836955;border-radius:7px;}
+.rpg-parent-journal .rpg-journal-stats b{font-size:28px;color:#f0d6a0;}
+.rpg-parent-journal .rpg-journal-stats span{font-size:12px;color:#c4ceba;}
+.rpg-parent-journal .rpg-journal-rewards{background:#15241e;border-color:#697c6555;}
+.rpg-parent-journal .rpg-journal-rewards summary{font-size:13px;}
+.rpg-parent-journal .rpg-learning-map{margin-top:30px;}
+.rpg-journal-map-heading{display:flex;align-items:end;justify-content:space-between;gap:16px;}
+.rpg-parent-journal .rpg-journal-map-heading .rpg-eyebrow{font-size:10px;letter-spacing:2px;margin:0 0 7px;}
+.rpg-journal-map-heading h3{font:24px/1.3 'Cinzel',Georgia,serif;color:#e7d7b5;margin:0;}
+.rpg-journal-map-heading>span{font-size:12px;color:#b8c6b3;white-space:nowrap;}
+.rpg-journal-legend{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0;}
+.rpg-journal-status{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;padding:4px 9px;border:1px solid;border-radius:5px;font:600 11px/1.4 'Nunito',sans-serif;}
+.rpg-journal-status.mastered{color:#e6d28f;background:#59482955;border-color:#b89b4c80;}
+.rpg-journal-status.practicing{color:#b5eee3;background:#20584955;border-color:#53b19b80;}
+.rpg-journal-status.ready{color:#b6d8f5;background:#294a6655;border-color:#649dc580;}
+.rpg-journal-status.locked{color:#c0c9bc;background:#3a433a55;border-color:#88938066;}
+.rpg-journal-domains{display:flex;flex-wrap:wrap;gap:8px;}
+.rpg-journal-domains a{display:flex;align-items:center;gap:12px;text-decoration:none;background:#18291f;border:1px solid #657c5755;border-radius:5px;padding:9px 12px;color:#e0ddc6;font:12px/1.4 'Nunito',sans-serif;}
+.rpg-journal-domains a span{font-size:10px;color:#b8c7ac;}
+.rpg-journal-domains a:hover{background:#233b2a;border-color:#c2af70;}
+.rpg-journal-domains a:focus-visible{outline:2px solid #e5cb8a;outline-offset:3px;}
+.rpg-parent-journal .rpg-journal-guide{font-size:12px;color:#b5c1ab;margin:15px 0 24px;line-height:1.6;}
+.rpg-journal-domain{margin:28px 0 36px;scroll-margin-top:22px;}
+.rpg-journal-domain>header{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.rpg-journal-domain>header>div{display:flex;align-items:center;gap:12px;}
+.rpg-journal-domain-number{font:12px 'Cinzel',Georgia,serif;color:#c9b581;border:1px solid #9f8d5444;padding:7px;}
+.rpg-journal-domain h3{font:20px/1.3 'Cinzel',Georgia,serif;color:#eadbb8;margin:0;}
+.rpg-journal-domain>header>span{font-size:12px;color:#c5cfb7;white-space:nowrap;}
+.rpg-journal-domain progress{appearance:none;display:block;width:100%;height:5px;margin:14px 0 20px;accent-color:#c2a765;border:0;border-radius:3px;overflow:hidden;background:#26362b;}
+.rpg-journal-domain progress::-webkit-progress-bar{background:#26362b;}
+.rpg-journal-domain progress::-webkit-progress-value{background:#c2a765;border-radius:3px;}
+.rpg-journal-domain progress::-moz-progress-bar{background:#c2a765;border-radius:3px;}
+.rpg-journal-chain{list-style:none;padding:0;margin:0;}
+.rpg-journal-topic{position:relative;display:grid;grid-template-columns:36px minmax(0,1fr);gap:14px;padding:0 0 14px;}
+.rpg-journal-topic:not(:last-child)::before{content:'';position:absolute;top:33px;bottom:-2px;left:17px;width:2px;background:#66785866;}
+.rpg-journal-node{position:relative;z-index:1;display:grid;place-items:center;width:34px;height:34px;margin-top:11px;border:1px solid #607556;border-radius:50%;background:#233222;color:#c8d2ba;font:14px 'Nunito',sans-serif;}
+.rpg-journal-node .rpg-icon{width:15px;height:15px;}
+.rpg-journal-topic.mastered .rpg-journal-node{border-color:#bb9e57;color:#f6db91;background:#443b24;}
+.rpg-journal-topic.practicing .rpg-journal-node{border-color:#6db69e;color:#bcf1db;background:#25483b;}
+.rpg-journal-topic.ready .rpg-journal-node{border-color:#729fc1;color:#c6e4ff;background:#283f50;}
+.rpg-journal-topic-card{min-width:0;padding:16px 18px;border:1px solid #63775c66;border-left:3px solid #78846b;background:linear-gradient(110deg,#203024,#15221d);border-radius:6px;}
+.rpg-journal-topic.mastered .rpg-journal-topic-card{border-left-color:#c2a45c;}
+.rpg-journal-topic.practicing .rpg-journal-topic-card{border-left-color:#74c3a7;}
+.rpg-journal-topic.ready .rpg-journal-topic-card{border-left-color:#79acd1;}
+.rpg-journal-topic.locked .rpg-journal-topic-card{background:#17221c;}
+.rpg-journal-topic-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.rpg-journal-topic-heading h4{font:600 17px/1.4 'Nunito',sans-serif;color:#eee6cd;margin:0;}
+.rpg-parent-journal .rpg-journal-topic-name{font-size:12px;color:#b7c4ae;margin:4px 0 10px;line-height:1.5;}
+.rpg-journal-tags{display:flex;flex-wrap:wrap;gap:6px 12px;color:#d1dcc6;font-size:11px;line-height:1.5;}
+.rpg-journal-tags>span{padding:3px 7px;background:#0b1a154d;border:1px solid #67795a44;border-radius:3px;}
+.rpg-parent-journal .rpg-journal-prompt{font-size:14px;line-height:1.65;color:#e0e1cb;margin:12px 0 8px;}
+.rpg-journal-prompt strong{color:#d8bf7e;margin-right:7px;font-size:11px;text-transform:uppercase;letter-spacing:.7px;}
+.rpg-parent-journal .rpg-journal-prereqs{font-size:11px;line-height:1.6;color:#b7c3ac;margin:0;}
+.rpg-journal-prereqs strong{font-weight:600;color:#ced7bf;margin-right:5px;}
+.rpg-parent-journal .rpg-journal-empty{padding:22px;border:1px solid #71836955;border-radius:6px;background:#19271f;font-size:14px;line-height:1.7;}
+@media(max-width:680px){
+ .rpg-parent-journal .rpg-journal-heading>p:last-child{font-size:13px;}
+ .rpg-parent-journal .rpg-journal-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:15px;}
+ .rpg-journal-map-heading{align-items:start;flex-direction:column;gap:8px;}.rpg-journal-map-heading h3{font-size:21px;}
+ .rpg-journal-domains{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;}.rpg-journal-domains a{justify-content:space-between;padding:9px;font-size:11px;gap:7px;}.rpg-journal-domains a span{white-space:nowrap;}
+ .rpg-journal-domain>header{align-items:start;flex-direction:column;gap:8px;}.rpg-journal-domain h3{font-size:19px;}.rpg-journal-domain>header>span{padding-left:44px;font-size:11px;}
+ .rpg-journal-topic{grid-template-columns:25px minmax(0,1fr);gap:8px;}.rpg-journal-node{width:25px;height:25px;font-size:12px;}.rpg-journal-topic:not(:last-child)::before{left:12px;top:35px;}
+ .rpg-journal-topic-card{padding:12px 11px;}.rpg-journal-topic-heading{align-items:start;flex-wrap:wrap;gap:7px;}.rpg-journal-topic-heading h4{font-size:16px;width:100%;}.rpg-journal-topic-heading .rpg-journal-status{font-size:10px;}
+ .rpg-parent-journal .rpg-journal-prompt{font-size:13px;}.rpg-journal-tags{gap:5px;font-size:10px;}.rpg-parent-journal .rpg-journal-topic-name{font-size:11px;}
+}

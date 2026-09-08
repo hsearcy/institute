@@ -13,6 +13,8 @@ import { renderSpellbookView } from './spellbookView';
 import './spellbook-v3.css';
 import { renderVictoryView } from './victoryView';
 import './victory-v3.css';
+import { renderParentJournal } from './parentJournalView';
+import './parent-journal.css';
 import { renderEquipmentView } from './equipmentView';
 import './equipment-v3.css';
 import './landscape-v3.css';
@@ -825,8 +827,7 @@ export class RpgGame {
     this.showDialog('parent', '<h2 id="rpg-dialog-title">Learning journal</h2><p>Loading your existing learning progress…</p>', true);
     const [mastery, legacy] = await Promise.all([fetchMastery(), fetchState()]);
     if (this.panel !== 'parent') return;
-    const topics = mastery?.topics ?? [];
-    this.el('rpg-dialog-content').innerHTML = `<p class="rpg-eyebrow">PARENT JOURNAL · ${esc(PROFILE)}</p><h2 id="rpg-dialog-title">The learning journey</h2><p>Character levels and math mastery grow independently. The same adaptive tutor chooses every problem.</p><div class="rpg-journal-stats"><span><b>${topics.filter(t => t.state === 'mastered').length}</b>topics mastered</span><span><b>${legacy?.gems ?? '…'}</b>gems kept</span><span><b>${mastery?.crazyCoins ?? '…'}</b>Crazy Coins</span><span><b>${this.state?.expeditionsCompleted ?? 0}</b>expeditions cleared</span></div><details><summary>Daily quests & rewards</summary><div class="rpg-quest-list">${(legacy?.quests ?? []).map(q => `<p><span>${esc(q.label)}</span><b>${q.progress} / ${q.target} ${q.done ? '✓' : ''}</b></p>`).join('') || 'Could not load daily quests.'}</div><button data-action="redeem" ${(mastery?.crazyCoins ?? 0) < 1 ? 'disabled' : ''}>Redeem one Crazy Coin · 15 minutes</button></details><div class="rpg-mastery-list">${topics.map(t => `<details><summary><span class="rpg-mastery-state ${t.state}">${t.state === 'mastered' ? '◆' : t.unlocked ? '◇' : '○'}</span><strong>${esc(t.kidLabel)}</strong><span>${t.state === 'mastered' ? 'Mastered' : t.unlocked ? 'Learning' : 'Not yet unlocked'} · ${t.correct}/${t.attempts}</span></summary><p>${esc(t.assessmentPrompt)}</p><p>Prerequisites: ${t.prereqs.length ? t.prereqs.map(id => esc(topics.find(other => other.id === id)?.kidLabel ?? id)).join(', ') : 'Starting skill'}${t.fluentMs ? ` · Fluency target: ${t.fluentMs / 1000}s` : ''}</p></details>`).join('') || '<p>Could not load the learning graph. Your saved data has not changed.</p>'}</div><div class="rpg-button-row"><button class="rpg-primary" data-action="close">Back</button><a class="rpg-text-button" href="?mode=mine">Original mine, shops & detailed statistics</a></div>`;
+    this.el('rpg-dialog-content').innerHTML = renderParentJournal(PROFILE, mastery, legacy, this.state?.expeditionsCompleted ?? 0);
   }
 
   private get tutorialKey(): string { return `${sessionKey}:tutorial:v${RPG_TUTORIAL_VERSION}`; }

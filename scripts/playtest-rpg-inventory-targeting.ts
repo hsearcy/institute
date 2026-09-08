@@ -54,13 +54,15 @@ try {
   if (!process.env.QA_VISUAL_ONLY) {
   await page.locator('#rpg-dialog-content [data-action="inventory"]').first().click();
   await page.screenshot({ path: resolve(output, 'inventory-desktop.png') });
-  await page.locator('.rpg-stronger-copy-link').click();
+  assert.deepEqual(await page.locator('.rpg-relic-slots [data-loot-equip]').evaluateAll((nodes: Element[]) => nodes.map(node => node.getAttribute('data-loot-equip'))), [...seed.loot].reverse().map((copy: any) => copy.id), 'Every copy appears once in the main grid, newest first');
+  assert.equal(await page.locator('.rpg-loot-collection').count(), 0, 'There is no separate copies section');
+  await page.locator('.rpg-stronger-copy-link[href="#rpg-loot-qa%3Amoonstaff-strong"]').click();
   assert(await page.locator('[data-loot-card="qa:moonstaff-strong"]').evaluate((node: Element) => {
     const card = node.getBoundingClientRect(), dialog = node.closest('.rpg-dialog')!.getBoundingClientRect();
     return card.top >= dialog.top && card.top < dialog.bottom;
-  }), 'Stronger copy link must scroll to its card');
+  }), 'Copy comparison link must scroll to its exact grid card');
   const equip = page.locator('[data-loot-equip="qa:moonstaff-strong"]');
-  await equip.scrollIntoViewIfNeeded(); await page.screenshot({ path: resolve(output, 'copies-desktop.png') });
+  await equip.scrollIntoViewIfNeeded(); await page.screenshot({ path: resolve(output, 'relic-grid-desktop.png') });
   await equip.click();
   await page.waitForFunction(() => (window as any).__game.state.equippedLootId === 'qa:moonstaff-strong' && !(window as any).__game.busy);
   assert.equal((await state()).equippedLootId, 'qa:moonstaff-strong');
@@ -69,7 +71,7 @@ try {
   await page.evaluate(() => { (window as any).__game.showInventory(); document.querySelector('.rpg-dialog')!.scrollTop = 0; });
   await page.screenshot({ path: resolve(output, 'inventory-phone.png') });
   await page.locator('[data-loot-equip="qa:moonstaff-skill"]').scrollIntoViewIfNeeded();
-  await page.screenshot({ path: resolve(output, 'copies-phone.png') });
+  await page.screenshot({ path: resolve(output, 'relic-grid-phone.png') });
   assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'Phone page overflow');
   await page.reload(); await loaded();
   assert.equal(await page.evaluate(() => (window as any).__game.state.equippedLootId), 'qa:moonstaff-strong');

@@ -34,7 +34,7 @@ No tutor selection, mastery, review scheduling, or math-progress storage changes
 
 Cards show short stat lines such as `+12 Storm power`, `+4 power`, `+1 Overcharge`, and `+1 target`. Named-spell damage appears only when that copy rolled it, for example `Tempest: +6 damage per target`. Skill bonuses have no inactive or learn-to-activate warning because they work while equipped. Universal base and rolled power combine into one stat; school power remains clearly scoped.
 
-Damage and target count are compared separately for the selected attack. Duplicate shortcuts expose tradeoffs such as less damage with wider coverage. Cards that would lose a borrowed spell indicate the fallback attack used by their preview. Equipment, discoveries, victory rewards, and the blacksmith share the stat helpers.
+Every owned copy appears once in the main inventory grid, newest acquisition first, and selecting a card equips that exact copy. Older synthetic legacy copies remain behind recorded finds. The equipped summary stays visible separately; there is no second individual-copies section. Damage and target count are compared separately for the selected attack. Direct comparison links show the actual tradeoff and jump to the relevant grid card. Cards that would lose a borrowed spell indicate the fallback attack used by their preview. Equipment, discoveries, victory rewards, and the blacksmith share the stat helpers.
 
 ## Verification
 

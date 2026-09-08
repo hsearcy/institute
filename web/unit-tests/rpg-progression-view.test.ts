@@ -99,9 +99,10 @@ test('equipment preview respects spell affinity and copy bonuses without mutatin
   expect(lootComparison({ ...state, selectedSpellId: 'cleave' }, 'cinderwand', copy).delta).toBe(9);
   const html = renderEquipmentView(state, '', true);
   expect(html).toContain('↑ +9 damage');
-  expect(html).toContain('2 copies');
-  expect(html).toContain('their powers do not add together');
-  expect(html).toContain('Your equipped copy and last copy are protected');
+  expect(html).toContain('Copy 2 of 2');
+  expect(html).toContain('Every copy has its own stats');
+  expect(html).toContain('Upgrade or reclaim copies');
+  expect(html).not.toContain('Your individual copies');
   expect(JSON.stringify(state)).toBe(before);
 });
 
@@ -110,14 +111,15 @@ test('an equipped relic advertises a stronger owned copy without silently equipp
   state.loot!.push({ id: 'upgrade-copy', itemId: 'apprentice', bonusPower: 2, upgradeLevel: 2 });
   const originalId = state.equippedLootId;
   const html = renderEquipmentView(state, '', true);
-  expect(html).toContain('Compare copies below ↓');
+  expect(html).toContain('Another copy:');
+  expect(html).not.toContain('More damage or targets');
   expect(html).toContain('↑ +6 damage · Same enemy count');
   expect(html).toContain('href="#rpg-loot-upgrade-copy"');
   expect(html).toContain('id="rpg-loot-upgrade-copy"');
   expect(collectionLootChoice(state, 'apprentice')?.id).toBe(originalId);
   expect(state.equippedLootId).toBe(originalId);
   state.equippedLootId = 'upgrade-copy';
-  expect(renderEquipmentView(state, '', true)).not.toContain('Compare copies below ↓');
+  expect(renderEquipmentView(state, '', true)).not.toContain('Another copy:');
 });
 
 

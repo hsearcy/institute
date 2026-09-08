@@ -111,9 +111,16 @@ export function alternateLootChoices(state: RpgState, itemId: string) {
   const targets = copies.filter(copy => copy.targetDelta > 0).sort((a, b) => b.targets - a.targets || b.damage - a.damage)[0];
   return [damage, targets].filter((copy, index, all) => copy && all.findIndex(other => other?.copy.id === copy.copy.id) === index) as NonNullable<typeof damage>[];
 }
+/** Saves append real finds in acquisition order. Synthetic migration copies have
+ * no acquisition time and must stay behind real finds even when appended later. */
+export function newestLoot(state: RpgState): RpgLootInstance[] {
+  const newest = [...(state.loot ?? [])].reverse();
+  return [...newest.filter(copy => !copy.id.startsWith('legacy:')), ...newest.filter(copy => copy.id.startsWith('legacy:'))];
+}
+
 export function renderLootCards(state: RpgState, gems?: number, forge = false): string {
   const equipped = rpgEquippedLoot(state);
-  return [...(state.loot ?? [])].sort((a, b) => Number(b.id === state.equippedLootId) - Number(a.id === state.equippedLootId) || lootComparison(state, b.itemId, b).damage - lootComparison(state, a.itemId, a).damage || lootComparison(state, b.itemId, b).targets - lootComparison(state, a.itemId, a).targets).map(loot => {
+  return newestLoot(state).map(loot => {
     const item = RPG_ITEMS.find(item => item.id === loot.itemId)!;
     const selected = equipped?.id === loot.id;
     const cost = rpgForgeCost(loot), maxed = loot.upgradeLevel >= RPG_MAX_ITEM_UPGRADE;

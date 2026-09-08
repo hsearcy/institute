@@ -26,7 +26,7 @@ try {
   seed.inventory = ['skybreaker', 'moonstaff', 'apprentice', 'cinderwand']; seed.skills = { cleave: 1 };
   seed.loot = seed.inventory.map((itemId: string) => ({ id: `qa:${itemId}`, itemId, bonusPower: 2, upgradeLevel: 0 }));
   Object.assign(seed.loot[0], { bonusSkillId: 'tempest_overcharge', bonusSkillRanks: 1, bonusTargets: 1, bonusSpellId: 'tempest', bonusSpellPower: 8 });
-  seed.loot.push({ id: 'qa:plain', itemId: 'skybreaker', bonusPower: 2, upgradeLevel: 0 });
+  seed.loot.push({ id: 'qa:plain', itemId: 'skybreaker', bonusPower: 8, upgradeLevel: 0 });
   seed.selectedSpellId = 'cleave'; seed.equippedItemId = 'skybreaker'; seed.equippedLootId = 'qa:skybreaker';
   const db = new Database(dbPath); db.query('UPDATE rpg_profiles SET state_json=? WHERE profile_id=?').run(JSON.stringify(seed), profile); db.close();
   const originalLearning = learning();
@@ -41,7 +41,9 @@ try {
   assert.equal(await page.locator('.rpg-hotbar [data-spell="tempest"]:not(.locked)').count(), 1, 'Gear spell appears immediately in the hotbar');
   assert.equal((await state()).selectedSpellId, 'cleave');
   await page.locator('#rpg-dialog-content [data-action="inventory"]').first().click();
-  const card = page.locator('[data-item="skybreaker"]');
+  assert.deepEqual(await page.locator('.rpg-relic-slots [data-loot-equip]').evaluateAll(nodes => nodes.map(node => node.getAttribute('data-loot-equip'))), ['qa:plain', 'qa:cinderwand', 'qa:apprentice', 'qa:moonstaff', 'qa:skybreaker']);
+  assert.equal(await page.locator('.rpg-loot-collection').count(), 0);
+  const card = page.locator('[data-loot-card="qa:skybreaker"]');
   for (const [name, width, height] of [['desktop', 1440, 900], ['phone', 390, 844]] as const) {
     await page.setViewportSize({ width, height }); await card.scrollIntoViewIfNeeded(); await page.screenshot({ path: resolve(output, `${name}-equipment.png`) });
     assert.equal(await card.getAttribute('title'), null);

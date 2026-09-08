@@ -56,8 +56,10 @@ try {
   const shot = async (name: string) => page.screenshot({ path: resolve(output, `${name}.png`) });
   const top = () => page.locator('.rpg-dialog').evaluate((node: Element) => { node.scrollTop = 0; });
   await top(); await shot('inventory-desktop');
-  assert.match(await page.locator('[data-item="icespear"]').textContent(), /\+4 Frost power/);
-  assert.match(await page.locator('[data-item="cinderwand"]').textContent(), /\+3 Flame power/);
+  assert.deepEqual(await page.locator('.rpg-relic-slots [data-loot-equip]').evaluateAll((nodes: Element[]) => nodes.map(node => node.getAttribute('data-loot-equip'))), [...seed.loot].reverse().map((copy: any) => copy.id), 'Every copy appears once in the main grid, newest first');
+  assert.equal(await page.locator('.rpg-loot-collection').count(), 0, 'There is no separate copies section');
+  assert.match(await page.locator('[data-loot-card="qa:icespear"]').textContent(), /\+4 Frost power/);
+  assert.match(await page.locator('[data-loot-card="qa:cinderwand"]').textContent(), /\+3 Flame power/);
   for (const id of ['qa:wide', 'qa:spell', 'qa:school', 'qa:unlearned']) {
     await page.locator(`[data-loot-card="${id}"]`).scrollIntoViewIfNeeded(); await shot(`${id.replace('qa:', '')}-desktop`);
   }
@@ -65,7 +67,7 @@ try {
   assert.match(temporaryCopyText, /\+2 Winter Crown/);
   assert.doesNotMatch(temporaryCopyText, /inactive|learn to activate/i);
   await page.setViewportSize({ width: 390, height: 844 }); await top(); await shot('inventory-phone');
-  await page.locator('[data-item="icespear"]').scrollIntoViewIfNeeded(); await shot('collection-phone');
+  await page.locator('[data-loot-card="qa:icespear"]').scrollIntoViewIfNeeded(); await shot('collection-phone');
   for (const id of ['qa:wide', 'qa:unlearned']) {
     await page.locator(`[data-loot-card="${id}"]`).scrollIntoViewIfNeeded(); await shot(`${id.replace('qa:', '')}-phone`);
   }
@@ -76,7 +78,7 @@ try {
     await page.waitForFunction(id => (window as any).__game.state.equippedLootId === id && !(window as any).__game.busy, id);
   };
   await equip('qa:unlearned'); await top(); await shot('skill-affinity-desktop');
-  assert.match(await page.locator('[data-item="moonstaff"] .rpg-slot-bonuses').textContent(), /\+2 Winter Crown/);
+  assert.match(await page.locator('[data-loot-card="qa:unlearned"] .rpg-slot-bonuses').textContent(), /\+2 Winter Crown/);
   const temporaryState = await state();
   assert.equal(temporaryState.skills.frost_master ?? 0, 0, 'Equipment must leave the permanent tree unchanged');
   assert.equal(rpgEffectiveSkills(temporaryState).frost_master, 2, 'Equipped ranks work immediately');
@@ -87,7 +89,7 @@ try {
     const box = node.getBoundingClientRect(); return Math.abs(box.width - box.height) < 2;
   })), 'Collection thumbnails keep square frames when some copies have more bonuses');
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.locator('[data-item="moonstaff"]').scrollIntoViewIfNeeded(); await shot('skill-affinity-phone');
+  await page.locator('[data-loot-card="qa:unlearned"]').scrollIntoViewIfNeeded(); await shot('skill-affinity-phone');
   await page.setViewportSize({ width: 1440, height: 900 });
   await equip('qa:wide');
   const wide = await state(), wideStats = rpgSpellCombatStats(wide);

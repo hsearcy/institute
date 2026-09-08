@@ -4,7 +4,7 @@ import { TOPICS, topicById, TopicSchema } from "./topics.ts";
 
 describe("curated topics", () => {
   test("loads and validates all topics", () => {
-    expect(TOPICS.length).toBe(36);
+    expect(TOPICS.length).toBe(50);
     for (const t of TOPICS) expect(() => TopicSchema.parse(t)).not.toThrow();
   });
   test("every prereq id resolves", () => {

@@ -30,7 +30,7 @@ export function numberWords(n: number): string {
 }
 /** "counting by twos/fifties/hundreds" — the plural step name, spoken. */
 const STEP_WORDS: Record<number, string> = {
-  2: "twos", 3: "threes", 4: "fours", 5: "fives", 8: "eights",
+  2: "twos", 3: "threes", 4: "fours", 5: "fives", 6: "sixes", 7: "sevens", 8: "eights", 9: "nines",
   10: "tens", 25: "twenty-fives", 50: "fifties", 100: "hundreds",
 };
 const stepWords = (n: number): string => STEP_WORDS[n] ?? `${numberWords(n)}s`;
@@ -267,6 +267,127 @@ export function problemForTopic(topic: Topic, difficulty: number): TopicProblemD
         spoken: `Round ${n} to the nearest ${base10 === 10 ? "ten" : "hundred"}.`,
         answer,
         hint: `Which ${base10 === 10 ? "ten" : "hundred"} is ${n} closest to, ${Math.floor(n / base10) * base10} or ${Math.ceil(n / base10) * base10}?` };
+    }
+    // ---- expansion batch (2026-09-08) ------------------------------------------
+    case "estimate_sum": {
+      // Round each to the nearest ten, then add: 48 + 31 is about 80.
+      const a = ri(11, lerp(48, 88, d)), b = ri(11, Math.min(88, 99 - a));
+      const ra = Math.round(a / 10) * 10, rb = Math.round(b / 10) * 10;
+      return { ...base, prompt: `About ${a} + ${b}?`,
+        spoken: `Round each number to the nearest ten, then add. About how much is ${a} plus ${b}?`,
+        answer: ra + rb,
+        hint: `${a} is about ${ra}, and ${b} is about ${rb}. Now add the tens: ${ra} plus ${rb}.` };
+    }
+    case "add_sub_3d": {
+      if (g.op === "add") {
+        const a = ri(100, lerp(300, 900, d));
+        const b = d < 0.5 ? 10 * ri(1, Math.min(9, Math.floor((999 - a) / 10))) : ri(10, Math.min(99, 999 - a));
+        return { ...base, prompt: `${a} + ${b}`, spoken: `What is ${a} plus ${b}?`, answer: a + b,
+          hint: b % 10 === 0
+            ? `Only the tens change: ${a} plus ${b / 10} tens. The ${a % 10} ones stay.`
+            : `Add the tens first: ${a} plus ${Math.floor(b / 10) * 10} is ${a + Math.floor(b / 10) * 10}. Then add ${b % 10} more.` };
+      }
+      const a = ri(120, lerp(400, 999, d));
+      const b = d < 0.5 ? 10 * ri(1, Math.min(9, Math.floor((a - 100) / 10))) : ri(10, Math.min(99, a - 100));
+      return { ...base, prompt: `${a} − ${b}`, spoken: `What is ${a} minus ${b}?`, answer: a - b,
+        hint: b % 10 === 0
+          ? `Only the tens change: ${a} take away ${b / 10} tens. The ${a % 10} ones stay.`
+          : `Take the tens first: ${a} minus ${Math.floor(b / 10) * 10} is ${a - Math.floor(b / 10) * 10}. Then take ${b % 10} more.` };
+    }
+    case "missing_factor": {
+      const top = lerp(5, g.maxFactor, d);
+      const a = ri(2, top), b = ri(2, top), prod = a * b;
+      const form = Math.random();
+      if (form < 0.4) return { ...base, prompt: `${a} × ? = ${prod}`, spoken: `${a} times what makes ${prod}?`, answer: b,
+        hint: `Count by ${a}s up to ${prod}: how many jumps did it take?` };
+      if (form < 0.7) return { ...base, prompt: `? × ${b} = ${prod}`, spoken: `What times ${b} makes ${prod}?`, answer: a,
+        hint: `Count by ${b}s up to ${prod}: how many jumps did it take?` };
+      return { ...base, prompt: `${prod} ÷ ? = ${a}`, spoken: `${prod} divided by what makes ${a}?`, answer: b,
+        hint: `${a} groups make ${prod}. Count by ${a}s up to ${prod} and count the jumps.` };
+    }
+    case "mul_2d1d": {
+      const b = ri(2, lerp(4, 9, d));
+      const a = ri(11, Math.min(lerp(25, 99, d), Math.floor(999 / b)));
+      const tens = Math.floor(a / 10) * 10, ones = a % 10;
+      return { ...base, prompt: `${a} × ${b}`, spoken: `What is ${a} times ${b}?`, answer: a * b,
+        hint: `Split ${a} into ${tens} and ${ones}. ${tens} times ${b} is ${tens * b}, and ${ones} times ${b} is ${ones * b}. Add them.` };
+    }
+    case "div_rem": {
+      const b = ri(2, lerp(4, g.maxDivisor, d)), q = ri(2, lerp(4, 9, d)), r = ri(1, b - 1);
+      const n = q * b + r;
+      return { ...base, prompt: `${n} ÷ ${b}, leftover?`,
+        spoken: `Share ${n} into groups of ${b}. How many are left over?`, answer: r,
+        hint: `Count by ${b}s but do not pass ${n}: you stop at ${q * b}. ${n} minus ${q * b} is the leftover.` };
+    }
+    case "frac_of": {
+      const dens = g.dens.slice(0, Math.max(1, lerp(2, g.dens.length, d)));
+      const den = dens[ri(0, dens.length - 1)];
+      const unit = ri(2, lerp(5, 12, d)), n = den * unit;
+      const word = ({ 2: "half", 3: "third", 4: "quarter", 5: "fifth", 10: "tenth" } as Record<number, string>)[den] ?? `${den}th`;
+      if (d > 0.6 && den > 2 && Math.random() < 0.5) {
+        const k = ri(2, den - 1);
+        return { ...base, prompt: `${k}/${den} of ${n}`, spoken: `What is ${numberWords(k)} ${word}s of ${n}?`, answer: k * unit,
+          hint: `First find one ${word}: ${n} divided by ${den} is ${unit}. Then take ${k} of them: ${unit} times ${k}.` };
+      }
+      return { ...base, prompt: `1/${den} of ${n}`, spoken: `What is one ${word} of ${n}?`, answer: unit,
+        hint: `One ${word} means split into ${den} equal parts. ${n} divided by ${den}.` };
+    }
+    case "double_half": {
+      if (Math.random() < 0.5) {
+        const n = ri(5, lerp(25, g.max, d)), tens = Math.floor(n / 10) * 10, ones = n % 10;
+        return { ...base, prompt: `Double ${n}`, spoken: `What is double ${n}?`, answer: 2 * n,
+          hint: tens ? `Double the tens and the ones: double ${tens} is ${2 * tens}, double ${ones} is ${2 * ones}. Add them.` : `${n} plus ${n}.` };
+      }
+      const n = 2 * ri(3, lerp(20, g.max, d)), tens = Math.floor(n / 10) * 10, ones = n % 10;
+      return { ...base, prompt: `Half of ${n}`, spoken: `What is half of ${n}?`, answer: n / 2,
+        hint: tens % 20 === 0
+          ? `Half of ${tens} is ${tens / 2}, and half of ${ones} is ${ones / 2}. Add them.`
+          : `Split ${n} into two equal shares. Try half of ${n - ones} first, then half of ${ones}.` };
+    }
+    case "change_from": {
+      const from = d < 0.4 ? 50 : 100;
+      const price = 5 * ri(1, from / 5 - 1);
+      const nextTen = Math.ceil(price / 10) * 10;
+      return { ...base, prompt: `Pay ${from}¢ for ${price}¢, change?`,
+        spoken: `You pay with ${from} cents for something that costs ${price} cents. How much change do you get?`,
+        answer: from - price,
+        hint: nextTen === price || nextTen === from
+          ? `Count up from ${price} to ${from} in tens.`
+          : `Count up: ${price} to ${nextTen} is ${nextTen - price}, then ${nextTen} to ${from} is ${from - nextTen}. Add the two jumps.` };
+    }
+    case "time_minutes": {
+      if (Math.random() < 0.4) {
+        const h = ri(1, lerp(2, 5, d));
+        return { ...base, prompt: `Minutes in ${h} hour${h > 1 ? "s" : ""}?`,
+          spoken: `How many minutes are in ${h} hour${h > 1 ? "s" : ""}?`, answer: 60 * h,
+          hint: h === 1 ? `One hour is 60 minutes.` : `One hour is 60 minutes. Count by 60s ${h} times.` };
+      }
+      const hr = ri(1, 12), m1 = 5 * ri(0, 6);
+      const maxJumps = Math.max(1, Math.min(lerp(5, 11, d), (60 - m1) / 5)); // never past the hour
+      const dur = 5 * ri(1, maxJumps), m2 = m1 + dur;
+      const end = m2 >= 60 ? `${hr === 12 ? 1 : hr + 1}:00` : `${hr}:${String(m2).padStart(2, "0")}`;
+      const start = `${hr}:${String(m1).padStart(2, "0")}`;
+      return { ...base, prompt: `${start} to ${end}, minutes?`,
+        spoken: `From ${start.replace(":", " ")} to ${end.replace(":00", " o'clock").replace(":", " ")}. How many minutes is that?`,
+        answer: dur,
+        hint: `Count by 5s from ${m1 || "the hour"} up to ${m2 >= 60 ? "60" : m2}. Each 5 is one jump on the clock.` };
+    }
+    case "perimeter_rect": {
+      if (d < 0.35) {
+        const sq = ri(2, 9);
+        return { ...base, prompt: `Square, side ${sq}, all around?`, spoken: `A square has sides of ${sq}. How far is it all the way around?`,
+          answer: 4 * sq, hint: `A square has 4 equal sides. Count by ${sq}s four times.` };
+      }
+      const w = ri(2, lerp(6, 12, d)), h = ri(1, lerp(5, 10, d));
+      return { ...base, prompt: `Rectangle ${w} by ${h}, all around?`,
+        spoken: `A rectangle is ${w} long and ${h} wide. How far is it all the way around?`, answer: 2 * (w + h),
+        hint: `Add all four sides: ${w} plus ${h} plus ${w} plus ${h}. Or add ${w} and ${h}, then double it.` };
+    }
+    case "area_tiles": {
+      const r = ri(2, lerp(5, 10, d)), c = ri(2, lerp(5, 10, d));
+      return { ...base, prompt: `${r} rows of ${c} tiles, total?`,
+        spoken: `A floor has ${r} rows with ${c} tiles in each row. How many tiles in all?`, answer: r * c,
+        hint: `Count by ${c}s, one for each row: ${r} jumps. That is ${r} times ${c}.` };
     }
     case "odd_pick": {
       const wantOdd = Math.random() < 0.5;

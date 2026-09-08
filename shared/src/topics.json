@@ -844,7 +844,7 @@
     "mt_wQ89AEXhz3"
    ],
    "helpPrereqs": [
-    "mt_IzQvs7k_sE"
+    "mt_7rJM8eWUfw"
    ]
   },
   {
@@ -1044,9 +1044,407 @@
     "mt_ezc2m_0dzN"
    ],
    "helpPrereqs": [
+    "mt_ewmuMMPAzP"
+   ]
+  },
+  {
+   "id": "mt_7rJM8eWUfw",
+   "name": "Counting in 6s",
+   "kidLabel": "Big Skips",
+   "domain": "Counting & Cardinality",
+   "ageRange": [
+    8,
+    9
+   ],
+   "description": "Count in multiples of 6, 7, 9, 25, and 1000",
+   "evidence": [
+    "Recite the multiples of 6 from 0 to at least 72",
+    "Recite the multiples of 7 from 0 to at least 84",
+    "Count in steps of 25 from 0 to 1000 and in steps of 1000 up to 10,000"
+   ],
+   "assessmentPrompt": "Can {{name}} count in sevens — 7, 14, 21, 28 — or in nines, or in 25s when thinking about coins, or in 1000s when talking about distances like kilometres?",
+   "legacySkill": "skip_counting",
+   "gen": {
+    "kind": "skip",
+    "steps": [
+     6,
+     7,
+     8,
+     9
+    ]
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_IzQvs7k_sE"
+   ],
+   "helpPrereqs": []
+  },
+  {
+   "id": "mt_3XJkeIn6J6",
+   "name": "Estimating answers (age 7+)",
+   "kidLabel": "Round & Add",
+   "domain": "Measurement",
+   "ageRange": [
+    7,
+    8
+   ],
+   "description": "Estimate a sum by rounding each number to the nearest ten first, then adding the tens",
+   "evidence": [
+    "Round 48 to 50 and 31 to 30 before adding",
+    "Say that 48 + 31 is about 80",
+    "Use the estimate to check whether an exact answer is sensible"
+   ],
+   "assessmentPrompt": "If {{name}} sees 48 + 31, can they say it is about 80 by rounding each number to the nearest ten first?",
+   "legacySkill": "place_value",
+   "gen": {
+    "kind": "estimate_sum"
+   },
+   "fluentMs": null,
+   "prereqs": [],
+   "helpPrereqs": [
+    "mt_LpSuPgL31x",
+    "mt_nvdpxAJTBG"
+   ]
+  },
+  {
+   "id": "mt_ewmuMMPAzP",
+   "name": "Addition and subtraction within 1000",
+   "kidLabel": "Big Add to 1000",
+   "domain": "Addition & Subtraction",
+   "ageRange": [
+    7,
+    8
+   ],
+   "description": "Add and subtract within 1000 using concrete models, drawings, and strategies based on place value; understand composing and decomposing tens and hundreds",
+   "evidence": [
+    "Add two three-digit numbers using base-ten blocks or drawings, composing a ten or hundred when necessary",
+    "Subtract three-digit numbers, decomposing a ten or hundred when necessary",
+    "Relate the concrete/drawn strategy to a written method and explain why it works"
+   ],
+   "assessmentPrompt": "Can {{name}} add or subtract numbers in the hundreds — like '347 + 256' — by thinking about hundreds, tens, and ones separately, or drawing a diagram to help?",
+   "legacySkill": "add_within_20",
+   "gen": {
+    "kind": "add_sub_3d",
+    "op": "add"
+   },
+   "fluentMs": null,
+   "prereqs": [
     "mt_aPBzD28_mT",
     "mt_cChv2j_-Da"
+   ],
+   "helpPrereqs": []
+  },
+  {
+   "id": "mt_HFRYjTb-Z5",
+   "name": "Fluent adding and subtracting within 1000",
+   "kidLabel": "Big Take to 1000",
+   "domain": "Addition & Subtraction",
+   "ageRange": [
+    8,
+    9
+   ],
+   "description": "Fluently add and subtract within 1000 using strategies and algorithms based on place value, properties of operations, and the relationship between addition and subtraction",
+   "evidence": [
+    "Add two three-digit numbers fluently using an efficient method",
+    "Subtract three-digit numbers fluently, including with regrouping",
+    "Choose the most efficient strategy based on the numbers involved"
+   ],
+   "assessmentPrompt": "Can {{name}} add or subtract three-digit numbers like '672 − 348' reliably, choosing whichever method works best for them?",
+   "legacySkill": "subtraction",
+   "gen": {
+    "kind": "add_sub_3d",
+    "op": "sub"
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_cChv2j_-Da",
+    "mt_ewmuMMPAzP"
+   ],
+   "helpPrereqs": []
+  },
+  {
+   "id": "mt_XuHmIn2xje",
+   "name": "Missing number problems (age 7+)",
+   "kidLabel": "Mystery to 100",
+   "domain": "Addition & Subtraction",
+   "ageRange": [
+    7,
+    8
+   ],
+   "description": "Solve addition and subtraction problems including missing-number problems, using number facts, place value, and more complex methods",
+   "evidence": [
+    "Solve a missing-number problem such as 245 + ? = 380",
+    "Choose an appropriate method (mental, written, or combination) based on the numbers",
+    "Solve multi-step problems combining addition and subtraction of three-digit numbers"
+   ],
+   "assessmentPrompt": "Can {{name}} work out sums with a hidden number — like '? − 38 = 24' or '53 + ? = 91' — by thinking carefully about what the equation is asking?",
+   "legacySkill": "add_within_20",
+   "gen": {
+    "kind": "missing_any",
+    "max": 100
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_cChv2j_-Da",
+    "mt_s2mfRBoTal"
+   ],
+   "helpPrereqs": [
+    "mt_ewmuMMPAzP"
    ]
+  },
+  {
+   "id": "mt_xZvDCYA5Ae",
+   "name": "Unknown in Multiplication & Division",
+   "kidLabel": "Missing Factor",
+   "domain": "Multiplication & Division",
+   "ageRange": [
+    8,
+    9
+   ],
+   "description": "Determine the unknown whole number in a multiplication or division equation relating three whole numbers (e.g. 8 × ? = 48, ? × 6 = 42)",
+   "evidence": [
+    "Find the missing factor in 7 × ? = 63",
+    "Find the missing dividend in ? ÷ 5 = 9",
+    "Explain the strategy used (e.g. using the related multiplication fact)"
+   ],
+   "assessmentPrompt": "If {{name}} sees '8 × ? = 48' or '? ÷ 6 = 7' written on paper, can they figure out what number goes in the blank?",
+   "legacySkill": "multiplication",
+   "gen": {
+    "kind": "missing_factor",
+    "maxFactor": 10
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_LpSuPgL31x",
+    "mt_PZ909yPrEC"
+   ],
+   "helpPrereqs": []
+  },
+  {
+   "id": "mt_DyGBW3ZHh3",
+   "name": "Written Multiplication & Division",
+   "kidLabel": "Written Times",
+   "domain": "Multiplication & Division",
+   "ageRange": [
+    7,
+    8
+   ],
+   "description": "Write and calculate mathematical statements for multiplication and division using known tables, including two-digit × one-digit, using mental and progressing to formal written methods",
+   "evidence": [
+    "Calculate 23 × 4 using partitioning (20 × 4 + 3 × 4)",
+    "Calculate 96 ÷ 8 using known table facts",
+    "Begin to use a formal written layout for short multiplication"
+   ],
+   "assessmentPrompt": "Can {{name}} work out sums like '23 × 4' or '68 ÷ 4' — either in their head using times table knowledge, or by writing it out step by step?",
+   "legacySkill": "multiplication",
+   "gen": {
+    "kind": "mul_2d1d"
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_LpSuPgL31x",
+    "mt_PZ909yPrEC",
+    "mt_wQ89AEXhz3"
+   ],
+   "helpPrereqs": [
+    "mt_aPBzD28_mT"
+   ]
+  },
+  {
+   "id": "mt_p-nbe0w_lf",
+   "name": "Division with remainders",
+   "kidLabel": "Leftovers",
+   "domain": "Multiplication & Division",
+   "ageRange": [
+    9,
+    10
+   ],
+   "description": "Solve multi-step word problems using the four operations with whole numbers, including interpreting remainders in context; represent with equations using a letter for the unknown; check with estimation",
+   "evidence": [
+    "52 children go on a trip in minibuses holding 9 each — how many minibuses are needed? (interpret remainder)",
+    "A shop sells packs of 6 pencils for £1.50 each — how much do 5 packs cost?",
+    "Represent a two-step problem with an equation using n for the unknown"
+   ],
+   "assessmentPrompt": "If {{name}} reads 'a school buys 7 boxes of 24 pens and shares them equally between 8 classes', can they work through all the steps and decide sensibly what to do with any remainder?",
+   "legacySkill": "division",
+   "gen": {
+    "kind": "div_rem",
+    "maxDivisor": 9
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_DyGBW3ZHh3",
+    "mt_HhuSDxwDNM",
+    "mt_K5jM7vlVhA",
+    "mt_LpSuPgL31x",
+    "mt_PZ909yPrEC",
+    "mt_wQ89AEXhz3",
+    "mt_wh3UqnWsa7"
+   ],
+   "helpPrereqs": [
+    "mt_Jvvh5P06NV"
+   ]
+  },
+  {
+   "id": "mt_cFltwUQi-d",
+   "name": "Fractions of amounts",
+   "kidLabel": "Fair Fractions",
+   "domain": "Fractions",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Recognise, find, name, and write fractions 1/3, 1/4, 2/4, and 3/4 of a length, shape, set of objects, or quantity",
+   "evidence": [
+    "Find 1/3 of 12 objects by sharing into 3 equal groups",
+    "Shade 3/4 of a rectangle that has been divided into 4 equal parts",
+    "Identify 1/4 of a length on a number line or ruler"
+   ],
+   "assessmentPrompt": "If you put 12 grapes on the table, can {{name}} count out a quarter of them — and then show you what three-quarters of the grapes looks like?",
+   "legacySkill": "division",
+   "gen": {
+    "kind": "frac_of",
+    "dens": [
+     2,
+     3,
+     4,
+     5,
+     10
+    ]
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_LpSuPgL31x",
+    "mt_g3W0mdADVu"
+   ],
+   "helpPrereqs": []
+  },
+  {
+   "id": "mt_g3W0mdADVu",
+   "name": "Finding halves and quarters (age 5+)",
+   "kidLabel": "Double & Half",
+   "domain": "Fractions",
+   "ageRange": [
+    5,
+    6
+   ],
+   "description": "Double a number and find half of an even number, up to 200",
+   "evidence": [
+    "Double 34 by doubling the tens and the ones",
+    "Find half of 60 by halving the tens",
+    "Know that halving undoes doubling"
+   ],
+   "assessmentPrompt": "Can {{name}} tell you double 34, and half of 60, without counting one by one?",
+   "legacySkill": "add_within_20",
+   "gen": {
+    "kind": "double_half",
+    "max": 100
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_LpSuPgL31x"
+   ],
+   "helpPrereqs": []
+  },
+  {
+   "id": "mt_6_O6THdEDK",
+   "name": "Giving Change",
+   "kidLabel": "Giving Change",
+   "domain": "Measurement",
+   "ageRange": [
+    7,
+    8
+   ],
+   "description": "Work out the change from 50 cents or a dollar by counting up from the price",
+   "evidence": [
+    "Count up from 65 cents to a dollar to find 35 cents change",
+    "Use jumps of 5 and 10 to reach the next ten and then the dollar"
+   ],
+   "assessmentPrompt": "If something costs 65 cents and {{name}} pays with a dollar, can they work out the change by counting up?",
+   "legacySkill": "subtraction",
+   "gen": {
+    "kind": "change_from"
+   },
+   "fluentMs": null,
+   "prereqs": [
+    "mt_AF2BeFQwfX",
+    "mt_cPZwlUk8Nd"
+   ],
+   "helpPrereqs": []
+  },
+  {
+   "id": "mt_2XDGT5tei1",
+   "name": "Number of minutes in an hour",
+   "kidLabel": "Minute Math",
+   "domain": "Measurement",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Know the number of minutes in an hour and the number of hours in a day",
+   "evidence": [
+    "State that there are 60 minutes in an hour",
+    "State that there are 24 hours in a day",
+    "Use these facts to solve simple time problems"
+   ],
+   "assessmentPrompt": "If {{name}} knows there are 60 minutes in an hour, can they tell you how many minutes are in 2 hours — and how many hours make a whole day?",
+   "legacySkill": "skip_counting",
+   "gen": {
+    "kind": "time_minutes"
+   },
+   "fluentMs": null,
+   "prereqs": [],
+   "helpPrereqs": []
+  },
+  {
+   "id": "mt_wE7-Gs9ENL",
+   "name": "Measuring Perimeters",
+   "kidLabel": "Fence Fixer",
+   "domain": "Measurement",
+   "ageRange": [
+    7,
+    8
+   ],
+   "description": "Measure the perimeter of simple 2-D shapes",
+   "evidence": [
+    "Measure each side of a rectangle and add the lengths to find the perimeter",
+    "Calculate the perimeter of a regular shape given the side length",
+    "Explain that perimeter is the total distance around a shape"
+   ],
+   "assessmentPrompt": "If {{name}} wants to put a decorative border around a rectangular picture frame 20 cm wide and 30 cm tall, can they work out the total length of border needed?",
+   "legacySkill": "add_within_20",
+   "gen": {
+    "kind": "perimeter_rect"
+   },
+   "fluentMs": null,
+   "prereqs": [],
+   "helpPrereqs": [
+    "mt_U0waNfD8PB"
+   ]
+  },
+  {
+   "id": "mt_Jvvh5P06NV",
+   "name": "Area by Tiling",
+   "kidLabel": "Tile Floor",
+   "domain": "Measurement",
+   "ageRange": [
+    8,
+    9
+   ],
+   "description": "Find the area of a rectangle by tiling it with unit squares and show that the result equals the product of the side lengths",
+   "evidence": [
+    "Tile a 4×6 rectangle and count 24 squares, then verify 4×6=24",
+    "Explain why the number of rows times the number in each row gives the area",
+    "Draw a rectangle on squared paper, tile it, and write the multiplication"
+   ],
+   "assessmentPrompt": "If a rectangular room is 4 m long and 3 m wide, can {{name}} work out its area by tiling it with 1-metre squares in their head — and explain why that equals 4 × 3?",
+   "legacySkill": "multiplication",
+   "gen": {
+    "kind": "area_tiles"
+   },
+   "fluentMs": null,
+   "prereqs": [],
+   "helpPrereqs": []
   }
  ]
 }

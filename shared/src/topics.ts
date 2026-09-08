@@ -37,6 +37,18 @@ export const GenSpecSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("money_sum") }),               // make an amount / how many more ¢
   z.object({ kind: z.literal("round_to"), bases: z.array(z.number().int()).min(1) }),
   z.object({ kind: z.literal("odd_pick") }),                // type the odd/even one
+  // ---- expansion batch (2026-09-08): 11 kinds for the post-30-mastered frontier ----
+  z.object({ kind: z.literal("estimate_sum") }),            // About 48 + 31? (round to tens, add)
+  z.object({ kind: z.literal("add_sub_3d"), op: z.enum(["add", "sub"]) }), // 234 + 45 / 671 − 38
+  z.object({ kind: z.literal("missing_factor"), maxFactor: z.number().int() }), // 3 × ? = 24
+  z.object({ kind: z.literal("mul_2d1d") }),                // 23 × 4
+  z.object({ kind: z.literal("div_rem"), maxDivisor: z.number().int() }), // 23 ÷ 4, leftover?
+  z.object({ kind: z.literal("frac_of"), dens: z.array(z.number().int()).min(1) }), // 1/4 of 20
+  z.object({ kind: z.literal("double_half"), max: z.number().int() }), // Double 34 / Half of 60
+  z.object({ kind: z.literal("change_from") }),             // Pay 100¢ for 65¢, change?
+  z.object({ kind: z.literal("time_minutes") }),            // Minutes in 2 hours? / 3:15 to 3:50
+  z.object({ kind: z.literal("perimeter_rect") }),          // Rectangle 6 by 4, perimeter?
+  z.object({ kind: z.literal("area_tiles") }),              // 6 rows of 4 tiles, total?
 ]);
 export type GenSpec = z.infer<typeof GenSpecSchema>;
 

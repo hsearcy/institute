@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
-import { RPG_ITEMS, rpgNormalizeLoot, rpgCampOffers, type RpgState, type State, type RpgCampState } from '@institute/shared';
-import { renderCampWorkshop, renderLootCards, renderPinnedGoal, renderNextDungeonReward, goalSummary, collectionLootChoice, lootComparison, lootStats, alternateLootChoices } from '../src/rpg/campView';
+import { RPG_ITEMS, rpgSpellCombatStats, rpgNormalizeLoot, rpgCampOffers, type RpgState, type State, type RpgCampState } from '@institute/shared';
+import { renderCampWorkshop, renderLootCards, renderPinnedGoal, renderNextDungeonReward, goalSummary, collectionLootChoice, lootComparison, lootStats, lootBonusLabels, itemBaseBonusLabel, alternateLootChoices } from '../src/rpg/campView';
 import { renderEquipmentView } from '../src/rpg/equipmentView';
 import { renderVictoryView } from '../src/rpg/victoryView';
 
@@ -33,8 +33,8 @@ test('rolled gear compares actual spell damage and protects equipped and last co
   const state = fixture();
   state.loot!.push({ id: 'better', itemId: 'apprentice', bonusPower: 4, bonusSkillId: 'frost_shards', bonusSkillRanks: 1, upgradeLevel: 1 });
   const html = renderLootCards(state, 100, true);
-  expect(html).toContain('+6 power');
-  expect(html).toContain('Crystal Shards (learn to activate)');
+  expect(html).toContain('+6 damage to each enemy with every attack.');
+  expect(html).toContain('Learn Crystal Shards in the skill tree to activate this bonus.');
   expect(html).toContain('↑ +6 damage');
   expect(html).toContain('Copy 2 of 2');
   expect(html).toContain('Copy 1 of 2');
@@ -66,7 +66,7 @@ test('duplicate rolled treasure is kept, never described as converted out of inv
   const state = fixture();
   const loot = { id: 'drop', itemId: 'cinderwand', bonusPower: 3, upgradeLevel: 0 };
   const html = renderVictoryView(state, { xp: 30, kills: 1, levelUp: false, levelsGained: 0, item: RPG_ITEMS.find(item => item.id === 'cinderwand')!, newItems: [], duplicateItem: true, bossDefeated: true, spellId: 'ember', loot, forgeDust: 13 }, 'Guardian');
-  expect(html).toContain('NEW RELIC ROLL'); expect(html).toContain('+3 power');
+  expect(html).toContain('NEW RELIC ROLL'); expect(html).toContain('+3 damage to each enemy with every attack.');
   expect(html).toContain('+13 forge dust'); expect(html).not.toContain('Converted into');
 });
 
@@ -111,7 +111,7 @@ test('an equipped relic advertises a stronger owned copy without silently equipp
   const originalId = state.equippedLootId;
   const html = renderEquipmentView(state, '', true);
   expect(html).toContain('Compare copies below ↓');
-  expect(html).toContain('↑ +6 damage · Same targets');
+  expect(html).toContain('↑ +6 damage · Same enemy count');
   expect(html).toContain('href="#rpg-loot-upgrade-copy"');
   expect(html).toContain('id="rpg-loot-upgrade-copy"');
   expect(collectionLootChoice(state, 'apprentice')?.id).toBe(originalId);
@@ -127,14 +127,14 @@ test('loot shows base affinity and named random modifiers, including inactive sk
   const copy = { id: 'named', itemId: 'moonstaff', bonusPower: 2, upgradeLevel: 0, bonusSpellId: 'ice_lance' as const, bonusSpellPower: 6, bonusSkillId: 'frost_master', bonusSkillRanks: 2 };
   state.loot!.push(copy);
   const stats = lootStats(copy, state);
-  expect(stats).toContain('+6 power · Ice Lance');
-  expect(stats).toContain('+2 Winter Crown (learn to activate) · All Frost spells');
-  expect(stats).toContain('+2 power · Every spell');
+  expect(stats).toContain('+6 damage to each enemy with your Ice Lance spell.');
+  expect(stats).toContain('Winter Crown upgrade for all Frost attacks: +12 damage to each enemy (2 bonus ranks). Inactive.');
+  expect(stats).toContain('+2 damage to each enemy with every attack.');
   const html = renderEquipmentView(state, '', true);
-  expect(html).toContain('Base bonus · Fire Nova');
-  expect(html).toContain('Base bonus · Every spell');
-  expect(html).toContain('+6 power · Ice Lance');
-  expect(lootStats({ ...copy, bonusSpellId: undefined, bonusSchoolId: 'frost', bonusSchoolPower: 4 }, state)).toContain('+4 power · All Frost spells');
+  expect(html).toContain('Your Fire Nova spell leaves burning embers and deals 3 more damage to each enemy.');
+  expect(html).toContain('Every attack deals 4 more damage to each enemy.');
+  expect(html).toContain('+6 damage to each enemy with your Ice Lance spell.');
+  expect(lootStats({ ...copy, bonusSpellId: undefined, bonusSchoolId: 'frost', bonusSchoolPower: 4 }, state)).toContain('+4 damage to each enemy with all Frost attacks.');
 });
 
 test('lower-damage wider copies remain discoverable with both sides of the tradeoff', () => {
@@ -146,11 +146,54 @@ test('lower-damage wider copies remain discoverable with both sides of the trade
   expect(lootComparison(state, 'apprentice', wide)).toMatchObject({ delta: -3, targetDelta: 2, targets: 5 });
   expect(alternateLootChoices(state, 'apprentice').map(choice => choice.copy.id)).toEqual(['wide']);
   const html = renderEquipmentView(state, '', true);
-  expect(html).toContain('↓ -3 damage · ↑ +2 targets');
+  expect(html).toContain('↓ -3 damage · ↑ +2 enemies');
   expect(html).toContain('href="#rpg-loot-wide"');
-  expect(html).toContain('+2 targets · Every spell (max 10)');
+  expect(html).toContain('Each attack can hit 2 extra enemies, up to 10 total.');
   expect(collectionLootChoice(state, 'apprentice')?.id).toBe('legacy:apprentice');
   state.equippedItemId = 'cinderwand'; state.equippedLootId = 'legacy:cinderwand';
   state.loot![0].bonusPower = 3;
   expect(collectionLootChoice(state, 'apprentice')?.id).toBe('wide');
+});
+
+
+test('Skybreaker explains Tempest and Overcharge bonuses while respecting active rank and enemy caps', () => {
+  const state = fixture();
+  const skybreaker = RPG_ITEMS.find(item => item.id === 'skybreaker')!;
+  const copy = { id: 'skybreaker-copy', itemId: skybreaker.id, bonusPower: 0, upgradeLevel: 0, bonusSkillId: 'tempest_overcharge', bonusSkillRanks: 1, bonusTargets: 1 };
+  state.inventory.push(skybreaker.id); state.loot!.push(copy); state.selectedSpellId = 'tempest';
+  state.equippedItemId = skybreaker.id; state.equippedLootId = copy.id;
+  expect(itemBaseBonusLabel(skybreaker)).toBe('Your Tempest spell forks its lightning strikes and deals 12 more damage to each enemy.');
+  const original = JSON.stringify(state), inactive = lootBonusLabels(copy, state).join(' ');
+  expect(inactive).toContain('Overcharge upgrade for your Tempest spell: +4 damage to each enemy (1 bonus rank).');
+  expect(inactive).toContain('Inactive. Learn Overcharge in the skill tree to activate this bonus.');
+  expect(inactive).toContain('Each attack can hit 1 extra enemy, up to 10 total.');
+  expect(inactive).not.toContain('can hit 1 extra enemy (1 bonus rank)');
+  const baseline = { ...state, loot: state.loot!.map(item => item.id === copy.id ? { ...item, bonusSkillId: undefined, bonusSkillRanks: undefined } : item) };
+  expect(rpgSpellCombatStats(state)).toEqual(rpgSpellCombatStats(baseline));
+  expect(JSON.stringify(state)).toBe(original);
+  state.skills.tempest = 1; state.skills.tempest_overcharge = 1;
+  const beforeActive = JSON.stringify(state), active = lootBonusLabels(copy, state).join(' ');
+  const actual = rpgSpellCombatStats(state), without = rpgSpellCombatStats({ ...baseline, skills: state.skills });
+  expect(actual.damage - without.damage).toBe(4); expect(actual.targets).toBe(10); expect(without.targets).toBe(10);
+  expect(active).toContain('+4 damage to each enemy'); expect(active).toContain('The extra-enemy limit is already reached.');
+  expect(active).not.toContain('Inactive'); expect(JSON.stringify(state)).toBe(beforeActive);
+  copy.bonusTargets = 0;
+  const wider = lootBonusLabels(copy, state).join(' ');
+  const beforeRanks = rpgSpellCombatStats({ ...state, loot: state.loot!.map(item => item.id === copy.id ? { ...item, bonusSkillRanks: 0 } : item) });
+  expect(rpgSpellCombatStats(state).targets - beforeRanks.targets).toBe(1);
+  expect(wider).toContain('+4 damage to each enemy and can hit 1 extra enemy');
+  state.skills.tempest_overcharge = 2; copy.bonusSkillRanks = 99;
+  expect(lootBonusLabels(copy, state).join(' ')).toContain('+8 damage to each enemy (2 bonus ranks).');
+  expect(lootBonusLabels(copy, state).join(' ')).toContain('The extra-enemy limit is already reached.');
+});
+
+test('invalid or unlock-only bonus ranks never advertise an inactive or free ability', () => {
+  const state = fixture();
+  const copy = { id: 'malformed', itemId: 'skybreaker', bonusPower: 0, upgradeLevel: 0, bonusSkillId: 'tempest', bonusSkillRanks: 2 };
+  const original = JSON.stringify(state);
+  expect(lootBonusLabels(copy, state)).toEqual([]);
+  expect(lootBonusLabels({ ...copy, bonusSkillId: 'not-a-skill' }, state)).toEqual([]);
+  expect(lootBonusLabels({ ...copy, bonusSkillId: 'tempest_overcharge', bonusSkillRanks: NaN }, state)).toEqual([]);
+  expect(lootBonusLabels({ ...copy, bonusSkillId: 'tempest_overcharge', bonusSkillRanks: 0 }, state)).toEqual([]);
+  expect(JSON.stringify(state)).toBe(original);
 });

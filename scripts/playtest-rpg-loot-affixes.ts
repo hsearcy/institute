@@ -73,7 +73,7 @@ try {
     await page.waitForFunction(id => (window as any).__game.state.equippedLootId === id && !(window as any).__game.busy, id);
   };
   await equip('qa:unlearned'); await top(); await shot('skill-affinity-desktop');
-  assert.match(await page.locator('[data-item="moonstaff"] .rpg-slot-bonuses').textContent(), /Winter Crown.*learn to activate/);
+  assert.match(await page.locator('[data-item="moonstaff"] .rpg-slot-bonuses').textContent(), /Winter Crown.*Inactive.*Learn Winter Crown/);
   assert(await page.locator('.rpg-relic-slots .rpg-relic-art').evaluateAll((nodes: Element[]) => nodes.every(node => {
     const box = node.getBoundingClientRect(); return Math.abs(box.width - box.height) < 2;
   })), 'Collection thumbnails keep square frames when some copies have more bonuses');

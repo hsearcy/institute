@@ -195,8 +195,16 @@ describe("full-session selector behaviour (regression guard)", () => {
     // Two started, cap is ACTIVE_CAP: exactly one slot opens, then the set is full.
     // (A started topic that gets stuck may pull in a prereq; that is remediation,
     // not discovery, so it is excluded here.)
-    const ladder = new Set(healthy.inProgressIds.flatMap((id) => { const t = TOPICS.find((x) => x.id === id)!; return [...t.prereqs, ...(t.helpPrereqs ?? [])]; }));
-    expect(newlyMet.filter((id) => !ladder.has(id)).length).toBe(ACTIVE_CAP - 2);
+    // Walk his first meetings in order: a topic that is a prereq of something he
+    // has already started is remediation; anything else is genuine discovery.
+    const started = new Set(healthy.inProgressIds);
+    let genuine = 0;
+    for (const id of newlyMet) {
+      const ladder = new Set([...started].flatMap((sid) => { const t = TOPICS.find((x) => x.id === sid)!; return [...t.prereqs, ...(t.helpPrereqs ?? [])]; }));
+      if (!ladder.has(id)) genuine++;
+      started.add(id);
+    }
+    expect(genuine).toBe(ACTIVE_CAP - 2);
     const startedSet = new Set([...healthy.masteredIds, ...healthy.inProgressIds]);
     let maxNewInWindow = 0;
     for (let i = 0; i + 8 <= seq.length; i++) {

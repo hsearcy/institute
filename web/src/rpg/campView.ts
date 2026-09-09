@@ -1,7 +1,8 @@
 import { RPG_ITEMS, rpgSpellAvailable, rpgLootSkillBonus, RPG_SCHOOLS, RPG_SPELLS, RPG_SKILLS, rpgLootAffixes, RPG_REGIONS, RPG_MAX_ITEM_UPGRADE, rpgForgeCost, rpgLootPower, rpgEquippedLoot, rpgSalvageValue, rpgUnlockedTier, rpgDungeonForgeDust, rpgNextRelicHunt, rpgSpellCombatStats, type RpgItem, type RpgState, type RpgLootInstance, type RpgCampState, type State, type Quest } from '@institute/shared';
+import { renderMathRecords } from './recordsView';
 import { escapeHtml as esc, relicArt, icon } from './icons';
 
-export type CampTab = 'quests' | 'merchant' | 'forge';
+export type CampTab = 'quests' | 'merchant' | 'forge' | 'records';
 export function itemAffinity(item: RpgItem): string {
   return item.scope === 'all' ? 'Every spell' : item.scope === 'school'
     ? `All ${RPG_SCHOOLS.find(school => school.id === item.school)!.name} spells`
@@ -75,8 +76,9 @@ export function renderCampWorkshop(state: RpgState, camp: RpgCampState, legacy: 
     const pinned = state.goal?.kind === 'item' && state.goal.id === item.id;
     return `<article class="rpg-market-card ${item.rarity}" data-offer="${item.id}">${relicArt(item.id)}<div><small>${item.rarity.toUpperCase()} RELIC</small><h3>${esc(item.name)}</h3><p>${esc(item.description)}</p><b>${offer.price} gems</b><small>${offer.owned ? 'In your collection' : !offer.available ? `${Math.max(0, offer.requiredClears - state.expeditionsCompleted)} more dungeon clears to unlock` : camp.gems < offer.price ? `${offer.price - camp.gems} more gems to save` : 'Ready to buy'}</small></div><div class="rpg-market-actions"><button class="rpg-primary" data-buy-item="${item.id}" ${offer.owned || !offer.available || camp.gems < offer.price ? 'disabled' : ''}>${offer.owned ? 'Owned' : `Buy · ${offer.price} gems`}</button>${!offer.owned ? `<button data-pin-kind="item" data-pin-id="${item.id}" aria-pressed="${pinned}">${pinned ? '✓ Your goal' : 'Save toward this'}</button>` : ''}</div></article>`;
   }).join('')}</div><p class="rpg-workshop-note">Legendary relics await in guardian treasure. See every discovery in Equipment.</p>`;
+  if (tab === 'records') body = renderMathRecords(legacy.daily);
   if (tab === 'forge') body = `<p>Keep the rolls you love. Every forge rank adds +2 power. Reclaim extra copies for dust; your equipped relic and last copy are protected.</p><div class="rpg-forge-list">${renderLootCards(state, camp.gems, true)}</div>`;
-  return `<div class="rpg-workshop"><p class="rpg-eyebrow">A FIRE TO RETURN TO</p><h2 id="rpg-dialog-title">Camp</h2><div class="rpg-wallet" aria-label="Your currencies"><span>◆ <b>${camp.gems}</b> gems</span><span>✦ <b>${state.forgeDust ?? 0}</b> forge dust</span></div><nav class="rpg-workshop-tabs" aria-label="Camp activities">${(['quests', 'merchant', 'forge'] as CampTab[]).map(key => `<button data-action="${key}" aria-pressed="${tab === key}">${key === 'quests' ? 'Quest board' : key === 'merchant' ? 'Merchant' : 'Blacksmith'}</button>`).join('')}</nav>${renderPinnedGoal(state, camp)}${body}<footer class="rpg-button-row"><button data-action="inventory">Equipment</button><button data-action="close">Back to adventure</button></footer></div>`;
+  return `<div class="rpg-workshop"><p class="rpg-eyebrow">A FIRE TO RETURN TO</p><h2 id="rpg-dialog-title">Camp</h2><div class="rpg-wallet" aria-label="Your currencies"><span>◆ <b>${camp.gems}</b> gems</span><span>✦ <b>${state.forgeDust ?? 0}</b> forge dust</span></div><nav class="rpg-workshop-tabs" aria-label="Camp activities">${(['quests', 'merchant', 'forge', 'records'] as CampTab[]).map(key => `<button data-action="${key}" aria-pressed="${tab === key}">${key === 'quests' ? 'Quest board' : key === 'merchant' ? 'Merchant' : key === 'forge' ? 'Blacksmith' : 'Records'}</button>`).join('')}</nav>${renderPinnedGoal(state, camp)}${body}<footer class="rpg-button-row"><button data-action="inventory">Equipment</button><button data-action="close">Back to adventure</button></footer></div>`;
 }
 /** Collection switches preserve the chosen copy, then prefer actual spell damage.
  * This avoids replacing a child's forged roll with the legacy base instance. */

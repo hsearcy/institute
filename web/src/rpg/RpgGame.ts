@@ -1082,7 +1082,7 @@ export class RpgGame {
       void this.changeLoadout('goal', { goal }, () => {
         if (this.panel === 'skills') this.showSkills();
         else if (this.panel === 'inventory') this.showInventory();
-        else if (this.campState && this.legacyState && ['merchant', 'forge', 'quests'].includes(this.panel)) this.showDialog(this.panel, renderCampWorkshop(this.state!, this.campState, this.legacyState, this.panel as CampTab), true);
+        else if (this.campState && this.legacyState && ['merchant', 'forge', 'quests', 'records'].includes(this.panel)) this.showDialog(this.panel, renderCampWorkshop(this.state!, this.campState, this.legacyState, this.panel as CampTab), true);
         this.toast('Goal pinned. Every adventure brings you closer.');
       }); return;
     }
@@ -1111,7 +1111,7 @@ export class RpgGame {
       case 'spell-goal': this.showSpellGoal(); break;
       case 'dismiss-loot': this.discovery = null; this.renderDiscovery(); break;
       case 'inventory': this.showInventory(); break;
-      case 'quests': case 'merchant': case 'forge': void this.showWorkshop(action); break;
+      case 'quests': case 'merchant': case 'forge': case 'records': void this.showWorkshop(action); break;
       case 'pause': this.showPause(); break;
       case 'retreat': this.confirmRetreat(); break;
       case 'confirm-retreat': void this.retreat(); break;

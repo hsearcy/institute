@@ -439,3 +439,27 @@ test('saved response recovery, worked help, and touch layout remain playable', a
   await page.getByRole('button',{name:'Save & leave',exact:true}).click();
   await expect(page.getByRole('button',{name:'Continue adventure'})).toBeVisible();
 });
+
+test('Camp Records tab shows saved math stats on desktop and phone', async ({ page }, info) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Skip guide', exact: true }).click();
+  await page.locator('.rpg-camp-menu [data-action="quests"]').click();
+  const tabs = page.getByRole('navigation', { name: 'Camp activities' });
+  await tabs.getByRole('button', { name: 'Records', exact: true }).click();
+  const records = page.getByRole('region', { name: 'Your Math Records' });
+  await expect(records).toBeVisible();
+  await expect(tabs.getByRole('button', { name: 'Records', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  const saved = await (await page.request.get(`/state?profileId=${profile}`)).json();
+  await expect(records.locator('.rpg-records-tile.today strong')).toHaveText(String(saved.daily.today));
+  await expect(records.locator('.rpg-records-tile.lifetime strong')).toHaveText(String(saved.daily.stats.trackedSolves));
+  await expect(records.getByRole('listitem')).toHaveCount(14);
+  await expect(records.locator('.rpg-records-tile')).toHaveCount(6);
+  await page.screenshot({ path: info.outputPath('camp-records-desktop.png') });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await records.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+  expect(await tabs.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+  await page.screenshot({ path: info.outputPath('camp-records-phone.png') });
+  await tabs.getByRole('button', { name: 'Quest board', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Daily quests', exact: true })).toBeVisible();
+  await expect(records).toHaveCount(0);
+});

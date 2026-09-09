@@ -10,6 +10,29 @@ function fixture(): RpgState {
 const legacy = { gems: 50, quests: [{ key: 'daily', label: 'Solve five problems', target: 5, progress: 5, reward: 25, done: true }], weeklyQuest: { key: 'weekly', label: 'Complete five daily boards', target: 5, progress: 2, reward: 250, done: false } } as State;
 const camp = (state: RpgState): RpgCampState => ({ gems: 50, forgeDust: state.forgeDust ?? 0, offers: rpgCampOffers(state) });
 
+test('Camp records show saved math history and all six totals', () => {
+  const daily: NonNullable<State['daily']> = {
+    day: '2026-09-08', timeZone: 'America/New_York', today: 146, record: 146,
+    recordDay: '2026-09-08', isRecord: true,
+    history: Array.from({ length: 14 }, (_, i) => ({ day: i < 6 ? `2026-08-${26 + i}` : `2026-09-0${i - 5}`, count: i === 13 ? 146 : 0 })),
+    stats: { last7Total: 284, last7Average: 40.6, bestDay: { day: '2026-09-08', count: 146 }, daysPlayed: 51, trackedSolves: 1126, currentStreakDays: 2 },
+    tracking: { completeSince: '2026-08-08', backfilled: true }, pendingEvents: [],
+  };
+  const html = renderCampWorkshop(fixture(), camp(fixture()), { ...legacy, daily }, 'records');
+  expect(html).toContain('data-action="records" aria-pressed="true"');
+  expect(html).toContain('Your Math Records');
+  expect(html).toContain('Problems right each day (last 14 days)');
+  expect(html.match(/role="listitem"/g)).toHaveLength(14);
+  for (const text of ['Right today', 'Best day ever', 'Last 7 days', 'Days in a row', 'Days played', 'Tracked solves', '284', '40.6', '51', '1126', '146 today, that is your best day EVER!', 'Tuesday 8 Sep (today, best day): 146 right', 'Saturday 8 Aug']) expect(html).toContain(text);
+  expect(html).not.toContain('aria-label="Daily quests"');
+});
+
+test('Camp records explain missing data without inventing totals', () => {
+  const html = renderCampWorkshop(fixture(), camp(fixture()), legacy, 'records');
+  expect(html).toContain('Records are unavailable');
+  expect(html).not.toContain('Tracked solves');
+});
+
 test('quest board shows daily completion and separate weekly progress with earned gems', () => {
   const html = renderCampWorkshop(fixture(), camp(fixture()), legacy, 'quests');
   expect(html).toContain('aria-label="Daily quests"');

@@ -114,3 +114,29 @@
  #rpg-ui .rpg-treasure-copy>p { font-size:11px; }
  #rpg-ui .rpg-treasure-actions { bottom:-19px; }
 }
+
+/* Math records use the shared daily totals and the Camp palette. */
+.rpg-records-summary { color:#edca87; }
+.rpg-records h4 { margin:22px 0 12px; }
+.rpg-records-chart { display:flex; gap:6px; padding:16px 10px 10px; border:1px solid #75603c; border-radius:6px; background:#161e21; }
+.rpg-records-col { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:4px; color:#c9c1ae; font-size:12px; }
+.rpg-records-count { font-weight:700; }
+.rpg-records-track { width:100%; height:140px; display:flex; align-items:flex-end; background:#ffffff09; border-radius:4px; overflow:hidden; }
+.rpg-records-fill { width:100%; background:linear-gradient(#a8e2e2,#428c99); border-radius:4px; }
+.rpg-records-col.best { color:#ffdf95; }
+.rpg-records-col.best .rpg-records-fill { background:linear-gradient(#ffe6a5,#c18a35); }
+.rpg-records-col.today .rpg-records-track { outline:1px solid #b79454; }
+.rpg-records-col small { min-height:16px; font-size:10px; white-space:nowrap; }
+.rpg-records-tiles { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.rpg-records-tile { display:flex; flex-direction:column; gap:4px; padding:14px; border:1px solid #75603c; border-radius:6px; background:#1b2227; }
+.rpg-records-tile strong { font-size:28px; color:#f6edda; }
+.rpg-records-tile b { color:#e7c78e; }
+.rpg-records-tile small { color:#bcb6a7; }
+.rpg-records-tile.today strong { color:#a4dfbd; }
+.rpg-records-tile.record strong { color:#ffdf95; }
+@media(max-width:680px) {
+  .rpg-records-tiles { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .rpg-records-chart { gap:3px; padding:12px 4px 8px; }
+  .rpg-records-col { font-size:10px; }
+  .rpg-records-col small { font-size:8px; }
+}

@@ -22,6 +22,8 @@ export type SelectInput = {
 export type Selection = { topic: Topic; difficulty: number; mode: "review" | "learn" };
 
 const RUN_CAP = 4;
+/** How many started topics he works at once. A slot opens when one masters. */
+export const ACTIVE_CAP = 3;
 
 export function selectNext(s: SelectInput): Selection {
   const byId = new Map(s.mastery.map((m) => [m.topicId, m]));
@@ -82,8 +84,21 @@ export function selectNext(s: SelectInput): Selection {
     stuck.flatMap((t) => [...t.prereqs, ...(t.helpPrereqs ?? [])]).filter((id) => !mastered.has(id)),
   );
   const remedial = pool.filter((t) => remedialIds.has(t.id));
-  const newTopics = pool.filter((t) => !isStarted(t.id) && !remedialIds.has(t.id));
-  const inProgress = pool.filter((t) => isStarted(t.id) && !remedialIds.has(t.id));
+
+  // ACTIVE SET: he works at most ACTIVE_CAP started topics at a time, the ones he
+  // is furthest along in. A slot opens only when one of them masters; everything
+  // else he has started waits its turn. This is the "small focused set" rule.
+  // Without it the every-other-rotation cadence opened six new topics in two
+  // sessions and he was failing three of them at once. Remediation prereqs do
+  // not count: they are the cure for a stuck topic, not more load.
+  const attemptsOf = (id: string) => byId.get(id)?.attempts ?? 0;
+  const startedAll = frontier.filter((t) => isStarted(t.id) && !remedialIds.has(t.id));
+  const active = new Set(
+    [...startedAll].sort((a, b) => attemptsOf(b.id) - attemptsOf(a.id)).slice(0, ACTIVE_CAP).map((t) => t.id),
+  );
+  const slotOpen = startedAll.length < ACTIVE_CAP;
+  const newTopics = slotOpen ? pool.filter((t) => !isStarted(t.id) && !remedialIds.has(t.id)) : [];
+  const inProgress = pool.filter((t) => active.has(t.id));
 
   let ranked: Topic[];
   if (stuck.length && remedial.length) {
@@ -111,9 +126,10 @@ export function selectNext(s: SelectInput): Selection {
     };
     const currentRunWasNew = s.recentTopicIds.slice(0, RUN_CAP).some(freshlyMet);
     ranked =
-      !currentRunWasNew && newTopics.length ? newTopics :  // just did an old topic → discover one
-      inProgress.length ? inProgress :                     // just met a new one → work in-progress
-      pool;                                                // early game: only new topics exist
+      !currentRunWasNew && newTopics.length ? newTopics :  // slot open, just did an old topic → discover one
+      inProgress.length ? inProgress :                     // work the active set
+      newTopics.length ? newTopics :                       // only the current topic is started → discover
+      pool;                                                // early game fallback
   }
   if (ranked.length) {
     const pick = [...ranked].sort((a, b) =>

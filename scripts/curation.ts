@@ -84,7 +84,7 @@ export const CURATION: CurationRow[] = [
   { id: "mt_QaYfeVL-0C", kidLabel: "Rounding Ranger",   legacySkill: "place_value",    gen: { kind: "round_to", bases: [10, 100] },                 fluentMs: null },
   // ---- expansion batch (2026-09-08): the post-30-mastered frontier, 14 topics ----
   { id: "mt_7rJM8eWUfw", kidLabel: "Big Skips",         legacySkill: "skip_counting",  gen: { kind: "skip", steps: [6, 7, 8, 9] },                    fluentMs: null },
-  { id: "mt_3XJkeIn6J6", kidLabel: "Round & Add",       legacySkill: "place_value",    gen: { kind: "estimate_sum" },                                 fluentMs: null,
+  { id: "mt_3XJkeIn6J6", kidLabel: "Round & Add",       legacySkill: "place_value",    gen: { kind: "estimate_sum" },                                 fluentMs: null, extraHelpPrereqs: ["mt_QaYfeVL-0C", "mt_I5j1ZWo2cn"],
     override: { description: "Estimate a sum by rounding each number to the nearest ten first, then adding the tens",
       evidence: ["Round 48 to 50 and 31 to 30 before adding", "Say that 48 + 31 is about 80", "Use the estimate to check whether an exact answer is sensible"],
       assessmentPrompt: "If {{name}} sees 48 + 31, can they say it is about 80 by rounding each number to the nearest ten first?" } },
@@ -103,7 +103,7 @@ export const CURATION: CurationRow[] = [
     override: { description: "Work out the change from 50 cents or a dollar by counting up from the price",
       evidence: ["Count up from 65 cents to a dollar to find 35 cents change", "Use jumps of 5 and 10 to reach the next ten and then the dollar"],
       assessmentPrompt: "If something costs 65 cents and {{name}} pays with a dollar, can they work out the change by counting up?" } },
-  { id: "mt_2XDGT5tei1", kidLabel: "Minute Math",       legacySkill: "skip_counting",  gen: { kind: "time_minutes" },                                 fluentMs: null },
-  { id: "mt_wE7-Gs9ENL", kidLabel: "Fence Fixer",       legacySkill: "add_within_20",  gen: { kind: "perimeter_rect" },                               fluentMs: null },
-  { id: "mt_Jvvh5P06NV", kidLabel: "Tile Floor",        legacySkill: "multiplication", gen: { kind: "area_tiles" },                                   fluentMs: null },
+  { id: "mt_2XDGT5tei1", kidLabel: "Minute Math",       legacySkill: "skip_counting",  gen: { kind: "time_minutes" },                                 fluentMs: null, extraHelpPrereqs: ["mt_M2v1A9OEuM"] },
+  { id: "mt_wE7-Gs9ENL", kidLabel: "Fence Fixer",       legacySkill: "add_within_20",  gen: { kind: "perimeter_rect" },                               fluentMs: null, extraHelpPrereqs: ["mt_m1W6nTQJ2b"] },
+  { id: "mt_Jvvh5P06NV", kidLabel: "Tile Floor",        legacySkill: "multiplication", gen: { kind: "area_tiles" },                                   fluentMs: null, extraHelpPrereqs: ["mt_PZ909yPrEC"] },
 ];

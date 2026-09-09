@@ -47,14 +47,22 @@ describe("rut-breaking rotation", () => {
     expect(r.topic.id).toBe("started"); // consolidate via in-progress, don't open "fresh"
   });
 
-  test("breaks out even with several long-worked topics (the real ares bug)", () => {
-    // He's cycled 3+ long-worked topics — none freshly met — so a NEW one appears
-    // instead of trapping him on his started set.
+  test("with TWO long-worked topics a slot is open, so a NEW one appears", () => {
+    const G = [t("cur", [], "d-cur"), t("old-a", [], "pool"), t("new1", [], "pool")];
+    const r = selectNext({ ...base, topics: G, currentTopicId: "cur",
+      recentTopicIds: ["cur", "cur", "cur", "cur", "old-a", "old-a"],
+      mastery: [m("cur", "practicing", 40), m("old-a", "practicing", 42)] });
+    expect(r.topic.id).toBe("new1");
+  });
+
+  test("with ACTIVE_CAP long-worked topics the set is full: work them, open nothing new", () => {
+    // He is not trapped: reviews still interleave, misses still ease and rescue,
+    // and a slot opens the moment one of these masters.
     const G = [t("cur", [], "d-cur"), t("old-a", [], "pool"), t("old-b", [], "pool"), t("new1", [], "pool")];
     const r = selectNext({ ...base, topics: G, currentTopicId: "cur",
       recentTopicIds: ["cur", "cur", "cur", "cur", "old-a", "old-a", "old-b", "old-b"],
       mastery: [m("cur", "practicing", 40), m("old-a", "practicing", 42), m("old-b", "practicing", 73)] });
-    expect(r.topic.id).toBe("new1");
+    expect(["old-a", "old-b"]).toContain(r.topic.id);
   });
 
   test("brand-new topics get picked when nothing is in progress", () => {

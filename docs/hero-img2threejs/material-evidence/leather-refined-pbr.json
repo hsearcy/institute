@@ -1,0 +1,88 @@
+{
+  "ok": true,
+  "verdict": "pass",
+  "confidence": 0.756,
+  "estimatedFidelity": 0.756,
+  "targetThreshold": 0.7,
+  "materialId": "leather-refined",
+  "sourceImage": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/refined-crops/leather-refined.png",
+  "outDir": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/leather-refined",
+  "palette": [
+    "#3C291E",
+    "#4B3224",
+    "#694731",
+    "#2E1E15",
+    "#BEBABE"
+  ],
+  "maps": {
+    "albedo": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/leather-refined/leather-refined_albedo.png",
+      "url": "leather-refined_albedo.png",
+      "channel": "albedo",
+      "source": "reference-pixel-extraction"
+    },
+    "roughness": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/leather-refined/leather-refined_roughness.png",
+      "url": "leather-refined_roughness.png",
+      "channel": "roughness",
+      "source": "reference-pixel-extraction"
+    },
+    "height": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/leather-refined/leather-refined_height.png",
+      "url": "leather-refined_height.png",
+      "channel": "height",
+      "source": "reference-pixel-extraction"
+    },
+    "normal": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/leather-refined/leather-refined_normal.png",
+      "url": "leather-refined_normal.png",
+      "channel": "normal",
+      "source": "reference-pixel-extraction"
+    },
+    "ao": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/leather-refined/leather-refined_ao.png",
+      "url": "leather-refined_ao.png",
+      "channel": "ao",
+      "source": "reference-pixel-extraction"
+    }
+  },
+  "diagnostics": {
+    "sourceWidth": 42,
+    "sourceHeight": 72,
+    "mapSize": 256,
+    "cropBBoxPixels": {
+      "x": 0,
+      "y": 0,
+      "width": 42,
+      "height": 72
+    },
+    "mask": {
+      "backgroundColor": "#422C1F",
+      "backgroundNoise": 32.326,
+      "transparentPixelFraction": 0.0,
+      "foregroundCoverage": 0.996
+    },
+    "mapStats": {
+      "valueRange": 0.1878,
+      "heightP90Gradient": 0.13599,
+      "roughnessBase": 0.759,
+      "roughnessVariation": 0.178,
+      "normalStrength": 0.316,
+      "blurRadius": 5
+    },
+    "palette": [
+      "#3C291E",
+      "#4B3224",
+      "#694731",
+      "#2E1E15",
+      "#BEBABE"
+    ]
+  },
+  "warnings": [
+    "image is not clearly isolated from background; using most pixels as material evidence",
+    "object/background separation is weak",
+    "single-image inverse rendering cannot prove true physical PBR; confidence is capped",
+    "low value range weakens height/roughness inference"
+  ],
+  "limitation": "single-image PBR extraction is an estimate; 70%+ extraction confidence still needs render screenshot review"
+}

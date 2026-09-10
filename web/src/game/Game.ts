@@ -1054,7 +1054,7 @@ export class Game {
     if (this.firstAttempt === null) void reportSkip(p);
     try {
       const text = (await fetchWalkthrough(p))
-        ?? `That one is tricky! The answer is ${p.answer}.${p.hint ? ' ' + p.hint : ''}`;
+        ?? `No worries, let's do it together. The answer is ${p.answer}.${p.hint ? ' ' + p.hint : ''}`;
       if (this.problem?.id !== p.id) return; // moved on already
       this.hud.setAnswer(String(p.answer));  // he SEES the answer, not just hears it
       this.hud.showHint(text);
@@ -1703,7 +1703,7 @@ const NUDGE = [
 // because missing hard ones is exactly how the tutor calibrates. Never scary.
 const WARM_MISS = [
   'That was a brave try on a tough one!',
-  'Ooh, a tricky gem! Missing these teaches me how to help you.',
+  'Good try! Missing one teaches me how to help you.',
   'Tough one! Even the best miners hit hard rock sometimes.',
   'Great effort, hard ones like this make you stronger!',
 ];

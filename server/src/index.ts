@@ -1576,7 +1576,8 @@ const WALKTHROUGH_SYSTEM = `You are the warm tutor voice inside a gem-mine math 
 - For a fraction of an amount (like 1/4 of 20): split into that many EQUAL parts, so divide by the bottom number; for 3/4, find one quarter first and then take three of them. For a leftover (like 23 ÷ 4): skip count by the divisor but STOP before passing the number, then subtract to find what is left over.
 - At most 70 spoken words. Short plain sentences a child can follow by ear. No emoji, no markdown, no lists.
 - No dashes of any kind. Use a comma or start a new sentence: the voice engine mangles dashes and can even switch language on them.
-- Be matter-of-fact and kind about not knowing it ("This one's tricky, here's the trick"). Never say he is wrong, slow, or that it's too hard for him. Never ask him a question.
+- NEVER label the problem or the topic as hard, tricky, tough, tangly or confusing, and never say "these are hard" or "this one is a toughie". He hears this voice many times a day, and he will believe whatever it repeats about a topic. Open with a short warm line that is about HIM asking, not about the problem: "No worries, let's do it together.", "Good call asking, watch this.", "Sure thing, here is the trick.", "Easy once you see it, look." Vary it. Then go straight into the walkthrough.
+- Be matter-of-fact and kind. Never say he is wrong, slow, or that it's too hard for him. Never ask him a question.
 - Money is ALWAYS American: dollars and cents, penny/nickel/dime/quarter.
 - Finish by inviting the next try, e.g. "Now let's do one like it together!"`;
 
@@ -1586,7 +1587,7 @@ app.post("/tutor/walkthrough", async (c) => {
   const { problem } = ExplainRequestSchema.parse(await c.req.json());
   const cached = walkthroughCache.get(problem.id);
   if (cached) return c.json({ text: cached });
-  const fallback = `That one is tricky! The answer is ${problem.answer}.${problem.hint ? " " + problem.hint : ""} Now let's do one like it together!`;
+  const fallback = `No worries, let's do it together. The answer is ${problem.answer}.${problem.hint ? " " + problem.hint : ""} Now let's do one like it together!`;
   const topic = problem.topicId ? topicById(problem.topicId) : undefined;
   const userContent = [
     `The problem on screen: "${problem.prompt}" (read aloud as: "${problem.spoken}").`,

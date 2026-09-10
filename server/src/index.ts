@@ -126,6 +126,21 @@ db.exec(`CREATE TABLE IF NOT EXISTS topic_demos (
 // Spaced-review schedule per mastered topic (guarded ALTERs).
 try { db.exec(`ALTER TABLE topic_mastery ADD COLUMN review_interval_days REAL`); } catch { /* exists */ }
 try { db.exec(`ALTER TABLE topic_mastery ADD COLUMN review_due_at INTEGER`); } catch { /* exists */ }
+// The level he PROVED on a topic, kept as a high-water mark so reviews cannot
+// drift easier than the mastery that earned them.
+try { db.exec(`ALTER TABLE topic_mastery ADD COLUMN mastery_difficulty REAL`); } catch { /* exists */ }
+// Backfill: mastered rows predating the column recover their mark from the
+// hardest problem they ever got right. Reviews had been shaving 0.1 off
+// last_difficulty each time, so that column has already drifted and cannot be
+// trusted as the mark; the attempt history can.
+db.exec(
+  `UPDATE topic_mastery SET mastery_difficulty = COALESCE(
+     (SELECT MAX(a.difficulty) FROM attempts a
+      WHERE a.profile_id = topic_mastery.profile_id AND a.topic_id = topic_mastery.topic_id
+        AND a.correct = 1),
+     last_difficulty)
+   WHERE state = 'mastered' AND mastery_difficulty IS NULL`,
+);
 // Add the equipped-pickaxe column (guarded — ALTER throws if it already exists).
 try {
   db.exec(`ALTER TABLE profile_state ADD COLUMN equipped_pickaxe TEXT DEFAULT 'wooden'`);
@@ -186,12 +201,14 @@ function recordMastery(profileId: string, skill: string, correct: boolean, diffi
 
 type TopicMasteryRow = {
   topic_id: string; attempts: number; correct: number; last_difficulty: number; state: string;
+  mastery_difficulty: number | null;
   review_interval_days: number | null; review_due_at: number | null;
 };
 
 function topicMasteryRows(profileId: string): TopicMasteryRow[] {
   return db.query(
-    `SELECT topic_id, attempts, correct, last_difficulty, state, review_interval_days, review_due_at
+    `SELECT topic_id, attempts, correct, last_difficulty, state, mastery_difficulty,
+            review_interval_days, review_due_at
      FROM topic_mastery WHERE profile_id = ?`,
   ).all(profileId) as TopicMasteryRow[];
 }
@@ -223,8 +240,11 @@ function recordTopicMastery(profileId: string, topicId: string, correct: boolean
   const topic = topicById(topicId);
   if (!topic) return;
   const row = db.query(
-    `SELECT attempts, correct, state, review_interval_days FROM topic_mastery WHERE profile_id = ? AND topic_id = ?`,
-  ).get(profileId, topicId) as { attempts: number; correct: number; state: string; review_interval_days: number | null } | null;
+    `SELECT attempts, correct, state, review_interval_days, mastery_difficulty
+     FROM topic_mastery WHERE profile_id = ? AND topic_id = ?`,
+  ).get(profileId, topicId) as
+    { attempts: number; correct: number; state: string; review_interval_days: number | null;
+      mastery_difficulty: number | null } | null;
   const wasMastered = row?.state === "mastered";
   const attempts = (row?.attempts ?? 0) + 1;
   const corr = (row?.correct ?? 0) + (correct ? 1 : 0);
@@ -240,6 +260,16 @@ function recordTopicMastery(profileId: string, topicId: string, correct: boolean
     lifetimeAttempts: attempts, recentResults, lifetimeRatio: corr / attempts,
     recentSolveMs, fluentMs: topic.fluentMs,
   });
+  // Mastery difficulty is a HIGH-WATER MARK: the hardest level he has proved on
+  // this topic. It only rises, and only on a correct answer, so a review can
+  // never be served easier than the mastery that earned it. A demotion back to
+  // practicing clears it — the next mastery has to earn its own mark.
+  const priorMark = row?.mastery_difficulty ?? null;
+  const masteryDifficulty =
+    state !== "mastered" ? null
+    : correct ? Math.max(priorMark ?? 0, difficulty)
+    : priorMark ?? difficulty;
+
   // Review schedule: any attempt while mastered is a review outcome; the moment
   // of first mastery schedules the first review.
   // Foundational (age-start ≤ 5) skills can graduate out of review once durable.
@@ -252,15 +282,16 @@ function recordTopicMastery(profileId: string, topicId: string, correct: boolean
   // COALESCE can't express "set null on retire", so gate the write with a flag.
   const hasSchedule = schedule ? 1 : 0;
   db.query(
-    `INSERT INTO topic_mastery (profile_id, topic_id, attempts, correct, last_difficulty, state, review_interval_days, review_due_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO topic_mastery (profile_id, topic_id, attempts, correct, last_difficulty, state, mastery_difficulty, review_interval_days, review_due_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(profile_id, topic_id) DO UPDATE SET
        attempts = excluded.attempts, correct = excluded.correct,
        last_difficulty = excluded.last_difficulty, state = excluded.state,
+       mastery_difficulty = excluded.mastery_difficulty,
        review_interval_days = CASE WHEN ? THEN excluded.review_interval_days ELSE topic_mastery.review_interval_days END,
        review_due_at = CASE WHEN ? THEN excluded.review_due_at ELSE topic_mastery.review_due_at END,
        updated_at = excluded.updated_at`,
-  ).run(profileId, topicId, attempts, corr, difficulty, state,
+  ).run(profileId, topicId, attempts, corr, difficulty, state, masteryDifficulty,
     schedule?.intervalDays ?? null, schedule?.dueAt ?? null, Date.now(),
     hasSchedule, hasSchedule);
 }
@@ -781,6 +812,7 @@ function selectFor(profileId: string, currentTopicId: string | null) {
     topics: TOPICS, now: Date.now(), currentTopicId,
     mastery: rows.map((r) => ({
       topicId: r.topic_id, state: r.state, lastDifficulty: r.last_difficulty, attempts: r.attempts,
+      masteryDifficulty: r.mastery_difficulty,
       reviewDueAt: r.review_due_at, reviewIntervalDays: r.review_interval_days,
     })),
     recentTopicIds: recent.map((r) => r.topic_id ?? "").filter(Boolean),

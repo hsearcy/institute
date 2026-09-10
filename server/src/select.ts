@@ -9,6 +9,9 @@ import { frontierTopics } from "./graph.ts";
 
 export type MasteryLite = {
   topicId: string; state: string; lastDifficulty: number; attempts: number;
+  /** Hardest level he has proved on this topic (high-water mark, set at mastery).
+   *  Null on legacy rows written before the column existed. */
+  masteryDifficulty?: number | null;
   reviewDueAt: number | null; reviewIntervalDays: number | null;
 };
 export type SelectInput = {
@@ -25,6 +28,12 @@ const RUN_CAP = 4;
 /** How many started topics he works at once. A slot opens when one masters. */
 export const ACTIVE_CAP = 3;
 
+/** The level a due review is served at: the mastery high-water mark, falling back
+ *  to the last recorded difficulty for rows predating that column. */
+function reviewDifficulty(m: MasteryLite): number {
+  return Math.max(0.3, m.masteryDifficulty ?? m.lastDifficulty);
+}
+
 export function selectNext(s: SelectInput): Selection {
   const byId = new Map(s.mastery.map((m) => [m.topicId, m]));
   const mastered = new Set(s.mastery.filter((m) => m.state === "mastered").map((m) => m.topicId));
@@ -38,7 +47,12 @@ export function selectNext(s: SelectInput): Selection {
       .sort((x, y) => x.m.reviewDueAt! - y.m.reviewDueAt!);
     if (due.length) {
       const { t, m } = due[0];
-      return { topic: t, difficulty: Math.max(0.3, m.lastDifficulty - 0.1), mode: "review" };
+      // A review runs at the level he MASTERED, never below it. It used to serve
+      // lastDifficulty − 0.1, and because the attempt writes its own difficulty
+      // back as last_difficulty, every review shaved another 0.1 — after ~7 of
+      // them a topic mastered at 0.97 was being "reviewed" at the 0.3 floor with
+      // problems like 2 + 2, which proves nothing about retention.
+      return { topic: t, difficulty: reviewDifficulty(m), mode: "review" };
     }
   }
 

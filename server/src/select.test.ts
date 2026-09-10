@@ -89,7 +89,29 @@ describe("selectNext", () => {
       mastery: [{ topicId: "a", state: "mastered", lastDifficulty: 0.6, reviewDueAt: NOW - 1000, reviewIntervalDays: 1 }],
     });
     expect(r).toMatchObject({ mode: "review", topic: { id: "a" } });
-    expect(r.difficulty).toBeCloseTo(0.5); // lastDifficulty − 0.1
+    expect(r.difficulty).toBeCloseTo(0.6); // no easing: a review tests the mastered level
+  });
+  test("a review is served at the mastery high-water mark, not the drifted last difficulty", () => {
+    const r = selectNext({ ...base,
+      mastery: [{ topicId: "a", state: "mastered", lastDifficulty: 0.3, masteryDifficulty: 0.95,
+                  reviewDueAt: NOW - 1000, reviewIntervalDays: 1 }],
+    });
+    expect(r.mode).toBe("review");
+    expect(r.difficulty).toBeCloseTo(0.95);
+  });
+  test("repeated reviews do not ratchet difficulty down", () => {
+    // Each review writes its own difficulty back as last_difficulty; the served
+    // level must stay pinned to the mastery mark however many times that happens.
+    let last = 0.9;
+    for (let i = 0; i < 10; i++) {
+      const r = selectNext({ ...base,
+        mastery: [{ topicId: "a", state: "mastered", lastDifficulty: last, masteryDifficulty: 0.9,
+                    reviewDueAt: NOW - 1000, reviewIntervalDays: 1 }],
+      });
+      expect(r.mode).toBe("review");
+      last = r.difficulty;
+    }
+    expect(last).toBeCloseTo(0.9);
   });
   test("never two reviews back-to-back", () => {
     const r = selectNext({ ...base, lastWasReview: true,

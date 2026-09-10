@@ -340,6 +340,58 @@ describe("topic-graph tutor flow", () => {
     expect(row.reviewDueAt).toBeLessThan(Date.now() + day + 60_000);
   });
 
+  test("reviews are served at the mastered level and never ratchet easier", async () => {
+    // He mastered Number Bonds at difficulty 0.9. Every review from then on must
+    // test THAT level. Reviews used to serve lastDifficulty − 0.1 and write the
+    // lowered value straight back, so a topic mastered at the top drifted down to
+    // the 0.3 floor after ~7 reviews and started asking him things like 2 + 2.
+    const profileId = "review-ratchet";
+    const topicId = "mt_e8CZ7E5qW7";
+    const other = "mt_M5PPDJStGm"; // a different topic, so the review is the RIGHT branch
+    const day = 24 * 60 * 60 * 1000;
+    try {
+      setSystemTime(new Date("2026-08-01T12:00:00.000Z"));
+      for (let i = 0; i < 8; i++) {
+        await call("POST", "/tutor/attempt", {
+          profileId, problemId: `rr-master-${i}`, skill: "add_within_20",
+          topicId, correct: true, solveMs: 2500, difficulty: 0.9,
+        });
+      }
+      expect((await call("GET", `/mastery?profileId=${profileId}`))
+        .topics.find((t: any) => t.id === topicId).state).toBe("mastered");
+
+      // Five reviews, each recorded at the difficulty it was actually served.
+      // (Five is the ladder's length before this foundational topic retires out
+      // of review.) Under the old rule the served level would be 0.4 by now.
+      let served = 0;
+      for (let i = 0; i < 5; i++) {
+        setSystemTime(new Date(Date.now() + 30 * day)); // always past due
+        // An attempt on the other topic first: two reviews never run back-to-back,
+        // so the most recent attempt must not be on a mastered topic. Alternate
+        // its correctness so THAT topic never masters and starts winning the
+        // review slot itself.
+        await call("POST", "/tutor/attempt", {
+          profileId, problemId: `rr-other-${i}`, skill: "skip_counting",
+          topicId: other, correct: i % 2 === 0, solveMs: 3000, difficulty: 0.5,
+        });
+        const current = { id: `rr-cur-${i}`, skill: "skip_counting", topicId: other,
+          topicLabel: "Counting", prompt: "What comes after 7?", spoken: "What comes after 7?",
+          answer: 8, difficulty: 0.5 };
+        const b = await call("POST", "/tutor/branches", { profileId, current });
+        expect(b.right.topicId).toBe(topicId); // the due review
+        served = b.right.difficulty;
+        expect(served).toBeCloseTo(0.9, 5);
+        await call("POST", "/tutor/attempt", {
+          profileId, problemId: `rr-review-${i}`, skill: "add_within_20",
+          topicId, correct: true, solveMs: 2500, difficulty: served,
+        });
+      }
+      expect(served).toBeCloseTo(0.9, 5);
+    } finally {
+      setSystemTime();
+    }
+  });
+
   test("crazy coin redemption refuses when no daily reward is available", async () => {
     const r = await call("POST", "/shop/redeem-crazy-coin", { profileId: "kid8" });
     expect(r).toEqual({ ok: false, reason: "no coins", crazyCoins: 0 });

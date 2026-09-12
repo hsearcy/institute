@@ -1,3 +1,4 @@
+import { HeroAssetLoadError } from './world/tripoHeroRuntime';
 import type { Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgAppearanceId, RpgReward, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
 import { RPG_APPEARANCES, rpgAppearanceUnlocked, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, rpgEncounterCombat, rpgNextRelicHunt, rpgUnlockedTier, rpgDungeonForgeDust, rpgSalvageValue, rpgAnswerPower, ProblemSchema } from '@institute/shared';
 import { fetchState, fetchMastery, redeemCrazyCoin, type Demo } from '../game/tutor';
@@ -186,14 +187,14 @@ export class RpgGame {
   private el<T extends HTMLElement = HTMLElement>(id: string): T { return this.root.querySelector<T>(`#${id}`)!; }
   async start(): Promise<void> {
     this.world.start();
-    const modelsReady = this.world.load().catch(() => this.toast('The dungeon is ready. Some details are still loading.'));
+    let modelsReady: Promise<void> | undefined;
     this.showDialog('loading', '<div class="rpg-seal">◆</div><p class="rpg-eyebrow">THE SUNKEN VAULT</p><h2 id="rpg-dialog-title">Opening the gates</h2><p>Finding your adventure…</p>');
     await this.runSafely(async () => {
+      await (modelsReady ??= this.world.load().catch(error => { modelsReady = undefined; throw error; }));
       this.state = await getRpgState();
       this.selectedTier = this.state.dungeonTier ?? 1;
       const [camp, legacy] = await Promise.all([getRpgCamp().catch(() => null), fetchState()]);
       this.campState = camp; this.legacyState = legacy;
-      await modelsReady;
       this.restoreSession(); this.renderState(); this.busy = false; this.showCamp();
       try { if (!localStorage.getItem(this.tutorialKey)) this.launchTutorial(); } catch { /* Replay remains available when local storage is blocked. */ }
       if (this.economyPending) this.toast('A camp purchase is waiting to reconnect. Open the merchant or blacksmith to finish saving it.');
@@ -711,7 +712,7 @@ export class RpgGame {
     if (!this.state) return ''; const s = this.state;
     return `<section class="rpg-armor-section" aria-labelledby="rpg-armor-title"><div class="rpg-armor-heading"><h3 id="rpg-armor-title">Hero armor</h3><span>Cosmetic · No cost</span></div><p>Find your hero’s look. Your relic and spell powers stay the same.</p><div class="rpg-armor-grid">${RPG_APPEARANCES.map(appearance => {
       const unlocked = rpgAppearanceUnlocked(appearance.id, s.level), selected = s.appearanceId === appearance.id;
-      return `<article class="rpg-armor-card ${unlocked ? '' : 'locked'} ${selected ? 'selected' : ''}" data-armor="${appearance.id}"><div class="rpg-armor-preview">${appearance.thumbnail ? `<img src="${esc(appearance.thumbnail)}" alt="${esc(appearance.name)} armor" loading="lazy" width="320" height="360">` : `<span class="rpg-wayfarer-crest" aria-hidden="true">${icon('shield')}${icon('sword')}</span>`}${!unlocked ? `<span class="rpg-armor-lock">${icon('lock')} Level ${appearance.requiredLevel}</span>` : ''}</div><h4>${esc(appearance.name)}</h4><p>${esc(appearance.description)}</p><button data-appearance="${appearance.id}" data-locked="${!unlocked}" aria-pressed="${selected}" aria-label="${selected ? 'Wearing' : 'Wear'} ${esc(appearance.name)}" ${!unlocked || selected || this.busy ? 'disabled' : ''}>${selected ? '✓ Wearing' : unlocked ? 'Wear' : `Unlocks at level ${appearance.requiredLevel}`}</button></article>`;
+      return `<article class="rpg-armor-card ${unlocked ? '' : 'locked'} ${selected ? 'selected' : ''}" data-armor="${appearance.id}"><div class="rpg-armor-preview"><img src="/assets/rpg/tripo-hero-preview.png" alt="${esc(appearance.name)} color preview" loading="lazy" width="320" height="360">${!unlocked ? `<span class="rpg-armor-lock">${icon('lock')} Level ${appearance.requiredLevel}</span>` : ''}</div><h4>${esc(appearance.name)}</h4><p>${esc(({ wayfarer: 'The bright teal hood and silver armor of your new hero.', cinder: 'A warm ember tint and subtle fiery glow.', glacier: 'An icy blue tint and subtle frost glow.', tempest: 'A soft violet tint and subtle storm glow.' })[appearance.id])}</p><button data-appearance="${appearance.id}" data-locked="${!unlocked}" aria-pressed="${selected}" aria-label="${selected ? 'Wearing' : 'Wear'} ${esc(appearance.name)}" ${!unlocked || selected || this.busy ? 'disabled' : ''}>${selected ? '✓ Wearing' : unlocked ? 'Wear' : `Unlocks at level ${appearance.requiredLevel}`}</button></article>`;
     }).join('')}</div><p class="rpg-armor-next">${this.armorProgressText()}</p></section>`;
   }
   private async wearAppearance(appearanceId: RpgAppearanceId): Promise<void> {
@@ -978,6 +979,13 @@ export class RpgGame {
     } catch (error) {
       if (this.disposed) return;
       console.warn('Adventure connection interrupted:', error);
+      if (error instanceof HeroAssetLoadError) {
+        this.retryAction = action; this.busy = true;
+        this.el('rpg-connection').hidden = true;
+        this.el('rpg-save-status').textContent = '◇ Hero download paused';
+        this.showDialog('loading', '<div class="rpg-seal">◆</div><h2 id="rpg-dialog-title">Your hero could not load</h2><p>The hero download did not finish. Check the connection and try again.</p><button class="rpg-primary" data-action="retry">Try again</button>');
+        return;
+      }
       if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
         // A stale tab or unavailable skill is a state conflict, not an outage.
         // Refresh the authoritative checkpoint and let the child continue.

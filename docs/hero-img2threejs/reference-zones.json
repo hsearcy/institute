@@ -1,0 +1,151 @@
+{
+  "sourceImage": "/home/houston/git/institute/docs/concepts/math-dungeon-rpg/07-teal-hero.png",
+  "zonesDir": "/home/houston/git/institute/docs/hero-img2threejs/reference",
+  "detailInventory": {
+    "scanMethod": "component-zones",
+    "targetMinDetails": 10,
+    "details": [
+      {
+        "id": "front",
+        "kind": "",
+        "description": "",
+        "region": {
+          "x": 0.0,
+          "y": 0.0,
+          "width": 0.5,
+          "height": 1.0,
+          "units": "normalized"
+        },
+        "scale": "",
+        "affects": "",
+        "mapsTo": {
+          "type": "",
+          "ref": ""
+        },
+        "evidenceRef": "/home/houston/git/institute/docs/hero-img2threejs/reference/front.png",
+        "confidence": 0.0
+      },
+      {
+        "id": "rear",
+        "kind": "",
+        "description": "",
+        "region": {
+          "x": 0.5,
+          "y": 0.0,
+          "width": 0.5,
+          "height": 1.0,
+          "units": "normalized"
+        },
+        "scale": "",
+        "affects": "",
+        "mapsTo": {
+          "type": "",
+          "ref": ""
+        },
+        "evidenceRef": "/home/houston/git/institute/docs/hero-img2threejs/reference/rear.png",
+        "confidence": 0.0
+      },
+      {
+        "id": "face",
+        "kind": "",
+        "description": "",
+        "region": {
+          "x": 0.31,
+          "y": 0.052,
+          "width": 0.072,
+          "height": 0.133,
+          "units": "normalized"
+        },
+        "scale": "",
+        "affects": "",
+        "mapsTo": {
+          "type": "",
+          "ref": ""
+        },
+        "evidenceRef": "/home/houston/git/institute/docs/hero-img2threejs/reference/face.png",
+        "confidence": 0.0
+      },
+      {
+        "id": "cloth",
+        "kind": "",
+        "description": "",
+        "region": {
+          "x": 0.64,
+          "y": 0.36,
+          "width": 0.067,
+          "height": 0.1,
+          "units": "normalized"
+        },
+        "scale": "",
+        "affects": "",
+        "mapsTo": {
+          "type": "",
+          "ref": ""
+        },
+        "evidenceRef": "/home/houston/git/institute/docs/hero-img2threejs/reference/cloth.png",
+        "confidence": 0.0
+      },
+      {
+        "id": "steel",
+        "kind": "",
+        "description": "",
+        "region": {
+          "x": 0.334,
+          "y": 0.324,
+          "width": 0.043,
+          "height": 0.052,
+          "units": "normalized"
+        },
+        "scale": "",
+        "affects": "",
+        "mapsTo": {
+          "type": "",
+          "ref": ""
+        },
+        "evidenceRef": "/home/houston/git/institute/docs/hero-img2threejs/reference/steel.png",
+        "confidence": 0.0
+      },
+      {
+        "id": "leather",
+        "kind": "",
+        "description": "",
+        "region": {
+          "x": 0.258,
+          "y": 0.806,
+          "width": 0.016,
+          "height": 0.026,
+          "units": "normalized"
+        },
+        "scale": "",
+        "affects": "",
+        "mapsTo": {
+          "type": "",
+          "ref": ""
+        },
+        "evidenceRef": "/home/houston/git/institute/docs/hero-img2threejs/reference/leather.png",
+        "confidence": 0.0
+      },
+      {
+        "id": "gold",
+        "kind": "",
+        "description": "",
+        "region": {
+          "x": 0.272,
+          "y": 0.236,
+          "width": 0.011,
+          "height": 0.011,
+          "units": "normalized"
+        },
+        "scale": "",
+        "affects": "",
+        "mapsTo": {
+          "type": "",
+          "ref": ""
+        },
+        "evidenceRef": "/home/houston/git/institute/docs/hero-img2threejs/reference/gold.png",
+        "confidence": 0.0
+      }
+    ]
+  },
+  "authoringInstruction": "Open each zone crop under zonesDir and replace every detail stub's kind, description, scale, affects, mapsTo, and confidence with what is actually observed. Add more detail entries per zone if a single zone contains multiple distinct marks; do not leave stubs unfilled or unlinked (mapsTo must reference a real component.localFeatures or material.localOverrides entry)."
+}

@@ -1,0 +1,45 @@
+{
+  "liveContentSHA256Before": "39df933b49e3a361c10395b65897ba348853aca018d0bb6c096af3e085419728",
+  "liveContentSHA256After": "39df933b49e3a361c10395b65897ba348853aca018d0bb6c096af3e085419728",
+  "counts": {
+    "meshes": {
+      "before": 14,
+      "after": 14
+    },
+    "skins": {
+      "before": 2,
+      "after": 2
+    },
+    "materials": {
+      "before": 24,
+      "after": 14
+    },
+    "textures": {
+      "before": 72,
+      "after": 42
+    },
+    "images": {
+      "before": 72,
+      "after": 42
+    },
+    "samplers": {
+      "before": 2,
+      "after": 2
+    },
+    "accessors": {
+      "before": 1652,
+      "after": 1104
+    },
+    "bufferViews": {
+      "before": 1724,
+      "after": 1146
+    }
+  },
+  "input": "assets/tripo-hero-2026-09-12/integration/hero-cape-fixed-v2.glb",
+  "output": "web/public/assets/rpg/tripo-hero-game.glb",
+  "inputBytes": 20119948,
+  "outputBytes": 11035048,
+  "savedBytes": 9084900,
+  "referenceValidation": "passed",
+  "writeReadVerification": "passed"
+}

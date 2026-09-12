@@ -1,0 +1,378 @@
+{
+  "version": 1,
+  "stage": "blockout",
+  "implementation": "web/src/rpg/hero-img2threejs/clothSurfaces.ts",
+  "api": "createClothSurface(id: string): THREE.BufferGeometry | null",
+  "sourceSpec": "docs/hero-img2threejs/hero-sculpt-spec.json",
+  "sourceImage": "docs/concepts/math-dungeon-rpg/07-teal-hero.png",
+  "sourcesUsed": [
+    "approved source concept and heroSurface parameters",
+    "img2threejs/grimoire/intake/surface_topology.md",
+    "img2threejs/grimoire/build/subdivision_surfaces.md"
+  ],
+  "provenance": "All vertices generated afresh from concept/spec measurements. No existing model assets or Blender sources inspected or reused.",
+  "coordinates": {
+    "space": "world-reference",
+    "up": "+Y",
+    "front": "+Z",
+    "capeSweepSide": "-X",
+    "nominalHeight": 2.2
+  },
+  "topology": {
+    "method": "Indexed continuous parametric surfaces with stitched boundary edges; hood/tabard use normal offsets, cowl/cape use directed graph extrusion to avoid thickness miters intersecting at folded seams.",
+    "noFlatCards": true,
+    "noMaterialsOrOrnaments": true,
+    "hoodRearClosure": "Single indexed fan per surface; no coincident ring of pole vertices",
+    "wrappedSeams": "Hood and cowl share actual seam vertices. Current UV seam is a blockout parameterization; projection/masked or seam-split material UVs are a later pass.",
+    "thicknessInterpretation": "Total inner/outer separation. Cowl uses Y separation; cape uses Z separation. These are real moved vertices, with normals recomputed from final indexed faces."
+  },
+  "components": {
+    "hood": {
+      "copiedHeroSurface": {
+        "kind": "hood",
+        "opening": [
+          [
+            0,
+            2.2,
+            0.08
+          ],
+          [
+            0.105,
+            2.14,
+            0.14
+          ],
+          [
+            0.157,
+            1.91,
+            0.125
+          ],
+          [
+            0.095,
+            1.82,
+            0.08
+          ]
+        ],
+        "depth": 0.3,
+        "thickness": 0.009
+      },
+      "inferredControls": {
+        "openingBottom": [
+          0,
+          1.8,
+          0.07
+        ],
+        "centerY": 2.005,
+        "rearDrop": 0.018,
+        "rearBulge": 0.043,
+        "radialBulge": 0.15,
+        "sideFoldAmplitude": 0.008,
+        "circumferenceSegments": 80,
+        "depthRings": 26
+      },
+      "shapeDecision": "Mirrored centripetal opening curve around the face; curved cloth wraps into a rounded rear pouch. Crown stays pointed and face aperture has no front cap. Crown including thickness rises approximately 0.01 above nominal 2.2 reference height.",
+      "triangles": 8320
+    },
+    "cowl": {
+      "copiedHeroSurface": {
+        "kind": "cowl",
+        "foldCount": 3,
+        "diagonalDrop": 0.1
+      },
+      "inferredControls": {
+        "innerRadiusX": 0.083,
+        "innerRadiusZ": 0.079,
+        "outerRadiusX": 0.29,
+        "outerRadiusZ": 0.17,
+        "innerY": 1.876,
+        "outerY": 1.78,
+        "centerZ": 0.025,
+        "foldAmplitude": 0.004,
+        "lateralDrop": 0.025,
+        "thickness": 0.009,
+        "circumferenceSegments": 64,
+        "radialSegments": 32,
+        "thicknessAxis": [
+          0,
+          -1,
+          0
+        ]
+      },
+      "shapeDecision": "Monotonic elliptical radii preserve a single neck opening. Three shallow vertical folds are integrated into the collar height field. The original oscillating radii doubled back through neighboring fold volumes and are removed.",
+      "triangles": 8448
+    },
+    "cape": {
+      "copiedHeroSurface": {
+        "kind": "cape",
+        "topY": 1.82,
+        "bottomY": 0.33,
+        "topWidth": 0.54,
+        "bottomWidth": 1.02,
+        "sweepX": -0.38,
+        "sweepZ": -0.33,
+        "foldAmplitude": 0.055,
+        "foldCount": 5,
+        "thickness": 0.008
+      },
+      "inferredControls": {
+        "topCenterZ": -0.16,
+        "shoulderWrap": 0.085,
+        "backBelly": 0.07,
+        "foldDiagonalPhase": 0.25,
+        "hemKnots": [
+          [
+            0,
+            0.12
+          ],
+          [
+            0.14,
+            0.015
+          ],
+          [
+            0.3,
+            0.065
+          ],
+          [
+            0.34,
+            0.1
+          ],
+          [
+            0.39,
+            0.035
+          ],
+          [
+            0.59,
+            0
+          ],
+          [
+            0.69,
+            0.075
+          ],
+          [
+            0.73,
+            0.1
+          ],
+          [
+            0.79,
+            0.04
+          ],
+          [
+            1,
+            0.1
+          ]
+        ],
+        "acrossSegments": 64,
+        "lengthSegments": 36,
+        "outerWingFlare": 0.24,
+        "outerWingLift": 0.37,
+        "wingFadeU": 0.63,
+        "wingFadePower": 1.15,
+        "wingLiftLengthPower": 1.35,
+        "hemLengthPower": 1,
+        "thicknessAxis": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "shapeDecision": "Continuous uniform grid with lifted and flared -X outer wing, five diagonal folds and shallow unequal V notches. Hem offsets are distributed along the length instead of pulling only the last rows back through the panel. The low inner hem stays approximately Y0.345.",
+      "triangles": 9616,
+      "measuredReferenceLandmark": {
+        "sourceImage": "docs/concepts/math-dungeon-rpg/07-teal-hero.png",
+        "frontCapeOuterTipPixels": [
+          45,
+          627
+        ],
+        "targetWorldXY": [
+          -1.13,
+          0.82
+        ],
+        "actualMidsurfaceWorldXY": [
+          -1.13,
+          0.82
+        ],
+        "basis": "Parent measured source landmark; existing concept-world reference scale and character center."
+      }
+    },
+    "tabard": {
+      "copiedHeroSurface": {
+        "kind": "tabard",
+        "topY": 1.22,
+        "bottomY": 0.68,
+        "topWidth": 0.24,
+        "bottomWidth": 0.2,
+        "z": 0.19,
+        "foldAmplitude": 0.023
+      },
+      "inferredControls": {
+        "sideHemRise": 0.135,
+        "forwardBelly": 0.015,
+        "thickness": 0.007,
+        "acrossSegments": 24,
+        "lengthSegments": 28
+      },
+      "shapeDecision": "Pointed central hanging panel with shallow longitudinal folds, forward curvature and closed thin edges, attached at belt height.",
+      "triangles": 2896
+    }
+  },
+  "validation": {
+    "method": "Instantiate every geometry, count undirected edge incidences, test triangle areas and bounding boxes; cast a front-to-back ray through the hood face center.",
+    "totalTriangles": 29280,
+    "nonManifoldEdges": 0,
+    "degenerateTriangles": 0,
+    "hoodFaceCenterRay": {
+      "origin": [
+        0,
+        2.02,
+        1
+      ],
+      "direction": [
+        0,
+        0,
+        -1
+      ],
+      "hitZ": [
+        -0.20185453298889589,
+        -0.21160482905981293
+      ],
+      "interpretation": "Ray crosses the open face aperture and reaches only rear lining and outer shell."
+    },
+    "visualStatus": "Pending integrated reference-view blockout review; topology checks are not an art-quality pass.",
+    "correction3": {
+      "reason": "Blockout02 actual self-intersection report found cowl8 and cape1 inside samples despite valid topology. Corrected vertex geometry without retagging normals or relaxing the gate.",
+      "normalMethod": "computeVertexNormals on final indexed faces; no substituted or forcibly flipped per-vertex normals",
+      "topologyChecks": {
+        "cowl": {
+          "nonManifoldEdges": 0,
+          "degenerateTriangles": 0,
+          "bounds": {
+            "min": [
+              -0.28999999165534973,
+              1.672544240951538,
+              -0.14499999582767487
+            ],
+            "max": [
+              0.28999999165534973,
+              1.880500078201294,
+              0.19499999284744263
+            ]
+          }
+        },
+        "cape": {
+          "nonManifoldEdges": 0,
+          "degenerateTriangles": 0,
+          "bounds": {
+            "min": [
+              -1.1299999952316284,
+              0.3466853201389313,
+              -0.5490000247955322
+            ],
+            "max": [
+              0.2828744351863861,
+              1.8200000524520874,
+              -0.06848833709955215
+            ]
+          }
+        }
+      },
+      "rayParityAllVertices": {
+        "selfIntersecting": false,
+        "meshCount": 2,
+        "insideVertexCount": 0,
+        "undecidedVertexCount": 94,
+        "sampledVertexCount": 9034,
+        "totalVertexCount": 9034,
+        "meshes": [
+          {
+            "name": "cowl",
+            "analyzed": true,
+            "error": null,
+            "selfIntersecting": false,
+            "insideVertexCount": 0,
+            "undecidedVertexCount": 92,
+            "outsideVertexCount": 4132,
+            "sampledVertexCount": 4224,
+            "totalVertexCount": 4224,
+            "samplingStride": 1,
+            "triangleCount": 8448,
+            "degenerateTriangleCount": 0,
+            "worstRegions": [],
+            "normalSource": "vertexNormals",
+            "normalFallbackCount": 0,
+            "epsilon": 0.0007037368849120661,
+            "rayDirectionCount": 3
+          },
+          {
+            "name": "cape",
+            "analyzed": true,
+            "error": null,
+            "selfIntersecting": false,
+            "insideVertexCount": 0,
+            "undecidedVertexCount": 2,
+            "outsideVertexCount": 4808,
+            "sampledVertexCount": 4810,
+            "totalVertexCount": 4810,
+            "samplingStride": 1,
+            "triangleCount": 9616,
+            "degenerateTriangleCount": 0,
+            "worstRegions": [],
+            "normalSource": "vertexNormals",
+            "normalFallbackCount": 0,
+            "epsilon": 0.0020970841515286064,
+            "rayDirectionCount": 3
+          }
+        ],
+        "errors": []
+      },
+      "rayParityRegression128": {
+        "selfIntersecting": false,
+        "meshCount": 2,
+        "insideVertexCount": 0,
+        "undecidedVertexCount": 0,
+        "sampledVertexCount": 255,
+        "totalVertexCount": 9034,
+        "meshes": [
+          {
+            "name": "cowl",
+            "analyzed": true,
+            "error": null,
+            "selfIntersecting": false,
+            "insideVertexCount": 0,
+            "undecidedVertexCount": 0,
+            "outsideVertexCount": 128,
+            "sampledVertexCount": 128,
+            "totalVertexCount": 4224,
+            "samplingStride": 33,
+            "triangleCount": 8448,
+            "degenerateTriangleCount": 0,
+            "worstRegions": [],
+            "normalSource": "vertexNormals",
+            "normalFallbackCount": 0,
+            "epsilon": 0.0007037368849120661,
+            "rayDirectionCount": 3
+          },
+          {
+            "name": "cape",
+            "analyzed": true,
+            "error": null,
+            "selfIntersecting": false,
+            "insideVertexCount": 0,
+            "undecidedVertexCount": 0,
+            "outsideVertexCount": 127,
+            "sampledVertexCount": 127,
+            "totalVertexCount": 4810,
+            "samplingStride": 38,
+            "triangleCount": 9616,
+            "degenerateTriangleCount": 0,
+            "worstRegions": [],
+            "normalSource": "vertexNormals",
+            "normalFallbackCount": 0,
+            "epsilon": 0.0020970841515286064,
+            "rayDirectionCount": 3
+          }
+        ],
+        "errors": []
+      },
+      "visualStatus": "Awaiting integrated blockout03 capture and critique; geometry checks do not assert art quality."
+    }
+  }
+}

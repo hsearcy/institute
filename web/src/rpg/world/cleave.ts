@@ -1,7 +1,7 @@
 import { AdditiveBlending, NormalBlending, BufferAttribute, BufferGeometry, DoubleSide, DynamicDrawUsage, Mesh, ShaderMaterial, Vector3 } from 'three';
 import { bladeWakeMaterial } from './materials';
 
-// The authored hero's strike is frame 10 at 50 fps: (10 - 1) / 50 = .18s.
+// The fresh Tripo slash is retimed to meet the blade effect at .18 seconds.
 export const CLEAVE_RELEASE = .18;
 export const CLEAVE_SPEED = 10;
 const SAMPLES = 16, HISTORY = 12;

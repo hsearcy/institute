@@ -1,0 +1,57 @@
+{
+  "part": "tripo_part_8",
+  "removedTriangles": 364,
+  "keptTriangles": 1220,
+  "sourceToRigMatrix": [
+    1.0000004208689923,
+    -9.641164101458718e-07,
+    3.1305064210110356e-07,
+    0.0,
+    9.641162870498423e-07,
+    1.000000420868963,
+    3.9432921091286144e-07,
+    0.0,
+    -3.1305102251918304e-07,
+    -3.943289094177944e-07,
+    1.000000420869379,
+    0.0,
+    0.06424131188142165,
+    0.5000005770511178,
+    0.025914734126804798,
+    1.0
+  ],
+  "fitMaxError": 1.418960615337102e-07,
+  "fitRmsError": 4.193651535038126e-08,
+  "fitScale": 1.000000420869506,
+  "skinAttributesPreserved": true,
+  "inputRig": "assets/tripo-hero-2026-09-12/integration/animate-native-model_url.glb",
+  "output": "assets/tripo-hero-2026-09-12/integration/hero-equipped-rig.glb",
+  "outputSha256": "a0b6ad76db071581395a261adcc1d620c77848287e0acc798a2c73dbcfd13cc3",
+  "bones": {
+    "rightHand": "R_Hand",
+    "leftHand": "L_Hand",
+    "head": "Head",
+    "chest": "Spine02",
+    "belt": "Waist"
+  },
+  "clipsPreserved": [
+    "preset:biped:idle",
+    "preset:biped:walk",
+    "preset:biped:cast_a_spell",
+    "preset:biped:slash"
+  ],
+  "socketNames": [
+    "TripoGrip",
+    "TripoCastOrigin",
+    "TripoHeadSocket",
+    "TripoChestSocket",
+    "TripoBeltSocket"
+  ],
+  "defaultSwordParts": [
+    "blade-and-guard",
+    "pommel",
+    "extracted-handle"
+  ],
+  "forwardWrapper": "TripoForward",
+  "limitations": "Grip/wearable placement requires integrated visual review; source cut has an open fused-contact seam inside the gripping hand."
+}

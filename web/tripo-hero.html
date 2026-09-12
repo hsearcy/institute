@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><title>Tripo hero · model viewer</title>
+  <style>
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#dddcd6;font-family:system-ui,sans-serif;color:#26342f}canvas{display:block;width:100%;height:100%}.panel{position:fixed;top:16px;left:16px;max-width:310px;background:#fffffff0;border:1px solid #aab6ad;border-radius:9px;padding:16px;box-shadow:0 8px 25px #35473920}h1{font-size:17px;margin:0 0 9px}p{font-size:12px;line-height:1.6;margin:8px 0}nav{display:flex;flex-wrap:wrap;gap:6px}button{cursor:pointer;border:1px solid #9aaea2;border-radius:4px;padding:7px 10px;background:#f7faf5;color:#243e30}button[aria-pressed=true]{background:#254e3a;color:#fff}button:focus-visible{outline:2px solid #42725a;outline-offset:2px}#status.error{color:#9b2525}body.capture .panel{display:none}.note{color:#627267}@media(max-width:600px){.panel{max-width:calc(100vw - 24px);left:12px;top:12px;padding:12px}}
+    #animation-controls{margin-top:12px;border-top:1px solid #c6d1c9;padding-top:10px}#animation-controls label{display:block;font-size:12px;margin:5px 0}#animation-controls select{padding:6px;width:68%;margin-right:5px}#animation-time{width:100%}#animation-clock{float:right;font-variant-numeric:tabular-nums}
+  </style>
+</head>
+<body>
+  <canvas id="tripo-canvas" aria-label="New Tripo hero model"></canvas>
+  <aside class="panel"><h1>Tripo hero study</h1><nav aria-label="Camera view"><button data-view="front">Front</button><button data-view="threequarter">Three-quarter</button><button data-view="back">Back</button><button data-view="face">Face</button></nav><div id="animation-controls" hidden><label for="animation-select">Animation</label><select id="animation-select"><option value="rest">Rest pose</option></select><button id="animation-play" type="button">Play</button><label for="animation-time">Frame time <output id="animation-clock">0.00s</output></label><input id="animation-time" type="range" min="0" max="1" step="0.001" value="0"></div><p id="status" role="status">Loading the new hero…</p><p class="note">Drag to orbit. Scroll to zoom. Press H to hide controls.</p></aside>
+  <script type="module" src="/src/tripo-hero.ts"></script>
+</body>
+</html>

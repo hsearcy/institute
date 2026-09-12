@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
 import { Group, Vector3 } from 'three';
-import { advanceHeroTravel, heroDoorwayRoute, HERO_STRIDE_DISTANCE, HERO_WALK_DURATION, setPlanarHeroHeading, settleHeroTravel } from '../src/rpg/world/heroLocomotion';
+import { advanceHeroTravel, heroDoorwayRoute, setPlanarHeroHeading, settleHeroTravel } from '../src/rpg/world/heroLocomotion';
 import { getRoomLayout } from '../src/rpg/world/roomLayout';
 
 test('late appearance quaternion copies cannot reverse planar heading', () => {
@@ -14,11 +14,12 @@ test('late appearance quaternion copies cannot reverse planar heading', () => {
   }
 });
 
-test('authored travel caps speed and advances exactly one stride per measured cycle', () => {
+test('travel caps speed and advances exactly one stride per supplied measured cycle', () => {
+  const cycle = { strideDistance: 1.3, duration: .95 };
   for (const delta of [1 / 60, 1 / 30, .06]) {
     let remaining = 20, speed = 0, advanced = 0, clipSeconds = 0, elapsed = 0;
     while (remaining > 1e-9 && elapsed < 12) {
-      const step = advanceHeroTravel(remaining, speed, delta);
+      const step = advanceHeroTravel(remaining, speed, delta, cycle);
       assert(step.distance >= 0 && step.distance <= remaining);
       assert(step.distance / delta <= 3 + 1e-10);
       assert(step.speed >= 0 && step.speed <= 3);
@@ -26,7 +27,7 @@ test('authored travel caps speed and advances exactly one stride per measured cy
       remaining -= step.distance; speed = step.speed; elapsed += delta;
     }
     assert(remaining < 1e-9); assert(elapsed < 8);
-    assert(Math.abs(clipSeconds / HERO_WALK_DURATION * HERO_STRIDE_DISTANCE - advanced) < 1e-9);
+    assert(Math.abs(clipSeconds / cycle.duration * cycle.strideDistance - advanced) < 1e-9);
     assert.equal(speed, 0);
   }
 });

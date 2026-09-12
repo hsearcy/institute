@@ -1,0 +1,88 @@
+{
+  "ok": true,
+  "verdict": "pass",
+  "confidence": 0.751,
+  "estimatedFidelity": 0.751,
+  "targetThreshold": 0.7,
+  "materialId": "leather",
+  "sourceImage": "/home/houston/git/institute/docs/hero-img2threejs/reference/leather.png",
+  "outDir": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/leather",
+  "palette": [
+    "#623A1F",
+    "#5A361E",
+    "#6B4122",
+    "#53321C",
+    "#7B4F2D"
+  ],
+  "maps": {
+    "albedo": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/leather/leather_albedo.png",
+      "url": "leather_albedo.png",
+      "channel": "albedo",
+      "source": "reference-pixel-extraction"
+    },
+    "roughness": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/leather/leather_roughness.png",
+      "url": "leather_roughness.png",
+      "channel": "roughness",
+      "source": "reference-pixel-extraction"
+    },
+    "height": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/leather/leather_height.png",
+      "url": "leather_height.png",
+      "channel": "height",
+      "source": "reference-pixel-extraction"
+    },
+    "normal": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/leather/leather_normal.png",
+      "url": "leather_normal.png",
+      "channel": "normal",
+      "source": "reference-pixel-extraction"
+    },
+    "ao": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/leather/leather_ao.png",
+      "url": "leather_ao.png",
+      "channel": "ao",
+      "source": "reference-pixel-extraction"
+    }
+  },
+  "diagnostics": {
+    "sourceWidth": 25,
+    "sourceHeight": 27,
+    "mapSize": 256,
+    "cropBBoxPixels": {
+      "x": 0,
+      "y": 0,
+      "width": 25,
+      "height": 27
+    },
+    "mask": {
+      "backgroundColor": "#55331E",
+      "backgroundNoise": 11.0,
+      "transparentPixelFraction": 0.0,
+      "foregroundCoverage": 1.0
+    },
+    "mapStats": {
+      "valueRange": 0.1043,
+      "heightP90Gradient": 0.13645,
+      "roughnessBase": 0.773,
+      "roughnessVariation": 0.178,
+      "normalStrength": 0.316,
+      "blurRadius": 5
+    },
+    "palette": [
+      "#623A1F",
+      "#5A361E",
+      "#6B4122",
+      "#53321C",
+      "#7B4F2D"
+    ]
+  },
+  "warnings": [
+    "image is not clearly isolated from background; using most pixels as material evidence",
+    "object/background separation is weak",
+    "single-image inverse rendering cannot prove true physical PBR; confidence is capped",
+    "low value range weakens height/roughness inference"
+  ],
+  "limitation": "single-image PBR extraction is an estimate; 70%+ extraction confidence still needs render screenshot review"
+}

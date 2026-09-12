@@ -3,6 +3,9 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
+const parameters = new URLSearchParams(location.search);
+const gameAsset = parameters.get('asset') === 'game';
+const assetPath = gameAsset ? '/assets/rpg/tripo-hero-game.glb' : '/assets/rpg/tripo-hero.glb';
 type View = 'front' | 'threequarter' | 'back' | 'face';
 const canvas = document.querySelector<HTMLCanvasElement>('#tripo-canvas')!;
 const status = document.querySelector<HTMLParagraphElement>('#status')!;
@@ -21,6 +24,48 @@ const controls = new OrbitControls(camera, canvas); controls.enableDamping = tru
 let model: THREE.Group | undefined, bounds = new THREE.Box3(), size = new THREE.Vector3(), currentView: View = 'threequarter';
 let ready = false, loadError: string | null = null, metadata: Record<string, unknown> = {};
 const headCenter = new THREE.Vector3();
+let mixer: THREE.AnimationMixer | undefined, currentAction: THREE.AnimationAction | undefined;
+let currentAnimation = 'rest', animationPlaying = false;
+const animationSelect = document.querySelector<HTMLSelectElement>('#animation-select')!;
+const animationTime = document.querySelector<HTMLInputElement>('#animation-time')!;
+const animationPlay = document.querySelector<HTMLButtonElement>('#animation-play')!;
+const animationClock = document.querySelector<HTMLOutputElement>('#animation-clock')!;
+function updateAnimationControls() {
+  animationSelect.value = currentAnimation;
+  const time = currentAction?.time ?? 0;
+  animationTime.max = String(currentAction?.getClip().duration ?? 1);
+  animationTime.value = String(time); animationTime.disabled = !currentAction;
+  animationClock.value = `${time.toFixed(2)}s`;
+  animationPlay.textContent = animationPlaying ? 'Pause' : 'Play'; animationPlay.disabled = !currentAction;
+}
+function inspectNodes(names?: string[]) {
+  const nodes: Record<string, unknown>[] = [];
+  model?.updateMatrixWorld(true);
+  model?.traverse(node => {
+    if (names ? !names.includes(node.name) : !(node instanceof THREE.Bone) && !/Tripo|Origin|Socket|Grip|Tip/.test(node.name)) return;
+    const position = new THREE.Vector3(), quaternion = new THREE.Quaternion(), scale = new THREE.Vector3();
+    node.matrixWorld.decompose(position, quaternion, scale);
+    nodes.push({ name: node.name, type: node.type, parent: node.parent?.name, position: position.toArray(), quaternion: quaternion.toArray(), scale: scale.toArray(), localPosition: node.position.toArray() });
+  });
+  return nodes;
+}
+async function setAnimation(name: string, time = 0, playing = false) {
+  if (!model || !mixer) throw new Error('The new hero is still loading.');
+  const clip = model.animations.find(clip => clip.name === name);
+  if (name !== 'rest' && !clip) throw new Error(`Unknown animation: ${name}`);
+  if (!Number.isFinite(time)) throw new Error('Animation time must be finite.');
+  mixer.stopAllAction(); mixer.setTime(0); currentAction = undefined;
+  currentAnimation = name; animationPlaying = playing && !!clip;
+  if (clip) {
+    currentAction = mixer.clipAction(clip).reset().setEffectiveWeight(1).setEffectiveTimeScale(1);
+    currentAction.setLoop(playing ? THREE.LoopRepeat : THREE.LoopOnce, playing ? Infinity : 1);
+    currentAction.clampWhenFinished = true; currentAction.play();
+    mixer.setTime(Math.max(0, Math.min(clip.duration, time)));
+  }
+  model.updateMatrixWorld(true); updateAnimationControls(); await settle();
+  return { name, time: currentAction?.time ?? 0, playing: animationPlaying, duration: clip?.duration ?? 0, nodes: inspectNodes() };
+}
+
 const render = () => renderer.render(scene, camera);
 async function settle() { render(); await new Promise<void>(resolve => requestAnimationFrame(() => { render(); requestAnimationFrame(() => { render(); resolve(); }); })); }
 async function setView(name: string) {
@@ -42,7 +87,8 @@ async function setView(name: string) {
 }
 const api = {
   get ready() { return ready; }, get error() { return loadError; }, get info() { return metadata; },
-  get model() { return model; }, scene, camera, renderer, controls, setView,
+  get model() { return model; }, scene, camera, renderer, controls, setView, setAnimation, inspectNodes,
+  get animation() { return { name: currentAnimation, time: currentAction?.time ?? 0, playing: animationPlaying }; },
   getInfo: () => ({ ...metadata, drawCalls: renderer.info.render.calls, trianglesRendered: renderer.info.render.triangles }),
   async capture(name: string = currentView) { document.body.classList.add('capture'); await setView(name); return { ok: true, selector: '#tripo-canvas' }; },
 };
@@ -50,13 +96,23 @@ const api = {
 document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach(button => { button.onclick = () => { void setView(button.dataset.view!).catch(error => { status.textContent = String(error); }); }; });
 window.addEventListener('keydown', event => { if (event.key.toLowerCase() === 'h') document.body.classList.toggle('capture'); });
 window.addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
-renderer.setAnimationLoop(() => { controls.update(); render(); });
-if (new URLSearchParams(location.search).get('capture') === '1') document.body.classList.add('capture');
+animationSelect.onchange = () => { void setAnimation(animationSelect.value, 0, false); };
+animationTime.oninput = () => { void setAnimation(currentAnimation, Number(animationTime.value), false); };
+animationPlay.onclick = () => { void setAnimation(currentAnimation, currentAction?.time ?? 0, !animationPlaying); };
+let previousFrame = performance.now();
+renderer.setAnimationLoop(() => {
+  const now = performance.now(), delta = Math.min(.1, (now - previousFrame) / 1000); previousFrame = now;
+  if (animationPlaying) { mixer?.update(delta); updateAnimationControls(); }
+  controls.update(); render();
+});
+if (parameters.get('capture') === '1') document.body.classList.add('capture');
 try {
-  const gltf = await new GLTFLoader().loadAsync('/assets/rpg/tripo-hero.glb');
-  model = gltf.scene; model.animations = gltf.animations;
-  // This fresh Tripo export faces +X. Rotate only the viewer instance to +Z.
-  model.rotation.y = -Math.PI / 2;
+  const gltf = await new GLTFLoader().loadAsync(assetPath);
+  // Keep presentation transforms outside the animated source root.
+  model = new THREE.Group(); model.name = 'TripoViewer'; model.add(gltf.scene); model.animations = gltf.animations;
+  // Raw Tripo faces +X; the assembled game rig is already normalized to +Z.
+  if (!gameAsset) model.rotation.y = -Math.PI / 2;
+  mixer = new THREE.AnimationMixer(model);
   bounds = new THREE.Box3().setFromObject(model); const originalBounds = { min: bounds.min.toArray(), max: bounds.max.toArray() };
   const center = bounds.getCenter(new THREE.Vector3()); bounds.getSize(size);
   if (bounds.isEmpty() || !size.toArray().every(Number.isFinite) || size.y <= 0) throw new Error('The downloaded model has invalid or empty bounds.');
@@ -68,11 +124,11 @@ try {
     if (!(node instanceof THREE.Mesh)) return;
     const positions = node.geometry.getAttribute('position');
     for (let i = 0; i < positions.count; i++) {
-      vertex.fromBufferAttribute(positions, i).applyMatrix4(node.matrixWorld);
+      node.getVertexPosition(i, vertex).applyMatrix4(node.matrixWorld);
       if (vertex.y > size.y * .82) headBounds.expandByPoint(vertex);
     }
   });
-  headBounds.getCenter(headCenter);
+  if (headBounds.isEmpty()) headCenter.set(0, size.y * .86, 0); else headBounds.getCenter(headCenter);
   let triangles = 0, meshCount = 0;
   const materials = new Map<string, Record<string, unknown>>();
   model.traverse(node => {
@@ -85,10 +141,14 @@ try {
     }
   });
   if (!meshCount) throw new Error('The downloaded model contains no meshes.');
-  metadata = { asset: '/assets/rpg/tripo-hero.glb', originalBounds, bbox: { min: bounds.min.toArray(), max: bounds.max.toArray(), size: size.toArray() }, triangles, meshes: meshCount, materials: [...materials.values()], animations: gltf.animations.map(clip => ({ name: clip.name, duration: clip.duration, tracks: clip.tracks.length })) };
+  metadata = { asset: assetPath, originalBounds, bbox: { min: bounds.min.toArray(), max: bounds.max.toArray(), size: size.toArray() }, triangles, meshes: meshCount, materials: [...materials.values()], animations: gltf.animations.map(clip => ({ name: clip.name, duration: clip.duration, tracks: clip.tracks.length })) };
+  for (const clip of gltf.animations) { const option = document.createElement('option'); option.value = clip.name; option.textContent = clip.name; animationSelect.add(option); }
+  document.querySelector<HTMLElement>('#animation-controls')!.hidden = gltf.animations.length === 0;
+  updateAnimationControls();
+  if (parameters.has('animation')) await setAnimation(parameters.get('animation')!, Number(parameters.get('time') ?? 0), false);
   await setView('threequarter'); ready = true;
   status.textContent = `${meshCount} meshes · ${Math.round(triangles).toLocaleString()} triangles · ${materials.size} materials · ${gltf.animations.length} animations`;
 } catch (error) {
-  loadError = `Could not load the new Tripo hero: ${error instanceof Error ? error.message : String(error)}. The viewer expects /assets/rpg/tripo-hero.glb.`;
+  loadError = `Could not load the new Tripo hero: ${error instanceof Error ? error.message : String(error)}. The viewer expects ${assetPath}.`;
   status.textContent = loadError; status.classList.add('error'); document.body.classList.remove('capture');
 }

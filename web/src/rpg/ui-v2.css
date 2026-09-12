@@ -278,3 +278,11 @@
 @media(max-width:760px){
  .rpg-skill-detail-art .rpg-painted-art{width:144px;}
 }
+
+/* The same new Tripo hero carries each earned elemental color style. */
+.rpg-armor-card[data-armor="cinder"]{--armor-tint:#ffedda}
+.rpg-armor-card[data-armor="glacier"]{--armor-tint:#dbf8ff}
+.rpg-armor-card[data-armor="tempest"]{--armor-tint:#ebe4ff}
+.rpg-armor-preview{isolation:isolate}
+.rpg-armor-preview::after{content:"";position:absolute;inset:0;background:var(--armor-tint,#fff);mix-blend-mode:multiply;pointer-events:none}
+.rpg-armor-lock{z-index:1}

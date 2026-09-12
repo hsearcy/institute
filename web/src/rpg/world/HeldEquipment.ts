@@ -16,6 +16,35 @@ export type ItemAttachment = 'hand.R' | 'head' | 'chest' | 'belt';
 export interface EquipmentSocket { parent: Object3D; transform: Matrix4 }
 export type EquipmentSockets = Partial<Record<Exclude<ItemAttachment, 'hand.R'>, EquipmentSocket>>;
 
+/** Bind only the measured sockets exported with the fresh Tripo rig. Their
+ * frames include the source-to-item unit conversion, so actor placement and
+ * normalization do not need a second guessed scale or a previous hero's rig.
+ */
+export function tripoHeroEquipment(hero: Object3D): HeldEquipment | undefined {
+  const frame = (name: string): EquipmentSocket | undefined => {
+    const marker = hero.getObjectByName(name);
+    if (!marker?.parent) return undefined;
+    if (marker.matrixAutoUpdate) marker.updateMatrix();
+    const transform = marker.matrix.clone();
+    if (!transform.elements.every(Number.isFinite) || Math.abs(transform.determinant()) < 1e-8) return undefined;
+    return { parent: marker.parent, transform };
+  };
+  const castMarker = hero.getObjectByName('TripoCastOrigin');
+  if (castMarker && !hero.getObjectByName('CastOrigin')) {
+    const origin = new Group(); origin.name = 'CastOrigin';
+    origin.userData.source = 'tripo-measured-left-palm';
+    castMarker.add(origin);
+  }
+  const grip = frame('TripoGrip');
+  if (!grip) return undefined;
+  const wearables: EquipmentSockets = {};
+  for (const [slot, name] of [['head', 'TripoHeadSocket'], ['chest', 'TripoChestSocket'], ['belt', 'TripoBeltSocket']] as const) {
+    const socket = frame(name);
+    if (socket) wearables[slot] = socket;
+  }
+  return new HeldEquipment(hero, grip.parent, grip.transform, wearables);
+}
+
 /** Local frames on the authored rig. Wearables use an upright +Y axis and
  * +Z front, with the source Grip marker at the band center or suspension point.
  */
@@ -68,7 +97,7 @@ export class HeldEquipment {
   private grip?: Object3D;
   private tip?: Object3D;
   private embeddedBlade?: { grip: Vector3; tip: Vector3 };
-  private readonly embedded: { mesh: Mesh; visible: boolean }[] = [];
+  private readonly embedded: { node: Object3D; visible: boolean }[] = [];
 
   constructor(private readonly hero: Object3D, private readonly hand: Object3D, private readonly socket: Matrix4,
     private readonly wearableSockets: EquipmentSockets = {}) {
@@ -79,19 +108,35 @@ export class HeldEquipment {
     const grip = new Vector3().setFromMatrixPosition(socket), point = new Vector3(), tip = new Vector3();
     const toHand = hand.matrixWorld.clone().invert(); let farthest = .25 ** 2;
     hero.traverse(node => {
-      if (!(node instanceof SkinnedMesh) || node.userData.sourcePart !== 'equipped_sword') return;
-      const indices = node.geometry.getAttribute('skinIndex'), weights = node.geometry.getAttribute('skinWeight'), positions = node.geometry.getAttribute('position');
-      if (!indices || !weights || !positions) return;
-      for (let i = 0; i < positions.count; i++) {
-        let sum = 0;
-        for (let component = 0; component < 4; component++) {
-          const weight = weights.getComponent(i, component); sum += weight;
-          if (weight > 1e-6 && node.skeleton.bones[indices.getComponent(i, component)] !== hand) return;
-        }
-        if (Math.abs(sum - 1) > .001) return;
+      if (node.userData.sourcePart !== 'equipped_sword') return;
+      // A segmented Tripo sword is a rigid group under the new hand. Explicit
+      // markers preserve its curved blade's real endpoint and handle center.
+      const sourceTip = node.getObjectByName('Tip');
+      if (sourceTip && hand.getObjectById(node.id)) {
+        sourceTip.getWorldPosition(point).applyMatrix4(toHand);
+        const distance = point.distanceToSquared(grip);
+        if (distance > farthest) { farthest = distance; tip.copy(point); }
+        return;
       }
+      if (!(node instanceof Mesh)) return;
+      const positions = node.geometry.getAttribute('position');
+      if (!positions) return;
+      if (node instanceof SkinnedMesh) {
+        const indices = node.geometry.getAttribute('skinIndex'), weights = node.geometry.getAttribute('skinWeight');
+        if (!indices || !weights) return;
+        for (let i = 0; i < positions.count; i++) {
+          let sum = 0;
+          for (let component = 0; component < 4; component++) {
+            const weight = weights.getComponent(i, component); sum += weight;
+            if (weight > 1e-6 && node.skeleton.bones[indices.getComponent(i, component)] !== hand) return;
+          }
+          if (Math.abs(sum - 1) > .001) return;
+        }
+      } else if (!hand.getObjectById(node.id)) return;
       for (let i = 0; i < positions.count; i++) {
-        node.getVertexPosition(i, point).applyMatrix4(node.matrixWorld).applyMatrix4(toHand);
+        if (node instanceof SkinnedMesh) node.getVertexPosition(i, point);
+        else point.fromBufferAttribute(positions, i);
+        point.applyMatrix4(node.matrixWorld).applyMatrix4(toHand);
         const distance = point.distanceToSquared(grip);
         if (distance > farthest) { farthest = distance; tip.copy(point); }
       }
@@ -129,8 +174,8 @@ export class HeldEquipment {
     mount.add(clone);
     this.clear();
     if (attachment === 'hand.R') this.hero.traverse(node => {
-      if (node instanceof Mesh && node.userData.sourcePart === 'equipped_sword') {
-        this.embedded.push({ mesh: node, visible: node.visible }); node.visible = false;
+      if (node.userData.sourcePart === 'equipped_sword') {
+        this.embedded.push({ node, visible: node.visible }); node.visible = false;
       }
     });
     target.parent.add(mount); this.mounted = mount;
@@ -143,7 +188,7 @@ export class HeldEquipment {
   clear(): void {
     this.mounted?.removeFromParent(); this.mounted = undefined;
     this.grip = undefined; this.tip = undefined;
-    for (const { mesh, visible } of this.embedded) mesh.visible = visible;
+    for (const { node, visible } of this.embedded) node.visible = visible;
     this.embedded.length = 0;
   }
 

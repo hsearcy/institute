@@ -758,7 +758,7 @@ export class Hud {
     const weeklyList = this.root.querySelector('#weekly-quest-list')!;
     // Fixed display order (the server's row order isn't deterministic) so rows
     // never reshuffle / rebuild under the panel.
-    const order = ['mine_gems', 'solve_10', 'streak_5', 'speed_8', 'topic_explorer'];
+    const order = ['mine_gems', 'solve_10', 'streak_5', 'speed_8', 'topic_explorer', 'complete_dungeon'];
     const dailyQuests = [...questsIn].sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
     const quests = [...dailyQuests, weeklyQuest];
     // Rebuild only if the set of keys changed; otherwise update in place.
@@ -1062,7 +1062,7 @@ export class Hud {
     panel.innerHTML = `
       <div class="pd-coins-info">
         <div class="pd-coins-count">🪙 Crazy Coins: <b id="pd-coin-count">${count}</b></div>
-        <div class="pd-coins-sub">Earned by finishing all 5 daily quests. Redeem one when he cashes it in.</div>
+        <div class="pd-coins-sub">Earned by finishing all daily quests. Redeem one when he cashes it in.</div>
       </div>
       <button class="pd-redeem" id="pd-redeem"${count > 0 ? '' : ' disabled'}>Redeem 1</button>`;
     panel.querySelector('#pd-redeem')!.addEventListener('click', () => this.onRedeemCrazyCoin());

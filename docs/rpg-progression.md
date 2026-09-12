@@ -4,7 +4,7 @@ Implemented on `concept/math-dungeon-rpg`. The RPG remains a client of the exist
 
 ## What the player can work toward
 
-- **Quest board:** the five original daily quests and the existing weekly quest are visible from camp and the adventure menu. Their existing gem rewards and daily-board Crazy Coin still apply. Completing a board does not stop normal adventure rewards.
+- **Quest board:** six daily quests, including defeating a dungeon boss, and the existing weekly quest are visible from camp and the adventure menu. Their existing gem rewards and daily-board Crazy Coin still apply. Completing a board does not stop normal adventure rewards.
 - **Merchant:** 16 named nonlegendary relics can be purchased with the original gem balance. The shop respects existing expedition-clear gates. Purchases have fixed stats; six legendary items remain dungeon discoveries.
 - **Individual loot rolls:** every dungeon relic drop is a saved item instance. Tier-one rolls add 1–4 power, while higher tiers allow up to 12. Some rolls add one rank to a skill in the item's school; higher tiers can roll two. Skill bonuses activate only on learned skills and cannot unlock spells, bypass prerequisites, or generate skill points.
 - **Blacksmith:** five upgrade levels per copy, each adding two power. Steps cost 25/50/75/100/125 gems and 5/10/15/20/25 forge dust. The player can keep multiple differently rolled copies and compare actual damage with the selected spell.

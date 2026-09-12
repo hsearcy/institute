@@ -352,7 +352,7 @@ const utcDay = () => new Date().toISOString().slice(0, 10);
 const HOARD_BONUS = 10;
 const LEGACY_CRAZY_COIN_COST = 200;
 
-/** The five daily quests, regenerated lazily per UTC day. Keep the legacy keys
+/** The daily quests, regenerated lazily per UTC day. Keep the legacy keys
  *  for the first three so an in-progress day survives deploys. */
 const QUEST_DEFS = [
   { key: "mine_gems", label: "Earn 50 gems today", target: 50, reward: 25 },
@@ -361,7 +361,16 @@ const QUEST_DEFS = [
   // Keep the legacy key so an in-progress daily board survives this deploy.
   { key: "speed_8", label: "Lightning: 5 under 20 seconds", target: 5, reward: 10 },
   { key: "topic_explorer", label: "Explore 4 math topics", target: 4, reward: 15 },
+  { key: "complete_dungeon", label: "Defeat a dungeon boss", target: 1, reward: 25 },
 ] as const;
+
+// Preserve earned board rewards when new quests are added to an existing day.
+db.exec(`CREATE TABLE IF NOT EXISTS daily_board_rewards (
+  profile_id TEXT NOT NULL, day TEXT NOT NULL, PRIMARY KEY (profile_id, day)
+)`);
+db.exec(`INSERT OR IGNORE INTO daily_board_rewards (profile_id, day)
+  SELECT profile_id, day FROM quests GROUP BY profile_id, day
+  HAVING COUNT(*) >= 5 AND SUM(done) = COUNT(*)`);
 
 const WEEKLY_QUEST_DEF = {
   key: "daily_quests_5_days",
@@ -579,13 +588,9 @@ function getWeeklyQuest(profileId: string, day = utcDay()): QuestRow {
 
 function completedDailyBoards(profileId: string, day: string): number {
   const row = db.query(
-    `SELECT COUNT(*) AS count FROM (
-       SELECT day FROM quests
-       WHERE profile_id = ? AND day >= ? AND day <= ?
-       GROUP BY day
-       HAVING COUNT(*) = ? AND SUM(done) = ?
-     )`,
-  ).get(profileId, weekStart(day), day, QUEST_DEFS.length, QUEST_DEFS.length) as { count: number };
+    `SELECT COUNT(*) AS count FROM daily_board_rewards
+     WHERE profile_id = ? AND day >= ? AND day <= ?`,
+  ).get(profileId, weekStart(day), day) as { count: number };
   return row.count;
 }
 
@@ -611,6 +616,7 @@ type QuestEvent = {
   firstTry: boolean;
   gemsEarned: number;
   solveMs?: number;
+  bossDefeated?: boolean;
 };
 
 /** Advance today's quests from one solved problem. Speed and topic breadth are
@@ -636,7 +642,9 @@ function advanceQuests(
   for (const r of getQuests(profileId, day)) {
     if (r.done) continue;
     let progress = r.progress;
-    if (r.quest_key === "mine_gems") progress += event.gemsEarned;
+    if (event.bossDefeated && r.quest_key !== "complete_dungeon") continue;
+    if (r.quest_key === "complete_dungeon" && event.bossDefeated) progress += 1;
+    else if (r.quest_key === "mine_gems") progress += event.gemsEarned;
     else if (r.quest_key === "solve_10") progress += 1;
     else if (r.quest_key === "streak_5" && event.firstTry) progress += 1;
     else if (r.quest_key === "speed_8" && event.firstTry && (event.solveMs ?? Infinity) < 20_000) progress += 1;
@@ -650,11 +658,12 @@ function advanceQuests(
     db.query(`UPDATE quests SET progress = ?, done = ? WHERE profile_id = ? AND quest_key = ? AND day = ?`)
       .run(progress, done, profileId, r.quest_key, day);
   }
-  completed.push(...advanceWeeklyQuest(profileId, day, state));
   // Finishing the whole daily board earns one real-world Crazy Coin.
   const doneAfter = getQuests(profileId, day).filter((r) => r.done).length;
-  const allDailiesCrazyCoin = doneBefore < QUEST_DEFS.length && doneAfter >= QUEST_DEFS.length;
+  const allDailiesCrazyCoin = doneBefore < QUEST_DEFS.length && doneAfter >= QUEST_DEFS.length
+    && db.query('INSERT OR IGNORE INTO daily_board_rewards (profile_id, day) VALUES (?, ?)').run(profileId, day).changes > 0;
   if (allDailiesCrazyCoin) state.crazy_coins += 1;
+  completed.push(...advanceWeeklyQuest(profileId, day, state));
   return { completed, allDailiesCrazyCoin };
 }
 
@@ -985,7 +994,11 @@ function localBranches(profileId: string, current: Problem): { right: Problem; w
 // ---- App -------------------------------------------------------------------
 const app = new Hono();
 app.use("*", cors());
-app.route("/rpg", createRpgRoutes(db, applyMiss));
+app.route("/rpg", createRpgRoutes(db, applyMiss, (profileId) => {
+  const state = getProfileState(profileId);
+  advanceQuests(profileId, utcDay(), state, { firstTry: false, gemsEarned: 0, bossDefeated: true });
+  saveProfileState(profileId, state);
+}));
 app.route("/rpg", createRpgEconomyRoutes(db));
 
 app.get("/health", (c) => c.json({ ok: true, model: TUTOR_MODEL, voice: ELEVEN_VOICE }));

@@ -20,16 +20,76 @@ const call = async (method: string, path: string, body?: unknown) => {
   return res.json() as Promise<any>;
 };
 
+async function finishDungeon(profileId: string, prefix: string) {
+  let state = await call("POST", "/rpg/start", { profileId });
+  let lastRequest;
+  for (let i = 0; i < 300 && !state.expedition.cleared; i++) {
+    const problemId = `${prefix}-${i}`;
+    await call("POST", "/tutor/attempt", {
+      profileId, problemId, skill: "add_within_20", correct: true, solveMs: 3000,
+    });
+    lastRequest = { profileId, problemId, expeditionId: state.expedition.id, encounterIndex: state.expedition.encounterIndex };
+    const before = await call("GET", `/state?profileId=${profileId}`);
+    const result = await call("POST", "/rpg/resolve", lastRequest);
+    state = result.state;
+    const board = await call("GET", `/state?profileId=${profileId}`);
+    expect(board.quests.filter((q: any) => q.key !== "complete_dungeon"))
+      .toEqual(before.quests.filter((q: any) => q.key !== "complete_dungeon"));
+    if (result.reward.bossDefeated) expect(board.gems - before.gems).toBe(25);
+    expect(board.quests.find((q: any) => q.key === "complete_dungeon"))
+      .toMatchObject({ progress: result.reward.bossDefeated ? 1 : 0, done: result.reward.bossDefeated });
+  }
+  expect(state.expedition.cleared).toBe(true);
+  return lastRequest;
+}
+
 describe("topic-graph tutor flow", () => {
+  test("dungeon quest needs a boss clear, rewards once, and resets each day", async () => {
+    const profileId = "daily-dungeon";
+    try {
+      setSystemTime(new Date("2031-01-01T12:00:00Z"));
+      const request = await finishDungeon(profileId, "dungeon-day-one");
+      const before = await call("GET", `/state?profileId=${profileId}`);
+      expect(before.quests.find((q: any) => q.key === "complete_dungeon"))
+        .toMatchObject({ target: 1, reward: 25, done: true });
+      await call("POST", "/rpg/resolve", request);
+      expect(await call("GET", `/state?profileId=${profileId}`)).toEqual(before);
+      setSystemTime(new Date("2031-01-02T12:00:00Z"));
+      await call("POST", "/rpg/resolve", request);
+      const next = await call("GET", `/state?profileId=${profileId}`);
+      expect(next.quests.find((q: any) => q.key === "complete_dungeon"))
+        .toMatchObject({ progress: 0, done: false });
+    } finally { setSystemTime(); }
+  });
+  test("boss defeat completes the board and grants its coin without another answer", async () => {
+    const profileId = "boss-last-daily";
+    const topics = TOPICS.filter(t => t.prereqs.length === 0).slice(0, 4);
+    for (let i = 0; i < 30; i++) {
+      await call("POST", "/tutor/attempt", {
+        profileId, problemId: `boss-last-math-${i}`, skill: "add_within_20",
+        topicId: topics[i % topics.length].id, correct: true, solveMs: 3000,
+      });
+    }
+    expect((await call("GET", `/mastery?profileId=${profileId}`)).crazyCoins).toBe(0);
+    const request = await finishDungeon(profileId, "boss-last-dungeon");
+    const board = await call("GET", `/state?profileId=${profileId}`);
+    expect(board.quests.every((q: any) => q.done)).toBe(true);
+    expect(board.weeklyQuest.progress).toBe(1);
+    expect((await call("GET", `/mastery?profileId=${profileId}`)).crazyCoins).toBe(1);
+    await call("POST", "/rpg/resolve", request);
+    expect((await call("GET", `/mastery?profileId=${profileId}`)).crazyCoins).toBe(1);
+  });
+
   test("weekly quest counts five completed daily boards, awards 250 once, and resets Sunday", async () => {
     const profileId = "weekly-quest";
     const topics = TOPICS.filter((t) => t.prereqs.length === 0).slice(0, 4);
     let weeklyAwards = 0;
 
     try {
-      // 2026-07-12 is a Sunday. Finish all five daily quests Sunday–Thursday.
+      // 2026-07-12 is a Sunday. Finish all daily quests Sunday–Thursday.
       for (let day = 0; day < 5; day++) {
         setSystemTime(new Date(`2026-07-${12 + day}T12:00:00.000Z`));
+        await finishDungeon(profileId, `weekly-dungeon-${day}`);
         for (let i = 0; i < 25; i++) {
           const topic = topics[i % topics.length];
           const result = await call("POST", "/tutor/attempt", {
@@ -137,6 +197,7 @@ describe("topic-graph tutor flow", () => {
 
   test("finishing the whole daily board awards one Crazy Coin exactly once", async () => {
     const profileId = "all-dailies-crazy-coin";
+    await finishDungeon(profileId, "coin-dungeon");
     let sawCoinAward = 0;
     for (let i = 0; i < 30; i++) {
       const r = await call("POST", "/tutor/attempt", {

@@ -173,7 +173,7 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
 }
 
 const ProfileSchema = z.object({ profileId: z.string().min(1).max(100) });
-export function createRpgRoutes(db: Database, applyMiss?: (profileId: string) => unknown): Hono {
+export function createRpgRoutes(db: Database, applyMiss?: (profileId: string) => unknown, onBossDefeated?: (profileId: string) => void): Hono {
   const app = new Hono();
   app.onError((error, c) => {
     if (error instanceof z.ZodError) return c.json({ error: 'Invalid adventure request.' }, 400);
@@ -227,7 +227,15 @@ export function createRpgRoutes(db: Database, applyMiss?: (profileId: string) =>
     })();
     return c.json(response);
   });
-  app.post('/resolve', async (c) => c.json(resolveRpgEncounter(db, await c.req.json())));
+  app.post('/resolve', async (c) => {
+    const body = await c.req.json();
+    const result = db.transaction(() => {
+      const result = resolveRpgEncounter(db, body);
+      if (result.reward.bossDefeated && !result.duplicate) onBossDefeated?.(result.state.profileId);
+      return result;
+    })();
+    return c.json(result);
+  });
   app.post('/upgrade', async (c) => {
     const { profileId, skillId, requestId } = ProfileSchema.extend({ skillId: z.string(), requestId: z.string().min(1).max(100).optional() }).parse(await c.req.json());
     const state = db.transaction(() => {

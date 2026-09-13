@@ -1,0 +1,14 @@
+{
+  "credential_probe": "TRIPO_API_KEY=SET",
+  "reference_sheet": "docs/concepts/enemy-character-references/01-skeleton.png",
+  "read": [
+    "threejs-3d-generator/SKILL.md",
+    "threejs-3d-generator/references/api-notes.md",
+    "threejs-3d-generator/references/threejs-integration.md",
+    "threejs-3d-generator/references/image-generator-workflows.md",
+    "imagegen/SKILL.md",
+    "https://docs.tripo3d.ai/model-generation/multiview-to-model-v3-0-v3-1.html"
+  ],
+  "inputs": "Generated front and rear single-figure images from the original sheet. Visually checked before submission.",
+  "skeleton_correction": "Rear sword moved to anatomical right hand before upload."
+}

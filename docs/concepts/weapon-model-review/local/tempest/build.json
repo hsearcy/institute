@@ -1,0 +1,17 @@
+{
+  "id": "tempest",
+  "triangles": 8620,
+  "meshes": 1,
+  "bytes": 227936,
+  "method": "Local solid geometry and original concept projection",
+  "grip": [
+    0,
+    0,
+    0
+  ],
+  "tip": [
+    -0.01860262081027031,
+    -0.0003499999875202775,
+    0.6433405876159668
+  ]
+}

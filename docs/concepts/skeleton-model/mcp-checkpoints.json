@@ -1,0 +1,109 @@
+{
+  "tool": "mcp__blender_bpy__execute_blender_code_for_cli",
+  "blender": "5.2.1",
+  "final_glb_sha256": "4f92f4bc0537a804dd2c9fc21f008989daae2a2dc40f90d15f3424d1ab429736",
+  "receipts": [
+    {
+      "head_atlas_stage": 1,
+      "resolution": 2048,
+      "body_uv_changed": false,
+      "_checkpoint": {
+        "path": "/home/hfsearcy/git/institute/docs/concepts/skeleton-model/detail-v26-stage-1.blend",
+        "source": "/home/hfsearcy/git/institute/docs/concepts/skeleton-model/details-source-v26.blend",
+        "source_sha256": "ae63076b8f41060ac3dd7f884953d773c37a708af507825f6c0a10761cc16ff5",
+        "output_sha256": "bad68729916284fdd05a77f3ea4249f31861c7010a9d40614ecbd7f06e6d200c",
+        "existed_before": false
+      }
+    },
+    {
+      "head_atlas_stage": 2,
+      "resolution": 2048,
+      "body_uv_changed": false,
+      "_checkpoint": {
+        "path": "/home/hfsearcy/git/institute/docs/concepts/skeleton-model/detail-v26-stage-2.blend",
+        "source": "/home/hfsearcy/git/institute/docs/concepts/skeleton-model/detail-v26-stage-1.blend",
+        "source_sha256": "bad68729916284fdd05a77f3ea4249f31861c7010a9d40614ecbd7f06e6d200c",
+        "output_sha256": "42e30322bf9310e6fb7ea2640d6ac1901b7597fdaf7dcf7cb042dbcaefb65b6a",
+        "existed_before": false
+      }
+    },
+    {
+      "head_atlas_stage": 3,
+      "resolution": 2048,
+      "body_uv_changed": false,
+      "_checkpoint": {
+        "path": "/home/hfsearcy/git/institute/docs/concepts/skeleton-model/detail-v26-stage-3.blend",
+        "source": "/home/hfsearcy/git/institute/docs/concepts/skeleton-model/detail-v26-stage-2.blend",
+        "source_sha256": "42e30322bf9310e6fb7ea2640d6ac1901b7597fdaf7dcf7cb042dbcaefb65b6a",
+        "output_sha256": "f630b2fa1f246386c3a626a8627599998eb44384f66273d5e8f063fdb8817f59",
+        "existed_before": false
+      }
+    },
+    {
+      "head_atlas_stage": 4,
+      "resolution": 2048,
+      "body_uv_changed": false,
+      "_checkpoint": {
+        "path": "/home/hfsearcy/git/institute/docs/concepts/skeleton-model/detail-v26-stage-4.blend",
+        "source": "/home/hfsearcy/git/institute/docs/concepts/skeleton-model/detail-v26-stage-3.blend",
+        "source_sha256": "f630b2fa1f246386c3a626a8627599998eb44384f66273d5e8f063fdb8817f59",
+        "output_sha256": "1520055b30f440ecd2280f267ebeaafd5f9acbe02411f6f5287ba27d2b620696",
+        "existed_before": false
+      }
+    },
+    {
+      "head_atlas_stage": 5,
+      "resolution": 2048,
+      "body_uv_changed": false,
+      "_checkpoint": {
+        "path": "/home/hfsearcy/git/institute/docs/concepts/skeleton-model/detail-v26-stage-5.blend",
+        "source": "/home/hfsearcy/git/institute/docs/concepts/skeleton-model/detail-v26-stage-4.blend",
+        "source_sha256": "1520055b30f440ecd2280f267ebeaafd5f9acbe02411f6f5287ba27d2b620696",
+        "output_sha256": "12dadaa695c56721b5bd484d927eafdfffb9ffc3ea36d1b66e1ea1b7953f365b",
+        "existed_before": false
+      }
+    },
+    {
+      "detail_atlas": 2048,
+      "packed_orm": 1024,
+      "replacements": [
+        "SkeletonHeadClean",
+        "SkeletonLeftHandClean",
+        "SkeletonRightHandClean"
+      ],
+      "_checkpoint": {
+        "path": "/home/hfsearcy/git/institute/docs/concepts/skeleton-model/clean-details-v26.blend",
+        "source": "/home/hfsearcy/git/institute/docs/concepts/skeleton-model/detail-v26-stage-5.blend",
+        "source_sha256": "12dadaa695c56721b5bd484d927eafdfffb9ffc3ea36d1b66e1ea1b7953f365b",
+        "output_sha256": "fa4041cfd34b1f56e3c92a0ec7e691b25f532b4715349643ef191455d860843a",
+        "existed_before": false
+      }
+    },
+    {
+      "bytes": 10573572,
+      "triangles": 95393,
+      "mesh_count": 18,
+      "head_atlas": 2048,
+      "body_geometry_changed": false,
+      "_checkpoint": {
+        "path": "/home/hfsearcy/git/institute/docs/concepts/skeleton-model/skeleton-concept-v26.blend",
+        "source": "/home/hfsearcy/git/institute/docs/concepts/skeleton-model/skeleton-concept-v23.blend",
+        "source_sha256": "d90e5d4bf12bc7904e15d3e5a7ef6a16019af901bdcc279d2807937812656f62",
+        "output_sha256": "9691ea8d922d556f33e5cdcf0535d32fed0e11e95a8b433e4c9607e89460f083",
+        "existed_before": false
+      }
+    },
+    {
+      "bytes": 7594076,
+      "triangles": 95393,
+      "mesh_count": 18,
+      "_checkpoint": {
+        "path": "/home/hfsearcy/git/institute/docs/concepts/skeleton-model/skeleton-concept-v27.blend",
+        "source": "/home/hfsearcy/git/institute/docs/concepts/skeleton-model/skeleton-concept-v26.blend",
+        "source_sha256": "9691ea8d922d556f33e5cdcf0535d32fed0e11e95a8b433e4c9607e89460f083",
+        "output_sha256": "1a05b9027cb9b3d383ebb54e7650eda790c3ecc932ebb4905888bf8314d7aeb9",
+        "existed_before": false
+      }
+    }
+  ]
+}

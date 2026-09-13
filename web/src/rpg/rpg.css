@@ -80,9 +80,10 @@ body.rpg-mode { background:#101719; color:#ede8d8; font-family:'DM Sans',system-
 .rpg-toast { position:absolute; top:23%; left:50%; transform:translateX(-50%); max-width:640px; padding:13px 24px; color:#ffdc96; background:linear-gradient(90deg,#10191800,#101918ed 12%,#101918ed 88%,#10191800); text-align:center; text-shadow:0 2px 7px #000; font-size:17px; z-index:10; animation:rpg-toast-in .4s ease-out; }
 @keyframes rpg-toast-in { from{opacity:0;translate:0 12px}to{opacity:1;translate:0 0} }
 .rpg-overlay { position:absolute; inset:0; z-index:20; display:grid; place-items:center; background:radial-gradient(ellipse at center,#07101455,#040b12bb); padding:26px; pointer-events:auto; backdrop-filter:blur(3px); }
-.rpg-dialog { width:min(550px,100%); max-height:calc(100dvh - 52px); overflow:auto; position:relative; padding:38px; text-align:center; border:1px solid #957b4d; outline:none; border-radius:5px; background:linear-gradient(130deg,#202c2eee,#10191ef9 65%); box-shadow:0 30px 100px #000b,inset 0 0 0 4px #141c1dd9,inset 0 0 0 5px #504b3577; scrollbar-width:thin; scrollbar-color:#8b7547 #172021; }
+.rpg-dialog { width:min(550px,100%); max-height:calc(100dvh - 52px); overflow:hidden; display:flex; flex-direction:column; position:relative; padding:38px; text-align:center; border:1px solid #957b4d; outline:none; border-radius:5px; background:linear-gradient(130deg,#202c2eee,#10191ef9 65%); box-shadow:0 30px 100px #000b,inset 0 0 0 4px #141c1dd9,inset 0 0 0 5px #504b3577; }
+#rpg-dialog-content { min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:#8b7547 #172021; }
 .rpg-dialog.wide { width:min(1040px,100%); }
-#rpg-ui .rpg-dialog-close { position:absolute; right:12px; top:9px; border:0; background:transparent; width:33px; height:33px; padding:0; color:#bcb59e; font:27px Georgia,serif; z-index:2; }
+#rpg-ui .rpg-dialog-close { position:absolute; right:7px; top:4px; border:0; background:#10191ef2; width:44px; height:44px; padding:0; color:#dcd3b8; font:27px Georgia,serif; z-index:2; }
 .rpg-dialog h2 { font:500 32px/1.2 'Cinzel',Georgia,serif; color:#ebd7af; margin:10px 0 13px; }
 .rpg-dialog h2 small { font:12px 'DM Sans',sans-serif; display:inline-block; margin-left:12px; padding:7px 13px; border:1px solid #837144; border-radius:4px; color:#eed5a2; vertical-align:middle; }
 .rpg-dialog p { font-size:14px; color:#b8c1b8; line-height:1.7; margin:10px 0 20px; }

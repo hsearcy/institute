@@ -1,0 +1,17 @@
+{
+  "id": "cleaver",
+  "triangles": 7852,
+  "meshes": 1,
+  "bytes": 222456,
+  "method": "Local solid geometry and original concept projection",
+  "grip": [
+    0,
+    0,
+    0
+  ],
+  "tip": [
+    0.04312269017100334,
+    -0.0003499999875202775,
+    0.8378878831863403
+  ]
+}

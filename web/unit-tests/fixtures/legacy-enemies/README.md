@@ -1,0 +1,1 @@
+Previous game exports retained as fixtures for the rigid-joint EnemyAnimator tests. Current Tripo assets use whole-model motion. Keep these fixtures so joint support remains tested while the Wraith still uses it.

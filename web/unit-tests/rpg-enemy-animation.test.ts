@@ -3,9 +3,11 @@ import { test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { BufferGeometry, Float32BufferAttribute, Mesh, Object3D, Vector3 } from 'three';
 import { EnemyAnimator } from '../src/rpg/world/EnemyAnimator';
+import { createHitReaction, sampleHitReaction } from '../src/rpg/world/hitReactions';
 
-function exportedRig(kind: string): { root: Object3D; nodes: Object3D[]; soles: { node: Object3D; vertices: Vector3[] }[] } {
-  const bytes = readFileSync(new URL(`../public/assets/rpg/${kind}.glb`, import.meta.url));
+// Keep legacy joint coverage while the current Tripo actors use whole-model motion.
+function exportedRig(kind: string, current = false): { root: Object3D; nodes: Object3D[]; soles: { node: Object3D; vertices: Vector3[] }[] } {
+  const bytes = readFileSync(new URL(current ? `../public/assets/rpg/candidates/${kind}-tripo.glb` : kind === 'wraith' ? `../public/assets/rpg/${kind}.glb` : `./fixtures/legacy-enemies/${kind}.glb`, import.meta.url));
   const gltf = JSON.parse(bytes.subarray(20, 20 + bytes.readUInt32LE(12)).toString());
   const nodes: Object3D[] = gltf.nodes.map((node: any) => {
     const object = node.mesh === undefined ? new Object3D() : new Mesh(new BufferGeometry()); object.name = node.name; object.userData = node.extras ?? {};
@@ -90,52 +92,78 @@ for (const kind of ['guardian', 'wraith']) test(`${kind} body-specific settle ke
   }
 });
 
-test('Wraith cloth folds and rigid attachments reset independently on a new living pose', () => {
+test('Wraith coherent cloth motion resets without moving rigid cut attachments', () => {
   const { root, nodes } = exportedRig('wraith'), animator = new EnemyAnimator(root, { kind: 'wraith', phase: .7 });
-  const positions = nodes.map(node => node.position.clone());
-  animator.update(2, { deathAge: 1, collapse: 'grounded' });
+  const rest = nodes.map(node => ({ position: node.position.clone(), rotation: node.quaternion.clone() }));
   const cloth = nodes.filter(node => node instanceof Mesh && node.morphTargetInfluences?.length) as Mesh[];
-  assert.equal(cloth.length, 4, 'Long upper sleeve panels bend with the robe');
-  assert(cloth.every(node => node.morphTargetInfluences![0] === 1));
-  animator.update(2, { moving: 0, threat: 0 });
-  assert(cloth.every(node => node.morphTargetInfluences![0] === 0));
-  nodes.forEach((node, i) => assert(node.position.equals(positions[i]), 'Head and hands recover their exact rest attachment positions'));
-});
-
-test('Wraith staff hand releases below the bowed head after its failed brace', () => {
-  const { root, nodes } = exportedRig('wraith'), animator = new EnemyAnimator(root, { kind: 'wraith', phase: .7 });
-  const forearm = nodes.find(node => node.userData.enemyJoint === 'ArmLowerL')!, head = nodes.find(node => node.userData.enemyJoint === 'Head')!;
-  // Measured source LeftHand joint relative to the actual exported forearm pivot.
-  const wrist = new Vector3(.43951 - .26465, 1.29083 - 1.26101, .31233 - .14644);
-  animator.update(2, { deathAge: .55, collapse: 'grounded' }); root.updateMatrixWorld(true);
-  const braceY = wrist.clone().applyMatrix4(forearm.matrixWorld).y;
-  animator.update(2, { deathAge: .95, collapse: 'grounded' }); root.updateMatrixWorld(true);
-  const releasedY = wrist.clone().applyMatrix4(forearm.matrixWorld).y;
-  assert(releasedY < braceY - .2, 'Holding hand must visibly lose support after its brace');
-  assert(releasedY < head.getWorldPosition(new Vector3()).y - .12, 'Staff hand must hang below the bowed head');
-});
-
-test('Wraith terminal joint geometry releases the forearm vertically and lowers its Head region', () => {
-  const { root, nodes } = exportedRig('wraith'), animator = new EnemyAnimator(root, { kind: 'wraith', phase: .7 });
-  animator.update(2, { deathAge: 1.1, collapse: 'grounded' }); root.updateMatrixWorld(true);
-  for (const [side, wrist] of [['L', new Vector3(.17486, .02982, .16589)], ['R', new Vector3(-.14077, -.10835, .05901)]] as const) {
-    const forearm = nodes.find(node => node.userData.enemyJoint === `ArmLower${side}`)!;
-    const direction = wrist.applyMatrix4(forearm.matrixWorld).sub(forearm.getWorldPosition(new Vector3())).normalize();
-    assert(direction.y < -.95, 'Both forearms must hang rather than retaining an active off-hand');
-    assert(forearm.position.z < .25, 'Elbows must also return beside the torso instead of preserving the reach');
-  }
-  const top = (object: Object3D) => {
-    let y = -Infinity;
-    object.traverse(node => {
-      if (!(node instanceof Mesh)) return;
-      const point = new Vector3(), count = node.geometry.getAttribute('position').count;
-      for (let i = 0; i < count; i++) y = Math.max(y, node.getVertexPosition(i, point).applyMatrix4(node.matrixWorld).y);
+  assert.equal(cloth.length, 7, 'Every source cut receives the same continuous cloth field');
+  for (const age of [0, .1, .3, .65, 1.1, 1.6]) {
+    animator.update(age, { deathAge: age, collapse: 'grounded', recoil: Math.max(0, 1 - age * 5) });
+    nodes.forEach((node, i) => {
+      if (node.userData.enemyJoint !== 'Body') {
+        assert(node.position.equals(rest[i].position), 'Disconnected rigid cuts must not move apart');
+        assert(node.quaternion.equals(rest[i].rotation), 'The staff and neck cuts keep one shared frame');
+      }
     });
-    return y;
-  };
-  const head = nodes.find(node => node.userData.enemyJoint === 'Head')!;
-  const mantle = Math.max(...nodes.filter(node => /^(Body|Cape|ArmUpperL|ArmUpperR)_Baked/.test(node.name)).map(top));
-  assert(top(head) < mantle - .05, 'The exported Head region must yield below the folded upper cloth; native silhouette review remains separate');
+  }
+  animator.update(2, { moving: 0, threat: 0 });
+  const fresh = nodes.flatMap(node => [...node.position.toArray(), ...node.quaternion.toArray()]);
+  animator.update(1, { deathAge: 1, collapse: 'grounded' });
+  animator.update(2, { moving: 0, threat: 0 });
+  assert.deepEqual(nodes.flatMap(node => [...node.position.toArray(), ...node.quaternion.toArray()]), fresh);
+});
+
+test('Wraith loses support before its spectral release and then holds a stable terminal pose', () => {
+  const { root, nodes } = exportedRig('wraith'), animator = new EnemyAnimator(root, { kind: 'wraith', phase: .7 });
+  const body = nodes.find(node => node.userData.enemyJoint === 'Body')!;
+  animator.update(0, { deathAge: 0, collapse: 'grounded' }); const initial = body.position.y;
+  animator.update(.64, { deathAge: .64, collapse: 'grounded' });
+  assert(body.position.y > initial + .08, 'The whole form must visibly lose ground support before erosion');
+  const state = () => nodes.flatMap(node => [...node.position.toArray(), ...node.quaternion.toArray(), ...((node as Mesh).morphTargetInfluences ?? [])]);
+  animator.update(2, { deathAge: 2, collapse: 'grounded' }); const settled = state();
+  animator.update(3, { deathAge: 3, collapse: 'grounded' });
+  assert.deepEqual(state(), settled, 'No idle oscillation continues after the release');
+});
+
+test('Wraith shared mesh-cut vertices follow one continuous field through the full release', () => {
+  const { root, nodes } = exportedRig('wraith'), animator = new EnemyAnimator(root, { kind: 'wraith', phase: .7 });
+  root.updateMatrixWorld(true);
+  const byPoint = new Map<string, { mesh: Mesh; index: number }[]>(), point = new Vector3();
+  for (const node of nodes) if (node instanceof Mesh) {
+    const positions = node.geometry.getAttribute('position');
+    for (let i = 0; i < positions.count; i++) {
+      point.fromBufferAttribute(positions, i).applyMatrix4(node.matrixWorld);
+      const key = point.toArray().map(v => Math.round(v * 10000)).join(',');
+      const group = byPoint.get(key) ?? []; group.push({ mesh: node, index: i }); byPoint.set(key, group);
+    }
+  }
+  const seams = [...byPoint.values()].filter(group => new Set(group.map(p => p.mesh)).size > 1);
+  assert(seams.length > 10, 'Use real shared cut vertices from the exported Wraith');
+  for (const age of [.1, .35, .7, 1.1, 1.6]) {
+    animator.update(age, { deathAge: age, collapse: 'grounded' }); root.updateMatrixWorld(true);
+    for (const seam of seams) {
+      const a = seam[0].mesh.getVertexPosition(seam[0].index, new Vector3()).applyMatrix4(seam[0].mesh.matrixWorld);
+      for (const b of seam.slice(1)) {
+        b.mesh.getVertexPosition(b.index, point).applyMatrix4(b.mesh.matrixWorld);
+        assert(point.distanceTo(a) < .0004, 'A shared source cut must not open into a visible gap');
+      }
+    }
+  }
+});
+
+test('Wraith cloth catch peaks after chest recoil on both impact sides', () => {
+  const { root, nodes } = exportedRig('wraith'), animator = new EnemyAnimator(root, { kind: 'wraith', phase: 0 });
+  const cloth = nodes.find(node => node instanceof Mesh && node.morphTargetInfluences?.length) as Mesh;
+  const reaction = createHitReaction({ at: 0, x: 0, z: 0, sourceX: 0, sourceZ: 2, phase: 0, heavy: false, maxHp: 100,
+    hit: { damage: 30, hpBefore: 100, hpAfter: 70 }, element: 'other' });
+  for (const side of [-1, 1]) {
+    const early = sampleHitReaction(reaction, .11), late = sampleHitReaction(reaction, .5);
+    animator.update(.11, { ...early, impactSide: side }); const earlyHem = cloth.morphTargetInfluences![1];
+    animator.update(.5, { ...late, impactSide: side }); const lateHem = cloth.morphTargetInfluences![1];
+    assert(late.recoil < early.recoil * .1, 'Chest impulse has already recovered');
+    assert(Math.abs(lateHem) > Math.abs(earlyHem) + 1, 'Delayed hem motion must remain visible after the impulse');
+    assert(Math.sign(lateHem) === side, 'The cloth follows the struck side');
+  }
 });
 
 test('Guardian fatal contact retains shoulder impulse against its planted lower mass', () => {
@@ -200,7 +228,7 @@ test('An arm-only wraith rig animates its staff while an unrigged legacy wraith 
 });
 
 for (const kind of ['skeleton','guardian','revenant']) test(`${kind} exported joints animate shared instance sources independently`, () => {
- const bytes = readFileSync(new URL(`../public/assets/rpg/${kind}.glb`, import.meta.url));
+ const bytes = readFileSync(new URL(kind === 'wraith' ? '../public/assets/rpg/wraith.glb' : `./fixtures/legacy-enemies/${kind}.glb`, import.meta.url));
  const gltf = JSON.parse(bytes.subarray(20,20 + bytes.readUInt32LE(12)).toString());
  const nodes=gltf.nodes.map((n:any)=> {const o=new Object3D();o.name=n.name;o.userData=n.extras??{};if(n.translation)o.position.fromArray(n.translation);if(n.rotation)o.quaternion.fromArray(n.rotation);if(n.scale)o.scale.fromArray(n.scale);if(n.matrix){o.matrix.fromArray(n.matrix);o.matrix.decompose(o.position,o.quaternion,o.scale);}return o;});
  gltf.nodes.forEach((n:any,i:number)=>n.children?.forEach((child:number)=>nodes[i].add(nodes[child])));
@@ -217,4 +245,16 @@ for (const kind of ['skeleton','guardian','revenant']) test(`${kind} exported jo
  anim.update(0,{moving:0,threat:0});assert(!arm.position.equals(deadPosition),'Death offsets reset when alive');
  for(const age of [0,.05,.2,.8,1.1,3]){anim.update(3,{deathAge:age});root.updateMatrixWorld(true);for(const o of nodes)assert(o.matrixWorld.elements.every(Number.isFinite));}
 
+});
+
+for (const kind of ['skeleton', 'revenant', 'guardian', 'vault-guardian-boss']) test(`${kind} unrigged Tripo fallback stays intact under joint animation calls`, () => {
+  const { root, nodes } = exportedRig(kind, true);
+  const animator = new EnemyAnimator(root, { kind, phase: 0 });
+  assert.equal(animator.articulated, false);
+  root.updateMatrixWorld(true);
+  const before = nodes.map(node => node.matrixWorld.clone());
+  for (const state of [{ moving: 1 }, { recoil: 1, threat: 1 }, { deathAge: 1, collapse: 'grounded' as const }]) {
+    animator.update(2, state); root.updateMatrixWorld(true);
+    assert(nodes.every((node, i) => node.matrixWorld.equals(before[i])), 'Static geometry must not deform');
+  }
 });

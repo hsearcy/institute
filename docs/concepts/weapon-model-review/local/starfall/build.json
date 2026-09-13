@@ -1,0 +1,17 @@
+{
+  "id": "starfall",
+  "triangles": 7556,
+  "meshes": 1,
+  "bytes": 203108,
+  "method": "Local solid geometry and original concept projection",
+  "grip": [
+    0,
+    0,
+    0
+  ],
+  "tip": [
+    -0.002432547975331545,
+    -0.0003499999875202775,
+    0.9027838706970215
+  ]
+}

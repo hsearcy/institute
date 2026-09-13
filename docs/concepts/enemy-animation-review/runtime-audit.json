@@ -1,0 +1,217 @@
+{
+  "performanceSample": {
+    "method": "Actual foreground DungeonWorld ticks over four seconds",
+    "frames": 241,
+    "fps": 59.9985000389295,
+    "diagnostics": {
+      "appearance": "wayfarer",
+      "drawWarmup": {
+        "programs": 153,
+        "durationMs": 862.9000000953674
+      },
+      "lastAttack": null,
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cast",
+        "cleave"
+      ],
+      "encounter": 5,
+      "region": "storm-vault",
+      "enemies": 10,
+      "articulatedEnemies": 10,
+      "enemyRoster": {
+        "vault-guardian-boss": 1,
+        "revenant": 3,
+        "skeleton": 5,
+        "guardian": 1
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 45,
+      "drawCalls": 222,
+      "triangles": 1408658,
+      "particles": 123,
+      "fragments": 0,
+      "hero": [
+        0,
+        0,
+        -98.6
+      ],
+      "softwareRenderer": false,
+      "fps": 60,
+      "quality": "full",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)"
+    },
+    "viewport": [
+      1440,
+      1000
+    ],
+    "hidden": false
+  },
+  "audit": {
+    "independent": true,
+    "cleanup": {
+      "textures": 9,
+      "disposed": 9,
+      "detached": true
+    },
+    "results": [
+      {
+        "kind": "skeleton",
+        "sides": [
+          1,
+          -1
+        ],
+        "idleChanged": true,
+        "articulated": true,
+        "first": {
+          "dead": true,
+          "visible": true,
+          "finite": true,
+          "erosion": 0
+        },
+        "dissolving": {
+          "visible": true,
+          "erosion": 0.2898316556311546,
+          "scale": 1
+        },
+        "removed": true,
+        "finite": true
+      },
+      {
+        "kind": "revenant",
+        "sides": [
+          1,
+          -1
+        ],
+        "idleChanged": true,
+        "articulated": true,
+        "first": {
+          "dead": true,
+          "visible": true,
+          "finite": true,
+          "erosion": 0
+        },
+        "dissolving": {
+          "visible": true,
+          "erosion": 0.2898316556311546,
+          "scale": 1
+        },
+        "removed": true,
+        "finite": true
+      },
+      {
+        "kind": "guardian",
+        "sides": [
+          1,
+          -1
+        ],
+        "idleChanged": true,
+        "articulated": true,
+        "first": {
+          "dead": true,
+          "visible": true,
+          "finite": true,
+          "erosion": 0
+        },
+        "dissolving": {
+          "visible": true,
+          "erosion": 0.2898316556311546,
+          "scale": 1
+        },
+        "removed": true,
+        "finite": true
+      },
+      {
+        "kind": "vault-guardian-boss",
+        "sides": [
+          1,
+          -1
+        ],
+        "idleChanged": true,
+        "articulated": true,
+        "first": {
+          "dead": true,
+          "visible": true,
+          "finite": true,
+          "erosion": 0
+        },
+        "dissolving": {
+          "visible": true,
+          "erosion": 0.2898316556311546,
+          "scale": 1
+        },
+        "removed": true,
+        "finite": true
+      },
+      {
+        "kind": "wraith",
+        "sides": [
+          1,
+          -1
+        ],
+        "idleChanged": true,
+        "articulated": true,
+        "first": {
+          "dead": true,
+          "visible": true,
+          "finite": true,
+          "erosion": 0
+        },
+        "dissolving": {
+          "visible": true,
+          "erosion": 0.2898316556311546,
+          "scale": 1
+        },
+        "removed": true,
+        "finite": true
+      }
+    ],
+    "resetLiving": true,
+    "diagnostics": {
+      "appearance": "wayfarer",
+      "drawWarmup": {
+        "programs": 153,
+        "durationMs": 862.9000000953674
+      },
+      "lastAttack": null,
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cast",
+        "cleave"
+      ],
+      "encounter": 0,
+      "region": "storm-vault",
+      "enemies": 10,
+      "articulatedEnemies": 10,
+      "enemyRoster": {
+        "guardian": 2,
+        "skeleton": 5,
+        "revenant": 2,
+        "wraith": 1
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 45,
+      "drawCalls": 421,
+      "triangles": 2863591,
+      "particles": 17,
+      "fragments": 0,
+      "hero": [
+        0,
+        0,
+        1.4
+      ],
+      "softwareRenderer": false,
+      "quality": "full",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "note": "Deterministic tick audit; FPS is invalid here. Use performanceSample for measured runtime FPS."
+    }
+  },
+  "learningUnchanged": true,
+  "errors": []
+}

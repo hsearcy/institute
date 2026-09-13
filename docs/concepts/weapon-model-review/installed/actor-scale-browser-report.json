@@ -1,0 +1,919 @@
+{
+  "db": "/tmp/rpg-item-catalogue-1789260487811.db",
+  "output": "/tmp/actor-scale-check",
+  "items": [
+    {
+      "id": "apprentice",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210,
+          "height": 210
+        },
+        {
+          "width": 195.671875,
+          "height": 195.671875
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.5916815775703582,
+            1.1773477911483516,
+            1.3902661541945913
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.27523774252956834,
+            1.22047398967706,
+            1.0930567818555508
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.27523774252956834,
+            1.22047398967706,
+            1.0930567818555508
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.41225584043110775,
+            1.237528150063182,
+            1.3961172035741172
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "wintercrown",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210,
+          "height": 210
+        },
+        {
+          "width": 195.65625,
+          "height": 195.65625
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.5916152186543001,
+            1.1772607407501647,
+            1.4111786619093847
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            -0.2742321213005616,
+            1.22047398967706,
+            1.0921579987645644
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.4122209443118343,
+            1.2261893576315526,
+            1.3933782820731004
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "armR",
+          "position": [
+            0.4016252540137186,
+            1.2271745129960645,
+            1.306902688459549
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "inferno",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210,
+          "height": 210
+        },
+        {
+          "width": 195.671875,
+          "height": 195.671875
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "head",
+          "parent": "head",
+          "position": [
+            -0.0014326802875107374,
+            2.2209777873389807,
+            1.4037644166051493
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "head",
+          "parent": "head",
+          "position": [
+            0.04332065498119143,
+            2.188289355023992,
+            1.4039726096863678
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "head",
+          "parent": "head",
+          "position": [
+            0.04269084549114122,
+            2.1914326626815663,
+            1.4083637603367836
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "head",
+          "parent": "head",
+          "position": [
+            0.042684082448630194,
+            2.2042083668029755,
+            1.4083982070252041
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "wardenheart",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210,
+          "height": 210
+        },
+        {
+          "width": 195.671875,
+          "height": 195.671875
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "chest",
+          "parent": "chest",
+          "position": [
+            0.08679498120392394,
+            1.7837172025455048,
+            1.1801350454181394
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "chest",
+          "parent": "chest",
+          "position": [
+            0.14602857566169825,
+            1.6793848513910654,
+            1.0908429987787698
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "chest",
+          "parent": "chest",
+          "position": [
+            0.17839957499392045,
+            1.665405378337816,
+            1.108322116100866
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "chest",
+          "parent": "chest",
+          "position": [
+            0.1818514489821274,
+            1.6713054797492326,
+            1.110461666066497
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "thunderbell",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210,
+          "height": 210
+        },
+        {
+          "width": 195.671875,
+          "height": 195.671875
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "belt",
+          "parent": "pelvis",
+          "position": [
+            -0.1481888051117901,
+            1.223692295346784,
+            1.1742485882791722
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "belt",
+          "parent": "root",
+          "position": [
+            -0.1430664377546265,
+            1.2189474411411878,
+            1.1363139694109485
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "belt",
+          "parent": "root",
+          "position": [
+            -0.10930659795431258,
+            1.2332268629893375,
+            1.1206249904102679
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "belt",
+          "parent": "root",
+          "position": [
+            -0.11495340769229147,
+            1.2252900689733948,
+            1.1229006633000749
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "stormorbit",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210,
+          "height": 210
+        },
+        {
+          "width": 195.65625,
+          "height": 195.65625
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "belt",
+          "parent": "pelvis",
+          "position": [
+            -0.15024802633715964,
+            1.223692295346784,
+            1.175613831896449
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "belt",
+          "parent": "root",
+          "position": [
+            -0.14326981579628867,
+            1.2189474411411878,
+            1.1364244164925246
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "belt",
+          "parent": "root",
+          "position": [
+            -0.11840285137018483,
+            1.201027587320968,
+            1.1243569461658456
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "belt",
+          "parent": "root",
+          "position": [
+            -0.11269302651154381,
+            1.2218876755466557,
+            1.121973724056022
+          ],
+          "embedded": [
+            true,
+            true
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    }
+  ],
+  "errors": [],
+  "casts": [
+    {
+      "id": "apprentice",
+      "before": {
+        "xp": 82305,
+        "problem": "pmtz3i5qa_0"
+      },
+      "after": {
+        "xp": 82337,
+        "problem": "pmtz3i63g_1",
+        "mounted": "apprentice",
+        "visibleEnemies": 1
+      }
+    },
+    {
+      "id": "wintercrown",
+      "before": {
+        "xp": 82337,
+        "problem": "pmtz3i63g_1"
+      },
+      "after": {
+        "xp": 82369,
+        "problem": "pmtz3j1d0_3",
+        "mounted": "wintercrown",
+        "visibleEnemies": 7
+      }
+    },
+    {
+      "id": "inferno",
+      "before": {
+        "xp": 82369,
+        "problem": "pmtz3j1d0_3"
+      },
+      "after": {
+        "xp": 82401,
+        "problem": "pmtz3j4cm_5",
+        "mounted": "inferno",
+        "visibleEnemies": 2
+      }
+    }
+  ],
+  "scope": "Actual installed assets, UI equip/save, all four armor mounts and representative solved-math combat. Visual scores are separate.",
+  "preexistingTabs": [
+    "chrome://newtab/",
+    "http://127.0.0.1:5188/weapon-review.html?candidate=1&item=apprentice"
+  ],
+  "initialProgress": {
+    "xp": 82305,
+    "skills": {
+      "ember_power": 3,
+      "ember_echo": 1,
+      "ember_master": 2,
+      "cleave": 1,
+      "cleave_sweep": 2,
+      "meteor": 1,
+      "meteor_shower": 2,
+      "phoenix_dive": 1,
+      "phoenix_wings": 2,
+      "firestorm": 1,
+      "firestorm_inferno": 2,
+      "frost": 1,
+      "frost_shards": 3,
+      "frost_master": 2,
+      "ice_lance": 1,
+      "ice_lance_split": 2,
+      "glacial_surge": 1,
+      "glacial_tide": 2,
+      "blizzard": 1,
+      "blizzard_hail": 2,
+      "frost_guardian": 1,
+      "guardian_twins": 2,
+      "storm": 1,
+      "storm_chain": 3,
+      "storm_master": 2,
+      "arc_lance": 1,
+      "arc_lance_fork": 2,
+      "thunderclap": 1,
+      "thunderclap_echo": 2,
+      "ball_lightning": 1,
+      "ball_lightning_orbit": 2,
+      "tempest": 1,
+      "tempest_overcharge": 2
+    },
+    "inventory": [
+      "apprentice",
+      "cinderwand",
+      "glacier",
+      "thunderrod",
+      "moonstaff",
+      "phoenix",
+      "wintercrown",
+      "tempest",
+      "cleaver",
+      "starfall",
+      "phoenix_talon",
+      "inferno",
+      "sunforged",
+      "icespear",
+      "tideglass",
+      "hailcaller",
+      "wardenheart",
+      "winterbranch",
+      "arcfang",
+      "thunderbell",
+      "stormorbit",
+      "skybreaker",
+      "stormsilver"
+    ],
+    "kills": 740
+  },
+  "reload": {
+    "saved": "stormorbit",
+    "mounted": "stormorbit",
+    "xp": 82305,
+    "skills": {
+      "ember_power": 3,
+      "ember_echo": 1,
+      "ember_master": 2,
+      "cleave": 1,
+      "cleave_sweep": 2,
+      "meteor": 1,
+      "meteor_shower": 2,
+      "phoenix_dive": 1,
+      "phoenix_wings": 2,
+      "firestorm": 1,
+      "firestorm_inferno": 2,
+      "frost": 1,
+      "frost_shards": 3,
+      "frost_master": 2,
+      "ice_lance": 1,
+      "ice_lance_split": 2,
+      "glacial_surge": 1,
+      "glacial_tide": 2,
+      "blizzard": 1,
+      "blizzard_hail": 2,
+      "frost_guardian": 1,
+      "guardian_twins": 2,
+      "storm": 1,
+      "storm_chain": 3,
+      "storm_master": 2,
+      "arc_lance": 1,
+      "arc_lance_fork": 2,
+      "thunderclap": 1,
+      "thunderclap_echo": 2,
+      "ball_lightning": 1,
+      "ball_lightning_orbit": 2,
+      "tempest": 1,
+      "tempest_overcharge": 2
+    }
+  },
+  "lockedCollection": [
+    {
+      "id": "apprentice",
+      "disabled": false,
+      "thumbnail": true,
+      "name": "Apprentice's Runeblade",
+      "lock": false
+    },
+    {
+      "id": "cinderwand",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Cinderbranch",
+      "lock": true,
+      "hint": "Find in dungeons"
+    },
+    {
+      "id": "glacier",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Glacier Fang",
+      "lock": true,
+      "hint": "Find in dungeons"
+    },
+    {
+      "id": "thunderrod",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Thunder Rod",
+      "lock": true,
+      "hint": "Find in dungeons"
+    },
+    {
+      "id": "moonstaff",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Moonshard Staff",
+      "lock": true,
+      "hint": "1 more dungeon clears"
+    },
+    {
+      "id": "phoenix",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Phoenix Scepter",
+      "lock": true,
+      "hint": "2 more dungeon clears"
+    },
+    {
+      "id": "wintercrown",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Staff of Endless Winter",
+      "lock": true,
+      "hint": "3 more dungeon clears"
+    },
+    {
+      "id": "tempest",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Tempest Caller",
+      "lock": true,
+      "hint": "4 more dungeon clears"
+    },
+    {
+      "id": "cleaver",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Ashsplitter",
+      "lock": true,
+      "hint": "Find in dungeons"
+    },
+    {
+      "id": "starfall",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Starfall Edge",
+      "lock": true,
+      "hint": "1 more dungeon clears"
+    },
+    {
+      "id": "phoenix_talon",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Phoenix Talon",
+      "lock": true,
+      "hint": "2 more dungeon clears"
+    },
+    {
+      "id": "inferno",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Crown of the Inferno",
+      "lock": true,
+      "hint": "5 more dungeon clears"
+    },
+    {
+      "id": "sunforged",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Sunforged Runeblade",
+      "lock": true,
+      "hint": "2 more dungeon clears"
+    },
+    {
+      "id": "icespear",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Rimepiercer",
+      "lock": true,
+      "hint": "Find in dungeons"
+    },
+    {
+      "id": "tideglass",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Tideglass Blade",
+      "lock": true,
+      "hint": "1 more dungeon clears"
+    },
+    {
+      "id": "hailcaller",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Hailcaller",
+      "lock": true,
+      "hint": "2 more dungeon clears"
+    },
+    {
+      "id": "wardenheart",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Winter Warden's Heart",
+      "lock": true,
+      "hint": "5 more dungeon clears"
+    },
+    {
+      "id": "winterbranch",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Winterbranch",
+      "lock": true,
+      "hint": "2 more dungeon clears"
+    },
+    {
+      "id": "arcfang",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Arc Fang",
+      "lock": true,
+      "hint": "Find in dungeons"
+    },
+    {
+      "id": "thunderbell",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Bell of Thunder",
+      "lock": true,
+      "hint": "1 more dungeon clears"
+    },
+    {
+      "id": "stormorbit",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Orb of the Stormkeeper",
+      "lock": true,
+      "hint": "2 more dungeon clears"
+    },
+    {
+      "id": "skybreaker",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Skybreaker",
+      "lock": true,
+      "hint": "5 more dungeon clears"
+    },
+    {
+      "id": "stormsilver",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Stormsilver Runeblade",
+      "lock": true,
+      "hint": "2 more dungeon clears"
+    }
+  ],
+  "success": true
+}

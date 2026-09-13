@@ -1,10 +1,66 @@
-import { BufferGeometry, Euler, Matrix4, Mesh, Object3D, Quaternion, Vector3 } from 'three';
+import { BufferGeometry, Euler, Float32BufferAttribute, Matrix4, Mesh, Object3D, Quaternion, Vector3 } from 'three';
+import { SkinnedEnemyAnimator } from './SkinnedEnemyAnimator';
 import { solvePlanarLeg } from './legSupport';
-import { bendWraithPoint, wraithGatherGeometry } from './wraithGather';
 import { ConvexHull } from 'three/examples/jsm/math/ConvexHull.js';
 import { AuthoredEnemyGuard, type AuthoredGuardSupport } from './AuthoredEnemyGuard';
 const supportCache = new WeakMap<BufferGeometry, Vector3[]>();
-const spectralReleaseDirections = { L: new Vector3(.12, -1, .06).normalize(), R: new Vector3(-.12, -1, .06).normalize() };
+function spectralFoldPoint(point: Vector3): Vector3 {
+  const radius = 1.6 / 1.35, angle = Math.max(0, point.y - .06) / radius, z = point.z;
+  point.y = .06 + radius * Math.sin(angle) - z * Math.sin(angle);
+  point.z = radius * (1 - Math.cos(angle)) + z * Math.cos(angle);
+  point.x -= .10 * Math.sin(angle);
+  return point;
+}
+const spectralStaffAnchor = new Vector3(.43951, 1.29083, .31233);
+const spectralHeadAnchor = new Vector3(0, 1.51, .02);
+function spectralRigidFold(point: Vector3, anchor: Vector3): Vector3 {
+  const rotation = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), (anchor.y - .06) / (1.6 / 1.35));
+  return point.sub(anchor).applyQuaternion(rotation).add(spectralFoldPoint(anchor.clone()));
+}
+const spectralMotionCache = new WeakMap<BufferGeometry, BufferGeometry>();
+/** All seven cuts use the same source-coordinate field, so their seams agree. */
+function spectralMotionGeometry(source: BufferGeometry): BufferGeometry {
+  const cached = spectralMotionCache.get(source); if (cached) return cached;
+  const geometry = source.clone(), position = source.getAttribute('position');
+  geometry.userData.enemySourceGeometry = source.uuid;
+  geometry.morphTargetsRelative = true;
+  geometry.morphAttributes.position = []; geometry.morphAttributes.normal = [];
+  for (const layer of [0, 1, 2]) {
+    const target = source.clone(), attribute = target.getAttribute('position');
+    const delta = new Float32Array(position.count * 3);
+    for (let i = 0; i < position.count; i++) {
+      const x = position.getX(i), y = position.getY(i), z = position.getZ(i);
+      // Keep the hand and the complete staff rigid. The field tapers continuously
+      // across every cut, including cloth sections assigned to arm groups.
+      const center = 1 - smooth((Math.abs(x) - .16) / .15);
+      const chest = smooth((y - .72) / .3) * (1 - smooth((y - 1.38) / .18)) * center;
+      const hem = (1 - smooth((y - .10) / .95)) * (1 - smooth((x - .18) / .13));
+      let dx = layer === 0 ? x * .030 * chest : .048 * Math.sin(y * 4 + z * 3) * hem;
+      let dy = layer === 0 ? .008 * chest : .020 * hem;
+      let dz = layer === 0 ? .020 * chest : .045 * Math.cos(y * 3 + x * 4) * hem;
+      if (layer === 2) {
+        const original = new Vector3(x, y, z), bent = spectralFoldPoint(original.clone());
+        // The head and staff keep their solid shape. Blend through surrounding
+        // cloth in source space, identically on each side of every mesh cut.
+        const head = smooth((y - 1.40) / .14) * (1 - smooth((Math.abs(x) - .16) / .10));
+        bent.lerp(spectralRigidFold(original.clone(), spectralHeadAnchor), head);
+        const staffDistance = Math.hypot(x - (.24 + .10 * y), z - (.18 + .07 * y));
+        const staff = 1 - smooth((staffDistance - .105) / .085);
+        bent.lerp(spectralRigidFold(original.clone(), spectralStaffAnchor), staff);
+        dx = bent.x - x; dy = bent.y - y; dz = bent.z - z;
+      }
+      delta.set([dx, dy, dz], i * 3); attribute.setXYZ(i, x + dx, y + dy, z + dz);
+    }
+    target.computeVertexNormals();
+    const normal = geometry.getAttribute('normal'), targetNormal = target.getAttribute('normal');
+    const normalDelta = new Float32Array(position.count * 3);
+    if (normal) for (let i = 0; i < position.count; i++) for (let axis = 0; axis < 3; axis++) normalDelta[i * 3 + axis] = targetNormal.getComponent(i, axis) - normal.getComponent(i, axis);
+    geometry.morphAttributes.position.push(new Float32BufferAttribute(delta, 3));
+    geometry.morphAttributes.normal.push(new Float32BufferAttribute(normalDelta, 3));
+    target.dispose();
+  }
+  geometry.computeBoundingBox(); geometry.computeBoundingSphere(); spectralMotionCache.set(source, geometry); return geometry;
+}
 function supportVertices(mesh: Mesh): Vector3[] {
   const cached = supportCache.get(mesh.geometry); if (cached) return cached;
   const position = mesh.geometry.getAttribute('position'); if (!position) return [];
@@ -44,6 +100,7 @@ const smooth = (n: number) => { const t = clamp(n); return t * t * (3 - 2 * t); 
 /** Rigid articulated poses. Shared geometry/materials remain suitable for instancing. */
 export class EnemyAnimator {
   readonly articulated: boolean;
+  private readonly skinned?: SkinnedEnemyAnimator;
   private readonly joints = new Map<string, Joint>();
   private readonly euler = new Euler();
   private readonly offset = new Quaternion();
@@ -56,30 +113,29 @@ export class EnemyAnimator {
   private supportHeight = 0;
   private readonly supportPoint = new Vector3();
   private readonly garments: Mesh[] = [];
-  private spectralEnvelope = { hem: 0, height: 1 };
+  private readonly spectralParentInverse = new Matrix4();
   private readonly legSupports = new Map<string, { foot: Vector3; center: Vector3; sole: readonly Vector3[]; limb: readonly { node: Object3D; point: Vector3 }[] }>();
   private readonly authoredGuard?: AuthoredEnemyGuard;
   private readonly authoredGuardSupport?: AuthoredGuardSupport;
 
   /** Authored foot support owns the visual pose, including its ground height. */
-  get ownsGroundedPose(): boolean { return this.authoredGuard !== undefined; }
+  get ownsGroundedPose(): boolean { return this.skinned !== undefined || this.authoredGuard !== undefined; }
   private readonly armSupports = new Map<string, { node: Object3D; point: Vector3 }[]>();
   private readonly capeSupports: { node: Object3D; point: Vector3 }[] = [];
   private readonly settledArmAngles = new Map<string, number>();
 
   constructor(visual: Object3D, options: { kind: string; phase: number }) {
-    this.brute = options.kind === 'guardian'; this.armored = options.kind === 'revenant'; this.spectral = options.kind === 'wraith'; this.phase = options.phase;
+    this.brute = (options.kind === 'guardian' || options.kind === 'vault-guardian-boss'); this.armored = options.kind === 'revenant'; this.spectral = options.kind === 'wraith'; this.phase = options.phase;
+    this.skinned = SkinnedEnemyAnimator.create(visual, options.kind, options.phase);
+    if (this.skinned) { this.articulated = true; return; }
     visual.traverse(object => {
       const name = typeof object.userData.enemyJoint === 'string'
         ? object.userData.enemyJoint : /^Joint_(\w+)/.exec(object.name)?.[1];
       if (name) this.joints.set(name, { object, position: object.position.clone(), rotation: object.quaternion.clone(), index: this.joints.size });
     });
     if (this.spectral) {
-      visual.traverse(object => { if (object instanceof Mesh && /^(Body|Cape|ArmUpperL|ArmUpperR)_Baked/.test(object.name)) this.garments.push(object); });
-      let hem = Infinity, top = -Infinity;
-      for (const garment of this.garments) { garment.geometry.computeBoundingBox(); hem = Math.min(hem, garment.geometry.boundingBox!.min.y); top = Math.max(top, garment.geometry.boundingBox!.max.y); }
-      this.spectralEnvelope = { hem, height: top - hem };
-      for (const garment of this.garments) { garment.geometry = wraithGatherGeometry(garment.geometry, this.spectralEnvelope); garment.updateMorphTargets(); }
+      visual.traverse(object => { if (object instanceof Mesh) this.garments.push(object); });
+      for (const garment of this.garments) { garment.geometry = spectralMotionGeometry(garment.geometry); garment.updateMorphTargets(); }
     }
     this.articulated = this.joints.has('ArmUpperR') && (this.joints.has('LegUpperL') || (this.spectral && this.joints.has('Body')));
     this.supportParent = this.joints.get('LegUpperL')?.object.parent ?? undefined;
@@ -121,13 +177,15 @@ export class EnemyAnimator {
 
   /** Updates local joint transforms only; caller updates matrixWorld before batching. */
   update(seconds: number, state: EnemyPoseState = {}): void {
+    if (this.skinned) { this.skinned.update(seconds, state); return; }
     if (!this.articulated) return;
-    for (const garment of this.garments) garment.morphTargetInfluences![0] = 0;
+    for (const garment of this.garments) garment.morphTargetInfluences!.fill(0);
     for (const joint of this.joints.values()) {
       joint.object.position.copy(joint.position); joint.object.quaternion.copy(joint.rotation);
     }
-    const t = seconds + this.phase, pace = this.brute ? 2.2 : this.armored ? 2.65 : 3.3;
-    const step = Math.sin(t * pace), stride = clamp(state.moving ?? .35);
+    if (this.spectral) { this.spectralMotion(seconds, state); return; }
+    const t = seconds + this.phase, pace = this.spectral ? 1.15 : this.brute ? 2.2 : this.armored ? 2.65 : 3.3;
+    const step = Math.sin(t * pace), stride = clamp(state.moving ?? .35) * (this.spectral ? .25 : 1);
     const breathe = Math.sin(t * 1.35), bodyTwist = Math.sin(t * .83);
     const weight = this.brute ? .65 : this.armored ? .82 : 1;
     this.rotate('Body', .025 + breathe * .015, bodyTwist * .045, step * .025);
@@ -209,7 +267,6 @@ export class EnemyAnimator {
       else this.breakApart(Math.max(0, death));
       if (state.collapse === 'grounded' && !this.brute && !this.spectral) this.groundedSkeleton(Math.max(0, death));
       if (state.collapse === 'grounded' && this.brute) this.groundedGuardian(Math.max(0, death), recoil, state.impactSide ?? 1);
-      if (state.collapse === 'grounded' && this.spectral) this.spectralBow(Math.max(0, death));
       if ((state.collapse === 'electric' || state.collapse === 'grounded') && death < .18 && (state.recoil ?? 0) > 0) {
         const hit = clamp(state.recoil ?? 0), side = state.impactSide ?? 1;
         this.rotate('Body', -.4 * hit, -.23 * hit * side, -.10 * hit * side);
@@ -337,47 +394,47 @@ export class EnemyAnimator {
     this.rotate('ArmLowerR', -1.10 * land, .28 * land, .05 * land);
   }
 
-  private spectralBow(age: number): void {
-    const settle = smooth((age - .12) / .64), slack = smooth((age - .58) / .28);
-    const body = this.joints.get('Body');
-    // A spectral body loses its bearing; a rigid robe should never be tipped
-    // like a solid cone or globally squashed into a miniature garment.
-    if (body) body.object.position.copy(body.position);
-    for (const garment of this.garments) garment.morphTargetInfluences![0] = settle;
-    this.rotate('Body', 0, 0, 0);
-    this.rotate('ArmUpperL', 0, 0, 0); this.rotate('ArmUpperR', 0, 0, 0);
-    // Upper meshes include long cloth panels. Bend those with the robe;
-    // transport the rigid hood/hands along the same curve independently.
-    for (const name of ['Head', 'ArmLowerL', 'ArmLowerR']) {
-      const joint = this.joints.get(name); if (!joint || !body) continue;
-      this.supportPoint.copy(joint.position).add(body.position);
-      if (name !== 'Head') this.supportPoint.add(this.joints.get(name.replace('Lower', 'Upper'))!.position);
-      const x = this.supportPoint.x, y = this.supportPoint.y, z = this.supportPoint.z;
-      const angle = bendWraithPoint(this.supportPoint, this.spectralEnvelope.hem, this.spectralEnvelope.height);
-      joint.object.position.x += (this.supportPoint.x - x) * settle;
-      joint.object.position.y += (this.supportPoint.y - y) * settle;
-      joint.object.position.z += (this.supportPoint.z - z) * settle;
-      if (name === 'Head') joint.object.position.y -= .08 * settle;
-      const turn = name === 'ArmLowerR' ? -.08 * settle : (angle + (name === 'Head' ? .35 : name === 'ArmLowerL' ? .4 * slack : 0)) * (name === 'ArmLowerL' ? smooth((age - .08) / .44) : settle);
-      this.rotate(name, turn, name === 'Head' ? .10 * settle : 0, name === 'ArmLowerR' ? .12 * settle : 0);
+  private spectralMotion(seconds: number, state: EnemyPoseState): void {
+    const body = this.joints.get('Body'); if (!body) return;
+    const t = seconds + this.phase, age = state.deathAge;
+    const recoil = clamp(state.recoil ?? 0), brace = clamp(state.brace ?? 0), side = state.impactSide ?? 1;
+    const dying = age !== undefined, release = dying ? smooth((age - .16) / .95) : 0;
+    const calm = dying ? 1 - smooth(age / .16) : 1 - Math.max(recoil, brace);
+    const breath = Math.sin(t * .72), sway = Math.sin(t * .57);
+    const lift = dying ? .12 * Math.sin(Math.PI * release) : 0;
+    const arch = dying ? -.12 * Math.sin(Math.PI * release) : 0;
+    // The robe, neck and staff were cut across rigid groups. Keep those groups
+    // in their exact shared rest frames; animate the bearing as one form.
+    this.rotate('Body', .010 * breath * calm - .115 * recoil + .025 * brace + arch,
+      .036 * sway * calm - .07 * recoil * side + .055 * release * side,
+      .008 * Math.sin(t * .73) * calm - .05 * recoil * side + .025 * release * side);
+    body.object.position.y += lift;
+    body.object.position.z -= .065 * recoil;
+    // Phase-lagged fabric movement remains continuous through every source cut.
+    const flutter = dying ? Math.sin(release * Math.PI * 2) * (1 - release) * 2 : .8 + .8 * Math.sin(t * .72 - 1.15);
+    const clothCatch = clamp(state.catchStep ?? state.brace ?? 0);
+    for (const garment of this.garments) {
+      garment.morphTargetInfluences![0] = (.5 + .5 * breath) * calm + .6 * brace;
+      // Catch-step peaks after the chest brace and decays later. This lets the
+      // lower cloth pass the recovering torso instead of stopping with it.
+      garment.morphTargetInfluences![1] = flutter * (dying ? 1 : calm) + (dying ? 1.7 * brace : 2.8 * clothCatch * side);
+      garment.morphTargetInfluences![2] = dying ? release : .11 * brace;
     }
-    // Release the entire reach: shoulders sink, elbows settle beside the robe,
-    // then wrists follow gravity. A vertical wrist with a forward elbow still
-    // reads as a deliberate plea/cast, especially with the fused staff in L.
-    for (const side of ['L', 'R'] as const) {
-      const shoulder = this.joints.get(`ArmUpper${side}`);
-      if (shoulder) shoulder.object.position.y -= .24 * slack;
-      const forearm = this.joints.get(`ArmLower${side}`);
-      if (!forearm || slack <= 0) continue;
-      // Source forearm-to-hand joint vectors, in exported Y-up coordinates.
-      if (side === 'L') this.supportPoint.set(.17486, .02982, .16589);
-      else this.supportPoint.set(-.14077, -.10835, .05901);
-      this.supportPoint.applyQuaternion(forearm.object.quaternion).normalize();
-      this.offset.setFromUnitVectors(this.supportPoint, spectralReleaseDirections[side]).multiply(forearm.object.quaternion);
-      forearm.object.quaternion.slerp(this.offset, slack);
-      forearm.object.position.z -= (side === 'L' ? .38 : .32) * slack;
+    // Rotating about the chest must not put the trailing hem or staff below
+    // the floor. Move the common parent only; joins stay exact.
+    body.object.updateWorldMatrix(true, true);
+    const parent = body.object.parent;
+    if (parent) this.spectralParentInverse.copy(parent.matrixWorld).invert();
+    let minimum = Infinity;
+    for (const garment of this.garments) {
+      const count = garment.geometry.getAttribute('position').count;
+      for (let i = 0; i < count; i++) {
+        garment.getVertexPosition(i, this.supportPoint).applyMatrix4(garment.matrixWorld);
+        if (parent) this.supportPoint.applyMatrix4(this.spectralParentInverse);
+        minimum = Math.min(minimum, this.supportPoint.y);
+      }
     }
-    this.rotate('Cape', 0, 0, 0);
+    if (minimum < .06) body.object.position.y += .06 - minimum;
   }
 
   private rotate(name: string, x: number, y: number, z: number): void {

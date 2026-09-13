@@ -1,0 +1,17 @@
+{
+  "id": "icespear",
+  "triangles": 9204,
+  "meshes": 1,
+  "bytes": 235272,
+  "method": "Local solid geometry and original concept projection",
+  "grip": [
+    0,
+    0,
+    0
+  ],
+  "tip": [
+    0.0,
+    -0.0003499999875202775,
+    0.7952617406845093
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "metal_diffuse_probe": {
+    "method": "bpy-dev MCP; 32x32 plane; Principled base color RGB 0.5; Cycles diffuse color only",
+    "metallic_0_mean_red": 0.4813075661659241,
+    "metallic_1_mean_red": 0.0,
+    "conclusion": "Diffuse color is not PBR base color for metallic surfaces; bake linked base color through emission."
+  },
+  "uv_fault": {
+    "reported_by": "skeleton_builder",
+    "finding": "SurfaceUV remained active_render while AtlasUV was active for editing. All exported atlas channels require the same render UV."
+  }
+}

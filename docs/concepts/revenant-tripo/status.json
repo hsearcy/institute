@@ -1,0 +1,24 @@
+{
+  "task_id": "2a61a568-b810-4bf8-8b94-5b0c8f91edab",
+  "type": "multiview_to_model",
+  "status": "success",
+  "progress": 100,
+  "create_time": 1789225786,
+  "consumed_credit": 60,
+  "output_fields": [
+    "pbr_model",
+    "rendered_image"
+  ],
+  "downloads": {
+    "pbr_model": {
+      "path": "docs/concepts/revenant-tripo/source/revenant-pbr_model.glb",
+      "bytes": 57852512,
+      "sha256": "aa0025357ac04abe17ec546eb6ad880d5ef726e11fea5b9cd82afdf3307b2fa1"
+    },
+    "rendered_image": {
+      "path": "docs/concepts/revenant-tripo/source/revenant-rendered_image.webp",
+      "bytes": 180031,
+      "sha256": "b748248d85156f1a772fc61136f888738743aad29b815230a48d348282c2f134"
+    }
+  }
+}

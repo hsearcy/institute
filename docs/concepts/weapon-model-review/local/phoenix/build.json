@@ -1,0 +1,17 @@
+{
+  "id": "phoenix",
+  "triangles": 7980,
+  "meshes": 1,
+  "bytes": 227932,
+  "method": "Local solid geometry and original concept projection",
+  "grip": [
+    0,
+    0,
+    0
+  ],
+  "tip": [
+    -0.05622047185897827,
+    -0.0003499999875202775,
+    0.7113610506057739
+  ]
+}

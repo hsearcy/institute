@@ -1,0 +1,194 @@
+{
+  "archive": "/tmp/institute-skeleton-obsolete-checkpoints",
+  "note": "Obsolete generated checkpoints. Final source chain and all critic evidence remain in the project.",
+  "files": [
+    {
+      "name": "review-scene-v2.blend",
+      "bytes": 7293801
+    },
+    {
+      "name": "atlas-stage-1.blend",
+      "bytes": 7593110
+    },
+    {
+      "name": "head-atlas-stage-2.blend",
+      "bytes": 67188697
+    },
+    {
+      "name": "skeleton-concept-v20.blend",
+      "bytes": 6595050
+    },
+    {
+      "name": "skeleton-concept-v5.blend",
+      "bytes": 5870708
+    },
+    {
+      "name": "review-scene-v14.blend",
+      "bytes": 6850050
+    },
+    {
+      "name": "atlas-v15-stage-5.blend",
+      "bytes": 64085848
+    },
+    {
+      "name": "skeleton-concept-v9.blend",
+      "bytes": 7501410
+    },
+    {
+      "name": "skeleton-concept-v2.blend",
+      "bytes": 5750797
+    },
+    {
+      "name": "head-atlas-stage-1.blend",
+      "bytes": 63691685
+    },
+    {
+      "name": "atlas-v15-stage-1.blend",
+      "bytes": 56556045
+    },
+    {
+      "name": "head-atlas-stage-3.blend",
+      "bytes": 69612828
+    },
+    {
+      "name": "head-atlas-stage-5.blend",
+      "bytes": 73843419
+    },
+    {
+      "name": "skeleton-concept-v17.blend",
+      "bytes": 9324395
+    },
+    {
+      "name": "review-scene-v12.blend",
+      "bytes": 12074190
+    },
+    {
+      "name": "atlas-v15-stage-3.blend",
+      "bytes": 61250243
+    },
+    {
+      "name": "skeleton-concept-v13.blend",
+      "bytes": 8416825
+    },
+    {
+      "name": "atlas-v15-stage-4.blend",
+      "bytes": 63298173
+    },
+    {
+      "name": "atlas-v11-stage-2.blend",
+      "bytes": 11618021
+    },
+    {
+      "name": "helmet-hands-export-review-v26.blend",
+      "bytes": 11056642
+    },
+    {
+      "name": "skeleton-concept-v14.blend",
+      "bytes": 8693743
+    },
+    {
+      "name": "review-scene-v17.blend",
+      "bytes": 7151738
+    },
+    {
+      "name": "diagnostic-v17.blend",
+      "bytes": 7151329
+    },
+    {
+      "name": "review-scene.blend",
+      "bytes": 10262282
+    },
+    {
+      "name": "skeleton-concept-v19.blend",
+      "bytes": 59937712
+    },
+    {
+      "name": "helmet-hands-review-v25.blend",
+      "bytes": 59511965
+    },
+    {
+      "name": "skeleton-concept-v3.blend",
+      "bytes": 5818402
+    },
+    {
+      "name": "review-scene-v23.blend",
+      "bytes": 5868442
+    },
+    {
+      "name": "atlas-v11-stage-1.blend",
+      "bytes": 10253201
+    },
+    {
+      "name": "skeleton-concept-v11.blend",
+      "bytes": 8202291
+    },
+    {
+      "name": "atlas-v11-stage-5.blend",
+      "bytes": 17405464
+    },
+    {
+      "name": "review-scene-v3.blend",
+      "bytes": 6443906
+    },
+    {
+      "name": "skeleton-concept-v16.blend",
+      "bytes": 65564279
+    },
+    {
+      "name": "skeleton-concept-v12.blend",
+      "bytes": 18841391
+    },
+    {
+      "name": "skeleton-concept-v10.blend",
+      "bytes": 6749910
+    },
+    {
+      "name": "review-scene-v6.blend",
+      "bytes": 6006957
+    },
+    {
+      "name": "atlas-stage-2.blend",
+      "bytes": 8452633
+    },
+    {
+      "name": "review-scene-v20.blend",
+      "bytes": 5867930
+    },
+    {
+      "name": "skeleton-concept-v6.blend",
+      "bytes": 5523935
+    },
+    {
+      "name": "atlas-v11-stage-3.blend",
+      "bytes": 14864649
+    },
+    {
+      "name": "helmet-hands-v24.blend",
+      "bytes": 59543957
+    },
+    {
+      "name": "head-atlas-stage-4.blend",
+      "bytes": 72146075
+    },
+    {
+      "name": "helmet-hands-review-v24.blend",
+      "bytes": 59546866
+    },
+    {
+      "name": "atlas-v11-stage-4.blend",
+      "bytes": 16872520
+    },
+    {
+      "name": "review-scene-v9.blend",
+      "bytes": 5411055
+    },
+    {
+      "name": "atlas-v15-stage-2.blend",
+      "bytes": 58171901
+    },
+    {
+      "name": "skeleton-concept.blend",
+      "bytes": 7159465
+    }
+  ]
+}

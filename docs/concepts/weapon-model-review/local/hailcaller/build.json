@@ -1,0 +1,17 @@
+{
+  "id": "hailcaller",
+  "triangles": 8188,
+  "meshes": 1,
+  "bytes": 229260,
+  "method": "Local solid geometry and original concept projection",
+  "grip": [
+    0,
+    0,
+    0
+  ],
+  "tip": [
+    0.021987223997712135,
+    -0.0003499999875202775,
+    0.6573764085769653
+  ]
+}

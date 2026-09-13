@@ -1,0 +1,17 @@
+{
+  "id": "wintercrown",
+  "triangles": 10124,
+  "meshes": 1,
+  "bytes": 258044,
+  "method": "Local solid geometry and original concept projection",
+  "grip": [
+    0,
+    0,
+    0
+  ],
+  "tip": [
+    0.021783029660582542,
+    -0.0003499999875202775,
+    1.2097959518432617
+  ]
+}

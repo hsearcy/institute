@@ -1,0 +1,61 @@
+{
+  "path": "/home/hfsearcy/git/institute/docs/concepts/skeleton-tripo/source/skeleton-pbr_model.glb",
+  "bytes": 58264456,
+  "sha256": "f6eb2ecc9a15245e1aad21e6bac8bc95b8dd4883384f9896d1ed90d7ee2ce7c7",
+  "triangles": 1913738,
+  "meshes": 1,
+  "primitives": 1,
+  "nodes": 1,
+  "materials": 1,
+  "textures": 3,
+  "images": 3,
+  "skins": 0,
+  "animations": 0,
+  "extensions_used": [],
+  "extensions_required": [],
+  "external_uris": [],
+  "materials_detail": [
+    {
+      "name": "tripo_material_ad83e4f7-6ba3-4fef-9dd0-9fc2e8784ff9",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "baseColorTexture": {
+          "index": 0
+        },
+        "metallicFactor": 1.0,
+        "roughnessFactor": 1.0,
+        "metallicRoughnessTexture": {
+          "index": 1
+        }
+      },
+      "normalTexture": {
+        "index": 2,
+        "scale": 1.0
+      },
+      "doubleSided": false
+    }
+  ],
+  "position_bounds": [
+    {
+      "min": [
+        -0.09784013032913208,
+        -0.4897157847881317,
+        -0.22903288900852203
+      ],
+      "max": [
+        0.09878052026033401,
+        0.48977720737457275,
+        0.228557288646698
+      ],
+      "count": 1007659
+    }
+  ],
+  "node_names": [
+    "tripo_node_ad83e4f7-6ba3-4fef-9dd0-9fc2e8784ff9"
+  ]
+}

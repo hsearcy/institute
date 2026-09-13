@@ -1,0 +1,37 @@
+{
+  "task_id": "eb6d496f-3b97-44e8-8792-c7e936028097",
+  "settings": {
+    "type": "multiview_to_model",
+    "model_version": "v3.1-20260211",
+    "geometry_quality": "detailed",
+    "texture_quality": "detailed",
+    "texture": true,
+    "pbr": true,
+    "texture_alignment": "original_image",
+    "orientation": "align_image",
+    "auto_size": true,
+    "enable_image_autofix": false,
+    "quad": false,
+    "generate_parts": false,
+    "smart_low_poly": false,
+    "export_uv": true,
+    "model_seed": 20260912,
+    "texture_seed": 20260912
+  },
+  "view_order": [
+    "front",
+    null,
+    "back",
+    null
+  ],
+  "inputs": {
+    "front": {
+      "path": "docs/concepts/vault-guardian-boss-tripo/reference/front.png",
+      "sha256": "58bbc8b219f747447a079158150aa8e2af3bc73886fb944fdd62d438bbb91814"
+    },
+    "back": {
+      "path": "docs/concepts/vault-guardian-boss-tripo/reference/back.png",
+      "sha256": "a954cfa7abc2569e67dac8976bf78ca28ca01b789c77bcdc56f57d4183ddfcb4"
+    }
+  }
+}

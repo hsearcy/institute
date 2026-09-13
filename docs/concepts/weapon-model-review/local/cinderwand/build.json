@@ -1,0 +1,17 @@
+{
+  "id": "cinderwand",
+  "triangles": 7420,
+  "meshes": 1,
+  "bytes": 191920,
+  "method": "Local solid geometry and original concept projection",
+  "grip": [
+    0,
+    0,
+    0
+  ],
+  "tip": [
+    -0.024383708834648132,
+    -0.0003499999875202775,
+    0.707127571105957
+  ]
+}

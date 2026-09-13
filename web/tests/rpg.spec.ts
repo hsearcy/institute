@@ -133,25 +133,12 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
   await expect(page.locator('.rpg-starter-spells [data-spell="cleave"]')).toHaveAttribute('aria-pressed','true');
   await page.locator('.rpg-starter-spells [data-spell="ember"]').click();
   await expect.poll(async () => (await state(page)).selectedSpellId).toBe('ember');
-  // Cosmetic milestones are visible to a legacy level-one learner, but cannot
-  // be worn early; the two-column phone layout keeps every control reachable.
+  // Retired hero models are no longer offered in equipment or camp.
   const originalViewport = page.viewportSize()!;
   await page.locator('.rpg-camp-menu').getByRole('button', { name: 'Equipment', exact: true }).click();
-  await expect(page.locator('.rpg-armor-card')).toHaveCount(4);
-  await expect(page.locator('[data-appearance="wayfarer"]')).toHaveAttribute('aria-pressed', 'true');
-  for (const [appearance, level] of [['cinder', 12], ['glacier', 15], ['tempest', 18]] as const) {
-    await expect(page.locator(`[data-appearance="${appearance}"]`)).toBeDisabled();
-    await expect(page.locator(`[data-armor="${appearance}"]`)).toContainText(`Level ${level}`);
-  }
-  await expect(page.locator('.rpg-armor-next')).toContainText('Level 12');
-  await page.setViewportSize({ width: 390, height: 844 });
-  expect(await page.locator('.rpg-armor-grid').evaluate(grid => grid.scrollWidth <= grid.clientWidth + 1)).toBe(true);
-  const armorBounds = await page.locator('.rpg-armor-card').evaluateAll(cards => cards.map(card => ({ x: card.getBoundingClientRect().x, y: card.getBoundingClientRect().y })));
-  expect(armorBounds[0]!.y).toBe(armorBounds[1]!.y);
-  expect(armorBounds[2]!.y).toBeGreaterThan(armorBounds[0]!.y);
-  expect((await page.locator('[data-appearance="cinder"]').boundingBox())!.height).toBeGreaterThanOrEqual(44);
-  await page.setViewportSize(originalViewport);
+  await expect(page.locator('.rpg-armor-card,[data-appearance]')).toHaveCount(0);
   await page.getByRole('button', { name: 'Back to camp', exact: true }).click();
+  await expect(page.locator('.rpg-armor-progress')).toHaveCount(0);
   expect((await state(page)).appearanceId).toBe('wayfarer');
   expect(await (await page.request.get(`/mastery?profileId=${profile}`)).json()).toEqual(originalMastery);
   await page.getByRole('button',{name:'Choose an expedition',exact:true}).click();
@@ -220,7 +207,7 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
   }), { timeout: 30_000 }).toBe(true);
   await expect.poll(() => page.evaluate(() => {
     const world = (window as any).__game.world;
-    return ['revenant', 'wraith'].every(modelId => {
+    return ['skeleton', 'guardian', 'revenant', 'wraith'].every(modelId => {
       const source = world.models.get(modelId);
       if (!source) return false;
       const geometries = new Set<unknown>();
@@ -229,7 +216,11 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
       return actors.length > 0 && actors.every((enemy: any) => {
         let authored = false;
         enemy.visual.traverse((node: any) => {
-          if (node.isMesh && geometries.has(node.geometry) && world.enemyInstances.some((batch: any) => batch.mesh.parent === world.enemyGroup && batch.mesh.visible && batch.sources.includes(node))) authored = true;
+          if (!node.isMesh) return;
+          const sourceGeometry = geometries.has(node.geometry) || [...geometries].some((g: any) => g.uuid === node.geometry.userData.enemySourceGeometry);
+          const drawn = node.isSkinnedMesh ? enemy.visual.visible && world.skinnedEnemies.some((actor: any) => actor.mesh === node)
+            : world.enemyInstances.some((batch: any) => batch.mesh.parent === world.enemyGroup && batch.mesh.visible && batch.sources.includes(node));
+          if (sourceGeometry && drawn) authored = true;
         });
         return authored && enemy.animator.articulated;
       });
@@ -241,7 +232,7 @@ test('legacy learner plays an expedition, gets loot and unlocks a spell without 
   });
   expect(roster.counts.revenant).toBeGreaterThan(0);
   expect(Object.values(roster.counts).reduce((sum, count) => sum + count, 0)).toBe(rpgEncounterCombat(waiting).enemies.length);
-  expect(roster.articulated).toBe((roster.counts.guardian ?? 0) + (roster.counts.skeleton ?? 0) + roster.counts.revenant! + (roster.counts.wraith ?? 0));
+  expect(roster.articulated).toBe(Object.values(roster.counts).reduce((sum, count) => sum + count, 0));
   const masteryBeforeTarget = await (await page.request.get(`/mastery?profileId=${profile}`)).json();
   const targetProblem = await page.locator('#rpg-answer-form').getAttribute('data-problem-id');
   await page.getByRole('button', {name:'Open spellbook',exact:true}).click();

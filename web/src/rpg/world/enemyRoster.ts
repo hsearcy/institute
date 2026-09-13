@@ -1,4 +1,4 @@
-export type EnemyModelId = 'guardian' | 'revenant' | 'skeleton' | 'wraith';
+export type EnemyModelId = 'vault-guardian-boss' | 'guardian' | 'revenant' | 'skeleton' | 'wraith';
 export type EnemyRosterEntry = Readonly<{
   modelId: EnemyModelId;
   height: number;
@@ -18,7 +18,7 @@ export function enemyRoster(encounterIndex: number, count: number): EnemyRosterE
     // Keep the established large silhouettes and boss placement intact.
     if (index % 7 === 0) {
       const boss = room === 5 && index === 0;
-      return { modelId: 'guardian', height: boss ? 3.8 : 2.5, brute: true, boss };
+      return { modelId: boss ? 'vault-guardian-boss' : 'guardian', height: boss ? 3.8 : 2.5, brute: true, boss };
     }
     const ordinal = ordinary++;
     // A balanced35% sequence spreads armor across each progressive formation

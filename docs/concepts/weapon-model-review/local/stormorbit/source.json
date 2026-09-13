@@ -1,0 +1,9 @@
+{
+  "id": "stormorbit",
+  "method": "Local full-volume geometry with concept-projected engraving and textured PBR backs",
+  "triangles": 5672,
+  "bytes": 860784,
+  "concept": "references/stormorbit-front.png",
+  "grip": "Physical wearable anchor",
+  "status": "Candidate; independent visual review required"
+}

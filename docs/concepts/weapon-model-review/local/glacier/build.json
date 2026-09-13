@@ -1,0 +1,17 @@
+{
+  "id": "glacier",
+  "triangles": 8596,
+  "meshes": 1,
+  "bytes": 234156,
+  "method": "Local solid geometry and original concept projection",
+  "grip": [
+    0,
+    0,
+    0
+  ],
+  "tip": [
+    0.08765515685081482,
+    -0.0003499999875202775,
+    0.709884524345398
+  ]
+}

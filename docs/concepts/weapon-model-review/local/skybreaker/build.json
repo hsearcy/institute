@@ -1,0 +1,17 @@
+{
+  "id": "skybreaker",
+  "triangles": 7424,
+  "meshes": 1,
+  "bytes": 221332,
+  "method": "Local solid geometry and original concept projection",
+  "grip": [
+    0,
+    0,
+    0
+  ],
+  "tip": [
+    -0.00941980630159378,
+    -0.0003499999875202775,
+    1.02809476852417
+  ]
+}

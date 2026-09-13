@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Enemy motion review</title>
+<style>
+body{height:100dvh;display:flex;flex-direction:column;margin:0;background:#14191e;color:#e4e8ea;font:15px system-ui}header{padding:10px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}h1{font-size:19px;margin:0}label{display:flex;align-items:center;gap:6px}select,button{background:#29323a;color:inherit;border:1px solid #62717d;border-radius:5px;padding:7px}#stage{flex:1;min-height:200px}canvas{display:block}p{margin:6px 16px;font-size:12px;color:#bfcad2}a{color:#99d3e5}
+</style>
+<header><h1>Enemy motion review</h1>
+<label>Model <select id="model"><option value="skeleton">Skeleton · Tripo</option><option value="guardian">Guardian · Tripo</option><option value="vault-guardian-boss">Vault Guardian Boss · Tripo</option><option value="wraith">Wraith reference</option><option value="revenant">Revenant · Tripo</option></select></label>
+<label>View <select id="view"><option value="front">Front</option><option value="side">Side</option><option value="back">Back</option><option value="quarter">Three-quarter</option><option value="game">Game angle</option></select></label>
+<label>Pose <select id="pose"><option value="idle">Idle</option><option value="hit">Hit and recover</option><option value="death">Death</option></select></label>
+<label>Light <select id="light"><option value="studio">Studio</option><option value="dungeon">Dungeon</option></select></label>
+<label>Dissolve <input id="dissolve" type="checkbox"></label><button id="reload">Reload model</button><button id="play">Play</button><label>Time <input id="time" type="range" min="0" max="8" step="0.01" value="0"></label><label>Impact <select id="side"><option value="1">Right</option><option value="-1">Left</option></select></label></header>
+<div id="stage"></div><p id="status">Loading model…</p><p>Drag to turn. Scroll to zoom. Right-drag to move. Motion review: idle, impact and collapse. Set time to zero to replay an action.</p>
+<script type="module">
+import {Scene,PerspectiveCamera,WebGLRenderer,ACESFilmicToneMapping,DirectionalLight,HemisphereLight,PMREMGenerator,Box3,Vector3,Color,Clock} from 'three';
+import {Mesh,PlaneGeometry,MeshStandardMaterial} from 'three';
+import {createHitReaction,sampleHitReaction} from './src/rpg/world/hitReactions.ts';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
+import {createSkinnedDissolve} from './src/rpg/world/electricDissolve.ts';
+import {EnemyAnimator} from './src/rpg/world/EnemyAnimator.ts';
+const $=id=>document.getElementById(id), stage=$('stage'), renderer=new WebGLRenderer({antialias:true});
+renderer.shadowMap.enabled=true;renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.toneMapping=ACESFilmicToneMapping;stage.append(renderer.domElement);
+let running=false, elapsed=0, dirty=true;
+const scene=new Scene();const floor=new Mesh(new PlaneGeometry(20,20),new MeshStandardMaterial({color:0x626b70,roughness:1}));floor.receiveShadow=true;floor.rotation.x=-Math.PI/2;floor.position.y=-.005;scene.add(floor);scene.background=new Color('#20272d');
+const pmrem=new PMREMGenerator(renderer), room=new RoomEnvironment(), env=pmrem.fromScene(room,.04);scene.environment=env.texture;room.dispose();pmrem.dispose();
+const camera=new PerspectiveCamera(38,1,.01,100), controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;
+const hemi=new HemisphereLight(0xc2d5e2,0x292521,1), key=new DirectionalLight(0xffebd5,3), fill=new DirectionalLight(0x9ccde8,1.5);key.castShadow=true;key.shadow.mapSize.set(1024,1024);key.shadow.camera.left=-4;key.shadow.camera.right=4;key.shadow.camera.top=4;key.shadow.camera.bottom=-4;key.shadow.bias=-.0001;key.position.set(3,5,4);fill.position.set(-3,3,-2);scene.add(hemi,key,fill);
+let model,animator,bindings=[],rests=[],center=new Vector3(0,.8,0),radius=1,request=0;
+const initial=new URLSearchParams(location.search).get('model');if(['skeleton','wraith','revenant','guardian','vault-guardian-boss','skeleton-blender'].includes(initial))$('model').value=initial;
+const loader=new GLTFLoader().setMeshoptDecoder(MeshoptDecoder), clock=new Clock();
+function view(){dirty=true;const dirs={front:[0,.08,1],side:[1,.08,0],back:[0,.08,-1],quarter:[.65,.17,1],game:[17,25,20]};const target=center.clone();const death=$('pose').value==='death';if(death)target.y-=radius*.2;camera.position.copy(target).add(new Vector3(...dirs[$('view').value]).normalize().multiplyScalar(radius*(death?4.4:3.5)));controls.target.copy(target);controls.update();}
+function dispose(object){const geometries=new Set(),materials=new Set(),textures=new Set();object.traverse(o=>{if(!o.isMesh)return;geometries.add(o.geometry);for(const m of [o.material].flat()){materials.add(m);for(const value of Object.values(m))if(value?.isTexture)textures.add(value);}});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());}
+async function load(){const id=++request,kind=$('model').value;$('status').textContent='Loading model…';window.__review={ok:false};try{const gltf=await loader.loadAsync(({skeleton:'/assets/rpg/skeleton.glb',guardian:'/assets/rpg/guardian.glb','vault-guardian-boss':'/assets/rpg/vault-guardian-boss.glb','skeleton-blender':'/assets/rpg/candidates/skeleton-concept.glb',wraith:'/assets/rpg/wraith.glb',revenant:'/assets/rpg/revenant.glb'}[kind])+'?v='+Date.now());if(id!==request){dispose(gltf.scene);return;}if(model){scene.remove(model);bindings.forEach(b=>b.dispose());bindings=[];dispose(model);}model=gltf.scene;scene.add(model);const box=new Box3().setFromObject(model),size=box.getSize(new Vector3());center=box.getCenter(new Vector3());radius=Math.max(size.x,size.y,size.z)/2;rests=[];let triangles=0,meshes=0,rigRevision=0;model.traverse(o=>{if(o.userData.rigMetadata)rigRevision=JSON.parse(o.userData.rigMetadata).revision;rests.push([o,o.position.clone(),o.quaternion.clone()]);if(o.isMesh){const binding=createSkinnedDissolve(o.geometry,o.material);bindings.push(binding);o.material=binding.material;o.customDepthMaterial=binding.depth;o.castShadow=true;meshes++;triangles+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3;}});let revision='';if(kind==='skeleton-blender'){try{const meta=await fetch('/assets/rpg/candidates/skeleton-concept.json?v='+Date.now()).then(r=>r.json());if(id!==request)return;revision=` · Revision ${meta.revision} · ${meta.description}`;}catch{}}
+animator=new EnemyAnimator(model,{kind:kind==='skeleton-blender'?'skeleton':kind,phase:0});$('pose').disabled=!animator.articulated;$('pose').value='idle';window.__review={ok:true,kind,rigRevision,meshes,triangles,articulated:animator.articulated,size:size.toArray()};$('status').textContent=`${{skeleton:'Skeleton · Tripo',guardian:'Guardian · Tripo','vault-guardian-boss':'Vault Guardian Boss · Tripo','skeleton-blender':'Previous Blender skeleton',wraith:'Wraith',revenant:'Revenant · Tripo'}[kind]}${revision}${rigRevision?' · Rig '+rigRevision:''} · ${Math.round(triangles).toLocaleString()} triangles · ${meshes} meshes · ${animator.articulated?'Joint motion available':'No joint motion'}`;view();}catch(error){$('status').textContent='Cannot load model: '+error.message;window.__review={ok:false,error:String(error)};}}
+function light(){dirty=true;const dungeon=$('light').value==='dungeon';scene.environmentIntensity=dungeon?.075:.5;renderer.toneMappingExposure=dungeon?1.12:1;hemi.color.setHex(dungeon?0x7394aa:0xc2d5e2);hemi.groundColor.setHex(dungeon?0x15120f:0x292521);hemi.intensity=dungeon?.38:1;key.color.setHex(dungeon?0x6d8da5:0xffebd5);key.intensity=dungeon?1.5:3;key.position.set(...(dungeon?[-12,24,-10]:[3,5,4]));fill.position.set(...(dungeon?[15,12,18]:[-3,3,-2]));fill.color.setHex(dungeon?0xc6d3cf:0x9ccde8);fill.intensity=dungeon?.48:1.5;}
+new ResizeObserver(()=>{renderer.setSize(stage.clientWidth,stage.clientHeight);camera.aspect=stage.clientWidth/stage.clientHeight;camera.updateProjectionMatrix();}).observe(stage);
+$('play').onclick=()=>{running=!running;$('play').textContent=running?'Pause':'Play';dirty=true;};$('time').oninput=()=>{running=false;elapsed=Number($('time').value);dirty=true;};$('pose').onchange=()=>{elapsed=0;dirty=true;};window.__motionReview={setTime:(t)=>{running=false;elapsed=t;dirty=true;},play:()=>{running=true;},state:()=>window.__review};
+$('dissolve').onchange=()=>{dirty=true;};$('side').onchange=()=>{dirty=true;};$('model').onchange=load;$('reload').onclick=load;$('view').onchange=view;$('light').onchange=light;
+renderer.setAnimationLoop(()=>{const changed=controls.update();const dt=clock.getDelta();if(!running&&!dirty&&!changed)return;dirty=false;if(running)elapsed+=dt;$('time').value=String(elapsed);if(model){for(const [o,p,q]of rests){o.position.copy(p);o.quaternion.copy(q);if(o.morphTargetInfluences)o.morphTargetInfluences.fill(0);}const pose=$('pose').value;
+const reaction=createHitReaction({at:0,x:0,z:0,sourceX:0,sourceZ:2,phase:0,heavy:['guardian','vault-guardian-boss'].includes($('model').value),maxHp:100,hit:{damage:pose==='death'?100:30,hpBefore:100,hpAfter:pose==='death'?0:70},element:'other'});reaction.side=Number($('side').value);const response=sampleHitReaction(reaction,elapsed);
+bindings.forEach(b=>b.set(pose==='death'&&$('dissolve').checked?response.erosion:0));
+const supportTravel=response.displacement*(pose==='death'?1:response.control);
+if(pose!=='idle')model.position.z=-supportTravel;
+animator.update(elapsed,pose==='idle'?{moving:0,threat:0}:{recoil:response.recoil,brace:response.brace,impactSide:reaction.side,supportTravel,catchStep:response.catchStep,footLift:response.footLift,footOffset:response.footOffset,deathAge:pose==='death'?response.collapseAge:undefined,collapse:'grounded'});
+}controls.update();renderer.render(scene,camera);});light();load();
+</script></html>

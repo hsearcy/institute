@@ -8,12 +8,12 @@ test('Enemy presentation preserves the supplied count and established boss/guard
     assert.equal(roster.length, count, 'Presentation must never add or remove authoritative enemies');
     assert.equal(roster.filter(enemy => enemy.boss).length, room === 5 && count > 0 ? 1 : 0);
     for (const [index, enemy] of roster.entries()) {
-      assert(['guardian', 'revenant', 'skeleton', 'wraith'].includes(enemy.modelId));
+      assert(['vault-guardian-boss', 'guardian', 'revenant', 'skeleton', 'wraith'].includes(enemy.modelId));
       assert(Number.isFinite(enemy.height) && enemy.height > 0);
       assert.equal(enemy.brute, index % 7 === 0, 'Established guardian slots must retain their large actor behavior');
       assert.equal(enemy.boss, room === 5 && index === 0);
       if (enemy.brute) {
-        assert.equal(enemy.modelId, 'guardian');
+        assert.equal(enemy.modelId, enemy.boss ? 'vault-guardian-boss' : 'guardian');
         assert.equal(enemy.height, enemy.boss ? 3.8 : 2.5);
       } else if (enemy.modelId === 'revenant') {
         assert(enemy.height >= 1.8 && enemy.height <= 1.95, 'Armored soldiers must retain the agreed silhouette scale');

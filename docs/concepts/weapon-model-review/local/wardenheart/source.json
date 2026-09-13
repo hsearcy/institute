@@ -1,0 +1,9 @@
+{
+  "id": "wardenheart",
+  "method": "Local full-volume geometry with concept-projected engraving and textured PBR backs",
+  "triangles": 5876,
+  "bytes": 748832,
+  "concept": "references/wardenheart-front.png",
+  "grip": "Physical wearable anchor",
+  "status": "Candidate; independent visual review required"
+}

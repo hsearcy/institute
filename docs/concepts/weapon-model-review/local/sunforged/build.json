@@ -1,0 +1,17 @@
+{
+  "id": "sunforged",
+  "triangles": 8624,
+  "meshes": 1,
+  "bytes": 232620,
+  "method": "Local solid geometry and original concept projection",
+  "grip": [
+    0,
+    0,
+    0
+  ],
+  "tip": [
+    0.000610646209679544,
+    -0.0003499999875202775,
+    1.0056768655776978
+  ]
+}

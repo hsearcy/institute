@@ -1,0 +1,106 @@
+[
+  {
+    "id": "apprentice",
+    "triangles": 6808,
+    "bytes": 193188,
+    "materials": 1,
+    "sha256": "aa8ed890be21863db1b932b11237fb7e268713fecadde73c76d347af0214a9ae",
+    "status": "Structural checks only; consult the separately recorded visual review scopes"
+  },
+  {
+    "id": "glacier",
+    "triangles": 8596,
+    "bytes": 234156,
+    "materials": 1,
+    "sha256": "680c09b7e847fd9b147a4ee884328795b9e18843132358bffb32e51d0649dd76",
+    "status": "Structural checks only; consult the separately recorded visual review scopes"
+  },
+  {
+    "id": "thunderrod",
+    "triangles": 9956,
+    "bytes": 302976,
+    "materials": 3,
+    "sha256": "493ba321847578987a87b043fa956227a741944c71200d6127445fe4161d2b73",
+    "status": "Structural checks only; consult the separately recorded visual review scopes"
+  },
+  {
+    "id": "cleaver",
+    "triangles": 7976,
+    "bytes": 225144,
+    "materials": 1,
+    "sha256": "8d73cb3c294767fe1a44f7d2490928598a271afb0fededae3b8bf602d3920072",
+    "status": "Structural checks only; consult the separately recorded visual review scopes"
+  },
+  {
+    "id": "starfall",
+    "triangles": 7556,
+    "bytes": 203108,
+    "materials": 1,
+    "sha256": "2155108a314e709252c7e5d67bc5a40220a047b7453589c54cc4c6ea371e2498",
+    "status": "Structural checks only; consult the separately recorded visual review scopes"
+  },
+  {
+    "id": "phoenix_talon",
+    "triangles": 7712,
+    "bytes": 218924,
+    "materials": 1,
+    "sha256": "57482fbcb49b0a82d14558ff8090785cc99f3fc5183ac87cdedd256bc58cbed9",
+    "status": "Structural checks only; consult the separately recorded visual review scopes"
+  },
+  {
+    "id": "sunforged",
+    "triangles": 8716,
+    "bytes": 234884,
+    "materials": 1,
+    "sha256": "7ab65aca717ac06a78f58b8bc83c3db2a3b11a242d7756893903014b6bba8547",
+    "status": "Structural checks only; consult the separately recorded visual review scopes"
+  },
+  {
+    "id": "icespear",
+    "triangles": 9204,
+    "bytes": 235292,
+    "materials": 1,
+    "sha256": "0197889dc59151206370a097dd04641f246140f85279f350861d83c0b48a65ee",
+    "status": "Structural checks only; consult the separately recorded visual review scopes"
+  },
+  {
+    "id": "tideglass",
+    "triangles": 8408,
+    "bytes": 231320,
+    "materials": 1,
+    "sha256": "7fca7c62e789ccb3176e538516b9f906a79c9ed8c102b0ff02084c14b1393b62",
+    "status": "Structural checks only; consult the separately recorded visual review scopes"
+  },
+  {
+    "id": "hailcaller",
+    "triangles": 8188,
+    "bytes": 229260,
+    "materials": 1,
+    "sha256": "fc7f8a962cc3d8cedce473a0834234d839c191f86911d970616d0c356331ee05",
+    "status": "Structural checks only; consult the separately recorded visual review scopes"
+  },
+  {
+    "id": "arcfang",
+    "triangles": 8216,
+    "bytes": 207904,
+    "materials": 1,
+    "sha256": "15c2ea4480b0a2017e8b7d151d4b18d6cc2ff1cd93b1b83464432132503de746",
+    "status": "Structural checks only; consult the separately recorded visual review scopes"
+  },
+  {
+    "id": "skybreaker",
+    "triangles": 7424,
+    "bytes": 221332,
+    "materials": 1,
+    "sha256": "24ea5ac24c798b05fd09ffecb62c8be91c7dfe40878555af1b514060e8ceef1e",
+    "status": "Structural checks only; consult the separately recorded visual review scopes"
+  },
+  {
+    "id": "stormsilver",
+    "triangles": 8300,
+    "bytes": 218856,
+    "materials": 1,
+    "sha256": "f9471eac1083dcf7ff23ba8c25eb1d3a389e92a2cc509065eaeb4b3eed4db442",
+    "status": "Structural checks only; consult the separately recorded visual review scopes"
+  }
+]

@@ -1,0 +1,25 @@
+{
+  "source": "https://polyhaven.com/a/rusty_metal_04",
+  "license": "CC0-1.0",
+  "creator": "Amal Kumar",
+  "files": [
+    {
+      "channel": "Diffuse",
+      "file": "rusty_metal_04_diff_2k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/rusty_metal_04/rusty_metal_04_diff_2k.jpg",
+      "sha256": "dc17baa7c113af0a8db59a7166dbebd1d8bc842e69b1f07b89d9e90531ebbd22"
+    },
+    {
+      "channel": "nor_gl",
+      "file": "rusty_metal_04_nor_gl_2k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/rusty_metal_04/rusty_metal_04_nor_gl_2k.png",
+      "sha256": "e29386e08affdb512887e54ac527303ccb7d1f7e5abf5620681fb5f49d1c0b6d"
+    },
+    {
+      "channel": "arm",
+      "file": "rusty_metal_04_arm_2k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/2k/rusty_metal_04/rusty_metal_04_arm_2k.png",
+      "sha256": "8837ef054d0ce51107ec6acd71bee884b6dad046ae72f56cf713c11519754d61"
+    }
+  ]
+}

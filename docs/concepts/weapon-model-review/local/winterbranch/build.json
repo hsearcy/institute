@@ -1,0 +1,17 @@
+{
+  "id": "winterbranch",
+  "triangles": 8876,
+  "meshes": 1,
+  "bytes": 235152,
+  "method": "Local solid geometry and original concept projection",
+  "grip": [
+    0,
+    0,
+    0
+  ],
+  "tip": [
+    0.06198030710220337,
+    -0.0003499999875202775,
+    0.5668380856513977
+  ]
+}

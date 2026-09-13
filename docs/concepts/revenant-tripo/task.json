@@ -1,0 +1,37 @@
+{
+  "task_id": "2a61a568-b810-4bf8-8b94-5b0c8f91edab",
+  "settings": {
+    "type": "multiview_to_model",
+    "model_version": "v3.1-20260211",
+    "geometry_quality": "detailed",
+    "texture_quality": "detailed",
+    "texture": true,
+    "pbr": true,
+    "texture_alignment": "original_image",
+    "orientation": "align_image",
+    "auto_size": true,
+    "enable_image_autofix": false,
+    "quad": false,
+    "generate_parts": false,
+    "smart_low_poly": false,
+    "export_uv": true,
+    "model_seed": 20260912,
+    "texture_seed": 20260912
+  },
+  "view_order": [
+    "front",
+    null,
+    "back",
+    null
+  ],
+  "inputs": {
+    "front": {
+      "path": "docs/concepts/revenant-tripo/reference/front.png",
+      "sha256": "85a7c1ba22bfe97f348c5c06b909a3812ea39890c9cef3ea81b5fec61cc291bc"
+    },
+    "back": {
+      "path": "docs/concepts/revenant-tripo/reference/back.png",
+      "sha256": "855c159deb80477cdb4ee45a65c4d336dab024240e174b2fb226bcd1a78bb732"
+    }
+  }
+}

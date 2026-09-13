@@ -1,0 +1,9 @@
+{
+  "id": "thunderbell",
+  "method": "Local full-volume geometry with concept-projected engraving and textured PBR backs",
+  "triangles": 8740,
+  "bytes": 879608,
+  "concept": "references/thunderbell-front.png",
+  "grip": "Physical wearable anchor",
+  "status": "Candidate; independent visual review required"
+}

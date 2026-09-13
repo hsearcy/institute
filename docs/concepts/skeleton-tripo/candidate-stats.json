@@ -1,0 +1,51 @@
+{
+  "path": "/home/hfsearcy/git/institute/web/public/assets/rpg/candidates/skeleton-tripo.glb",
+  "bytes": 6577580,
+  "sha256": "a64ea81c3126199ebdfe5e2b3ceff90124e79b221d9e02f65a9c285efbc1d99d",
+  "triangles": 95000,
+  "meshes": 1,
+  "primitives": 1,
+  "nodes": 1,
+  "materials": 1,
+  "textures": 3,
+  "images": 3,
+  "skins": 0,
+  "animations": 0,
+  "extensions_used": [],
+  "extensions_required": [],
+  "external_uris": [],
+  "materials_detail": [
+    {
+      "name": "tripo_material_ad83e4f7-6ba3-4fef-9dd0-9fc2e8784ff9",
+      "normalTexture": {
+        "index": 0
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1
+        },
+        "metallicRoughnessTexture": {
+          "index": 2
+        }
+      }
+    }
+  ],
+  "position_bounds": [
+    {
+      "min": [
+        -0.09779775142669678,
+        -0.4897629916667938,
+        -0.22895990312099457
+      ],
+      "max": [
+        0.0989866852760315,
+        0.4899148643016815,
+        0.22866639494895935
+      ],
+      "count": 74480
+    }
+  ],
+  "node_names": [
+    "tripo_node_ad83e4f7-6ba3-4fef-9dd0-9fc2e8784ff9"
+  ]
+}

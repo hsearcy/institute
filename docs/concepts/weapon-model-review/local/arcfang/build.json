@@ -1,0 +1,17 @@
+{
+  "id": "arcfang",
+  "triangles": 8216,
+  "meshes": 1,
+  "bytes": 207904,
+  "method": "Local solid geometry and original concept projection",
+  "grip": [
+    0,
+    0,
+    0
+  ],
+  "tip": [
+    -0.029238849878311157,
+    -0.0003499999875202775,
+    0.6846156120300293
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "task_id": "41d62f4f-a25c-468a-8fdc-1778018bda10",
+  "type": "multiview_to_model",
+  "status": "success",
+  "progress": 100,
+  "create_time": 1789237744,
+  "consumed_credit": 60,
+  "output_fields": [
+    "pbr_model",
+    "rendered_image"
+  ],
+  "downloads": {
+    "pbr_model": {
+      "path": "docs/concepts/guardian-tripo/source/guardian-pbr_model.glb",
+      "bytes": 59758120,
+      "sha256": "cc5034ac57244f79e4133b26816c683d9327abefe6f1be073e36ea355fa8790f"
+    },
+    "rendered_image": {
+      "path": "docs/concepts/guardian-tripo/source/guardian-rendered_image.webp",
+      "bytes": 300723,
+      "sha256": "80d062fc8c194d0a5caf8dc5a31ff75c781514455b6913dd703e69e43b4edd85"
+    }
+  }
+}

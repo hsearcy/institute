@@ -1,10 +1,10 @@
-import type { Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgAppearanceId, RpgReward, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
-import { RPG_APPEARANCES, rpgAppearanceUnlocked, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, rpgEncounterCombat, rpgNextRelicHunt, rpgUnlockedTier, rpgDungeonForgeDust, rpgSalvageValue, rpgAnswerPower, ProblemSchema } from '@institute/shared';
+import type { Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgReward, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
+import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, rpgEncounterCombat, rpgNextRelicHunt, rpgUnlockedTier, rpgDungeonForgeDust, rpgSalvageValue, rpgAnswerPower, ProblemSchema } from '@institute/shared';
 import { fetchState, fetchMastery, redeemCrazyCoin, type Demo } from '../game/tutor';
 import { speak } from '../game/audio';
 import * as dungeonSound from './sound';
 import { API, PROFILE } from '../game/config';
-import { getRpgState, getRpgCamp, setRpgAppearance, mutateRpg, resolveEncounter, attemptStatus, request, ApiError } from './api';
+import { getRpgState, getRpgCamp, mutateRpg, resolveEncounter, attemptStatus, request, ApiError } from './api';
 import { DungeonWorld } from './DungeonWorld';
 import { icon, spellArt, skillArt, relicArt, escapeHtml as esc } from './icons';
 import './rpg.css';
@@ -347,7 +347,7 @@ export class RpgGame {
     this.stopClock(); this.saveSession(); this.playing = false; this.el('rpg-controls').hidden = true;
     const resume = s.expedition && !s.expedition.cleared;
     if (resume) this.setEncounter();
-    this.showDialog('camp', `<div class="rpg-seal">${icon('sword')}</div><p class="rpg-eyebrow">INSTITUTE PRESENTS</p><h2 id="rpg-dialog-title" class="rpg-title">The Sunken<br><em>Vault</em></h2><p class="rpg-camp-story">Ancient halls. Hidden relics.<br>A little magic goes a long way.</p><div class="rpg-camp-stats"><span>LEVEL <b>${s.level}</b></span><span>RELICS <b>${s.inventory.length}</b></span><span>GUARDIANS <b>${s.expeditionsCompleted}</b></span></div>${s.totalKills === 0 ? `<div class="rpg-starter-spells" aria-label="Your starting sword attack">${(['cleave'] as RpgSpellId[]).map(id => `<button data-spell="${id}" aria-pressed="${s.selectedSpellId === id}" class="${s.selectedSpellId === id ? 'selected' : ''}">${spellArt(id)}<span>${RPG_SPELLS.find(spell => spell.id === id)!.name}</span></button>`).join('')}</div>` : ''}${s.goal ? renderPinnedGoal(s, this.campState) : this.spellGoalCard() ? `<button class="rpg-goal-card" data-action="spell-goal">${this.spellGoalCard()}</button>` : ''}<button class="rpg-primary rpg-large" data-action="begin">${resume ? 'Continue adventure' : 'Enter the dungeon'} <span>→</span></button><button class="rpg-text-button" data-action="map">Choose an expedition</button><button class="rpg-text-button" data-action="tutorial">${icon('help')} How to play · Story & tour</button><div class="rpg-camp-menu"><button data-action="quests">${icon('ring')} Quest board</button><button data-action="merchant">◆ Merchant${this.campState ? ` · ${this.campState.gems} gems` : ''}</button><button data-action="forge">${icon('sword')} Blacksmith</button><button data-action="spellbook">${icon('storm')} Spellbook</button><button data-action="skills">${icon('tree')} Skill trees${s.skillPoints ? ` · ${s.skillPoints} new` : ''}</button><button data-action="inventory">${icon('bag')} Equipment</button><button data-action="parent">Parent journal</button></div><button class="rpg-armor-progress" data-action="inventory">${icon('shield')}${this.armorProgressText()}</button><p class="rpg-camp-note">Solve to unleash your spells. Take all the time you need.</p>`);
+    this.showDialog('camp', `<div class="rpg-seal">${icon('sword')}</div><p class="rpg-eyebrow">INSTITUTE PRESENTS</p><h2 id="rpg-dialog-title" class="rpg-title">The Sunken<br><em>Vault</em></h2><p class="rpg-camp-story">Ancient halls. Hidden relics.<br>A little magic goes a long way.</p><div class="rpg-camp-stats"><span>LEVEL <b>${s.level}</b></span><span>RELICS <b>${s.inventory.length}</b></span><span>GUARDIANS <b>${s.expeditionsCompleted}</b></span></div>${s.totalKills === 0 ? `<div class="rpg-starter-spells" aria-label="Your starting sword attack">${(['cleave'] as RpgSpellId[]).map(id => `<button data-spell="${id}" aria-pressed="${s.selectedSpellId === id}" class="${s.selectedSpellId === id ? 'selected' : ''}">${spellArt(id)}<span>${RPG_SPELLS.find(spell => spell.id === id)!.name}</span></button>`).join('')}</div>` : ''}${s.goal ? renderPinnedGoal(s, this.campState) : this.spellGoalCard() ? `<button class="rpg-goal-card" data-action="spell-goal">${this.spellGoalCard()}</button>` : ''}<button class="rpg-primary rpg-large" data-action="begin">${resume ? 'Continue adventure' : 'Enter the dungeon'} <span>→</span></button><button class="rpg-text-button" data-action="map">Choose an expedition</button><button class="rpg-text-button" data-action="tutorial">${icon('help')} How to play · Story & tour</button><div class="rpg-camp-menu"><button data-action="quests">${icon('ring')} Quest board</button><button data-action="merchant">◆ Merchant${this.campState ? ` · ${this.campState.gems} gems` : ''}</button><button data-action="forge">${icon('sword')} Blacksmith</button><button data-action="spellbook">${icon('storm')} Spellbook</button><button data-action="skills">${icon('tree')} Skill trees${s.skillPoints ? ` · ${s.skillPoints} new` : ''}</button><button data-action="inventory">${icon('bag')} Equipment</button><button data-action="parent">Parent journal</button></div><p class="rpg-camp-note">Solve to unleash your spells. Take all the time you need.</p>`);
   }
   private async begin(regionId?: string, tier?: number): Promise<void> {
     if (!this.state || this.busy) return;
@@ -700,28 +700,6 @@ export class RpgGame {
       return `<path d="M${x1} ${y1} C${x1} ${mid} ${x2} ${mid} ${x2} ${y2}" class="${parent.classList.contains('learned') ? 'learned' : ''}"/><circle cx="${x2}" cy="${y2}" r="3"/>`;
     }).join('');
   }
-  private armorProgressText(): string {
-    if (!this.state) return '';
-    const justUnlocked = RPG_APPEARANCES.find(appearance => appearance.requiredLevel > 1 && appearance.requiredLevel === this.state!.level);
-    if (justUnlocked) return `${esc(justUnlocked.name)} armor unlocked · Choose your look in Equipment`;
-    const next = RPG_APPEARANCES.find(appearance => !rpgAppearanceUnlocked(appearance.id, this.state!.level));
-    return next ? `Next hero armor: ${esc(next.name)} · Level ${next.requiredLevel}` : 'All four hero armor styles unlocked';
-  }
-  private armorCards(): string {
-    if (!this.state) return ''; const s = this.state;
-    return `<section class="rpg-armor-section" aria-labelledby="rpg-armor-title"><div class="rpg-armor-heading"><h3 id="rpg-armor-title">Hero armor</h3><span>Cosmetic · No cost</span></div><p>Find your hero’s look. Your relic and spell powers stay the same.</p><div class="rpg-armor-grid">${RPG_APPEARANCES.map(appearance => {
-      const unlocked = rpgAppearanceUnlocked(appearance.id, s.level), selected = s.appearanceId === appearance.id;
-      return `<article class="rpg-armor-card ${unlocked ? '' : 'locked'} ${selected ? 'selected' : ''}" data-armor="${appearance.id}"><div class="rpg-armor-preview">${appearance.thumbnail ? `<img src="${esc(appearance.thumbnail)}" alt="${esc(appearance.name)} armor" loading="lazy" width="320" height="360">` : `<span class="rpg-wayfarer-crest" aria-hidden="true">${icon('shield')}${icon('sword')}</span>`}${!unlocked ? `<span class="rpg-armor-lock">${icon('lock')} Level ${appearance.requiredLevel}</span>` : ''}</div><h4>${esc(appearance.name)}</h4><p>${esc(appearance.description)}</p><button data-appearance="${appearance.id}" data-locked="${!unlocked}" aria-pressed="${selected}" aria-label="${selected ? 'Wearing' : 'Wear'} ${esc(appearance.name)}" ${!unlocked || selected || this.busy ? 'disabled' : ''}>${selected ? '✓ Wearing' : unlocked ? 'Wear' : `Unlocks at level ${appearance.requiredLevel}`}</button></article>`;
-    }).join('')}</div><p class="rpg-armor-next">${this.armorProgressText()}</p></section>`;
-  }
-  private async wearAppearance(appearanceId: RpgAppearanceId): Promise<void> {
-    if (this.busy || !this.state || this.state.appearanceId === appearanceId || !rpgAppearanceUnlocked(appearanceId, this.state.level)) return;
-    await this.runSafely(async () => {
-      this.state = await setRpgAppearance(appearanceId);
-      this.renderState(); this.showInventory();
-      this.toast(`${RPG_APPEARANCES.find(appearance => appearance.id === appearanceId)!.name} worn.`);
-    });
-  }
   private relicHuntCard(regionId: string): string {
     if (!this.state) return '';
     const hunt = rpgNextRelicHunt(this.state, regionId);
@@ -735,7 +713,7 @@ export class RpgGame {
   }
   private showInventory(): void {
     if (!this.state) return;
-    this.showDialog('inventory', renderEquipmentView(this.state, this.armorCards(), this.playing), true);
+    this.showDialog('inventory', renderEquipmentView(this.state, '', this.playing), true);
   }
   private showMap(): void {
     if (!this.state) return; const s = this.state;
@@ -798,7 +776,7 @@ export class RpgGame {
       const [camp, legacy] = await Promise.all([getRpgCamp(), request<State>(`/state?profileId=${encodeURIComponent(PROFILE)}`)]);
       this.campState = camp; this.legacyState = legacy; this.renderState();
       const tab = pending.action === 'shop/buy' ? 'merchant' : 'forge';
-      this.showDialog(tab, renderCampWorkshop(this.state!, camp, legacy, tab), true);
+      this.showDialog(tab, renderCampWorkshop(this.state!, camp, legacy, tab), true, pending.action === 'forge/upgrade');
       this.toast(pending.action === 'shop/buy' ? 'Your new relic is ready in Equipment!' : pending.action === 'forge/upgrade' ? 'Forged! +2 power. Your favorite relic grows stronger.' : `Reclaimed +${result.dustGained ?? 0} forge dust.`);
     });
   }
@@ -929,12 +907,15 @@ export class RpgGame {
     this.startClock(); this.updatePower();
   }
 
-  private showDialog(name: string, html: string, wide = false): void {
+  private showDialog(name: string, html: string, wide = false, preserveScroll = false): void {
+    const content = this.el('rpg-dialog-content');
+    const scrollTop = preserveScroll && this.panel === name ? content.scrollTop : 0;
     if (!this.panel) { this.stopClock(); this.saveSession(); }
     this.panel = name; this.root.dataset.panel = name; this.world.setPaused(true);
     this.el('rpg-overlay').hidden = false;
-    this.el('rpg-dialog-content').innerHTML = html;
+    content.innerHTML = html;
     this.root.querySelector('.rpg-dialog')!.classList.toggle('wide', wide);
+    content.scrollTop = scrollTop;
     this.root.querySelector<HTMLButtonElement>('.rpg-dialog-close')!.hidden = ['camp','demo','walkthrough','loading'].includes(name);
     this.root.querySelector<HTMLElement>('.rpg-dialog')!.focus({ preventScroll: true });
   }
@@ -1066,11 +1047,6 @@ export class RpgGame {
     }
     if (button.dataset.discoveryItem) {
       void this.changeLoadout('equip', {itemId:button.dataset.discoveryItem}, () => { this.discovery = null; this.renderDiscovery(); this.toast('Relic equipped. Unleash its magic!'); }); return;
-    }
-    if (button.dataset.appearance) {
-      const appearance = RPG_APPEARANCES.find(entry => entry.id === button.dataset.appearance);
-      if (appearance) void this.wearAppearance(appearance.id);
-      return;
     }
     if (button.dataset.selectTier) { this.selectedTier = Number(button.dataset.selectTier); this.showMap(); return; }
     if (button.dataset.buyItem) { void this.economyAction('shop/buy', { itemId: button.dataset.buyItem }); return; }

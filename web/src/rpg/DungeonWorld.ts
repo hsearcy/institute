@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { RPG_SPELLS, RPG_APPEARANCES, type RpgAppearanceId, type RpgCombatEnemy, type RpgCombatResult } from '@institute/shared';
+import { RPG_SPELLS, type RpgAppearanceId, type RpgCombatEnemy, type RpgCombatResult } from '@institute/shared';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js';
@@ -29,13 +29,16 @@ import { RoomCutaway } from './world/RoomCutaway';
 import { ITEM_MODELS } from './itemModels';
 import { createHitReaction, sampleHitReaction, type HitReaction, type CombatHit } from './world/hitReactions';
 import { advanceHeroTravel, heroDoorwayRoute, setPlanarHeroHeading, settleHeroTravel } from './world/heroLocomotion';
-import { cloneErosionProgramMaterial, createElectricDissolve } from './world/electricDissolve';
+import { cloneErosionProgramMaterial, createElectricDissolve, createSkinnedDissolve } from './world/electricDissolve';
 import { createVaultScenery } from './world/scenery';
 import { brokenGateWallCrown, gateBreach, roomHasTomb } from './world/gateComposition';
 import { createArchitecturalRemnant, ruinGeometry, isRuinFootprintClear, type RuinKind } from './world/ruins';
 import { masonryGeometry, projectStoneUV } from './world/masonry';
 import { getRoomLayout, enemyPositions, isCrossingChasm, roomFloorPatches } from './world/roomLayout';
 import { stoneMaterial, floorRelief, flameMaterial, fireSheetMaterial, firePlumeMaterial, bladeWakeMaterial, ashMaterial, novaMaterial, glowTexture, waveTexture } from './world/materials';
+
+// Shared visual size; weapons inherit the hero scale through their sockets.
+const ACTOR_SCALE = 1.25;
 
 type Enemy = { id: string; hp: number; maxHp: number; root: THREE.Group; visual: THREE.Object3D; origin: THREE.Vector3; phase: number; brute: boolean; dead: boolean; modelId: string; height: number; deathAt: number; animator: EnemyAnimator };
 type Fragment = { position: THREE.Vector3; velocity: THREE.Vector3; rotation: THREE.Vector3; spin: THREE.Vector3; scale: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; hot: boolean; bounced: boolean };
@@ -107,6 +110,7 @@ export class DungeonWorld {
   private readonly effects: Effect[] = [];
   private novaContacts?: ReturnType<typeof createFireNovaContacts>;
   private readonly enemies: Enemy[] = [];
+  private readonly skinnedEnemies: { mesh: THREE.SkinnedMesh; root: THREE.Group; baseMaterial: THREE.Material | THREE.Material[]; dissolve: ReturnType<typeof createSkinnedDissolve> }[] = [];
   private readonly enemyInstances: { mesh: THREE.InstancedMesh; sources: THREE.Mesh[]; roots: THREE.Group[]; baseMaterial: THREE.Material | THREE.Material[]; dissolve: ReturnType<typeof createElectricDissolve> }[] = [];
   private lastFrameAt = performance.now();
   private frame = 0;
@@ -190,7 +194,7 @@ export class DungeonWorld {
     moon.name = 'moon';
     this.scene.add(this.floorGroup, this.enemyGroup, this.effectsGroup, this.propGroup, this.biomeGroup, this.hero);
     for (const fragments of [this.stoneFragments, this.hotFragments]) { fragments.count = 0; fragments.setColorAt(0, new THREE.Color()); fragments.frustumCulled = false; fragments.instanceMatrix.setUsage(THREE.DynamicDrawUsage); this.scene.add(fragments); }
-    this.heroVisual = this.makeHero(); this.hero.add(this.heroVisual);
+    this.heroVisual = this.makeHero(); this.heroVisual.scale.setScalar(ACTOR_SCALE); this.hero.add(this.heroVisual);
     this.heroLight.position.set(1.2, 3.1, 1.5); this.hero.add(this.heroLight);
     this.scene.add(this.burstLight);
     this.scene.add(...this.warmLights);
@@ -217,16 +221,17 @@ export class DungeonWorld {
   }
 
   async load(): Promise<void> {
+    performance.mark('dungeon-load-start');
     const loader = new GLTFLoader();
-    await Promise.all(['hero', 'hero-cinder', 'hero-glacier', 'hero-tempest', 'imp', 'guardian', 'arch', 'pillar', 'masonry-pier', 'masonry-post', 'brazier', 'crystal', 'chest', 'wall-bay', 'broken-wall', 'skeleton', 'revenant', 'wraith', 'furnace', 'reliquary', 'ice_cluster', ...Object.values(ITEM_MODELS).map(item => item.model)].map(async name => {
+    await Promise.all(['hero', 'imp', 'guardian', 'vault-guardian-boss', 'arch', 'pillar', 'masonry-pier', 'masonry-post', 'brazier', 'crystal', 'chest', 'wall-bay', 'broken-wall', 'skeleton', 'revenant', 'wraith', 'furnace', 'reliquary', 'ice_cluster', ...Object.values(ITEM_MODELS).map(item => item.model)].map(async name => {
       try {
         const gltf = await loader.loadAsync(`/assets/rpg/${name}.glb`);
         if (this.disposed) return;
         if (name === 'hero' || name.startsWith('hero-')) this.heroClipSets.set(name, gltf.animations);
         gltf.scene.traverse(object => {
           if (object instanceof THREE.Mesh) {
-            object.castShadow = true; object.receiveShadow = !name.startsWith('hero') && !name.startsWith('items/') && !['skeleton', 'revenant', 'wraith', 'guardian', 'imp'].includes(name);
-            if (name.startsWith('hero') || name.startsWith('items/') || ['skeleton', 'revenant', 'guardian', 'imp', 'wraith'].includes(name)) {
+            object.castShadow = true; object.receiveShadow = !name.startsWith('hero') && !name.startsWith('items/') && !['skeleton', 'revenant', 'wraith', 'guardian', 'vault-guardian-boss', 'imp'].includes(name);
+            if (name.startsWith('hero') || name.startsWith('items/') || ['skeleton', 'revenant', 'guardian', 'vault-guardian-boss', 'imp', 'wraith'].includes(name)) {
               for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
                 if (material instanceof THREE.MeshStandardMaterial) { material.envMap = this.environment.texture; material.envMapIntensity = name.startsWith('hero') || name.startsWith('items/') ? .55 : .225; }
               }
@@ -242,6 +247,7 @@ export class DungeonWorld {
         this.models.set(name, gltf.scene); this.loadedModels++;
       } catch { /* The authored procedural dungeon remains fully playable offline. */ }
     }));
+    performance.mark('dungeon-models-ready');
     try {
       const texture = await new THREE.TextureLoader().loadAsync('/assets/rpg/dungeon-cobbles-v2.png');
       texture.colorSpace = THREE.SRGBColorSpace; texture.wrapS = texture.wrapT = THREE.RepeatWrapping; texture.anisotropy = 8;
@@ -267,11 +273,12 @@ export class DungeonWorld {
       if (this.softwareRenderer) height.dispose();
     } catch { /* Missing optional surface maps retain the fallback stone. */ }
     if (this.disposed) return;
+    performance.mark('dungeon-textures-ready');
     this.installScenery();
     replacedStoneTextures.forEach(texture => texture.dispose());
     this.setAppearance(this.desiredAppearance);
     this.enemies.forEach(enemy => {
-      enemy.height = this.enemyHeight(enemy.modelId, enemy.height);
+      enemy.height = this.enemyHeight(enemy.modelId, enemy.height / ACTOR_SCALE) * ACTOR_SCALE;
       const visual = this.model(enemy.modelId, enemy.height) ?? (enemy.modelId === 'revenant' ? this.model('skeleton', enemy.height) : undefined);
       if (visual) { enemy.root.remove(enemy.visual); this.releaseProcedural(enemy.visual); enemy.visual = visual; enemy.root.add(visual); enemy.animator = new EnemyAnimator(visual, {kind: enemy.modelId, phase: enemy.phase}); }
     });
@@ -297,13 +304,16 @@ export class DungeonWorld {
     summon?.traverse(object => { if (object instanceof THREE.Mesh && object.material instanceof THREE.MeshStandardMaterial) { object.material = object.material.clone(); object.material.transparent = true; warmMaterials.push(object.material); } });
     if (summon) warmup.add(summon);
     this.scene.add(warmup);
+    performance.mark('dungeon-scene-ready');
     try {
       await this.renderer.compileAsync(this.scene, this.camera);
     } catch { /* Drivers without parallel compilation compile on first render. */ }
     this.scene.remove(warmup); this.preparedMaterials.push(...warmMaterials);
+    performance.mark('dungeon-shaders-ready');
     for (const object of warmup.children) if (object instanceof THREE.Mesh) object.geometry.dispose();
     this.prepareSpellDraws();
     this.loadedAt = performance.now();
+    performance.mark('dungeon-load-ready');
   }
 
   private prepareSpellDraws(): void {
@@ -323,7 +333,7 @@ export class DungeonWorld {
       return material;
     };
     const retainSurface = (source: THREE.Material | THREE.Material[]) => Array.isArray(source) ? source.map(retainVariant) : retainVariant(source);
-    const bindings = this.enemyInstances.map(({ mesh, dissolve }) => ({
+    const bindings = [...this.enemyInstances, ...this.skinnedEnemies].map(({ mesh, dissolve }) => ({
       mesh, material: mesh.material, depth: mesh.customDepthMaterial,
       electric: retainSurface(dissolve.materialFor('electric')),
       burn: retainSurface(dissolve.materialFor('burn')),
@@ -427,11 +437,16 @@ export class DungeonWorld {
 
   private model(name: string, height: number): THREE.Group | undefined {
     const original = this.models.get(name); if (!original) return undefined;
-    const clone = (name === 'hero' || name.startsWith('hero-') ? cloneSkeleton(original) : original.clone(true)) as THREE.Group;
+    let hasSkin = false; original.traverse(o => { if (o instanceof THREE.SkinnedMesh) hasSkin = true; });
+    const clone = (hasSkin || name === 'hero' || name.startsWith('hero-') ? cloneSkeleton(original) : original.clone(true)) as THREE.Group;
     const bounds = new THREE.Box3().setFromObject(clone);
     const size = bounds.getSize(new THREE.Vector3());
     const scale = height / Math.max(size.y, .01); clone.scale.multiplyScalar(scale);
     clone.position.y -= bounds.min.y * scale;
+    if (['skeleton', 'revenant', 'guardian', 'vault-guardian-boss'].includes(name)) {
+      // Keep imported floor alignment below the actor's whole-model motion.
+      const actor = new THREE.Group(); actor.add(clone); return actor;
+    }
     return clone;
   }
 
@@ -480,6 +495,7 @@ export class DungeonWorld {
       group.scale.setScalar(boss ? 2.8 : 1.65);
       for (let i = 0; i < 5; i++) { const spike = this.mesh(new THREE.ConeGeometry(.12, .65, 4), this.materials.crystal, (i - 2) * .19, 1.1 + Math.sin(i) * .14, -.28); spike.rotation.x = -.5; group.add(spike); }
     }
+    group.scale.multiplyScalar(ACTOR_SCALE);
     return group;
   }
 
@@ -862,6 +878,9 @@ export class DungeonWorld {
     if (regionId) this.regionId = regionId;
     this.enemies.forEach(enemy => this.releaseProcedural(enemy.visual));
     this.releaseEnemyInstances();
+    const skeletons = new Set<THREE.Skeleton>();
+    for (const enemy of this.enemies) enemy.visual.traverse(object => { if (object instanceof THREE.SkinnedMesh) skeletons.add(object.skeleton); });
+    for (const skeleton of skeletons) skeleton.dispose();
     this.enemies.length = 0; this.enemyGroup.clear();
     const layout = getRoomLayout(this.encounter);
     this.destination.set(layout.heroX, 0, -this.encounter * 20 + layout.heroZ);
@@ -873,7 +892,7 @@ export class DungeonWorld {
     const formation = enemyPositions(this.encounter, count), roster = enemyRoster(this.encounter, count);
     for (let i = 0; i < count; i++) {
       const { brute, boss, modelId } = roster[i];
-      const height = this.enemyHeight(modelId, roster[i].height);
+      const height = this.enemyHeight(modelId, roster[i].height) * ACTOR_SCALE;
       const root = new THREE.Group();
       const origin = new THREE.Vector3(formation[i].x, 0, -this.encounter * 20 + formation[i].z);
       root.position.copy(origin); root.rotation.y = Math.atan2(this.destination.x - origin.x, this.destination.z - origin.z);
@@ -1025,6 +1044,18 @@ export class DungeonWorld {
     for (const enemy of this.enemies) {
       // Keep procedural actors independent until their authored models arrive.
       if (enemy.visual.userData.procedural) continue;
+      let skinned = false;
+      enemy.visual.traverse(o => { if (o instanceof THREE.SkinnedMesh) skinned = true; });
+      if (skinned) {
+        enemy.visual.visible = true;
+        enemy.visual.traverse(o => {
+          if (!(o instanceof THREE.SkinnedMesh)) return;
+          const dissolve = createSkinnedDissolve(o.geometry, o.material);
+          this.skinnedEnemies.push({ mesh: o, root: enemy.root, baseMaterial: o.material, dissolve });
+          o.material = dissolve.material; o.customDepthMaterial = dissolve.depth; o.frustumCulled = false;
+        });
+        continue;
+      }
       enemy.visual.visible = false;
       enemy.visual.traverse(object => {
         if (!(object instanceof THREE.Mesh)) return;
@@ -1048,6 +1079,7 @@ export class DungeonWorld {
   }
 
   private setElectricMaterials(enabled: boolean, style: 'electric' | 'burn' = 'electric'): void {
+    for (const actor of this.skinnedEnemies) { actor.mesh.material = actor.dissolve.materialFor(style); actor.mesh.customDepthMaterial = actor.dissolve.depth; }
     for (const instance of this.enemyInstances) {
       instance.mesh.material = enabled ? instance.dissolve.materialFor(style) : instance.baseMaterial;
       instance.mesh.customDepthMaterial = enabled ? instance.dissolve.depth : undefined;
@@ -1055,17 +1087,19 @@ export class DungeonWorld {
   }
 
   private releaseEnemyInstances(): void {
+    for (const actor of this.skinnedEnemies) { actor.mesh.material = actor.baseMaterial; actor.mesh.customDepthMaterial = undefined; actor.dissolve.dispose(); }
+    this.skinnedEnemies.length = 0;
     for (const instance of this.enemyInstances) {
       this.enemyGroup.remove(instance.mesh); instance.mesh.dispose(); instance.dissolve.dispose();
     }
     this.enemyInstances.length = 0;
   }
 
-  setAppearance(appearanceId: RpgAppearanceId): void {
+  setAppearance(_appearanceId: RpgAppearanceId): void {
     if (this.disposed) return;
-    const appearance = RPG_APPEARANCES.find(entry => entry.id === appearanceId) ?? RPG_APPEARANCES[0];
-    this.desiredAppearance = appearance.id;
-    const modelId = this.models.has(appearance.modelId) ? appearance.modelId : 'hero';
+    // Old saves can keep their cosmetic ID; all heroes now use the main rig.
+    this.desiredAppearance = 'wayfarer';
+    const modelId = 'hero';
     if (this.heroModelId === modelId) return;
     const model = this.model(modelId, 1.8);
     if (!model) return; // Keep the procedural hero until authored models arrive.
@@ -1096,7 +1130,7 @@ export class DungeonWorld {
     const hand = model.getObjectByName('handR');
     if (hand && this.heroUsesAuthoredMotion) this.heldEquipment = new HeldEquipment(model, hand, authoredHeroGrip(), authoredHeroWearableSockets(model));
     else this.heldEquipment = legacyHeroEquipment(model);
-    this.heroModelId = modelId; this.appearance = modelId === appearance.modelId ? appearance.id : 'wayfarer';
+    this.heroModelId = modelId; this.appearance = 'wayfarer';
     this.heroMixer = new THREE.AnimationMixer(this.heroVisual);
     for (const clip of this.heroClipSets.get(modelId) ?? []) this.heroActions.set(clip.name.toLowerCase(), this.heroMixer.clipAction(clip));
     this.playHeroAnimation(previousAnimation);
@@ -2035,7 +2069,7 @@ export class DungeonWorld {
       view.position.copy(this.destination).add(new THREE.Vector3(17, 25, 20));
       view.lookAt(this.destination.x, .2, this.destination.z - 1.8); view.updateMatrixWorld();
       const screenY = (point: THREE.Vector3) => (1 - point.project(view).y) * height * .5;
-      const ys = [screenY(this.destination.clone()), screenY(this.destination.clone().add(new THREE.Vector3(0, 2.1, 0)))];
+      const ys = [screenY(this.destination.clone()), screenY(this.destination.clone().add(new THREE.Vector3(0, 2.1 * ACTOR_SCALE, 0)))];
       for (const enemy of this.enemies) {
         ys.push(screenY(enemy.origin.clone()), screenY(enemy.origin.clone().add(new THREE.Vector3(0, enemy.height + .55, 0))));
       }
@@ -2050,9 +2084,9 @@ export class DungeonWorld {
       view.lookAt(this.destination.x, .2, this.destination.z - 1.8); view.updateMatrixWorld();
       const pixelScale = height / (2 * halfHeight);
       const centerX = (point: THREE.Vector3) => (point.project(view).x + 1) * width * .5;
-      const heroX = centerX(this.destination.clone()), xs = [heroX - .65 * pixelScale, heroX + .65 * pixelScale];
+      const heroX = centerX(this.destination.clone()), xs = [heroX - .65 * ACTOR_SCALE * pixelScale, heroX + .65 * ACTOR_SCALE * pixelScale];
       for (const enemy of this.enemies) {
-        const x = centerX(enemy.origin.clone()), radius = (enemy.brute ? enemy.height * .4 : .72) * pixelScale;
+        const x = centerX(enemy.origin.clone()), radius = (enemy.brute ? enemy.height * .4 : .72 * ACTOR_SCALE) * pixelScale;
         xs.push(x - radius, x + radius);
       }
       const fit = dungeonCombatFrame(Math.min(...xs), Math.max(...xs), 18, width - 18, width);
@@ -2155,8 +2189,9 @@ export class DungeonWorld {
       }
       if (this.attackAge >= this.attackDuration) { this.attacking = false; this.heroMotion = undefined; this.heroVisual.position.x = this.heroVisual.position.z = 0; this.attackResolve?.(); this.attackResolve = undefined; }
     }
+    this.heldEquipment?.update(this.elapsed);
     this.rune.rotation.z = this.elapsed * .14;
-    this.rune.scale.setScalar(1 + Math.sin(this.elapsed * 2) * .04);
+    this.rune.scale.setScalar(ACTOR_SCALE * (1 + Math.sin(this.elapsed * 2) * .04));
     for (const enemy of this.enemies) {
       if (enemy.dead && !enemy.root.visible) continue;
       const reaction = enemy.root.userData.hitReaction as HitReaction | undefined;
@@ -2177,8 +2212,9 @@ export class DungeonWorld {
         if (t === 1) enemy.root.visible = false;
       } else {
         const approach = this.hero.position.clone().sub(enemy.origin).setY(0).normalize();
-        const feint = (.5 + Math.sin(this.elapsed * .8 + enemy.phase) * .5) * (enemy.brute ? .55 : enemy.modelId === 'revenant' ? .62 : .9);
-        enemy.root.position.set(enemy.origin.x + approach.x * feint + Math.sin(this.elapsed * .65 + enemy.phase) * .16, 0, enemy.origin.z + approach.z * feint + Math.cos(this.elapsed * .72 + enemy.phase) * .16);
+        const feint = (enemy.animator.ownsGroundedPose ? 0 : 1) * (.5 + Math.sin(this.elapsed * .8 + enemy.phase) * .5) * (enemy.brute ? .55 : enemy.modelId === 'revenant' ? .62 : .9);
+        enemy.root.position.copy(enemy.origin);
+        if (!enemy.animator.ownsGroundedPose && enemy.modelId !== 'wraith') enemy.root.position.set(enemy.origin.x + approach.x * feint + Math.sin(this.elapsed * .65 + enemy.phase) * .16, 0, enemy.origin.z + approach.z * feint + Math.cos(this.elapsed * .72 + enemy.phase) * .16);
         if (reaction && response && !response.complete) {
           const impactPosition = new THREE.Vector3(reaction.x + reaction.dx * response.displacement, 0, reaction.z + reaction.dz * response.displacement);
           enemy.root.position.lerp(impactPosition, response.control);
@@ -2187,18 +2223,19 @@ export class DungeonWorld {
         enemy.root.scale.setScalar(1); enemy.root.userData.electricDissolve = 0;
         // Authored foot support already settles the soles through each pose.
         // A second whole-model bounce would lift those planted feet afterward.
-        enemy.visual.position.y = enemy.animator.ownsGroundedPose ? 0 : (enemy.modelId === 'wraith' ? .14 + Math.sin(this.elapsed * 2 + enemy.phase) * .09 : Math.abs(Math.sin(this.elapsed * 4.7 + enemy.phase)) * (enemy.brute || enemy.modelId === 'revenant' ? .035 : .075)) * (1 - (response?.control ?? 0));
-        enemy.visual.rotation.z = enemy.animator.ownsGroundedPose ? 0 : Math.sin(this.elapsed * 1.5 + enemy.phase) * .035 * (1 - (response?.control ?? 0));
+        enemy.visual.position.y = enemy.animator.ownsGroundedPose ? 0 : (enemy.modelId === 'wraith' ? .12 + Math.sin(this.elapsed * .85 + enemy.phase) * .035 : Math.abs(Math.sin(this.elapsed * 4.7 + enemy.phase)) * (enemy.brute || enemy.modelId === 'revenant' ? .035 : .075)) * (1 - (response?.control ?? 0));
+        enemy.visual.rotation.z = enemy.animator.ownsGroundedPose ? 0 : Math.sin(this.elapsed * (enemy.modelId === 'wraith' ? .8 : 1.5) + enemy.phase) * (enemy.modelId === 'wraith' ? .008 : .035) * (1 - (response?.control ?? 0));
       }
       enemy.animator.update(this.elapsed, {
         moving: (.35 + Math.abs(Math.cos(this.elapsed * .8 + enemy.phase)) * .4) * (1 - (response?.control ?? 0)),
         threat: (this.paused ? .25 : .8) * (1 - (response?.control ?? 0)),
-        recoil: response?.recoil, impactSide: reaction?.side, brace: response?.brace, catchStep: response?.catchStep, footOffset: response?.footOffset, footLift: response?.footLift, supportTravel: response?.displacement,
+        recoil: response?.recoil, impactSide: reaction?.side, brace: response?.brace, catchStep: response?.catchStep, footOffset: response?.footOffset, footLift: response?.footLift, supportTravel: response ? response.displacement * (enemy.dead ? 1 : response.control) : undefined,
         injury: enemy.dead ? 0 : 1 - enemy.hp / Math.max(1, enemy.maxHp),
         deathAge: enemy.dead ? (groundedCollapse ? response?.collapseAge : this.elapsed - enemy.deathAt) : undefined,
         collapse: groundedCollapse ? 'grounded' : undefined,
       });
     }
+    for (const actor of this.skinnedEnemies) actor.dissolve.set(actor.root.userData.electricDissolve ?? 0);
     if (this.enemyInstances.length) {
       this.enemyGroup.updateMatrixWorld(true);
       this.enemyInstances.forEach(instance => {

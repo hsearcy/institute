@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Weapon and relic references</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #101719; color: #e9edeb; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header, main { max-width: 1800px; margin: auto; padding: 24px clamp(16px, 3vw, 48px); }
+    header { padding-bottom: 0; }
+    .eyebrow { color: #84bdb1; text-transform: uppercase; letter-spacing: .15em; font-size: 12px; }
+    h1 { font-size: clamp(24px, 4vw, 38px); margin: 10px 0; font-weight: 600; }
+    p { color: #aebcba; line-height: 1.6; }
+    [role=tablist] { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+    button, .download { font: inherit; border: 1px solid #364646; border-radius: 8px; padding: 11px 16px; background: #1a2628; color: #dae4e1; cursor: pointer; text-decoration: none; }
+    button:hover, .download:hover { background: #2a3b3d; }
+    button[aria-selected=true] { background: #bce2d6; color: #142723; border-color: #bce2d6; }
+    :focus-visible { outline: 3px solid #efc887; outline-offset: 4px; }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    h2 { margin: 0; font-size: 22px; }
+    .toolbar p { margin: 6px 0 0; font-size: 14px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    figure { margin: 0; border: 1px solid #42504d; border-radius: 12px; overflow: auto; background: #a8a59e; }
+    img { display: block; width: 100%; height: auto; }
+    figure.actual img { width: auto; max-width: none; }
+    .hint { font-size: 13px; margin-bottom: 0; }
+    [hidden] { display: none !important; }
+    @media (max-width: 600px) { header, main { padding-top: 18px; } button, .download { padding: 10px 12px; font-size: 14px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="eyebrow">Institute · Concept art</div>
+    <h1>Weapon and relic references</h1>
+    <p>19 weapons and 4 worn relics. Choose an item to view its four reference angles.</p>
+    <p><a class="download" href="../">Enemy references</a></p>
+    <nav role="tablist" aria-label="Weapons and relics" id="tabs"></nav>
+  </header>
+  <main id="panels"></main>
+  <script>
+    const enemies = [["apprentice", "Apprentice's Runeblade", "apprentice.png"], ["cinderwand", "Cinderbranch", "cinderwand.png"], ["glacier", "Glacier Fang", "glacier.png"], ["thunderrod", "Thunder Rod", "thunderrod.png"], ["moonstaff", "Moonshard Staff", "moonstaff.png"], ["phoenix", "Phoenix Scepter", "phoenix.png"], ["wintercrown", "Staff of Endless Winter", "wintercrown.png"], ["tempest", "Tempest Caller", "tempest.png"], ["cleaver", "Ashsplitter", "cleaver.png"], ["starfall", "Starfall Edge", "starfall.png"], ["phoenix_talon", "Phoenix Talon", "phoenix_talon.png"], ["inferno", "Crown of the Inferno", "inferno.png"], ["sunforged", "Sunforged Runeblade", "sunforged.png"], ["icespear", "Rimepiercer", "icespear.png"], ["tideglass", "Tideglass Blade", "tideglass.png"], ["hailcaller", "Hailcaller", "hailcaller.png"], ["wardenheart", "Winter Warden's Heart", "wardenheart.png"], ["winterbranch", "Winterbranch", "winterbranch.png"], ["arcfang", "Arc Fang", "arcfang.png"], ["thunderbell", "Bell of Thunder", "thunderbell.png"], ["stormorbit", "Orb of the Stormkeeper", "stormorbit.png"], ["skybreaker", "Skybreaker", "skybreaker.png"], ["stormsilver", "Stormsilver Runeblade", "stormsilver.png"]];
+    const tabs = document.querySelector('#tabs');
+    const panels = document.querySelector('#panels');
+    for (const [id, name, file] of enemies) {
+      const tab = document.createElement('button');
+      tab.id = `tab-${id}`;
+      tab.type = 'button';
+      tab.role = 'tab';
+      tab.setAttribute('aria-controls', `panel-${id}`);
+      tab.textContent = name;
+      tab.addEventListener('click', () => select(id));
+      tabs.append(tab);
+      const panel = document.createElement('section');
+      panel.id = `panel-${id}`;
+      panel.role = 'tabpanel';
+      panel.setAttribute('aria-labelledby', tab.id);
+      panel.tabIndex = 0;
+      panel.innerHTML = `<div class="toolbar"><div><h2>${name}</h2><p>Front · Side · Back · Three-quarter</p></div><div class="actions"><button type="button" aria-pressed="false">Actual size</button><a class="download" href="${file}" target="_blank" rel="noopener">Open image</a><a class="download" href="${file}" download>Download PNG</a></div></div><figure><img data-src="${file}" alt="${name} equipment reference sheet with front, side, back and three-quarter views" decoding="async"></figure><p class="hint">Select Actual size to inspect details. Scroll inside the image to move across the sheet.</p>`;
+      const zoom = panel.querySelector('button');
+      zoom.addEventListener('click', () => {
+        const actual = panel.querySelector('figure').classList.toggle('actual');
+        zoom.setAttribute('aria-pressed', String(actual));
+        zoom.textContent = actual ? 'Fit to screen' : 'Actual size';
+      });
+      panels.append(panel);
+    }
+    function select(id, focus = false) {
+      if (!enemies.some(enemy => enemy[0] === id)) id = 'apprentice';
+      for (const [key] of enemies) {
+        const tab = document.getElementById(`tab-${key}`);
+        const active = key === id;
+        tab.setAttribute('aria-selected', String(active));
+        tab.tabIndex = active ? 0 : -1;
+        document.getElementById(`panel-${key}`).hidden = !active;
+        if (active) {
+          const image = document.getElementById(`panel-${key}`).querySelector('img');
+          if (!image.getAttribute('src')) image.src = image.dataset.src;
+        }
+        if (active && focus) tab.focus();
+      }
+      history.replaceState(null, '', `#${id}`);
+    }
+    tabs.addEventListener('keydown', event => {
+      const index = enemies.findIndex(([id]) => `tab-${id}` === event.target.id);
+      if (index < 0) return;
+      let next;
+      if (event.key === 'ArrowRight') next = (index + 1) % enemies.length;
+      if (event.key === 'ArrowLeft') next = (index + enemies.length - 1) % enemies.length;
+      if (event.key === 'Home') next = 0;
+      if (event.key === 'End') next = enemies.length - 1;
+      if (next !== undefined) { event.preventDefault(); select(enemies[next][0], true); }
+    });
+    window.addEventListener('hashchange', () => select(location.hash.slice(1)));
+    select(location.hash.slice(1));
+  </script>
+</body>
+</html>

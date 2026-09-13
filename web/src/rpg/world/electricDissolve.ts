@@ -35,15 +35,21 @@ const fragmentDeclarations = `
 `;
 
 type Shader = Parameters<THREE.Material['onBeforeCompile']>[0];
-function patch(shader: Shader, surface: boolean, burn = false): void {
-  shader.vertexShader = vertexDeclarations + shader.vertexShader;
+function patch(shader: Shader, surface: boolean, burn = false, progress?: THREE.IUniform<number>): void {
+  if (progress) shader.uniforms.uElectricDissolve = progress;
+  shader.vertexShader = (progress ? `varying float vElectricDissolve;
+varying vec3 vElectricWorld;
+uniform float uElectricDissolve;
+` : vertexDeclarations) + shader.vertexShader;
   shader.vertexShader = shader.vertexShader.replace('#include <project_vertex>', `#include <project_vertex>
+    ${progress ? `vElectricDissolve=uElectricDissolve;
+    vElectricWorld=(modelMatrix*vec4(transformed,1.)).xyz;` : `
     vElectricDissolve=0.;
     vElectricWorld=(modelMatrix*vec4(transformed,1.)).xyz;
     #ifdef USE_INSTANCING
       vElectricDissolve=instanceDissolve;
       vElectricWorld=(modelMatrix*instanceMatrix*vec4(transformed,1.)).xyz;
-    #endif`);
+    #endif`}`);
   shader.fragmentShader = fragmentDeclarations + shader.fragmentShader;
   shader.fragmentShader = shader.fragmentShader.replace('#include <alphatest_fragment>', `#include <alphatest_fragment>
     if(vElectricDissolve>0.001 && electricField()<vElectricDissolve) discard;`);
@@ -53,6 +59,36 @@ function patch(shader: Shader, surface: boolean, burn = false): void {
         edge*=smoothstep(.48,.75,electricNoise(vElectricWorld*3.5+2.1));
         totalEmissiveRadiance+=vec3(${burn ? '.08,.026,.006' : '.015,.05,.08'})*edge;
       }`);
+}
+
+/** Per-actor copies for a SkinnedMesh. Geometry, skin attributes and maps remain shared. */
+export function createSkinnedDissolve(source: THREE.BufferGeometry, materials: THREE.Material | THREE.Material[]) {
+  const progress: THREE.IUniform<number> = { value: 0 };
+  const originals = Array.isArray(materials) ? materials : [materials];
+  const copyMaterials = (burn: boolean) => originals.map(original => {
+    const material = original.clone();
+    material.onBeforeCompile = (shader, renderer) => {
+      original.onBeforeCompile.call(material, shader, renderer);
+      // project_vertex follows skinning and displacement in both stock shaders.
+      patch(shader, true, burn, progress);
+    };
+    material.customProgramCacheKey = () => `${original.customProgramCacheKey()}|skinned-${burn ? 'burn' : 'electric'}-erosion-v1`;
+    return material;
+  });
+  const copies = copyMaterials(false);
+  let burnCopies: THREE.Material[] | undefined;
+  const depth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
+  depth.onBeforeCompile = shader => patch(shader, false, false, progress);
+  depth.customProgramCacheKey = () => 'skinned-electric-erosion-depth-v1';
+  return {
+    geometry: source, material: Array.isArray(materials) ? copies : copies[0], depth,
+    materialFor(style: 'electric' | 'burn') {
+      const selected = style === 'burn' ? (burnCopies ??= copyMaterials(true)) : copies;
+      return Array.isArray(materials) ? selected : selected[0];
+    },
+    set(value: number) { progress.value = Number.isFinite(value) ? THREE.MathUtils.clamp(value, 0, 1) : 0; },
+    dispose() { copies.forEach(material => material.dispose()); burnCopies?.forEach(material => material.dispose()); depth.dispose(); },
+  };
 }
 
 /** Caller-owned batch copies; source GLB geometry/materials are never modified. */

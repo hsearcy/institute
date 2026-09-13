@@ -1,0 +1,17 @@
+{
+  "id": "moonstaff",
+  "triangles": 8108,
+  "meshes": 1,
+  "bytes": 207188,
+  "method": "Local solid geometry and original concept projection",
+  "grip": [
+    0,
+    0,
+    0
+  ],
+  "tip": [
+    0.0033560090232640505,
+    -0.0003499999875202775,
+    0.5772335529327393
+  ]
+}

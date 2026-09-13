@@ -1,0 +1,51 @@
+{
+  "path": "web/public/assets/rpg/candidates/revenant-tripo.glb",
+  "bytes": 6644900,
+  "sha256": "744fb820c7a54af2440859b1e9fe9ab413ec056f53cfd7c94973f47e7fa82509",
+  "triangles": 95000,
+  "meshes": 1,
+  "primitives": 1,
+  "nodes": 1,
+  "materials": 1,
+  "textures": 3,
+  "images": 3,
+  "skins": 0,
+  "animations": 0,
+  "extensions_used": [],
+  "extensions_required": [],
+  "external_uris": [],
+  "materials_detail": [
+    {
+      "name": "tripo_material_2a61a568-b810-4bf8-8b94-5b0c8f91edab",
+      "normalTexture": {
+        "index": 0
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1
+        },
+        "metallicRoughnessTexture": {
+          "index": 2
+        }
+      }
+    }
+  ],
+  "position_bounds": [
+    {
+      "min": [
+        -0.13809101283550262,
+        -0.48962369561195374,
+        -0.2558114230632782
+      ],
+      "max": [
+        0.13859164714813232,
+        0.48894980549812317,
+        0.2567780613899231
+      ],
+      "count": 72970
+    }
+  ],
+  "node_names": [
+    "tripo_node_2a61a568-b810-4bf8-8b94-5b0c8f91edab"
+  ]
+}

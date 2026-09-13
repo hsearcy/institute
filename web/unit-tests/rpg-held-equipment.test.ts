@@ -19,6 +19,25 @@ function fixture() {
   return { hero, hand, blade, source, grip, mesh, material };
 }
 
+test('Bell and orb replace the sword at the animated hand rather than the belt', () => {
+  for (const id of ['thunderbell', 'stormorbit']) {
+    const f = fixture(); f.source.children[0].userData.itemId = id;
+    f.source.children[0].userData.attachment = 'belt';
+    const equipment = new HeldEquipment(f.hero, f.hand, authoredHeroGrip());
+    assert(equipment.replace(f.source)); assert.equal(f.blade.visible, false);
+    for (const angle of [0, .7, 1.4]) {
+      f.hand.rotation.x = angle; f.hero.updateMatrixWorld(true); equipment.update(angle);
+      const mount = f.hand.getObjectByName('HeldEquipment')!;
+      assert.equal(mount.userData.attachment, 'hand.R');
+      const actual = f.hand.getObjectByName(f.grip.name)!.getWorldPosition(new Vector3());
+      const palm = f.hand.localToWorld(new Vector3().setFromMatrixPosition(authoredHeroGrip()));
+      assert(id === 'thunderbell' ? actual.distanceTo(palm) < 1e-7 : actual.distanceTo(palm) > .2);
+      assert.equal(equipment.sampleWorldBlade(new Vector3(), new Vector3()), false, 'Relics do not create sword trails');
+    }
+    equipment.clear(); assert.equal(f.blade.visible, true);
+  }
+});
+
 test('Nested item grip tracks the measured palm through parent animation and model scale', () => {
   const f = fixture(), socket = authoredHeroGrip(), equipment = new HeldEquipment(f.hero, f.hand, socket);
   assert(equipment.replace(f.source));

@@ -1,0 +1,27 @@
+{
+  "method": "Deterministic time samples of the actual browser scene; not a runtime FPS measurement",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+  "model": {
+    "ok": true,
+    "kind": "wraith",
+    "rigRevision": 0,
+    "meshes": 7,
+    "triangles": 9188,
+    "articulated": true,
+    "size": [
+      1.2941535077989101,
+      1.8720829039812088,
+      1.0944321155548096
+    ]
+  },
+  "state": "hit",
+  "view": "game",
+  "side": "1",
+  "dissolve": true,
+  "fps": 30,
+  "frames": 66,
+  "seconds": 2.2,
+  "captureWallSeconds": 7.07,
+  "browserErrors": [],
+  "output": "/tmp/wraith-coherent-v3-native/wraith-hit-game-right-dissolve-sampled30.mp4"
+}

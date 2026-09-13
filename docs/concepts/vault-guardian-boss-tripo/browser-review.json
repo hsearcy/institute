@@ -1,0 +1,13 @@
+{
+  "loaded": true,
+  "front_direction": "+Z",
+  "views": [
+    "front",
+    "side",
+    "back",
+    "quarter"
+  ],
+  "static": true,
+  "candidate_sha256": "d5642504acebd1f65a26a7fba641ef7c676d0c475a1ecc2c6b48948832a237b4",
+  "visual_notes": "Stone body, hands, feet, and turquoise crystal formations are present; front, side and rear views checked."
+}

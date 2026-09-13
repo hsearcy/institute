@@ -1,0 +1,27 @@
+{
+  "method": "Deterministic time samples of the actual browser scene; not a runtime FPS measurement",
+  "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+  "model": {
+    "ok": true,
+    "kind": "guardian",
+    "rigRevision": 17,
+    "meshes": 1,
+    "triangles": 94999,
+    "articulated": true,
+    "size": [
+      1.6055864086898481,
+      2.101066453750184,
+      0.9300620028015019
+    ]
+  },
+  "state": "death",
+  "view": "quarter",
+  "side": "1",
+  "dissolve": false,
+  "fps": 30,
+  "frames": 66,
+  "seconds": 2.2,
+  "captureWallSeconds": 6.537,
+  "browserErrors": [],
+  "output": "/tmp/enemy-death-final-wide/guardian-death-quarter-right-solid-sampled30.mp4"
+}

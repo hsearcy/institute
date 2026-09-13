@@ -1,0 +1,29 @@
+{
+  "source_triangles": 1954508,
+  "candidate_triangles": 94999,
+  "candidate_bytes": 7205540,
+  "texture_images": [
+    {
+      "name": "Color_41d62f4f-a25c-468a-8fdc-1778018bda10",
+      "size": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "NormalGL_41d62f4f-a25c-468a-8fdc-1778018bda10",
+      "size": [
+        4096,
+        4096
+      ]
+    },
+    {
+      "name": "ORM_41d62f4f-a25c-468a-8fdc-1778018bda10",
+      "size": [
+        4096,
+        4096
+      ]
+    }
+  ],
+  "method": "Blender collapse decimation; original UVs and PBR textures retained; no new generation"
+}

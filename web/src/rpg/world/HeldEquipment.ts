@@ -1,4 +1,4 @@
-import { Group, Matrix4, Mesh, Object3D, SkinnedMesh, Vector3 } from 'three';
+import { Group, Matrix4, Mesh, Object3D, Quaternion, SkinnedMesh, Vector3 } from 'three';
 
 // Measured against the accepted authored hero (rig_authored_hero.py).
 // Items use +Y toward the tip and +Z for the presentation face. The source
@@ -68,6 +68,12 @@ export class HeldEquipment {
   private grip?: Object3D;
   private tip?: Object3D;
   private embeddedBlade?: { grip: Vector3; tip: Vector3 };
+  private handRelic?: { floating: boolean; inverseGrip: Matrix4 };
+  private readonly relicPosition = new Vector3();
+  private readonly relicRotation = new Quaternion();
+  private readonly heroRotation = new Quaternion();
+  private readonly relicScale = new Vector3();
+  private readonly relicOffset = new Vector3();
   private readonly embedded: { mesh: Mesh; visible: boolean }[] = [];
 
   constructor(private readonly hero: Object3D, private readonly hand: Object3D, private readonly socket: Matrix4,
@@ -112,7 +118,8 @@ export class HeldEquipment {
       if (node.userData.attachmentRole === 'Tip') tip = node;
     });
     if (!metadata) return false;
-    const attachment = metadata.userData.attachment as ItemAttachment;
+    const handRelic = metadata.userData.itemId === 'thunderbell' || metadata.userData.itemId === 'stormorbit';
+    const attachment = handRelic ? 'hand.R' : metadata.userData.attachment as ItemAttachment;
     const target = attachment === 'hand.R' ? { parent: this.hand, transform: this.socket } : this.wearableSockets[attachment];
     if (!target || !target.transform.elements.every(Number.isFinite) || Math.abs(target.transform.determinant()) < 1e-8) return false;
     grip ??= clone.getObjectByName(metadata.userData.gripNode);
@@ -134,15 +141,36 @@ export class HeldEquipment {
       }
     });
     target.parent.add(mount); this.mounted = mount;
+    if (handRelic) {
+      this.handRelic = { floating: metadata.userData.itemId === 'stormorbit', inverseGrip: transform.clone().invert() };
+      this.update(0);
+    }
     // A worn relic augments the hero's embedded weapon. Its markers must never
     // turn a crown or pendant into the endpoints of the Cleave blade trail.
-    if (attachment === 'hand.R') { this.grip = grip; this.tip = tip; }
+    if (attachment === 'hand.R' && !handRelic) { this.grip = grip; this.tip = tip; }
     return true;
+  }
+
+  /** Gravity keeps the bell upright; the orb floats beside the animated palm. */
+  update(time: number): void {
+    if (!this.mounted || !this.handRelic) return;
+    this.hand.getWorldQuaternion(this.relicRotation).invert();
+    this.hero.getWorldQuaternion(this.heroRotation);
+    this.relicRotation.multiply(this.heroRotation);
+    this.relicPosition.setFromMatrixPosition(this.socket);
+    if (this.handRelic.floating) {
+      this.relicOffset.set(0, .32 + Math.sin(time * 2) * .025, .25).applyQuaternion(this.relicRotation);
+      this.relicPosition.add(this.relicOffset);
+    }
+    this.relicScale.setScalar(this.handRelic.floating ? 1.8 : 1.6);
+    this.mounted.matrix.compose(this.relicPosition, this.relicRotation, this.relicScale).multiply(this.handRelic.inverseGrip);
+    this.mounted.matrixWorldNeedsUpdate = true;
   }
 
   clear(): void {
     this.mounted?.removeFromParent(); this.mounted = undefined;
     this.grip = undefined; this.tip = undefined;
+    this.handRelic = undefined;
     for (const { mesh, visible } of this.embedded) mesh.visible = visible;
     this.embedded.length = 0;
   }

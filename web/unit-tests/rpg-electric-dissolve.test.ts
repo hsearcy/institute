@@ -1,7 +1,65 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
 import * as THREE from 'three';
-import { cloneErosionProgramMaterial, createElectricDissolve } from '../src/rpg/world/electricDissolve';
+import { cloneErosionProgramMaterial, createElectricDissolve, createSkinnedDissolve } from '../src/rpg/world/electricDissolve';
+
+test('Skinned erosion shares progress with its shadow after deformation and isolates actors', () => {
+  const geometry = new THREE.BoxGeometry(), material = new THREE.MeshStandardMaterial();
+  const a = createSkinnedDissolve(geometry, material), b = createSkinnedDissolve(geometry, material);
+  const compile = (surface: THREE.Material, depth = false) => {
+    const shader = { ...(depth ? THREE.ShaderLib.depth : THREE.ShaderLib.standard), uniforms: {} as Record<string, THREE.IUniform> };
+    surface.onBeforeCompile(shader, {} as THREE.WebGLRenderer);
+    return shader;
+  };
+  // Set before compilation: a newly compiled burn/shadow variant must inherit it.
+  a.set(.6);
+  const shaders = [compile(a.material as THREE.Material), compile(a.materialFor('burn') as THREE.Material), compile(a.depth, true)];
+  const other = compile(b.material as THREE.Material);
+  for (const shader of shaders) {
+    assert.equal(shader.uniforms.uElectricDissolve, shaders[0].uniforms.uElectricDissolve);
+    assert.equal(shader.uniforms.uElectricDissolve.value, .6);
+    assert(!shader.vertexShader.includes('instanceDissolve'), 'Skinned actors need no instance attribute');
+    assert(shader.vertexShader.indexOf('vElectricDissolve=uElectricDissolve;') > shader.vertexShader.indexOf('#include <skinning_vertex>'));
+    assert(shader.vertexShader.includes('vElectricWorld=(modelMatrix*vec4(transformed,1.)).xyz;'));
+    assert(shader.fragmentShader.includes('if(vElectricDissolve>0.001 && electricField()<vElectricDissolve) discard;'));
+  }
+  assert.notEqual(other.uniforms.uElectricDissolve, shaders[0].uniforms.uElectricDissolve);
+  assert.equal(other.uniforms.uElectricDissolve.value, 0);
+  assert(!shaders[2].fragmentShader.includes('totalEmissiveRadiance+='));
+  for (const [input, expected] of [[2, 1], [-1, 0], [NaN, 0], [Infinity, 0], [.3, .3]]) {
+    a.set(input);
+    for (const shader of shaders) assert.equal(shader.uniforms.uElectricDissolve.value, expected);
+    assert.equal(other.uniforms.uElectricDissolve.value, 0);
+  }
+  assert.notEqual((a.material as THREE.Material).customProgramCacheKey(), a.depth.customProgramCacheKey());
+  a.dispose(); b.dispose(); geometry.dispose(); material.dispose();
+});
+
+test('Skinned erosion preserves source skin attributes, maps and hooks and owns only its material copies', () => {
+  const geometry = new THREE.BoxGeometry(), texture = new THREE.Texture();
+  const skinIndex = new THREE.Uint16BufferAttribute(new Uint16Array(geometry.getAttribute('position').count * 4), 4);
+  geometry.setAttribute('skinIndex', skinIndex);
+  const materials = [new THREE.MeshStandardMaterial({ map: texture }), new THREE.MeshStandardMaterial({ normalMap: texture })];
+  materials[0].onBeforeCompile = shader => { shader.uniforms.existingHook = { value: 7 }; };
+  const hook = materials[0].onBeforeCompile;
+  const binding = createSkinnedDissolve(geometry, materials);
+  let sourceDisposals = 0, ownedDisposals = 0;
+  for (const source of [geometry, texture, ...materials]) source.addEventListener('dispose', () => sourceDisposals++);
+  const electric = binding.material as THREE.MeshStandardMaterial[], burn = binding.materialFor('burn') as THREE.MeshStandardMaterial[];
+  for (const owned of [...electric, ...burn, binding.depth]) owned.addEventListener('dispose', () => ownedDisposals++);
+  assert.equal(binding.geometry, geometry);
+  assert.equal(geometry.getAttribute('skinIndex'), skinIndex);
+  assert.equal(geometry.getAttribute('instanceDissolve'), undefined);
+  assert.equal(electric[0].map, texture); assert.equal(burn[1].normalMap, texture);
+  assert.equal(materials[0].onBeforeCompile, hook);
+  assert.equal(binding.materialFor('burn'), burn);
+  assert.equal(binding.materialFor('electric'), electric);
+  const shader = { ...THREE.ShaderLib.standard, uniforms: {} as Record<string, THREE.IUniform> };
+  electric[0].onBeforeCompile(shader, {} as THREE.WebGLRenderer);
+  assert.equal(shader.uniforms.existingHook.value, 7);
+  binding.dispose(); assert.equal(ownedDisposals, 5); assert.equal(sourceDisposals, 0);
+  geometry.dispose(); texture.dispose(); materials.forEach(material => material.dispose());
+});
 
 test('Prepared erosion programs retain exact shader hooks after an encounter releases its materials', () => {
   const geometry = new THREE.BoxGeometry(), source = new THREE.MeshStandardMaterial();

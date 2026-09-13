@@ -1,0 +1,51 @@
+{
+  "path": "/home/hfsearcy/git/institute/web/public/assets/rpg/candidates/vault-guardian-boss-tripo.glb",
+  "bytes": 7728136,
+  "sha256": "d5642504acebd1f65a26a7fba641ef7c676d0c475a1ecc2c6b48948832a237b4",
+  "triangles": 94999,
+  "meshes": 1,
+  "primitives": 1,
+  "nodes": 1,
+  "materials": 1,
+  "textures": 3,
+  "images": 3,
+  "skins": 0,
+  "animations": 0,
+  "extensions_used": [],
+  "extensions_required": [],
+  "external_uris": [],
+  "materials_detail": [
+    {
+      "name": "tripo_material_eb6d496f-3b97-44e8-8792-c7e936028097",
+      "normalTexture": {
+        "index": 0
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1
+        },
+        "metallicRoughnessTexture": {
+          "index": 2
+        }
+      }
+    }
+  ],
+  "position_bounds": [
+    {
+      "min": [
+        -0.19594977796077728,
+        -0.48931241035461426,
+        -0.3986901640892029
+      ],
+      "max": [
+        0.19464494287967682,
+        0.48914048075675964,
+        0.39854586124420166
+      ],
+      "count": 68970
+    }
+  ],
+  "node_names": [
+    "tripo_node_eb6d496f-3b97-44e8-8792-c7e936028097"
+  ]
+}

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "cinderwand",
+    "triangles": 7420,
+    "bytes": 191920,
+    "materials": 1,
+    "sha256": "36465d80e01c71f0ba889f54c98c312ddf4b762d258938fe22a1dcbd9fd9e286",
+    "status": "Structural checks only; consult the separately recorded visual review scopes"
+  },
+  {
+    "id": "moonstaff",
+    "triangles": 8108,
+    "bytes": 207188,
+    "materials": 1,
+    "sha256": "c4294bd86bdcba2a8ab8eb11593c36e0660c221023ff9f18a5dd054fb47b031e",
+    "status": "Structural checks only; consult the separately recorded visual review scopes"
+  },
+  {
+    "id": "phoenix",
+    "triangles": 7980,
+    "bytes": 227932,
+    "materials": 1,
+    "sha256": "96ac1c11b6617c04db10d5549a5d69c3eeeb48097a6ca2cfa447c44ba2d400fe",
+    "status": "Structural checks only; consult the separately recorded visual review scopes"
+  },
+  {
+    "id": "wintercrown",
+    "triangles": 10124,
+    "bytes": 258044,
+    "materials": 1,
+    "sha256": "7272abee11eb4e457a4b0b29847239bfe5b7500d5991b082d1306f31f5f7273b",
+    "status": "Structural checks only; consult the separately recorded visual review scopes"
+  },
+  {
+    "id": "tempest",
+    "triangles": 8620,
+    "bytes": 227936,
+    "materials": 1,
+    "sha256": "29f25f46a97791d91996127fc7a2584fd17f3b4215603a06d57d19db4002cb98",
+    "status": "Structural checks only; consult the separately recorded visual review scopes"
+  },
+  {
+    "id": "winterbranch",
+    "triangles": 8876,
+    "bytes": 235152,
+    "materials": 1,
+    "sha256": "cc1914fac4e84ee48a66de5020de00ef6691a947d58000085b9603b6e48c337c",
+    "status": "Structural checks only; consult the separately recorded visual review scopes"
+  }
+]

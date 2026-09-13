@@ -1,0 +1,51 @@
+{
+  "path": "/home/hfsearcy/git/institute/web/public/assets/rpg/candidates/guardian-tripo.glb",
+  "bytes": 7205540,
+  "sha256": "fcc9d8ca0a1738bb29b940fbf8a7998718b27f16cdfbc526458afccaf9d485f1",
+  "triangles": 94999,
+  "meshes": 1,
+  "primitives": 1,
+  "nodes": 1,
+  "materials": 1,
+  "textures": 3,
+  "images": 3,
+  "skins": 0,
+  "animations": 0,
+  "extensions_used": [],
+  "extensions_required": [],
+  "external_uris": [],
+  "materials_detail": [
+    {
+      "name": "tripo_material_41d62f4f-a25c-468a-8fdc-1778018bda10",
+      "normalTexture": {
+        "index": 0
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1
+        },
+        "metallicRoughnessTexture": {
+          "index": 2
+        }
+      }
+    }
+  ],
+  "position_bounds": [
+    {
+      "min": [
+        -0.21662451326847076,
+        -0.48977938294410706,
+        -0.37451592087745667
+      ],
+      "max": [
+        0.21744202077388763,
+        0.4907917082309723,
+        0.3748435378074646
+      ],
+      "count": 68791
+    }
+  ],
+  "node_names": [
+    "tripo_node_41d62f4f-a25c-468a-8fdc-1778018bda10"
+  ]
+}

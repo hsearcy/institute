@@ -1,0 +1,55 @@
+{
+  "type": 1,
+  "name": "Rusty Metal 04",
+  "categories": [
+    "man made",
+    "metal"
+  ],
+  "tags": [
+    "metal sheet",
+    "metal",
+    "rusted",
+    "rusty",
+    "rust",
+    "steel",
+    "oxidized",
+    "corrosion",
+    "oxidized metal",
+    "corroded",
+    "iron",
+    "metallic",
+    "steel sheeting",
+    "corroded metal sheet"
+  ],
+  "authors": {
+    "Amal Kumar": "All"
+  },
+  "max_resolution": [
+    16384,
+    16384
+  ],
+  "dimensions": [
+    2000,
+    2000
+  ],
+  "date_published": 1741219200,
+  "staging": null,
+  "sponsors": [
+    "126766476"
+  ],
+  "description": "Free 16K texture of corroded steel sheeting with flaking paint, coarse rust patches, pitted oxidized surface and faint blue undercoat.",
+  "files_hash": "1c144f4e2b09d58f75430ae32d992b5d8aae53eb",
+  "category_id": "733fc0a1-302e-50f0-bd83-79d7fd8f3f1e",
+  "category": "Metal/Sheet & Corrugated/Flat Sheet",
+  "attributes": {
+    "condition": [
+      "rusted",
+      "painted",
+      "damaged"
+    ],
+    "origin": "man_made"
+  },
+  "img_version": "d0fdf0c3",
+  "download_count": 116559,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/rusty_metal_04.png?width=256&height=256&v=d0fdf0c3"
+}

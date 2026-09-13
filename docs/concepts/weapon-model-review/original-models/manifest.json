@@ -1,0 +1,1436 @@
+{
+  "version": 1,
+  "coordinateConvention": "Rigid equipment uses a palm or wearable anchor origin, separate from ground-origin scenery/enemy assets.",
+  "items": [
+    {
+      "id": "apprentice",
+      "model": "apprentice.glb",
+      "thumbnail": "apprentice.png",
+      "sha256": "843adac02c11ea0d8d7aacba6d8f0eec90cf92e3bb0653a836f39ded73c35761",
+      "candidateSha256": "843adac02c11ea0d8d7aacba6d8f0eec90cf92e3bb0653a836f39ded73c35761",
+      "thumbnailSha256": "01e66d6d3064f411ad55e13de561f0a9be4edee042fde066fa7cb36751da5105",
+      "bytes": 1311748,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/apprentice-v7-source.blend",
+        "sha256": "058af1a1a45481bca7a8d0dcd62a4dabcf7f6f71450f332f715d854c39bffa42",
+        "recipe": "scripts/blender/items/build_studies.py::apprentice",
+        "recipeFilesAtInstallation": {
+          "scripts/blender/items/build_studies.py": "ecf3918193161bffa339480ef68996d858c13c5d15ba19b2ae4fb3bae90c583d",
+          "scripts/blender/items/surfaces.py": "b21a9a2b8d912b0ff9c2561a2d357e480615fe89e27eff6ee29108982637cf54",
+          "scripts/blender/items/bake_items.py": "4408b3298fb03705dbf6d911c48a93908e77168a32970b2075e5e90b8d6658ff",
+          "scripts/blender/items/pack_candidate.py": "b317bac3d5d6ce5602a09e5c50936884349875675df910a354c39281e3962109"
+        },
+        "materialRevision": "v4 blackened forged iron crossguard; baseColor multiplier(.32,.36,.38), metalness.65, roughness.54. Other accepted surfaces retained."
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "actual palm/grasp center at local(0,0,0)",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "apprentice_Grip.014",
+        "tipNode": "apprentice_Tip.014",
+        "transform": "full measured palm socket \u00d7 inverse local Grip transform; no bounding-box fit"
+      },
+      "render": {
+        "triangles": 4746,
+        "meshes": 1,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "textures": 3,
+        "embeddedImages": 3,
+        "textureSize": [
+          1024,
+          1024
+        ],
+        "transmission": false,
+        "skinned": false,
+        "drawCallScope": "per item color pass; shadow/depth/postprocessing passes counted separately"
+      },
+      "review": {
+        "sourceConstruction": 8,
+        "sourceMaterial": 8,
+        "exactExportConstruction": 8,
+        "exactExportMaterial": 8,
+        "nativeStaticAttachmentScale": 8,
+        "nativeStaticMaterial": 8,
+        "standaloneThumbnail": 8,
+        "continuousMotion": {
+          "score": 8,
+          "scope": "Weapon-only grip, continuity and material across three actual Cleave intervals at observed recording sampling.",
+          "firstCastSmoothness": {
+            "score": 8,
+            "scope": "One fresh first Cleave cast; weapon-only continuity and smoothness reviewed at25fps video sampling, corroborated by actual-render telemetry. No Cleave FX acceptance inferred.",
+            "activeIntervalMedianMs": 16.8,
+            "activeIntervalMaximumMs": 23.7,
+            "programCount": 144,
+            "programCountStable": true,
+            "evidence": [
+              "docs/rpg-playtest/v15/items/apprentice-v4/first-cast-warmup.json",
+              "docs/rpg-playtest/v15/items/apprentice-v4/first-cast-warmup.webm"
+            ],
+            "priorFailure": "Earlier98.9ms opening gap retained as prior evidence; corrected warm geometry now includes the actual ribbon attribute variant."
+          },
+          "spellEffectAcceptance": "not implied"
+        },
+        "actualInventoryCard": {
+          "score": 8,
+          "reviewedSizesPx": [
+            210,
+            93
+          ],
+          "scope": "Actual feature and inventory-card deployment"
+        },
+        "scope": "Independent scoped art reviews; no other item or general gameplay acceptance inferred."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "thunderrod",
+      "model": "thunderrod.glb",
+      "thumbnail": "thunderrod.png",
+      "sha256": "f5c813c5e8aa5753b1746db0038605414abf829b6ce0784407c45d048875378c",
+      "candidateSha256": "f5c813c5e8aa5753b1746db0038605414abf829b6ce0784407c45d048875378c",
+      "thumbnailSha256": "b2981ed9bb79177c6b6001a22a830616a996e3a0bf842d4c42f7d1be14d77c7f",
+      "bytes": 1270772,
+      "source": {
+        "recipe": "scripts/blender/items/build_studies.py::thunderrod",
+        "evidence": "docs/rpg-playtest/v18/items/thunder",
+        "materialRevision": "v8 localized contact-face heat and oxidation; reviewed source retained"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "actual palm/grasp center at local(0,0,0)",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "thunderrod_Grip.005",
+        "tipNode": "thunderrod_Tip.005",
+        "transform": "full measured palm socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 9300,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "textureSize": [
+          1024,
+          1024
+        ],
+        "transmission": false,
+        "skinned": false,
+        "drawCallScope": "per item color pass; shadow/depth passes separate"
+      },
+      "review": {
+        "sourceConstruction": 8,
+        "sourceMaterial": 8,
+        "exactExportConstruction": 8,
+        "exactExportMaterial": 8,
+        "nativeStaticAttachmentScale": 8,
+        "nativeStaticMaterial": 8,
+        "standaloneThumbnail": 8,
+        "actualInventoryCard": {
+          "score": 8,
+          "reviewedSizesPx": [
+            210,
+            92
+          ]
+        },
+        "continuousMotion": {
+          "score": 8,
+          "scope": "Weapon-only grip/material continuity through two actual Chain Lightning casts, reviewed at 25fps. Spell effects excluded."
+        },
+        "evidence": "docs/rpg-playtest/v18/items/thunder/runtime",
+        "scope": "Independent bounded reviews; no other item, spell art, or global acceptance."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "cleaver",
+      "model": "cleaver.glb",
+      "thumbnail": "cleaver.png",
+      "sha256": "338e88f04c4b96d196331908fc2abcbe64f7d900987233a5a11cf3ecf8a81422",
+      "candidateSha256": "338e88f04c4b96d196331908fc2abcbe64f7d900987233a5a11cf3ecf8a81422",
+      "thumbnailSha256": "dc03505fd8a5d17bd926fe68f12183d87a8a367b3e2cfae7a79a69cec75ae393",
+      "bytes": 827720,
+      "source": {
+        "recipe": "scripts/blender/items/metal_weapons.py::cleaver",
+        "evidence": "docs/rpg-playtest/v18/items/ashsplitter/corrected-v4",
+        "materialRevision": "v2 restrained steel bevel, source retained",
+        "bakeOptions": {
+          "structured_blade": true,
+          "split_material_boundaries": true,
+          "geometry_normals_only": true
+        }
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "actual palm/grasp center at local(0,0,0)",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "cleaver_Grip.005",
+        "tipNode": "cleaver_Tip.005",
+        "transform": "full measured palm socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 5160,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "textureSize": [
+          1024,
+          1024
+        ],
+        "transmission": false,
+        "skinned": false,
+        "drawCallScope": "per item color pass; shadow/depth passes separate"
+      },
+      "review": {
+        "sourceConstruction": 8,
+        "sourceMaterial": 8,
+        "exactExportConstruction": 8,
+        "exactExportMaterial": 8,
+        "nativeStaticAttachmentScale": 8,
+        "nativeStaticMaterial": 8,
+        "standaloneThumbnail": 8,
+        "actualInventoryCard": {
+          "score": 8,
+          "reviewedSizesPx": [
+            210,
+            92
+          ]
+        },
+        "continuousMotion": {
+          "score": 8,
+          "scope": "Weapon-only grip/material continuity through two actual Flame Cleave casts, reviewed at 25fps. Spell effects excluded."
+        },
+        "evidence": "docs/rpg-playtest/v18/items/ashsplitter/runtime",
+        "scope": "Independent bounded reviews; no other item, spell art, or global acceptance."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "moonstaff",
+      "model": "moonstaff.glb",
+      "thumbnail": "moonstaff.png",
+      "sha256": "3bef5aa838a2770636ab5b3cb80f7c0a362c4b77fd7e2ddd082508c99402520b",
+      "candidateSha256": "3bef5aa838a2770636ab5b3cb80f7c0a362c4b77fd7e2ddd082508c99402520b",
+      "thumbnailSha256": "12a97e9cbfb9f13332318eba861e1751989dc25ead36971b23f3df1714452ebb",
+      "bytes": 878972,
+      "source": {
+        "recipe": "scripts/blender/items/build_studies.py::moonstaff",
+        "sourceSnapshotSha256": "244802fdca8a4d8e94c2fb46368693f39b3ea4e2e4e5971ca568f1d88b0880ff",
+        "evidence": "docs/rpg-playtest/v18/items/moonstaff",
+        "sourceRecipeSnapshot": "docs/rpg-playtest/v18/items/moonstaff/source-recipe-v4",
+        "bakeOptions": {
+          "structured_grip": true,
+          "geometry_normals_only": true
+        },
+        "materialRevision": "v4 broad mineral cloud under polished stone, silver setting and restrained navy leather; source unchanged"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "actual palm/grasp center at local(0,0,0)",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "moonstaff_Grip.006",
+        "tipNode": "moonstaff_Tip.006",
+        "transform": "full measured palm socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 11302,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "textureSize": [
+          1024,
+          1024
+        ],
+        "transmission": false,
+        "skinned": false,
+        "drawCallScope": "per item color pass; shadow/depth passes separate"
+      },
+      "review": {
+        "sourceConstruction": 8,
+        "sourceMaterial": 8,
+        "exactExportConstruction": 8,
+        "exactExportMaterial": 8,
+        "nativeStaticAttachmentScale": 8,
+        "nativeStaticMaterial": 8,
+        "standaloneThumbnail": 8,
+        "actualInventoryCard": {
+          "score": 8,
+          "reviewedSizesPx": [
+            210,
+            92
+          ]
+        },
+        "continuousMotion": {
+          "score": 8,
+          "scope": "Weapon-only visible hand continuity, long-shaft clearance and material/readability through two Cleave casts and one Nova cast. Isolated first Cleave shows raise, sweep and recovery at25fps recording sampling. No subframe, FX or general performance acceptance inferred.",
+          "reviewedFrames": {
+            "isolated": [
+              30,
+              65
+            ],
+            "threeCastNova": [
+              195,
+              245
+            ],
+            "threeCastSecondCleave": [
+              355,
+              405
+            ]
+          }
+        },
+        "evidence": "docs/rpg-playtest/v18/items/moonstaff/runtime",
+        "scope": "Independent bounded reviews; no other item, spell art, or global acceptance."
+      },
+      "performance": {
+        "evidence": "docs/rpg-playtest/v18/items/moonstaff/runtime/performance-comparison.json",
+        "scope": "One matched first-Cleave pair on current host,25fps recording; existing preview renderer suspended then exactly restored",
+        "activeMedianMs": 21.65,
+        "activeP95Ms": 29.6,
+        "activeMaximumMs": 45.2,
+        "apprenticeBaselineMedianMs": 20.1,
+        "programCount": 159,
+        "programCountStable": true
+      },
+      "preview": {
+        "thumbnailAzimuth": 32,
+        "thumbnailElevation": 12,
+        "thumbnailRoll": 28,
+        "thumbnailMargin": 1.18,
+        "scope": "Explicit thumbnail framing override; accepted GLB embedded metadata retained"
+      },
+      "validation": {
+        "routeFreeInstalledUiCombatReload": "passed",
+        "fourModelSwitching": "passed",
+        "fullTests": 369,
+        "testFiles": 48,
+        "failures": 0,
+        "productionBuild": "passed",
+        "evidence": "docs/rpg-playtest/v18/items/moonstaff/runtime",
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "phoenix",
+      "model": "phoenix.glb",
+      "thumbnail": "phoenix.png",
+      "sha256": "1114e85036a0670de36b9182bef1a8e795b5f5e705ba715ee8ec14a0ca9cfcc0",
+      "candidateSha256": "1114e85036a0670de36b9182bef1a8e795b5f5e705ba715ee8ec14a0ca9cfcc0",
+      "thumbnailSha256": "71cb4bcc4fd456e64e5bc4f1f7ba7b99575da81959502a23908278359ea6b81c",
+      "bytes": 1013548,
+      "source": {
+        "recipe": "scripts/blender/items/build_studies.py::phoenix",
+        "sourceSnapshotSha256": "6dee67a6f3a732825b66077e178120d1803a86e2c748f324fc5008f7871f38f2",
+        "sourceRecipeSnapshot": "docs/rpg-playtest/v18/items/phoenix/source-recipe-v8",
+        "evidence": "docs/rpg-playtest/v18/items/phoenix",
+        "bakeOptions": {
+          "structured_grip": true,
+          "small_mesh_ratio": 0.35,
+          "geometry_normals_only": true
+        },
+        "materialRevision": "Protected bronze wing roots, clean exposed faces, red enamel and deep garnet; v8 outward winding preserves approved vertex positions and material intent"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "actual palm/grasp center at local(0,0,0)",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "phoenix_Grip.007",
+        "tipNode": "phoenix_Tip.007",
+        "transform": "full measured palm socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 11212,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "textureSize": [
+          1024,
+          1024
+        ],
+        "transmission": false,
+        "skinned": false,
+        "drawCallScope": "per item color pass; shadow/depth passes separate"
+      },
+      "review": {
+        "sourceConstruction": 8,
+        "sourceMaterial": 8,
+        "exactExportConstruction": 8,
+        "exactExportMaterial": 8,
+        "nativeStaticAttachmentScale": 8,
+        "nativeStaticMaterial": 8,
+        "standaloneThumbnail": 8,
+        "actualInventoryCard": {
+          "score": 8,
+          "reviewedSizesPx": [
+            210,
+            92
+          ]
+        },
+        "continuousMotion": {
+          "score": 8,
+          "scope": "Weapon-only seated hand/shaft continuity, head and shaft clearance and material readability through two real Cleave casts and one Nova cast; reviewed every original25fps frame. FX, phone inventory and subframe behavior excluded.",
+          "reviewedFrames": {
+            "firstCleave": [
+              345,
+              425
+            ],
+            "nova": [
+              515,
+              605
+            ],
+            "secondCleave": [
+              680,
+              765
+            ]
+          }
+        },
+        "evidence": "docs/rpg-playtest/v18/items/phoenix/runtime",
+        "scope": "Independent bounded reviews; no other item, spell art or global acceptance"
+      },
+      "performance": {
+        "evidence": "docs/rpg-playtest/v18/items/phoenix/runtime/native-performance.json",
+        "scope": "One current-host three-cast candidate run,25fps recording, existing preview rendering suspended and exactly restored; no global benchmark",
+        "activeMedianMs": 22.9,
+        "activeP95Ms": 29.8,
+        "activeMaximumMs": 37.8,
+        "programCount": 163,
+        "programCountStable": true
+      },
+      "preview": {
+        "thumbnailAzimuth": 28,
+        "thumbnailElevation": 12,
+        "thumbnailRoll": 22,
+        "thumbnailMargin": 1.18,
+        "scope": "Uses exact GLB embedded framing metadata"
+      },
+      "validation": {
+        "routeFreeInstalledUiCombatReload": "passed",
+        "fiveModelSwitching": "passed",
+        "fullTests": 385,
+        "testFiles": 50,
+        "failures": 0,
+        "productionBuild": "passed",
+        "evidence": "docs/rpg-playtest/v18/items/phoenix/runtime",
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "wintercrown",
+      "model": "wintercrown.glb",
+      "thumbnail": "wintercrown.png",
+      "sha256": "9e897aea4863c3a5639a5dce2d3c3bda76dac9729ae0f387a683e3b6bbc90d28",
+      "candidateSha256": "9e897aea4863c3a5639a5dce2d3c3bda76dac9729ae0f387a683e3b6bbc90d28",
+      "thumbnailSha256": "304e696c74bc636fcce1869d779e12c38121860da3ed911229c599441ac8a0d5",
+      "bytes": 821772,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/catalogue-v1/wintercrown/source.blend",
+        "sha256": "45643cec7e3d506fd450d5988d709e18ebee8103eb8a4dc7210cf2b520cf0a3b",
+        "sourceRecipeSha256": "72e45312856f2ae168e0a253042d25e301145ad764fb2b0ccc3ea71833085009",
+        "recipe": "scripts/blender/items/build_studies.py::BUILDERS['wintercrown']",
+        "evidence": "tmp/item-models/catalogue-v1/wintercrown"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "local origin is the palm or wearable attachment anchor",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "wintercrown_Grip.001",
+        "tipNode": "wintercrown_Tip.001",
+        "transform": "measured bone socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 10616,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "transmission": false,
+        "skinned": false
+      },
+      "review": {
+        "status": "Visual work in progress; not accepted against the requested 8/10 overall standard.",
+        "structuralValidation": "passed",
+        "nativeValidation": "Functional equip/save and all four armor mounts passed; visual work in progress",
+        "scope": "Installed distinct functional reward model. Installation is not an overall art-quality approval."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "tempest",
+      "model": "tempest.glb",
+      "thumbnail": "tempest.png",
+      "sha256": "9f1584de5faa0015a5049c92ad6adbff71efa748b5216bb2c8041a1c1fbbf31c",
+      "candidateSha256": "9f1584de5faa0015a5049c92ad6adbff71efa748b5216bb2c8041a1c1fbbf31c",
+      "thumbnailSha256": "990a8d1ea0d99ac08bef0ad9e2794e6e9637d4ed269a397c90f3f2abfd2b61b7",
+      "bytes": 850160,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/catalogue-v1/tempest/source.blend",
+        "sha256": "fa69fda347707cbaf958f958a06d8358f20415cefb3843cb07314da1036e2b6d",
+        "sourceRecipeSha256": "72e45312856f2ae168e0a253042d25e301145ad764fb2b0ccc3ea71833085009",
+        "recipe": "scripts/blender/items/build_studies.py::BUILDERS['tempest']",
+        "evidence": "tmp/item-models/catalogue-v1/tempest"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "local origin is the palm or wearable attachment anchor",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "tempest_Grip.001",
+        "tipNode": "tempest_Tip.001",
+        "transform": "measured bone socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 9836,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "transmission": false,
+        "skinned": false
+      },
+      "review": {
+        "status": "Visual work in progress; not accepted against the requested 8/10 overall standard.",
+        "structuralValidation": "passed",
+        "nativeValidation": "Functional equip/save and all four armor mounts passed; visual work in progress",
+        "scope": "Installed distinct functional reward model. Installation is not an overall art-quality approval."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "phoenix_talon",
+      "model": "phoenix_talon.glb",
+      "thumbnail": "phoenix_talon.png",
+      "sha256": "0f1b4c17f215ba6cbd5bc615414e52818658a226ab65b2a66275b077628c9b01",
+      "candidateSha256": "0f1b4c17f215ba6cbd5bc615414e52818658a226ab65b2a66275b077628c9b01",
+      "thumbnailSha256": "d78eedd308190977dcebb55775a6f779baf6c1dc99c9de348509b4f4bf49b025",
+      "bytes": 735096,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/catalogue-v1/phoenix_talon/source.blend",
+        "sha256": "0d04a32022d1768a8cd05ac3b373dd82a55eee93618c79fdbb7e900b6aea5c40",
+        "sourceRecipeSha256": "72e45312856f2ae168e0a253042d25e301145ad764fb2b0ccc3ea71833085009",
+        "recipe": "scripts/blender/items/build_studies.py::BUILDERS['phoenix_talon']",
+        "evidence": "tmp/item-models/catalogue-v1/phoenix_talon"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "local origin is the palm or wearable attachment anchor",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "phoenix_talon_Grip.001",
+        "tipNode": "phoenix_talon_Tip.001",
+        "transform": "measured bone socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 6602,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "transmission": false,
+        "skinned": false
+      },
+      "review": {
+        "status": "Visual work in progress; not accepted against the requested 8/10 overall standard.",
+        "structuralValidation": "passed",
+        "nativeValidation": "Functional equip/save and all four armor mounts passed; visual work in progress",
+        "scope": "Installed distinct functional reward model. Installation is not an overall art-quality approval."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "sunforged",
+      "model": "sunforged.glb",
+      "thumbnail": "sunforged.png",
+      "sha256": "e707044e8f4a4670b4dcfad6fa5bae2ecf9604a650f696d9af91eb805a2a847b",
+      "candidateSha256": "e707044e8f4a4670b4dcfad6fa5bae2ecf9604a650f696d9af91eb805a2a847b",
+      "thumbnailSha256": "23111c07d110e37b69ea1a0637e00581f8e4563f39a77b9a72b3b8cdb83e371a",
+      "bytes": 890936,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/catalogue-v1/sunforged/source.blend",
+        "sha256": "df3e1d6b66ec1b0bafa9338b4bbc587acb4492c63623b4bfa87c4a025dfa5b5f",
+        "sourceRecipeSha256": "72e45312856f2ae168e0a253042d25e301145ad764fb2b0ccc3ea71833085009",
+        "recipe": "scripts/blender/items/build_studies.py::BUILDERS['sunforged']",
+        "evidence": "tmp/item-models/catalogue-v1/sunforged"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "local origin is the palm or wearable attachment anchor",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "sunforged_Grip.001",
+        "tipNode": "sunforged_Tip.001",
+        "transform": "measured bone socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 9978,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "transmission": false,
+        "skinned": false
+      },
+      "review": {
+        "status": "Visual work in progress; not accepted against the requested 8/10 overall standard.",
+        "structuralValidation": "passed",
+        "nativeValidation": "Functional equip/save and all four armor mounts passed; visual work in progress",
+        "scope": "Installed distinct functional reward model. Installation is not an overall art-quality approval."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "icespear",
+      "model": "icespear.glb",
+      "thumbnail": "icespear.png",
+      "sha256": "d51260f6bf101e35bf01ca3643f43db8ebe86509a2e7657f654a4178965a95f9",
+      "candidateSha256": "d51260f6bf101e35bf01ca3643f43db8ebe86509a2e7657f654a4178965a95f9",
+      "thumbnailSha256": "ba8bd54531e5b30fc928f0578fd602148e732894e923a620fa1d7079d012f0fe",
+      "bytes": 611744,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/catalogue-v1/icespear/source.blend",
+        "sha256": "f214dca4a260ab94c4840688570d273675b9e3638171039abdf8a833fcddf9ea",
+        "sourceRecipeSha256": "72e45312856f2ae168e0a253042d25e301145ad764fb2b0ccc3ea71833085009",
+        "recipe": "scripts/blender/items/build_studies.py::BUILDERS['icespear']",
+        "evidence": "tmp/item-models/catalogue-v1/icespear"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "local origin is the palm or wearable attachment anchor",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "icespear_Grip.001",
+        "tipNode": "icespear_Tip.001",
+        "transform": "measured bone socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 6870,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "transmission": false,
+        "skinned": false
+      },
+      "review": {
+        "status": "Visual work in progress; not accepted against the requested 8/10 overall standard.",
+        "structuralValidation": "passed",
+        "nativeValidation": "Functional equip/save and all four armor mounts passed; visual work in progress",
+        "scope": "Installed distinct functional reward model. Installation is not an overall art-quality approval."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "tideglass",
+      "model": "tideglass.glb",
+      "thumbnail": "tideglass.png",
+      "sha256": "a2b47cfd26087c7f36b3a08de4ef922b3cd76b55e34d965f23b76b06b11b2c9f",
+      "candidateSha256": "a2b47cfd26087c7f36b3a08de4ef922b3cd76b55e34d965f23b76b06b11b2c9f",
+      "thumbnailSha256": "414da1f188dcc9e6f26892aff3fe9a4586ead03f21952296419ac3b5334543b7",
+      "bytes": 508328,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/catalogue-v1/tideglass/source.blend",
+        "sha256": "434a9de56b07ab460eb7af8b8ee4213797549f17bab357fa0466ffdea753ffb8",
+        "sourceRecipeSha256": "72e45312856f2ae168e0a253042d25e301145ad764fb2b0ccc3ea71833085009",
+        "recipe": "scripts/blender/items/build_studies.py::BUILDERS['tideglass']",
+        "evidence": "tmp/item-models/catalogue-v1/tideglass"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "local origin is the palm or wearable attachment anchor",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "tideglass_Grip.001",
+        "tipNode": "tideglass_Tip.001",
+        "transform": "measured bone socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 5988,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "transmission": false,
+        "skinned": false
+      },
+      "review": {
+        "status": "Visual work in progress; not accepted against the requested 8/10 overall standard.",
+        "structuralValidation": "passed",
+        "nativeValidation": "Functional equip/save and all four armor mounts passed; visual work in progress",
+        "scope": "Installed distinct functional reward model. Installation is not an overall art-quality approval."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "hailcaller",
+      "model": "hailcaller.glb",
+      "thumbnail": "hailcaller.png",
+      "sha256": "bb0f47e7eea26190f5835894af2ac57eb125ca319924c8a0f2a525abcf0e235d",
+      "candidateSha256": "bb0f47e7eea26190f5835894af2ac57eb125ca319924c8a0f2a525abcf0e235d",
+      "thumbnailSha256": "98906f166e0c584dfe262f9a8a2c4e28f9ae1c1c24ba5eceb846477e4781ad1a",
+      "bytes": 673156,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/catalogue-v1/hailcaller/source.blend",
+        "sha256": "518b7ee287d0208d8bf229372f150a75df2f58223cb9c7cb8cd11f64cf73d43b",
+        "sourceRecipeSha256": "72e45312856f2ae168e0a253042d25e301145ad764fb2b0ccc3ea71833085009",
+        "recipe": "scripts/blender/items/build_studies.py::BUILDERS['hailcaller']",
+        "evidence": "tmp/item-models/catalogue-v1/hailcaller"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "local origin is the palm or wearable attachment anchor",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "hailcaller_Grip.001",
+        "tipNode": "hailcaller_Tip.001",
+        "transform": "measured bone socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 7368,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "transmission": false,
+        "skinned": false
+      },
+      "review": {
+        "status": "Visual work in progress; not accepted against the requested 8/10 overall standard.",
+        "structuralValidation": "passed",
+        "nativeValidation": "Functional equip/save and all four armor mounts passed; visual work in progress",
+        "scope": "Installed distinct functional reward model. Installation is not an overall art-quality approval."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "wardenheart",
+      "model": "wardenheart.glb",
+      "thumbnail": "wardenheart.png",
+      "sha256": "9103d388ef30b206fbcb6de4d0f26d13b2defee4c8b7d138af89745a5ebef036",
+      "candidateSha256": "9103d388ef30b206fbcb6de4d0f26d13b2defee4c8b7d138af89745a5ebef036",
+      "thumbnailSha256": "84b2bfbfbbf6cbf35987d6ca1f5a01a239214a7fe109e7244db6e263538423a8",
+      "bytes": 489420,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/catalogue-v1/wardenheart/source.blend",
+        "sha256": "d0c77cb2cb7ff571584909e769caa4dcb27bcef176b06aba61fd1dc4c84119b7",
+        "sourceRecipeSha256": "72e45312856f2ae168e0a253042d25e301145ad764fb2b0ccc3ea71833085009",
+        "recipe": "scripts/blender/items/build_studies.py::BUILDERS['wardenheart']",
+        "evidence": "tmp/item-models/catalogue-v1/wardenheart"
+      },
+      "attachment": {
+        "node": "chest",
+        "units": "meters",
+        "gripOrigin": "local origin is the palm or wearable attachment anchor",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "wardenheart_Grip.001",
+        "tipNode": "wardenheart_Tip.001",
+        "transform": "measured bone socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 1500,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "transmission": false,
+        "skinned": false
+      },
+      "review": {
+        "status": "Visual work in progress; not accepted against the requested 8/10 overall standard.",
+        "structuralValidation": "passed",
+        "nativeValidation": "Functional equip/save and all four armor mounts passed; visual work in progress",
+        "scope": "Installed distinct functional reward model. Installation is not an overall art-quality approval."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "arcfang",
+      "model": "arcfang.glb",
+      "thumbnail": "arcfang.png",
+      "sha256": "e6fa8bd65aa5e5ce13a38068260d16d579b34401d3ce674e27fdb84b9d385a04",
+      "candidateSha256": "e6fa8bd65aa5e5ce13a38068260d16d579b34401d3ce674e27fdb84b9d385a04",
+      "thumbnailSha256": "faac2b2bb813ac1f4055ce7dad4ca1d6c7db8430fe2f82cea03195725947748a",
+      "bytes": 775324,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/catalogue-v1/arcfang/source.blend",
+        "sha256": "fe5dbe6c6a9134b3fdc1374703d9f88420b30061aabce6ff6b6727fc270b42e2",
+        "sourceRecipeSha256": "72e45312856f2ae168e0a253042d25e301145ad764fb2b0ccc3ea71833085009",
+        "recipe": "scripts/blender/items/build_studies.py::BUILDERS['arcfang']",
+        "evidence": "tmp/item-models/catalogue-v1/arcfang"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "local origin is the palm or wearable attachment anchor",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "arcfang_Grip.001",
+        "tipNode": "arcfang_Tip.001",
+        "transform": "measured bone socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 6904,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "transmission": false,
+        "skinned": false
+      },
+      "review": {
+        "status": "Visual work in progress; not accepted against the requested 8/10 overall standard.",
+        "structuralValidation": "passed",
+        "nativeValidation": "Functional equip/save and all four armor mounts passed; visual work in progress",
+        "scope": "Installed distinct functional reward model. Installation is not an overall art-quality approval."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "thunderbell",
+      "model": "thunderbell.glb",
+      "thumbnail": "thunderbell.png",
+      "sha256": "7fade833c26223956ddf526cc8f38c598eff9485f8eb4b7a2ce783e0efc5e491",
+      "candidateSha256": "7fade833c26223956ddf526cc8f38c598eff9485f8eb4b7a2ce783e0efc5e491",
+      "thumbnailSha256": "5f93ecad926edbae767f7df6a4dc716c6c97c99f32bcd8e96f53f00073450f58",
+      "bytes": 1156000,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/catalogue-v1/thunderbell/source.blend",
+        "sha256": "fc97a8c1485fa43cdd1d52d29a0dca5ee94f9ab86317b37e88b41390933624e5",
+        "sourceRecipeSha256": "72e45312856f2ae168e0a253042d25e301145ad764fb2b0ccc3ea71833085009",
+        "recipe": "scripts/blender/items/build_studies.py::BUILDERS['thunderbell']",
+        "evidence": "tmp/item-models/catalogue-v1/thunderbell"
+      },
+      "attachment": {
+        "node": "belt",
+        "units": "meters",
+        "gripOrigin": "local origin is the palm or wearable attachment anchor",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "thunderbell_Grip.001",
+        "tipNode": "thunderbell_Tip.001",
+        "transform": "measured bone socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 11966,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "transmission": false,
+        "skinned": false
+      },
+      "review": {
+        "status": "Visual work in progress; not accepted against the requested 8/10 overall standard.",
+        "structuralValidation": "passed",
+        "nativeValidation": "Functional equip/save and all four armor mounts passed; visual work in progress",
+        "scope": "Installed distinct functional reward model. Installation is not an overall art-quality approval."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "stormorbit",
+      "model": "stormorbit.glb",
+      "thumbnail": "stormorbit.png",
+      "sha256": "47f9407ff85dd190f4a3a35c16ced5da4f588bf551a0d0ed762d3f16418f1c9b",
+      "candidateSha256": "47f9407ff85dd190f4a3a35c16ced5da4f588bf551a0d0ed762d3f16418f1c9b",
+      "thumbnailSha256": "c18fb28de0ec6e831b787d03abd360ded6cd1cdc8187f0b5bd255bf669258a6d",
+      "bytes": 706884,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/catalogue-v1/stormorbit/source.blend",
+        "sha256": "3605fd5438ff3f2f02fb0f2590197e05e77fcb88dd2c2f170924fabf23897350",
+        "sourceRecipeSha256": "72e45312856f2ae168e0a253042d25e301145ad764fb2b0ccc3ea71833085009",
+        "recipe": "scripts/blender/items/build_studies.py::BUILDERS['stormorbit']",
+        "evidence": "tmp/item-models/catalogue-v1/stormorbit"
+      },
+      "attachment": {
+        "node": "belt",
+        "units": "meters",
+        "gripOrigin": "local origin is the palm or wearable attachment anchor",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "stormorbit_Grip.001",
+        "tipNode": "stormorbit_Tip.001",
+        "transform": "measured bone socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 2320,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "transmission": false,
+        "skinned": false
+      },
+      "review": {
+        "status": "Visual work in progress; not accepted against the requested 8/10 overall standard.",
+        "structuralValidation": "passed",
+        "nativeValidation": "Functional equip/save and all four armor mounts passed; visual work in progress",
+        "scope": "Installed distinct functional reward model. Installation is not an overall art-quality approval."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "skybreaker",
+      "model": "skybreaker.glb",
+      "thumbnail": "skybreaker.png",
+      "sha256": "cd66df4a500e65669478f8fd75100818120a2887570303c165dda89c1dd2bc88",
+      "candidateSha256": "cd66df4a500e65669478f8fd75100818120a2887570303c165dda89c1dd2bc88",
+      "thumbnailSha256": "fefc64ff59d7cb05e635e2cd01549ce25b2ecf1efb398396e401c3b432e37b25",
+      "bytes": 636556,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/catalogue-v1/skybreaker/source.blend",
+        "sha256": "d6e504a3e6d74c20ade6d33436d54f304458044cb7df222811cbd1d878041ea5",
+        "sourceRecipeSha256": "72e45312856f2ae168e0a253042d25e301145ad764fb2b0ccc3ea71833085009",
+        "recipe": "scripts/blender/items/build_studies.py::BUILDERS['skybreaker']",
+        "evidence": "tmp/item-models/catalogue-v1/skybreaker"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "local origin is the palm or wearable attachment anchor",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "skybreaker_Grip.001",
+        "tipNode": "skybreaker_Tip.001",
+        "transform": "measured bone socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 7468,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "transmission": false,
+        "skinned": false
+      },
+      "review": {
+        "status": "Visual work in progress; not accepted against the requested 8/10 overall standard.",
+        "structuralValidation": "passed",
+        "nativeValidation": "Functional equip/save and all four armor mounts passed; visual work in progress",
+        "scope": "Installed distinct functional reward model. Installation is not an overall art-quality approval."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "stormsilver",
+      "model": "stormsilver.glb",
+      "thumbnail": "stormsilver.png",
+      "sha256": "0ccefc37c99b03aa7c34e3f8572cc94f9ea2a503d125b58f47105b673c9acccb",
+      "candidateSha256": "0ccefc37c99b03aa7c34e3f8572cc94f9ea2a503d125b58f47105b673c9acccb",
+      "thumbnailSha256": "95598dc8855f7ffca23693c2f06a1f13a229f49f8e322b1575abc8fc167fc82f",
+      "bytes": 781600,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/catalogue-v1/stormsilver/source.blend",
+        "sha256": "7aa8e14f6bebb5e2b31c5642877ad10a0a0f59fd45d699633bbcb9183219214c",
+        "sourceRecipeSha256": "72e45312856f2ae168e0a253042d25e301145ad764fb2b0ccc3ea71833085009",
+        "recipe": "scripts/blender/items/build_studies.py::BUILDERS['stormsilver']",
+        "evidence": "tmp/item-models/catalogue-v1/stormsilver"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "local origin is the palm or wearable attachment anchor",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "stormsilver_Grip.001",
+        "tipNode": "stormsilver_Tip.001",
+        "transform": "measured bone socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 11606,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "transmission": false,
+        "skinned": false
+      },
+      "review": {
+        "status": "Visual work in progress; not accepted against the requested 8/10 overall standard.",
+        "structuralValidation": "passed",
+        "nativeValidation": "Functional equip/save and all four armor mounts passed; visual work in progress",
+        "scope": "Installed distinct functional reward model. Installation is not an overall art-quality approval."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "inferno",
+      "model": "inferno.glb",
+      "thumbnail": "inferno.png",
+      "sha256": "1a9e45eeab15f60b78a0380017e0d4190ce3f7fa3d9b34c8d2575db589d23711",
+      "candidateSha256": "1a9e45eeab15f60b78a0380017e0d4190ce3f7fa3d9b34c8d2575db589d23711",
+      "thumbnailSha256": "5e9f975272e98ac8185f402afabab2849214203fbf20d684b8274b1dfde01798",
+      "bytes": 851556,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/catalogue-v1/inferno/source.blend",
+        "sha256": "11517b94817e57a5a1f7d4392c89ddcaece8a8085361dfccbfc538c220becd86",
+        "sourceRecipeSha256": "72e45312856f2ae168e0a253042d25e301145ad764fb2b0ccc3ea71833085009",
+        "recipe": "scripts/blender/items/build_studies.py::BUILDERS['inferno']",
+        "evidence": "tmp/item-models/catalogue-v1/inferno"
+      },
+      "attachment": {
+        "node": "head",
+        "units": "meters",
+        "gripOrigin": "local origin is the palm or wearable attachment anchor",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "inferno_Grip.001",
+        "tipNode": "inferno_Tip.001",
+        "transform": "measured bone socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 6220,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "transmission": false,
+        "skinned": false
+      },
+      "review": {
+        "status": "Visual work in progress; not accepted against the requested 8/10 overall standard.",
+        "structuralValidation": "passed",
+        "nativeValidation": "Functional equip/save and all four armor mounts passed; visual work in progress",
+        "scope": "Installed distinct functional reward model. Installation is not an overall art-quality approval."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "winterbranch",
+      "model": "winterbranch.glb",
+      "thumbnail": "winterbranch.png",
+      "sha256": "ed01315eed6c805e590c21fbb873ea14326992d78874dd1c3f6da1d71285b9dc",
+      "candidateSha256": "ed01315eed6c805e590c21fbb873ea14326992d78874dd1c3f6da1d71285b9dc",
+      "thumbnailSha256": "b4097c83c9f6a0b2992bc6aca32ab846dcdca7f20f8d0cccabdd398d73384e7c",
+      "bytes": 1424696,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/catalogue-v1/winterbranch/source.blend",
+        "sha256": "7492f7b56859848b3467120f24a3ffdfb6d734d429fb0d1116f86773e9ea9ce2",
+        "sourceRecipeSha256": "72e45312856f2ae168e0a253042d25e301145ad764fb2b0ccc3ea71833085009",
+        "recipe": "scripts/blender/items/build_studies.py::BUILDERS['winterbranch']",
+        "evidence": "tmp/item-models/catalogue-v1/winterbranch"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "local origin is the palm or wearable attachment anchor",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "winterbranch_Grip.001",
+        "tipNode": "winterbranch_Tip.001",
+        "transform": "measured bone socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 11968,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "transmission": false,
+        "skinned": false
+      },
+      "review": {
+        "status": "Visual work in progress; not accepted against the requested 8/10 overall standard.",
+        "structuralValidation": "passed",
+        "nativeValidation": "Functional equip/save and all four armor mounts passed; visual work in progress",
+        "scope": "Installed distinct functional reward model. Installation is not an overall art-quality approval."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "cinderwand",
+      "model": "cinderwand.glb",
+      "thumbnail": "cinderwand.png",
+      "sha256": "8ab19ace6df4782073906af2bf9869bdd0a413e02b252ef5ed1f61a56a670587",
+      "candidateSha256": "8ab19ace6df4782073906af2bf9869bdd0a413e02b252ef5ed1f61a56a670587",
+      "thumbnailSha256": "40f374377a20620bf689687ddc17a76bae148b69fe7ceff1226cbb98adc2c3f5",
+      "bytes": 1354744,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/catalogue-v1/cinderwand/source.blend",
+        "sha256": "cf2db73dbcdb8340bd405d832b75cc4b67e28b9fddf3ab43a972632618987c2d",
+        "sourceRecipeSha256": "72e45312856f2ae168e0a253042d25e301145ad764fb2b0ccc3ea71833085009",
+        "recipe": "scripts/blender/items/build_studies.py::BUILDERS['cinderwand']",
+        "evidence": "tmp/item-models/catalogue-v1/cinderwand"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "local origin is the palm or wearable attachment anchor",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "cinderwand_Grip.001",
+        "tipNode": "cinderwand_Tip.001",
+        "transform": "measured bone socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 9938,
+        "materials": 2,
+        "mainPassDrawCalls": 2,
+        "embeddedImages": 3,
+        "transmission": false,
+        "skinned": false
+      },
+      "review": {
+        "status": "Visual work in progress; not accepted against the requested 8/10 overall standard.",
+        "structuralValidation": "passed",
+        "nativeValidation": "Functional equip/save and all four armor mounts passed; visual work in progress",
+        "scope": "Installed distinct functional reward model. Installation is not an overall art-quality approval."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "glacier",
+      "model": "glacier.glb",
+      "thumbnail": "glacier.png",
+      "sha256": "bfa81edad698d1c969cb4fc06ce6608559b9666d350f5ac847d74d9b4ae3568d",
+      "candidateSha256": "bfa81edad698d1c969cb4fc06ce6608559b9666d350f5ac847d74d9b4ae3568d",
+      "thumbnailSha256": "1a9423d1ac84768ae04f4a222d726d2a0180fd24f4c9d025bec94bcd76995f1a",
+      "bytes": 1931760,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/catalogue-v1/glacier/source.blend",
+        "sha256": "57962f72be4d769ec7202c7cc967acaa423e0f640b2331a10e4a87f0028300d6",
+        "sourceRecipeSha256": "72e45312856f2ae168e0a253042d25e301145ad764fb2b0ccc3ea71833085009",
+        "recipe": "scripts/blender/items/build_studies.py::BUILDERS['glacier']",
+        "evidence": "tmp/item-models/catalogue-v1/glacier"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "local origin is the palm or wearable attachment anchor",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "glacier_Grip.002",
+        "tipNode": "glacier_Tip.002",
+        "transform": "measured bone socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 6452,
+        "materials": 2,
+        "mainPassDrawCalls": 2,
+        "embeddedImages": 3,
+        "transmission": false,
+        "skinned": false
+      },
+      "review": {
+        "status": "Visual work in progress; not accepted against the requested 8/10 overall standard.",
+        "structuralValidation": "passed",
+        "nativeValidation": "Functional equip/save and all four armor mounts passed; visual work in progress",
+        "scope": "Installed distinct functional reward model. Installation is not an overall art-quality approval."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    },
+    {
+      "id": "starfall",
+      "model": "starfall.glb",
+      "thumbnail": "starfall.png",
+      "sha256": "a4ee91943ad99437f2db38c6aa520b825578845b8ecfbeb9425ec286162fa0ef",
+      "candidateSha256": "a4ee91943ad99437f2db38c6aa520b825578845b8ecfbeb9425ec286162fa0ef",
+      "thumbnailSha256": "9f0af88c7523adbf9cde2c52060e78ec1c107cf6a9646183af3fec23a22a56f5",
+      "bytes": 1025272,
+      "source": {
+        "constructionSnapshot": "tmp/item-models/catalogue-v1/starfall/source.blend",
+        "sha256": "dfb8a4f8aca6a8c8d1fa2f65934d3a84078814150e8671c5ba9525572004ac2e",
+        "sourceRecipeSha256": "72e45312856f2ae168e0a253042d25e301145ad764fb2b0ccc3ea71833085009",
+        "recipe": "scripts/blender/items/build_studies.py::BUILDERS['starfall']",
+        "evidence": "tmp/item-models/catalogue-v1/starfall"
+      },
+      "attachment": {
+        "node": "hand.R",
+        "units": "meters",
+        "gripOrigin": "local origin is the palm or wearable attachment anchor",
+        "tipAxis": "+Y",
+        "presentationFace": "+Z",
+        "gripNode": "starfall_Grip.001",
+        "tipNode": "starfall_Tip.001",
+        "transform": "measured bone socket \u00d7 inverse local Grip transform"
+      },
+      "render": {
+        "triangles": 11967,
+        "materials": 1,
+        "mainPassDrawCalls": 1,
+        "embeddedImages": 3,
+        "transmission": false,
+        "skinned": false
+      },
+      "review": {
+        "status": "Visual work in progress; not accepted against the requested 8/10 overall standard.",
+        "structuralValidation": "passed",
+        "nativeValidation": "Functional equip/save and all four armor mounts passed; visual work in progress",
+        "scope": "Installed distinct functional reward model. Installation is not an overall art-quality approval."
+      },
+      "validation": {
+        "catalogue20260907": {
+          "uiEquipAndSave": "passed",
+          "armorMounts": [
+            "wayfarer",
+            "cinder",
+            "glacier",
+            "tempest"
+          ],
+          "evidence": "docs/rpg-playtest/item-catalogue-2026-09-07",
+          "scope": "Functional validation; no overall visual quality score implied"
+        }
+      }
+    }
+  ]
+}

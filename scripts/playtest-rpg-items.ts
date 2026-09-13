@@ -69,7 +69,9 @@ try {
   await page.locator('#rpg-dialog-content [data-action="begin"]').click(); await ready();
   const equip = async (id: string) => {
     await page.locator('button[data-action="inventory"]').first().click();
-    const button = page.locator(`button[data-item="${id}"]`); await button.scrollIntoViewIfNeeded();
+    assert.equal(await page.locator('[data-appearance],.rpg-armor-card').count(), 0, 'Retired hero choices are still visible');
+    const copyId = await page.evaluate(id => (window as any).__game.state.loot.find((copy: any) => copy.itemId === id).id, id);
+    const button = page.locator(`button[data-loot-equip="${copyId}"]`); await button.scrollIntoViewIfNeeded();
     if (!await button.isDisabled()) await button.click();
     await page.waitForFunction(id => { const g = (window as any).__game; return !g.busy && g.state.equippedItemId === id && g.world.heldEquipment?.itemId === id; }, id);
   };
@@ -86,7 +88,8 @@ try {
         const mounts: any[] = []; w.heroVisual.traverse((node: any) => { if (node.name === 'HeldEquipment') mounts.push(node); });
         if (mounts.length !== 1 || w.heldEquipment?.itemId !== id) throw Error(`${id}/${armor}: mount count ${mounts.length}`);
         const mount = mounts[0], attachment = mount.userData.attachment;
-        const expectedParent = attachment === 'hand.R' ? armor === 'wayfarer' ? 'handR' : 'armR' : attachment === 'belt' ? armor === 'wayfarer' ? 'pelvis' : 'root' : attachment;
+        if (w.heroModelId !== 'hero') throw Error('Retired hero rig loaded');
+        const expectedParent = attachment === 'hand.R' ? 'handR' : attachment === 'belt' ? 'pelvis' : attachment;
         if (mount.parent.name !== expectedParent) throw Error(`${id}/${armor}: wrong parent ${mount.parent.name}`);
         const embedded: boolean[] = []; w.heroVisual.traverse((node: any) => { if (node.userData.sourcePart === 'equipped_sword') embedded.push(node.visible); });
         if (!embedded.length || embedded.some(visible => visible !== (attachment !== 'hand.R'))) throw Error(`${id}/${armor}: embedded sword visibility ${embedded}`);
@@ -104,7 +107,7 @@ try {
         await page.screenshot({ path: resolve(output, `${id}-${armor}-native.png`) });
         if (fit.attachment !== 'hand.R') await page.screenshot({ path: resolve(output, `${id}-${armor}-fit.png`),
           clip: { x: Math.max(0, Math.min(1080, fit.center.x - 180)), y: Math.max(0, Math.min(450, fit.center.y - 225)), width: 360, height: 450 } });
-        if (fit.attachment !== 'hand.R' && process.env.QA_FIT_CLOSE) {
+        if (process.env.QA_FIT_CLOSE) {
           await page.evaluate(() => {
             const w = (window as any).__game.world;
             (window as any).__itemFitCamera = { position: w.camera.position.clone(), quaternion: w.camera.quaternion.clone(), zoom: w.camera.zoom, target: w.cameraTarget.clone(), frame: w.frame };
@@ -135,7 +138,7 @@ try {
   // learning/resolve path as normal play, without changing learning selection.
   await page.locator('#rpg-dialog-content [data-action="begin"]').click();
   await ready();
-  for (const id of (process.env.QA_SKIP_COMBAT ? [] : ['apprentice', 'wintercrown', 'inferno']).filter(id => ids.includes(id))) {
+  for (const id of (process.env.QA_SKIP_COMBAT ? [] : (process.env.QA_COMBAT_ITEMS?.split(',') ?? ['apprentice', 'wintercrown', 'inferno'])).filter(id => ids.includes(id))) {
     await equip(id); await page.getByRole('button', { name: 'Close', exact: true }).click(); await ready();
     const before = await page.evaluate(() => { const g = (window as any).__game; return { xp: g.state.xp, problem: g.session.problem.id }; });
     await page.locator('#rpg-answer').fill(await page.evaluate(() => String((window as any).__game.session.problem.answer)));
@@ -149,8 +152,8 @@ try {
   const beforeCollection = await page.evaluate(() => JSON.stringify((window as any).__game.state));
   await page.evaluate(state => { const g = (window as any).__game; (window as any).__priorItemState = g.state; g.state = state; g.showInventory(); }, newPlayer);
   try {
-    report.lockedCollection = await page.locator('button[data-item]').evaluateAll(nodes => nodes.map(node => ({
-      id: (node as HTMLElement).dataset.item, disabled: (node as HTMLButtonElement).disabled,
+    report.lockedCollection = await page.locator('button[data-item],button[data-loot-card]').evaluateAll(nodes => nodes.map(node => ({
+      id: (node as HTMLElement).dataset.item ?? (node.querySelector('.rpg-relic-art') as HTMLElement)?.style.backgroundImage.match(/items\/(.+)\.png/)?.[1], disabled: (node as HTMLButtonElement).disabled,
       thumbnail: !!node.querySelector('.rpg-relic-art'), name: node.querySelector('.rpg-armory-slot-name')?.textContent,
       lock: !!node.querySelector('.rpg-armory-slot-lock'), hint: node.querySelector('.rpg-armory-slot-hint')?.textContent,
     })));

@@ -1,0 +1,534 @@
+{
+  "db": "/tmp/rpg-item-catalogue-1789261832359.db",
+  "output": "/tmp/hand-relic-check",
+  "items": [
+    {
+      "id": "thunderbell",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210,
+          "height": 210
+        },
+        {
+          "width": 195.671875,
+          "height": 195.671875
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.5914251837283174,
+            1.1768891477750363,
+            1.3880250250618467
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.5917469010923939,
+            1.1774672952041354,
+            1.3908493342815003
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.5917469010923939,
+            1.1774672952041354,
+            1.3908493342815003
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.5917469010923939,
+            1.1774672952041354,
+            1.3908493342815003
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    },
+    {
+      "id": "stormorbit",
+      "card": [
+        {
+          "width": 0,
+          "height": 0
+        },
+        {
+          "width": 210,
+          "height": 210
+        },
+        {
+          "width": 195.65625,
+          "height": 195.65625
+        }
+      ],
+      "mounts": [
+        {
+          "armor": "wayfarer",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.6865467312605784,
+            1.5461432609207693,
+            1.1097158819876312
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "cinder",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.6860701133972127,
+            1.5813940654878964,
+            1.105038118707586
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "glacier",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.6860701133972127,
+            1.5813940654878964,
+            1.105038118707586
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        },
+        {
+          "armor": "tempest",
+          "attachment": "hand.R",
+          "parent": "handR",
+          "position": [
+            0.6860469992842485,
+            1.5821570823464832,
+            1.1048199676320993
+          ],
+          "embedded": [
+            false,
+            false
+          ],
+          "sameInstance": true,
+          "center": {
+            "x": 658.5058165639883,
+            "y": 473.7106199079733
+          }
+        }
+      ],
+      "persisted": true
+    }
+  ],
+  "errors": [],
+  "casts": [
+    {
+      "id": "thunderbell",
+      "before": {
+        "xp": 82305,
+        "problem": "pmtz4az1u_0"
+      },
+      "after": {
+        "xp": 82337,
+        "problem": "pmtz4azea_1",
+        "mounted": "thunderbell",
+        "visibleEnemies": 1
+      }
+    },
+    {
+      "id": "stormorbit",
+      "before": {
+        "xp": 82337,
+        "problem": "pmtz4azea_1"
+      },
+      "after": {
+        "xp": 82369,
+        "problem": "pmtz4bdjw_3",
+        "mounted": "stormorbit",
+        "visibleEnemies": 7
+      }
+    }
+  ],
+  "scope": "Actual installed assets, UI equip/save, all four armor mounts and representative solved-math combat. Visual scores are separate.",
+  "preexistingTabs": [
+    "chrome://newtab/",
+    "http://127.0.0.1:5188/"
+  ],
+  "consoleErrors": [
+    {
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "location": {
+        "url": "http://127.0.0.1:5263/favicon.ico",
+        "line": 0,
+        "column": 0,
+        "lineNumber": 0,
+        "columnNumber": 0
+      }
+    }
+  ],
+  "initialProgress": {
+    "xp": 82305,
+    "skills": {
+      "ember_power": 3,
+      "ember_echo": 1,
+      "ember_master": 2,
+      "cleave": 1,
+      "cleave_sweep": 2,
+      "meteor": 1,
+      "meteor_shower": 2,
+      "phoenix_dive": 1,
+      "phoenix_wings": 2,
+      "firestorm": 1,
+      "firestorm_inferno": 2,
+      "frost": 1,
+      "frost_shards": 3,
+      "frost_master": 2,
+      "ice_lance": 1,
+      "ice_lance_split": 2,
+      "glacial_surge": 1,
+      "glacial_tide": 2,
+      "blizzard": 1,
+      "blizzard_hail": 2,
+      "frost_guardian": 1,
+      "guardian_twins": 2,
+      "storm": 1,
+      "storm_chain": 3,
+      "storm_master": 2,
+      "arc_lance": 1,
+      "arc_lance_fork": 2,
+      "thunderclap": 1,
+      "thunderclap_echo": 2,
+      "ball_lightning": 1,
+      "ball_lightning_orbit": 2,
+      "tempest": 1,
+      "tempest_overcharge": 2
+    },
+    "inventory": [
+      "apprentice",
+      "cinderwand",
+      "glacier",
+      "thunderrod",
+      "moonstaff",
+      "phoenix",
+      "wintercrown",
+      "tempest",
+      "cleaver",
+      "starfall",
+      "phoenix_talon",
+      "inferno",
+      "sunforged",
+      "icespear",
+      "tideglass",
+      "hailcaller",
+      "wardenheart",
+      "winterbranch",
+      "arcfang",
+      "thunderbell",
+      "stormorbit",
+      "skybreaker",
+      "stormsilver"
+    ],
+    "kills": 740
+  },
+  "reload": {
+    "saved": "stormorbit",
+    "mounted": "stormorbit",
+    "xp": 82305,
+    "skills": {
+      "ember_power": 3,
+      "ember_echo": 1,
+      "ember_master": 2,
+      "cleave": 1,
+      "cleave_sweep": 2,
+      "meteor": 1,
+      "meteor_shower": 2,
+      "phoenix_dive": 1,
+      "phoenix_wings": 2,
+      "firestorm": 1,
+      "firestorm_inferno": 2,
+      "frost": 1,
+      "frost_shards": 3,
+      "frost_master": 2,
+      "ice_lance": 1,
+      "ice_lance_split": 2,
+      "glacial_surge": 1,
+      "glacial_tide": 2,
+      "blizzard": 1,
+      "blizzard_hail": 2,
+      "frost_guardian": 1,
+      "guardian_twins": 2,
+      "storm": 1,
+      "storm_chain": 3,
+      "storm_master": 2,
+      "arc_lance": 1,
+      "arc_lance_fork": 2,
+      "thunderclap": 1,
+      "thunderclap_echo": 2,
+      "ball_lightning": 1,
+      "ball_lightning_orbit": 2,
+      "tempest": 1,
+      "tempest_overcharge": 2
+    }
+  },
+  "lockedCollection": [
+    {
+      "id": "apprentice",
+      "disabled": false,
+      "thumbnail": true,
+      "name": "Apprentice's Runeblade",
+      "lock": false
+    },
+    {
+      "id": "cinderwand",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Cinderbranch",
+      "lock": true,
+      "hint": "Find in dungeons"
+    },
+    {
+      "id": "glacier",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Glacier Fang",
+      "lock": true,
+      "hint": "Find in dungeons"
+    },
+    {
+      "id": "thunderrod",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Thunder Rod",
+      "lock": true,
+      "hint": "Find in dungeons"
+    },
+    {
+      "id": "moonstaff",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Moonshard Staff",
+      "lock": true,
+      "hint": "1 more dungeon clears"
+    },
+    {
+      "id": "phoenix",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Phoenix Scepter",
+      "lock": true,
+      "hint": "2 more dungeon clears"
+    },
+    {
+      "id": "wintercrown",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Staff of Endless Winter",
+      "lock": true,
+      "hint": "3 more dungeon clears"
+    },
+    {
+      "id": "tempest",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Tempest Caller",
+      "lock": true,
+      "hint": "4 more dungeon clears"
+    },
+    {
+      "id": "cleaver",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Ashsplitter",
+      "lock": true,
+      "hint": "Find in dungeons"
+    },
+    {
+      "id": "starfall",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Starfall Edge",
+      "lock": true,
+      "hint": "1 more dungeon clears"
+    },
+    {
+      "id": "phoenix_talon",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Phoenix Talon",
+      "lock": true,
+      "hint": "2 more dungeon clears"
+    },
+    {
+      "id": "inferno",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Crown of the Inferno",
+      "lock": true,
+      "hint": "5 more dungeon clears"
+    },
+    {
+      "id": "sunforged",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Sunforged Runeblade",
+      "lock": true,
+      "hint": "2 more dungeon clears"
+    },
+    {
+      "id": "icespear",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Rimepiercer",
+      "lock": true,
+      "hint": "Find in dungeons"
+    },
+    {
+      "id": "tideglass",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Tideglass Blade",
+      "lock": true,
+      "hint": "1 more dungeon clears"
+    },
+    {
+      "id": "hailcaller",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Hailcaller",
+      "lock": true,
+      "hint": "2 more dungeon clears"
+    },
+    {
+      "id": "wardenheart",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Winter Warden's Heart",
+      "lock": true,
+      "hint": "5 more dungeon clears"
+    },
+    {
+      "id": "winterbranch",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Winterbranch",
+      "lock": true,
+      "hint": "2 more dungeon clears"
+    },
+    {
+      "id": "arcfang",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Arc Fang",
+      "lock": true,
+      "hint": "Find in dungeons"
+    },
+    {
+      "id": "thunderbell",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Bell of Thunder",
+      "lock": true,
+      "hint": "1 more dungeon clears"
+    },
+    {
+      "id": "stormorbit",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Orb of the Stormkeeper",
+      "lock": true,
+      "hint": "2 more dungeon clears"
+    },
+    {
+      "id": "skybreaker",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Skybreaker",
+      "lock": true,
+      "hint": "5 more dungeon clears"
+    },
+    {
+      "id": "stormsilver",
+      "disabled": true,
+      "thumbnail": true,
+      "name": "Stormsilver Runeblade",
+      "lock": true,
+      "hint": "2 more dungeon clears"
+    }
+  ],
+  "success": true
+}

@@ -1,0 +1,8 @@
+{
+  "id": "inferno",
+  "triangles": 9448,
+  "bytes": 1010712,
+  "materials": 2,
+  "sha256": "1b116d432fce761c149cda943440c5da30c7ab1f47720415bf97e854d3803a80",
+  "status": "Structural checks only; consult the separately recorded visual review scopes"
+}

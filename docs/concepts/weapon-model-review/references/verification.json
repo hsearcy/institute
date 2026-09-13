@@ -1,0 +1,148 @@
+{
+  "count": 23,
+  "contact_sheets": [
+    "contact-1.jpg",
+    "contact-2.jpg",
+    "contact-3.jpg"
+  ],
+  "results": [
+    {
+      "id": "apprentice",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "arcfang",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "cinderwand",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "cleaver",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "glacier",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "hailcaller",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "icespear",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "inferno",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "moonstaff",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "phoenix",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "phoenix_talon",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "skybreaker",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "starfall",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "stormorbit",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "stormsilver",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "sunforged",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "tempest",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "thunderbell",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "thunderrod",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "tideglass",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "wardenheart",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "winterbranch",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    },
+    {
+      "id": "wintercrown",
+      "source_hash_matches": true,
+      "crop_and_recorded_masks_match_exactly": true,
+      "complete_single_front_view_visual_check": true
+    }
+  ]
+}

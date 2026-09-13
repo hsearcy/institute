@@ -1,0 +1,17 @@
+{
+  "id": "thunderrod",
+  "triangles": 9956,
+  "meshes": 5,
+  "bytes": 302980,
+  "method": "Local solid geometry and original concept projection",
+  "grip": [
+    0,
+    0,
+    0
+  ],
+  "tip": [
+    0.0021518003195524216,
+    -0.0003499999875202775,
+    0.7292391657829285
+  ]
+}

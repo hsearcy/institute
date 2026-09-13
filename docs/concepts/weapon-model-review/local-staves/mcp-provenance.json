@@ -1,0 +1,12 @@
+{
+  "tool": "bpy-dev Blender MCP execute_blender_code_for_cli",
+  "checkpoint": {
+    "path": "/tmp/weapon-staves-fifth.blend",
+    "source": "/tmp/weapon-staves-fourth.blend",
+    "source_sha256": "e325dd72a8ad88388749b7fc4f32bfbe0bca29a4a5ebac68f71400e1cccc643b",
+    "output_sha256": "78d71fd7027a9a3e405ef4ee91140fe4ce7b35c4a73b2bea16fad2b4d6a5216a",
+    "existed_before": false
+  },
+  "recipe": "scripts/blender/weapon-local/staves.py",
+  "sources": "Original project concept sheets only; no old model geometry or external provider."
+}

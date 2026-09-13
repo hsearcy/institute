@@ -1,4 +1,4 @@
-import { RPG_ITEMS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, type RpgState, type RpgLoadout, type RpgLootInstance, type RpgSpellId, type RpgSchoolId } from './rpg';
+import { RPG_ITEMS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, type RpgState, type RpgLoadout, type RpgLootInstance, type RpgSpellId, type RpgSchoolId, type RpgSpellShape, type RpgCombatAffix } from './rpg';
 
 export const RPG_MAX_ITEM_UPGRADE = 5;
 export const RPG_MAX_DUNGEON_TIER = 10;
@@ -70,32 +70,36 @@ export function rpgNormalizeLoot(state: RpgState): RpgState {
 
 /** Randomness is called only by the server while committing a drop receipt.
  * Power applies to every spell; the optional skill is drawn from this relic's school. */
-export function rpgCreateLoot(itemId: string, tier = 1, random: () => number = Math.random): RpgLootInstance {
+export function rpgCreateLoot(itemId: string, tier = 1, random: () => number = Math.random, boss = false): RpgLootInstance {
   const item = RPG_ITEMS.find(entry => entry.id === itemId);
   if (!item) throw new Error('Unknown relic.');
   const unit = () => { const value = random(); return Number.isFinite(value) ? Math.max(0, Math.min(0.999999999, value)) : 0; };
   const level = rpgTier(tier);
-  const bonusPower = Math.min(12, 1 + Math.floor(unit() * (3 + level)) + Math.floor((level - 1) / 3));
+  const bonusPower = Math.min(12, (boss ? 4 : 1) + Math.floor(unit() * (3 + level)) + Math.floor((level - 1) / 3));
   const result: RpgLootInstance = { id: crypto.randomUUID(), itemId, bonusPower, upgradeLevel: 0 };
   const progress = (level - 1) / 9;
-  if (unit() < .10 + progress * .08) {
-    const skills = RPG_SKILLS.filter(skill => !item.school || skill.school === item.school);
+  if (unit() < .20 + progress * .10 && boss) {
+    const skills = RPG_SKILLS.filter(skill => skill.kind === 'modifier' && (!item.school || skill.school === item.school));
     const skill = skills[Math.floor(unit() * skills.length)];
     if (skill) { result.bonusSkillId = skill.id; result.bonusSkillRanks = skill.kind !== 'unlock' && level >= 4 && unit() < 0.25 ? 2 : 1; }
   }
-  // Most extras are useful across a school or every attack. Named damage is
-  // a rare 5–10% roll, while temporary skill ranks above occur on 10–18%.
-  // Only newly committed drops enter this code; saved receipts never reroll.
+  // Normal drops keep broad power and coverage. Spell-changing traits and
+  // temporary modifier ranks are boss-only. Saved receipts never reroll.
   const extra = unit(), targetChance = .25 + progress * .10, schoolChance = .25 + progress * .15;
   if (extra < targetChance) result.bonusTargets = level >= 5 && unit() < .12 + (level - 5) * .02 ? 2 : 1;
   else if (extra < targetChance + schoolChance) {
     const schools = RPG_SCHOOLS.filter(school => !item.school || school.id === item.school);
     result.bonusSchoolId = schools[Math.floor(unit() * schools.length)]!.id;
     result.bonusSchoolPower = Math.min(RPG_MAX_LOOT_SCHOOL_POWER, 1 + Math.floor(unit() * (2 + Math.ceil(level * .6))));
-  } else if (extra < targetChance + schoolChance + .05 + progress * .05) {
-    const spells = RPG_SPELLS.filter(spell => !item.school || spell.school === item.school);
-    result.bonusSpellId = spells[Math.floor(unit() * spells.length)]!.id;
-    result.bonusSpellPower = Math.min(RPG_MAX_LOOT_SPELL_POWER, 2 + Math.floor(unit() * (4 + level)));
+  }
+  if (boss) {
+    // Every boss copy has a useful non-power trait. Spell shapes are a separate
+    // 40% roll, chosen within the weapon's school.
+    result.combatAffix = unit() < .5 ? 'opening-strike' : 'boss-slayer';
+    if (unit() < .4) {
+      const shapes = RPG_SPELL_SHAPES.filter(shape => !item.school || shape.school === item.school);
+      result.spellShape = shapes[Math.floor(unit() * shapes.length)]!.id;
+    }
   }
   return result;
 }
@@ -119,4 +123,25 @@ export function rpgEffectiveSkills(state: Pick<RpgLoadout, 'skills' | 'equippedI
 export function rpgForgeCost(instance: Pick<RpgLootInstance, 'upgradeLevel'>): { gems: number; dust: number } {
   const next = Math.max(0, Math.min(RPG_MAX_ITEM_UPGRADE, instance.upgradeLevel)) + 1;
   return { gems: 25 * next, dust: 5 * next };
+}
+
+
+export const RPG_SPELL_SHAPES: readonly { id: RpgSpellShape; spellId: RpgSpellId; school: RpgSchoolId; label: string }[] = [
+  { id: 'twin-orb', spellId: 'ball_lightning', school: 'storm', label: 'Ball Lightning: +1 orb · +30% spell damage' },
+  { id: 'meteor-shower', spellId: 'meteor', school: 'ember', label: 'Meteor: +1 meteor · +30% spell damage' },
+  { id: 'split-lance', spellId: 'ice_lance', school: 'frost', label: 'Ice Lance: twin spears · +30% spell damage' },
+];
+/** Validate saved traits in one place for combat, effects, and item labels. */
+export function rpgLootSpellShape(loot?: RpgLootInstance) {
+  const item = RPG_ITEMS.find(item => item.id === loot?.itemId);
+  return item ? RPG_SPELL_SHAPES.find(shape => shape.id === loot?.spellShape && (!item.school || shape.school === item.school)) : undefined;
+}
+export function rpgLootCombatAffix(loot?: RpgLootInstance): RpgCombatAffix | undefined {
+  return RPG_ITEMS.some(item => item.id === loot?.itemId) && (loot?.combatAffix === 'opening-strike' || loot?.combatAffix === 'boss-slayer') ? loot.combatAffix : undefined;
+}
+
+/** Independent rolls, made only when the server commits a boss clear. */
+export function rpgRollBossBonus(random: () => number = Math.random): { bossCrazyCoins: number; bossDimes: number } {
+  const wins = () => { const roll = random(); return Number.isFinite(roll) && roll >= 0 && roll < .1 ? 1 : 0; };
+  return { bossCrazyCoins: wins(), bossDimes: wins() };
 }

@@ -1,3 +1,4 @@
+import { z } from 'zod';
 // Institute tutor server (Bun + Hono + bun:sqlite).
 //  - POST /tutor/first    → instant first problem (local; uses stored mastery)
 //  - POST /tutor/branches → LLM pre-generates BOTH follow-ups for the on-screen
@@ -158,11 +159,18 @@ try {
 try {
   db.exec(`ALTER TABLE profile_state ADD COLUMN equipped_gem_style TEXT DEFAULT 'gem_classic'`);
 } catch { /* column already present */ }
-// Crazy Coins: a real-world consumable — each coin trades for 15 minutes of
-// shows, redeemed by a parent from the dashboard (guarded ALTER).
+// Parent-redeemed rewards. Amounts use whole coins and whole dimes.
 try {
   db.exec(`ALTER TABLE profile_state ADD COLUMN crazy_coins INTEGER DEFAULT 0`);
 } catch { /* column already present */ }
+try {
+  db.exec(`ALTER TABLE profile_state ADD COLUMN dimes INTEGER DEFAULT 0`);
+} catch { /* column already present */ }
+db.exec(`CREATE TABLE IF NOT EXISTS parent_redemptions (
+  profile_id TEXT NOT NULL, request_id TEXT NOT NULL, currency TEXT NOT NULL,
+  ok INTEGER NOT NULL, created_at INTEGER NOT NULL,
+  PRIMARY KEY (profile_id, request_id)
+)`);
 // Lifetime earnings never fall when gems are spent. Existing profiles are
 // backfilled below once the shop catalogs are available.
 let shouldBackfillLifetimeGems = false;
@@ -342,7 +350,7 @@ db.query(`UPDATE topic_mastery SET review_interval_days = 1, review_due_at = ?
 
 // ---- Rewards: gems / streaks / daily quests / shield -----------------------
 
-type ProfileStateRow = { gems: number; lifetime_gems: number; streak: number; best_streak: number; shields: number; crazy_coins: number; equipped_pickaxe: string; equipped_pad_theme: string; equipped_gem_style: string };
+type ProfileStateRow = { gems: number; lifetime_gems: number; streak: number; best_streak: number; shields: number; crazy_coins: number; dimes: number; equipped_pickaxe: string; equipped_pad_theme: string; equipped_gem_style: string };
 type QuestRow = { quest_key: string; label: string; target: number; progress: number; reward: number; done: number };
 
 const utcDay = () => new Date().toISOString().slice(0, 10);
@@ -390,25 +398,26 @@ function streakBonus(streak: number): number {
 
 /** Read (creating if missing) the per-profile reward state. */
 function getProfileState(profileId: string): ProfileStateRow {
-  let row = db.query(`SELECT gems, lifetime_gems, streak, best_streak, shields, crazy_coins, equipped_pickaxe, equipped_pad_theme, equipped_gem_style FROM profile_state WHERE profile_id = ?`)
+  let row = db.query(`SELECT gems, lifetime_gems, streak, best_streak, shields, crazy_coins, dimes, equipped_pickaxe, equipped_pad_theme, equipped_gem_style FROM profile_state WHERE profile_id = ?`)
     .get(profileId) as ProfileStateRow | null;
   if (!row) {
     db.query(`INSERT OR IGNORE INTO profile_state (profile_id, gems, lifetime_gems, streak, best_streak, shields, crazy_coins, equipped_pickaxe, equipped_pad_theme, equipped_gem_style, updated_at)
               VALUES (?, 0, 0, 0, 0, 0, 0, 'wooden', 'pad_classic', 'gem_classic', ?)`).run(profileId, Date.now());
-    row = { gems: 0, lifetime_gems: 0, streak: 0, best_streak: 0, shields: 0, crazy_coins: 0, equipped_pickaxe: "wooden", equipped_pad_theme: "pad_classic", equipped_gem_style: "gem_classic" };
+    row = { gems: 0, lifetime_gems: 0, streak: 0, best_streak: 0, shields: 0, crazy_coins: 0, dimes: 0, equipped_pickaxe: "wooden", equipped_pad_theme: "pad_classic", equipped_gem_style: "gem_classic" };
   }
   // Existing rows predating the columns come back with NULL — normalize to the defaults.
   if (!row.equipped_pickaxe) row.equipped_pickaxe = "wooden";
   if (!row.crazy_coins) row.crazy_coins = 0;
+  if (!row.dimes) row.dimes = 0;
   if (!row.equipped_pad_theme) row.equipped_pad_theme = "pad_classic";
   if (!row.equipped_gem_style) row.equipped_gem_style = "gem_classic";
   return row;
 }
 
 function saveProfileState(profileId: string, s: ProfileStateRow): void {
-  db.query(`UPDATE profile_state SET gems = ?, lifetime_gems = ?, streak = ?, best_streak = ?, shields = ?, crazy_coins = ?, equipped_pickaxe = ?, equipped_pad_theme = ?, equipped_gem_style = ?, updated_at = ?
+  db.query(`UPDATE profile_state SET gems = ?, lifetime_gems = ?, streak = ?, best_streak = ?, shields = ?, crazy_coins = ?, dimes = ?, equipped_pickaxe = ?, equipped_pad_theme = ?, equipped_gem_style = ?, updated_at = ?
             WHERE profile_id = ?`)
-    .run(s.gems, s.lifetime_gems, s.streak, s.best_streak, s.shields, s.crazy_coins, s.equipped_pickaxe, s.equipped_pad_theme, s.equipped_gem_style, Date.now(), profileId);
+    .run(s.gems, s.lifetime_gems, s.streak, s.best_streak, s.shields, s.crazy_coins, s.dimes, s.equipped_pickaxe, s.equipped_pad_theme, s.equipped_gem_style, Date.now(), profileId);
 }
 
 function creditGems(state: ProfileStateRow, amount: number): void {
@@ -994,8 +1003,10 @@ function localBranches(profileId: string, current: Problem): { right: Problem; w
 // ---- App -------------------------------------------------------------------
 const app = new Hono();
 app.use("*", cors());
-app.route("/rpg", createRpgRoutes(db, applyMiss, (profileId) => {
+app.route("/rpg", createRpgRoutes(db, applyMiss, (profileId, reward) => {
   const state = getProfileState(profileId);
+  state.crazy_coins += reward.bossCrazyCoins ?? 0;
+  state.dimes += reward.bossDimes ?? 0;
   advanceQuests(profileId, utcDay(), state, { firstTry: false, gemsEarned: 0, bossDefeated: true });
   saveProfileState(profileId, state);
 }));
@@ -1392,17 +1403,25 @@ app.post("/shop/buy-shield", async (c) => {
   return c.json({ ok: false, reason: "not enough gems", gems: s.gems, shields: s.shields });
 });
 
-// Parent redeems one Crazy Coin (kid cashes it in for 15 minutes of shows).
-// Only decrements the counter — daily quest rewards do not affect gems.
-app.post("/shop/redeem-crazy-coin", async (c) => {
-  const { profileId } = await c.req.json();
-  const s = getProfileState(profileId);
-  if (s.crazy_coins <= 0) {
-    return c.json({ ok: false, reason: "no coins", crazyCoins: s.crazy_coins });
-  }
-  s.crazy_coins -= 1;
-  saveProfileState(profileId, s);
-  return c.json({ ok: true, crazyCoins: s.crazy_coins });
+// Redeem whole rewards. A stable request ID makes a lost response safe to retry.
+for (const currency of ['crazy-coin', 'dime'] as const) app.post(`/shop/redeem-${currency}`, async (c) => {
+  const body = z.object({ profileId: z.string().min(1).max(100), requestId: z.string().min(1).max(100).optional() }).safeParse(await c.req.json());
+  if (!body.success) return c.json({ error: 'Invalid redemption request.' }, 400);
+  const { profileId } = body.data, requestId = body.data.requestId ?? crypto.randomUUID();
+  const result = db.transaction(() => {
+    const receipt = db.query('SELECT currency, ok FROM parent_redemptions WHERE profile_id = ? AND request_id = ?')
+      .get(profileId, requestId) as { currency: string; ok: number } | null;
+    if (receipt && receipt.currency !== currency) return null;
+    const state = getProfileState(profileId), field = currency === 'dime' ? 'dimes' : 'crazy_coins';
+    const ok = receipt ? !!receipt.ok : state[field] > 0;
+    if (!receipt) {
+      if (ok) { state[field]--; saveProfileState(profileId, state); }
+      db.query('INSERT INTO parent_redemptions VALUES (?, ?, ?, ?, ?)').run(profileId, requestId, currency, Number(ok), Date.now());
+    }
+    return { ok, ...(!ok ? { reason: currency === 'dime' ? 'no dimes' : 'no coins' } : {}),
+      ...(currency === 'dime' ? { dimes: state.dimes } : { crazyCoins: state.crazy_coins }) };
+  })();
+  return result ? c.json(result) : c.json({ error: 'This request already redeemed a different reward.' }, 409);
 });
 
 // Topic-graph mastery view (parent dashboard): per-topic state, unlock status,
@@ -1431,7 +1450,7 @@ app.get("/mastery", (c) => {
       reviewIntervalDays: r?.review_interval_days ?? null,
     };
   });
-  return c.json({ profileId, topics, crazyCoins: getProfileState(profileId).crazy_coins });
+  return c.json({ profileId, topics, crazyCoins: getProfileState(profileId).crazy_coins, dimes: getProfileState(profileId).dimes });
 });
 
 // ---- Explain (the 🎓 button) ------------------------------------------------

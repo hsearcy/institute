@@ -2,7 +2,7 @@ import type { Database } from 'bun:sqlite';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
-  RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellAvailable, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER,
+  rpgRollBossBonus, rpgLootSpellShape, rpgEquippedLoot, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellAvailable, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER,
   type RpgState, type RpgReward, type RpgResolveResult,
 } from '@institute/shared';
 
@@ -152,7 +152,7 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
     state.selectedSpellId = spellId;
     const duplicateItem = !!item && state.inventory.includes(item.id);
     const tier = rpgTier(expedition.tier);
-    const loot = item ? rpgCreateLoot(item.id, tier) : undefined;
+    const loot = item ? rpgCreateLoot(item.id, tier, Math.random, bossDefeated) : undefined;
     if (loot) state.loot!.push(loot);
     const forgeDust = cast.result.encounterCleared ? rpgRoomForgeDust(tier, bossDefeated) : 0;
     state.forgeDust = (state.forgeDust ?? 0) + forgeDust;
@@ -164,7 +164,10 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
     state.skillPoints += levelsGained;
     if (bossDefeated) { expedition.cleared = true; state.expeditionsCompleted++; state.bestTier = Math.max(state.bestTier ?? 0, tier); }
     else if (cast.result.encounterCleared) { expedition.encounterIndex++; expedition.combat = rpgEncounterCombat(state); }
-    const reward: RpgReward = { xp, kills, levelUp: levelsGained > 0, levelsGained, item, newItems: item && !duplicateItem ? [item] : [], duplicateItem, bossDefeated, spellId, combat: cast.result, loot, forgeDust, tier };
+    const shape = rpgLootSpellShape(rpgEquippedLoot(state));
+    const spellShape = shape?.spellId === spellId ? shape.id : undefined;
+    const { bossCrazyCoins, bossDimes } = bossDefeated ? rpgRollBossBonus() : { bossCrazyCoins: 0, bossDimes: 0 };
+    const reward: RpgReward = { spellShape, bossCrazyCoins, bossDimes, xp, kills, levelUp: levelsGained > 0, levelsGained, item, newItems: item && !duplicateItem ? [item] : [], duplicateItem, bossDefeated, spellId, combat: cast.result, loot, forgeDust, tier };
     db.query(`INSERT INTO rpg_cast_claims (profile_id, problem_id, expedition_id, encounter_index, reward_json, created_at)
       VALUES (?, ?, ?, ?, ?, ?)`).run(body.profileId, body.problemId, expedition.id, body.encounterIndex, JSON.stringify(reward), Date.now());
     saveRpgState(db, state);
@@ -173,7 +176,7 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
 }
 
 const ProfileSchema = z.object({ profileId: z.string().min(1).max(100) });
-export function createRpgRoutes(db: Database, applyMiss?: (profileId: string) => unknown, onBossDefeated?: (profileId: string) => void): Hono {
+export function createRpgRoutes(db: Database, applyMiss?: (profileId: string) => unknown, onBossDefeated?: (profileId: string, reward: RpgReward) => void): Hono {
   const app = new Hono();
   app.onError((error, c) => {
     if (error instanceof z.ZodError) return c.json({ error: 'Invalid adventure request.' }, 400);
@@ -231,7 +234,7 @@ export function createRpgRoutes(db: Database, applyMiss?: (profileId: string) =>
     const body = await c.req.json();
     const result = db.transaction(() => {
       const result = resolveRpgEncounter(db, body);
-      if (result.reward.bossDefeated && !result.duplicate) onBossDefeated?.(result.state.profileId);
+      if (result.reward.bossDefeated && !result.duplicate) onBossDefeated?.(result.state.profileId, result.reward);
       return result;
     })();
     return c.json(result);

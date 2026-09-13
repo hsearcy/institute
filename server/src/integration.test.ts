@@ -6,7 +6,7 @@ process.env.TUTOR_MAX_RETRIES = "0"; // no retry backoff — fall back immediate
 process.env.TUTOR_TIMEOUT_MS = "300"; // the dead endpoint hangs (WSL2); time out fast instead
 process.env.PLAYER_TZ = "America/New_York"; // daily-record days are HIS days, never the machine's
 const { default: server } = await import("./index.ts");
-import { describe, expect, setSystemTime, test } from "bun:test";
+import { describe, expect, setSystemTime, spyOn, test } from "bun:test";
 import { TOPICS } from "@institute/shared";
 
 const call = async (method: string, path: string, body?: unknown) => {
@@ -20,7 +20,7 @@ const call = async (method: string, path: string, body?: unknown) => {
   return res.json() as Promise<any>;
 };
 
-async function finishDungeon(profileId: string, prefix: string) {
+async function finishDungeon(profileId: string, prefix: string, bonusRoll = .99) {
   let state = await call("POST", "/rpg/start", { profileId });
   let lastRequest;
   for (let i = 0; i < 300 && !state.expedition.cleared; i++) {
@@ -30,7 +30,10 @@ async function finishDungeon(profileId: string, prefix: string) {
     });
     lastRequest = { profileId, problemId, expeditionId: state.expedition.id, encounterIndex: state.expedition.encounterIndex };
     const before = await call("GET", `/state?profileId=${profileId}`);
-    const result = await call("POST", "/rpg/resolve", lastRequest);
+    const random = spyOn(Math, 'random').mockReturnValue(bonusRoll);
+    let result;
+    try { result = await call("POST", "/rpg/resolve", lastRequest); }
+    finally { random.mockRestore(); }
     state = result.state;
     const board = await call("GET", `/state?profileId=${profileId}`);
     expect(board.quests.filter((q: any) => q.key !== "complete_dungeon"))
@@ -919,4 +922,27 @@ describe("daily correct-answer count and the all-time record", () => {
       setSystemTime();
     }
   });
+});
+
+
+test("boss money is credited once and parent redemptions are safe to retry", async () => {
+  const profileId = 'boss-parent-rewards';
+  {
+    const request = await finishDungeon(profileId, 'boss-money', 0);
+    const balance = await call('GET', `/mastery?profileId=${profileId}`);
+    expect(balance.dimes).toBe(1);
+    expect(balance.crazyCoins).toBeGreaterThanOrEqual(1);
+    await call('POST', '/rpg/resolve', request);
+    expect(await call('GET', `/mastery?profileId=${profileId}`)).toEqual(balance);
+    for (const [currency, field] of [['crazy-coin','crazyCoins'],['dime','dimes']]) {
+      const body={profileId,requestId:`redeem-${currency}`};
+      const first=await call('POST', `/shop/redeem-${currency}`, body);
+      expect(first.ok).toBe(true);
+      expect(first[field]).toBe(balance[field]-1);
+      expect(await call('POST', `/shop/redeem-${currency}`, body)).toEqual(first);
+    }
+    const empty=await call('POST','/shop/redeem-dime',{profileId,requestId:'empty-dime'});
+    expect(empty).toMatchObject({ok:false,dimes:0});
+    expect((await call('GET', `/mastery?profileId=${profileId}`)).dimes).toBe(0);
+  }
 });

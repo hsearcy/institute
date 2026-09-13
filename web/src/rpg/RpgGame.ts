@@ -1,7 +1,7 @@
 import { HeroAssetLoadError } from './world/tripoHeroRuntime';
 import type { Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgReward, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
 import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, rpgEncounterCombat, rpgNextRelicHunt, rpgUnlockedTier, rpgDungeonForgeDust, rpgSalvageValue, rpgAnswerPower, ProblemSchema } from '@institute/shared';
-import { fetchState, fetchMastery, redeemCrazyCoin, type Demo } from '../game/tutor';
+import { fetchState, fetchMastery, redeemCrazyCoin, redeemDime, type Demo } from '../game/tutor';
 import { speak } from '../game/audio';
 import * as dungeonSound from './sound';
 import { API, PROFILE } from '../game/config';
@@ -490,7 +490,7 @@ export class RpgGame {
         }
         if (!this.muted) dungeonSound.cast(result.reward.spellId);
         await this.world.attack(result.reward.spellId, {
-          combat: result.reward.combat,
+          combat: result.reward.combat, spellShape: result.reward.spellShape,
           echo: modifiers.includes('echo'), wide: modifiers.includes('wide'),
           burning: modifiers.includes('burn'), shards: modifiers.includes('ice-shards'),
           chains: modifiers.includes('chain'), pierce: modifiers.includes('pierce'),
@@ -727,7 +727,7 @@ export class RpgGame {
   }
   private showMap(): void {
     if (!this.state) return; const s = this.state;
-    this.showDialog('map', `<p class="rpg-eyebrow">BEYOND THE NEXT GATE</p><h2 id="rpg-dialog-title">Expeditions</h2><p>Explore forest ruins, a rocky coast, an old quarry, palace gardens, or the vaults. Outdoor areas offer relics from every school. Six encounters lead to the guardian’s treasure.</p><div class="rpg-tier-choice" aria-label="Dungeon tier"><span>Choose your depth · Highest clear ${s.bestTier ?? 0}</span>${Array.from({length:rpgUnlockedTier(s)}, (_, index) => index + 1).map(tier => `<button data-select-tier="${tier}" aria-pressed="${this.selectedTier === tier}" ${s.expedition && !s.expedition.cleared ? 'disabled' : ''}>Tier ${tier}</button>`).join('')}</div><p class="rpg-tier-reward">Tier ${this.selectedTier}: ${rpgDungeonForgeDust(this.selectedTier)} guaranteed forge dust across six rooms · Two fresh relic rolls. Deeper tiers have tougher monsters and stronger possible bonuses.</p><div class="rpg-regions">${RPG_REGIONS.map(region => {
+    this.showDialog('map', `<p class="rpg-eyebrow">BEYOND THE NEXT GATE</p><h2 id="rpg-dialog-title">Expeditions</h2><p>Explore forest ruins, a rocky coast, an old quarry, palace gardens, or the vaults. Outdoor areas offer relics from every school. Six encounters lead to the guardian’s treasure.</p><div class="rpg-tier-choice" aria-label="Dungeon tier"><span>Choose your depth · Highest clear ${s.bestTier ?? 0}</span>${Array.from({length:rpgUnlockedTier(s)}, (_, index) => index + 1).map(tier => `<button data-select-tier="${tier}" aria-pressed="${this.selectedTier === tier}" ${s.expedition && !s.expedition.cleared ? 'disabled' : ''}>Tier ${tier}</button>`).join('')}</div><p class="rpg-tier-reward">Tier ${this.selectedTier}: ${rpgDungeonForgeDust(this.selectedTier)} guaranteed forge dust across six rooms · Two fresh relic rolls. Deeper tiers have tougher monsters and stronger possible bonuses.</p><p class="rpg-tier-reward">Boss treasure: stronger item rolls and special spell effects. Separate 10% chances for an extra Crazy Coin and a dime.</p><div class="rpg-regions">${RPG_REGIONS.map(region => {
       const unlocked = s.expeditionsCompleted >= region.requiredClears;
       const active = !!s.expedition && !s.expedition.cleared;
       const current = active && s.expedition!.regionId === region.id;
@@ -826,6 +826,34 @@ export class RpgGame {
     const [mastery, legacy] = await Promise.all([fetchMastery(), fetchState()]);
     if (this.panel !== 'parent') return;
     this.el('rpg-dialog-content').innerHTML = renderParentJournal(PROFILE, mastery, legacy, this.state?.expeditionsCompleted ?? 0);
+  }
+
+  private parentRedemptionBusy = false;
+  private async redeemParentReward(currency: 'coin' | 'dime'): Promise<void> {
+    if (this.parentRedemptionBusy || this.panel !== 'parent') return;
+    const journal = this.root.querySelector<HTMLElement>('.rpg-parent-journal');
+    if (!journal) return;
+    const buttons = [...journal.querySelectorAll<HTMLButtonElement>('[data-action="redeem"], [data-action="redeem-dime"]')];
+    const status = journal.querySelector<HTMLElement>('[data-parent-redemption-status]')!;
+    const key = `${sessionKey}:redeem:${currency}`;
+    const requestId = sessionStorage.getItem(key) ?? newRequestId();
+    sessionStorage.setItem(key, requestId);
+    this.parentRedemptionBusy = true; buttons.forEach(button => button.disabled = true);
+    status.textContent = 'Saving redemption…';
+    try {
+      const result = currency === 'coin' ? await redeemCrazyCoin(requestId) : await redeemDime(requestId);
+      if (!result) { status.textContent = 'Could not confirm the redemption. Try again to check the same request.'; return; }
+      sessionStorage.removeItem(key);
+      const balance = 'crazyCoins' in result ? result.crazyCoins : result.dimes;
+      journal.querySelector<HTMLElement>(`[data-parent-balance="${currency}"]`)!.textContent = String(balance);
+      status.textContent = result.ok ? (currency === 'coin' ? 'One Crazy Coin redeemed.' : 'One dime redeemed. Pay $0.10.') : (currency === 'coin' ? 'No Crazy Coins to redeem.' : 'No dimes to redeem.');
+    } finally {
+      this.parentRedemptionBusy = false;
+      buttons.forEach(button => {
+        const kind = button.dataset.action === 'redeem' ? 'coin' : 'dime';
+        button.disabled = !(Number(journal.querySelector(`[data-parent-balance="${kind}"]`)?.textContent) > 0);
+      });
+    }
   }
 
   private get tutorialKey(): string { return `${sessionKey}:tutorial:v${RPG_TUTORIAL_VERSION}`; }
@@ -1134,7 +1162,8 @@ export class RpgGame {
       case 'retry': if (this.retryAction && !this.retrying) { this.retrying = true; void this.runSafely(this.retryAction).finally(() => { this.retrying = false; }); } break;
       case 'clear-goal': void this.changeLoadout('goal', { goal: null }, () => this.showCamp()); break;
       case 'respec': void this.changeLoadout('respec', {}, () => this.showSkills()); break;
-      case 'redeem': void (async () => { await redeemCrazyCoin(); await this.showParent(); })(); break;
+      case 'redeem': void this.redeemParentReward('coin'); break;
+      case 'redeem-dime': void this.redeemParentReward('dime'); break;
     }
   };
   private onKey = (event: KeyboardEvent): void => {

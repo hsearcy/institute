@@ -58,12 +58,10 @@ test('new broad and rare rolls use bounded deterministic branches', () => {
   expect(roll([.25, .99, 0])).toMatchObject({ bonusPower: 2, bonusTargets: 1 });
   expect(roll([.25, .99, 0, 0], 5).bonusTargets).toBe(2);
   expect(roll([.25, .99, 0, .99], 5).bonusTargets).toBe(1);
-  expect(roll([.25, .99, .52, 0, .99])).toMatchObject({ bonusSpellId: 'ember', bonusSpellPower: 6 });
+  expect(roll([.25, .99, .52]).bonusSpellId).toBeUndefined();
   expect(roll([.25, .99, .3, 0, .99])).toMatchObject({ bonusSchoolId: 'ember', bonusSchoolPower: 3 });
-  const retained = roll([.25, 0, 0, .99, .99], 4);
-  expect(retained).toMatchObject({ bonusPower: 3, bonusSkillId: 'ember_power', bonusSkillRanks: 1 });
-  expect(rpgLootAffixes(retained)).toEqual({ targets: 0, spellPower: 0, schoolPower: 0 });
-  expect(roll([.25, .99, .8, .99, .99], 10, 'winterbranch')).toMatchObject({ bonusSpellId: 'frost_guardian', bonusSpellPower: 12 });
+  expect(roll([.25, 0, .99], 4).bonusSkillId).toBeUndefined();
+  expect(roll([.25, .99, .8], 10, 'winterbranch').bonusSpellId).toBeUndefined();
 });
 
 test('named affixes affect only their spell or school on the exact equipped copy without unlocking skills', () => {
@@ -171,19 +169,20 @@ test('all base relic power covers every attack or a whole school without named s
   }
 });
 
-test('skill and named-spell rolls are rare additional bonuses while broad power is guaranteed', () => {
-  for (const [tier, expectedSkills, expectedNamed] of [[1, 100, 50], [10, 180, 100]]) {
-    let skills = 0, named = 0;
+test('boss modifier ranks roll at 20–30% and visual spell traits at 40%', () => {
+  for (const [tier, expectedSkills] of [[1, 200], [10, 300]]) {
+    let skills = 0, shapes = 0;
     for (let sample = 0; sample < 1000; sample++) {
-      let draw = 0;
-      const rankRoll = rpgCreateLoot('moonstaff', tier, () => ++draw === 1 ? .5 : draw === 2 ? (sample + .5) / 1000 : .999);
-      if (rankRoll.bonusSkillId) skills++;
-      draw = 0;
-      const namedRoll = rpgCreateLoot('moonstaff', tier, () => ++draw === 1 ? .5 : draw === 3 ? (sample + .5) / 1000 : .999);
-      if (namedRoll.bonusSpellId) named++;
-      expect(rankRoll.bonusPower).toBeGreaterThan(0); expect(namedRoll.bonusPower).toBeGreaterThan(0);
+      const roll = rpgCreateLoot('moonstaff', tier, () => (sample + .5) / 1000, true);
+      if (roll.bonusSkillId) {
+        skills++;
+        expect(RPG_SKILLS.find(skill => skill.id === roll.bonusSkillId)!.kind).toBe('modifier');
+      }
+      if (roll.spellShape) shapes++;
+      expect(roll.bonusPower).toBeGreaterThanOrEqual(4);
+      expect(['opening-strike', 'boss-slayer']).toContain(roll.combatAffix);
     }
-    expect(skills).toBe(expectedSkills); expect(named).toBe(expectedNamed);
+    expect(skills).toBe(expectedSkills); expect(shapes).toBe(400);
   }
 });
 

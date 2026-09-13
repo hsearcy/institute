@@ -45,7 +45,7 @@ const ACTOR_SCALE = 1.25;
 type Enemy = { id: string; hp: number; maxHp: number; root: THREE.Group; visual: THREE.Object3D; origin: THREE.Vector3; phase: number; brute: boolean; dead: boolean; modelId: string; height: number; deathAt: number; animator: EnemyAnimator };
 type Fragment = { position: THREE.Vector3; velocity: THREE.Vector3; rotation: THREE.Vector3; spin: THREE.Vector3; scale: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; hot: boolean; bounced: boolean };
 type Particle = { position: THREE.Vector3; velocity: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; size: number };
-type AttackOptions = { combat?: RpgCombatResult; echo?: boolean; wide?: boolean; burning?: boolean; shards?: boolean; chains?: boolean; pierce?: boolean; orbit?: boolean; summon?: boolean; itemId?: string; kills?: number; drop?: { name: string; rarity: string }; xp?: number };
+type AttackOptions = { spellShape?: import('@institute/shared').RpgSpellShape; combat?: RpgCombatResult; echo?: boolean; wide?: boolean; burning?: boolean; shards?: boolean; chains?: boolean; pierce?: boolean; orbit?: boolean; summon?: boolean; itemId?: string; kills?: number; drop?: { name: string; rarity: string }; xp?: number };
 type Effect = { mesh: THREE.Mesh; age: number; duration: number; kind: 'ring' | 'slash' | 'beam' | 'ground' | 'shard' | 'custom'; radius: number; update?: (t: number, delta: number) => void };
 
 /** Presentation only. Time, animations and damage never decide learning or rewards. */
@@ -1353,6 +1353,11 @@ export class DungeonWorld {
             this.meteorImpact(target, new THREE.Vector3(5, -11, 3), 1);
           });
           if (options.echo) this.schedule(.35, () => this.projectile(target.clone().add(new THREE.Vector3(6, 10, 2)), origin.clone().add(new THREE.Vector3(3, 0, 1)), 0xffb74c, .7, .6, () => this.meteorImpact(origin.clone().add(new THREE.Vector3(3, 0, 1)), new THREE.Vector3(-3, -10, -1), .6)));
+          if (options.spellShape === 'meteor-shower') this.schedule(.12, () => {
+            const impact = target.clone().add(new THREE.Vector3(1.5, 0, -.8));
+            this.projectile(impact.clone().add(new THREE.Vector3(5, 12, -2)), impact, 0xff9c32, .9, .62,
+              () => this.meteorImpact(impact, new THREE.Vector3(-5, -12, 2), .8));
+          });
           resolveHorde(.72); break;
         }
         case 'phoenix-dive': {
@@ -1459,12 +1464,15 @@ export class DungeonWorld {
           // The server may select victims on either side of the hero. Every
           // selected body gets an aimed lance, rather than a cosmetic forward
           // cone followed by unrelated off-screen damage cues.
-          targets.forEach((enemy, index) => this.schedule(index * .055, () => {
-            const from = castOrigin(), duration = directionalFlightDuration(from, enemy.root.position);
+          const spearCount = options.spellShape === 'split-lance' ? 2 : 1;
+          targets.forEach((enemy, index) => { for (let spear = 0; spear < spearCount; spear++) this.schedule(index * .055, () => {
+            const from = castOrigin();
+            if (spearCount > 1) from.x += spear === 0 ? -.4 : .4;
+            const duration = directionalFlightDuration(from, enemy.root.position);
             const started = this.elapsed, shard = createFrostfallCrystal(index + this.encounter * 11, options.pierce ? 1.2 : 1.05, .28);
             const wake = createIceLanceWake(), view = this.camera.getWorldDirection(new THREE.Vector3()).negate();
             const flight = createDirectedFlight(from, duration, to => to.copy(enemy.root.position).add(new THREE.Vector3(0, enemy.height * .55, 0)),
-              (at, release) => frostContact(enemy, index, at, release, options.pierce ? .95 : .75));
+              (at, release) => { if (spear === 0) frostContact(enemy, index, at, release, options.pierce ? .95 : .75); });
             const update = () => {
               const age = this.elapsed - started; flight.update(age);
               const opacity = 1 - THREE.MathUtils.smoothstep(age, duration, duration + .055);
@@ -1473,13 +1481,13 @@ export class DungeonWorld {
             };
             update(); this.effect(wake.mesh, duration + .065);
             shard.layers.forEach((layer, n) => {
-              layer.name = `ice-lance:${enemy.id}`; layer.userData.targetId = enemy.id;
+              layer.name = `ice-lance:${enemy.id}:spear-${spear}`; layer.userData.targetId = enemy.id;
               this.effect(layer, duration + .065, n === 0 ? update : undefined);
             });
             // Same flight update establishes the final visible tip and contact,
             // including frames that skipped past the mesh's visual lifetime.
             this.schedule(duration, update);
-          }));
+          }); });
           break;
         }
         case 'glacial-surge': {
@@ -1548,7 +1556,7 @@ export class DungeonWorld {
           resolveHorde(.27); break;
         }
         case 'ball-lightning': {
-          const count = options.orbit ? 4 : 1;
+          const count = (options.orbit ? 4 : 1) + (options.spellShape === 'twin-orb' ? 1 : 0);
           const started = this.elapsed, view = new THREE.Vector3();
           const launch = new THREE.Vector3(), orbitTarget = new THREE.Vector3(), towardView = this.camera.position.clone().sub(origin).setY(0).normalize();
           const side = new THREE.Vector3(towardView.z, 0, -towardView.x);

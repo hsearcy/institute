@@ -1,4 +1,4 @@
-import { RPG_ITEMS, rpgSpellAvailable, rpgLootSkillBonus, RPG_SCHOOLS, RPG_SPELLS, RPG_SKILLS, rpgLootAffixes, RPG_REGIONS, RPG_MAX_ITEM_UPGRADE, rpgForgeCost, rpgLootPower, rpgEquippedLoot, rpgSalvageValue, rpgUnlockedTier, rpgDungeonForgeDust, rpgNextRelicHunt, rpgSpellCombatStats, type RpgItem, type RpgState, type RpgLootInstance, type RpgCampState, type State, type Quest } from '@institute/shared';
+import { rpgLootSpellShape, rpgLootCombatAffix, RPG_ITEMS, rpgSpellAvailable, rpgLootSkillBonus, RPG_SCHOOLS, RPG_SPELLS, RPG_SKILLS, rpgLootAffixes, RPG_REGIONS, RPG_MAX_ITEM_UPGRADE, rpgForgeCost, rpgLootPower, rpgEquippedLoot, rpgSalvageValue, rpgUnlockedTier, rpgDungeonForgeDust, rpgNextRelicHunt, rpgSpellCombatStats, type RpgItem, type RpgState, type RpgLootInstance, type RpgCampState, type State, type Quest } from '@institute/shared';
 import { renderMathRecords } from './recordsView';
 import { escapeHtml as esc, relicArt, icon } from './icons';
 
@@ -21,6 +21,10 @@ export function lootBonusLabels(loot: RpgLootInstance, _state: RpgState, include
   if (affixes.spellId) labels.push(`${RPG_SPELLS.find(spell => spell.id === affixes.spellId)!.name}: +${affixes.spellPower} damage per target`);
   if (affixes.schoolId) labels.push(`+${affixes.schoolPower} ${RPG_SCHOOLS.find(school => school.id === affixes.schoolId)!.name} power`);
   if (affixes.targets) labels.push(`+${affixes.targets} ${affixes.targets === 1 ? 'target' : 'targets'}`);
+  const shape = rpgLootSpellShape(loot), trait = rpgLootCombatAffix(loot);
+  if (shape) labels.push(shape.label + ' · Grants spell while equipped');
+  if (trait === 'opening-strike') labels.push('Opening strike: +25% damage on the first cast in each room');
+  if (trait === 'boss-slayer') labels.push('Boss slayer: +30% damage to the guardian');
   return labels;
 }
 export function relicStatLabels(item: RpgItem, loot: RpgLootInstance | undefined, state: RpgState): string[] {
@@ -140,5 +144,5 @@ export function renderNextDungeonReward(state: RpgState, camp?: RpgCampState | n
   const region = RPG_REGIONS.find(region => region.id === state.expedition?.regionId) ?? RPG_REGIONS[0];
   const hunt = rpgNextRelicHunt(state, region.id);
   const item = RPG_ITEMS.find(item => item.id === hunt?.itemId);
-  return `<section class="rpg-next-dungeon" aria-label="Your next adventure reward"><small>BEYOND THE NEXT GATE · TIER ${tier}</small><h3>${tier > (state.dungeonTier ?? 1) ? 'A deeper vault is open' : 'Another treasure awaits'}</h3><p><strong>${rpgDungeonForgeDust(tier)} forge dust</strong> for a full clear · Two fresh relic rolls with a chance of stronger power or a bonus skill.</p>${item ? `<p>${hunt?.duplicate ? 'Another roll on' : 'Next relic discovery:'} <strong>${esc(item.name)}</strong></p>` : ''}${renderPinnedGoal(state, camp)}<button class="rpg-primary" data-region="${region.id}" data-tier="${tier}">Explore tier ${tier} →</button><small>Your reward is saved. Come back whenever you like.</small></section>`;
+  return `<section class="rpg-next-dungeon" aria-label="Your next adventure reward"><small>BEYOND THE NEXT GATE · TIER ${tier}</small><h3>${tier > (state.dungeonTier ?? 1) ? 'A deeper vault is open' : 'Another treasure awaits'}</h3><p><strong>${rpgDungeonForgeDust(tier)} forge dust</strong> for a full clear · Two fresh relic rolls with a chance of stronger power. Boss loot can change a spell.</p>${item ? `<p>${hunt?.duplicate ? 'Another roll on' : 'Next relic discovery:'} <strong>${esc(item.name)}</strong></p>` : ''}${renderPinnedGoal(state, camp)}<button class="rpg-primary" data-region="${region.id}" data-tier="${tier}">Explore tier ${tier} →</button><small>Your reward is saved. Come back whenever you like.</small></section>`;
 }

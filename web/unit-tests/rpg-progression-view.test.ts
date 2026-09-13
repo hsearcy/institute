@@ -89,7 +89,7 @@ test('duplicate rolled treasure is kept, never described as converted out of inv
   const state = fixture();
   const loot = { id: 'drop', itemId: 'cinderwand', bonusPower: 3, upgradeLevel: 0 };
   const html = renderVictoryView(state, { xp: 30, kills: 1, levelUp: false, levelsGained: 0, item: RPG_ITEMS.find(item => item.id === 'cinderwand')!, newItems: [], duplicateItem: true, bossDefeated: true, spellId: 'ember', loot, forgeDust: 13 }, 'Guardian');
-  expect(html).toContain('NEW RELIC ROLL'); expect(html).toContain('+3 power');
+  expect(html).toContain('BOSS RELIC ROLL'); expect(html).toContain('+3 power');
   expect(html).toContain('+13 forge dust'); expect(html).not.toContain('Converted into');
 });
 

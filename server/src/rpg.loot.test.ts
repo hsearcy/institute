@@ -142,3 +142,22 @@ test('retreat keeps earned rewards and solve claims, grants no clear, and can be
     expect(() => resolveRpgEncounter(db, { ...request, expeditionId: easier.expedition!.id })).toThrow('already powered');
   } finally { db.close(); }
 });
+
+test('boss bonus rolls and stronger loot are saved once; ordinary rooms award no bonus money', () => {
+  const db = fixture(), random = spyOn(Math, 'random').mockReturnValue(0);
+  try {
+    startRpgExpedition(db, 'sam');
+    for (let room=0; room<5; room++) {
+      const {result}=finishRoom(db, `bonus-${room}`);
+      expect(result.reward.bossCrazyCoins ?? 0).toBe(0);
+      expect(result.reward.bossDimes ?? 0).toBe(0);
+      expect(result.reward.loot?.spellShape).toBeUndefined();
+    }
+    const {result,request}=finishRoom(db,'bonus-boss');
+    expect(result.reward.bossCrazyCoins).toBe(1);
+    expect(result.reward.bossDimes).toBe(1);
+    expect(result.reward.loot!.bonusPower).toBeGreaterThanOrEqual(4);
+    random.mockImplementation(()=>{throw Error('A saved reward must not roll again');});
+    expect(resolveRpgEncounter(db,request).reward).toEqual(result.reward);
+  } finally { random.mockRestore(); db.close(); }
+});

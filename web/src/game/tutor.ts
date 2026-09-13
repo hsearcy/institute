@@ -204,13 +204,13 @@ export async function ackRecordEvent(eventId: string): Promise<void> {
   }
 }
 
-/** Parent redeems one Crazy Coin (kid cashes it in for his 15 minutes).
+/** Parent redeems one Crazy Coin.
  *  Returns the new coin count, or a no-coins failure. Never throws. */
-export async function redeemCrazyCoin(): Promise<
+export async function redeemCrazyCoin(requestId?: string): Promise<
   { ok: true; crazyCoins: number } | { ok: false; reason: string; crazyCoins: number } | null
 > {
   try {
-    return await post('/shop/redeem-crazy-coin', { profileId: PROFILE });
+    return await post('/shop/redeem-crazy-coin', { profileId: PROFILE, requestId });
   } catch {
     return null;
   }
@@ -233,7 +233,7 @@ export type MasteryTopic = {
   skips?: number;
 };
 
-export type Mastery = { profileId: string; topics: MasteryTopic[]; crazyCoins: number };
+export type Mastery = { profileId: string; topics: MasteryTopic[]; crazyCoins: number; dimes?: number };
 
 /** Fetch the topic-mastery graph for the parent dashboard. Returns null on
  *  failure so the overlay can show a gentle notice; never throws. */
@@ -299,4 +299,11 @@ export async function repairPickaxe(
   } catch {
     return null;
   }
+}
+
+
+/** Records one parent payout. The caller retains requestId after a lost response. */
+export async function redeemDime(requestId: string): Promise<{ ok: boolean; dimes: number; reason?: string } | null> {
+  try { return await post('/shop/redeem-dime', { profileId: PROFILE, requestId }); }
+  catch { return null; }
 }

@@ -87,7 +87,7 @@
 #rpg-ui .rpg-next-dungeon { margin-top:14px; padding:14px 18px; }
 #rpg-ui .rpg-next-dungeon h3 { margin:7px 0; }
 #rpg-ui .rpg-next-dungeon p { margin:9px 0; }
-#rpg-ui .rpg-treasure-actions { position:sticky; bottom:-22px; z-index:2; margin:12px -10px -8px; padding:10px; background:#101916f5; border-top:1px solid #8d7748; box-shadow:0 -8px 18px #0c1413d9; }
+#rpg-ui .rpg-treasure-actions { position:sticky; bottom:0; z-index:2; margin:12px 0 0; padding:10px; background:#101916f5; border-top:1px solid #8d7748; box-shadow:0 -8px 18px #0c1413d9; }
 #rpg-ui .rpg-treasure-actions>div { margin-top:4px; }
 #rpg-ui .rpg-treasure-actions>small { display:none; }
 @media(max-width:680px) {
@@ -112,7 +112,7 @@
  #rpg-ui .rpg-treasure-copy>span { font-size:12px; }
  #rpg-ui .rpg-treasure-copy>small { font-size:8px; }
  #rpg-ui .rpg-treasure-copy>p { font-size:11px; }
- #rpg-ui .rpg-treasure-actions { bottom:-19px; }
+ #rpg-ui .rpg-treasure-actions { bottom:0; }
 }
 
 /* Math records use the shared daily totals and the Camp palette. */

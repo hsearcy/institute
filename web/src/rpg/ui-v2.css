@@ -303,3 +303,7 @@
   .rpg-route { top:112px; }
   .rpg-boss { top:145px; }
 }
+
+.rpg-boss-bonus { padding:16px; margin:16px 0; border:1px solid #dfbb71; background:#a6752224; color:#ffe0a0; text-align:center; }
+.rpg-boss-bonus p { margin:6px 0; font-size:20px; }
+.rpg-journal-rewards button { margin:8px 8px 0 0; }

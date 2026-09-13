@@ -1,4 +1,4 @@
-import { rpgEffectiveSkills, rpgEquippedLoot, rpgLootAffixes, rpgLootSkillBonus, rpgLootPower, rpgTier } from './rpgLoot';
+import { rpgLootSpellShape, rpgLootCombatAffix, rpgEffectiveSkills, rpgEquippedLoot, rpgLootAffixes, rpgLootSkillBonus, rpgLootPower, rpgTier } from './rpgLoot';
 
 /** Adventure content only. Never used by tutor selection, mastery, or review. */
 export const RPG_DUPLICATE_ITEM_XP = 16;
@@ -139,7 +139,10 @@ export interface RpgCombatResult {
   damage: number; coverage: number; powerPercent?: number;
 }
 export interface RpgExpedition { id: string; regionId: string; encounterIndex: number; encountersTotal: number; cleared: boolean; startedAt: number; combat?: RpgCombatState; tier?: number }
+export type RpgSpellShape = 'twin-orb' | 'meteor-shower' | 'split-lance';
+export type RpgCombatAffix = 'opening-strike' | 'boss-slayer';
 export interface RpgLootInstance {
+  spellShape?: RpgSpellShape; combatAffix?: RpgCombatAffix;
   id: string; itemId: string; bonusPower: number; bonusSkillId?: string; bonusSkillRanks?: number; upgradeLevel: number;
   bonusTargets?: number; bonusSpellId?: RpgSpellId; bonusSpellPower?: number;
   bonusSchoolId?: RpgSchoolId; bonusSchoolPower?: number;
@@ -152,7 +155,7 @@ export interface RpgState {
   loot?: RpgLootInstance[]; equippedLootId?: string | null; forgeDust?: number;
   dungeonTier?: number; bestTier?: number; goal?: RpgGoal | null;
 }
-export interface RpgReward { xp: number; kills: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; bossDefeated: boolean; spellId: RpgSpellId; combat?: RpgCombatResult; loot?: RpgLootInstance; forgeDust?: number; tier?: number }
+export interface RpgReward { xp: number; kills: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; bossDefeated: boolean; spellId: RpgSpellId; combat?: RpgCombatResult; loot?: RpgLootInstance; forgeDust?: number; tier?: number; bossCrazyCoins?: number; bossDimes?: number; spellShape?: RpgSpellShape }
 export interface RpgResolveResult { state: RpgState; reward: RpgReward; duplicate: boolean }
 
 type RelicProgress = Pick<RpgState, 'inventory' | 'expeditionsCompleted' | 'totalKills'>;
@@ -227,6 +230,7 @@ export function rpgSpellUnlocked(spellId: RpgSpellId, skills: Record<string, num
  * rank. Availability disappears when that exact bonus copy is unequipped. */
 export function rpgSpellAvailable(state: RpgLoadout, spellId: RpgSpellId = state.selectedSpellId): boolean {
   if (rpgSpellUnlocked(spellId, state.skills)) return true;
+  if (rpgLootSpellShape(rpgEquippedLoot(state))?.spellId === spellId) return true;
   const bonus = rpgLootSkillBonus(rpgEquippedLoot(state));
   return !!bonus && RPG_SKILLS.some(skill => skill.id === bonus.skillId && skill.spellId === spellId);
 }
@@ -267,7 +271,8 @@ export function rpgSpellCombatStats(state: RpgLoadout, spellId = state.selectedS
   // can reach up to two more victims, independently of learned modifiers.
   const extraTargets = Math.min(2, RPG_SKILLS.filter(skill => skill.kind === 'modifier' && skillApplies(skill, spellId))
     .reduce((total, skill) => total + (skills[skill.id] ?? 0), 0));
-  return { damage: damage + power, targets: Math.min(10, coverage + extraTargets + affixes.targets) };
+  const shape = rpgLootSpellShape(equipped);
+  return { damage: Math.round((damage + power) * (shape?.spellId === spellId ? 1.3 : 1)), targets: Math.min(10, coverage + extraTargets + affixes.targets) };
 }
 
 /** Deterministic current-room health. Returns a copy and never rewrites a save. */
@@ -306,10 +311,13 @@ export function rpgApplyCombat(state: RpgLoadout, combat: RpgCombatState, spellI
   const stats = rpgSpellCombatStats(state, spellId);
   const power = Number.isFinite(powerPercent) ? Math.max(30, Math.min(100, powerPercent)) : 100;
   const damage = Math.max(1, Math.round(stats.damage * power / 100));
+  const affix = rpgLootCombatAffix(rpgEquippedLoot(state));
   const next: RpgCombatState = { ...combat, casts: combat.casts + 1, enemies: combat.enemies.map(enemy => ({ ...enemy })) };
   const hits = next.enemies.filter(enemy => enemy.hp > 0).slice(0, stats.targets).map(enemy => {
     const hpBefore = enemy.hp;
-    enemy.hp = Math.max(0, enemy.hp - damage);
+    const multiplier = affix === 'opening-strike' && combat.casts === 0 ? 1.25
+      : affix === 'boss-slayer' && combat.encounterIndex === 5 && enemy.id === 'enemy-0' ? 1.3 : 1;
+    enemy.hp = Math.max(0, enemy.hp - Math.round(damage * multiplier));
     return { enemyId: enemy.id, damage: hpBefore - enemy.hp, hpBefore, hpAfter: enemy.hp };
   });
   const remainingEnemies = next.enemies.filter(enemy => enemy.hp > 0).length;

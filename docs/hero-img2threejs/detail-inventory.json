@@ -1,0 +1,1159 @@
+{
+  "scanMethod": "component-zones",
+  "targetMinDetails": 30,
+  "note": "Enumerate every identity-defining small detail before authoring the spec. Each detail must map to a component.localFeatures entry or material.localOverrides entry, never prose only. Use forge/stage1_intake/build_detail_inventory.py to scan zones.",
+  "details": [
+    {
+      "id": "pelvis-hip-taper",
+      "kind": "contour",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "pelvis/hip-taper"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "cuirass-tapered-waist",
+      "kind": "contour",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "cuirass/tapered-waist"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "cuirass-central-keel",
+      "kind": "ridge",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "cuirass/central-keel"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "cuirass-gold-panel-borders",
+      "kind": "bevel",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "cuirass/gold-panel-borders"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "head-cheek-jaw-contour",
+      "kind": "contour",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "head/cheek-jaw-contour"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "head-orbital-recess",
+      "kind": "hole",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "head/orbital-recess"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "head-nasal-bridge",
+      "kind": "ridge",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "head/nasal-bridge"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "head-closed-smile",
+      "kind": "groove",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "head/closed-smile"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "hood-pointed-open-contour",
+      "kind": "contour",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "hood/pointed-open-contour"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "hood-gold-opening-binding",
+      "kind": "bevel",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "hood/gold-opening-binding"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "hood-rear-neck-fold",
+      "kind": "seam",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "hood/rear-neck-fold"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "cowl-crossing-collar-folds",
+      "kind": "ridge",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "cowl/crossing-collar-folds"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "cape-deep-diagonal-folds",
+      "kind": "ridge",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "cape/deep-diagonal-folds"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "cape-asymmetric-hem-notches",
+      "kind": "hole",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "cape/asymmetric-hem-notches"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "cape-gold-binding",
+      "kind": "bevel",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "cape/gold-binding"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "cape-gold-hem-motifs",
+      "kind": "linework",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "cape/gold-hem-motifs"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "belt-waist-wrap",
+      "kind": "contour",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "meso",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "belt/waist-wrap"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "belt-angular-gold-buckle",
+      "kind": "bevel",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "meso",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "belt/angular-gold-buckle"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "harness-diagonal-strap",
+      "kind": "ridge",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "meso",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "harness/diagonal-strap"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "harness-strap-buckle",
+      "kind": "bevel",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "meso",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "harness/strap-buckle"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "tabard-pointed-panel",
+      "kind": "contour",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "tabard/pointed-panel"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "tabard-gold-edge-binding",
+      "kind": "bevel",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "tabard/gold-edge-binding"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "upper-arm-l-elbow-cloth-folds",
+      "kind": "ridge",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "upper-arm-l/elbow-cloth-folds"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "forearm-l-forearm-taper",
+      "kind": "contour",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "forearm-l/forearm-taper"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "forearm-l-gold-cuff",
+      "kind": "bevel",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "forearm-l/gold-cuff"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "hand-l-separate-finger-grip",
+      "kind": "contour",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "hand-l/separate-finger-grip"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "pauldron-l-compact-dome",
+      "kind": "contour",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "pauldron-l/compact-dome"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "pauldron-l-layered-gold-lames",
+      "kind": "bevel",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "pauldron-l/layered-gold-lames"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "thigh-l-trouser-folds",
+      "kind": "ridge",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "thigh-l/trouser-folds"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "boot-l-continuous-shaft-instep",
+      "kind": "contour",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "boot-l/continuous-shaft-instep"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "boot-l-ankle-straps",
+      "kind": "ridge",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "boot-l/ankle-straps"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "boot-l-separate-sole",
+      "kind": "seam",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "boot-l/separate-sole"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "knee-l-faceted-shield",
+      "kind": "ridge",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "meso",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "knee-l/faceted-shield"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "knee-l-gold-knee-rim",
+      "kind": "bevel",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "meso",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "knee-l/gold-knee-rim"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "pouch-l-dimensional-flap",
+      "kind": "seam",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "meso",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "pouch-l/dimensional-flap"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "pouch-l-closure-fastener",
+      "kind": "fastener",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "meso",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "pouch-l/closure-fastener"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "side-tabard-l-flared-gold-hem",
+      "kind": "bevel",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "meso",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "side-tabard-l/flared-gold-hem"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "upper-arm-r-elbow-cloth-folds",
+      "kind": "ridge",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "upper-arm-r/elbow-cloth-folds"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "forearm-r-forearm-taper",
+      "kind": "contour",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "forearm-r/forearm-taper"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "forearm-r-gold-cuff",
+      "kind": "bevel",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "forearm-r/gold-cuff"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "hand-r-separate-finger-grip",
+      "kind": "contour",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "hand-r/separate-finger-grip"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "pauldron-r-compact-dome",
+      "kind": "contour",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "pauldron-r/compact-dome"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "pauldron-r-layered-gold-lames",
+      "kind": "bevel",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "pauldron-r/layered-gold-lames"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "thigh-r-trouser-folds",
+      "kind": "ridge",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "thigh-r/trouser-folds"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "boot-r-continuous-shaft-instep",
+      "kind": "contour",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "boot-r/continuous-shaft-instep"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "boot-r-ankle-straps",
+      "kind": "ridge",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "boot-r/ankle-straps"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "boot-r-separate-sole",
+      "kind": "seam",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "boot-r/separate-sole"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "knee-r-faceted-shield",
+      "kind": "ridge",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "meso",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "knee-r/faceted-shield"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "knee-r-gold-knee-rim",
+      "kind": "bevel",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "meso",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "knee-r/gold-knee-rim"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "pouch-r-dimensional-flap",
+      "kind": "seam",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "meso",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "pouch-r/dimensional-flap"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "pouch-r-closure-fastener",
+      "kind": "fastener",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "meso",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "pouch-r/closure-fastener"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "side-tabard-r-flared-gold-hem",
+      "kind": "bevel",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "meso",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "side-tabard-r/flared-gold-hem"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "sword-tapered-blade-tip",
+      "kind": "contour",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "sword/tapered-blade-tip"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "sword-long-bevel-planes",
+      "kind": "bevel",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "macro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "sword/long-bevel-planes"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "guard-angular-quillons",
+      "kind": "contour",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "meso",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "guard/angular-quillons"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "guard-jewel-amber-diamond-facets",
+      "kind": "gloss",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "micro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "guard-jewel/amber-diamond-facets"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "clasp-diamond-clasp",
+      "kind": "bevel",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "micro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "clasp/diamond-clasp"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "buckle-angular-belt-frame",
+      "kind": "bevel",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "micro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "buckle/angular-belt-frame"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "eye-l-recessed-eye",
+      "kind": "gloss",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "micro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "eye-l/recessed-eye"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "brow-l-tapered-dark-brow",
+      "kind": "contour",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "micro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "brow-l/tapered-dark-brow"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "eye-r-recessed-eye",
+      "kind": "gloss",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "micro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "eye-r/recessed-eye"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "brow-r-tapered-dark-brow",
+      "kind": "contour",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "micro",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "brow-r/tapered-dark-brow"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "hair-parted-root-mass",
+      "kind": "contour",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "meso",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "hair/parted-root-mass"
+      },
+      "realization": "geometry"
+    },
+    {
+      "id": "hair-swept-bangs",
+      "kind": "ridge",
+      "region": {
+        "x": 0,
+        "y": 0,
+        "width": 1,
+        "height": 1
+      },
+      "scale": "meso",
+      "confidence": 0.85,
+      "evidenceRef": "front",
+      "mapsTo": {
+        "type": "geometry",
+        "ref": "hair/swept-bangs"
+      },
+      "realization": "geometry"
+    }
+  ]
+}

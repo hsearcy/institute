@@ -88,8 +88,9 @@ try {
         const mounts: any[] = []; w.heroVisual.traverse((node: any) => { if (node.name === 'HeldEquipment') mounts.push(node); });
         if (mounts.length !== 1 || w.heldEquipment?.itemId !== id) throw Error(`${id}/${armor}: mount count ${mounts.length}`);
         const mount = mounts[0], attachment = mount.userData.attachment;
-        if (w.heroModelId !== 'hero') throw Error('Retired hero rig loaded');
-        const expectedParent = attachment === 'hand.R' ? 'handR' : attachment === 'belt' ? 'pelvis' : attachment;
+        if (w.heroModelId !== 'tripo-hero-game') throw Error('Retired hero rig loaded');
+        const socketName = ({ 'hand.R': 'TripoGrip', belt: 'TripoBeltSocket', head: 'TripoHeadSocket', chest: 'TripoChestSocket' } as Record<string, string>)[attachment];
+        const expectedParent = w.heroVisual.getObjectByName(socketName)?.parent?.name;
         if (mount.parent.name !== expectedParent) throw Error(`${id}/${armor}: wrong parent ${mount.parent.name}`);
         const embedded: boolean[] = []; w.heroVisual.traverse((node: any) => { if (node.userData.sourcePart === 'equipped_sword') embedded.push(node.visible); });
         if (!embedded.length || embedded.some(visible => visible !== (attachment !== 'hand.R'))) throw Error(`${id}/${armor}: embedded sword visibility ${embedded}`);

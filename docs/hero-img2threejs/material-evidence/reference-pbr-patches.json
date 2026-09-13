@@ -1,0 +1,501 @@
+{
+  "cloth": {
+    "referencePbr": {
+      "version": "1.0",
+      "sourceImage": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/cloth-clean-crop/cloth-clean.png",
+      "extractor": "stage1_intake/extract_pbr_evidence.py",
+      "method": "single-image pixel evidence with de-lighting estimate; not photogrammetry",
+      "usable": true,
+      "verdict": "pass",
+      "confidence": 0.776,
+      "estimatedFidelity": 0.776,
+      "targetThreshold": 0.7,
+      "hardLimit": "A single image cannot uniquely recover true albedo/roughness/normal/AO; maps are reference-derived estimates.",
+      "maps": {
+        "albedo": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/cloth-clean/cloth-clean_albedo.png",
+          "url": "cloth-clean_albedo.png",
+          "channel": "albedo",
+          "source": "reference-pixel-extraction"
+        },
+        "roughness": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/cloth-clean/cloth-clean_roughness.png",
+          "url": "cloth-clean_roughness.png",
+          "channel": "roughness",
+          "source": "reference-pixel-extraction"
+        },
+        "height": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/cloth-clean/cloth-clean_height.png",
+          "url": "cloth-clean_height.png",
+          "channel": "height",
+          "source": "reference-pixel-extraction"
+        },
+        "normal": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/cloth-clean/cloth-clean_normal.png",
+          "url": "cloth-clean_normal.png",
+          "channel": "normal",
+          "source": "reference-pixel-extraction"
+        },
+        "ao": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/cloth-clean/cloth-clean_ao.png",
+          "url": "cloth-clean_ao.png",
+          "channel": "ao",
+          "source": "reference-pixel-extraction"
+        }
+      },
+      "diagnostics": {
+        "sourceWidth": 95,
+        "sourceHeight": 139,
+        "mapSize": 256,
+        "cropBBoxPixels": {
+          "x": 0,
+          "y": 0,
+          "width": 95,
+          "height": 139
+        },
+        "mask": {
+          "backgroundColor": "#016F7C",
+          "backgroundNoise": 81.597,
+          "transparentPixelFraction": 0.0,
+          "foregroundCoverage": 1.0
+        },
+        "mapStats": {
+          "valueRange": 0.2685,
+          "heightP90Gradient": 0.08612,
+          "roughnessBase": 0.765,
+          "roughnessVariation": 0.142,
+          "normalStrength": 0.257,
+          "blurRadius": 5
+        },
+        "palette": [
+          "#027C88",
+          "#016975",
+          "#015560",
+          "#01444E",
+          "#0796A1"
+        ]
+      },
+      "warnings": [
+        "image is not clearly isolated from background; using most pixels as material evidence",
+        "object/background separation is weak",
+        "single-image inverse rendering cannot prove true physical PBR; confidence is capped"
+      ]
+    }
+  },
+  "steel": {
+    "referencePbr": {
+      "version": "1.0",
+      "sourceImage": "/home/houston/git/institute/docs/hero-img2threejs/reference/steel.png",
+      "extractor": "stage1_intake/extract_pbr_evidence.py",
+      "method": "single-image pixel evidence with de-lighting estimate; not photogrammetry",
+      "usable": true,
+      "verdict": "pass",
+      "confidence": 0.81,
+      "estimatedFidelity": 0.81,
+      "targetThreshold": 0.7,
+      "hardLimit": "A single image cannot uniquely recover true albedo/roughness/normal/AO; maps are reference-derived estimates.",
+      "maps": {
+        "albedo": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/steel/steel_albedo.png",
+          "url": "steel_albedo.png",
+          "channel": "albedo",
+          "source": "reference-pixel-extraction"
+        },
+        "roughness": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/steel/steel_roughness.png",
+          "url": "steel_roughness.png",
+          "channel": "roughness",
+          "source": "reference-pixel-extraction"
+        },
+        "height": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/steel/steel_height.png",
+          "url": "steel_height.png",
+          "channel": "height",
+          "source": "reference-pixel-extraction"
+        },
+        "normal": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/steel/steel_normal.png",
+          "url": "steel_normal.png",
+          "channel": "normal",
+          "source": "reference-pixel-extraction"
+        },
+        "ao": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/steel/steel_ao.png",
+          "url": "steel_ao.png",
+          "channel": "ao",
+          "source": "reference-pixel-extraction"
+        }
+      },
+      "diagnostics": {
+        "sourceWidth": 66,
+        "sourceHeight": 53,
+        "mapSize": 256,
+        "cropBBoxPixels": {
+          "x": 0,
+          "y": 0,
+          "width": 66,
+          "height": 53
+        },
+        "mask": {
+          "backgroundColor": "#76655B",
+          "backgroundNoise": 48.363,
+          "transparentPixelFraction": 0.0,
+          "foregroundCoverage": 0.9114
+        },
+        "mapStats": {
+          "valueRange": 0.405,
+          "heightP90Gradient": 0.12885,
+          "roughnessBase": 0.755,
+          "roughnessVariation": 0.163,
+          "normalStrength": 0.307,
+          "blurRadius": 5
+        },
+        "palette": [
+          "#85776B",
+          "#70645A",
+          "#5D5248",
+          "#9E8F82",
+          "#C5B8AA"
+        ]
+      },
+      "warnings": [
+        "image is not clearly isolated from background; using most pixels as material evidence",
+        "object/background separation is weak",
+        "single-image inverse rendering cannot prove true physical PBR; confidence is capped"
+      ]
+    }
+  },
+  "leather": {
+    "referencePbr": {
+      "version": "1.0",
+      "sourceImage": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/refined-crops/leather-refined.png",
+      "extractor": "stage1_intake/extract_pbr_evidence.py",
+      "method": "single-image pixel evidence with de-lighting estimate; not photogrammetry",
+      "usable": true,
+      "verdict": "pass",
+      "confidence": 0.756,
+      "estimatedFidelity": 0.756,
+      "targetThreshold": 0.7,
+      "hardLimit": "A single image cannot uniquely recover true albedo/roughness/normal/AO; maps are reference-derived estimates.",
+      "maps": {
+        "albedo": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/leather-refined/leather-refined_albedo.png",
+          "url": "leather-refined_albedo.png",
+          "channel": "albedo",
+          "source": "reference-pixel-extraction"
+        },
+        "roughness": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/leather-refined/leather-refined_roughness.png",
+          "url": "leather-refined_roughness.png",
+          "channel": "roughness",
+          "source": "reference-pixel-extraction"
+        },
+        "height": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/leather-refined/leather-refined_height.png",
+          "url": "leather-refined_height.png",
+          "channel": "height",
+          "source": "reference-pixel-extraction"
+        },
+        "normal": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/leather-refined/leather-refined_normal.png",
+          "url": "leather-refined_normal.png",
+          "channel": "normal",
+          "source": "reference-pixel-extraction"
+        },
+        "ao": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/leather-refined/leather-refined_ao.png",
+          "url": "leather-refined_ao.png",
+          "channel": "ao",
+          "source": "reference-pixel-extraction"
+        }
+      },
+      "diagnostics": {
+        "sourceWidth": 42,
+        "sourceHeight": 72,
+        "mapSize": 256,
+        "cropBBoxPixels": {
+          "x": 0,
+          "y": 0,
+          "width": 42,
+          "height": 72
+        },
+        "mask": {
+          "backgroundColor": "#422C1F",
+          "backgroundNoise": 32.326,
+          "transparentPixelFraction": 0.0,
+          "foregroundCoverage": 0.996
+        },
+        "mapStats": {
+          "valueRange": 0.1878,
+          "heightP90Gradient": 0.13599,
+          "roughnessBase": 0.759,
+          "roughnessVariation": 0.178,
+          "normalStrength": 0.316,
+          "blurRadius": 5
+        },
+        "palette": [
+          "#3C291E",
+          "#4B3224",
+          "#694731",
+          "#2E1E15",
+          "#BEBABE"
+        ]
+      },
+      "warnings": [
+        "image is not clearly isolated from background; using most pixels as material evidence",
+        "object/background separation is weak",
+        "single-image inverse rendering cannot prove true physical PBR; confidence is capped",
+        "low value range weakens height/roughness inference"
+      ]
+    }
+  },
+  "gold": {
+    "referencePbr": {
+      "version": "1.0",
+      "sourceImage": "/home/houston/git/institute/docs/hero-img2threejs/reference/gold.png",
+      "extractor": "stage1_intake/extract_pbr_evidence.py",
+      "method": "single-image pixel evidence with de-lighting estimate; not photogrammetry",
+      "usable": true,
+      "verdict": "pass",
+      "confidence": 0.792,
+      "estimatedFidelity": 0.792,
+      "targetThreshold": 0.7,
+      "hardLimit": "A single image cannot uniquely recover true albedo/roughness/normal/AO; maps are reference-derived estimates.",
+      "maps": {
+        "albedo": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/gold/gold_albedo.png",
+          "url": "gold_albedo.png",
+          "channel": "albedo",
+          "source": "reference-pixel-extraction"
+        },
+        "roughness": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/gold/gold_roughness.png",
+          "url": "gold_roughness.png",
+          "channel": "roughness",
+          "source": "reference-pixel-extraction"
+        },
+        "height": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/gold/gold_height.png",
+          "url": "gold_height.png",
+          "channel": "height",
+          "source": "reference-pixel-extraction"
+        },
+        "normal": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/gold/gold_normal.png",
+          "url": "gold_normal.png",
+          "channel": "normal",
+          "source": "reference-pixel-extraction"
+        },
+        "ao": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/gold/gold_ao.png",
+          "url": "gold_ao.png",
+          "channel": "ao",
+          "source": "reference-pixel-extraction"
+        }
+      },
+      "diagnostics": {
+        "sourceWidth": 17,
+        "sourceHeight": 11,
+        "mapSize": 256,
+        "cropBBoxPixels": {
+          "x": 0,
+          "y": 0,
+          "width": 17,
+          "height": 11
+        },
+        "mask": {
+          "backgroundColor": "#988065",
+          "backgroundNoise": 51.701,
+          "transparentPixelFraction": 0.0,
+          "foregroundCoverage": 1.0
+        },
+        "mapStats": {
+          "valueRange": 0.3302,
+          "heightP90Gradient": 0.08042,
+          "roughnessBase": 0.723,
+          "roughnessVariation": 0.129,
+          "normalStrength": 0.25,
+          "blurRadius": 5
+        },
+        "palette": [
+          "#887359",
+          "#9F886C",
+          "#786248",
+          "#3B2510",
+          "#EBC881"
+        ]
+      },
+      "warnings": [
+        "image is not clearly isolated from background; using most pixels as material evidence",
+        "object/background separation is weak",
+        "single-image inverse rendering cannot prove true physical PBR; confidence is capped"
+      ]
+    }
+  },
+  "face": {
+    "referencePbr": {
+      "version": "1.0",
+      "sourceImage": "/home/houston/git/institute/docs/hero-img2threejs/reference/face.png",
+      "extractor": "stage1_intake/extract_pbr_evidence.py",
+      "method": "single-image pixel evidence with de-lighting estimate; not photogrammetry",
+      "usable": true,
+      "verdict": "pass",
+      "confidence": 0.829,
+      "estimatedFidelity": 0.829,
+      "targetThreshold": 0.7,
+      "hardLimit": "A single image cannot uniquely recover true albedo/roughness/normal/AO; maps are reference-derived estimates.",
+      "maps": {
+        "albedo": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/face/face_albedo.png",
+          "url": "face_albedo.png",
+          "channel": "albedo",
+          "source": "reference-pixel-extraction"
+        },
+        "roughness": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/face/face_roughness.png",
+          "url": "face_roughness.png",
+          "channel": "roughness",
+          "source": "reference-pixel-extraction"
+        },
+        "height": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/face/face_height.png",
+          "url": "face_height.png",
+          "channel": "height",
+          "source": "reference-pixel-extraction"
+        },
+        "normal": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/face/face_normal.png",
+          "url": "face_normal.png",
+          "channel": "normal",
+          "source": "reference-pixel-extraction"
+        },
+        "ao": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/face/face_ao.png",
+          "url": "face_ao.png",
+          "channel": "ao",
+          "source": "reference-pixel-extraction"
+        }
+      },
+      "diagnostics": {
+        "sourceWidth": 111,
+        "sourceHeight": 136,
+        "mapSize": 256,
+        "cropBBoxPixels": {
+          "x": 0,
+          "y": 0,
+          "width": 111,
+          "height": 136
+        },
+        "mask": {
+          "backgroundColor": "#A6A6AC",
+          "backgroundNoise": 202.914,
+          "transparentPixelFraction": 0.0,
+          "foregroundCoverage": 0.9616
+        },
+        "mapStats": {
+          "valueRange": 0.8012,
+          "heightP90Gradient": 0.14526,
+          "roughnessBase": 0.764,
+          "roughnessVariation": 0.194,
+          "normalStrength": 0.326,
+          "blurRadius": 5
+        },
+        "palette": [
+          "#140D07",
+          "#673819",
+          "#F5BB86",
+          "#BF7A44",
+          "#1C7783"
+        ]
+      },
+      "warnings": [
+        "image is not clearly isolated from background; using most pixels as material evidence",
+        "object/background separation is weak",
+        "single-image inverse rendering cannot prove true physical PBR; confidence is capped"
+      ]
+    }
+  },
+  "hair": {
+    "referencePbr": {
+      "version": "1.0",
+      "sourceImage": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/hair-crop/hair.png",
+      "extractor": "stage1_intake/extract_pbr_evidence.py",
+      "method": "single-image pixel evidence with de-lighting estimate; not photogrammetry",
+      "usable": true,
+      "verdict": "pass",
+      "confidence": 0.829,
+      "estimatedFidelity": 0.829,
+      "targetThreshold": 0.7,
+      "hardLimit": "A single image cannot uniquely recover true albedo/roughness/normal/AO; maps are reference-derived estimates.",
+      "maps": {
+        "albedo": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/hair/hair_albedo.png",
+          "url": "hair_albedo.png",
+          "channel": "albedo",
+          "source": "reference-pixel-extraction"
+        },
+        "roughness": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/hair/hair_roughness.png",
+          "url": "hair_roughness.png",
+          "channel": "roughness",
+          "source": "reference-pixel-extraction"
+        },
+        "height": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/hair/hair_height.png",
+          "url": "hair_height.png",
+          "channel": "height",
+          "source": "reference-pixel-extraction"
+        },
+        "normal": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/hair/hair_normal.png",
+          "url": "hair_normal.png",
+          "channel": "normal",
+          "source": "reference-pixel-extraction"
+        },
+        "ao": {
+          "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/hair/hair_ao.png",
+          "url": "hair_ao.png",
+          "channel": "ao",
+          "source": "reference-pixel-extraction"
+        }
+      },
+      "diagnostics": {
+        "sourceWidth": 68,
+        "sourceHeight": 40,
+        "mapSize": 256,
+        "cropBBoxPixels": {
+          "x": 0,
+          "y": 0,
+          "width": 68,
+          "height": 40
+        },
+        "mask": {
+          "backgroundColor": "#1A656A",
+          "backgroundNoise": 134.078,
+          "transparentPixelFraction": 0.0,
+          "foregroundCoverage": 0.9982
+        },
+        "mapStats": {
+          "valueRange": 0.8366,
+          "heightP90Gradient": 0.09065,
+          "roughnessBase": 0.738,
+          "roughnessVariation": 0.172,
+          "normalStrength": 0.262,
+          "blurRadius": 5
+        },
+        "palette": [
+          "#1C0C04",
+          "#592E12",
+          "#FACC9C",
+          "#AB6D3B",
+          "#358177"
+        ]
+      },
+      "warnings": [
+        "image is not clearly isolated from background; using most pixels as material evidence",
+        "object/background separation is weak",
+        "single-image inverse rendering cannot prove true physical PBR; confidence is capped"
+      ]
+    }
+  }
+}

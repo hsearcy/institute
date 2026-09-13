@@ -1,3 +1,4 @@
+import { HeroAssetLoadError } from './world/tripoHeroRuntime';
 import type { Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgReward, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
 import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, rpgEncounterCombat, rpgNextRelicHunt, rpgUnlockedTier, rpgDungeonForgeDust, rpgSalvageValue, rpgAnswerPower, ProblemSchema } from '@institute/shared';
 import { fetchState, fetchMastery, redeemCrazyCoin, type Demo } from '../game/tutor';
@@ -186,14 +187,14 @@ export class RpgGame {
   private el<T extends HTMLElement = HTMLElement>(id: string): T { return this.root.querySelector<T>(`#${id}`)!; }
   async start(): Promise<void> {
     this.world.start();
-    const modelsReady = this.world.load().catch(() => this.toast('The dungeon is ready. Some details are still loading.'));
+    let modelsReady: Promise<void> | undefined;
     this.showDialog('loading', '<div class="rpg-seal">◆</div><p class="rpg-eyebrow">THE SUNKEN VAULT</p><h2 id="rpg-dialog-title">Opening the gates</h2><p>Finding your adventure…</p>');
     await this.runSafely(async () => {
+      await (modelsReady ??= this.world.load().catch(error => { modelsReady = undefined; throw error; }));
       this.state = await getRpgState();
       this.selectedTier = this.state.dungeonTier ?? 1;
       const [camp, legacy] = await Promise.all([getRpgCamp().catch(() => null), fetchState()]);
       this.campState = camp; this.legacyState = legacy;
-      await modelsReady;
       this.restoreSession(); this.renderState(); this.busy = false; this.showCamp();
       try { if (!localStorage.getItem(this.tutorialKey)) this.launchTutorial(); } catch { /* Replay remains available when local storage is blocked. */ }
       if (this.economyPending) this.toast('A camp purchase is waiting to reconnect. Open the merchant or blacksmith to finish saving it.');
@@ -959,6 +960,13 @@ export class RpgGame {
     } catch (error) {
       if (this.disposed) return;
       console.warn('Adventure connection interrupted:', error);
+      if (error instanceof HeroAssetLoadError) {
+        this.retryAction = action; this.busy = true;
+        this.el('rpg-connection').hidden = true;
+        this.el('rpg-save-status').textContent = '◇ Hero download paused';
+        this.showDialog('loading', '<div class="rpg-seal">◆</div><h2 id="rpg-dialog-title">Your hero could not load</h2><p>The hero download did not finish. Check the connection and try again.</p><button class="rpg-primary" data-action="retry">Try again</button>');
+        return;
+      }
       if (error instanceof ApiError && error.status >= 400 && error.status < 500) {
         // A stale tab or unavailable skill is a state conflict, not an outage.
         // Refresh the authoritative checkpoint and let the child continue.

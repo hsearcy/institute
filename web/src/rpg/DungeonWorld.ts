@@ -22,13 +22,14 @@ import { phoenixWingGeometry, phoenixTailGeometry, stormFilamentsGeometry } from
 import { phoenixFeatherMaterial, stormWispMaterial } from './world/materials';
 import { enemyRoster } from './world/enemyRoster';
 import { EnemyAnimator } from './world/EnemyAnimator';
-import { HeldEquipment, authoredHeroGrip, authoredHeroWearableSockets, legacyHeroEquipment } from './world/HeldEquipment';
+import { HeldEquipment, tripoHeroEquipment } from './world/HeldEquipment';
+import { TRIPO_HERO_MODEL, createTripoHeroInstance, tintTripoHero, measureTripoWalkCycle, HeroAssetLoadError } from './world/tripoHeroRuntime';
 import { createCleaveStrike, cleaveEdgeMaterial, steelBladeWakeMaterial, CLEAVE_RELEASE, CLEAVE_SPEED } from './world/cleave';
 import { createChainSequence, chainLightningGeometry, chainLightningMaterial, createChainCharge, CHAIN_BOLT_LIFETIME } from './world/chain';
 import { RoomCutaway } from './world/RoomCutaway';
 import { ITEM_MODELS } from './itemModels';
 import { createHitReaction, sampleHitReaction, type HitReaction, type CombatHit } from './world/hitReactions';
-import { advanceHeroTravel, heroDoorwayRoute, setPlanarHeroHeading, settleHeroTravel } from './world/heroLocomotion';
+import { advanceHeroTravel, heroDoorwayRoute, setPlanarHeroHeading, settleHeroTravel, type HeroWalkCycle } from './world/heroLocomotion';
 import { cloneErosionProgramMaterial, createElectricDissolve, createSkinnedDissolve } from './world/electricDissolve';
 import { createVaultScenery } from './world/scenery';
 import { brokenGateWallCrown, gateBreach, roomHasTomb } from './world/gateComposition';
@@ -131,6 +132,7 @@ export class DungeonWorld {
   private lastAttack: { spellId: string; effect: string; options: AttackOptions } | null = null;
   private heroMotion?: (age: number) => THREE.Vector3;
   private heroTravelSpeed = 0;
+  private heroWalkCycle?: HeroWalkCycle;
   private heroTravelWaypoints: THREE.Vector3[] = [];
   private readonly summoned: { root: THREE.Group; age: number; duration: number; update: (t: number) => void }[] = [];
   private shake = 0;
@@ -194,7 +196,7 @@ export class DungeonWorld {
     moon.name = 'moon';
     this.scene.add(this.floorGroup, this.enemyGroup, this.effectsGroup, this.propGroup, this.biomeGroup, this.hero);
     for (const fragments of [this.stoneFragments, this.hotFragments]) { fragments.count = 0; fragments.setColorAt(0, new THREE.Color()); fragments.frustumCulled = false; fragments.instanceMatrix.setUsage(THREE.DynamicDrawUsage); this.scene.add(fragments); }
-    this.heroVisual = this.makeHero(); this.heroVisual.scale.setScalar(ACTOR_SCALE); this.hero.add(this.heroVisual);
+    this.heroVisual.scale.setScalar(ACTOR_SCALE); this.hero.add(this.heroVisual);
     this.heroLight.position.set(1.2, 3.1, 1.5); this.hero.add(this.heroLight);
     this.scene.add(this.burstLight);
     this.scene.add(...this.warmLights);
@@ -223,29 +225,29 @@ export class DungeonWorld {
   async load(): Promise<void> {
     performance.mark('dungeon-load-start');
     const loader = new GLTFLoader();
-    await Promise.all(['hero', 'imp', 'guardian', 'vault-guardian-boss', 'arch', 'pillar', 'masonry-pier', 'masonry-post', 'brazier', 'crystal', 'chest', 'wall-bay', 'broken-wall', 'skeleton', 'revenant', 'wraith', 'furnace', 'reliquary', 'ice_cluster', ...Object.values(ITEM_MODELS).map(item => item.model)].map(async name => {
+    await Promise.all([TRIPO_HERO_MODEL, 'imp', 'guardian', 'vault-guardian-boss', 'arch', 'pillar', 'masonry-pier', 'masonry-post', 'brazier', 'crystal', 'chest', 'wall-bay', 'broken-wall', 'skeleton', 'revenant', 'wraith', 'furnace', 'reliquary', 'ice_cluster', ...Object.values(ITEM_MODELS).map(item => item.model)].map(async name => {
       try {
         const gltf = await loader.loadAsync(`/assets/rpg/${name}.glb`);
         if (this.disposed) return;
-        if (name === 'hero' || name.startsWith('hero-')) this.heroClipSets.set(name, gltf.animations);
+        if (name === TRIPO_HERO_MODEL) this.heroClipSets.set(name, gltf.animations);
         gltf.scene.traverse(object => {
           if (object instanceof THREE.Mesh) {
-            object.castShadow = true; object.receiveShadow = !name.startsWith('hero') && !name.startsWith('items/') && !['skeleton', 'revenant', 'wraith', 'guardian', 'vault-guardian-boss', 'imp'].includes(name);
-            if (name.startsWith('hero') || name.startsWith('items/') || ['skeleton', 'revenant', 'guardian', 'vault-guardian-boss', 'imp', 'wraith'].includes(name)) {
+            object.castShadow = true; object.receiveShadow = name !== TRIPO_HERO_MODEL && !name.startsWith('items/') && !['skeleton', 'revenant', 'wraith', 'guardian', 'vault-guardian-boss', 'imp'].includes(name);
+            if (name === TRIPO_HERO_MODEL || name.startsWith('items/') || ['skeleton', 'revenant', 'guardian', 'vault-guardian-boss', 'imp', 'wraith'].includes(name)) {
               for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
-                if (material instanceof THREE.MeshStandardMaterial) { material.envMap = this.environment.texture; material.envMapIntensity = name.startsWith('hero') || name.startsWith('items/') ? .55 : .225; }
+                if (material instanceof THREE.MeshStandardMaterial) { material.envMap = this.environment.texture; material.envMapIntensity = name === TRIPO_HERO_MODEL || name.startsWith('items/') ? .55 : .225; }
               }
             }
             if (object.material instanceof THREE.MeshStandardMaterial && /glow_flame|glow_amber/.test(object.material.name)) {
               object.material.emissive.setHex(0xff780c); object.material.emissiveIntensity = name === 'furnace' ? .9 : 1.4; object.material.toneMapped = false;
             }
-            if (name.startsWith('hero') && object.material instanceof THREE.MeshStandardMaterial && /glow_/.test(object.material.name)) {
-              object.material.emissiveIntensity = .3; object.material.toneMapped = true;
-            }
           }
         });
         this.models.set(name, gltf.scene); this.loadedModels++;
-      } catch { /* The authored procedural dungeon remains fully playable offline. */ }
+      } catch (error) {
+        if (name === TRIPO_HERO_MODEL) throw new HeroAssetLoadError(error);
+        // Optional scenery and enemies retain their procedural fallbacks.
+      }
     }));
     performance.mark('dungeon-models-ready');
     try {
@@ -437,6 +439,7 @@ export class DungeonWorld {
 
   private model(name: string, height: number): THREE.Group | undefined {
     const original = this.models.get(name); if (!original) return undefined;
+    if (name === TRIPO_HERO_MODEL) return createTripoHeroInstance(original, height);
     let hasSkin = false; original.traverse(o => { if (o instanceof THREE.SkinnedMesh) hasSkin = true; });
     const clone = (hasSkin || name === 'hero' || name.startsWith('hero-') ? cloneSkeleton(original) : original.clone(true)) as THREE.Group;
     const bounds = new THREE.Box3().setFromObject(clone);
@@ -461,22 +464,6 @@ export class DungeonWorld {
 
   private mesh(geometry: THREE.BufferGeometry, material: THREE.Material, x = 0, y = 0, z = 0): THREE.Mesh {
     const mesh = new THREE.Mesh(geometry, material); mesh.position.set(x, y, z); mesh.castShadow = mesh.receiveShadow = true; return mesh;
-  }
-
-  private makeHero(): THREE.Group {
-    const group = new THREE.Group();
-    group.userData.procedural = true;
-    group.add(this.mesh(new THREE.CylinderGeometry(.23, .3, .65, 8), this.materials.teal, 0, .95));
-    group.add(this.mesh(new THREE.SphereGeometry(.25, 10, 8), this.materials.dark, 0, 1.48));
-    const hood = this.mesh(new THREE.SphereGeometry(.29, 10, 8, 0, Math.PI * 2, 0, Math.PI * .7), this.materials.teal, 0, 1.49); group.add(hood);
-    const cape = this.mesh(new THREE.ConeGeometry(.42, 1.05, 4, 1, true), this.materials.teal, 0, .9, -.22); cape.rotation.x = -.2; group.add(cape);
-    for (const x of [-.19, .19]) {
-      group.add(this.mesh(new THREE.CylinderGeometry(.12, .14, .58, 6), this.materials.dark, x, .38));
-      group.add(this.mesh(new THREE.SphereGeometry(.22, 6, 4), this.materials.gold, x * 1.8, 1.14));
-    }
-    const sword = this.mesh(new THREE.BoxGeometry(.12, 1.15, .055), this.materials.steel, .6, 1.01, .18); sword.rotation.z = -.42; sword.name = 'weapon'; group.add(sword);
-    group.add(this.mesh(new THREE.BoxGeometry(.43, .08, .1), this.materials.gold, .4, .65, .18));
-    return group;
   }
 
   private makeEnemy(brute: boolean, boss: boolean, modelId = 'skeleton', height = brute ? (boss ? 3.8 : 2.5) : 1.65): THREE.Group {
@@ -1099,12 +1086,11 @@ export class DungeonWorld {
     if (this.disposed) return;
     // Old saves can keep their cosmetic ID; all heroes now use the main rig.
     this.desiredAppearance = 'wayfarer';
-    const modelId = 'hero';
+    const modelId = TRIPO_HERO_MODEL;
     if (this.heroModelId === modelId) return;
     const model = this.model(modelId, 1.8);
-    if (!model) return; // Keep the procedural hero until authored models arrive.
-    // The brighter teal cloth and satin silver need a softer personal fill.
-    this.heroLight.intensity = modelId === 'hero' ? 18 : 32;
+    if (!model) return; // The required new hero is still loading.
+    this.heroLight.intensity = 18;
     const previousVisual = this.heroVisual;
     const previousAnimation = this.heroAnimation || 'idle';
     const previousTime = this.heroActions.get(previousAnimation)?.time ?? 0;
@@ -1116,20 +1102,17 @@ export class DungeonWorld {
     // baked textures remain owned by the model cache for subsequent armor swaps.
     this.heroVisual.traverse(object => {
       if (object instanceof THREE.SkinnedMesh) object.skeleton.dispose();
-      if (object instanceof THREE.Mesh && object.userData.equipmentMaterial) {
+      if (object instanceof THREE.Mesh && (object.userData.equipmentMaterial || object.userData.tripoInstanceMaterial)) {
         for (const material of Array.isArray(object.material) ? object.material : [object.material]) material.dispose();
       }
     });
     this.heroVisual = new THREE.Group();
     this.heroVisual.position.copy(previousVisual.position); this.heroVisual.quaternion.copy(previousVisual.quaternion); this.heroVisual.scale.copy(previousVisual.scale);
     this.heroVisual.add(model); this.hero.add(this.heroVisual);
-    // New actors author their grounding and strike weight in the skeleton.
-    // Keep the legacy accents only for the older armor rigs.
-    this.heroUsesAuthoredMotion = !!model.getObjectByName('CastOrigin');
-    // GLTFLoader sanitizes the authored hand.R bone name to handR.
-    const hand = model.getObjectByName('handR');
-    if (hand && this.heroUsesAuthoredMotion) this.heldEquipment = new HeldEquipment(model, hand, authoredHeroGrip(), authoredHeroWearableSockets(model));
-    else this.heldEquipment = legacyHeroEquipment(model);
+    this.heroWalkCycle = measureTripoWalkCycle(model, this.heroClipSets.get(modelId)?.find(clip => clip.name.toLowerCase() === 'walk'));
+    this.heldEquipment = tripoHeroEquipment(model);
+    this.heroUsesAuthoredMotion = (this.heroClipSets.get(modelId)?.length ?? 0) > 0;
+    tintTripoHero(model, 'wayfarer');
     this.heroModelId = modelId; this.appearance = 'wayfarer';
     this.heroMixer = new THREE.AnimationMixer(this.heroVisual);
     for (const clip of this.heroClipSets.get(modelId) ?? []) this.heroActions.set(clip.name.toLowerCase(), this.heroMixer.clipAction(clip));
@@ -2157,7 +2140,7 @@ export class DungeonWorld {
     const travelTarget = this.heroTravelWaypoints[0] ?? this.destination;
     const distance = this.hero.position.distanceTo(travelTarget);
     const walking = distance > .025 && !this.attacking;
-    const travel = this.heroUsesAuthoredMotion && walking ? advanceHeroTravel(distance, this.heroTravelSpeed, delta) : undefined;
+    const travel = this.heroUsesAuthoredMotion && walking ? advanceHeroTravel(distance, this.heroTravelSpeed, delta, this.heroWalkCycle) : undefined;
     this.heroTravelSpeed = travel?.speed ?? 0;
     if (!this.attacking) this.playHeroAnimation(distance > .025 ? 'walk' : 'idle');
     if (travel) this.heroActions.get('walk')?.setEffectiveTimeScale(travel.clipRate);
@@ -2367,7 +2350,7 @@ export class DungeonWorld {
   }
 
   get diagnostics(): Record<string, unknown> {
-    return { appearance: this.appearance, drawWarmup: this.drawWarmup, lastAttack: this.lastAttack, lastSpellId: this.lastAttack?.spellId, lastSpellEffect: this.lastAttack?.effect, heroAnimation: this.heroAnimation || 'procedural', heroClips: [...this.heroActions.keys()], encounter: this.encounter, region: this.regionId, enemies: this.enemies.filter(enemy => !enemy.dead).length, articulatedEnemies: this.enemies.filter(enemy => enemy.animator.articulated).length, enemyRoster: this.enemies.reduce<Record<string, number>>((counts, enemy) => { counts[enemy.modelId] = (counts[enemy.modelId] ?? 0) + 1; return counts; }, {}), attacking: this.attacking, paused: this.paused, modelsLoaded: this.loadedModels, drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, particles: this.particles.length, fragments: this.fragments.length, hero: this.hero.position.toArray(), softwareRenderer: this.softwareRenderer, fps: Math.round(this.framesPerSecond), quality: ['full', 'balanced', 'performance'][this.quality], renderer: this.renderer.getContext().getParameter(this.renderer.getContext().VERSION) };
+    return { appearance: this.appearance, heroModelId: this.heroModelId, heroWalkCycle: this.heroWalkCycle, drawWarmup: this.drawWarmup, lastAttack: this.lastAttack, lastSpellId: this.lastAttack?.spellId, lastSpellEffect: this.lastAttack?.effect, heroAnimation: this.heroAnimation || 'procedural', heroClips: [...this.heroActions.keys()], encounter: this.encounter, region: this.regionId, enemies: this.enemies.filter(enemy => !enemy.dead).length, articulatedEnemies: this.enemies.filter(enemy => enemy.animator.articulated).length, enemyRoster: this.enemies.reduce<Record<string, number>>((counts, enemy) => { counts[enemy.modelId] = (counts[enemy.modelId] ?? 0) + 1; return counts; }, {}), attacking: this.attacking, paused: this.paused, modelsLoaded: this.loadedModels, drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, particles: this.particles.length, fragments: this.fragments.length, hero: this.hero.position.toArray(), softwareRenderer: this.softwareRenderer, fps: Math.round(this.framesPerSecond), quality: ['full', 'balanced', 'performance'][this.quality], renderer: this.renderer.getContext().getParameter(this.renderer.getContext().VERSION) };
   }
 
   dispose(): void {

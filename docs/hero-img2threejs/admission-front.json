@@ -1,0 +1,14 @@
+{
+  "admitted": true,
+  "reasons": [],
+  "provenance": {
+    "viewpoint": "reference",
+    "sourcePath": "/home/houston/git/institute/docs/hero-img2threejs/reference/front.png",
+    "width": 768,
+    "height": 1024,
+    "foregroundCoverage": 0.3949,
+    "largestComponentFraction": 0.9965,
+    "pHash": 17813676045724483650,
+    "duplicateOfHash": null
+  }
+}

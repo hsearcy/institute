@@ -1,0 +1,129 @@
+{
+  "source": "segment-model_url.glb",
+  "coordinateSystem": "+X forward, +Y up; segmented source raw coordinates before rig translation",
+  "gripBasis": "Axis from measured gold pommel center through observed fist hollow; blade presentation normal estimated from isolated distal blade PCA, orthogonalized against handle axis. No prior hero transforms.",
+  "measurementPrecision": "Grip center visually calibrated on fresh textured front/side projections, approximately +/-0.008 source units; final gameplay closeup still required.",
+  "defaultSwordTip": [
+    0.323841989,
+    -0.433200628,
+    0.406071812
+  ],
+  "sockets": {
+    "TripoGrip": {
+      "boneRole": "rightHand",
+      "matrix": [
+        0.17935056598375657,
+        0.7576225936666604,
+        0.6275678290409006,
+        0.0,
+        0.4547008171374058,
+        -0.6295241696255165,
+        0.6300368931672807,
+        0.0,
+        0.8723993015677407,
+        0.17235813129384586,
+        -0.45739712854478193,
+        0.0,
+        0.121,
+        -0.057,
+        0.09,
+        1.0
+      ],
+      "itemScale": 0.55
+    },
+    "TripoCastOrigin": {
+      "boneRole": "leftHand",
+      "matrix": [
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.133,
+        -0.064,
+        -0.369,
+        1.0
+      ],
+      "itemScale": 1
+    },
+    "TripoHeadSocket": {
+      "boneRole": "head",
+      "matrix": [
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.075,
+        0.475,
+        -0.14,
+        1.0
+      ],
+      "itemScale": 0.55
+    },
+    "TripoChestSocket": {
+      "boneRole": "chest",
+      "matrix": [
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.188,
+        0.249,
+        -0.145,
+        1.0
+      ],
+      "itemScale": 0.55
+    },
+    "TripoBeltSocket": {
+      "boneRole": "belt",
+      "matrix": [
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.191,
+        0.04,
+        -0.145,
+        1.0
+      ],
+      "itemScale": 0.55
+    }
+  },
+  "anchorEvidence": {
+    "leftPalm": "Segmentedpart10 bounds x[.045,.125], y[-.097,.006], z[-.406,-.332]; castingpoint lies .008 in front of palm.",
+    "head": "Newhood upperheadsurface; crown band centered below hood peak atY.475.",
+    "chest": "New breastplate front below collar clasp, avoiding face and arm attachments.",
+    "belt": "New central belt/buckle front; attachment hangs below buckle."
+  }
+}

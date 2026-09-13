@@ -1,0 +1,1073 @@
+{
+  "pass": "blockout-03",
+  "url": "http://127.0.0.1:5188/hero-study.html?capture=1",
+  "startedAt": "2026-09-10T23:09:19.911Z",
+  "viewport": [
+    768,
+    1024
+  ],
+  "devicePixelRatio": 1,
+  "status": "captured",
+  "captures": [
+    {
+      "id": "hero",
+      "camera": {
+        "position": [
+          -0.8968277131546161,
+          1.3285774205960699,
+          4.054534857155789
+        ],
+        "target": [
+          -0.327,
+          1.114,
+          0
+        ],
+        "fov": 32,
+        "near": 0.02,
+        "far": 30,
+        "exposure": 1
+      },
+      "files": {
+        "beauty": {
+          "path": "hero-beauty.png",
+          "sha256": "0abb75f5dacb2ee2cb60852832b04a518791858975444a3bd9af3596639aafc7",
+          "capturedAt": "2026-09-10T23:09:21.275Z",
+          "bytes": 236260
+        },
+        "alpha-silhouette": {
+          "path": "hero-alpha-silhouette.png",
+          "sha256": "11535088bbd8c279d92698bdce9e1ceb71a5211bac70cfe813b2f34f98cf908c",
+          "capturedAt": "2026-09-10T23:09:21.527Z",
+          "bytes": 28888
+        },
+        "semantic-id": {
+          "path": "hero-semantic-id.png",
+          "sha256": "279163da3953ae040b9fce2b0a305fe9c49f40fb4885ae64431bd5e4a17ffc21",
+          "capturedAt": "2026-09-10T23:09:21.796Z",
+          "bytes": 46733
+        },
+        "depth": {
+          "path": "hero-depth.png",
+          "sha256": "ab685b04f85cf405735cd464d42f58f7d7d2ed5237fb244a75508e3cf34df511",
+          "capturedAt": "2026-09-10T23:09:22.050Z",
+          "bytes": 9861
+        },
+        "normal": {
+          "path": "hero-normal.png",
+          "sha256": "5c0a62cb071a672b4c43800e0d0af585221a13e1331186d68230b681c0f0f509",
+          "capturedAt": "2026-09-10T23:09:22.464Z",
+          "bytes": 304382
+        },
+        "roughness-material-id": {
+          "path": "hero-roughness-material-id.png",
+          "sha256": "c75bb4a4dd8fb112f80f5c2ac2eae5299d6576c7d7430512bfb954d16b32c561",
+          "capturedAt": "2026-09-10T23:09:22.718Z",
+          "bytes": 26378
+        }
+      }
+    },
+    {
+      "id": "orbit-plus35",
+      "camera": {
+        "position": [
+          2.021440516095669,
+          1.3285774205960699,
+          3.3539206420144527
+        ],
+        "target": [
+          -0.327,
+          1.114,
+          0
+        ],
+        "fov": 32,
+        "near": 0.02,
+        "far": 30,
+        "exposure": 1
+      },
+      "files": {
+        "beauty": {
+          "path": "orbit-plus35-beauty.png",
+          "sha256": "b4f44ab21a184a739cf0f3bb7ed86c660dc75dd12d52603a975f3674416b49e9",
+          "capturedAt": "2026-09-10T23:09:23.156Z",
+          "bytes": 212080
+        },
+        "alpha-silhouette": {
+          "path": "orbit-plus35-alpha-silhouette.png",
+          "sha256": "8008c2d657535497b61190ab1b2b38380f811e24c2292505cc937c032ebd6c65",
+          "capturedAt": "2026-09-10T23:09:23.423Z",
+          "bytes": 24179
+        },
+        "semantic-id": {
+          "path": "orbit-plus35-semantic-id.png",
+          "sha256": "1ec0b566b9c53b234f8845c52938e06af6f2a2b62e8fe76d9ae189eb453c0a9d",
+          "capturedAt": "2026-09-10T23:09:23.713Z",
+          "bytes": 42491
+        },
+        "depth": {
+          "path": "orbit-plus35-depth.png",
+          "sha256": "4ed6e31a49db7aa004fe4aa92892b1578699a0aecb63a3356eee831d3502cafc",
+          "capturedAt": "2026-09-10T23:09:23.966Z",
+          "bytes": 8566
+        },
+        "normal": {
+          "path": "orbit-plus35-normal.png",
+          "sha256": "f3db5935046cd1e2af3124136b464900861cd8c16e80fc7a68580aca388c7508",
+          "capturedAt": "2026-09-10T23:09:24.364Z",
+          "bytes": 272632
+        },
+        "roughness-material-id": {
+          "path": "orbit-plus35-roughness-material-id.png",
+          "sha256": "d4740d024545111a8826cb5a172598b56e8ffaf7e2177681b5ba058cf4bbfc64",
+          "capturedAt": "2026-09-10T23:09:24.627Z",
+          "bytes": 22473
+        }
+      }
+    },
+    {
+      "id": "orbit-minus35",
+      "camera": {
+        "position": [
+          -2.675440516095669,
+          1.3285774205960699,
+          3.3539206420144527
+        ],
+        "target": [
+          -0.327,
+          1.114,
+          0
+        ],
+        "fov": 32,
+        "near": 0.02,
+        "far": 30,
+        "exposure": 1
+      },
+      "files": {
+        "beauty": {
+          "path": "orbit-minus35-beauty.png",
+          "sha256": "7531f6e5280842868cf34e29cdad2779f040fa23b30e0469043b9871634147cb",
+          "capturedAt": "2026-09-10T23:09:25.034Z",
+          "bytes": 228184
+        },
+        "alpha-silhouette": {
+          "path": "orbit-minus35-alpha-silhouette.png",
+          "sha256": "da35d5ee243cdc8fd2f7e1509b9b6693ee789f3137834693fcd5261ef7892d35",
+          "capturedAt": "2026-09-10T23:09:25.319Z",
+          "bytes": 27981
+        },
+        "semantic-id": {
+          "path": "orbit-minus35-semantic-id.png",
+          "sha256": "8c40a17d9aeead49931f42b9add20fba710afd286b0ba149175cbca78127f01f",
+          "capturedAt": "2026-09-10T23:09:25.612Z",
+          "bytes": 44074
+        },
+        "depth": {
+          "path": "orbit-minus35-depth.png",
+          "sha256": "c8fe324e1d8cd892baad73eb162ffbe5f2489ddbe1a599d180fdfd22d712c3ea",
+          "capturedAt": "2026-09-10T23:09:25.892Z",
+          "bytes": 9669
+        },
+        "normal": {
+          "path": "orbit-minus35-normal.png",
+          "sha256": "f5ed35329c9e7b83d90af166368f27aedbe507d312938a6400f87ab5054667b2",
+          "capturedAt": "2026-09-10T23:09:26.325Z",
+          "bytes": 294631
+        },
+        "roughness-material-id": {
+          "path": "orbit-minus35-roughness-material-id.png",
+          "sha256": "dd483475c429598234140ad21eb2a700fd6558e372d856352eea86bb4219868b",
+          "capturedAt": "2026-09-10T23:09:26.619Z",
+          "bytes": 25625
+        }
+      }
+    },
+    {
+      "id": "profile",
+      "camera": {
+        "position": [
+          3.7673810924937525,
+          1.3285774205960699,
+          2.5070853497059585e-16
+        ],
+        "target": [
+          -0.327,
+          1.114,
+          0
+        ],
+        "fov": 32,
+        "near": 0.02,
+        "far": 30,
+        "exposure": 1
+      },
+      "files": {
+        "beauty": {
+          "path": "profile-beauty.png",
+          "sha256": "f78171b6453b9b1f3d8ef1b3562c97cf59f7cc81bb7de8673ea6c5fc26c70095",
+          "capturedAt": "2026-09-10T23:09:26.998Z",
+          "bytes": 120529
+        },
+        "alpha-silhouette": {
+          "path": "profile-alpha-silhouette.png",
+          "sha256": "4b962e3d4dd1a078f6360a3c4d8cf7ec098ac588afa16acddc3239a8dc643f91",
+          "capturedAt": "2026-09-10T23:09:27.282Z",
+          "bytes": 21160
+        },
+        "semantic-id": {
+          "path": "profile-semantic-id.png",
+          "sha256": "e2a128304b996002a6676fde26c39587d124b80a6ffe516711bfe768aaf04943",
+          "capturedAt": "2026-09-10T23:09:27.575Z",
+          "bytes": 29932
+        },
+        "depth": {
+          "path": "profile-depth.png",
+          "sha256": "dd2c1a12041282bef53d60e3e047e93bd5badd61e42a7276371355bf628177ff",
+          "capturedAt": "2026-09-10T23:09:27.841Z",
+          "bytes": 7541
+        },
+        "normal": {
+          "path": "profile-normal.png",
+          "sha256": "a9832f5704bd0f6ae6f4a6c5cd5e71f3fb770d05a01036cd9cae386465123dbc",
+          "capturedAt": "2026-09-10T23:09:28.240Z",
+          "bytes": 159969
+        },
+        "roughness-material-id": {
+          "path": "profile-roughness-material-id.png",
+          "sha256": "2d78759d24652ab90d7ac5aa71aef3a8e6a6d916b082b974b210ca6f929a0766",
+          "capturedAt": "2026-09-10T23:09:28.516Z",
+          "bytes": 19795
+        }
+      }
+    },
+    {
+      "id": "rear-threequarter",
+      "camera": {
+        "position": [
+          2.5681646352643175,
+          1.3285774205960699,
+          -2.895164635264317
+        ],
+        "target": [
+          -0.327,
+          1.114,
+          0
+        ],
+        "fov": 32,
+        "near": 0.02,
+        "far": 30,
+        "exposure": 1
+      },
+      "files": {
+        "beauty": {
+          "path": "rear-threequarter-beauty.png",
+          "sha256": "04c2faaaded692fc2064ff3ee56362cc5425752f18f067944732a12a61aa8123",
+          "capturedAt": "2026-09-10T23:09:28.945Z",
+          "bytes": 198170
+        },
+        "alpha-silhouette": {
+          "path": "rear-threequarter-alpha-silhouette.png",
+          "sha256": "9899111f2a5b5f38ef98ac865efb9fc8a206010f2480288fa724714f6c76096f",
+          "capturedAt": "2026-09-10T23:09:29.236Z",
+          "bytes": 26295
+        },
+        "semantic-id": {
+          "path": "rear-threequarter-semantic-id.png",
+          "sha256": "78f9ee949ed00b7ba1ddaa432ff0f11d926363dd2c7de8bd59b38425e11a0e52",
+          "capturedAt": "2026-09-10T23:09:29.528Z",
+          "bytes": 35289
+        },
+        "depth": {
+          "path": "rear-threequarter-depth.png",
+          "sha256": "227f67a1a14d659f68efaaf474ee1abeee69d0229dc402cc1a0a95c9753dc518",
+          "capturedAt": "2026-09-10T23:09:29.810Z",
+          "bytes": 8926
+        },
+        "normal": {
+          "path": "rear-threequarter-normal.png",
+          "sha256": "5525afc37e15575558952fdb709806e09e6524e66f04f15cf7dc133923ec23b3",
+          "capturedAt": "2026-09-10T23:09:30.246Z",
+          "bytes": 306398
+        },
+        "roughness-material-id": {
+          "path": "rear-threequarter-roughness-material-id.png",
+          "sha256": "217d9231df885698cf731eb32d6f7c1bf65c7892caf14da84c9be3d6ce0adcb8",
+          "capturedAt": "2026-09-10T23:09:30.539Z",
+          "bytes": 23481
+        }
+      }
+    },
+    {
+      "id": "rear",
+      "camera": {
+        "position": [
+          -0.3269999999999995,
+          1.3285774205960699,
+          -4.0943810924937525
+        ],
+        "target": [
+          -0.327,
+          1.114,
+          0
+        ],
+        "fov": 32,
+        "near": 0.02,
+        "far": 30,
+        "exposure": 1
+      },
+      "files": {
+        "beauty": {
+          "path": "rear-beauty.png",
+          "sha256": "3f25b09da7af5e012d65ca32d0f370001975ee229a456dc83e27cd961a02aa8d",
+          "capturedAt": "2026-09-10T23:09:30.997Z",
+          "bytes": 202248
+        },
+        "alpha-silhouette": {
+          "path": "rear-alpha-silhouette.png",
+          "sha256": "998d89c7e3f93a9eebc209cd92420def573244d22a7d2df727114b8eaf4cef04",
+          "capturedAt": "2026-09-10T23:09:31.285Z",
+          "bytes": 25714
+        },
+        "semantic-id": {
+          "path": "rear-semantic-id.png",
+          "sha256": "e26bc8510f95e06c2bd8047fa79f0873566f8d1ceee2b2181ae00fdc7ecf3a72",
+          "capturedAt": "2026-09-10T23:09:31.572Z",
+          "bytes": 32074
+        },
+        "depth": {
+          "path": "rear-depth.png",
+          "sha256": "d2775c68407aa1253c216ed767f63febe6ca4d530746155f8df1f4ab03bb4e3d",
+          "capturedAt": "2026-09-10T23:09:31.859Z",
+          "bytes": 9194
+        },
+        "normal": {
+          "path": "rear-normal.png",
+          "sha256": "d88692c7e96ac78f40aadcbf647efec43bbf6477eaeae789122bef09e6ce0f06",
+          "capturedAt": "2026-09-10T23:09:32.320Z",
+          "bytes": 335745
+        },
+        "roughness-material-id": {
+          "path": "rear-roughness-material-id.png",
+          "sha256": "0f480f6784d9a8448bc71cc3e4395c5d809556d12baa37bfbbdb9e00ab1ba06d",
+          "capturedAt": "2026-09-10T23:09:32.603Z",
+          "bytes": 23471
+        }
+      }
+    },
+    {
+      "id": "head-hero",
+      "camera": {
+        "position": [
+          0.3927841290969059,
+          2.0801863496793853,
+          1.0791655254138985
+        ],
+        "target": [
+          0,
+          2.02,
+          0
+        ],
+        "fov": 32,
+        "near": 0.02,
+        "far": 30,
+        "exposure": 1
+      },
+      "files": {
+        "beauty": {
+          "path": "head-hero-beauty.png",
+          "sha256": "590faae4e32de389346507c8965bbc36633a35f23789c6a2f4ae8689b920b584",
+          "capturedAt": "2026-09-10T23:09:33.032Z",
+          "bytes": 177546
+        },
+        "alpha-silhouette": {
+          "path": "head-hero-alpha-silhouette.png",
+          "sha256": "39e57f5825169bd90c47b1867d0cd08654535fe84b6a43b51bdc9d3daa6c3ac8",
+          "capturedAt": "2026-09-10T23:09:33.312Z",
+          "bytes": 12554
+        },
+        "semantic-id": {
+          "path": "head-hero-semantic-id.png",
+          "sha256": "e4e334f331d3820ff2d176980663b462a5038d325a808bb4afd741c1683cfc16",
+          "capturedAt": "2026-09-10T23:09:33.604Z",
+          "bytes": 23094
+        },
+        "depth": {
+          "path": "head-hero-depth.png",
+          "sha256": "ff83ce73f9696f0de369edc1717aafc40b32a9c49ea4f7e1b63818c47937cf26",
+          "capturedAt": "2026-09-10T23:09:33.896Z",
+          "bytes": 10645
+        },
+        "normal": {
+          "path": "head-hero-normal.png",
+          "sha256": "0c003d172a296069f6bca8b8b44152a0930ff99a152d18f1d98d6928c1fe4180",
+          "capturedAt": "2026-09-10T23:09:34.315Z",
+          "bytes": 268675
+        },
+        "roughness-material-id": {
+          "path": "head-hero-roughness-material-id.png",
+          "sha256": "49ef25f93e76479e47ea0c6b9372eee62f4474412e4f33054103ae4a33e57ae9",
+          "capturedAt": "2026-09-10T23:09:34.599Z",
+          "bytes": 11700
+        }
+      }
+    },
+    {
+      "id": "head-threequarter",
+      "camera": {
+        "position": [
+          -0.6587089252463462,
+          2.0801863496793853,
+          0.94073383861381
+        ],
+        "target": [
+          0,
+          2.02,
+          0
+        ],
+        "fov": 32,
+        "near": 0.02,
+        "far": 30,
+        "exposure": 1
+      },
+      "files": {
+        "beauty": {
+          "path": "head-threequarter-beauty.png",
+          "sha256": "4afa62a36f8e18e0ad406441ef5b1a39cedd90e82adcf177531d3f0ada5ec65e",
+          "capturedAt": "2026-09-10T23:09:35.005Z",
+          "bytes": 176339
+        },
+        "alpha-silhouette": {
+          "path": "head-threequarter-alpha-silhouette.png",
+          "sha256": "ea7f1d4a077176b1991ace8c294082c11c41a06564da823dfa58dafc686114a9",
+          "capturedAt": "2026-09-10T23:09:35.293Z",
+          "bytes": 12383
+        },
+        "semantic-id": {
+          "path": "head-threequarter-semantic-id.png",
+          "sha256": "7e3a14660e3552ed448cfa99c282a18053e7a3d8ea48de6884b40eaccfb1619a",
+          "capturedAt": "2026-09-10T23:09:35.593Z",
+          "bytes": 23298
+        },
+        "depth": {
+          "path": "head-threequarter-depth.png",
+          "sha256": "2e1de8a4e07bfe72ce0668210a5b1959456728c4b24e22d3825fb2a028325b79",
+          "capturedAt": "2026-09-10T23:09:35.876Z",
+          "bytes": 10334
+        },
+        "normal": {
+          "path": "head-threequarter-normal.png",
+          "sha256": "d652284a3b0d19a290f5bdf57091b9253ea8bc2dd4a2269bc1242e99b7c08801",
+          "capturedAt": "2026-09-10T23:09:36.314Z",
+          "bytes": 262893
+        },
+        "roughness-material-id": {
+          "path": "head-threequarter-roughness-material-id.png",
+          "sha256": "db4f29059f4165668406f6ffedaebd26e30dd9d9dc686aff1590a53a9db2d2ef",
+          "capturedAt": "2026-09-10T23:09:36.594Z",
+          "bytes": 11577
+        }
+      }
+    },
+    {
+      "id": "turntable-0",
+      "camera": {
+        "position": [
+          -0.327,
+          1.3285774205960699,
+          4.0943810924937525
+        ],
+        "target": [
+          -0.327,
+          1.114,
+          0
+        ],
+        "fov": 32,
+        "near": 0.02,
+        "far": 30,
+        "exposure": 1
+      },
+      "files": {
+        "beauty": {
+          "path": "turntable-0-beauty.png",
+          "sha256": "1ffa289384d592ae0d00be056451e07d45695b6c89b3996d5ec9d2a5f84ae1f6",
+          "capturedAt": "2026-09-10T23:09:37.038Z",
+          "bytes": 232809
+        }
+      }
+    },
+    {
+      "id": "turntable-90",
+      "camera": {
+        "position": [
+          3.7673810924937525,
+          1.3285774205960699,
+          2.5070853497059585e-16
+        ],
+        "target": [
+          -0.327,
+          1.114,
+          0
+        ],
+        "fov": 32,
+        "near": 0.02,
+        "far": 30,
+        "exposure": 1
+      },
+      "files": {
+        "beauty": {
+          "path": "turntable-90-beauty.png",
+          "sha256": "f78171b6453b9b1f3d8ef1b3562c97cf59f7cc81bb7de8673ea6c5fc26c70095",
+          "capturedAt": "2026-09-10T23:09:37.425Z",
+          "bytes": 120529
+        }
+      }
+    },
+    {
+      "id": "turntable-180",
+      "camera": {
+        "position": [
+          -0.3269999999999995,
+          1.3285774205960699,
+          -4.0943810924937525
+        ],
+        "target": [
+          -0.327,
+          1.114,
+          0
+        ],
+        "fov": 32,
+        "near": 0.02,
+        "far": 30,
+        "exposure": 1
+      },
+      "files": {
+        "beauty": {
+          "path": "turntable-180-beauty.png",
+          "sha256": "3f25b09da7af5e012d65ca32d0f370001975ee229a456dc83e27cd961a02aa8d",
+          "capturedAt": "2026-09-10T23:09:37.868Z",
+          "bytes": 202248
+        }
+      }
+    },
+    {
+      "id": "turntable-270",
+      "camera": {
+        "position": [
+          -4.421381092493752,
+          1.3285774205960699,
+          -7.521256049117875e-16
+        ],
+        "target": [
+          -0.327,
+          1.114,
+          0
+        ],
+        "fov": 32,
+        "near": 0.02,
+        "far": 30,
+        "exposure": 1
+      },
+      "files": {
+        "beauty": {
+          "path": "turntable-270-beauty.png",
+          "sha256": "be61fffd830881b3a586aa6cf3fed263af7671b946a7058ce632a19689cee93c",
+          "capturedAt": "2026-09-10T23:09:38.248Z",
+          "bytes": 123040
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "passLegends": {
+    "beauty": {
+      "passId": "beauty",
+      "regionColors": {
+        "belt": "ed6c6c",
+        "boot-l": "6ca1ed",
+        "boot-r": "c5ed6c",
+        "boot-strap-0-l": "ed6ce2",
+        "boot-strap-0-r": "6cedde",
+        "boot-strap-1-l": "edc06c",
+        "boot-strap-1-r": "9a6ced",
+        "boot-strap-2-l": "76ed6c",
+        "boot-strap-2-r": "ed6ca7",
+        "bracer-band-lower-l": "6ccaed",
+        "bracer-band-lower-r": "e6ed6c",
+        "bracer-band-upper-l": "da6ced",
+        "bracer-band-upper-r": "6cedbb",
+        "brow-l": "ed946c",
+        "brow-r": "6c7eed",
+        "buckle": "aced6c",
+        "cape": "ed6cce",
+        "clasp": "6ceaed",
+        "cowl": "edd66c",
+        "cuirass": "b66ced",
+        "eye-l": "6ced8d",
+        "eye-r": "ed6c86",
+        "forearm-l": "6cb2ed",
+        "forearm-r": "d2ed6c",
+        "guard": "ed6ced",
+        "guard-jewel": "6cedd2",
+        "hair": "edb16c",
+        "hand-l": "856ced",
+        "hand-r": "8eed6c",
+        "harness": "ed6cb7",
+        "head": "6cd7ed",
+        "hood": "ede96c",
+        "knee-l": "cd6ced",
+        "knee-r": "6cedab",
+        "neck": "ed7d6c",
+        "pauldron-l": "6c95ed",
+        "pauldron-r": "bced6c",
+        "pelvis": "ed6cdb",
+        "pouch-l": "6cede6",
+        "pouch-r": "edc96c",
+        "root": "a66ced",
+        "side-tabard-l": "6ced74",
+        "side-tabard-r": "ed6c9b",
+        "sword": "6cc1ed",
+        "tabard": "dfed6c",
+        "thigh-l": "e26ced",
+        "thigh-r": "6cedc4",
+        "upper-arm-l": "eda06c",
+        "upper-arm-r": "6c6ded"
+      },
+      "materialIds": [
+        "blockout-clay"
+      ],
+      "silhouetteEncoding": "white foreground on black background",
+      "roughnessEncoding": "R=roughness, G=(material index+1)/(count+1), B=metalness; sRGB bytes"
+    },
+    "alpha-silhouette": {
+      "passId": "alpha-silhouette",
+      "regionColors": {
+        "belt": "ed6c6c",
+        "boot-l": "6ca1ed",
+        "boot-r": "c5ed6c",
+        "boot-strap-0-l": "ed6ce2",
+        "boot-strap-0-r": "6cedde",
+        "boot-strap-1-l": "edc06c",
+        "boot-strap-1-r": "9a6ced",
+        "boot-strap-2-l": "76ed6c",
+        "boot-strap-2-r": "ed6ca7",
+        "bracer-band-lower-l": "6ccaed",
+        "bracer-band-lower-r": "e6ed6c",
+        "bracer-band-upper-l": "da6ced",
+        "bracer-band-upper-r": "6cedbb",
+        "brow-l": "ed946c",
+        "brow-r": "6c7eed",
+        "buckle": "aced6c",
+        "cape": "ed6cce",
+        "clasp": "6ceaed",
+        "cowl": "edd66c",
+        "cuirass": "b66ced",
+        "eye-l": "6ced8d",
+        "eye-r": "ed6c86",
+        "forearm-l": "6cb2ed",
+        "forearm-r": "d2ed6c",
+        "guard": "ed6ced",
+        "guard-jewel": "6cedd2",
+        "hair": "edb16c",
+        "hand-l": "856ced",
+        "hand-r": "8eed6c",
+        "harness": "ed6cb7",
+        "head": "6cd7ed",
+        "hood": "ede96c",
+        "knee-l": "cd6ced",
+        "knee-r": "6cedab",
+        "neck": "ed7d6c",
+        "pauldron-l": "6c95ed",
+        "pauldron-r": "bced6c",
+        "pelvis": "ed6cdb",
+        "pouch-l": "6cede6",
+        "pouch-r": "edc96c",
+        "root": "a66ced",
+        "side-tabard-l": "6ced74",
+        "side-tabard-r": "ed6c9b",
+        "sword": "6cc1ed",
+        "tabard": "dfed6c",
+        "thigh-l": "e26ced",
+        "thigh-r": "6cedc4",
+        "upper-arm-l": "eda06c",
+        "upper-arm-r": "6c6ded"
+      },
+      "materialIds": [
+        "blockout-clay"
+      ],
+      "silhouetteEncoding": "white foreground on black background",
+      "roughnessEncoding": "R=roughness, G=(material index+1)/(count+1), B=metalness; sRGB bytes"
+    },
+    "semantic-id": {
+      "passId": "semantic-id",
+      "regionColors": {
+        "belt": "ed6c6c",
+        "boot-l": "6ca1ed",
+        "boot-r": "c5ed6c",
+        "boot-strap-0-l": "ed6ce2",
+        "boot-strap-0-r": "6cedde",
+        "boot-strap-1-l": "edc06c",
+        "boot-strap-1-r": "9a6ced",
+        "boot-strap-2-l": "76ed6c",
+        "boot-strap-2-r": "ed6ca7",
+        "bracer-band-lower-l": "6ccaed",
+        "bracer-band-lower-r": "e6ed6c",
+        "bracer-band-upper-l": "da6ced",
+        "bracer-band-upper-r": "6cedbb",
+        "brow-l": "ed946c",
+        "brow-r": "6c7eed",
+        "buckle": "aced6c",
+        "cape": "ed6cce",
+        "clasp": "6ceaed",
+        "cowl": "edd66c",
+        "cuirass": "b66ced",
+        "eye-l": "6ced8d",
+        "eye-r": "ed6c86",
+        "forearm-l": "6cb2ed",
+        "forearm-r": "d2ed6c",
+        "guard": "ed6ced",
+        "guard-jewel": "6cedd2",
+        "hair": "edb16c",
+        "hand-l": "856ced",
+        "hand-r": "8eed6c",
+        "harness": "ed6cb7",
+        "head": "6cd7ed",
+        "hood": "ede96c",
+        "knee-l": "cd6ced",
+        "knee-r": "6cedab",
+        "neck": "ed7d6c",
+        "pauldron-l": "6c95ed",
+        "pauldron-r": "bced6c",
+        "pelvis": "ed6cdb",
+        "pouch-l": "6cede6",
+        "pouch-r": "edc96c",
+        "root": "a66ced",
+        "side-tabard-l": "6ced74",
+        "side-tabard-r": "ed6c9b",
+        "sword": "6cc1ed",
+        "tabard": "dfed6c",
+        "thigh-l": "e26ced",
+        "thigh-r": "6cedc4",
+        "upper-arm-l": "eda06c",
+        "upper-arm-r": "6c6ded"
+      },
+      "materialIds": [
+        "blockout-clay"
+      ],
+      "silhouetteEncoding": "white foreground on black background",
+      "roughnessEncoding": "R=roughness, G=(material index+1)/(count+1), B=metalness; sRGB bytes"
+    },
+    "depth": {
+      "passId": "depth",
+      "regionColors": {
+        "belt": "ed6c6c",
+        "boot-l": "6ca1ed",
+        "boot-r": "c5ed6c",
+        "boot-strap-0-l": "ed6ce2",
+        "boot-strap-0-r": "6cedde",
+        "boot-strap-1-l": "edc06c",
+        "boot-strap-1-r": "9a6ced",
+        "boot-strap-2-l": "76ed6c",
+        "boot-strap-2-r": "ed6ca7",
+        "bracer-band-lower-l": "6ccaed",
+        "bracer-band-lower-r": "e6ed6c",
+        "bracer-band-upper-l": "da6ced",
+        "bracer-band-upper-r": "6cedbb",
+        "brow-l": "ed946c",
+        "brow-r": "6c7eed",
+        "buckle": "aced6c",
+        "cape": "ed6cce",
+        "clasp": "6ceaed",
+        "cowl": "edd66c",
+        "cuirass": "b66ced",
+        "eye-l": "6ced8d",
+        "eye-r": "ed6c86",
+        "forearm-l": "6cb2ed",
+        "forearm-r": "d2ed6c",
+        "guard": "ed6ced",
+        "guard-jewel": "6cedd2",
+        "hair": "edb16c",
+        "hand-l": "856ced",
+        "hand-r": "8eed6c",
+        "harness": "ed6cb7",
+        "head": "6cd7ed",
+        "hood": "ede96c",
+        "knee-l": "cd6ced",
+        "knee-r": "6cedab",
+        "neck": "ed7d6c",
+        "pauldron-l": "6c95ed",
+        "pauldron-r": "bced6c",
+        "pelvis": "ed6cdb",
+        "pouch-l": "6cede6",
+        "pouch-r": "edc96c",
+        "root": "a66ced",
+        "side-tabard-l": "6ced74",
+        "side-tabard-r": "ed6c9b",
+        "sword": "6cc1ed",
+        "tabard": "dfed6c",
+        "thigh-l": "e26ced",
+        "thigh-r": "6cedc4",
+        "upper-arm-l": "eda06c",
+        "upper-arm-r": "6c6ded"
+      },
+      "materialIds": [
+        "blockout-clay"
+      ],
+      "silhouetteEncoding": "white foreground on black background",
+      "roughnessEncoding": "R=roughness, G=(material index+1)/(count+1), B=metalness; sRGB bytes"
+    },
+    "normal": {
+      "passId": "normal",
+      "regionColors": {
+        "belt": "ed6c6c",
+        "boot-l": "6ca1ed",
+        "boot-r": "c5ed6c",
+        "boot-strap-0-l": "ed6ce2",
+        "boot-strap-0-r": "6cedde",
+        "boot-strap-1-l": "edc06c",
+        "boot-strap-1-r": "9a6ced",
+        "boot-strap-2-l": "76ed6c",
+        "boot-strap-2-r": "ed6ca7",
+        "bracer-band-lower-l": "6ccaed",
+        "bracer-band-lower-r": "e6ed6c",
+        "bracer-band-upper-l": "da6ced",
+        "bracer-band-upper-r": "6cedbb",
+        "brow-l": "ed946c",
+        "brow-r": "6c7eed",
+        "buckle": "aced6c",
+        "cape": "ed6cce",
+        "clasp": "6ceaed",
+        "cowl": "edd66c",
+        "cuirass": "b66ced",
+        "eye-l": "6ced8d",
+        "eye-r": "ed6c86",
+        "forearm-l": "6cb2ed",
+        "forearm-r": "d2ed6c",
+        "guard": "ed6ced",
+        "guard-jewel": "6cedd2",
+        "hair": "edb16c",
+        "hand-l": "856ced",
+        "hand-r": "8eed6c",
+        "harness": "ed6cb7",
+        "head": "6cd7ed",
+        "hood": "ede96c",
+        "knee-l": "cd6ced",
+        "knee-r": "6cedab",
+        "neck": "ed7d6c",
+        "pauldron-l": "6c95ed",
+        "pauldron-r": "bced6c",
+        "pelvis": "ed6cdb",
+        "pouch-l": "6cede6",
+        "pouch-r": "edc96c",
+        "root": "a66ced",
+        "side-tabard-l": "6ced74",
+        "side-tabard-r": "ed6c9b",
+        "sword": "6cc1ed",
+        "tabard": "dfed6c",
+        "thigh-l": "e26ced",
+        "thigh-r": "6cedc4",
+        "upper-arm-l": "eda06c",
+        "upper-arm-r": "6c6ded"
+      },
+      "materialIds": [
+        "blockout-clay"
+      ],
+      "silhouetteEncoding": "white foreground on black background",
+      "roughnessEncoding": "R=roughness, G=(material index+1)/(count+1), B=metalness; sRGB bytes"
+    },
+    "roughness-material-id": {
+      "passId": "roughness-material-id",
+      "regionColors": {
+        "belt": "ed6c6c",
+        "boot-l": "6ca1ed",
+        "boot-r": "c5ed6c",
+        "boot-strap-0-l": "ed6ce2",
+        "boot-strap-0-r": "6cedde",
+        "boot-strap-1-l": "edc06c",
+        "boot-strap-1-r": "9a6ced",
+        "boot-strap-2-l": "76ed6c",
+        "boot-strap-2-r": "ed6ca7",
+        "bracer-band-lower-l": "6ccaed",
+        "bracer-band-lower-r": "e6ed6c",
+        "bracer-band-upper-l": "da6ced",
+        "bracer-band-upper-r": "6cedbb",
+        "brow-l": "ed946c",
+        "brow-r": "6c7eed",
+        "buckle": "aced6c",
+        "cape": "ed6cce",
+        "clasp": "6ceaed",
+        "cowl": "edd66c",
+        "cuirass": "b66ced",
+        "eye-l": "6ced8d",
+        "eye-r": "ed6c86",
+        "forearm-l": "6cb2ed",
+        "forearm-r": "d2ed6c",
+        "guard": "ed6ced",
+        "guard-jewel": "6cedd2",
+        "hair": "edb16c",
+        "hand-l": "856ced",
+        "hand-r": "8eed6c",
+        "harness": "ed6cb7",
+        "head": "6cd7ed",
+        "hood": "ede96c",
+        "knee-l": "cd6ced",
+        "knee-r": "6cedab",
+        "neck": "ed7d6c",
+        "pauldron-l": "6c95ed",
+        "pauldron-r": "bced6c",
+        "pelvis": "ed6cdb",
+        "pouch-l": "6cede6",
+        "pouch-r": "edc96c",
+        "root": "a66ced",
+        "side-tabard-l": "6ced74",
+        "side-tabard-r": "ed6c9b",
+        "sword": "6cc1ed",
+        "tabard": "dfed6c",
+        "thigh-l": "e26ced",
+        "thigh-r": "6cedc4",
+        "upper-arm-l": "eda06c",
+        "upper-arm-r": "6c6ded"
+      },
+      "materialIds": [
+        "blockout-clay"
+      ],
+      "silhouetteEncoding": "white foreground on black background",
+      "roughnessEncoding": "R=roughness, G=(material index+1)/(count+1), B=metalness; sRGB bytes"
+    }
+  },
+  "geometry": {
+    "path": "mesh-buffers.json",
+    "sha256": "203637e3924a218b9c898fd31db72e9a8f0d1077be32436b3a882648ec088848",
+    "meshes": 49,
+    "space": "world",
+    "posed": true
+  },
+  "gateGeometry": {
+    "path": "geometry-gates.json",
+    "sha256": "1efb7fd875429b0ab31d04f9a701278b86de3a8e4be43ebd76528a577fcf47fe",
+    "meshes": 49,
+    "includesHiddenMeshes": true
+  },
+  "runtime": {
+    "rootName": "TealHero-img2threejs",
+    "sculptRuntime": {
+      "present": true,
+      "fields": [
+        "nodes",
+        "meshes",
+        "sockets",
+        "colliders",
+        "destructionGroups"
+      ],
+      "partNames": [
+        "root",
+        "pelvis",
+        "cuirass",
+        "neck",
+        "head",
+        "hood",
+        "cowl",
+        "cape",
+        "belt",
+        "harness",
+        "tabard",
+        "upper-arm-l",
+        "forearm-l",
+        "hand-l",
+        "pauldron-l",
+        "thigh-l",
+        "boot-l",
+        "knee-l",
+        "pouch-l",
+        "side-tabard-l",
+        "bracer-band-upper-l",
+        "bracer-band-lower-l",
+        "boot-strap-0-l",
+        "boot-strap-1-l",
+        "boot-strap-2-l",
+        "upper-arm-r",
+        "forearm-r",
+        "hand-r",
+        "pauldron-r",
+        "thigh-r",
+        "boot-r",
+        "knee-r",
+        "pouch-r",
+        "side-tabard-r",
+        "bracer-band-upper-r",
+        "bracer-band-lower-r",
+        "boot-strap-0-r",
+        "boot-strap-1-r",
+        "boot-strap-2-r",
+        "sword",
+        "guard",
+        "guard-jewel",
+        "clasp",
+        "buckle",
+        "eye-l",
+        "brow-l",
+        "eye-r",
+        "brow-r",
+        "hair"
+      ]
+    },
+    "clips": [],
+    "renderer": {
+      "calls": 21,
+      "triangles": 71020
+    },
+    "canvas": {
+      "width": 768,
+      "height": 1024
+    },
+    "meshNames": [
+      "Root",
+      "Pelvis",
+      "Cuirass",
+      "Neck",
+      "Head",
+      "Hood",
+      "Eye L",
+      "Brow L",
+      "Eye R",
+      "Brow R",
+      "Hair",
+      "Cowl",
+      "Harness",
+      "Upper Arm L",
+      "Forearm L",
+      "Hand L",
+      "Bracer Band Upper L",
+      "Bracer Band Lower L",
+      "Pauldron L",
+      "Upper Arm R",
+      "Forearm R",
+      "Hand R",
+      "Sword",
+      "Guard",
+      "Guard Jewel",
+      "Bracer Band Upper R",
+      "Bracer Band Lower R",
+      "Pauldron R",
+      "Clasp",
+      "Cape",
+      "Belt",
+      "Buckle",
+      "Tabard",
+      "Thigh L",
+      "Boot L",
+      "Knee L",
+      "Boot Strap 0 L",
+      "Boot Strap 1 L",
+      "Boot Strap 2 L",
+      "Pouch L",
+      "Side Tabard L",
+      "Thigh R",
+      "Boot R",
+      "Knee R",
+      "Boot Strap 0 R",
+      "Boot Strap 1 R",
+      "Boot Strap 2 R",
+      "Pouch R",
+      "Side Tabard R"
+    ]
+  },
+  "visualReview": "Pending image readback and reference comparison. Readiness and screenshots do not establish visual quality.",
+  "finishedAt": "2026-09-10T23:09:44.747Z"
+}

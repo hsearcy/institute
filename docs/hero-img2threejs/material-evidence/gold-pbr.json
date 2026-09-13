@@ -1,0 +1,87 @@
+{
+  "ok": true,
+  "verdict": "pass",
+  "confidence": 0.792,
+  "estimatedFidelity": 0.792,
+  "targetThreshold": 0.7,
+  "materialId": "gold",
+  "sourceImage": "/home/houston/git/institute/docs/hero-img2threejs/reference/gold.png",
+  "outDir": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/gold",
+  "palette": [
+    "#887359",
+    "#9F886C",
+    "#786248",
+    "#3B2510",
+    "#EBC881"
+  ],
+  "maps": {
+    "albedo": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/gold/gold_albedo.png",
+      "url": "gold_albedo.png",
+      "channel": "albedo",
+      "source": "reference-pixel-extraction"
+    },
+    "roughness": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/gold/gold_roughness.png",
+      "url": "gold_roughness.png",
+      "channel": "roughness",
+      "source": "reference-pixel-extraction"
+    },
+    "height": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/gold/gold_height.png",
+      "url": "gold_height.png",
+      "channel": "height",
+      "source": "reference-pixel-extraction"
+    },
+    "normal": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/gold/gold_normal.png",
+      "url": "gold_normal.png",
+      "channel": "normal",
+      "source": "reference-pixel-extraction"
+    },
+    "ao": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/gold/gold_ao.png",
+      "url": "gold_ao.png",
+      "channel": "ao",
+      "source": "reference-pixel-extraction"
+    }
+  },
+  "diagnostics": {
+    "sourceWidth": 17,
+    "sourceHeight": 11,
+    "mapSize": 256,
+    "cropBBoxPixels": {
+      "x": 0,
+      "y": 0,
+      "width": 17,
+      "height": 11
+    },
+    "mask": {
+      "backgroundColor": "#988065",
+      "backgroundNoise": 51.701,
+      "transparentPixelFraction": 0.0,
+      "foregroundCoverage": 1.0
+    },
+    "mapStats": {
+      "valueRange": 0.3302,
+      "heightP90Gradient": 0.08042,
+      "roughnessBase": 0.723,
+      "roughnessVariation": 0.129,
+      "normalStrength": 0.25,
+      "blurRadius": 5
+    },
+    "palette": [
+      "#887359",
+      "#9F886C",
+      "#786248",
+      "#3B2510",
+      "#EBC881"
+    ]
+  },
+  "warnings": [
+    "image is not clearly isolated from background; using most pixels as material evidence",
+    "object/background separation is weak",
+    "single-image inverse rendering cannot prove true physical PBR; confidence is capped"
+  ],
+  "limitation": "single-image PBR extraction is an estimate; 70%+ extraction confidence still needs render screenshot review"
+}

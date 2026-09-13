@@ -1,0 +1,87 @@
+{
+  "ok": true,
+  "verdict": "pass",
+  "confidence": 0.783,
+  "estimatedFidelity": 0.783,
+  "targetThreshold": 0.7,
+  "materialId": "cloth",
+  "sourceImage": "/home/houston/git/institute/docs/hero-img2threejs/reference/cloth.png",
+  "outDir": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/cloth",
+  "palette": [
+    "#01505A",
+    "#027C88",
+    "#016671",
+    "#013842",
+    "#079CA6"
+  ],
+  "maps": {
+    "albedo": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/cloth/cloth_albedo.png",
+      "url": "cloth_albedo.png",
+      "channel": "albedo",
+      "source": "reference-pixel-extraction"
+    },
+    "roughness": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/cloth/cloth_roughness.png",
+      "url": "cloth_roughness.png",
+      "channel": "roughness",
+      "source": "reference-pixel-extraction"
+    },
+    "height": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/cloth/cloth_height.png",
+      "url": "cloth_height.png",
+      "channel": "height",
+      "source": "reference-pixel-extraction"
+    },
+    "normal": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/cloth/cloth_normal.png",
+      "url": "cloth_normal.png",
+      "channel": "normal",
+      "source": "reference-pixel-extraction"
+    },
+    "ao": {
+      "path": "/home/houston/git/institute/docs/hero-img2threejs/material-evidence/cloth/cloth_ao.png",
+      "url": "cloth_ao.png",
+      "channel": "ao",
+      "source": "reference-pixel-extraction"
+    }
+  },
+  "diagnostics": {
+    "sourceWidth": 103,
+    "sourceHeight": 102,
+    "mapSize": 256,
+    "cropBBoxPixels": {
+      "x": 0,
+      "y": 0,
+      "width": 103,
+      "height": 102
+    },
+    "mask": {
+      "backgroundColor": "#01717A",
+      "backgroundNoise": 69.296,
+      "transparentPixelFraction": 0.0,
+      "foregroundCoverage": 0.9998
+    },
+    "mapStats": {
+      "valueRange": 0.2947,
+      "heightP90Gradient": 0.07401,
+      "roughnessBase": 0.755,
+      "roughnessVariation": 0.122,
+      "normalStrength": 0.243,
+      "blurRadius": 5
+    },
+    "palette": [
+      "#01505A",
+      "#027C88",
+      "#016671",
+      "#013842",
+      "#079CA6"
+    ]
+  },
+  "warnings": [
+    "image is not clearly isolated from background; using most pixels as material evidence",
+    "object/background separation is weak",
+    "single-image inverse rendering cannot prove true physical PBR; confidence is capped"
+  ],
+  "limitation": "single-image PBR extraction is an estimate; 70%+ extraction confidence still needs render screenshot review"
+}

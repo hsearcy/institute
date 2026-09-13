@@ -1,0 +1,222 @@
+{
+  "passed": false,
+  "checks": {
+    "silhouetteIoU": 0.6389,
+    "aspectRatioDelta": 0.0031,
+    "scaleDelta": 0.2664,
+    "bilateralSymmetryError": 0.3703,
+    "colorDelta": {
+      "checked": 49,
+      "maxDeltaE": 71.88,
+      "perComponent": [
+        {
+          "componentId": null,
+          "deltaE": 35.66
+        },
+        {
+          "componentId": null,
+          "deltaE": 25.57
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.63
+        },
+        {
+          "componentId": null,
+          "deltaE": 36.49
+        },
+        {
+          "componentId": null,
+          "deltaE": 36.49
+        },
+        {
+          "componentId": null,
+          "deltaE": 30.46
+        },
+        {
+          "componentId": null,
+          "deltaE": 30.46
+        },
+        {
+          "componentId": null,
+          "deltaE": 30.46
+        },
+        {
+          "componentId": null,
+          "deltaE": 32.12
+        },
+        {
+          "componentId": null,
+          "deltaE": 32.12
+        },
+        {
+          "componentId": null,
+          "deltaE": 30.46
+        },
+        {
+          "componentId": null,
+          "deltaE": 30.46
+        },
+        {
+          "componentId": null,
+          "deltaE": 32.12
+        },
+        {
+          "componentId": null,
+          "deltaE": 36.49
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.63
+        },
+        {
+          "componentId": null,
+          "deltaE": 25.57
+        },
+        {
+          "componentId": null,
+          "deltaE": 32.12
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.63
+        },
+        {
+          "componentId": null,
+          "deltaE": 32.12
+        },
+        {
+          "componentId": null,
+          "deltaE": 30.46
+        },
+        {
+          "componentId": null,
+          "deltaE": 52.69
+        },
+        {
+          "componentId": null,
+          "deltaE": 52.69
+        },
+        {
+          "componentId": null,
+          "deltaE": 52.69
+        },
+        {
+          "componentId": null,
+          "deltaE": 32.12
+        },
+        {
+          "componentId": null,
+          "deltaE": 32.12
+        },
+        {
+          "componentId": null,
+          "deltaE": 30.46
+        },
+        {
+          "componentId": null,
+          "deltaE": 32.12
+        },
+        {
+          "componentId": null,
+          "deltaE": 36.49
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.63
+        },
+        {
+          "componentId": null,
+          "deltaE": 25.57
+        },
+        {
+          "componentId": null,
+          "deltaE": 32.12
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.63
+        },
+        {
+          "componentId": null,
+          "deltaE": 32.12
+        },
+        {
+          "componentId": null,
+          "deltaE": 30.46
+        },
+        {
+          "componentId": null,
+          "deltaE": 52.69
+        },
+        {
+          "componentId": null,
+          "deltaE": 52.69
+        },
+        {
+          "componentId": null,
+          "deltaE": 52.69
+        },
+        {
+          "componentId": null,
+          "deltaE": 32.12
+        },
+        {
+          "componentId": null,
+          "deltaE": 32.12
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.63
+        },
+        {
+          "componentId": null,
+          "deltaE": 52.69
+        },
+        {
+          "componentId": null,
+          "deltaE": 71.88
+        },
+        {
+          "componentId": null,
+          "deltaE": 52.69
+        },
+        {
+          "componentId": null,
+          "deltaE": 52.69
+        },
+        {
+          "componentId": null,
+          "deltaE": 13.73
+        },
+        {
+          "componentId": null,
+          "deltaE": 33.12
+        },
+        {
+          "componentId": null,
+          "deltaE": 13.73
+        },
+        {
+          "componentId": null,
+          "deltaE": 33.12
+        },
+        {
+          "componentId": null,
+          "deltaE": 33.12
+        }
+      ],
+      "gated": false
+    }
+  },
+  "failures": [
+    "silhouette IoU 0.639 is below threshold 0.85",
+    "scale delta 0.266 exceeds threshold 0.08"
+  ],
+  "maskWarnings": [
+    "render: 7.4% of foreground cells lie outside the largest connected blob and were excluded from the bounding box; if the subject really has separated parts in this projection, they are not being measured"
+  ],
+  "renderHash": "41c3e0b6631f0586",
+  "passId": "blockout",
+  "mapStrippedRender": "docs/hero-img2threejs/review/blockout-02/hero-beauty.png"
+}

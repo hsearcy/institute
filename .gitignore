@@ -25,3 +25,6 @@ server/data/
 web/test-results/
 web/playwright-report/
 __pycache__/
+
+# Local spell capture runs; keep source checks and the text evidence report.
+/artifacts/spell*/

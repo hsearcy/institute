@@ -1,6 +1,6 @@
 # Spell effect bonuses
 
-Status: Planned. Approved for the backlog on 2026-09-13. This document does not mean that the effects below are implemented.
+Status: Implemented locally on 2026-09-13. All 15 boss-item bonuses are in the shared catalogue and the game renderer. See artifacts/final-evidence.md for checks.
 
 ## Aim and limits
 
@@ -10,7 +10,7 @@ Reuse the current spell code, materials, geometry, and animation tools. Do not a
 
 ## Approved effects
 
-| Spell | Bonus name | Planned visual effect | Combat bonus |
+| Spell | Bonus name | Visual effect | Combat bonus |
 |---|---|---|---|
 | Fire Nova | Aftershock | The first ring leaves glowing cracks. A second, tighter ring erupts from them. | +30% damage |
 | Heavy Cleave | Rift Slash | A sharp crescent follows the sword, cuts through the horde, then breaks into fading embers. | +2 targets |
@@ -36,4 +36,4 @@ Keep spell silhouettes clear at the normal game camera distance. Use controlled 
 
 ## Existing implementation
 
-See [Boss treasure](../features/boss-treasure.md) for the current reward rules. Extra lightning orbs, extra meteors, and twin ice spears already exist. The effects above are a future extension and visual revision of that system. Preserve existing item copies and saved cast receipts when implementing the plan. Keep the current ten-target limit.
+See [Boss treasure](../features/boss-treasure.md) for the current reward rules. The old twin-orb, meteor-shower, and split-lance save IDs now select Twin Orbit, Molten Core, and Diamond Drill. Existing item copies and saved cast receipts remain valid. Damage and target bonuses come from the server; visual fragments do not add damage. The ten-target limit remains.

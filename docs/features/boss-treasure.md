@@ -6,7 +6,9 @@ Parent journal buttons redeem one reward at a time. Dimes represent $0.10 paid b
 
 New boss item copies have +3 added to the ordinary power roll, within the existing power cap. Every boss copy rolls one of two extra traits: opening strike (+25% damage on the first cast per room) or boss slayer (+30% damage to `enemy-0` in the boss room). Actual hit damage includes these conditions; ordinary item previews show base damage with the conditions listed separately.
 
-Boss copies also have a 40% chance of a school-matched spell shape: Ball Lightning gains one orb, Meteor gains one meteor, or Ice Lance gains twin spears. Each shape adds 30% spell damage, rounded to a whole number, and lends its named spell while equipped. The server records the used shape in the cast receipt so the renderer uses the same trait. Projectiles display the combined authoritative damage without applying it twice.
+Boss copies also have a 40% chance of a school-matched spell shape, with five choices per school. Neutral items can draw any of the 15 shapes. The [spell effect list](../plans/spell-effect-bonuses.md) gives each visual and combat bonus: either +30% damage or +2 targets, within the ten-target limit. Each shape lends its named spell while equipped. The server records the used shape in the cast receipt so the renderer uses the same trait. Extra visual contacts do not apply damage twice.
+
+The original `twin-orb`, `meteor-shower`, and `split-lance` IDs are retained. Their visuals are now Twin Orbit, Molten Core, and Diamond Drill. No saved item copies are rerolled.
 
 Temporary skill rolls are now boss-only (20% at tier 1 through 30% at tier 10), drawn from visual modifier skills. Ordinary drops keep power, school power, and extra targets. Existing skill and named-spell damage rolls remain valid and are never rerolled or removed.
 

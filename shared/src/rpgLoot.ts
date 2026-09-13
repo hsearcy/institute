@@ -126,10 +126,26 @@ export function rpgForgeCost(instance: Pick<RpgLootInstance, 'upgradeLevel'>): {
 }
 
 
-export const RPG_SPELL_SHAPES: readonly { id: RpgSpellShape; spellId: RpgSpellId; school: RpgSchoolId; label: string }[] = [
-  { id: 'twin-orb', spellId: 'ball_lightning', school: 'storm', label: 'Ball Lightning: +1 orb · +30% spell damage' },
-  { id: 'meteor-shower', spellId: 'meteor', school: 'ember', label: 'Meteor: +1 meteor · +30% spell damage' },
-  { id: 'split-lance', spellId: 'ice_lance', school: 'frost', label: 'Ice Lance: twin spears · +30% spell damage' },
+/** Existing IDs keep their saved damage/availability; their visuals gain detail. */
+export const RPG_SPELL_SHAPES: readonly {
+  id: RpgSpellShape; spellId: RpgSpellId; school: RpgSchoolId;
+  name: string; label: string; damageMultiplier: number; extraTargets: number;
+}[] = [
+  { id: 'twin-orb', spellId: 'ball_lightning', school: 'storm', name: 'Twin Orbit', label: 'Ball Lightning: +1 linked orb · +30% spell damage', damageMultiplier: 1.3, extraTargets: 0 },
+  { id: 'meteor-shower', spellId: 'meteor', school: 'ember', name: 'Molten Core', label: 'Meteor: bursting molten core · +30% spell damage', damageMultiplier: 1.3, extraTargets: 0 },
+  { id: 'split-lance', spellId: 'ice_lance', school: 'frost', name: 'Diamond Drill', label: 'Ice Lance: three rotating shards · +30% spell damage', damageMultiplier: 1.3, extraTargets: 0 },
+  { id: 'aftershock', spellId: 'ember', school: 'ember', name: 'Aftershock', label: 'Fire Nova: erupting cracks and a second ring · +30% spell damage', damageMultiplier: 1.3, extraTargets: 0 },
+  { id: 'rift-slash', spellId: 'cleave', school: 'ember', name: 'Rift Slash', label: 'Heavy Cleave: a travelling fire crescent · +2 targets', damageMultiplier: 1, extraTargets: 2 },
+  { id: 'blazing-wake', spellId: 'phoenix_dive', school: 'ember', name: 'Blazing Wake', label: 'Phoenix Dive: fire races back along the trail · +30% spell damage', damageMultiplier: 1.3, extraTargets: 0 },
+  { id: 'volcanic-ground', spellId: 'firestorm', school: 'ember', name: 'Volcanic Ground', label: 'Firestorm: cracked ground erupts beneath enemies · +2 targets', damageMultiplier: 1, extraTargets: 2 },
+  { id: 'crystal-bloom', spellId: 'frost', school: 'frost', name: 'Crystal Bloom', label: 'Frostfall: ice clusters grow and shatter · +30% spell damage', damageMultiplier: 1.3, extraTargets: 0 },
+  { id: 'frozen-fault', spellId: 'glacial_surge', school: 'frost', name: 'Frozen Fault', label: 'Glacial Surge: two widening rows of ice · +2 targets', damageMultiplier: 1, extraTargets: 2 },
+  { id: 'whiteout', spellId: 'blizzard', school: 'frost', name: 'Whiteout', label: 'Blizzard: spiralling snow and heavy ice strikes · +30% spell damage', damageMultiplier: 1.3, extraTargets: 0 },
+  { id: 'glacial-hammer', spellId: 'frost_guardian', school: 'frost', name: 'Glacial Hammer', label: 'Frost Guardian: the slam sends out ice spikes · +2 targets', damageMultiplier: 1, extraTargets: 2 },
+  { id: 'thunder-web', spellId: 'storm', school: 'storm', name: 'Thunder Web', label: 'Chain Lightning: a branching electric web · +2 targets', damageMultiplier: 1, extraTargets: 2 },
+  { id: 'overcharge', spellId: 'arc_lance', school: 'storm', name: 'Overcharge', label: 'Arc Lance: spiralling beams and impact rings · +30% spell damage', damageMultiplier: 1.3, extraTargets: 0 },
+  { id: 'resonance', spellId: 'thunderclap', school: 'storm', name: 'Resonance', label: 'Thunderclap: three spreading pressure rings · +30% spell damage', damageMultiplier: 1.3, extraTargets: 0 },
+  { id: 'storm-pillars', spellId: 'tempest', school: 'storm', name: 'Storm Pillars', label: 'Tempest: thick bolts leave columns of sparks · +2 targets', damageMultiplier: 1, extraTargets: 2 },
 ];
 /** Validate saved traits in one place for combat, effects, and item labels. */
 export function rpgLootSpellShape(loot?: RpgLootInstance) {

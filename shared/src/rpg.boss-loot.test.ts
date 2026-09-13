@@ -62,3 +62,22 @@ test('a spell-shape item lends its spell only while that copy is equipped', () =
   state.skills.ball_lightning=1;
   expect(rpgSpellAvailable(state,'ball_lightning')).toBe(true);
 });
+
+test('all fifteen spells have a unique boss effect with the stated damage or coverage bonus', async () => {
+  const {RPG_SPELLS,RPG_SPELL_SHAPES,rpgLootSpellShape}=await import('./index');
+  expect(RPG_SPELL_SHAPES).toHaveLength(15);
+  expect(new Set(RPG_SPELL_SHAPES.map(shape=>shape.spellId)).size).toBe(15);
+  for(const shape of RPG_SPELL_SHAPES){
+    const base=equipped();base.equippedItemId='moonstaff';base.loot![0].itemId='moonstaff';
+    const before=rpgSpellCombatStats(base,shape.spellId);
+    base.loot![0].spellShape=shape.id;
+    expect(rpgLootSpellShape(base.loot![0])?.school).toBe(RPG_SPELLS.find(spell=>spell.id===shape.spellId)!.school);
+    expect(rpgSpellCombatStats(base,shape.spellId)).toEqual({damage:Math.round(before.damage*shape.damageMultiplier),targets:Math.min(10,before.targets+shape.extraTargets)});
+    expect(rpgSpellAvailable(base,shape.spellId)).toBe(true);
+    for(const other of RPG_SPELLS.filter(spell=>spell.id!==shape.spellId)){
+      expect(rpgSpellCombatStats(base,other.id)).toEqual(rpgSpellCombatStats({...base,loot:[{...base.loot![0],spellShape:undefined}]},other.id));
+    }
+    base.equippedLootId='not-equipped';
+    expect(rpgSpellCombatStats(base,shape.spellId)).toEqual(rpgSpellCombatStats({...base,loot:[]},shape.spellId));
+  }
+});

@@ -139,7 +139,9 @@ export interface RpgCombatResult {
   damage: number; coverage: number; powerPercent?: number;
 }
 export interface RpgExpedition { id: string; regionId: string; encounterIndex: number; encountersTotal: number; cleared: boolean; startedAt: number; combat?: RpgCombatState; tier?: number }
-export type RpgSpellShape = 'twin-orb' | 'meteor-shower' | 'split-lance';
+export type RpgSpellShape = 'twin-orb' | 'meteor-shower' | 'split-lance'
+  | 'aftershock' | 'rift-slash' | 'blazing-wake' | 'volcanic-ground' | 'crystal-bloom'
+  | 'frozen-fault' | 'whiteout' | 'glacial-hammer' | 'thunder-web' | 'overcharge' | 'resonance' | 'storm-pillars';
 export type RpgCombatAffix = 'opening-strike' | 'boss-slayer';
 export interface RpgLootInstance {
   spellShape?: RpgSpellShape; combatAffix?: RpgCombatAffix;
@@ -272,7 +274,7 @@ export function rpgSpellCombatStats(state: RpgLoadout, spellId = state.selectedS
   const extraTargets = Math.min(2, RPG_SKILLS.filter(skill => skill.kind === 'modifier' && skillApplies(skill, spellId))
     .reduce((total, skill) => total + (skills[skill.id] ?? 0), 0));
   const shape = rpgLootSpellShape(equipped);
-  return { damage: Math.round((damage + power) * (shape?.spellId === spellId ? 1.3 : 1)), targets: Math.min(10, coverage + extraTargets + affixes.targets) };
+  return { damage: Math.round((damage + power) * (shape?.spellId === spellId ? shape.damageMultiplier : 1)), targets: Math.min(10, coverage + extraTargets + affixes.targets + (shape?.spellId === spellId ? shape.extraTargets : 0)) };
 }
 
 /** Deterministic current-room health. Returns a copy and never rewrites a save. */

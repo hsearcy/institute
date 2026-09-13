@@ -574,3 +574,20 @@ test('a relic grants its spell only while equipped, without permanent ranks or d
     expect(getRpgState(db, 'sam').selectedSpellId).toBe('tempest');
   } finally { db.close(); }
 });
+
+
+test('New outdoor destinations start at tier one with no clears and preserve learning state', () => {
+  for (const regionId of ['mosswood', 'tidebreak', 'old-quarry', 'kingsgarden']) {
+    const db = legacyDb();
+    try {
+      ensureRpgSchema(db);
+      const before = snapshot(db);
+      const started = startRpgExpedition(db, 'sam', regionId, 1);
+      expect(started.expeditionsCompleted).toBe(0);
+      expect(started.expedition).toMatchObject({ regionId, tier: 1, encountersTotal: 6, encounterIndex: 0 });
+      expect(started.expedition!.combat!.enemies[0].maxHp).toBe(12);
+      expect(getRpgState(db, 'sam').expedition).toEqual(started.expedition);
+      expect(snapshot(db)).toBe(before);
+    } finally { db.close(); }
+  }
+});

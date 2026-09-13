@@ -2,6 +2,11 @@ import { ITEM_MODELS } from './itemModels';
 
 // Original lightweight vector UI art. The dungeon/characters use Blender GLBs.
 const paths: Record<string, string> = {
+  forge: '<path d="M7 34h48v7H39l-3 7v5h10v6H19v-6h9v-5l-8-7h-5Z"/><path d="m27 8 7-6 18 15-7 8Z"/><path d="m34 20-12 14-5-4 12-15Z"/><path d="m8 18 5 4m1-12 2 6m-10 9 6 1" fill="none"/>' ,
+  forest: '<path d="m19 6 14 22h-8l12 18H6l12-18h-8Zm24 9 14 22H30Z"/><path d="M20 45v13m23-21v21" fill="none"/>',
+  coast: '<path d="M5 41q8-10 17 0t18 0 19 0M5 52q8-10 17 0t18 0 19 0" fill="none"/><path d="m9 33 10-21 11 7 6 14Z"/><circle cx="46" cy="13" r="6"/>',
+  quarry: '<path d="m5 48 9-22 13 5 11-19 16 9 5 27Z" fill="none"/><path d="m13 47 7-11 10 4 12-17 12 4M8 56h48" fill="none"/>',
+  garden: '<path d="M12 57V26a20 20 0 0 1 40 0v31M20 57V26a12 12 0 0 1 24 0v31M7 57h50" fill="none"/><path d="M12 45C0 35 5 29 12 35M51 34c14-11 9-19 1-10"/>',
   ember: '<path d="M32 7c6 15-9 16 0 26 1-8 9-9 8-16 16 17 16 34-8 39C9 51 11 34 22 24c-2 12 5 12 5 7 0-10 8-12 5-24Z"/><ellipse cx="32" cy="48" rx="25" ry="9" fill="none"/>',
   frost: '<path d="m32 5 10 20 14 7-14 8-10 19-10-19L8 32l14-7Z"/><path d="M32 8v48M10 32h44M17 17l30 30M47 17 17 47" fill="none"/>',
   storm: '<path d="m36 4-23 32h16l-6 25 29-37H35Z"/><path d="m11 15 5 8-9 7m45 12-7 4 8 9" fill="none"/>',

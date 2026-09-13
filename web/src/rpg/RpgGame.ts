@@ -25,6 +25,7 @@ import './progression.css';
 import { renderCampWorkshop, renderPinnedGoal, lootStats, collectionLootChoice, type CampTab } from './campView';
 import { nextSpellGoal } from './nextSpell';
 import { skillUpgradePreview } from './skillPreview';
+import { equippedForgeReady } from './forgeReady';
 import { getRoomLayout } from './world/roomLayout';
 import { Celebrations, type CelebrationEvent } from './Celebrations';
 import './hud-rewards.css';
@@ -43,7 +44,6 @@ type Session = {
   pending?: { correct: boolean; assisted: boolean; solveMs: number; answerMs?: number; wrongCount?: number; spellId?: RpgSpellId };
 };
 const sessionKey = `institute:rpg:problem:v1:${API}:${PROFILE}`;
-const roomNames = Array.from({length:6}, (_, index) => getRoomLayout(index).name);
 
 /** The adventure is a client of the existing tutor; it never chooses math topics. */
 export class RpgGame {
@@ -119,9 +119,9 @@ export class RpgGame {
     this.root.id = 'rpg-ui';
     this.root.innerHTML = `
       <header class="rpg-top"><div class="rpg-location"><span class="rpg-eyebrow">INSTITUTE <b>◆</b> THE SUNKEN VAULT</span><h1 id="rpg-region">The Embercrypt</h1><p id="rpg-room">A new adventure awaits</p></div>
-      <nav aria-label="Adventure menu"><button data-action="map" title="Expeditions" aria-label="Expeditions">${icon('map')}</button><button data-action="skills" title="Skill trees" aria-label="Skill trees">${icon('tree')}<i id="rpg-points" hidden></i></button><button data-action="inventory" title="Equipment" aria-label="Equipment">${icon('bag')}</button><button data-action="quests" title="Quest board and camp" aria-label="Quest board and camp">${icon('ring')}</button><button data-action="sound" title="Toggle tutor voice" aria-label="Mute tutor voice">${icon('sound')}</button><button data-action="pause" title="Pause and save" aria-label="Pause and save">Ⅱ</button></nav></header>
+      <nav aria-label="Adventure menu"><button data-action="map" title="Expeditions" aria-label="Expeditions">${icon('map')}</button><button data-action="skills" title="Skill trees" aria-label="Skill trees">${icon('tree')}<i id="rpg-points" hidden></i></button><button data-action="inventory" title="Equipment" aria-label="Equipment">${icon('bag')}</button><button id="rpg-blacksmith" data-action="blacksmith" title="Blacksmith" aria-label="Blacksmith">${icon('forge')}<i id="rpg-forge-ready" aria-hidden="true" hidden>↑</i></button><button data-action="quests" title="Quest board and camp" aria-label="Quest board and camp">${icon('ring')}</button><button data-action="sound" title="Toggle tutor voice" aria-label="Mute tutor voice">${icon('sound')}</button><button data-action="pause" title="Pause and save" aria-label="Pause and save">Ⅱ</button></nav></header>
       <div class="rpg-route" aria-label="Expedition progress" id="rpg-route"></div><button id="rpg-next-spell" class="rpg-next-spell" data-action="spell-goal" hidden></button>
-      <div id="rpg-boss" class="rpg-boss" hidden><span>GUARDIAN OF THE VAULT</span><strong></strong><div role="progressbar" aria-label="Guardian health" aria-valuemin="0" aria-valuemax="36" aria-valuenow="36"><i></i></div></div>
+      <div id="rpg-boss" class="rpg-boss" hidden><span>GUARDIAN</span><strong></strong><div role="progressbar" aria-label="Guardian health" aria-valuemin="0" aria-valuemax="36" aria-valuenow="36"><i></i></div></div>
       <div id="rpg-toast" class="rpg-toast" role="status" aria-live="polite" hidden></div><aside id="rpg-discovery" class="rpg-discovery" aria-label="New relic" aria-live="polite" hidden></aside><div id="rpg-floating-xp" class="rpg-floating-xp" aria-hidden="true"></div><div id="rpg-world-loot" class="rpg-world-loot" aria-hidden="true" hidden></div>
       <section class="rpg-controls" id="rpg-controls" hidden aria-label="Spell controls">
         <div class="rpg-hint" id="rpg-hint" role="status" hidden></div>
@@ -258,6 +258,7 @@ export class RpgGame {
     const s = this.state; if (!s || this.disposed) return;
     const expedition = s.expedition;
     const region = RPG_REGIONS.find(r => r.id === expedition?.regionId) ?? RPG_REGIONS[0];
+    const roomNames = Array.from({length:6}, (_, index) => getRoomLayout(index, region.id).name);
     this.el('rpg-region').textContent = region.name;
     this.el('rpg-room').textContent = expedition && !expedition.cleared ? `${roomNames[expedition.encounterIndex]} · ${expedition.encounterIndex + 1} / ${expedition.encountersTotal}` : region.subtitle;
     this.el('rpg-route').innerHTML = Array.from({ length: 6 }, (_, i) => `<span class="${expedition && (expedition.cleared || i < expedition.encounterIndex) ? 'complete' : i === expedition?.encounterIndex ? 'current' : ''}" title="${roomNames[i]}">${i === 5 ? '♜' : '◆'}</span>`).join('');
@@ -295,6 +296,12 @@ export class RpgGame {
     }).join('') + `<button class="rpg-spell rpg-tree-button" data-action="skills" aria-label="Skill trees">${icon('tree')}<span>Skill trees</span>${s.skillPoints ? `<i>${s.skillPoints} new</i>` : '<kbd>K</kbd>'}</button>`;
     const item = RPG_ITEMS.find(i => i.id === s.equippedItemId)!;
     this.el('rpg-equipped').textContent = item.name;
+    const forgeReady = equippedForgeReady(s, this.campState?.gems ?? this.legacyState?.gems);
+    const blacksmith = this.el('rpg-blacksmith');
+    this.el('rpg-forge-ready').hidden = !forgeReady;
+    blacksmith.classList.toggle('upgrade-ready', forgeReady);
+    blacksmith.title = forgeReady ? `Blacksmith: Upgrade available for ${item.name}` : 'Blacksmith';
+    blacksmith.setAttribute('aria-label', blacksmith.title);
     const gear = this.root.querySelector('.rpg-gear-button')!;
     gear.querySelector('.rpg-icon,.rpg-relic-art')?.remove();
     gear.insertAdjacentHTML('afterbegin',relicArt(item.id));
@@ -348,7 +355,7 @@ export class RpgGame {
     this.stopClock(); this.saveSession(); this.playing = false; this.el('rpg-controls').hidden = true;
     const resume = s.expedition && !s.expedition.cleared;
     if (resume) this.setEncounter();
-    this.showDialog('camp', `<div class="rpg-seal">${icon('sword')}</div><p class="rpg-eyebrow">INSTITUTE PRESENTS</p><h2 id="rpg-dialog-title" class="rpg-title">The Sunken<br><em>Vault</em></h2><p class="rpg-camp-story">Ancient halls. Hidden relics.<br>A little magic goes a long way.</p><div class="rpg-camp-stats"><span>LEVEL <b>${s.level}</b></span><span>RELICS <b>${s.inventory.length}</b></span><span>GUARDIANS <b>${s.expeditionsCompleted}</b></span></div>${s.totalKills === 0 ? `<div class="rpg-starter-spells" aria-label="Your starting sword attack">${(['cleave'] as RpgSpellId[]).map(id => `<button data-spell="${id}" aria-pressed="${s.selectedSpellId === id}" class="${s.selectedSpellId === id ? 'selected' : ''}">${spellArt(id)}<span>${RPG_SPELLS.find(spell => spell.id === id)!.name}</span></button>`).join('')}</div>` : ''}${s.goal ? renderPinnedGoal(s, this.campState) : this.spellGoalCard() ? `<button class="rpg-goal-card" data-action="spell-goal">${this.spellGoalCard()}</button>` : ''}<button class="rpg-primary rpg-large" data-action="begin">${resume ? 'Continue adventure' : 'Enter the dungeon'} <span>→</span></button><button class="rpg-text-button" data-action="map">Choose an expedition</button><button class="rpg-text-button" data-action="tutorial">${icon('help')} How to play · Story & tour</button><div class="rpg-camp-menu"><button data-action="quests">${icon('ring')} Quest board</button><button data-action="merchant">◆ Merchant${this.campState ? ` · ${this.campState.gems} gems` : ''}</button><button data-action="forge">${icon('sword')} Blacksmith</button><button data-action="spellbook">${icon('storm')} Spellbook</button><button data-action="skills">${icon('tree')} Skill trees${s.skillPoints ? ` · ${s.skillPoints} new` : ''}</button><button data-action="inventory">${icon('bag')} Equipment</button><button data-action="parent">Parent journal</button></div><p class="rpg-camp-note">Solve to unleash your spells. Take all the time you need.</p>`);
+    this.showDialog('camp', `<div class="rpg-seal">${icon('sword')}</div><p class="rpg-eyebrow">INSTITUTE PRESENTS</p><h2 id="rpg-dialog-title" class="rpg-title">The Sunken<br><em>Vault</em></h2><p class="rpg-camp-story">Ancient halls. Hidden relics.<br>A little magic goes a long way.</p><div class="rpg-camp-stats"><span>LEVEL <b>${s.level}</b></span><span>RELICS <b>${s.inventory.length}</b></span><span>GUARDIANS <b>${s.expeditionsCompleted}</b></span></div>${s.totalKills === 0 ? `<div class="rpg-starter-spells" aria-label="Your starting sword attack">${(['cleave'] as RpgSpellId[]).map(id => `<button data-spell="${id}" aria-pressed="${s.selectedSpellId === id}" class="${s.selectedSpellId === id ? 'selected' : ''}">${spellArt(id)}<span>${RPG_SPELLS.find(spell => spell.id === id)!.name}</span></button>`).join('')}</div>` : ''}${s.goal ? renderPinnedGoal(s, this.campState) : this.spellGoalCard() ? `<button class="rpg-goal-card" data-action="spell-goal">${this.spellGoalCard()}</button>` : ''}<button class="rpg-primary rpg-large" data-action="begin">${resume ? 'Continue adventure' : 'Enter the dungeon'} <span>→</span></button><button class="rpg-text-button" data-action="map">Choose an expedition</button><button class="rpg-text-button" data-action="tutorial">${icon('help')} How to play · Story & tour</button><div class="rpg-camp-menu"><button data-action="quests">${icon('ring')} Quest board</button><button data-action="merchant">◆ Merchant${this.campState ? ` · ${this.campState.gems} gems` : ''}</button><button data-action="forge">${icon('forge')} Blacksmith</button><button data-action="spellbook">${icon('storm')} Spellbook</button><button data-action="skills">${icon('tree')} Skill trees${s.skillPoints ? ` · ${s.skillPoints} new` : ''}</button><button data-action="inventory">${icon('bag')} Equipment</button><button data-action="parent">Parent journal</button></div><p class="rpg-camp-note">Solve to unleash your spells. Take all the time you need.</p>`);
   }
   private async begin(regionId?: string, tier?: number): Promise<void> {
     if (!this.state || this.busy) return;
@@ -708,9 +715,11 @@ export class RpgGame {
     const item = RPG_ITEMS.find(item => item.id === hunt.itemId);
     if (!item) return '';
     const region = RPG_REGIONS.find(region => region.id === regionId)!;
-    const collected = RPG_ITEMS.filter(item => item.school === region.relicSchool && this.state!.inventory.includes(item.id)).length;
-    const total = RPG_ITEMS.filter(item => item.school === region.relicSchool).length;
-    return `<span class="rpg-relic-hunt ${item.rarity}" data-hunt-item="${item.id}">${relicArt(item.id)}<span><small>${hunt.duplicate ? 'DUPLICATE TREASURE' : 'NEXT DISCOVERY'}</small><strong>${esc(item.name)}</strong><span>${hunt.encounterIndex === 5 ? 'Guardian treasure' : `Room ${hunt.encounterIndex + 1}`} · ${hunt.duplicate ? 'Fresh randomized bonus stats' : item.rarity + ' relic · bonus stats vary'}</span>${!hunt.regional && !hunt.duplicate ? '<span class="rpg-hunt-fallback">Treasure from beyond this vault</span>' : ''}<span class="rpg-hunt-collection">${collected} / ${total} ${RPG_SCHOOLS.find(school => school.id === region.relicSchool)!.name} relics found</span></span></span>`;
+    const collection = RPG_ITEMS.filter(item => item.id !== 'apprentice' && (!region.relicSchool || item.school === region.relicSchool));
+    const collected = collection.filter(item => this.state!.inventory.includes(item.id)).length;
+    const total = collection.length;
+    const collectionName = region.relicSchool ? RPG_SCHOOLS.find(school => school.id === region.relicSchool)!.name : 'All-school';
+    return `<span class="rpg-relic-hunt ${item.rarity}" data-hunt-item="${item.id}">${relicArt(item.id)}<span><small>${hunt.duplicate ? 'DUPLICATE TREASURE' : 'NEXT DISCOVERY'}</small><strong>${esc(item.name)}</strong><span>${hunt.encounterIndex === 5 ? 'Guardian treasure' : `Room ${hunt.encounterIndex + 1}`} · ${hunt.duplicate ? 'Fresh randomized bonus stats' : item.rarity + ' relic · bonus stats vary'}</span>${region.relicSchool && !hunt.regional && !hunt.duplicate ? '<span class="rpg-hunt-fallback">Treasure from beyond this vault</span>' : ''}<span class="rpg-hunt-collection">${collected} / ${total} ${collectionName} relics found</span></span></span>`;
   }
   private showInventory(): void {
     if (!this.state) return;
@@ -718,11 +727,11 @@ export class RpgGame {
   }
   private showMap(): void {
     if (!this.state) return; const s = this.state;
-    this.showDialog('map', `<p class="rpg-eyebrow">BEYOND THE NEXT GATE</p><h2 id="rpg-dialog-title">Expeditions</h2><p>Choose a vault to hunt its Flame, Frost, or Storm relics. Six encounters lead to the guardian’s treasure.</p><div class="rpg-tier-choice" aria-label="Dungeon tier"><span>Choose your depth · Highest clear ${s.bestTier ?? 0}</span>${Array.from({length:rpgUnlockedTier(s)}, (_, index) => index + 1).map(tier => `<button data-select-tier="${tier}" aria-pressed="${this.selectedTier === tier}" ${s.expedition && !s.expedition.cleared ? 'disabled' : ''}>Tier ${tier}</button>`).join('')}</div><p class="rpg-tier-reward">Tier ${this.selectedTier}: ${rpgDungeonForgeDust(this.selectedTier)} guaranteed forge dust across six rooms · Two fresh relic rolls. Deeper tiers have tougher monsters and stronger possible bonuses.</p><div class="rpg-regions">${RPG_REGIONS.map((region, index) => {
+    this.showDialog('map', `<p class="rpg-eyebrow">BEYOND THE NEXT GATE</p><h2 id="rpg-dialog-title">Expeditions</h2><p>Explore forest ruins, a rocky coast, an old quarry, palace gardens, or the vaults. Outdoor areas offer relics from every school. Six encounters lead to the guardian’s treasure.</p><div class="rpg-tier-choice" aria-label="Dungeon tier"><span>Choose your depth · Highest clear ${s.bestTier ?? 0}</span>${Array.from({length:rpgUnlockedTier(s)}, (_, index) => index + 1).map(tier => `<button data-select-tier="${tier}" aria-pressed="${this.selectedTier === tier}" ${s.expedition && !s.expedition.cleared ? 'disabled' : ''}>Tier ${tier}</button>`).join('')}</div><p class="rpg-tier-reward">Tier ${this.selectedTier}: ${rpgDungeonForgeDust(this.selectedTier)} guaranteed forge dust across six rooms · Two fresh relic rolls. Deeper tiers have tougher monsters and stronger possible bonuses.</p><div class="rpg-regions">${RPG_REGIONS.map(region => {
       const unlocked = s.expeditionsCompleted >= region.requiredClears;
       const active = !!s.expedition && !s.expedition.cleared;
       const current = active && s.expedition!.regionId === region.id;
-      return `<button class="rpg-region-card ${!unlocked ? 'locked' : ''}" style="--region-color:${region.color}" data-region="${region.id}" data-tier="${this.selectedTier}" ${!unlocked || (active && !current) ? 'disabled' : ''}><div class="rpg-region-art">${icon(index === 0 ? 'ember' : index === 1 ? 'frost' : 'storm')}<i></i><i></i><i></i></div><small>EXPEDITION ${['I','II','III'][index]}</small><h3>${region.name}</h3><p>${region.subtitle}</p><span>Guardian · ${region.bossName}</span>${this.relicHuntCard(region.id)}<b>${current ? `Continue · ${s.expedition!.encounterIndex + 1}/6` : !unlocked ? `Clear ${region.requiredClears} expeditions to unlock` : active ? 'Finish your current expedition first' : 'Enter the dungeon →'}</b></button>`;
+      return `<button class="rpg-region-card ${!unlocked ? 'locked' : ''}" style="--region-color:${region.color}" data-region="${region.id}" data-tier="${this.selectedTier}" ${!unlocked || (active && !current) ? 'disabled' : ''}><div class="rpg-region-art">${icon(region.relicSchool ?? region.environment ?? 'map')}<i></i><i></i><i></i></div><small>${region.relicSchool ? 'VAULT · ' + RPG_SCHOOLS.find(school => school.id === region.relicSchool)!.name.toUpperCase() : 'OUTDOORS · MIXED RELICS'}</small><h3>${region.name}</h3><p>${region.subtitle}</p><span>Guardian · ${region.bossName}</span>${this.relicHuntCard(region.id)}<b>${current ? `Continue · ${s.expedition!.encounterIndex + 1}/6` : !unlocked ? `Clear ${region.requiredClears} expeditions to unlock` : active ? 'Finish your current expedition first' : 'Start expedition →'}</b></button>`;
     }).join('')}</div>${s.expedition && !s.expedition.cleared ? '<button class="rpg-text-button" data-action="retreat">Choose an easier expedition</button>' : ''}<button class="rpg-text-button" data-action="close">${this.playing ? 'Return to dungeon' : 'Back to camp'}</button>`, true);
   }
   private recordLearningReward(reward: Reward): void {
@@ -742,7 +751,7 @@ export class RpgGame {
     if (this.legacyState) this.legacyState.gems = reward.totalGems;
     if (this.campState) this.campState.gems = reward.totalGems;
   }
-  private async showWorkshop(tab: CampTab): Promise<void> {
+  private async showWorkshop(tab: CampTab, focusEquipped = false): Promise<void> {
     if (!this.state || this.busy) return;
     this.showDialog(tab, '<h2 id="rpg-dialog-title">Returning to camp…</h2><p>Opening your saved rewards.</p>', true);
     await this.runSafely(async () => {
@@ -758,7 +767,14 @@ export class RpgGame {
       }
       const [camp, legacy] = await Promise.all([getRpgCamp(), request<State>(`/state?profileId=${encodeURIComponent(PROFILE)}`)]);
       this.campState = camp; this.legacyState = legacy; this.renderState();
-      if (this.panel === tab) this.showDialog(tab, renderCampWorkshop(this.state!, camp, legacy, tab), true);
+      if (this.panel === tab) {
+        this.showDialog(tab, renderCampWorkshop(this.state!, camp, legacy, tab), true);
+        if (focusEquipped) {
+          const card = this.root.querySelector<HTMLElement>('.rpg-forge-list .rpg-loot-card.equipped');
+          card?.scrollIntoView({ block: 'center' });
+          card?.querySelector<HTMLButtonElement>('[data-forge-loot]:not(:disabled)')?.focus({ preventScroll: true });
+        }
+      }
     });
   }
   private async economyAction(action: string, body: Record<string, unknown>): Promise<void> {
@@ -1095,6 +1111,7 @@ export class RpgGame {
       case 'spell-goal': this.showSpellGoal(); break;
       case 'dismiss-loot': this.discovery = null; this.renderDiscovery(); break;
       case 'inventory': this.showInventory(); break;
+      case 'blacksmith': void this.showWorkshop('forge', true); break;
       case 'quests': case 'merchant': case 'forge': case 'records': void this.showWorkshop(action); break;
       case 'pause': this.showPause(); break;
       case 'retreat': this.confirmRetreat(); break;

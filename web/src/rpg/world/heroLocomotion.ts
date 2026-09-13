@@ -1,9 +1,9 @@
 import type { Euler, Vector3 } from 'three';
 import { getRoomLayout } from './roomLayout';
 
-export function heroDoorwayRoute(previousRoom: number, room: number): readonly { x: number; z: number }[] {
+export function heroDoorwayRoute(previousRoom: number, room: number, regionId?: string): readonly { x: number; z: number }[] {
   if (room !== previousRoom + 1) return [];
-  const { doorX } = getRoomLayout(previousRoom), center = -20 * previousRoom;
+  const { doorX } = getRoomLayout(previousRoom, regionId), center = -20 * previousRoom;
   // Align before the decorative steps, keep straight through the arch/pier
   // depth, then turn toward the next encounter's hero mark.
   return [{ x: doorX, z: center - 7 }, { x: doorX, z: center - 11.2 }];

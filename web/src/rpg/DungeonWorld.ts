@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { createOutdoorWorld, disposeOutdoorWorld, outdoorKind, outdoorLight } from './world/outdoorWorld';
 import { RPG_SPELLS, type RpgAppearanceId, type RpgCombatEnemy, type RpgCombatResult } from '@institute/shared';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -79,6 +80,8 @@ export class DungeonWorld {
   private readonly propGroup = new THREE.Group();
   private readonly roomCutaway = new RoomCutaway();
   private readonly biomeGroup = new THREE.Group();
+  private outdoorWorld?: THREE.Group;
+  private outdoorRegion = "";
   private biomeBuilt = "";
   private stoneSurfaceLoaded = false;
   private readonly floatingRunes: THREE.Object3D[] = [];
@@ -185,7 +188,7 @@ export class DungeonWorld {
       flame: new THREE.MeshStandardMaterial({ color: 0xff9218, emissive: 0xff6500, emissiveIntensity: 2, transparent: true, opacity: .94, toneMapped: false }),
     };
     if (this.softwareRenderer) for (const name of ['floor', 'wall', 'trim']) this.materials[name].bumpMap = null;
-    this.scene.add(new THREE.HemisphereLight(0x7394aa, 0x15120f, .38));
+    const ambient = new THREE.HemisphereLight(0x7394aa, 0x15120f, .38); ambient.name = 'ambient'; this.scene.add(ambient);
     const moon = new THREE.DirectionalLight(0x6d8da5, 1.5);
     moon.position.set(-12, 24, -10); moon.castShadow = true;
     moon.shadow.mapSize.set(this.softwareRenderer ? 1024 : 2048, this.softwareRenderer ? 1024 : 2048); moon.shadow.camera.left = moon.shadow.camera.bottom = -23;
@@ -290,6 +293,7 @@ export class DungeonWorld {
     this.installMasonryPosts();
     this.roomCutaway.prepare([...this.floorGroup.children, ...this.propGroup.children]);
     this.biomeBuilt = ""; this.buildBiome();
+    this.setEnvironment();
     this.renderer.shadowMap.needsUpdate = true;
     // Compile authored actors and uncommon effect programs during loading,
     // before a child's first cast would otherwise pay the shader setup cost.
@@ -860,7 +864,7 @@ export class DungeonWorld {
   }
 
   setEncounter(index: number, regionId?: string, enemyCount?: number, health?: readonly RpgCombatEnemy[]): void {
-    const was = this.encounter;
+    const was = this.encounter, previousRegion = this.regionId;
     this.encounter = Math.max(0, Math.min(5, index));
     if (regionId) this.regionId = regionId;
     this.enemies.forEach(enemy => this.releaseProcedural(enemy.visual));
@@ -869,14 +873,14 @@ export class DungeonWorld {
     for (const enemy of this.enemies) enemy.visual.traverse(object => { if (object instanceof THREE.SkinnedMesh) skeletons.add(object.skeleton); });
     for (const skeleton of skeletons) skeleton.dispose();
     this.enemies.length = 0; this.enemyGroup.clear();
-    const layout = getRoomLayout(this.encounter);
+    const layout = getRoomLayout(this.encounter, this.regionId);
     this.destination.set(layout.heroX, 0, -this.encounter * 20 + layout.heroZ);
-    this.heroTravelWaypoints = heroDoorwayRoute(was, this.encounter).map(point => new THREE.Vector3(point.x, 0, point.z));
-    if (!this.frame || Math.abs(was - this.encounter) > 1) { this.hero.position.copy(this.destination); this.cameraTarget.copy(this.destination); }
+    this.heroTravelWaypoints = heroDoorwayRoute(was, this.encounter, this.regionId).map(point => new THREE.Vector3(point.x, 0, point.z));
+    if (!this.frame || previousRegion !== this.regionId || Math.abs(was - this.encounter) > 1) { this.hero.position.copy(this.destination); this.cameraTarget.copy(this.destination); }
     if (this.hero.position.distanceToSquared(this.destination) < .025 ** 2) this.heroTravelWaypoints.length = 0;
     // A hard population limit, independent of spell power and old receipt totals.
     const count = Math.max(1, Math.min(10, Math.trunc(health?.length ?? enemyCount ?? 10)));
-    const formation = enemyPositions(this.encounter, count), roster = enemyRoster(this.encounter, count);
+    const formation = enemyPositions(this.encounter, count, this.regionId), roster = enemyRoster(this.encounter, count);
     for (let i = 0; i < count; i++) {
       const { brute, boss, modelId } = roster[i];
       const height = this.enemyHeight(modelId, roster[i].height) * ACTOR_SCALE;
@@ -919,9 +923,37 @@ export class DungeonWorld {
     }
     if (!this.frame) [...this.warmLights, ...this.recessLights].forEach((light, index) => light.position.copy(this.lightAnchors[index]));
     this.buildBiome(); this.biomeGroup.position.z = -this.encounter * 20;
+    this.setEnvironment();
     this.batchEnemies();
     this.updateCameraProjection(Math.max(1, this.canvas.clientWidth), Math.max(1, this.canvas.clientHeight));
     this.renderer.shadowMap.needsUpdate = true;
+  }
+
+  private setEnvironment(): void {
+    const kind = outdoorKind(this.regionId);
+    this.floorGroup.visible = this.propGroup.visible = this.biomeGroup.visible = !kind;
+    if (this.outdoorWorld && this.outdoorRegion !== this.regionId) {
+      disposeOutdoorWorld(this.outdoorWorld); this.outdoorWorld = undefined; this.outdoorRegion = '';
+    }
+    const ambient = this.scene.getObjectByName('ambient') as THREE.HemisphereLight;
+    const moon = this.scene.getObjectByName('moon') as THREE.DirectionalLight;
+    if (kind) {
+      if (!this.outdoorWorld) {
+        this.outdoorWorld = createOutdoorWorld(this.regionId); this.outdoorRegion = this.regionId;
+        this.scene.add(this.outdoorWorld);
+      }
+      const light = outdoorLight[kind];
+      this.scene.background = new THREE.Color(light.sky); this.scene.fog = new THREE.Fog(light.fog, 45, 95);
+      ambient.color.setHex(light.sky); ambient.groundColor.setHex(light.ground); ambient.intensity = 1.15;
+      moon.color.setHex(light.sun); moon.intensity = light.intensity;
+      this.warmLights.forEach(light => { light.intensity = 0; });
+      this.recessLights.forEach(light => { light.visible = false; });
+    } else {
+      this.scene.background = new THREE.Color(0x080f16);
+      ambient.color.setHex(0x7394aa); ambient.groundColor.setHex(0x15120f); ambient.intensity = .38;
+      moon.color.setHex(0x6d8da5); moon.intensity = 1.5;
+      this.recessLights.forEach(light => { light.visible = true; });
+    }
   }
 
   private updateStoneTint(): void {
@@ -932,6 +964,7 @@ export class DungeonWorld {
   }
 
   private buildBiome(): void {
+    if (outdoorKind(this.regionId)) return;
     const key = `${this.regionId}:${this.encounter === 3 ? 'crossing' : 'hall'}`;
     if (this.biomeBuilt === key) return;
     this.biomeBuilt = key;
@@ -1845,7 +1878,7 @@ export class DungeonWorld {
 
   private iceWave(origin: THREE.Vector3, wide: boolean): void {
     const branches = wide ? 7 : 5;
-    const layout = getRoomLayout(this.encounter);
+    const layout = getRoomLayout(this.encounter, this.regionId);
     // Branching pressure fractures spread ahead of the hero. Offset, leaning
     // shards grow along those cracks instead of forming a regular cone grid.
     for (let branch = 0; branch < branches; branch++) {
@@ -1854,7 +1887,7 @@ export class DungeonWorld {
         const phase = branch * 5.31 + step * 2.17;
         const at = origin.clone().add(new THREE.Vector3(lane * (.46 + step * .16) + Math.sin(phase) * .32, 0, 1.3 - step * .94 + Math.cos(phase) * .25));
         const localZ = at.z + this.encounter * 20;
-        if (Math.abs(at.x) > layout.walkable.maxX - .55 || localZ < layout.walkable.minZ + .6 || localZ > layout.walkable.maxZ - .6 || isCrossingChasm(this.encounter, at.x, localZ)) continue;
+        if (Math.abs(at.x) > layout.walkable.maxX - .55 || localZ < layout.walkable.minZ + .6 || localZ > layout.walkable.maxZ - .6 || (!outdoorKind(this.regionId) && isCrossingChasm(this.encounter, at.x, localZ))) continue;
         this.schedule(step * .07 + Math.abs(lane) * .022, () => {
           const height = .64 + (Math.sin(phase * 1.7) + 1) * .48 + step * .07;
           const mesh = new THREE.Mesh(iceShardGeometry(.19 + height * .08, height, phase), iceShardMaterial());
@@ -2239,7 +2272,7 @@ export class DungeonWorld {
         if (count > 0) { instance.mesh.instanceMatrix.needsUpdate = true; if (instance.mesh.morphTexture) instance.mesh.morphTexture.needsUpdate = true; instance.dissolve.upload(); }
       });
     }
-    this.torches.forEach(torch => {
+    if (!outdoorKind(this.regionId)) this.torches.forEach(torch => {
       const flicker = 1 + Math.sin(this.elapsed * 11 + torch.phase) * .12 + Math.sin(this.elapsed * 17 + torch.phase) * .08;
       torch.flame.scale.y = flicker; if (torch.light) torch.light.intensity = 22 * flicker;
       if (Math.abs(torch.position.z - this.hero.position.z) < 17 && Math.random() < delta * 3) this.emit(torch.position, 0xffb965, 1, .35, 1.4);
@@ -2307,15 +2340,15 @@ export class DungeonWorld {
     const moon = this.scene.getObjectByName('moon') as THREE.DirectionalLight;
     moon.position.set(this.cameraTarget.x - 12, 24, this.cameraTarget.z - 10); moon.target.position.copy(this.cameraTarget);
     [...this.warmLights, ...this.recessLights].forEach((light, index) => light.position.lerp(this.lightAnchors[index], 1 - Math.exp(-delta * 3)));
-    for (const object of [...this.floorGroup.children, ...this.propGroup.children]) {
+    for (const object of [...this.floorGroup.children, ...this.propGroup.children, ...(this.outdoorWorld?.children ?? [])]) {
       if (typeof object.userData.room === 'number') {
         const center = object.userData.room * -20;
-        object.visible = Math.abs(center - this.cameraTarget.z) < 37;
+        object.visible = object.userData.continuousGround === true || Math.abs(center - this.cameraTarget.z) < 37;
       }
     }
     // Ground remains continuous; only foreground architecture fades as the
     // camera passes its doorway. Materials and shadows share the same weight.
-    this.roomCutaway.update(this.cameraTarget.z);
+    if (!this.outdoorWorld) this.roomCutaway.update(this.cameraTarget.z);
     this.renderer.info.reset();
     if (this.softwareRenderer) this.renderer.render(this.scene, this.camera); else this.composer.render(delta);
   }

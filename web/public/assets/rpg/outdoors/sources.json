@@ -1,0 +1,59 @@
+[
+  {
+    "id": "forrest_ground_01",
+    "source": "https://polyhaven.com/a/forrest_ground_01",
+    "license": "CC0",
+    "files": [
+      {
+        "file": "forrest_ground_01-diffuse.jpg",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forrest_ground_01/forrest_ground_01_diff_1k.jpg",
+        "sha256": "3dd6875cb3908e022a3c45ebbffa5e84c670ff2691fbbb6dc9ea4bff88523800",
+        "bytes": 833711
+      },
+      {
+        "file": "forrest_ground_01-normal.jpg",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/forrest_ground_01/forrest_ground_01_nor_gl_1k.jpg",
+        "sha256": "32528a7cdee962cc0b248ee4023a74d0df175737ea90e1eb425122351e0bdab4",
+        "bytes": 1428763
+      }
+    ]
+  },
+  {
+    "id": "coast_sand_rocks_02",
+    "source": "https://polyhaven.com/a/coast_sand_rocks_02",
+    "license": "CC0",
+    "files": [
+      {
+        "file": "coast_sand_rocks_02-diffuse.jpg",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/coast_sand_rocks_02/coast_sand_rocks_02_diff_1k.jpg",
+        "sha256": "78eae8ce6209f79417a15ba863fe828f983c22f7e63a9ee3ef504a0062a05ea9",
+        "bytes": 839184
+      },
+      {
+        "file": "coast_sand_rocks_02-normal.jpg",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/coast_sand_rocks_02/coast_sand_rocks_02_nor_gl_1k.jpg",
+        "sha256": "52776374a8f64aaa8334a87ef8484048baa6f689428a9f8b812004871417ef3e",
+        "bytes": 1265458
+      }
+    ]
+  },
+  {
+    "id": "aerial_ground_rock",
+    "source": "https://polyhaven.com/a/aerial_ground_rock",
+    "license": "CC0",
+    "files": [
+      {
+        "file": "aerial_ground_rock-diffuse.jpg",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_ground_rock/aerial_ground_rock_diff_1k.jpg",
+        "sha256": "c14761998b32630dd193b0fbfd31c8c6f5a144a701b84f87f9d7c33596cc554f",
+        "bytes": 599629
+      },
+      {
+        "file": "aerial_ground_rock-normal.jpg",
+        "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/aerial_ground_rock/aerial_ground_rock_nor_gl_1k.jpg",
+        "sha256": "f2eb54b43510bb96391c690e40a7fb78f5c5d9dbbb0f00fd26e4cd9aff2aa4d9",
+        "bytes": 613846
+      }
+    ]
+  }
+]

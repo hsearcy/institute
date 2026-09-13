@@ -1,0 +1,4502 @@
+{
+  "errors": [],
+  "scenes": [
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 0,
+      "region": "mosswood",
+      "enemies": 6,
+      "articulatedEnemies": 6,
+      "enemyRoster": {
+        "guardian": 1,
+        "skeleton": 3,
+        "revenant": 1,
+        "wraith": 1
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 53,
+      "triangles": 652982,
+      "particles": 50,
+      "fragments": 0,
+      "hero": [
+        -1.4,
+        0,
+        1.4
+      ],
+      "softwareRenderer": false,
+      "fps": 16,
+      "quality": "full",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-forest",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 234,
+        "textures": 148
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 1,
+      "region": "mosswood",
+      "enemies": 7,
+      "articulatedEnemies": 7,
+      "enemyRoster": {
+        "guardian": 1,
+        "skeleton": 4,
+        "revenant": 2
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 85,
+      "triangles": 1720374,
+      "particles": 51,
+      "fragments": 0,
+      "hero": [
+        -0.6024266209559578,
+        0,
+        -18.587157224716833
+      ],
+      "softwareRenderer": false,
+      "fps": 60,
+      "quality": "full",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-forest",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 233,
+        "textures": 136
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 2,
+      "region": "mosswood",
+      "enemies": 8,
+      "articulatedEnemies": 8,
+      "enemyRoster": {
+        "guardian": 2,
+        "revenant": 2,
+        "skeleton": 3,
+        "wraith": 1
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 60,
+      "triangles": 873457,
+      "particles": 51,
+      "fragments": 0,
+      "hero": [
+        1.3,
+        0,
+        -38.6
+      ],
+      "softwareRenderer": false,
+      "fps": 22,
+      "quality": "full",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-forest",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 246,
+        "textures": 150
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 3,
+      "region": "mosswood",
+      "enemies": 8,
+      "articulatedEnemies": 8,
+      "enemyRoster": {
+        "guardian": 2,
+        "skeleton": 4,
+        "revenant": 2
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 55,
+      "triangles": 960057,
+      "particles": 34,
+      "fragments": 0,
+      "hero": [
+        -0.8,
+        0,
+        -58.6
+      ],
+      "softwareRenderer": false,
+      "fps": 2,
+      "quality": "full",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-forest",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 245,
+        "textures": 137
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 4,
+      "region": "mosswood",
+      "enemies": 9,
+      "articulatedEnemies": 9,
+      "enemyRoster": {
+        "guardian": 2,
+        "wraith": 2,
+        "revenant": 2,
+        "skeleton": 3
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 61,
+      "triangles": 890553,
+      "particles": 31,
+      "fragments": 0,
+      "hero": [
+        -1.5,
+        0,
+        -78.6
+      ],
+      "softwareRenderer": false,
+      "fps": 26,
+      "quality": "full",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-forest",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 258,
+        "textures": 150
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 5,
+      "region": "mosswood",
+      "enemies": 10,
+      "articulatedEnemies": 10,
+      "enemyRoster": {
+        "vault-guardian-boss": 1,
+        "revenant": 3,
+        "skeleton": 5,
+        "guardian": 1
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 51,
+      "triangles": 1122669,
+      "particles": 25,
+      "fragments": 0,
+      "hero": [
+        0.8,
+        0,
+        -98.6
+      ],
+      "softwareRenderer": false,
+      "fps": 1,
+      "quality": "balanced",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-forest",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 252,
+        "textures": 142
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 0,
+      "region": "tidebreak",
+      "enemies": 6,
+      "articulatedEnemies": 6,
+      "enemyRoster": {
+        "guardian": 1,
+        "skeleton": 3,
+        "revenant": 1,
+        "wraith": 1
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 52,
+      "triangles": 600518,
+      "particles": 43,
+      "fragments": 0,
+      "hero": [
+        1.5,
+        0,
+        1.4
+      ],
+      "softwareRenderer": false,
+      "fps": 36,
+      "quality": "balanced",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-coast",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 235,
+        "textures": 151
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 1,
+      "region": "tidebreak",
+      "enemies": 7,
+      "articulatedEnemies": 7,
+      "enemyRoster": {
+        "guardian": 1,
+        "skeleton": 4,
+        "revenant": 2
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 54,
+      "triangles": 789684,
+      "particles": 56,
+      "fragments": 0,
+      "hero": [
+        0.5032910323395136,
+        0,
+        -18.585639220382745
+      ],
+      "softwareRenderer": false,
+      "fps": 56,
+      "quality": "balanced",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-coast",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 234,
+        "textures": 139
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 2,
+      "region": "tidebreak",
+      "enemies": 8,
+      "articulatedEnemies": 8,
+      "enemyRoster": {
+        "guardian": 2,
+        "revenant": 2,
+        "skeleton": 3,
+        "wraith": 1
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 61,
+      "triangles": 795431,
+      "particles": 52,
+      "fragments": 0,
+      "hero": [
+        -1.2,
+        0,
+        -38.6
+      ],
+      "softwareRenderer": false,
+      "fps": 39,
+      "quality": "balanced",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-coast",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 247,
+        "textures": 153
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 3,
+      "region": "tidebreak",
+      "enemies": 8,
+      "articulatedEnemies": 8,
+      "enemyRoster": {
+        "guardian": 2,
+        "skeleton": 4,
+        "revenant": 2
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 55,
+      "triangles": 881483,
+      "particles": 48,
+      "fragments": 0,
+      "hero": [
+        0.9,
+        0,
+        -58.6
+      ],
+      "softwareRenderer": false,
+      "fps": 20,
+      "quality": "balanced",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-coast",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 246,
+        "textures": 140
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 4,
+      "region": "tidebreak",
+      "enemies": 9,
+      "articulatedEnemies": 9,
+      "enemyRoster": {
+        "guardian": 2,
+        "wraith": 2,
+        "revenant": 2,
+        "skeleton": 3
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 61,
+      "triangles": 811823,
+      "particles": 39,
+      "fragments": 0,
+      "hero": [
+        1.4,
+        0,
+        -78.6
+      ],
+      "softwareRenderer": false,
+      "fps": 28,
+      "quality": "balanced",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-coast",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 260,
+        "textures": 153
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 5,
+      "region": "tidebreak",
+      "enemies": 10,
+      "articulatedEnemies": 10,
+      "enemyRoster": {
+        "vault-guardian-boss": 1,
+        "revenant": 3,
+        "skeleton": 5,
+        "guardian": 1
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 52,
+      "triangles": 1071269,
+      "particles": 40,
+      "fragments": 0,
+      "hero": [
+        -0.8,
+        0,
+        -98.6
+      ],
+      "softwareRenderer": false,
+      "fps": 29,
+      "quality": "balanced",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-coast",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 253,
+        "textures": 142
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 0,
+      "region": "old-quarry",
+      "enemies": 6,
+      "articulatedEnemies": 6,
+      "enemyRoster": {
+        "guardian": 1,
+        "skeleton": 3,
+        "revenant": 1,
+        "wraith": 1
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 51,
+      "triangles": 602134,
+      "particles": 46,
+      "fragments": 0,
+      "hero": [
+        0.4,
+        0,
+        1.4
+      ],
+      "softwareRenderer": false,
+      "fps": 31,
+      "quality": "balanced",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-quarry",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 233,
+        "textures": 150
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 1,
+      "region": "old-quarry",
+      "enemies": 7,
+      "articulatedEnemies": 7,
+      "enemyRoster": {
+        "guardian": 1,
+        "skeleton": 4,
+        "revenant": 2
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 51,
+      "triangles": 791898,
+      "particles": 70,
+      "fragments": 0,
+      "hero": [
+        -1.5992115190455098,
+        0,
+        -18.580506477338183
+      ],
+      "softwareRenderer": false,
+      "fps": 60,
+      "quality": "balanced",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-quarry",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 231,
+        "textures": 138
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 2,
+      "region": "old-quarry",
+      "enemies": 8,
+      "articulatedEnemies": 8,
+      "enemyRoster": {
+        "guardian": 2,
+        "revenant": 2,
+        "skeleton": 3,
+        "wraith": 1
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 58,
+      "triangles": 797849,
+      "particles": 50,
+      "fragments": 0,
+      "hero": [
+        -0.5,
+        0,
+        -38.6
+      ],
+      "softwareRenderer": false,
+      "fps": 20,
+      "quality": "balanced",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-quarry",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 243,
+        "textures": 152
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 3,
+      "region": "old-quarry",
+      "enemies": 8,
+      "articulatedEnemies": 8,
+      "enemyRoster": {
+        "guardian": 2,
+        "skeleton": 4,
+        "revenant": 2
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 52,
+      "triangles": 883697,
+      "particles": 39,
+      "fragments": 0,
+      "hero": [
+        1.2,
+        0,
+        -58.6
+      ],
+      "softwareRenderer": false,
+      "fps": 35,
+      "quality": "balanced",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-quarry",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 241,
+        "textures": 139
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 4,
+      "region": "old-quarry",
+      "enemies": 9,
+      "articulatedEnemies": 9,
+      "enemyRoster": {
+        "guardian": 2,
+        "wraith": 2,
+        "revenant": 2,
+        "skeleton": 3
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 58,
+      "triangles": 813597,
+      "particles": 34,
+      "fragments": 0,
+      "hero": [
+        0.5,
+        0,
+        -78.6
+      ],
+      "softwareRenderer": false,
+      "fps": 21,
+      "quality": "balanced",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-quarry",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 254,
+        "textures": 152
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 5,
+      "region": "old-quarry",
+      "enemies": 10,
+      "articulatedEnemies": 10,
+      "enemyRoster": {
+        "vault-guardian-boss": 1,
+        "revenant": 3,
+        "skeleton": 5,
+        "guardian": 1
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 50,
+      "triangles": 1071865,
+      "particles": 30,
+      "fragments": 0,
+      "hero": [
+        -1.2,
+        0,
+        -98.6
+      ],
+      "softwareRenderer": false,
+      "fps": 19,
+      "quality": "balanced",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-quarry",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 247,
+        "textures": 141
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 0,
+      "region": "kingsgarden",
+      "enemies": 6,
+      "articulatedEnemies": 6,
+      "enemyRoster": {
+        "guardian": 1,
+        "skeleton": 3,
+        "revenant": 1,
+        "wraith": 1
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 56,
+      "triangles": 628030,
+      "particles": 43,
+      "fragments": 0,
+      "hero": [
+        -0.5,
+        0,
+        1.4
+      ],
+      "softwareRenderer": false,
+      "fps": 43,
+      "quality": "balanced",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-garden",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 238,
+        "textures": 151
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 1,
+      "region": "kingsgarden",
+      "enemies": 7,
+      "articulatedEnemies": 7,
+      "enemyRoster": {
+        "guardian": 1,
+        "skeleton": 4,
+        "revenant": 2
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 57,
+      "triangles": 830306,
+      "particles": 41,
+      "fragments": 0,
+      "hero": [
+        1.599677974018207,
+        0,
+        -18.588085038673654
+      ],
+      "softwareRenderer": false,
+      "fps": 53,
+      "quality": "balanced",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-garden",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 238,
+        "textures": 139
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 2,
+      "region": "kingsgarden",
+      "enemies": 8,
+      "articulatedEnemies": 8,
+      "enemyRoster": {
+        "guardian": 2,
+        "revenant": 2,
+        "skeleton": 3,
+        "wraith": 1
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 65,
+      "triangles": 836697,
+      "particles": 34,
+      "fragments": 0,
+      "hero": [
+        0.5,
+        0,
+        -38.6
+      ],
+      "softwareRenderer": false,
+      "fps": 5,
+      "quality": "balanced",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-garden",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 253,
+        "textures": 153
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 3,
+      "region": "kingsgarden",
+      "enemies": 8,
+      "articulatedEnemies": 8,
+      "enemyRoster": {
+        "guardian": 2,
+        "skeleton": 4,
+        "revenant": 2
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 58,
+      "triangles": 922105,
+      "particles": 33,
+      "fragments": 0,
+      "hero": [
+        -1.3,
+        0,
+        -58.6
+      ],
+      "softwareRenderer": false,
+      "fps": 32,
+      "quality": "balanced",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-garden",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 253,
+        "textures": 140
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 4,
+      "region": "kingsgarden",
+      "enemies": 9,
+      "articulatedEnemies": 9,
+      "enemyRoster": {
+        "guardian": 2,
+        "wraith": 2,
+        "revenant": 2,
+        "skeleton": 3
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 52,
+      "triangles": 852992,
+      "particles": 6,
+      "fragments": 0,
+      "hero": [
+        -0.4,
+        0,
+        -78.6
+      ],
+      "softwareRenderer": false,
+      "fps": 2,
+      "quality": "performance",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-garden",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 268,
+        "textures": 142
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 5,
+      "region": "kingsgarden",
+      "enemies": 10,
+      "articulatedEnemies": 10,
+      "enemyRoster": {
+        "vault-guardian-boss": 1,
+        "revenant": 3,
+        "skeleton": 5,
+        "guardian": 1
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 40,
+      "triangles": 1097532,
+      "particles": 18,
+      "fragments": 0,
+      "hero": [
+        1.2,
+        0,
+        -98.6
+      ],
+      "softwareRenderer": false,
+      "fps": 45,
+      "quality": "performance",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "outdoors": "Outdoor-garden",
+      "legacyVisible": false,
+      "memory": {
+        "geometries": 261,
+        "textures": 131
+      }
+    },
+    {
+      "appearance": "wayfarer",
+      "heroModelId": "tripo-hero-game",
+      "heroWalkCycle": {
+        "strideDistance": 1.5936590900247372,
+        "duration": 1.1666666269302368
+      },
+      "drawWarmup": {
+        "programs": 143,
+        "durationMs": 2383
+      },
+      "lastAttack": {
+        "spellId": "cleave",
+        "effect": "cleave",
+        "options": {
+          "combat": {
+            "damage": 43,
+            "powerPercent": 100,
+            "coverage": 5,
+            "enemiesBefore": [
+              {
+                "id": "enemy-0",
+                "hp": 12,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 6,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 8,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 10,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "enemiesAfter": [
+              {
+                "id": "enemy-0",
+                "hp": 0,
+                "maxHp": 12
+              },
+              {
+                "id": "enemy-1",
+                "hp": 0,
+                "maxHp": 6
+              },
+              {
+                "id": "enemy-2",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-3",
+                "hp": 0,
+                "maxHp": 8
+              },
+              {
+                "id": "enemy-4",
+                "hp": 0,
+                "maxHp": 10
+              },
+              {
+                "id": "enemy-5",
+                "hp": 6,
+                "maxHp": 6
+              }
+            ],
+            "hits": [
+              {
+                "enemyId": "enemy-0",
+                "damage": 12,
+                "hpBefore": 12,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-1",
+                "damage": 6,
+                "hpBefore": 6,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-2",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-3",
+                "damage": 8,
+                "hpBefore": 8,
+                "hpAfter": 0
+              },
+              {
+                "enemyId": "enemy-4",
+                "damage": 10,
+                "hpBefore": 10,
+                "hpAfter": 0
+              }
+            ],
+            "defeatedIds": [
+              "enemy-0",
+              "enemy-1",
+              "enemy-2",
+              "enemy-3",
+              "enemy-4"
+            ],
+            "encounterCleared": false,
+            "remainingEnemies": 1
+          },
+          "echo": false,
+          "wide": true,
+          "burning": false,
+          "shards": false,
+          "chains": false,
+          "pierce": false,
+          "orbit": false,
+          "summon": false,
+          "itemId": "moonstaff",
+          "kills": 5,
+          "xp": 32
+        }
+      },
+      "lastSpellId": "cleave",
+      "lastSpellEffect": "cleave",
+      "heroAnimation": "idle",
+      "heroClips": [
+        "idle",
+        "walk",
+        "cleave",
+        "cast"
+      ],
+      "encounter": 0,
+      "region": "embercrypt",
+      "enemies": 6,
+      "articulatedEnemies": 6,
+      "enemyRoster": {
+        "guardian": 1,
+        "skeleton": 3,
+        "revenant": 1,
+        "wraith": 1
+      },
+      "attacking": false,
+      "paused": false,
+      "modelsLoaded": 42,
+      "drawCalls": 128,
+      "triangles": 968692,
+      "particles": 54,
+      "fragments": 0,
+      "hero": [
+        0,
+        0,
+        1.4
+      ],
+      "softwareRenderer": false,
+      "fps": 36,
+      "quality": "performance",
+      "renderer": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+      "legacyVisible": true,
+      "memory": {
+        "geometries": 223,
+        "textures": 137
+      }
+    }
+  ],
+  "casts": [
+    "mosswood",
+    "tidebreak",
+    "old-quarry",
+    "kingsgarden"
+  ]
+}

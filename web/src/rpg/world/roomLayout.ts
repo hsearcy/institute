@@ -87,8 +87,57 @@ const roomSpecs: readonly RoomSpec[] = [
 ];
 const layouts: readonly RoomLayout[] = roomSpecs.map((spec, index) => room(spec, roomSpecs[index - 1]));
 
-export function getRoomLayout(roomIndex: number): RoomLayout {
-  return layouts[Number.isFinite(roomIndex) ? Math.max(0, Math.min(5, Math.trunc(roomIndex))) : 0];
+/** Each outdoor route has its own staging and pack positions. Scenery belongs
+ * outside this open combat floor; room three has solid ground in these areas. */
+type OutdoorSpec = readonly [name: string, heroX: number, doorX: number, anchors: readonly RoomPoint[], landmark: string];
+const outdoorSpecs: Readonly<Record<string, readonly OutdoorSpec[]>> = {
+  mosswood: [
+    ['The Fern Trail', -1.4, -2.0, [{ x: -3.8, z: -3 }, { x: 3.4, z: -4.8 }, { x: 3.5, z: 4.5 }], 'old-oak'],
+    ['The Fallen Oak', -.6, 1.5, [{ x: 4.2, z: -3.6 }, { x: -3.8, z: -4.8 }, { x: -4, z: 4.2 }], 'fallen-trunk'],
+    ['The Moonlit Clearing', 1.3, 2.1, [{ x: -4.2, z: -2.5 }, { x: 3.5, z: -5 }, { x: -3.8, z: 4.4 }], 'moon-stones'],
+    ['The Root Passage', -.8, -1.7, [{ x: -3.3, z: -4.8 }, { x: 3.5, z: -2 }, { x: -3.8, z: 4.6 }], 'root-arch'],
+    ['The Ancient Grove', -1.5, .8, [{ x: 3.8, z: -4.5 }, { x: -3.8, z: -1.8 }, { x: 3.5, z: 4.3 }], 'standing-stones'],
+    ['The Heartwood Circle', .8, 0, [{ x: -3.8, z: -3.1 }, { x: 3.8, z: -2.8 }, { x: -3.5, z: 4.5 }], 'heartwood-tree'],
+  ],
+  tidebreak: [
+    ['The Driftwood Shore', 1.5, 2.2, [{ x: -4, z: -3.5 }, { x: 3.5, z: -4.8 }, { x: -3.8, z: 4.3 }], 'driftwood'],
+    ['The Salt Pools', .5, -1.5, [{ x: -3.7, z: -4.6 }, { x: 4.2, z: -2.5 }, { x: -3.6, z: 4.6 }], 'tide-pool'],
+    ['The Wreck Beach', -1.2, -2, [{ x: 3.6, z: -3 }, { x: -4, z: -5 }, { x: 3.8, z: 4.5 }], 'shipwreck'],
+    ['The Sea Arch', .9, 1.8, [{ x: -4.2, z: -3.4 }, { x: 3.6, z: -5 }, { x: 3.8, z: 4.2 }], 'sea-arch'],
+    ['The Gull Cliffs', 1.4, -.7, [{ x: -3.8, z: -4.8 }, { x: 3.5, z: -2.2 }, { x: -3.6, z: 4.6 }], 'gull-stack'],
+    ['The Stormwatch Point', -.8, 0, [{ x: -3.5, z: -2.8 }, { x: 4, z: -3.5 }, { x: 3.8, z: 4.6 }], 'beacon'],
+  ],
+  'old-quarry': [
+    ['The Cart Road', .4, -1.3, [{ x: 4, z: -3.4 }, { x: -3.6, z: -5.2 }, { x: -3.7, z: 4.6 }], 'ore-cart'],
+    ['The Split Boulder', -1.6, -2.2, [{ x: -3.6, z: -2.8 }, { x: 3.9, z: -4.6 }, { x: 3.6, z: 4.5 }], 'split-boulder'],
+    ['The Cutting Yard', -.5, 1.6, [{ x: 3.7, z: -4.8 }, { x: -4.3, z: -3 }, { x: 3.8, z: 4.4 }], 'cut-stone'],
+    ['The Broken Crane', 1.2, 2.2, [{ x: -3.8, z: -4.8 }, { x: 4.1, z: -2.6 }, { x: -3.9, z: 4.2 }], 'crane'],
+    ['The Redstone Basin', .5, -1.4, [{ x: -4, z: -2.4 }, { x: 3.8, z: -5 }, { x: -3.5, z: 4.6 }], 'redstone-spire'],
+    ['The Foreman Terrace', -1.2, 0, [{ x: -3.8, z: -3.6 }, { x: 3.8, z: -2.8 }, { x: 3.6, z: 4.2 }], 'stone-monolith'],
+  ],
+  kingsgarden: [
+    ['The Rose Walk', -.5, 1.4, [{ x: -4, z: -4.8 }, { x: 3.8, z: -2.8 }, { x: 3.5, z: 4.4 }], 'rose-arbour'],
+    ['The Silent Fountain', 1.6, 2.3, [{ x: -4.1, z: -3.2 }, { x: 3.6, z: -5 }, { x: -3.7, z: 4.5 }], 'fountain'],
+    ['The Cypress Walk', .5, -1.7, [{ x: 3.8, z: -4.6 }, { x: -3.7, z: -2.8 }, { x: -3.8, z: 4.3 }], 'cypress'],
+    ['The Overgrown Court', -1.3, -2.1, [{ x: 4.1, z: -3.2 }, { x: -3.6, z: -5 }, { x: 3.9, z: 4.5 }], 'broken-statue'],
+    ['The Marble Steps', -.4, 1.4, [{ x: -3.9, z: -4.6 }, { x: 3.5, z: -2.5 }, { x: 3.8, z: 4.3 }], 'marble-column'],
+    ['The Crown Pavilion', 1.2, 0, [{ x: -4, z: -2.8 }, { x: 3.6, z: -3.8 }, { x: -3.8, z: 4.6 }], 'crown-pavilion'],
+  ],
+};
+const outdoorLayouts = new Map(Object.entries(outdoorSpecs).map(([region, entries]) => {
+  const specs: RoomSpec[] = entries.map(([name, heroX, doorX, hordeAnchors, landmark], index) => ({
+    id: `${region}-${index}`, name, heroX, doorX, sideWallX: 12, sideWallWidth: 0,
+    wallHeights: { left: 0, right: 0, back: 0 },
+    walkable: { minX: -6.8, maxX: 6.8, minZ: -7.4, maxZ: 7.6 },
+    landmarks: [{ id: landmark, x: index % 2 ? -9 : 9, z: -4, radius: 1.7 }],
+    hordeAnchors, ...(index === 5 ? { bossAnchor: { x: -.4 * heroX, z: -4.5 } } : {}),
+  }));
+  return [region, specs.map((spec, index) => room(spec, specs[index - 1]))];
+}));
+
+export function getRoomLayout(roomIndex: number, regionId?: string): RoomLayout {
+  const selected = regionId ? outdoorLayouts.get(regionId) ?? layouts : layouts;
+  return selected[Number.isFinite(roomIndex) ? Math.max(0, Math.min(5, Math.trunc(roomIndex))) : 0];
 }
 
 function distanceToBounds(point: RoomPoint, bounds: RoomBounds): number {
@@ -115,8 +164,8 @@ export function enemyScreenEnvelope(point: RoomPoint, index: number, roomIndex: 
 }
 
 /** Stable small formations respect floor, route and projected body clearance. */
-export function enemyPositions(roomIndex: number, count: number): RoomPoint[] {
-  const layout = getRoomLayout(roomIndex);
+export function enemyPositions(roomIndex: number, count: number, regionId?: string): RoomPoint[] {
+  const layout = getRoomLayout(roomIndex, regionId);
   const wanted = Number.isFinite(count) ? Math.max(0, Math.min(MAX_ROOM_ENEMIES, Math.trunc(count))) : 0;
   if (!wanted) return [];
   const result: RoomPoint[] = layout.bossAnchor ? [{ ...layout.bossAnchor }] : [];

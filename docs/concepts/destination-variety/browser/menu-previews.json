@@ -1,0 +1,22 @@
+[
+  {
+    "url": "http://127.0.0.1:5188/assets/rpg/outdoors/mosswood-preview.jpg",
+    "width": 960,
+    "height": 600
+  },
+  {
+    "url": "http://127.0.0.1:5188/assets/rpg/outdoors/tidebreak-preview.jpg",
+    "width": 960,
+    "height": 600
+  },
+  {
+    "url": "http://127.0.0.1:5188/assets/rpg/outdoors/old-quarry-preview.jpg",
+    "width": 960,
+    "height": 600
+  },
+  {
+    "url": "http://127.0.0.1:5188/assets/rpg/outdoors/kingsgarden-preview.jpg",
+    "width": 720,
+    "height": 450
+  }
+]

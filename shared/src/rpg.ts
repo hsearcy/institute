@@ -89,11 +89,16 @@ export const RPG_SKILLS: readonly RpgSkill[] = [
   { id: 'tempest', name: 'Tempest', description: 'Unlock a sky full of lightning strikes.', school: 'storm', spellId: 'tempest', parentId: 'thunderclap', level: 10, maxRank: 1, kind: 'unlock', scope: 'spell', powerPerRank: 0 },
   { id: 'tempest_overcharge', name: 'Overcharge', description: 'Tempest gains follow-up chain lightning. Deal 4 more damage per target per rank.', school: 'storm', spellId: 'tempest', parentId: 'tempest', level: 12, maxRank: 2, kind: 'modifier', scope: 'spell', powerPerRank: 4, effect: 'chain' },
 ];
-export interface RpgRegion { id: string; name: string; subtitle: string; color: string; requiredClears: number; bossName: string; relicSchool: RpgSchoolId }
+export type RpgEnvironment = 'vault' | 'forest' | 'coast' | 'quarry' | 'garden';
+export interface RpgRegion { id: string; name: string; subtitle: string; color: string; requiredClears: number; bossName: string; relicSchool: RpgSchoolId | null; environment?: RpgEnvironment; combatDifficulty?: number }
 export const RPG_REGIONS: readonly RpgRegion[] = [
-  { id: 'embercrypt', name: 'The Embercrypt', subtitle: 'Break the curse beneath the old keep', color: '#ff9f51', requiredClears: 0, bossName: 'The Hollow King', relicSchool: 'ember' },
-  { id: 'frostvault', name: 'Frostbound Vault', subtitle: 'Awaken the frozen halls', color: '#74d9ff', requiredClears: 1, bossName: 'The Crystal Warden', relicSchool: 'frost' },
-  { id: 'stormspire', name: 'The Storm Spire', subtitle: 'Climb into the heart of the storm', color: '#bb9cff', requiredClears: 3, bossName: 'The Thunder Colossus', relicSchool: 'storm' },
+  { id: 'embercrypt', name: 'The Embercrypt', subtitle: 'Break the curse beneath the old keep', color: '#ff9f51', requiredClears: 0, bossName: 'The Hollow King', relicSchool: 'ember', environment: 'vault', combatDifficulty: 0 },
+  { id: 'frostvault', name: 'Frostbound Vault', subtitle: 'Awaken the frozen halls', color: '#74d9ff', requiredClears: 1, bossName: 'The Crystal Warden', relicSchool: 'frost', environment: 'vault', combatDifficulty: 1 },
+  { id: 'stormspire', name: 'The Storm Spire', subtitle: 'Climb into the heart of the storm', color: '#bb9cff', requiredClears: 3, bossName: 'The Thunder Colossus', relicSchool: 'storm', environment: 'vault', combatDifficulty: 2 },
+  { id: 'mosswood', name: 'Mosswood Ruins', subtitle: 'Follow the forest trail through fallen stone arches', color: '#91be75', requiredClears: 0, bossName: 'The Rootbound King', relicSchool: null, environment: 'forest', combatDifficulty: 0 },
+  { id: 'tidebreak', name: 'Tidebreak Coast', subtitle: 'Cross the rocky shore beneath the open sky', color: '#78c6c8', requiredClears: 0, bossName: 'The Tidemark Warden', relicSchool: null, environment: 'coast', combatDifficulty: 0 },
+  { id: 'old-quarry', name: 'The Old Quarry', subtitle: 'Descend between broken cliffs and abandoned workings', color: '#c3a16e', requiredClears: 0, bossName: 'The Iron Overseer', relicSchool: null, environment: 'quarry', combatDifficulty: 0 },
+  { id: 'kingsgarden', name: 'The King’s Garden', subtitle: 'Walk the wild courtyards of a ruined palace', color: '#b0b983', requiredClears: 0, bossName: 'The Thorn Regent', relicSchool: null, environment: 'garden', combatDifficulty: 0 },
 ];
 export interface RpgItem {
   id: string; name: string; rarity: RpgRarity; description: string; power: number;
@@ -166,6 +171,12 @@ export function rpgRelicDrop(state: RelicProgress, regionId: string, encounterIn
   const pool = RPG_ITEMS.filter(item => item.id !== 'apprentice' && item.requiredClears <= state.expeditionsCompleted
     && (boss || item.rarity !== 'legendary'));
   const missing = pool.filter(item => !state.inventory.includes(item.id));
+  // Open-air areas share every school. Prefer an uncollected relic, with no
+  // elemental bias. Keep the same rule in forecasts and server rewards.
+  if (!region.relicSchool) {
+    const choices = missing.length ? missing : pool;
+    return choices[(state.expeditionsCompleted + encounterIndex) % choices.length] ?? null;
+  }
   return missing.find(item => item.school === region.relicSchool)
     ?? missing.find(item => item.scope === 'all')
     ?? missing[0]
@@ -188,7 +199,7 @@ export function rpgNextRelicHunt(state: RpgState, regionId: string): RpgRelicHun
     const item = rpgRelicDrop(progress, regionId, room);
     if (item) {
       const duplicate = progress.inventory.includes(item.id);
-      const hunt = { regionId, itemId: item.id, encounterIndex: room, regional: item.school === region.relicSchool, duplicate };
+      const hunt = { regionId, itemId: item.id, encounterIndex: room, regional: !!region.relicSchool && item.school === region.relicSchool, duplicate };
       if (!duplicate) return hunt;
       nextDuplicate ??= hunt;
     }
@@ -266,7 +277,7 @@ export function rpgEncounterCombat(state: Pick<RpgState, 'expedition'> & Partial
   if (saved?.version === 1 && saved.encounterIndex === room) {
     return { ...saved, enemies: saved.enemies.map(enemy => ({ ...enemy })) };
   }
-  const region = Math.max(0, RPG_REGIONS.findIndex(entry => entry.id === state.expedition?.regionId));
+  const difficulty = RPG_REGIONS.find(entry => entry.id === state.expedition?.regionId)?.combatDifficulty ?? 0;
   // Ease new heroes into a horde: three enemies at level one, then one more
   // per level. Saved rooms above return untouched, even after a level-up.
   const levelCap = state.level !== undefined && Number.isFinite(state.level)
@@ -274,7 +285,7 @@ export function rpgEncounterCombat(state: Pick<RpgState, 'expedition'> & Partial
   const count = Math.min([6, 7, 8, 8, 9, 10][room], levelCap);
   return { version: 1, encounterIndex: room, casts: 0, enemies: Array.from({ length: count }, (_, index) => {
     const boss = room === 5 && index === 0;
-    const baseHp = (boss ? 36 : index % 7 === 0 ? 12 : [6, 6, 8, 8, 10][index % 5]) + region * (boss ? 8 : 2) + Math.floor(room / 2) * (boss ? 0 : 2);
+    const baseHp = (boss ? 36 : index % 7 === 0 ? 12 : [6, 6, 8, 8, 10][index % 5]) + difficulty * (boss ? 8 : 2) + Math.floor(room / 2) * (boss ? 0 : 2);
     const maxHp = Math.ceil(baseHp * (1.4 ** (rpgTier(state.expedition?.tier) - 1)));
     return { id: `enemy-${index}`, hp: maxHp, maxHp };
   }) };

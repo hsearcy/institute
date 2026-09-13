@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { RPG_ITEMS, RPG_REGIONS, rpgNextRelicHunt, rpgRelicDrop, type RpgState } from './rpg';
+import { RPG_ITEMS, RPG_REGIONS, rpgNextRelicHunt, rpgRelicDrop, rpgEncounterCombat, type RpgState } from './rpg';
 
 const state = (overrides: Partial<RpgState> = {}): RpgState => ({
   profileId: 'hunt-test', xp: 0, level: 1, xpIntoLevel: 0, xpForNextLevel: 90, skillPoints: 0,
@@ -67,4 +67,46 @@ test('Resumed and completed expeditions forecast the proper room without mutatin
   expect(rpgRelicDrop(complete, 'stormspire', 2)?.id).toBe(hunt.itemId);
   expect(rpgNextRelicHunt(progress, 'missing-region')).toBeNull();
   for (const room of [-1, .5, 6, NaN]) expect(rpgRelicDrop(progress, 'embercrypt', room)).toBeNull();
+});
+
+
+test('Outdoor destinations are available from the start and offer every relic school', () => {
+  const outdoor = RPG_REGIONS.filter(region => region.environment !== 'vault');
+  expect(outdoor.map(region => region.id)).toEqual(['mosswood', 'tidebreak', 'old-quarry', 'kingsgarden']);
+  for (const region of outdoor) {
+    expect(region.requiredClears).toBe(0);
+    expect(region.relicSchool).toBeNull();
+    const progress = state({ expeditionsCompleted: 0, inventory: ['apprentice'] });
+    const schools = new Set<string>();
+    for (let clear = 0; clear < 8; clear++) {
+      progress.expeditionsCompleted = clear;
+      for (const room of [2, 5]) {
+        progress.expedition = { id: 'outdoor', regionId: region.id, encounterIndex: room, encountersTotal: 6, cleared: false, startedAt: 1 };
+        const item = rpgRelicDrop(progress, region.id, room)!;
+        const hunt = rpgNextRelicHunt(progress, region.id)!;
+        if (!progress.inventory.includes(item.id)) expect(hunt).toMatchObject({ itemId: item.id, encounterIndex: room, regional: false });
+        if (item.school) schools.add(item.school);
+        progress.inventory.push(item.id);
+      }
+    }
+    expect([...schools].sort()).toEqual(['ember', 'frost', 'storm']);
+  }
+});
+
+test('Destination order does not raise combat difficulty and existing vault health stays stable', () => {
+  function combat(regionId: string, room: number, tier = 1) {
+    return rpgEncounterCombat({ level: 10, expedition: { id: 'difficulty', regionId, encounterIndex: room, encountersTotal: 6, cleared: false, startedAt: 1, tier } });
+  }
+  expect(combat('embercrypt', 0).enemies[0].maxHp).toBe(12);
+  expect(combat('frostvault', 0).enemies[0].maxHp).toBe(14);
+  expect(combat('stormspire', 5).enemies[0].maxHp).toBe(52);
+  for (const region of RPG_REGIONS.filter(region => !region.relicSchool)) {
+    for (let room = 0; room < 6; room++) {
+      expect(combat(region.id, room)).toEqual(combat('embercrypt', room));
+      expect(combat(region.id, room, 2).enemies[0].maxHp).toBeGreaterThan(combat(region.id, room).enemies[0].maxHp);
+    }
+  }
+  const saved = combat('mosswood', 0);
+  saved.enemies[0].hp = 3;
+  expect(rpgEncounterCombat({ expedition: { id: 'resume', regionId: 'mosswood', encounterIndex: 0, encountersTotal: 6, cleared: false, startedAt: 1, combat: saved } })).toEqual(saved);
 });

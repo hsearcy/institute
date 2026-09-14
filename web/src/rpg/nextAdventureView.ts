@@ -1,4 +1,4 @@
-import {RPG_REGIONS, rpgUnlockedTier, rpgTier, rpgBossBonusChance, rpgLootPowerRange, rpgDungeonForgeDust, type RpgState} from '@institute/shared';
+import {RPG_REGIONS, rpgUnlockedTier, rpgBossBonusChance, rpgLootPowerRange, rpgDungeonForgeDust, type RpgState} from '@institute/shared';
 import {escapeHtml as esc, icon} from './icons';
 
 export interface NextAdventure {regionId: string; tier: number}
@@ -7,7 +7,7 @@ export function chooseNextAdventure(state: RpgState, random: () => number = Math
   const different=unlocked.filter(region=>region.id!==state.expedition?.regionId);
   const choices=different.length?different:unlocked;
   const roll=random(), index=Math.floor((Number.isFinite(roll)?Math.max(0,Math.min(.999999,roll)):0)*choices.length);
-  return {regionId:choices[index].id,tier:Math.min(rpgUnlockedTier(state),rpgTier(state.expedition?.tier??state.dungeonTier))};
+  return {regionId:choices[index].id,tier:rpgUnlockedTier(state)};
 }
 export function tierRewards(tier: number): string {
   const range=rpgLootPowerRange(tier,true),chance=(rpgBossBonusChance(tier)*100).toFixed(1).replace(/\.0$/,'');

@@ -238,10 +238,19 @@ test('victory offers unlocked destinations, one selected area, and all lower tie
 });
 
 
-test('the default next area changes with the random draw, excludes the cleared area, and stays at the played tier', async () => {
+test('the default next area changes with the random draw, excludes the cleared area, and selects the highest unlocked tier', async () => {
   const {chooseNextAdventure}=await import('../src/rpg/nextAdventureView');
   const state=fixture();state.expedition={id:'done',regionId:'embercrypt',tier:1,encounterIndex:5,encountersTotal:6,startedAt:0,cleared:true};
   const first=chooseNextAdventure(state,()=>0),last=chooseNextAdventure(state,()=>.99999);
   expect(first.regionId).not.toBe('embercrypt');expect(last.regionId).not.toBe(first.regionId);
-  expect(first.tier).toBe(1);expect(state.expedition.regionId).toBe('embercrypt');
+  expect(first.tier).toBe(2);expect(last.tier).toBe(2);expect(state.expedition.regionId).toBe('embercrypt');
+});
+
+test('next dungeon defaults to the highest unlocked tier after a lower-tier clear and caps at 100', async () => {
+  const {chooseNextAdventure}=await import('../src/rpg/nextAdventureView');
+  const state=fixture();state.bestTier=20;state.dungeonTier=2;
+  state.expedition={id:'done',regionId:'embercrypt',tier:2,encounterIndex:5,encountersTotal:6,startedAt:0,cleared:true};
+  expect(chooseNextAdventure(state).tier).toBe(21);
+  state.bestTier=100;
+  expect(chooseNextAdventure(state).tier).toBe(100);
 });

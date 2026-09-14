@@ -29,14 +29,14 @@ try {
    db.query("UPDATE rpg_profiles SET state_json=? WHERE profile_id='rpg-archmage'").run(JSON.stringify(s));db.close();`,db,String(tier)],{cwd:root});assert.equal(seed.status,0,seed.stderr.toString());
   await page.evaluate(async()=>{const g=window.__game;g.state=await fetch('/rpg/state?profileId=rpg-archmage').then(r=>r.json());g.session=null;g.busy=false;g.showVictory({xp:90,kills:1,levelUp:false,levelsGained:0,item:null,newItems:[],duplicateItem:false,bossDefeated:true,spellId:'ember'});});
   const selected=page.locator('[data-next-region][aria-pressed="true"]');assert.equal(await selected.count(),1);assert.notEqual(await selected.getAttribute('data-next-region'),'embercrypt');
-  assert.equal(await page.locator('#rpg-next-tier').inputValue(),String(tier));
+  assert.equal(await page.locator('#rpg-next-tier').inputValue(),String(Math.min(100,tier+1)));
   await page.locator('#rpg-next-adventure').scrollIntoViewIfNeeded();await page.screenshot({path:`${out}/${mode}-victory.png`});
   assert(await page.locator('[data-action="next-adventure"]').evaluate(el=>{const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}),'Next button is hidden behind another element');
   const dialog=await page.locator('#rpg-dialog-content').evaluate(el=>({width:el.clientWidth,scrollWidth:el.scrollWidth}));assert(dialog.scrollWidth<=dialog.width+1);
   let chosen=await selected.getAttribute('data-next-region');
   if(mode==='mobile'){chosen='old-quarry';await page.locator('[data-next-region="old-quarry"]').click();await page.locator('#rpg-next-tier').selectOption('2');assert.match(await page.locator('#rpg-next-adventure .rpg-tier-reward').textContent(),/2%/);}
   const next=page.waitForResponse(r=>r.url().endsWith('/rpg/start'));
-  await page.locator('[data-action="next-adventure"]').click();const started=await (await next).json();assert.equal(started.expedition.regionId,chosen);assert.equal(started.expedition.tier,mode==='mobile'?2:tier);
+  await page.locator('[data-action="next-adventure"]').click();const started=await (await next).json();assert.equal(started.expedition.regionId,chosen);assert.equal(started.expedition.tier,mode==='mobile'?2:Math.min(100,tier+1));
   for(let i=0;i<100;i++){const demo=page.locator('[data-action="demo-go"]');if(await demo.isVisible())await demo.click();if(await page.evaluate(()=>!window.__game.busy&&!window.__game.panel))break;await sleep(200);}
   assert.equal(await page.evaluate(()=>window.__game.state.expedition.encounterIndex),0);
   const before=await page.evaluate(()=>{const s=window.__game.state;return {xp:s.xp,loot:s.loot,clears:s.expeditionsCompleted};});
@@ -48,7 +48,7 @@ try {
   assert.equal(await page.locator('[data-region="mosswood"]').getAttribute('data-tier'),'1');assert.match(await page.locator('.rpg-tier-reward').textContent(),/1%/);
   await page.screenshot({path:`${out}/${mode}-lower-tier.png`});
   const lower=page.waitForResponse(r=>r.url().endsWith('/rpg/start'));await page.locator('[data-region="mosswood"]').click();const lowerState=await (await lower).json();assert.equal(lowerState.expedition.tier,1);assert.equal(lowerState.expedition.regionId,'mosswood');
-  report.captures.push({mode,defaultTier:tier,selectedArea:chosen,lowerTier:lowerState.expedition.tier,earnedStatePreserved:true});console.log('PASS '+mode+' next area, start, first-room exit, lower tier');
+  report.captures.push({mode,defaultTier:Math.min(100,tier+1),selectedArea:chosen,lowerTier:lowerState.expedition.tier,earnedStatePreserved:true});console.log('PASS '+mode+' next area, start, first-room exit, lower tier');
   await page.waitForFunction(()=>!window.__game.busy,undefined,{timeout:20000});
  }
  assert.deepEqual(report.errors,[]);await writeFile(`${out}/report.json`,JSON.stringify(report,null,2));

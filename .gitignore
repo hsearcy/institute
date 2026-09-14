@@ -28,3 +28,7 @@ __pycache__/
 
 # Local spell capture runs; keep source checks and the text evidence report.
 /artifacts/spell*/
+
+/artifacts/next-adventure/
+
+/artifacts/tier-balance.json

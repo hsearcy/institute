@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { RPG_ITEMS, rpgSpellCombatStats, rpgNormalizeLoot, rpgCampOffers, type RpgState, type State, type RpgCampState } from '@institute/shared';
+import { RPG_ITEMS, rpgSpellCombatStats, rpgNormalizeLoot, rpgCampOffers, RPG_MAX_DUNGEON_TIER, rpgDungeonForgeDust, type RpgState, type State, type RpgCampState } from '@institute/shared';
 import { renderCampWorkshop, renderLootCards, renderPinnedGoal, renderNextDungeonReward, goalSummary, collectionLootChoice, lootComparison, lootStats, lootBonusLabels, itemBaseBonusLabel, relicStatLabels, alternateLootChoices } from '../src/rpg/campView';
 import { renderEquipmentView } from '../src/rpg/equipmentView';
 import { renderVictoryView } from '../src/rpg/victoryView';
@@ -76,11 +76,11 @@ test('upgrade target shows exact missing resources and handles a completed forge
 });
 
 test('maximum tier still offers exact repeatable materials without promising better random stats', () => {
-  const state = fixture(); state.bestTier = 10; state.dungeonTier = 10; state.inventory = RPG_ITEMS.map(item => item.id);
+  const state = fixture(); state.bestTier = RPG_MAX_DUNGEON_TIER; state.dungeonTier = RPG_MAX_DUNGEON_TIER; state.inventory = RPG_ITEMS.map(item => item.id);
   const html = renderNextDungeonReward(state);
-  expect(html).toContain('100 forge dust');
-  expect(html).toContain('data-tier="10"');
-  expect(html).not.toContain('data-tier="11"');
+  expect(html).toContain(`${rpgDungeonForgeDust(RPG_MAX_DUNGEON_TIER)} forge dust`);
+  expect(html).toContain(`data-tier="${RPG_MAX_DUNGEON_TIER}"`);
+  expect(html).not.toContain(`data-tier="${RPG_MAX_DUNGEON_TIER+1}"`);
   expect(html).toContain('chance of stronger power');
   expect(html).not.toContain('Next relic discovery:');
 });
@@ -222,4 +222,26 @@ test('unequipping a borrowed spell previews the fallback attack on the candidate
   expect(html).toContain('Switches to Heavy Cleave');
   expect(html).toContain(`${comparison.damage} damage with Heavy Cleave`);
   expect(state.selectedSpellId).toBe('tempest');
+});
+
+test('victory offers unlocked destinations, one selected area, and all lower tiers', () => {
+  const state=fixture();state.bestTier=5;state.dungeonTier=5;
+  const reward={xp:30,kills:1,levelUp:false,levelsGained:0,item:null,newItems:[],duplicateItem:false,bossDefeated:true,spellId:'ember' as const};
+  const html=renderVictoryView(state,reward,'Guardian',null,{regionId:'mosswood',tier:3});
+  expect(html).toContain('data-next-region="mosswood" aria-pressed="true"');
+  expect(html).toContain('id="rpg-next-tier"');
+  expect(html).toContain('value="1"');
+  expect(html).toContain('value="3" selected');
+  expect(html).not.toContain('value="7"');
+  expect(html).toContain('data-action="next-adventure"');
+  expect(html).toContain('3%');
+});
+
+
+test('the default next area changes with the random draw, excludes the cleared area, and stays at the played tier', async () => {
+  const {chooseNextAdventure}=await import('../src/rpg/nextAdventureView');
+  const state=fixture();state.expedition={id:'done',regionId:'embercrypt',tier:1,encounterIndex:5,encountersTotal:6,startedAt:0,cleared:true};
+  const first=chooseNextAdventure(state,()=>0),last=chooseNextAdventure(state,()=>.99999);
+  expect(first.regionId).not.toBe('embercrypt');expect(last.regionId).not.toBe(first.regionId);
+  expect(first.tier).toBe(1);expect(state.expedition.regionId).toBe('embercrypt');
 });

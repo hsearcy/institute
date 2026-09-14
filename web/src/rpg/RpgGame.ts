@@ -1,6 +1,7 @@
+import {chooseNextAdventure, renderNextAdventure, tierSelect, tierRewards, type NextAdventure} from './nextAdventureView';
 import { HeroAssetLoadError } from './world/tripoHeroRuntime';
 import type { Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgReward, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
-import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, rpgEncounterCombat, rpgNextRelicHunt, rpgUnlockedTier, rpgDungeonForgeDust, rpgSalvageValue, rpgAnswerPower, ProblemSchema } from '@institute/shared';
+import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, rpgEncounterCombat, rpgNextRelicHunt, rpgSalvageValue, rpgAnswerPower, ProblemSchema } from '@institute/shared';
 import { fetchState, fetchMastery, redeemCrazyCoin, redeemDime, type Demo } from '../game/tutor';
 import { speak } from '../game/audio';
 import * as dungeonSound from './sound';
@@ -155,6 +156,18 @@ export class RpgGame {
     this.combatLayoutObserver = new ResizeObserver(updateCombatSafeArea);
     this.combatLayoutObserver.observe(controls); this.combatLayoutObserver.observe(route); this.combatLayoutObserver.observe(this.el('rpg-boss'));
     this.root.addEventListener('click', this.onClick, { signal: this.abort.signal });
+    this.root.addEventListener('change', event => {
+      const select = event.target as HTMLSelectElement;
+      if (select.id === 'rpg-map-tier') {
+        this.selectedTier = Number(select.value);
+        this.el('rpg-dialog-content').querySelectorAll<HTMLButtonElement>('[data-region]').forEach(button => { button.dataset.tier = String(this.selectedTier); });
+        this.el('rpg-dialog-content').querySelector('.rpg-tier-reward')!.textContent = `${tierRewards(this.selectedTier)} Lower tiers have easier enemies and weaker item rolls.`;
+      }
+      if (select.id === 'rpg-next-tier' && this.nextAdventure && this.state) {
+        this.nextAdventure.tier = Number(select.value);
+        this.el('rpg-next-adventure').querySelector('.rpg-tier-reward')!.textContent = tierRewards(this.nextAdventure.tier);
+      }
+    }, { signal: this.abort.signal });
     this.el<HTMLFormElement>('rpg-answer-form').addEventListener('submit', e => { e.preventDefault(); void this.submit(); }, { signal: this.abort.signal });
     this.el<HTMLInputElement>('rpg-answer').addEventListener('input', e => {
       const input = e.target as HTMLInputElement;
@@ -603,9 +616,11 @@ export class RpgGame {
     const loot = this.state?.loot?.find(entry => entry.id === this.discoveryLootId);
     panel.innerHTML = `<button data-action="dismiss-loot" class="rpg-discovery-close" aria-label="Dismiss new relic">×</button><p class="rpg-eyebrow">${item.rarity.toUpperCase()} RELIC DISCOVERED</p><div class="rpg-discovery-body">${relicArt(item.id)}<div><h3>${item.name}</h3><p>${esc(loot ? lootStats(loot, this.state!) : item.description)}</p></div></div><button class="rpg-discovery-equip" ${loot ? `data-loot-equip="${esc(loot.id)}"` : `data-discovery-item="${item.id}"`} ${this.busy ? 'disabled' : ''}>${loot ? this.state?.equippedLootId === loot.id ? '✓ Equipped' : 'Equip this roll' : this.state?.equippedItemId === item.id ? '✓ Equipped' : 'Equip this relic'}</button><small>Already saved in your equipment</small>`;
   }
+  private nextAdventure: NextAdventure | null = null;
   private showVictory(reward: RpgReward): void {
     const s = this.state!; const region = RPG_REGIONS.find(r => r.id === s.expedition?.regionId)!;
-    this.showDialog('victory', renderVictoryView(s, reward, region.bossName, this.campState));
+    this.nextAdventure = chooseNextAdventure(s);
+    this.showDialog('victory', renderVictoryView(s, reward, region.bossName, this.campState, this.nextAdventure));
   }
 
   private hint(text: string): void { this.el('rpg-hint').textContent = text; this.el('rpg-hint').hidden = false; }
@@ -727,12 +742,12 @@ export class RpgGame {
   }
   private showMap(): void {
     if (!this.state) return; const s = this.state;
-    this.showDialog('map', `<p class="rpg-eyebrow">BEYOND THE NEXT GATE</p><h2 id="rpg-dialog-title">Expeditions</h2><p>Explore forest ruins, a rocky coast, an old quarry, palace gardens, or the vaults. Outdoor areas offer relics from every school. Six encounters lead to the guardian’s treasure.</p><div class="rpg-tier-choice" aria-label="Dungeon tier"><span>Choose your depth · Highest clear ${s.bestTier ?? 0}</span>${Array.from({length:rpgUnlockedTier(s)}, (_, index) => index + 1).map(tier => `<button data-select-tier="${tier}" aria-pressed="${this.selectedTier === tier}" ${s.expedition && !s.expedition.cleared ? 'disabled' : ''}>Tier ${tier}</button>`).join('')}</div><p class="rpg-tier-reward">Tier ${this.selectedTier}: ${rpgDungeonForgeDust(this.selectedTier)} guaranteed forge dust across six rooms · Two fresh relic rolls. Deeper tiers have tougher monsters and stronger possible bonuses.</p><p class="rpg-tier-reward">Boss treasure: stronger item rolls and special spell effects. Separate 10% chances for an extra Crazy Coin and a dime.</p><div class="rpg-regions">${RPG_REGIONS.map(region => {
+    this.showDialog('map', `<p class="rpg-eyebrow">BEYOND THE NEXT GATE</p><h2 id="rpg-dialog-title">Expeditions</h2><p>Explore forest ruins, a rocky coast, an old quarry, palace gardens, or the vaults. Outdoor areas offer relics from every school. Six encounters lead to the guardian’s treasure.</p>${s.expedition && !s.expedition.cleared ? `<div class="rpg-active-expedition"><p>Current dungeon · Tier ${s.expedition.tier ?? 1} · Room ${s.expedition.encounterIndex + 1} of 6</p><button class="rpg-primary" data-action="retreat">Leave dungeon & choose area or tier</button><small>Keep all earned treasure. The unfinished dungeon will not count as a clear.</small></div>` : ''}${tierSelect(s,this.selectedTier,'rpg-map-tier',!!s.expedition&&!s.expedition.cleared)}<p class="rpg-tier-reward">${tierRewards(this.selectedTier)} Lower tiers have easier enemies and weaker item rolls.</p><div class="rpg-regions">${RPG_REGIONS.map(region => {
       const unlocked = s.expeditionsCompleted >= region.requiredClears;
       const active = !!s.expedition && !s.expedition.cleared;
       const current = active && s.expedition!.regionId === region.id;
       return `<button class="rpg-region-card ${!unlocked ? 'locked' : ''}" style="--region-color:${region.color}" data-region="${region.id}" data-tier="${this.selectedTier}" ${!unlocked || (active && !current) ? 'disabled' : ''}><div class="rpg-region-art">${icon(region.relicSchool ?? region.environment ?? 'map')}<i></i><i></i><i></i></div><small>${region.relicSchool ? 'VAULT · ' + RPG_SCHOOLS.find(school => school.id === region.relicSchool)!.name.toUpperCase() : 'OUTDOORS · MIXED RELICS'}</small><h3>${region.name}</h3><p>${region.subtitle}</p><span>Guardian · ${region.bossName}</span>${this.relicHuntCard(region.id)}<b>${current ? `Continue · ${s.expedition!.encounterIndex + 1}/6` : !unlocked ? `Clear ${region.requiredClears} expeditions to unlock` : active ? 'Finish your current expedition first' : 'Start expedition →'}</b></button>`;
-    }).join('')}</div>${s.expedition && !s.expedition.cleared ? '<button class="rpg-text-button" data-action="retreat">Choose an easier expedition</button>' : ''}<button class="rpg-text-button" data-action="close">${this.playing ? 'Return to dungeon' : 'Back to camp'}</button>`, true);
+    }).join('')}</div><button class="rpg-text-button" data-action="close">${this.playing ? 'Return to dungeon' : 'Back to camp'}</button>`, true);
   }
   private recordLearningReward(reward: Reward): void {
     // Read the tutor's existing receipt; never add a request or change its rewards.
@@ -804,7 +819,7 @@ export class RpgGame {
   }
   private confirmRetreat(): void {
     if (this.busy || this.session?.pending || !this.state?.expedition || this.state.expedition.cleared) return;
-    this.showDialog('retreat', `<p class="rpg-eyebrow">A DIFFERENT PATH</p><h2 id="rpg-dialog-title">Choose an easier expedition?</h2><p>Keep all the XP, gems, forge dust, and relics you have earned. Your next dungeon begins at room one.</p><p>This unfinished expedition will not count as a clear. Its guardian treasure is still waiting.</p><div class="rpg-button-row"><button data-action="close">Keep exploring</button><button class="rpg-primary" data-action="confirm-retreat">Keep treasure & choose a dungeon</button></div>`);
+    this.showDialog('retreat', `<p class="rpg-eyebrow">A DIFFERENT PATH</p><h2 id="rpg-dialog-title">Leave this dungeon?</h2><p>Keep all the XP, gems, forge dust, and relics you have earned. Your next dungeon begins at room one.</p><p>This unfinished expedition will not count as a clear. Its guardian treasure is still waiting.</p><div class="rpg-button-row"><button data-action="close">Keep exploring</button><button class="rpg-primary" data-action="confirm-retreat">Keep treasure & choose a dungeon</button></div>`);
   }
   private async retreat(): Promise<void> {
     if (this.busy || this.session?.pending || !this.state?.expedition || this.state.expedition.cleared) return;
@@ -819,7 +834,7 @@ export class RpgGame {
   private showPause(): void {
     if (!this.state || this.busy) return;
     this.saveSession();
-    this.showDialog('pause', `<div class="rpg-seal">${icon('shield')}</div><p class="rpg-eyebrow">A MOMENT BY THE FIRE</p><h2 id="rpg-dialog-title">Adventure saved</h2><p>Your spells, treasures, and progress will be here.</p><div class="rpg-button-row"><button class="rpg-primary" data-action="close">Keep exploring</button><button data-action="camp">Save & leave</button></div><button class="rpg-text-button" data-action="tutorial">${icon('help')} How to play · Story & tour</button><button class="rpg-text-button" data-action="retreat">Choose an easier expedition</button><button class="rpg-text-button" data-action="parent">Open parent journal</button>`);
+    this.showDialog('pause', `<div class="rpg-seal">${icon('shield')}</div><p class="rpg-eyebrow">A MOMENT BY THE FIRE</p><h2 id="rpg-dialog-title">Adventure saved</h2><p>Your spells, treasures, and progress will be here.</p><div class="rpg-button-row"><button class="rpg-primary" data-action="close">Keep exploring</button><button data-action="camp">Save & leave</button></div><button class="rpg-text-button" data-action="tutorial">${icon('help')} How to play · Story & tour</button><button class="rpg-text-button" data-action="retreat">Leave dungeon & choose area or tier</button><button class="rpg-text-button" data-action="parent">Open parent journal</button>`);
   }
   private async showParent(): Promise<void> {
     this.showDialog('parent', '<h2 id="rpg-dialog-title">Learning journal</h2><p>Loading your existing learning progress…</p>', true);
@@ -1100,6 +1115,12 @@ export class RpgGame {
     if (button.dataset.discoveryItem) {
       void this.changeLoadout('equip', {itemId:button.dataset.discoveryItem}, () => { this.discovery = null; this.renderDiscovery(); this.toast('Relic equipped. Unleash its magic!'); }); return;
     }
+    if (button.dataset.nextRegion && this.nextAdventure && this.state) {
+      this.nextAdventure.regionId = button.dataset.nextRegion;
+      this.el('rpg-next-adventure').outerHTML = renderNextAdventure(this.state, this.nextAdventure);
+      this.root.querySelector<HTMLButtonElement>('[data-action="next-adventure"]')!.textContent = `Go to ${RPG_REGIONS.find(region=>region.id===this.nextAdventure!.regionId)!.name} →`;
+      this.root.querySelector<HTMLButtonElement>(`[data-next-region="${this.nextAdventure.regionId}"]`)?.focus(); return;
+    }
     if (button.dataset.selectTier) { this.selectedTier = Number(button.dataset.selectTier); this.showMap(); return; }
     if (button.dataset.buyItem) { void this.economyAction('shop/buy', { itemId: button.dataset.buyItem }); return; }
     if (button.dataset.forgeLoot) { void this.economyAction('forge/upgrade', { lootId: button.dataset.forgeLoot }); return; }
@@ -1129,6 +1150,7 @@ export class RpgGame {
     const action = button.dataset.action;
     if (this.busy && !['retry','sound','demo-go','demo-hear'].includes(action ?? '')) return;
     switch (action) {
+      case 'next-adventure': if (this.nextAdventure && this.state?.expedition?.cleared) void this.begin(this.nextAdventure.regionId, this.nextAdventure.tier); break;
       case 'begin': void this.begin(); break;
       case 'close': this.closeDialog(); break;
       case 'tutorial': this.launchTutorial(); break;

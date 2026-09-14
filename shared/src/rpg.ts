@@ -293,7 +293,9 @@ export function rpgEncounterCombat(state: Pick<RpgState, 'expedition'> & Partial
   return { version: 1, encounterIndex: room, casts: 0, enemies: Array.from({ length: count }, (_, index) => {
     const boss = room === 5 && index === 0;
     const baseHp = (boss ? 36 : index % 7 === 0 ? 12 : [6, 6, 8, 8, 10][index % 5]) + difficulty * (boss ? 8 : 2) + Math.floor(room / 2) * (boss ? 0 : 2);
-    const maxHp = Math.ceil(baseHp * (1.4 ** (rpgTier(state.expedition?.tier) - 1)));
+    const tier = rpgTier(state.expedition?.tier);
+    // Health and item power grow together; broad loot rolls can beat the next step.
+    const maxHp = Math.ceil(baseHp * (tier + 3) / 4);
     return { id: `enemy-${index}`, hp: maxHp, maxHp };
   }) };
 }

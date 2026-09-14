@@ -166,7 +166,7 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
     else if (cast.result.encounterCleared) { expedition.encounterIndex++; expedition.combat = rpgEncounterCombat(state); }
     const shape = rpgLootSpellShape(rpgEquippedLoot(state));
     const spellShape = shape?.spellId === spellId ? shape.id : undefined;
-    const { bossCrazyCoins, bossDimes } = bossDefeated ? rpgRollBossBonus() : { bossCrazyCoins: 0, bossDimes: 0 };
+    const { bossCrazyCoins, bossDimes } = bossDefeated ? rpgRollBossBonus(Math.random, tier) : { bossCrazyCoins: 0, bossDimes: 0 };
     const reward: RpgReward = { spellShape, bossCrazyCoins, bossDimes, xp, kills, levelUp: levelsGained > 0, levelsGained, item, newItems: item && !duplicateItem ? [item] : [], duplicateItem, bossDefeated, spellId, combat: cast.result, loot, forgeDust, tier };
     db.query(`INSERT INTO rpg_cast_claims (profile_id, problem_id, expedition_id, encounter_index, reward_json, created_at)
       VALUES (?, ?, ?, ?, ?, ?)`).run(body.profileId, body.problemId, expedition.id, body.encounterIndex, JSON.stringify(reward), Date.now());

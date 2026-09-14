@@ -1,7 +1,8 @@
 import { RPG_ITEMS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, type RpgState, type RpgLoadout, type RpgLootInstance, type RpgSpellId, type RpgSchoolId, type RpgSpellShape, type RpgCombatAffix } from './rpg';
 
 export const RPG_MAX_ITEM_UPGRADE = 5;
-export const RPG_MAX_DUNGEON_TIER = 10;
+export const RPG_MAX_DUNGEON_TIER = 100;
+export const RPG_MAX_LOOT_POWER = 12 + 4 * (RPG_MAX_DUNGEON_TIER - 1);
 export const RPG_UPGRADE_POWER = 2;
 export const RPG_MAX_LOOT_TARGETS = 2;
 export const RPG_MAX_LOOT_SPELL_POWER = 12;
@@ -52,6 +53,17 @@ export function rpgDungeonForgeDust(tier: number): number {
   return 5 * rpgRoomForgeDust(tier) + rpgRoomForgeDust(tier, true);
 }
 
+/** Roll bounds for the tier actually played, independent of the hero's best tier. */
+export function rpgLootPowerRange(tier: number, boss = false): {min: number; max: number} {
+  const depth = rpgTier(tier) - 1;
+  return boss ? {min: 4 + 2 * depth, max: 12 + 4 * depth}
+    : {min: 1 + Math.floor(1.5 * depth), max: 4 + 3 * depth};
+}
+export function rpgBossBonusChance(tier = 1): number {
+  const level = rpgTier(tier);
+  return Math.min(250, Math.min(level, 10) * 10 + Math.max(0, level - 10) * 3) / 1000;
+}
+
 /** Reading an old save creates stable, zero-bonus instances in memory only.
  * Item discovery IDs, XP, learned ranks, and all tutor state remain untouched. */
 export function rpgNormalizeLoot(state: RpgState): RpgState {
@@ -75,9 +87,10 @@ export function rpgCreateLoot(itemId: string, tier = 1, random: () => number = M
   if (!item) throw new Error('Unknown relic.');
   const unit = () => { const value = random(); return Number.isFinite(value) ? Math.max(0, Math.min(0.999999999, value)) : 0; };
   const level = rpgTier(tier);
-  const bonusPower = Math.min(12, (boss ? 4 : 1) + Math.floor(unit() * (3 + level)) + Math.floor((level - 1) / 3));
+  const range = rpgLootPowerRange(level, boss);
+  const bonusPower = range.min + Math.floor(unit() * (range.max - range.min + 1));
   const result: RpgLootInstance = { id: crypto.randomUUID(), itemId, bonusPower, upgradeLevel: 0 };
-  const progress = (level - 1) / 9;
+  const progress = Math.min(1, (level - 1) / 9);
   if (unit() < .20 + progress * .10 && boss) {
     const skills = RPG_SKILLS.filter(skill => skill.kind === 'modifier' && (!item.school || skill.school === item.school));
     const skill = skills[Math.floor(unit() * skills.length)];
@@ -86,7 +99,7 @@ export function rpgCreateLoot(itemId: string, tier = 1, random: () => number = M
   // Normal drops keep broad power and coverage. Spell-changing traits and
   // temporary modifier ranks are boss-only. Saved receipts never reroll.
   const extra = unit(), targetChance = .25 + progress * .10, schoolChance = .25 + progress * .15;
-  if (extra < targetChance) result.bonusTargets = level >= 5 && unit() < .12 + (level - 5) * .02 ? 2 : 1;
+  if (extra < targetChance) result.bonusTargets = level >= 5 && unit() < .12 + (Math.min(level, 10) - 5) * .02 ? 2 : 1;
   else if (extra < targetChance + schoolChance) {
     const schools = RPG_SCHOOLS.filter(school => !item.school || school.id === item.school);
     result.bonusSchoolId = schools[Math.floor(unit() * schools.length)]!.id;
@@ -108,7 +121,7 @@ export function rpgEquippedLoot(state: Pick<RpgLoadout, 'equippedItemId' | 'loot
   return state.loot?.find(item => item.id === state.equippedLootId && item.itemId === state.equippedItemId);
 }
 export function rpgLootPower(item?: RpgLootInstance): number {
-  return item ? boundedBonus(item.bonusPower, 12) + boundedBonus(item.upgradeLevel, RPG_MAX_ITEM_UPGRADE) * RPG_UPGRADE_POWER : 0;
+  return item ? boundedBonus(item.bonusPower, RPG_MAX_LOOT_POWER) + boundedBonus(item.upgradeLevel, RPG_MAX_ITEM_UPGRADE) * RPG_UPGRADE_POWER : 0;
 }
 
 /** Equipped ranks work immediately, including unlearned skills. They may
@@ -157,7 +170,7 @@ export function rpgLootCombatAffix(loot?: RpgLootInstance): RpgCombatAffix | und
 }
 
 /** Independent rolls, made only when the server commits a boss clear. */
-export function rpgRollBossBonus(random: () => number = Math.random): { bossCrazyCoins: number; bossDimes: number } {
-  const wins = () => { const roll = random(); return Number.isFinite(roll) && roll >= 0 && roll < .1 ? 1 : 0; };
+export function rpgRollBossBonus(random: () => number = Math.random, tier = 1): { bossCrazyCoins: number; bossDimes: number } {
+  const wins = () => { const roll = random(); return Number.isFinite(roll) && roll >= 0 && roll < rpgBossBonusChance(tier) ? 1 : 0; };
   return { bossCrazyCoins: wins(), bossDimes: wins() };
 }

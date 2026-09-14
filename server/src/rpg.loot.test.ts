@@ -161,3 +161,44 @@ test('boss bonus rolls and stronger loot are saved once; ordinary rooms award no
     expect(resolveRpgEncounter(db,request).reward).toEqual(result.reward);
   } finally { random.mockRestore(); db.close(); }
 });
+
+test('boss money and item strength use the completed tier, not the highest unlocked tier', () => {
+  const random=spyOn(Math,'random').mockReturnValue(.05);
+  const powers:number[]=[];
+  try {
+    for(const tier of [1,10]) {
+      const db=fixture();
+      try {
+        const s=getRpgState(db,'sam');s.bestTier=20;saveRpgState(db,s);
+        const started=startRpgExpedition(db,'sam','embercrypt',tier);
+        started.expedition!.encounterIndex=5;
+        started.expedition!.combat={version:1,encounterIndex:5,casts:0,enemies:[{id:'enemy-0',hp:1,maxHp:1}]};
+        saveRpgState(db,started);
+        const {result,request}=finishRoom(db,`tier-${tier}`);
+        expect(result.reward.bossCrazyCoins).toBe(tier===1?0:1);
+        expect(result.reward.bossDimes).toBe(tier===1?0:1);
+        expect(result.reward.tier).toBe(tier);
+        powers.push(result.reward.loot!.bonusPower);
+        const saved=result.reward;random.mockReturnValue(.99);
+        expect(resolveRpgEncounter(db,request).reward).toEqual(saved);
+        random.mockReturnValue(.05);
+      } finally {db.close();}
+    }
+    expect(powers[1]).toBeGreaterThan(powers[0]);
+  } finally {random.mockRestore();}
+});
+
+test('room one can be abandoned before a cast and restarted at a lower tier without a clear', async () => {
+  const db=fixture();
+  try {
+    const s=getRpgState(db,'sam');s.bestTier=3;saveRpgState(db,s);
+    const before=startRpgExpedition(db,'sam','embercrypt',4);
+    expect(before.expedition!.encounterIndex).toBe(0);
+    expect((await post(db,'/retreat',{profileId:'sam'})).status).toBe(200);
+    const after=startRpgExpedition(db,'sam','mosswood',1);
+    expect(after.expedition).toMatchObject({regionId:'mosswood',tier:1,encounterIndex:0});
+    expect(after.expedition!.id).not.toBe(before.expedition!.id);
+    expect(after.totalKills).toBe(before.totalKills);expect(after.loot).toEqual(before.loot);
+    expect(after.expeditionsCompleted).toBe(before.expeditionsCompleted);
+  } finally {db.close();}
+});

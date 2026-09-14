@@ -36,10 +36,10 @@ test('opening strike applies only to the first cast; boss slayer applies only to
 });
 
 
-test('coin and dime rolls are independent and each has an exact 10% boundary', () => {
-  for (const [coin,dime] of [[0,0],[.099999,.1],[.1,.099999],[.1,.1]]) {
+test('coin and dime rolls are independent and each has an exact 1% boundary', () => {
+  for (const [coin,dime] of [[0,0],[.009999,.01],[.01,.009999],[.01,.01]]) {
     const rolls=[coin,dime];
-    expect(rpgRollBossBonus(()=>rolls.shift()!)).toEqual({bossCrazyCoins:coin<.1?1:0,bossDimes:dime<.1?1:0});
+    expect(rpgRollBossBonus(()=>rolls.shift()!)).toEqual({bossCrazyCoins:coin<.01?1:0,bossDimes:dime<.01?1:0});
   }
   for (const invalid of [NaN, Infinity, -1]) expect(rpgRollBossBonus(()=>invalid)).toEqual({bossCrazyCoins:0,bossDimes:0});
 });
@@ -79,5 +79,12 @@ test('all fifteen spells have a unique boss effect with the stated damage or cov
     }
     base.equippedLootId='not-equipped';
     expect(rpgSpellCombatStats(base,shape.spellId)).toEqual(rpgSpellCombatStats({...base,loot:[]},shape.spellId));
+  }
+});
+
+test('boss bonus chance follows the played tier and independent exact boundaries', () => {
+  for (const [tier,chance] of [[1,.01],[2,.02],[10,.10],[11,.103],[20,.13],[59,.247],[60,.25],[61,.25],[100,.25]]) {
+    const rolls=[chance-.000001,chance];
+    expect(rpgRollBossBonus(()=>rolls.shift()!,tier)).toEqual({bossCrazyCoins:1,bossDimes:0});
   }
 });

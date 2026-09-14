@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { RPG_ITEMS, RPG_SKILLS, RPG_SPELLS, rpgEncounterCombat, rpgSpellCombatStats, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, type RpgState, type RpgLootInstance } from './rpg';
-import { rpgCreateLoot, rpgNormalizeLoot, rpgEffectiveSkills, rpgForgeCost, rpgDungeonForgeDust, rpgUnlockedTier, rpgLootAffixes, rpgLootSkillBonus } from './rpgLoot';
+import { rpgCreateLoot, rpgNormalizeLoot, rpgEffectiveSkills, rpgForgeCost, rpgDungeonForgeDust, rpgUnlockedTier, rpgLootAffixes, rpgLootSkillBonus, RPG_MAX_LOOT_POWER, RPG_MAX_DUNGEON_TIER } from './rpgLoot';
 
 const oldSave: RpgState = {
   profileId: 'old', xp: 500, level: 4, xpIntoLevel: 95, xpForNextLevel: 225, skillPoints: 2,
@@ -27,7 +27,7 @@ test('random rolls are bounded and provide school-relevant temporary skill bonus
     const result = rpgCreateLoot(item.id, tier, () => value);
     expect(result.itemId).toBe(item.id);
     expect(result.bonusPower).toBeGreaterThanOrEqual(1);
-    expect(result.bonusPower).toBeLessThanOrEqual(12);
+    expect(result.bonusPower).toBeLessThanOrEqual(RPG_MAX_LOOT_POWER);
     expect(result.upgradeLevel).toBe(0);
     const affixes = rpgLootAffixes(result);
     expect([affixes.targets, affixes.spellPower, affixes.schoolPower].filter(Boolean).length).toBeLessThanOrEqual(1);
@@ -127,14 +127,14 @@ test('rolls and forging strengthen attacks; equipped ranks activate immediately 
 test('higher dungeon tiers add bounded health and guaranteed materials without extra enemies', () => {
   for (let tier = 1; tier <= 10; tier++) {
     expect(rpgDungeonForgeDust(tier)).toBe(20 + 8 * tier);
-    expect(rpgUnlockedTier({ bestTier: tier })).toBe(Math.min(10, tier + 1));
+    expect(rpgUnlockedTier({ bestTier: tier })).toBe(Math.min(RPG_MAX_DUNGEON_TIER, tier + 1));
     for (let room = 0; room < 6; room++) {
       const expedition = { id: 'tier', regionId: 'embercrypt', encounterIndex: room, encountersTotal: 6, cleared: false, startedAt: 0, tier };
       const pack = rpgEncounterCombat({ expedition });
       const baseline = rpgEncounterCombat({ expedition: { ...expedition, tier: 1 } });
       expect(pack.enemies.length).toBeLessThanOrEqual(10);
       expect(pack.enemies.length).toBe(baseline.enemies.length);
-      expect(pack.enemies[0].maxHp).toBe(Math.ceil(baseline.enemies[0].maxHp * (1.4 ** (tier - 1))));
+      expect(pack.enemies[0].maxHp).toBe(Math.ceil(baseline.enemies[0].maxHp * (tier + 3) / 4));
     }
   }
 });
@@ -221,4 +221,58 @@ test('saved Overcharge works immediately for Tempest only while its exact copy i
   for (const value of [0, -1, NaN, Infinity]) expect(rpgLootSkillBonus({ ...copy, bonusSkillRanks: value })).toBeUndefined();
   expect(rpgLootSkillBonus({ ...copy, bonusSkillId: 'fake' })).toBeUndefined();
   expect(rpgLootSkillBonus({ ...copy, itemId: 'fake' })).toBeUndefined();
+});
+
+test('tiers above ten unlock in order and improve new item power without changing old copies', () => {
+  expect(rpgUnlockedTier({bestTier:10})).toBe(11);
+  for(const boss of [false,true])for(const random of [()=>0,()=>.5,()=>.999]) {
+    expect(rpgCreateLoot('cinderwand',20,random,boss).bonusPower).toBeGreaterThan(rpgCreateLoot('cinderwand',10,random,boss).bonusPower);
+    expect(rpgCreateLoot('cinderwand',50,random,boss).bonusPower).toBeGreaterThan(rpgCreateLoot('cinderwand',20,random,boss).bonusPower);
+  }
+});
+
+test('later tiers remain harder without the old unbounded exponential health growth', () => {
+  const s={...oldSave,expedition:{id:'depth',regionId:'embercrypt',tier:10,encounterIndex:5,encountersTotal:6,cleared:false,startedAt:0}};
+  const atTen=rpgEncounterCombat(s).enemies[0].maxHp;
+  s.expedition.tier=50;
+  const atFifty=rpgEncounterCombat(s).enemies[0].maxHp;
+  expect(atFifty).toBeGreaterThan(atTen);
+  expect(atFifty).toBeLessThan(atTen*5);
+});
+
+
+test('tier 100 is the final unlocked tier and its new loot power reaches combat', () => {
+  expect(rpgUnlockedTier({bestTier:99})).toBe(100);
+  expect(rpgUnlockedTier({bestTier:100})).toBe(100);
+  const state=rpgNormalizeLoot(oldSave),base=rpgSpellCombatStats(state).damage;
+  const loot=rpgCreateLoot('cinderwand',100,()=>.999,true);
+  expect(loot.bonusPower).toBe(408);
+  state.loot!.push(loot);state.equippedLootId=loot.id;
+  expect(rpgSpellCombatStats(state).damage).toBe(base+408);
+});
+
+
+test('ordinary boss upgrades make progress gently harder, while a strong roll can make the next tier easier', () => {
+  const effort = (tier:number, power:number, mastered=false) => {
+    const state=rpgNormalizeLoot({...oldSave,level:60,skills:mastered?Object.fromEntries(RPG_SKILLS.map(s=>[s.id,s.maxRank])):oldSave.skills,
+      expedition:{id:'balance',regionId:'embercrypt',tier,encounterIndex:5,encountersTotal:6,cleared:false,startedAt:0}});
+    state.loot![1].bonusPower=power;
+    return rpgEncounterCombat(state).enemies[0].maxHp/rpgSpellCombatStats(state).damage;
+  };
+  for (const mastered of [false,true]) for(let tier=10;tier<100;tier++) {
+    const held=rpgCreateLoot('cinderwand',tier-1,()=>.5,true).bonusPower;
+    const ordinary=rpgCreateLoot('cinderwand',tier,()=>.5,true).bonusPower;
+    const strong=rpgCreateLoot('cinderwand',tier,()=>.999,true).bonusPower;
+    const before=effort(tier,held,mastered), next=effort(tier+1,ordinary,mastered);
+    expect(next).toBeGreaterThan(before);
+    expect(next/before).toBeLessThan(1.08);
+    expect(effort(tier+1,strong,mastered)).toBeLessThan(before);
+  }
+});
+
+test('power rolls use the whole tier range without clamping most rolls to the top', () => {
+  const powers=Array.from({length:1000},(_,i)=>rpgCreateLoot('cinderwand',100,()=>i/1000,true).bonusPower);
+  const max=Math.max(...powers);
+  expect(powers.filter(power=>power===max).length).toBeLessThan(20);
+  expect(new Set(powers).size).toBeGreaterThan(100);
 });

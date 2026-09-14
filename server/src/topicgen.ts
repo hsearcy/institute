@@ -338,11 +338,16 @@ export function problemForTopic(topic: Topic, difficulty: number): TopicProblemD
         return { ...base, prompt: `Double ${n}`, spoken: `What is double ${n}?`, answer: 2 * n,
           hint: tens ? `Double the tens and the ones: double ${tens} is ${2 * tens}, double ${ones} is ${2 * ones}. Add them.` : `${n} plus ${n}.` };
       }
-      const n = 2 * ri(3, lerp(20, g.max, d)), tens = Math.floor(n / 10) * 10, ones = n % 10;
-      return { ...base, prompt: `Half of ${n}`, spoken: `What is half of ${n}?`, answer: n / 2,
-        hint: tens % 20 === 0
-          ? `Half of ${tens} is ${tens / 2}, and half of ${ones} is ${ones / 2}. Add them.`
-          : `Split ${n} into two equal shares. Try half of ${n - ones} first, then half of ${ones}.` };
+      const n = 2 * ri(3, lerp(20, g.max, d));
+      // Split into hundreds, tens, ones; halve each; add. Every part halves to a
+      // whole number (n is even, and any tens halve to a multiple of 5).
+      const parts = [Math.floor(n / 100) * 100, Math.floor((n % 100) / 10) * 10, n % 10].filter((v) => v > 0);
+      const hint = parts.length > 1
+        ? `Split ${n} into ${parts.join(" and ")}. ${parts.map((v) => `Half of ${v} is ${v / 2}`).join(", ")}. Add them.`
+        : n >= 10
+          ? `${n} is ${n / 10} tens. Half of ${n / 10} tens, then say it as a number.` // never states the answer
+          : `Half of ${n} means two equal shares.`;
+      return { ...base, prompt: `Half of ${n}`, spoken: `What is half of ${n}?`, answer: n / 2, hint };
     }
     case "change_from": {
       const from = d < 0.4 ? 50 : 100;

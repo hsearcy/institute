@@ -22,7 +22,7 @@ export function lootBonusLabels(loot: RpgLootInstance, _state: RpgState, include
   if (affixes.schoolId) labels.push(`+${affixes.schoolPower} ${RPG_SCHOOLS.find(school => school.id === affixes.schoolId)!.name} power`);
   if (affixes.targets) labels.push(`+${affixes.targets} ${affixes.targets === 1 ? 'target' : 'targets'}`);
   const shape = rpgLootSpellShape(loot), trait = rpgLootCombatAffix(loot);
-  if (shape) labels.push(shape.name + ' — ' + shape.label + ' · Grants spell while equipped');
+  if (shape) labels.push(shape.name + ': ' + shape.label + ' · Grants spell while equipped');
   if (trait === 'opening-strike') labels.push('Opening strike: +25% damage on the first cast in each room');
   if (trait === 'boss-slayer') labels.push('Boss slayer: +30% damage to the guardian');
   return labels;

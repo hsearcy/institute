@@ -1102,10 +1102,10 @@
    "fluentMs": null,
    "prereqs": [],
    "helpPrereqs": [
-    "mt_LpSuPgL31x",
-    "mt_nvdpxAJTBG",
     "mt_QaYfeVL-0C",
-    "mt_I5j1ZWo2cn"
+    "mt_I5j1ZWo2cn",
+    "mt_LpSuPgL31x",
+    "mt_nvdpxAJTBG"
    ]
   },
   {
@@ -1346,7 +1346,10 @@
    "prereqs": [
     "mt_LpSuPgL31x"
    ],
-   "helpPrereqs": []
+   "helpPrereqs": [
+    "mt_aPBzD28_mT",
+    "mt_I5j1ZWo2cn"
+   ]
   },
   {
    "id": "mt_6_O6THdEDK",
@@ -1423,8 +1426,8 @@
    "fluentMs": null,
    "prereqs": [],
    "helpPrereqs": [
-    "mt_U0waNfD8PB",
-    "mt_m1W6nTQJ2b"
+    "mt_m1W6nTQJ2b",
+    "mt_U0waNfD8PB"
    ]
   },
   {

@@ -11,7 +11,7 @@ export function chooseNextAdventure(state: RpgState, random: () => number = Math
 }
 export function tierRewards(tier: number): string {
   const range=rpgLootPowerRange(tier,true),chance=(rpgBossBonusChance(tier)*100).toFixed(1).replace(/\.0$/,'');
-  return `Boss item: +${range.min}–${range.max} power · ${rpgDungeonForgeDust(tier)} forge dust per dungeon. Separate ${chance}% chances for a Crazy Coin and a dime.`;
+  return `Boss item: +${range.min} to ${range.max} power · ${rpgDungeonForgeDust(tier)} forge dust per dungeon. Separate ${chance}% chances for a Crazy Coin and a dime.`;
 }
 export function tierSelect(state: RpgState, tier: number, id: string, disabled=false): string {
   return `<label class="rpg-tier-select" for="${id}">Dungeon tier <select id="${id}" ${disabled?'disabled':''}>${Array.from({length:rpgUnlockedTier(state)},(_,i)=>i+1).map(value=>`<option value="${value}"${value===tier?' selected':''}>Tier ${value}${value===(state.bestTier??0)+1?' · New challenge':''}</option>`).join('')}</select></label>`;

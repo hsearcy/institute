@@ -19,6 +19,11 @@ describe("rescueTopic", () => {
     const r = rescueTopic(ALL[3], [m("soft", "mastered"), m("hard", "practicing")], ALL);
     expect(r?.id).toBe("soft");
   });
+  test("a help-prereq (the remediation ladder) beats a hard prereq (the gate)", () => {
+    // Both mastered: the hand-authored ladder must win, not the taxonomy gate.
+    const r = rescueTopic(ALL[3], [m("soft", "mastered"), m("hard", "mastered")], ALL);
+    expect(r?.id).toBe("soft");
+  });
   test("falls back to any candidate when none mastered", () => {
     const r = rescueTopic(ALL[3], [], ALL);
     expect(["hard", "soft"]).toContain(r?.id);

@@ -69,7 +69,18 @@ describe("expansion 2 generators", () => {
     each({ kind: "double_half", max: 100 }, (p) => {
       let m;
       if ((m = p.prompt.match(/^Double (\d+)$/))) expect(p.answer).toBe(2 * Number(m[1]));
-      else if ((m = p.prompt.match(/^Half of (\d+)$/))) { expect(Number(m[1]) % 2).toBe(0); expect(p.answer).toBe(Number(m[1]) / 2); }
+      else if ((m = p.prompt.match(/^Half of (\d+)$/))) {
+        const n = Number(m[1]); expect(n % 2).toBe(0); expect(p.answer).toBe(n / 2);
+        // a multi-part number (158 = 100, 50, 8) gets decomposed: every stated half is
+        // whole and they add back up to the answer. A single-part number (20, 100)
+        // gets a tens nudge that never states the answer.
+        const parts = [Math.floor(n / 100) * 100, Math.floor((n % 100) / 10) * 10, n % 10].filter((v) => v > 0);
+        const halves = [...p.hint!.matchAll(/Half of (\d+) is (\d+)/g)].map((x) => [Number(x[1]), Number(x[2])]);
+        if (parts.length > 1) {
+          expect(halves.length).toBe(parts.length); for (const [v, h] of halves) expect(h * 2).toBe(v);
+          expect(halves.reduce((a, [, h]) => a + h, 0)).toBe(n / 2);
+        } else expect(p.hint!).not.toContain(`is ${n / 2}`);
+      }
       else throw new Error(`unexpected prompt ${p.prompt}`);
     });
   });

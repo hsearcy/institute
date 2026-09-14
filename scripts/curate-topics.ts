@@ -38,7 +38,9 @@ const out = CURATION.map((c) => {
     fluentMs: c.fluentMs,
     prereqs: prereqs.get(c.id) ?? [],
     helpPrereqs: [
-      ...new Set([...(unionPrereqs.get(c.id) ?? []), ...(c.extraHelpPrereqs ?? [])]),
+      // Hand-authored ladders first: they are targeted remediation, the taxonomy
+      // soft edges are merely advisory.
+      ...new Set([...(c.extraHelpPrereqs ?? []), ...(unionPrereqs.get(c.id) ?? [])]),
     ].filter((id) => id !== c.id && !(prereqs.get(c.id) ?? []).includes(id)),
   };
 });

@@ -96,6 +96,9 @@ export const CURATION: CurationRow[] = [
   { id: "mt_p-nbe0w_lf", kidLabel: "Leftovers",         legacySkill: "division",       gen: { kind: "div_rem", maxDivisor: 9 },                       fluentMs: null },
   { id: "mt_cFltwUQi-d", kidLabel: "Fair Fractions",    legacySkill: "division",       gen: { kind: "frac_of", dens: [2, 3, 4, 5, 10] },              fluentMs: null },
   { id: "mt_g3W0mdADVu", kidLabel: "Double & Half",     legacySkill: "add_within_20",  gen: { kind: "double_half", max: 100 },                        fluentMs: null,
+    // Halving 158 is: split into 100, 50, 8, halve each, add. That is place value
+    // and tens arithmetic, not division facts (its only taxonomy prereq).
+    extraHelpPrereqs: ["mt_aPBzD28_mT", "mt_I5j1ZWo2cn"], // Hundreds & More, Tens Math
     override: { description: "Double a number and find half of an even number, up to 200",
       evidence: ["Double 34 by doubling the tens and the ones", "Find half of 60 by halving the tens", "Know that halving undoes doubling"],
       assessmentPrompt: "Can {{name}} tell you double 34, and half of 60, without counting one by one?" } },

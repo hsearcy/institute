@@ -929,7 +929,6 @@ async function llmBranches(profileId: string, current: Problem): Promise<{ right
   const resp = await anthropic.messages.create({
     model: TUTOR_MODEL,
     max_tokens: 1024,
-    temperature: 0.9,
     system: SYSTEM,
     tools: [BRANCHES_TOOL as unknown as Anthropic.Tool],
     tool_choice: { type: "tool", name: "next_problems" },

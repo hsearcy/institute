@@ -141,3 +141,24 @@ describe("selectNext", () => {
     expect(r.topic).toBeDefined();
   });
 });
+
+describe("gated started topic", () => {
+  test("a started topic newly locked behind a prereq pulls that prereq in past the active cap", () => {
+    // "mixed" was being practiced, then a curriculum change put "table" in front
+    // of it. He also has 3 other started topics, so the cap is full: without the
+    // gated rule "table" would wait indefinitely.
+    const G2 = [
+      t("table", [], "mul"), t("mixed", ["table"], "mul"),
+      t("x", [], "add"), t("y", [], "count"), t("z", [], "place"),
+    ].map((topic) => ({ ...topic, helpPrereqs: [] }));
+    const seen = new Set<string>();
+    let cur: string | null = null; const recent: string[] = [];
+    for (let i = 0; i < 24; i++) {
+      const r = selectNext({ ...base, topics: G2, currentTopicId: cur, recentTopicIds: recent,
+        mastery: [m("mixed", "practicing", 23), m("x", "practicing", 5), m("y", "practicing", 5), m("z", "practicing", 5)] });
+      cur = r.topic.id; recent.unshift(cur); seen.add(cur);
+    }
+    expect(seen.has("table")).toBe(true);
+    expect(seen.has("mixed")).toBe(false); // still locked
+  });
+});

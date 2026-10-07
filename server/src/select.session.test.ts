@@ -105,8 +105,10 @@ describe("full-session selector behaviour (regression guard)", () => {
     const { seq, newlyMet } = simulate({ ...samState, masterAfter: 999 });
     // The prereqs actually get worked.
     for (const p of PREREQS) expect(seq).toContain(p);
-    // Every genuinely-new topic he meets is a prereq of a stuck topic — no strangers.
-    for (const id of newlyMet) expect(PREREQS).toContain(id);
+    // Every genuinely-new topic he meets is on a stuck topic's ladder (hard or
+    // help prereq, from the curriculum data) — no strangers.
+    const ladder = [FAIR_SHARES, BOND_MASTER].flatMap((sid) => { const t = TOPICS.find((x) => x.id === sid)!; return [...t.prereqs, ...t.helpPrereqs]; });
+    for (const id of newlyMet) expect(ladder).toContain(id);
   });
 
   test("never trapped cycling only the two hard topics", () => {
@@ -198,17 +200,17 @@ describe("full-session selector behaviour (regression guard)", () => {
     // Walk his first meetings in order: a topic that is a prereq of something he
     // has already started is remediation; anything else is genuine discovery.
     const started = new Set(healthy.inProgressIds);
-    let genuine = 0;
+    const genuineIds = new Set<string>();
     for (const id of newlyMet) {
       const ladder = new Set([...started].flatMap((sid) => { const t = TOPICS.find((x) => x.id === sid)!; return [...t.prereqs, ...(t.helpPrereqs ?? [])]; }));
-      if (!ladder.has(id)) genuine++;
+      if (!ladder.has(id)) genuineIds.add(id);
       started.add(id);
     }
-    expect(genuine).toBe(ACTIVE_CAP - 2);
-    const startedSet = new Set([...healthy.masteredIds, ...healthy.inProgressIds]);
+    expect(genuineIds.size).toBe(ACTIVE_CAP - 2);
+    // The cadence is about DISCOVERY; a stuck topic's ladder arriving is remediation.
     let maxNewInWindow = 0;
     for (let i = 0; i + 8 <= seq.length; i++) {
-      const newInWin = new Set(seq.slice(i, i + 8).filter((id) => !startedSet.has(id)));
+      const newInWin = new Set(seq.slice(i, i + 8).filter((id) => genuineIds.has(id)));
       maxNewInWindow = Math.max(maxNewInWindow, newInWin.size);
     }
     expect(maxNewInWindow).toBeLessThanOrEqual(2); // not a novelty firehose

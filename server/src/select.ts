@@ -93,10 +93,24 @@ export function selectNext(s: SelectInput): Selection {
     const m = byId.get(t.id);
     return m !== undefined && m.state !== "mastered" && m.attempts >= STUCK_ATTEMPTS;
   });
+  // GATED: started, unmastered, but now LOCKED behind a prereq he has not
+  // mastered (a curriculum change put a new step in front of it, e.g. Times
+  // Tables II now waits on the single 3s, 4s and 8s tables). Those missing
+  // steps are the way back to work he already began, so they count as
+  // remediation too; otherwise the active cap would hide them indefinitely.
+  const frontierIds = new Set(frontier.map((t) => t.id));
+  const gated = s.topics.filter((t) => {
+    const m = byId.get(t.id);
+    return m !== undefined && m.state !== "mastered" && m.attempts > 0 && !frontierIds.has(t.id);
+  });
   // The unmastered, unlocked prereqs (hard + soft) those stuck topics rest on.
-  const remedialIds = new Set(
+  const stuckRemedialIds = new Set(
     stuck.flatMap((t) => [...t.prereqs, ...(t.helpPrereqs ?? [])]).filter((id) => !mastered.has(id)),
   );
+  // Plus the missing hard prereqs of gated ones. Unlike the stuck ladder these
+  // still count toward the active cap once started: a gate step he is already
+  // working (e.g. Times Tables itself) must not free a slot for something else.
+  const remedialIds = new Set([...stuckRemedialIds, ...gated.flatMap((t) => t.prereqs).filter((id) => !mastered.has(id))]);
   const remedial = pool.filter((t) => remedialIds.has(t.id));
 
   // ACTIVE SET: he works at most ACTIVE_CAP started topics at a time, the ones he
@@ -106,7 +120,7 @@ export function selectNext(s: SelectInput): Selection {
   // sessions and he was failing three of them at once. Remediation prereqs do
   // not count: they are the cure for a stuck topic, not more load.
   const attemptsOf = (id: string) => byId.get(id)?.attempts ?? 0;
-  const startedAll = frontier.filter((t) => isStarted(t.id) && !remedialIds.has(t.id));
+  const startedAll = frontier.filter((t) => isStarted(t.id) && !stuckRemedialIds.has(t.id));
   const active = new Set(
     [...startedAll].sort((a, b) => attemptsOf(b.id) - attemptsOf(a.id)).slice(0, ACTIVE_CAP).map((t) => t.id),
   );
@@ -115,7 +129,7 @@ export function selectNext(s: SelectInput): Selection {
   const inProgress = pool.filter((t) => active.has(t.id));
 
   let ranked: Topic[];
-  if (stuck.length && remedial.length) {
+  if ((stuck.length || gated.length) && remedial.length) {
     // FOCUSED REMEDIATION: rotate among the underlying skills, the stuck topics,
     // and his other in-progress work. Withhold brand-new UNRELATED topics until
     // he's unstuck or there's nothing left to remediate — a struggling child

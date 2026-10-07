@@ -417,7 +417,9 @@
    "helpPrereqs": [
     "mt_nvdpxAJTBG",
     "mt_aHAM29nidj",
-    "mt_OkSJfrmFb_"
+    "mt_OkSJfrmFb_",
+    "tt_3",
+    "tt_4"
    ]
   },
   {
@@ -768,6 +770,8 @@
     "mt_HhuSDxwDNM"
    ],
    "helpPrereqs": [
+    "tt_3",
+    "tt_4",
     "mt_LpSuPgL31x",
     "mt_PZ909yPrEC"
    ]

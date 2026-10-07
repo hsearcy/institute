@@ -80,7 +80,8 @@ export const CURATION: CurationRow[] = [
   { id: "mt_LpSuPgL31x", kidLabel: "Fair Shares",      legacySkill: "division",       gen: { kind: "div", divisors: [2, 3, 4, 5], quotientMax: 5 }, fluentMs: null,
     // Division IS skip-counting by the divisor — his actual solving strategy — but
     // Marble gives this topic no prereqs, so he had no ladder down. Wire it in.
-    extraHelpPrereqs: ["mt_nvdpxAJTBG", "mt_aHAM29nidj", "mt_OkSJfrmFb_"] }, // Counting by 2s / 3s / Ten Hops
+    // The 3s and 4s tables (2026-10-07) are the facts its ÷3 and ÷4 rest on.
+    extraHelpPrereqs: ["mt_nvdpxAJTBG", "mt_aHAM29nidj", "mt_OkSJfrmFb_", "tt_3", "tt_4"] }, // Counting by 2s / 3s / Ten Hops
   // ---- expansion batch (2026-07-10): 20 topics, ages 5-8 ----------------------
   { id: "mt_s2mfRBoTal", kidLabel: "Bond Master",       legacySkill: "add_within_20",  gen: { kind: "missing_addend", totalMax: 20 },               fluentMs: 7000,
     // He stalls crossing ten (4 + ? = 18). The make-a-ten skill is the scaffold;
@@ -96,7 +97,9 @@ export const CURATION: CurationRow[] = [
   { id: "mt_OkSJfrmFb_", kidLabel: "Ten Hops Anywhere", legacySkill: "skip_counting",  gen: { kind: "skip", steps: [10], offset: true },            fluentMs: null },
   { id: "mt_IzQvs7k_sE", kidLabel: "Super Skips",       legacySkill: "skip_counting",  gen: { kind: "skip", steps: [4, 8, 50, 100] },               fluentMs: null },
   { id: "mt_M2v1A9OEuM", kidLabel: "Counting to 1000",  legacySkill: "skip_counting",  gen: { kind: "skip", steps: [5, 10, 100], offset: true },    fluentMs: null },
-  { id: "mt_wh3UqnWsa7", kidLabel: "Groups Galore",     legacySkill: "multiplication", gen: { kind: "mul_div", tables: [2, 3, 4, 5, 10] },          fluentMs: null },
+  { id: "mt_wh3UqnWsa7", kidLabel: "Groups Galore",     legacySkill: "multiplication", gen: { kind: "mul_div", tables: [2, 3, 4, 5, 10] },          fluentMs: null,
+    // Mixed 2/3/4/5/10: when he is stuck here, the single 3s and 4s tables are the cure.
+    extraHelpPrereqs: ["tt_3", "tt_4"] },
   { id: TT2, kidLabel: "Times Tables II",   legacySkill: "multiplication", gen: { kind: "mul_div", tables: [3, 4, 8] },                 fluentMs: 7000,
     extraPrereqs: ["tt_3", "tt_4", "tt_8"] },
   { id: TT_MASTER, kidLabel: "Times Tables Master", legacySkill: "multiplication", gen: { kind: "mul_div", tables: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], maxFactor: 12 }, fluentMs: 8000,

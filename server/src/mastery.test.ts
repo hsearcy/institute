@@ -25,6 +25,11 @@ describe("topicState", () => {
     expect(topicState(sig({ ...base, recentSolveMs: [9000, 8000, 7000] }))).toBe("practicing");
     expect(topicState(sig({ ...base, recentSolveMs: [3000, 5000, 4000] }))).toBe("mastered");
   });
+  test("table topics need ≥4 unaided solve times for the speed gate", () => {
+    const base = { lifetimeAttempts: 12, recentResults: Array(12).fill(true), lifetimeRatio: 1, fluentMs: 7000, minFluentSolves: 4 };
+    expect(topicState(sig({ ...base, recentSolveMs: [3000, 3000, 3000] }))).toBe("practicing");
+    expect(topicState(sig({ ...base, recentSolveMs: [3000, 3000, 3000, 3000] }))).toBe("mastered");
+  });
   test("windowed accuracy demotes after two recent misses", () => {
     const twelve = [...Array(10).fill(true), false, false]; // 10/12 = 83%
     expect(topicState(sig({ lifetimeAttempts: 40, recentResults: twelve, lifetimeRatio: 0.95 }))).toBe("practicing");

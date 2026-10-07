@@ -23,6 +23,20 @@ export const SKILL_LABELS: Record<Skill, string> = {
   division: "Division",
 };
 
+/** Extra on-screen context shown with a problem. A union so later kinds (shapes
+ *  for geometry, clock faces) slot in beside the first one. */
+export const ProblemVisualSchema = z.discriminatedUnion("kind", [
+  /** Nearby facts from the same times table, e.g. 8 × 6 = 48 above 8 × 7 = ?.
+   *  `rows` never contains the target factor; the client inserts the "?" row. */
+  z.object({
+    kind: z.literal("fact_ladder"),
+    table: z.number().int(),
+    target: z.number().int(),
+    rows: z.array(z.object({ factor: z.number().int(), product: z.number().int() })),
+  }),
+]);
+export type ProblemVisual = z.infer<typeof ProblemVisualSchema>;
+
 /** One math problem = one gem to mine. */
 export const ProblemSchema = z.object({
   /** Unique id (the server stamps this). */
@@ -44,6 +58,8 @@ export const ProblemSchema = z.object({
   difficulty: z.number().min(0).max(1),
   /** A warm, kid-friendly strategy hint (e.g. make-a-ten), shown if he gets stuck. */
   hint: z.string().max(200).optional(),
+  /** Optional on-screen context (see ProblemVisualSchema). */
+  visual: ProblemVisualSchema.optional(),
 });
 export type Problem = z.infer<typeof ProblemSchema>;
 

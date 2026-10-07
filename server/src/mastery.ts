@@ -17,6 +17,10 @@ export type TopicSignals = {
   lifetimeRatio: number;
   recentSolveMs: number[];
   fluentMs: number | null;
+  /** The speed gate needs at least this many solve times. Table topics pass only
+   *  UNAIDED solves (no fact ladder) and set 4, so reading an answer off a visible
+   *  neighbor fact can never earn mastery. */
+  minFluentSolves?: number;
 };
 
 export function topicState(s: TopicSignals): "practicing" | "mastered" {
@@ -26,5 +30,6 @@ export function topicState(s: TopicSignals): "practicing" | "mastered" {
     : s.lifetimeRatio;
   if (acc < 0.85) return "practicing";
   if (s.fluentMs !== null && median(s.recentSolveMs) > s.fluentMs) return "practicing";
+  if (s.fluentMs !== null && s.recentSolveMs.length < (s.minFluentSolves ?? 0)) return "practicing";
   return "mastered";
 }

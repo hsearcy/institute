@@ -799,7 +799,10 @@
    },
    "fluentMs": 7000,
    "prereqs": [
-    "mt_HhuSDxwDNM"
+    "mt_HhuSDxwDNM",
+    "tt_3",
+    "tt_4",
+    "tt_8"
    ],
    "helpPrereqs": [
     "mt_IzQvs7k_sE"
@@ -841,7 +844,15 @@
    },
    "fluentMs": 8000,
    "prereqs": [
-    "mt_wQ89AEXhz3"
+    "mt_wQ89AEXhz3",
+    "tt_3",
+    "tt_4",
+    "tt_6",
+    "tt_8",
+    "tt_9",
+    "tt_7",
+    "tt_11",
+    "tt_12"
    ],
    "helpPrereqs": [
     "mt_7rJM8eWUfw"
@@ -1454,6 +1465,236 @@
    "prereqs": [],
    "helpPrereqs": [
     "mt_PZ909yPrEC"
+   ]
+  },
+  {
+   "id": "tt_3",
+   "name": "The 3 times table",
+   "kidLabel": "3s Table",
+   "domain": "Multiplication & Division",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Know the 3 times table from 3 × 1 to 3 × 12 by heart",
+   "evidence": [
+    "Say 3 × 7 without counting up from the start",
+    "Use a known fact like 3 × 5 to work out a nearby one",
+    "Answer any 3 times fact within a few seconds"
+   ],
+   "assessmentPrompt": "Can {{name}} tell you 3 × 6, 3 × 7 and 3 × 8 quickly, without counting by 3s from the start?",
+   "legacySkill": "multiplication",
+   "gen": {
+    "kind": "table",
+    "table": 3
+   },
+   "fluentMs": 7000,
+   "prereqs": [
+    "mt_HhuSDxwDNM"
+   ],
+   "helpPrereqs": [
+    "mt_aHAM29nidj"
+   ]
+  },
+  {
+   "id": "tt_4",
+   "name": "The 4 times table",
+   "kidLabel": "4s Table",
+   "domain": "Multiplication & Division",
+   "ageRange": [
+    6,
+    7
+   ],
+   "description": "Know the 4 times table from 4 × 1 to 4 × 12 by heart",
+   "evidence": [
+    "Say 4 × 7 without counting up from the start",
+    "Use a known fact like 4 × 5 to work out a nearby one",
+    "Answer any 4 times fact within a few seconds"
+   ],
+   "assessmentPrompt": "Can {{name}} tell you 4 × 6, 4 × 7 and 4 × 8 quickly, without counting by 4s from the start?",
+   "legacySkill": "multiplication",
+   "gen": {
+    "kind": "table",
+    "table": 4
+   },
+   "fluentMs": 7000,
+   "prereqs": [
+    "mt_HhuSDxwDNM"
+   ],
+   "helpPrereqs": [
+    "mt_IzQvs7k_sE"
+   ]
+  },
+  {
+   "id": "tt_6",
+   "name": "The 6 times table",
+   "kidLabel": "6s Table",
+   "domain": "Multiplication & Division",
+   "ageRange": [
+    7,
+    8
+   ],
+   "description": "Know the 6 times table from 6 × 1 to 6 × 12 by heart",
+   "evidence": [
+    "Say 6 × 7 without counting up from the start",
+    "Use a known fact like 6 × 5 to work out a nearby one",
+    "Answer any 6 times fact within a few seconds"
+   ],
+   "assessmentPrompt": "Can {{name}} tell you 6 × 6, 6 × 7 and 6 × 8 quickly, without counting by 6s from the start?",
+   "legacySkill": "multiplication",
+   "gen": {
+    "kind": "table",
+    "table": 6
+   },
+   "fluentMs": 7000,
+   "prereqs": [
+    "tt_3"
+   ],
+   "helpPrereqs": [
+    "mt_7rJM8eWUfw"
+   ]
+  },
+  {
+   "id": "tt_8",
+   "name": "The 8 times table",
+   "kidLabel": "8s Table",
+   "domain": "Multiplication & Division",
+   "ageRange": [
+    7,
+    8
+   ],
+   "description": "Know the 8 times table from 8 × 1 to 8 × 12 by heart",
+   "evidence": [
+    "Say 8 × 7 without counting up from the start",
+    "Use a known fact like 8 × 5 to work out a nearby one",
+    "Answer any 8 times fact within a few seconds"
+   ],
+   "assessmentPrompt": "Can {{name}} tell you 8 × 6, 8 × 7 and 8 × 8 quickly, without counting by 8s from the start?",
+   "legacySkill": "multiplication",
+   "gen": {
+    "kind": "table",
+    "table": 8
+   },
+   "fluentMs": 7000,
+   "prereqs": [
+    "tt_4"
+   ],
+   "helpPrereqs": [
+    "mt_IzQvs7k_sE"
+   ]
+  },
+  {
+   "id": "tt_9",
+   "name": "The 9 times table",
+   "kidLabel": "9s Table",
+   "domain": "Multiplication & Division",
+   "ageRange": [
+    7,
+    8
+   ],
+   "description": "Know the 9 times table from 9 × 1 to 9 × 12 by heart",
+   "evidence": [
+    "Say 9 × 7 without counting up from the start",
+    "Use a known fact like 9 × 5 to work out a nearby one",
+    "Answer any 9 times fact within a few seconds"
+   ],
+   "assessmentPrompt": "Can {{name}} tell you 9 × 6, 9 × 7 and 9 × 8 quickly, without counting by 9s from the start?",
+   "legacySkill": "multiplication",
+   "gen": {
+    "kind": "table",
+    "table": 9
+   },
+   "fluentMs": 7000,
+   "prereqs": [
+    "tt_3"
+   ],
+   "helpPrereqs": [
+    "mt_7rJM8eWUfw"
+   ]
+  },
+  {
+   "id": "tt_7",
+   "name": "The 7 times table",
+   "kidLabel": "7s Table",
+   "domain": "Multiplication & Division",
+   "ageRange": [
+    7,
+    8
+   ],
+   "description": "Know the 7 times table from 7 × 1 to 7 × 12 by heart",
+   "evidence": [
+    "Say 7 × 7 without counting up from the start",
+    "Use a known fact like 7 × 5 to work out a nearby one",
+    "Answer any 7 times fact within a few seconds"
+   ],
+   "assessmentPrompt": "Can {{name}} tell you 7 × 6, 7 × 7 and 7 × 8 quickly, without counting by 7s from the start?",
+   "legacySkill": "multiplication",
+   "gen": {
+    "kind": "table",
+    "table": 7
+   },
+   "fluentMs": 7000,
+   "prereqs": [
+    "tt_6"
+   ],
+   "helpPrereqs": [
+    "mt_7rJM8eWUfw"
+   ]
+  },
+  {
+   "id": "tt_11",
+   "name": "The 11 times table",
+   "kidLabel": "11s Table",
+   "domain": "Multiplication & Division",
+   "ageRange": [
+    8,
+    9
+   ],
+   "description": "Know the 11 times table from 11 × 1 to 11 × 12 by heart",
+   "evidence": [
+    "Say 11 × 7 without counting up from the start",
+    "Use a known fact like 11 × 5 to work out a nearby one",
+    "Answer any 11 times fact within a few seconds"
+   ],
+   "assessmentPrompt": "Can {{name}} tell you 11 × 6, 11 × 7 and 11 × 8 quickly, without counting by 11s from the start?",
+   "legacySkill": "multiplication",
+   "gen": {
+    "kind": "table",
+    "table": 11
+   },
+   "fluentMs": 7000,
+   "prereqs": [
+    "tt_9"
+   ],
+   "helpPrereqs": []
+  },
+  {
+   "id": "tt_12",
+   "name": "The 12 times table",
+   "kidLabel": "12s Table",
+   "domain": "Multiplication & Division",
+   "ageRange": [
+    8,
+    9
+   ],
+   "description": "Know the 12 times table from 12 × 1 to 12 × 12 by heart",
+   "evidence": [
+    "Say 12 × 7 without counting up from the start",
+    "Use a known fact like 12 × 5 to work out a nearby one",
+    "Answer any 12 times fact within a few seconds"
+   ],
+   "assessmentPrompt": "Can {{name}} tell you 12 × 6, 12 × 7 and 12 × 8 quickly, without counting by 12s from the start?",
+   "legacySkill": "multiplication",
+   "gen": {
+    "kind": "table",
+    "table": 12
+   },
+   "fluentMs": 7000,
+   "prereqs": [
+    "tt_9"
+   ],
+   "helpPrereqs": [
+    "tt_6"
    ]
   }
  ]

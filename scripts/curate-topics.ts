@@ -13,23 +13,29 @@ const deps = JSON.parse(readFileSync("data/taxonomy/dependencies.json", "utf8"))
 const byId = new Map(topics.map((t) => [t.id, t]));
 
 const curatedIds = new Set(CURATION.map((c) => c.id));
-for (const c of CURATION) if (!byId.has(c.id)) throw new Error(`unknown taxonomy id ${c.id}`);
+for (const c of CURATION) if (!byId.has(c.id) && !c.custom) throw new Error(`unknown taxonomy id ${c.id}`);
 for (const c of CURATION)
-  for (const id of c.extraHelpPrereqs ?? [])
-    if (!curatedIds.has(id)) throw new Error(`${c.id} extraHelpPrereq ${id} not in curation`);
+  for (const id of [...(c.extraHelpPrereqs ?? []), ...(c.extraPrereqs ?? [])])
+    if (!curatedIds.has(id)) throw new Error(`${c.id} extra prereq ${id} not in curation`);
 const prereqs = contractEdges(deps, curatedIds);
+for (const c of CURATION)
+  if (c.extraPrereqs?.length) prereqs.set(c.id, [...new Set([...(prereqs.get(c.id) ?? []), ...c.extraPrereqs])]);
 // Soft edges become the remediation safety net: contract over hard+soft, then
 // subtract the hard prereqs — advisory "step down to this if he struggles".
 const unionPrereqs = contractEdges(deps, curatedIds, new Set(["hard", "soft"]));
 
 const out = CURATION.map((c) => {
-  const t = byId.get(c.id)!;
+  const raw = byId.get(c.id);
+  const t = c.custom ?? {
+    name: raw!.name, domain: raw!.domain, ageRange: [raw!.ageRangeStart, raw!.ageRangeEnd],
+    description: raw!.description, evidence: raw!.evidence, assessmentPrompt: raw!.assessmentPrompt,
+  };
   return {
     id: c.id,
     name: t.name,
     kidLabel: c.kidLabel,
     domain: t.domain,
-    ageRange: [t.ageRangeStart, t.ageRangeEnd],
+    ageRange: t.ageRange,
     description: c.override?.description ?? t.description,
     evidence: c.override?.evidence ?? t.evidence,
     assessmentPrompt: c.override?.assessmentPrompt ?? t.assessmentPrompt,

@@ -21,6 +21,7 @@ import { localProblem, type ProblemDraft, type SkillStat } from "./generate.ts";
 import { unlockedTopics, frontierTopics } from "./graph.ts";
 import { problemForTopic, serveProblem, maybeCostume } from "./topicgen.ts";
 import { topicState } from "./mastery.ts";
+import { UNAIDED_FROM } from "./visuals.ts";
 import { nextReview } from "./review.ts";
 import { selectNext } from "./select.ts";
 import { rescueTopic } from "./rescue.ts";
@@ -260,13 +261,17 @@ function recordTopicMastery(profileId: string, topicId: string, correct: boolean
     `SELECT correct FROM attempts WHERE profile_id = ? AND topic_id = ?
      ORDER BY created_at DESC, id DESC LIMIT 12`,
   ).all(profileId, topicId) as { correct: number }[]).map((r) => !!r.correct);
+  // Table topics fade a fact ladder in below UNAIDED_FROM; only the solves made
+  // without it show recall, so only those count toward the speed gate.
+  const aided = topic.gen.kind === "table";
   const recentSolveMs = (db.query(
     `SELECT solve_ms FROM attempts WHERE profile_id = ? AND topic_id = ? AND correct = 1
+       AND difficulty >= ?
      ORDER BY created_at DESC, id DESC LIMIT 8`,
-  ).all(profileId, topicId) as { solve_ms: number }[]).map((r) => r.solve_ms);
+  ).all(profileId, topicId, aided ? UNAIDED_FROM : 0) as { solve_ms: number }[]).map((r) => r.solve_ms);
   const state = topicState({
     lifetimeAttempts: attempts, recentResults, lifetimeRatio: corr / attempts,
-    recentSolveMs, fluentMs: topic.fluentMs,
+    recentSolveMs, fluentMs: topic.fluentMs, minFluentSolves: aided ? 4 : undefined,
   });
   // Mastery difficulty is a HIGH-WATER MARK: the hardest level he has proved on
   // this topic. It only rises, and only on a correct answer, so a review can
@@ -947,9 +952,14 @@ async function llmBranches(profileId: string, current: Problem): Promise<{ right
   let wrong = dress(stampTopic(ProblemSchema.parse(stampId(correctDraft(raw.wrong as ProblemDraft))), wrongTopic), wrongTopic);
   // Reject repeats (the just-solved problem or anything recently shown); regenerate locally.
   const taken = new Set<string>([current.prompt, ...avoid]);
-  if (taken.has(right.prompt)) right = freshLocal(rightTopic, right.skill, right.difficulty, taken);
+  // Table topics are always generated locally: "8 × 7" gains nothing from the
+  // model, and the fact ladder must match the prompt exactly (no 7 × 8 swaps).
+  const local = (t: Topic | undefined) => t?.gen.kind === "table";
+  if (taken.has(right.prompt) || local(rightTopic))
+    right = freshLocal(rightTopic, right.skill, local(rightTopic) ? plan.rightTarget : right.difficulty, taken);
   else taken.add(right.prompt);
-  if (taken.has(wrong.prompt)) wrong = freshLocal(wrongTopic, wrong.skill, wrong.difficulty, taken);
+  if (taken.has(wrong.prompt) || local(wrongTopic))
+    wrong = freshLocal(wrongTopic, wrong.skill, local(wrongTopic) ? wrongTarget : wrong.difficulty, taken);
   notePrompt(profileId, right.prompt);
   notePrompt(profileId, wrong.prompt);
   // Stamp LAST, off each branch's FINAL topic — a regenerated or costumed branch

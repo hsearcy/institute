@@ -30,6 +30,7 @@ import { equippedForgeReady } from './forgeReady';
 import { getRoomLayout } from './world/roomLayout';
 import { Celebrations, type CelebrationEvent } from './Celebrations';
 import './hud-rewards.css';
+import './fact-ladder.css';
 import { AnswerClock } from './AnswerClock';
 import { newRequestId } from './requestId';
 import { RPG_TUTORIAL_PAGES, RPG_TUTORIAL_VERSION, startTutorial as newTutorialState, advanceTutorial, type TutorialState } from './tutorial';
@@ -125,6 +126,7 @@ export class RpgGame {
       <div id="rpg-boss" class="rpg-boss" hidden><span>GUARDIAN</span><strong></strong><div role="progressbar" aria-label="Guardian health" aria-valuemin="0" aria-valuemax="36" aria-valuenow="36"><i></i></div></div>
       <div id="rpg-toast" class="rpg-toast" role="status" aria-live="polite" hidden></div><aside id="rpg-discovery" class="rpg-discovery" aria-label="New relic" aria-live="polite" hidden></aside><div id="rpg-floating-xp" class="rpg-floating-xp" aria-hidden="true"></div><div id="rpg-world-loot" class="rpg-world-loot" aria-hidden="true" hidden></div>
       <section class="rpg-controls" id="rpg-controls" hidden aria-label="Spell controls">
+        <div class="rpg-ladder" id="rpg-ladder" hidden></div>
         <div class="rpg-hint" id="rpg-hint" role="status" hidden></div>
         <form id="rpg-answer-form" class="rpg-answer-panel" autocomplete="off"><div class="rpg-question"><span id="rpg-topic" class="rpg-eyebrow">POWER YOUR SPELL</span><label for="rpg-answer" id="rpg-problem">Preparing your next spell…</label></div><input id="rpg-answer" aria-label="Your answer" inputmode="none" autocomplete="off" maxlength="3" pattern="[0-9]*" type="text"><button class="rpg-primary" id="rpg-cast" type="submit">Unleash <span id="rpg-power">100%</span></button><div class="rpg-help-buttons"><button type="button" data-action="hear" aria-label="Read problem aloud" title="Hear the problem">${icon('sound')}</button><button type="button" data-action="explain" class="rpg-direct-help">${icon('help')}<span>Hint</span></button><button type="button" data-action="walkthrough" class="rpg-direct-help"><span>I don't know</span></button><button type="button" data-action="keypad" aria-label="Toggle number pad" title="Number pad">⌨</button></div></form>
         <div id="rpg-keypad" class="rpg-keypad" hidden>${[1,2,3,4,5,6,7,8,9,'⌫',0,'✓'].map(n => `<button type="button" data-digit="${n}" aria-label="${n === '⌫' ? 'Delete digit' : n === '✓' ? 'Submit answer' : n}">${n}</button>`).join('')}</div>
@@ -407,6 +409,7 @@ export class RpgGame {
     if (this.disposed) return;
     this.closeDialog(true); this.entered = ''; this.updateAnswer();
     this.el('rpg-problem').textContent = p.prompt;
+    this.renderVisual(p.visual);
     this.el('rpg-answer-form').dataset.problemId = p.id;
     this.el('rpg-topic').textContent = p.topicLabel ?? 'POWER YOUR SPELL';
     this.el('rpg-hint').hidden = true;
@@ -621,6 +624,19 @@ export class RpgGame {
     const s = this.state!; const region = RPG_REGIONS.find(r => r.id === s.expedition?.regionId)!;
     this.nextAdventure = chooseNextAdventure(s);
     this.showDialog('victory', renderVictoryView(s, reward, region.bossName, this.campState, this.nextAdventure));
+  }
+
+  /** On-screen context beside the problem. Today: the fact ladder for a single
+   *  times table (8 × 6 = 48 above 8 × 7 = ?), faded by difficulty server side. */
+  private renderVisual(v: Problem['visual']): void {
+    const box = this.el('rpg-ladder');
+    if (v?.kind !== 'fact_ladder') { box.hidden = true; box.innerHTML = ''; return; }
+    const rows = [...v.rows.map(r => ({ f: r.factor, p: String(r.product), target: false })), { f: v.target, p: '?', target: true }]
+      .sort((a, b) => a.f - b.f);
+    box.dataset.size = rows.length > 6 ? 'full' : 'short';
+    box.innerHTML = `<span class="rpg-eyebrow">${esc(String(v.table))}s TABLE</span><ol>${rows.map(r =>
+      `<li${r.target ? ' class="is-target"' : ''}><span>${v.table} × ${r.f}</span><b>=</b><strong>${esc(r.p)}</strong></li>`).join('')}</ol>`;
+    box.hidden = false;
   }
 
   private hint(text: string): void { this.el('rpg-hint').textContent = text; this.el('rpg-hint').hidden = false; }

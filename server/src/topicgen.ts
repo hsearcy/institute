@@ -3,6 +3,7 @@
 import type { Topic } from "@institute/shared";
 import { addHint, subHint, type ProblemDraft } from "./generate.ts";
 import { costume } from "./costume.ts";
+import { factLadder, tableHint, TABLE_MAX } from "./visuals.ts";
 
 const ri = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
@@ -152,6 +153,15 @@ export function problemForTopic(topic: Topic, difficulty: number): TopicProblemD
       }
       return { ...base, prompt: `${t} × ${k}`, spoken: `What is ${t} times ${k}?`, answer: t * k,
         hint: `${k} groups of ${t}. Skip-count by ${t}, ${k} times.` };
+    }
+    case "table": {
+      // Difficulty fades the ladder, NOT the factor: every fact from ×2 to ×12
+      // must get recall practice, so k is uniform at every level.
+      const t = g.table;
+      const k = ri(2, TABLE_MAX);
+      const visual = factLadder(t, k, d);
+      return { ...base, prompt: `${t} × ${k}`, spoken: `What is ${t} times ${k}?`, answer: t * k,
+        hint: tableHint(t, k, visual), visual };
     }
     case "div": {
       const b = g.divisors[ri(0, g.divisors.length - 1)];

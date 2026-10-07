@@ -49,6 +49,8 @@ export const GenSpecSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("time_minutes") }),            // Minutes in 2 hours? / 3:15 to 3:50
   z.object({ kind: z.literal("perimeter_rect") }),          // Rectangle 6 by 4, perimeter?
   z.object({ kind: z.literal("area_tiles") }),              // 6 rows of 4 tiles, total?
+  // ---- per-table topics (2026-10-07): one times table each, with a fact ladder ----
+  z.object({ kind: z.literal("table"), table: z.number().int() }), // 8 × 7, factor 2..12
 ]);
 export type GenSpec = z.infer<typeof GenSpecSchema>;
 

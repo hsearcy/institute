@@ -18,7 +18,49 @@ export type CurationRow = {
    *  Shares — division — has NO taxonomy prereqs, but skip-counting is what it
    *  actually leans on. Soft only: they never gate/lock the topic. */
   extraHelpPrereqs?: string[];
+  /** Hand-authored HARD prereqs (unlock gates) merged with the taxonomy's. */
+  extraPrereqs?: string[];
+  /** A topic the taxonomy does not have (id outside its mt_ namespace): the
+   *  fields the taxonomy row would otherwise supply. */
+  custom?: { name: string; domain: string; ageRange: [number, number]; description: string; evidence: string[]; assessmentPrompt: string };
 };
+
+const TT = "mt_HhuSDxwDNM";       // Times Tables (2, 5, 10)
+const TT2 = "mt_wQ89AEXhz3";      // Times Tables II (3, 4, 8 mixed)
+const TT_MASTER = "mt_K5jM7vlVhA";
+
+/** One times table per topic (2026-10-07). Learning 3/4/8 and 2..12 as one mixed
+ *  bag of random facts was slow and frustrating; each table now gets its own
+ *  topic with a fading fact ladder (server/src/visuals.ts), and the mixed topics
+ *  become the interleaved review that unlocks once its tables are mastered.
+ *  2, 5 and 10 stay in Times Tables, the entry topic. */
+function tableRow(n: number, prereqs: string[], helps: string[], age: [number, number]): CurationRow {
+  return {
+    id: `tt_${n}`, kidLabel: `${n}s Table`, legacySkill: "multiplication",
+    gen: { kind: "table", table: n }, fluentMs: 7000,
+    extraPrereqs: prereqs, extraHelpPrereqs: helps,
+    custom: {
+      name: `The ${n} times table`, domain: "Multiplication & Division", ageRange: age,
+      description: `Know the ${n} times table from ${n} × 1 to ${n} × 12 by heart`,
+      evidence: [
+        `Say ${n} × 7 without counting up from the start`,
+        `Use a known fact like ${n} × 5 to work out a nearby one`,
+        `Answer any ${n} times fact within a few seconds`,
+      ],
+      assessmentPrompt: `Can {{name}} tell you ${n} × 6, ${n} × 7 and ${n} × 8 quickly, without counting by ${n}s from the start?`,
+    },
+  };
+}
+const TABLES: CurationRow[] = [
+  tableRow(3, [TT], ["mt_aHAM29nidj"], [6, 7]),           // ← Counting by 3s
+  tableRow(4, [TT], ["mt_IzQvs7k_sE"], [6, 7]),           // ← Super Skips (4s)
+  tableRow(6, ["tt_3"], ["mt_7rJM8eWUfw"], [7, 8]),       // ← Big Skips (6s)
+  tableRow(8, ["tt_4"], ["mt_IzQvs7k_sE"], [7, 8]),
+  tableRow(9, ["tt_3"], ["mt_7rJM8eWUfw"], [7, 8]),
+  tableRow(7, ["tt_6"], ["mt_7rJM8eWUfw"], [7, 8]),
+  tableRow(11, ["tt_9"], [], [8, 9]),
+  tableRow(12, ["tt_9"], ["tt_6"], [8, 9]),
+];
 
 export const CURATION: CurationRow[] = [
   { id: "mt_M5PPDJStGm", kidLabel: "Counting",         legacySkill: "skip_counting",  gen: { kind: "next_number", max: 100 },                      fluentMs: null },
@@ -34,7 +76,7 @@ export const CURATION: CurationRow[] = [
   { id: "mt_THl9GLxwoL", kidLabel: "Tens & Ones",      legacySkill: "place_value",    gen: { kind: "compose_tens", tensMax: 9 },                    fluentMs: null },
   { id: "mt_I5j1ZWo2cn", kidLabel: "Tens Math",        legacySkill: "place_value",    gen: { kind: "add_sub_tens" },                                fluentMs: null },
   { id: "mt_PZ909yPrEC", kidLabel: "Groups Of",        legacySkill: "multiplication", gen: { kind: "mul", tables: [2, 5, 10] },                     fluentMs: null },
-  { id: "mt_HhuSDxwDNM", kidLabel: "Times Tables",     legacySkill: "multiplication", gen: { kind: "mul_div", tables: [2, 5, 10] },                 fluentMs: 7000 },
+  { id: TT, kidLabel: "Times Tables",     legacySkill: "multiplication", gen: { kind: "mul_div", tables: [2, 5, 10] },                 fluentMs: 7000 },
   { id: "mt_LpSuPgL31x", kidLabel: "Fair Shares",      legacySkill: "division",       gen: { kind: "div", divisors: [2, 3, 4, 5], quotientMax: 5 }, fluentMs: null,
     // Division IS skip-counting by the divisor — his actual solving strategy — but
     // Marble gives this topic no prereqs, so he had no ladder down. Wire it in.
@@ -55,8 +97,10 @@ export const CURATION: CurationRow[] = [
   { id: "mt_IzQvs7k_sE", kidLabel: "Super Skips",       legacySkill: "skip_counting",  gen: { kind: "skip", steps: [4, 8, 50, 100] },               fluentMs: null },
   { id: "mt_M2v1A9OEuM", kidLabel: "Counting to 1000",  legacySkill: "skip_counting",  gen: { kind: "skip", steps: [5, 10, 100], offset: true },    fluentMs: null },
   { id: "mt_wh3UqnWsa7", kidLabel: "Groups Galore",     legacySkill: "multiplication", gen: { kind: "mul_div", tables: [2, 3, 4, 5, 10] },          fluentMs: null },
-  { id: "mt_wQ89AEXhz3", kidLabel: "Times Tables II",   legacySkill: "multiplication", gen: { kind: "mul_div", tables: [3, 4, 8] },                 fluentMs: 7000 },
-  { id: "mt_K5jM7vlVhA", kidLabel: "Times Tables Master", legacySkill: "multiplication", gen: { kind: "mul_div", tables: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], maxFactor: 12 }, fluentMs: 8000 },
+  { id: TT2, kidLabel: "Times Tables II",   legacySkill: "multiplication", gen: { kind: "mul_div", tables: [3, 4, 8] },                 fluentMs: 7000,
+    extraPrereqs: ["tt_3", "tt_4", "tt_8"] },
+  { id: TT_MASTER, kidLabel: "Times Tables Master", legacySkill: "multiplication", gen: { kind: "mul_div", tables: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], maxFactor: 12 }, fluentMs: 8000,
+    extraPrereqs: TABLES.map((t) => t.id) },
   { id: "mt_0u4KLbvBa1", kidLabel: "Odd One Out",       legacySkill: "division",       gen: { kind: "odd_pick" },                                   fluentMs: null },
   { id: "mt_U0waNfD8PB", kidLabel: "Number Battles",    legacySkill: "place_value",    gen: { kind: "compare_pick", max: 99 },                      fluentMs: null },
   { id: "mt_aPBzD28_mT", kidLabel: "Hundreds & More",   legacySkill: "place_value",    gen: { kind: "compose_hundreds" },                           fluentMs: null },
@@ -109,4 +153,5 @@ export const CURATION: CurationRow[] = [
   { id: "mt_2XDGT5tei1", kidLabel: "Minute Math",       legacySkill: "skip_counting",  gen: { kind: "time_minutes" },                                 fluentMs: null, extraHelpPrereqs: ["mt_M2v1A9OEuM"] },
   { id: "mt_wE7-Gs9ENL", kidLabel: "Fence Fixer",       legacySkill: "add_within_20",  gen: { kind: "perimeter_rect" },                               fluentMs: null, extraHelpPrereqs: ["mt_m1W6nTQJ2b"] },
   { id: "mt_Jvvh5P06NV", kidLabel: "Tile Floor",        legacySkill: "multiplication", gen: { kind: "area_tiles" },                                   fluentMs: null, extraHelpPrereqs: ["mt_PZ909yPrEC"] },
+  ...TABLES,
 ];

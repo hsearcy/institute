@@ -1,7 +1,7 @@
 // Deterministic-enough local problem generator. Used to bootstrap the very first
 // problem instantly (no LLM wait at startup) and as the always-available fallback
 // if the LLM is slow or errors — so the gem-mine loop is never blocked.
-import type { Skill } from "@institute/shared";
+import type { ProblemVisual, Skill } from "@institute/shared";
 
 export type ProblemDraft = {
   skill: Skill;
@@ -10,6 +10,7 @@ export type ProblemDraft = {
   answer: number;
   difficulty: number;
   hint?: string;
+  visual?: ProblemVisual;
 };
 
 const ri = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;

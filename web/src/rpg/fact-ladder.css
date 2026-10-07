@@ -22,3 +22,19 @@
   .rpg-ladder[data-size="full"] ol{column-gap:9px}
   .rpg-ladder[data-size="full"] li{font-size:11px;grid-template-columns:4em .8em 2em;padding:0 2px}
 }
+/* Wide screens: the ladder lives in the open left third of the scene, beside the
+   fight instead of over it, and gets bigger since it has the room. It shares the
+   controls' visibility (sibling right after them). */
+.rpg-ladder-side{display:none}
+@media(min-width:1001px){
+  .rpg-controls .rpg-ladder{display:none}
+  .rpg-ladder-side:not([hidden]){display:block;position:absolute;z-index:4;left:clamp(16px,6vw,140px);top:50%;transform:translateY(-50%);margin:0;padding:12px 20px 14px}
+  .rpg-controls[hidden] + .rpg-ladder-side{display:none}
+  .rpg-ladder-side .rpg-eyebrow{font-size:10px;margin-bottom:8px}
+  .rpg-ladder-side li{font-size:24px;gap:4px}
+  .rpg-ladder-side[data-size="full"] li{font-size:19px}
+  .rpg-ladder-side[data-size="full"] ol{column-gap:26px}
+}
+@media(min-width:1001px) and (max-height:650px){
+  .rpg-ladder-side li{font-size:18px}.rpg-ladder-side[data-size="full"] li{font-size:15px}
+}

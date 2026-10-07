@@ -133,6 +133,7 @@ export class RpgGame {
         <footer class="rpg-hotbar"><div class="rpg-hud-art" aria-hidden="true"></div><div class="rpg-level-orb"><span>LEVEL</span><strong id="rpg-level">1</strong></div><div class="rpg-spellbar" id="rpg-spellbar"></div><span class="rpg-compact-spell-name" id="rpg-compact-spell-name" aria-hidden="true"></span><button class="rpg-gear-button" data-action="inventory" aria-label="Open equipment">${icon('sword')}<span id="rpg-equipped">Equipment</span></button><button class="rpg-magic-orb" data-action="spellbook" aria-label="Open spellbook"><span>SPELLS</span><strong id="rpg-spell-count">2</strong><small>Spellbook · B</small></button></footer>
         <div class="rpg-xp"><div class="rpg-xp-heading"><strong id="rpg-xp-next">Next: Level 2</strong><span id="rpg-xp-label">0 / 90 XP</span></div><div class="rpg-xp-track" id="rpg-xp-track" role="progressbar" aria-label="Experience toward next level" aria-valuemin="0" aria-valuemax="90" aria-valuenow="0"><i id="rpg-xp-fill"></i><span id="rpg-xp-gain" aria-hidden="true"></span></div></div>
       </section>
+      <div class="rpg-ladder rpg-ladder-side" id="rpg-ladder-side" hidden></div>
       <div class="rpg-connection" id="rpg-connection" hidden role="alert"><span>Reconnecting to your adventure…</span><button data-action="retry">Try again</button></div>
       <div id="rpg-overlay" class="rpg-overlay" hidden><section class="rpg-dialog" role="dialog" aria-modal="true" aria-labelledby="rpg-dialog-title" tabindex="-1"><button class="rpg-dialog-close" data-action="close" aria-label="Close">×</button><div id="rpg-dialog-content"></div></section></div>
       <button class="rpg-parent" data-action="parent">Parent journal</button><span id="rpg-save-status" class="rpg-save-status">◆ Adventure saved on your server</span>`;
@@ -629,14 +630,15 @@ export class RpgGame {
   /** On-screen context beside the problem. Today: the fact ladder for a single
    *  times table (8 × 6 = 48 above 8 × 7 = ?), faded by difficulty server side. */
   private renderVisual(v: Problem['visual']): void {
-    const box = this.el('rpg-ladder');
-    if (v?.kind !== 'fact_ladder') { box.hidden = true; box.innerHTML = ''; return; }
+    // Two homes, CSS shows one: in the controls stack on narrow screens, in the
+    // open left third of the scene on wide ones (off the hero and the fight).
+    const boxes = [this.el('rpg-ladder'), this.el('rpg-ladder-side')];
+    if (v?.kind !== 'fact_ladder') { for (const box of boxes) { box.hidden = true; box.innerHTML = ''; } return; }
     const rows = [...v.rows.map(r => ({ f: r.factor, p: String(r.product), target: false })), { f: v.target, p: '?', target: true }]
       .sort((a, b) => a.f - b.f);
-    box.dataset.size = rows.length > 6 ? 'full' : 'short';
-    box.innerHTML = `<span class="rpg-eyebrow">${esc(String(v.table))}s TABLE</span><ol>${rows.map(r =>
+    const html = `<span class="rpg-eyebrow">${esc(String(v.table))}s TABLE</span><ol>${rows.map(r =>
       `<li${r.target ? ' class="is-target"' : ''}><span>${v.table} × ${r.f}</span><b>=</b><strong>${esc(r.p)}</strong></li>`).join('')}</ol>`;
-    box.hidden = false;
+    for (const box of boxes) { box.dataset.size = rows.length > 6 ? 'full' : 'short'; box.innerHTML = html; box.hidden = false; }
   }
 
   private hint(text: string): void { this.el('rpg-hint').textContent = text; this.el('rpg-hint').hidden = false; }

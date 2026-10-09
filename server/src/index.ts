@@ -21,7 +21,9 @@ import { localProblem, type ProblemDraft, type SkillStat } from "./generate.ts";
 import { unlockedTopics, frontierTopics } from "./graph.ts";
 import { problemForTopic, serveProblem, maybeCostume } from "./topicgen.ts";
 import { topicState } from "./mastery.ts";
-import { UNAIDED_FROM } from "./visuals.ts";
+import { TABLE_STEP_UP, UNAIDED_FROM } from "./visuals.ts";
+
+const isTableTopic = (id: string | null | undefined): boolean => !!id && topicById(id)?.gen.kind === "table";
 import { nextReview } from "./review.ts";
 import { selectNext } from "./select.ts";
 import { rescueTopic } from "./rescue.ts";
@@ -808,14 +810,18 @@ function adaptivePlan(
   const lastMs = recent[0]?.solve_ms ?? 0;
   const solveTag = lastMs === 0 ? "unknown" : lastMs < 4000 ? "fast" : lastMs < 9000 ? "steady" : "slow";
   // Push harder when he's accurate and fast; ease more when he's struggling.
-  const up = (recentAcc >= 0.8 ? 0.14 : recentAcc >= 0.6 ? 0.08 : 0.04) + (solveTag === "fast" ? 0.04 : 0);
+  const baseUp = (recentAcc >= 0.8 ? 0.14 : recentAcc >= 0.6 ? 0.08 : 0.04) + (solveTag === "fast" ? 0.04 : 0);
+  const up = isTableTopic(current.topicId) ? Math.min(baseUp, TABLE_STEP_UP) : baseUp;
   const down = 0.12 + (recentAcc < 0.5 ? 0.05 : 0);
   // Where the right branch goes: the unified selector (due reviews → focus run
   // → domain-rotating interleave). Staying put is selection returning current.
   const next = selectFor(profileId, current.topicId ?? null);
   const advanceTopic = next.topic.id !== current.topicId ? next.topic : null;
   return {
-    rightTarget: next.mode === "review" ? next.difficulty : +clampDiff(cur + up).toFixed(2),
+    // Moving to ANOTHER topic starts at that topic's own level (the selector's);
+    // carrying this topic's difficulty over served a fresh table topic at 0.9+
+    // straight after a hard Fair Shares run, with no ladder at all.
+    rightTarget: next.mode === "review" || advanceTopic ? next.difficulty : +clampDiff(cur + up).toFixed(2),
     wrongTarget: +clampDiff(cur - down).toFixed(2),
     solveTag,
     recentAccuracyPct: Math.round(recentAcc * 100),
@@ -1003,9 +1009,10 @@ function localBranches(profileId: string, current: Problem): { right: Problem; w
   const make = (topic: Topic | undefined, d: number) =>
     topic ? maybeCostume(stampId(problemForTopic(topic, d)), topic) : stampId(localProblem(current.skill, d));
   const next = curTopic ? selectFor(profileId, curTopic.id) : null;
+  const step = isTableTopic(current.topicId) ? TABLE_STEP_UP : 0.12;
   const right = next
-    ? make(next.topic, next.mode === "review" ? next.difficulty : Math.min(0.95, current.difficulty + 0.12))
-    : make(undefined, Math.min(0.95, current.difficulty + 0.12));
+    ? make(next.topic, next.mode === "review" || next.topic.id !== current.topicId ? next.difficulty : Math.min(0.95, current.difficulty + step))
+    : make(undefined, Math.min(0.95, current.difficulty + step));
   const wrongPlan = wrongBranchPlan(profileId, current, recentAttempts(profileId, 3));
   const wrong = make(wrongPlan.topic, wrongPlan.difficulty);
   return {

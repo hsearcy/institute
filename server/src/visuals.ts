@@ -4,7 +4,11 @@ import type { ProblemVisual } from "@institute/shared";
 
 /** At or above this difficulty a table problem shows NO ladder: it is pure recall.
  *  Mastery's speed gate for table topics counts only solves at this level. */
-export const UNAIDED_FROM = 0.85;
+export const UNAIDED_FROM = 0.9;
+
+/** Difficulty climbs by at most this per correct answer on a table topic, so each
+ *  ladder stage lasts a few problems instead of one (~11 correct to reach recall). */
+export const TABLE_STEP_UP = 0.06;
 
 /** Facts a young child already knows by heart; the one-anchor level leans on them. */
 const ANCHORS = [2, 5, 10];
@@ -19,12 +23,15 @@ export function anchorFor(k: number): number {
 }
 
 /** How much of the table to show around `table × k`, fading as difficulty rises:
- *  the whole table → two neighbors each side → one anchor fact → nothing. */
+ *  the whole table → two neighbors each side → one each side → one anchor fact →
+ *  nothing. */
 export function factLadder(table: number, k: number, difficulty: number): ProblemVisual | undefined {
   let factors: number[];
+  const near = (n: number) => [k - n, k - 1, k + 1, k + n].filter((f) => f >= 1 && f <= TABLE_MAX);
   if (difficulty >= UNAIDED_FROM) return undefined;
-  if (difficulty < 0.35) factors = Array.from({ length: TABLE_MAX }, (_, i) => i + 1);
-  else if (difficulty < 0.6) factors = [k - 2, k - 1, k + 1, k + 2].filter((f) => f >= 1 && f <= TABLE_MAX);
+  if (difficulty < 0.45) factors = Array.from({ length: TABLE_MAX }, (_, i) => i + 1);
+  else if (difficulty < 0.62) factors = near(2);
+  else if (difficulty < 0.77) factors = [...new Set(near(1))];
   else {
     // The target IS a known fact: nothing useful to lean on.
     if (ANCHORS.includes(k)) return undefined;

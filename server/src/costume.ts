@@ -1,39 +1,34 @@
 // server/src/costume.ts — the gem-economy story pass. Sam computed 450−200 in
-// his head, unprompted, because he WANTED the gold pickaxe — while the same
-// shape as a drill ("2 + ? = 8") stalls him. So problems sometimes wear shop
+// his head, unprompted, because he WANTED a shop item — while the same shape
+// as a drill ("2 + ? = 8") stalls him. So problems sometimes wear adventure
 // clothes: `spoken` tells the story, but the PROMPT, ANSWER, HINT, and NUMBERS
 // are untouched — the topic's envelope and the trust-math guard stay intact.
 //
 // Rules (see the 2026-07-16 plan):
-// - Third-person characters only (Milo/Ruby the miners) — never "you have N";
+// - Third-person characters only (Finn/Arlo the adventurers) — never "you have N";
 //   the kid compares any "you have" against his live gem counter.
 // - Real item names only with their REAL prices; otherwise generic props.
 // - Stable quantities only — no live balance (problems are pre-generated).
-import type { GenSpec } from "@institute/shared";
+import { RPG_ITEMS, rpgMerchantPrice, type GenSpec } from "@institute/shared";
 import type { ProblemDraft } from "./generate.ts";
 
-/** Everything purchasable, for honest price references + the LLM catalog line. */
-export const SHOP_PRICES = [
-  { name: "stone pickaxe", price: 50 },
-  { name: "iron pickaxe", price: 120 },
-  { name: "silver pickaxe", price: 250 },
-  { name: "gold pickaxe", price: 450 },
-  { name: "diamond pickaxe", price: 800 },
-  { name: "shield", price: 40 },
-  { name: "ocean pad", price: 75 },
-  { name: "lava pad", price: 160 },
-  { name: "galaxy pad", price: 340 },
-  { name: "rainbow pad", price: 650 },
-] as const;
+/** Everything the camp Merchant sells, for honest price references + the LLM catalog line. */
+export const SHOP_PRICES = RPG_ITEMS.flatMap((item) => {
+  const price = rpgMerchantPrice(item);
+  return price === null ? [] : [{ name: item.name, price }];
+});
 
-const priceItem = (n: number) => SHOP_PRICES.find((p) => p.price === n);
-
-const MINERS = ["Milo the miner", "Ruby the digger"];
-const TREATS = ["gem sticker", "shiny pebble", "tiny lantern", "rock candy"];
 const pick = <T>(a: readonly T[]): T => a[Math.floor(Math.random() * a.length)];
+const priceItem = (n: number) => {
+  const matches = SHOP_PRICES.filter((p) => p.price === n);
+  return matches.length ? pick(matches) : undefined;
+};
+
+const HEROES = ["Finn the knight", "Arlo the wizard"];
+const TREATS = ["healing potion", "magic scroll", "lucky charm", "silver key"];
 const norm = (s: string) => s.replace(/[−–—]/g, "-");
 
-/** A shop-story `spoken` for this draft, or null when the kind/shape declines.
+/** An adventure-story `spoken` for this draft, or null when the kind/shape declines.
  *  NEVER mutates the draft; callers decide whether to use it. */
 export function costume(draft: ProblemDraft, kind: GenSpec["kind"]): { spoken: string } | null {
   const p = norm(draft.prompt);
@@ -46,7 +41,7 @@ export function costume(draft: ProblemDraft, kind: GenSpec["kind"]): { spoken: s
       if ((m = p.match(/^(\d+) \+ \? = (\d+)$/)) || (m = p.match(/^\? \+ (\d+) = (\d+)$/))) {
         const [have, want] = [Number(m[1]), Number(m[2])];
         const item = priceItem(want);
-        const who = pick(MINERS);
+        const who = pick(HEROES);
         const treat = pick(TREATS);
         return { spoken: item
           ? pick([
@@ -55,7 +50,7 @@ export function costume(draft: ProblemDraft, kind: GenSpec["kind"]): { spoken: s
           ])
           : pick([
             `${who} saved up ${have} gems and wants a ${treat} that costs ${want}. How many more does he need?`,
-            `A ${treat} at the shop costs ${want} gems, and ${who} has ${have}. How many more to go?`,
+            `A ${treat} at the merchant costs ${want} gems, and ${who} has ${have}. How many more to go?`,
           ]) };
       }
       return null;
@@ -65,19 +60,19 @@ export function costume(draft: ProblemDraft, kind: GenSpec["kind"]): { spoken: s
     case "add_2d2d":
     case "add_within_100": {
       if ((m = p.match(/^(\d+) \+ (\d+)$/))) {
-        const who = pick(MINERS);
+        const who = pick(HEROES);
         return { spoken: pick([
-          `${who} mined ${m[1]} gems this morning and ${m[2]} more after lunch. How many gems altogether?`,
-          `${who} found a pouch of ${m[1]} gems and another with ${m[2]}. How many gems in all?`,
+          `${who} found ${m[1]} gems in the dungeon this morning and ${m[2]} more after lunch. How many gems altogether?`,
+          `${who} opened a treasure chest with ${m[1]} gems and another with ${m[2]}. How many gems in all?`,
         ]) };
       }
       if ((m = p.match(/^(\d+) - (\d+)$/))) {
         const spent = Number(m[2]);
         const item = priceItem(spent);
-        const who = pick(MINERS);
+        const who = pick(HEROES);
         return { spoken: pick([
-          `${who} had ${m[1]} gems and spent ${spent} at the shop${item ? ` on a ${item.name}` : ""}. How many gems are left?`,
-          `${who} had ${m[1]} gems, then a rockslide took ${spent}! How many are left?`,
+          `${who} had ${m[1]} gems and spent ${spent} at the merchant${item ? ` on the ${item.name}` : ""}. How many gems are left?`,
+          `${who} had ${m[1]} gems, then a sneaky goblin grabbed ${spent}! How many are left?`,
         ]) };
       }
       return null;
@@ -95,16 +90,16 @@ export function costume(draft: ProblemDraft, kind: GenSpec["kind"]): { spoken: s
     case "mul": {
       if (!(m = p.match(/^(\d+) × (\d+)$/))) return null;
       return { spoken: pick([
-        `Each gem pouch holds ${m[1]} gems. How many gems in ${m[2]} pouches?`,
-        `A shield pack has ${m[1]} shields, and ${pick(MINERS)} buys ${m[2]} packs. How many shields is that?`,
+        `Each treasure chest holds ${m[1]} gems. How many gems in ${m[2]} chests?`,
+        `A potion bag holds ${m[1]} potions, and ${pick(HEROES)} buys ${m[2]} bags. How many potions is that?`,
       ]) };
     }
     case "mul_div": {
       if ((m = p.match(/^(\d+) × (\d+)$/))) {
-        return { spoken: `Each gem pouch holds ${m[1]} gems. How many gems in ${m[2]} pouches?` };
+        return { spoken: `Each treasure chest holds ${m[1]} gems. How many gems in ${m[2]} chests?` };
       }
       if ((m = p.match(/^(\d+) ÷ (\d+)$/))) {
-        return { spoken: `${pick(MINERS)} packs ${m[1]} gems into pouches of ${m[2]}. How many pouches does he fill?` };
+        return { spoken: `${pick(HEROES)} packs ${m[1]} gems into bags of ${m[2]}. How many bags does he fill?` };
       }
       return null;
     }
@@ -112,8 +107,8 @@ export function costume(draft: ProblemDraft, kind: GenSpec["kind"]): { spoken: s
       if (!(m = p.match(/^(\d+) ([+-]) (\d+)$/))) return null;
       const [base, op, step] = [Number(m[1]), m[2], Number(m[3])];
       return { spoken: op === "+"
-        ? `A trinket at the shop costs ${base} gems. The deluxe one costs ${step} more. How much is the deluxe one?`
-        : `A trinket costs ${base} gems, but today it's on sale for ${step} less! What does it cost now?` };
+        ? `A magic scroll at the merchant costs ${base} gems. The golden one costs ${step} more. How much is the golden one?`
+        : `A magic scroll costs ${base} gems, but today it's on sale for ${step} less! What does it cost now?` };
     }
     default:
       return null;

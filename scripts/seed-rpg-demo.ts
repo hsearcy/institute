@@ -27,9 +27,8 @@ export async function seedRpgDemo() {
         // Restarting the local server preserves everything played so far.
         if (db.query('SELECT 1 FROM profile_state WHERE profile_id = ?').get(profileId)) continue;
         const now = Date.now();
-        db.query(`INSERT INTO profile_state (profile_id,gems,lifetime_gems,streak,best_streak,shields,crazy_coins,equipped_pickaxe,equipped_pad_theme,equipped_gem_style,updated_at)
-          VALUES (?, 482, 1800, 4, 21, 2, 3, 'diamond', 'pad_ocean', 'gem_ruby', ?)`).run(profileId, now);
-        for (const item of ['diamond', 'pad_ocean', 'gem_ruby']) db.query('INSERT INTO owned_items (profile_id,item_key,durability) VALUES (?, ?, 100)').run(profileId, item);
+        db.query(`INSERT INTO profile_state (profile_id,gems,lifetime_gems,streak,best_streak,shields,crazy_coins,updated_at)
+          VALUES (?, 482, 1800, 4, 21, 2, 3, ?)`).run(profileId, now);
         for (let i = 0; i < 4; i++) {
           const topic = roots[i]!;
           const mastered = i < 2;

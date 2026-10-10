@@ -49,9 +49,9 @@ try{
  // Delay only narration of the next genuine learning question. The tutor and combat stay real.
  console.log('NARRATION: awaiting branches');await page.waitForFunction(()=>!!(window as any).__game.session.branches);
  console.log('NARRATION: branches ready');const nextSpoken=await page.evaluate(()=>(window as any).__game.session.branches.wrong.spoken);
- const narrationAudio=Buffer.from(await Bun.file(resolve(root,'web/public/assets/audio/pickaxe-chink.mp3')).arrayBuffer());
+ const narrationAudio=Buffer.from(await Bun.file(resolve(root,'web/public/assets/rpg/audio/loot.wav')).arrayBuffer());
  let releaseNarration!:()=>void,reading=false;const narrationGate=new Promise<void>(resolve=>releaseNarration=resolve);
- await page.route('**/tts',async route=>{if(route.request().postDataJSON().text===nextSpoken){reading=true;await narrationGate;}await route.fulfill({status:200,contentType:'audio/mpeg',body:narrationAudio});});
+ await page.route('**/tts',async route=>{if(route.request().postDataJSON().text===nextSpoken){reading=true;await narrationGate;}await route.fulfill({status:200,contentType:'audio/wav',body:narrationAudio});});
  await page.locator('[data-action=sound]').click();await page.locator('[data-action=walkthrough]').click();await page.getByRole('button',{name:'Next question',exact:true}).waitFor();await page.getByRole('button',{name:'Next question',exact:true}).click();await ready();
  for(let i=0;!reading&&i<100;i++)await page.waitForTimeout(50);assert(reading,'Initial question narration requested');console.log('NARRATION: response held');
  assert.equal(await page.evaluate(()=>(window as any).__game.answerClock.elapsed()),0);await page.waitForTimeout(650);assert.equal(await page.evaluate(()=>(window as any).__game.answerClock.elapsed()),0);releaseNarration();console.log('NARRATION: response released');await page.waitForFunction(()=>(window as any).__game.answerClock.elapsed()>500);report.checks.push('Power clock stays at zero throughout delayed initial narration and starts only after speech resolves');await page.unroute('**/tts');await page.locator('[data-action=sound]').click();

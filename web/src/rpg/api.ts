@@ -1,4 +1,4 @@
-import { API, PROFILE } from '../game/config';
+import { API, PROFILE } from './config';
 import type { RpgState, RpgResolveResult, RpgAppearanceId } from '@institute/shared';
 
 export class ApiError extends Error {

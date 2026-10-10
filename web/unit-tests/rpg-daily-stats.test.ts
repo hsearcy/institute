@@ -1,20 +1,15 @@
 import { describe, expect, test } from "bun:test";
-import type { DailyRecord, DailyRecordEvent } from "@institute/shared";
+import type { DailyRecord } from "@institute/shared";
 import {
   CHART_DAYS,
-  PRESENTED_EVENT_MEMORY,
   chartBars,
-  chipLabel,
   countPhrase,
   dayLabel,
   dayTick,
   encouragement,
-  focusTrapIndex,
-  rememberPresented,
   statTiles,
   trackingNote,
-  unpresentedEvents,
-} from "../src/game/dailyStats";
+} from "../src/rpg/dailyStats";
 
 const history = (counts: number[], lastDay = "2026-08-08") => {
   const [y, m, d] = lastDay.split("-").map(Number);
@@ -41,9 +36,6 @@ const record = (over: Partial<DailyRecord> = {}): DailyRecord => ({
   pendingEvents: [],
   ...over,
 });
-
-const event = (id: string, count = 9): DailyRecordEvent =>
-  ({ id, day: "2026-08-08", count, previousRecord: count - 1 });
 
 describe("day formatting", () => {
   test("labels a day in words, not just a colour or a number", () => {
@@ -121,9 +113,9 @@ describe("the summary tiles", () => {
 });
 
 describe("the encouraging line", () => {
-  test("invites a first gem before there is any record", () => {
+  test("invites a first solve before there is any record", () => {
     expect(encouragement(record({ today: 0, record: 0, recordDay: null })))
-      .toBe("Mine your first gem to start the record!");
+      .toBe("Solve your first problem to start the record!");
   });
 
   test("counts exactly how many more beat the record", () => {
@@ -139,13 +131,6 @@ describe("the encouraging line", () => {
   test("a fresh morning points at the record to chase", () => {
     expect(encouragement(record({ today: 0, record: 14, isRecord: false })))
       .toBe("Your record is 14 in one day. Ready to chase it?");
-  });
-});
-
-describe("the HUD chip label", () => {
-  test("spells out both numbers and that it opens something", () => {
-    expect(chipLabel(record())).toBe("Right today: 6. Best day ever: 14. Tap to see your stats.");
-    expect(chipLabel(null)).toBe("Right today: 0. Best day ever: 0. Tap to see your stats.");
   });
 });
 
@@ -165,64 +150,5 @@ describe("the tracking small print", () => {
 
   test("cannot name a date it does not have", () => {
     expect(trackingNote({ completeSince: null, backfilled: true })).toBeNull();
-  });
-});
-
-describe("showing a record celebration exactly once", () => {
-  test("skips events already shown on this device", () => {
-    const events = [event("a", 9), event("b", 12)];
-    expect(unpresentedEvents(events, [])).toEqual(events);
-    expect(unpresentedEvents(events, ["a"])).toEqual([event("b", 12)]);
-    expect(unpresentedEvents(events, ["a", "b"])).toEqual([]);
-  });
-
-  test("a duplicated id inside one payload is still one party", () => {
-    expect(unpresentedEvents([event("a"), event("a")], [])).toEqual([event("a")]);
-  });
-
-  test("remembers ids newest-last, without duplicates", () => {
-    let ids = rememberPresented([], "a");
-    ids = rememberPresented(ids, "b");
-    ids = rememberPresented(ids, "a"); // re-shown: moves, never doubles
-    expect(ids).toEqual(["b", "a"]);
-  });
-
-  test("forgets the oldest ids rather than growing without bound", () => {
-    let ids: string[] = [];
-    for (let i = 0; i < PRESENTED_EVENT_MEMORY + 5; i++) ids = rememberPresented(ids, `e${i}`);
-    expect(ids).toHaveLength(PRESENTED_EVENT_MEMORY);
-    expect(ids.at(-1)).toBe(`e${PRESENTED_EVENT_MEMORY + 4}`);
-    expect(ids).not.toContain("e0");
-  });
-
-  test("a small cap still keeps the most recent", () => {
-    const ids = ["a", "b", "c"].reduce((acc, id) => rememberPresented(acc, id, 2), [] as string[]);
-    expect(ids).toEqual(["b", "c"]);
-  });
-});
-
-describe("the modal focus trap", () => {
-  test("cycles forward and wraps at the end", () => {
-    expect(focusTrapIndex(3, 0, false)).toBe(1);
-    expect(focusTrapIndex(3, 2, false)).toBe(0);
-  });
-
-  test("cycles backward and wraps at the start", () => {
-    expect(focusTrapIndex(3, 2, true)).toBe(1);
-    expect(focusTrapIndex(3, 0, true)).toBe(2);
-  });
-
-  test("pulls focus in when it is outside the dialog", () => {
-    expect(focusTrapIndex(3, -1, false)).toBe(0);
-    expect(focusTrapIndex(3, -1, true)).toBe(2);
-  });
-
-  test("a single control (our close button) always keeps focus", () => {
-    expect(focusTrapIndex(1, 0, false)).toBe(0);
-    expect(focusTrapIndex(1, 0, true)).toBe(0);
-  });
-
-  test("an empty dialog is left alone rather than throwing", () => {
-    expect(focusTrapIndex(0, -1, false)).toBe(-1);
   });
 });

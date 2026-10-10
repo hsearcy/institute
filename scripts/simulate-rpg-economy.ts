@@ -52,7 +52,7 @@ function simulate(state: RpgState, tier: number) {
   return { tier, casts, perRoom, singleCastRooms, dust: rpgDungeonForgeDust(tier),
     // Existing tutor: a solved retry earns one gem; sustained first-try streaks
     // earn roughly three per solve after ten. These are bounds/scenarios, not a
-    // promise about the child's accuracy. Quests and hoard bonuses are omitted.
+    // promise about the child's accuracy. Quests are omitted.
     gemsWithoutStreak: casts, gemsSustainedStreakApprox: casts * 3 };
 }
 

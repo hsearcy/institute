@@ -1,6 +1,6 @@
 // server/src/costume.test.ts — the gem-economy story pass must NEVER touch the
 // math: prompt, answer, difficulty, and hint stay identical; only `spoken` gets
-// shop clothes, and only with honest numbers.
+// adventure clothes, and only with honest numbers.
 import { describe, expect, test } from "bun:test";
 import { costume, SHOP_PRICES } from "./costume.ts";
 import { problemForTopic } from "./topicgen.ts";
@@ -11,10 +11,12 @@ const t = (gen: GenSpec): Topic => ({
   id: "x", name: "x", kidLabel: "x", domain: "d", ageRange: [6, 7], description: "",
   evidence: [], assessmentPrompt: "", legacySkill: "add_within_20", gen, fluentMs: null, prereqs: [], helpPrereqs: [],
 });
-const SHOPPY = /gem|pickaxe|shield|shop|pack|pouch|miner|milo|ruby|chest|trinket|deluxe|sale|coin/i;
+const STORY = /gem|merchant|chest|potion|bag|scroll|sale|knight|wizard/i;
+// The mine is gone: no story may send him back into it.
+const MINING = /\bmin(e|ed|er|ing)\b|pickaxe|rockslide|\bdig/i;
 
 describe("costume", () => {
-  test("compatible kinds get a shop story; math untouched; spoken bounded", () => {
+  test("compatible kinds get an adventure story; math untouched; spoken bounded", () => {
     const kinds: GenSpec[] = [
       { kind: "missing_addend", totalMax: 20 },
       { kind: "missing_any", max: 20 },
@@ -37,7 +39,8 @@ describe("costume", () => {
         if (c === null) continue; // some shapes (e.g. non-gap missing_any) legitimately decline
         costumed++;
         expect(c.spoken.length).toBeLessThanOrEqual(160);
-        expect(c.spoken).toMatch(SHOPPY);
+        expect(c.spoken).toMatch(STORY);
+        expect(c.spoken).not.toMatch(MINING);
         expect(c.spoken).not.toMatch(/you have/i); // the kid compares against his LIVE counter
       }
     }

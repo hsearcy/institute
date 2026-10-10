@@ -1,5 +1,5 @@
 import type { State } from '@institute/shared';
-import type { Mastery, MasteryTopic } from '../game/tutor';
+import type { Mastery, MasteryTopic } from './tutor';
 import { escapeHtml as esc, icon } from './icons';
 
 /** Stable learning order within a domain; cross-domain prerequisites remain named on cards. */
@@ -46,7 +46,7 @@ export function renderParentJournal(profile: string, mastery: Mastery | null, le
   const counts = { mastered: 0, practicing: 0, ready: 0, locked: 0 };
   for (const topic of topics) counts[topicStatus(topic).key as keyof typeof counts]++;
   return `<div class="rpg-parent-journal">
-    <header class="rpg-journal-heading"><p class="rpg-eyebrow">PARENT JOURNAL · ${esc(profile)}</p><h2 id="rpg-dialog-title">The learning journey</h2><p>See what he knows, what he is practicing, and what comes next. Math progress is shared with the original mine.</p></header>
+    <header class="rpg-journal-heading"><p class="rpg-eyebrow">PARENT JOURNAL · ${esc(profile)}</p><h2 id="rpg-dialog-title">The learning journey</h2><p>See what he knows, what he is practicing, and what comes next.</p></header>
     <div class="rpg-journal-stats"><span><b>${mastery ? counts.mastered : '…'}</b>topics mastered</span><span><b>${legacy?.gems ?? '…'}</b>gems kept</span><span><b data-parent-balance="coin">${mastery?.crazyCoins ?? '…'}</b>Crazy Coins</span><span><b data-parent-balance="dime">${mastery ? mastery.dimes ?? 0 : '…'}</b>dimes to pay</span><span><b>${expeditions}</b>expeditions cleared</span></div>
     <details class="rpg-journal-rewards"><summary>Daily quests & rewards</summary><div class="rpg-quest-list">${legacy ? legacy.quests.map(quest => `<p><span>${esc(quest.label)}</span><b>${quest.progress} / ${quest.target} ${quest.done ? '✓' : ''}</b></p>`).join('') || '<p>No daily quests available yet.</p>' : '<p>Could not load daily quests.</p>'}</div><button data-action="redeem" ${(mastery?.crazyCoins ?? 0) < 1 ? 'disabled' : ''}>Redeem one Crazy Coin</button><button data-action="redeem-dime" ${(mastery?.dimes ?? 0) < 1 ? 'disabled' : ''}>Redeem one dime · $0.10</button><p>Each boss has a separate 10% chance to award a Crazy Coin and a dime. Redeem a dime when you pay it.</p><p data-parent-redemption-status role="status" aria-live="polite"></p></details>
     <section class="rpg-learning-map" aria-label="Math learning map">
@@ -59,6 +59,6 @@ export function renderParentJournal(profile: string, mastery: Mastery | null, le
         return `<section class="rpg-journal-domain" id="rpg-journal-domain-${index}" tabindex="-1" aria-labelledby="rpg-journal-domain-title-${index}"><header><div><span class="rpg-journal-domain-number">${String(index + 1).padStart(2, '0')}</span><h3 id="rpg-journal-domain-title-${index}">${esc(domain)}</h3></div><span>${mastered} of ${entries.length} mastered</span></header><progress value="${mastered}" max="${entries.length}" aria-label="${esc(domain)} mastery"></progress><ol class="rpg-journal-chain">${ordered.map((topic, step) => renderTopic(topic, step + 1, byId)).join('')}</ol></section>`;
       }).join('')}` : `<p class="rpg-journal-empty" role="status">${mastery ? 'No math topics are available yet. They will appear here when the learning tree is ready.' : 'Could not load the learning map. Your saved progress is unchanged. Close the journal and try again.'}</p>`}
     </section>
-    <footer class="rpg-button-row"><button class="rpg-primary" data-action="close">Back to adventure</button><a class="rpg-text-button" href="?mode=mine">Original mine, shops & detailed statistics</a></footer>
+    <footer class="rpg-button-row"><button class="rpg-primary" data-action="close">Back to adventure</button></footer>
   </div>`;
 }

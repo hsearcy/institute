@@ -31,7 +31,7 @@ function gems(db: Database, profileId: string): number {
 
 function debit(db: Database, profileId: string, cost: number): void {
   // Spend the original wallet. Never subtract from lifetime earnings, create a
-  // second currency balance, or rewrite unrelated mining/learning fields.
+  // second currency balance, or rewrite unrelated reward/learning fields.
   const result = db.query('UPDATE profile_state SET gems = gems - ? WHERE profile_id = ? AND gems >= ?')
     .run(cost, profileId, cost);
   if (result.changes !== 1) throw new EconomyError(`You need ${cost} gems for this.`);

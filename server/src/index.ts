@@ -22,6 +22,7 @@ import { unlockedTopics, frontierTopics } from "./graph.ts";
 import { problemForTopic, serveProblem, maybeCostume } from "./topicgen.ts";
 import { topicState } from "./mastery.ts";
 import { TABLE_STEP_UP, UNAIDED_FROM } from "./visuals.ts";
+import { SHOP_PRICES } from "./costume.ts";
 
 const isTableTopic = (id: string | null | undefined): boolean => !!id && topicById(id)?.gen.kind === "table";
 import { nextReview } from "./review.ts";
@@ -97,11 +98,6 @@ db.exec(`
     done INTEGER DEFAULT 0,
     PRIMARY KEY (profile_id, quest_key, week_start)
   );
-  CREATE TABLE IF NOT EXISTS owned_items (
-    profile_id TEXT,
-    item_key TEXT,
-    PRIMARY KEY (profile_id, item_key)
-  );
   CREATE TABLE IF NOT EXISTS topic_mastery (
     profile_id TEXT NOT NULL,
     topic_id TEXT NOT NULL,
@@ -145,23 +141,6 @@ db.exec(
      last_difficulty)
    WHERE state = 'mastered' AND mastery_difficulty IS NULL`,
 );
-// Add the equipped-pickaxe column (guarded — ALTER throws if it already exists).
-try {
-  db.exec(`ALTER TABLE profile_state ADD COLUMN equipped_pickaxe TEXT DEFAULT 'wooden'`);
-} catch { /* column already present */ }
-// Per-owned-item durability (NULL ⇒ treat as full). Pickaxes wear as he mines and
-// break at 0 (→ auto-swap to wooden); repair refills it.
-try {
-  db.exec(`ALTER TABLE owned_items ADD COLUMN durability INTEGER`);
-} catch { /* column already present */ }
-// Equipped number-pad theme (guarded ALTER; 'pad_classic' = the free default look).
-try {
-  db.exec(`ALTER TABLE profile_state ADD COLUMN equipped_pad_theme TEXT DEFAULT 'pad_classic'`);
-} catch { /* column already present */ }
-// Equipped model for the prize embedded in the mine wall.
-try {
-  db.exec(`ALTER TABLE profile_state ADD COLUMN equipped_gem_style TEXT DEFAULT 'gem_classic'`);
-} catch { /* column already present */ }
 // Parent-redeemed rewards. Amounts use whole coins and whole dimes.
 try {
   db.exec(`ALTER TABLE profile_state ADD COLUMN crazy_coins INTEGER DEFAULT 0`);
@@ -174,12 +153,9 @@ db.exec(`CREATE TABLE IF NOT EXISTS parent_redemptions (
   ok INTEGER NOT NULL, created_at INTEGER NOT NULL,
   PRIMARY KEY (profile_id, request_id)
 )`);
-// Lifetime earnings never fall when gems are spent. Existing profiles are
-// backfilled below once the shop catalogs are available.
-let shouldBackfillLifetimeGems = false;
+// Lifetime earnings never fall when gems are spent.
 try {
   db.exec(`ALTER TABLE profile_state ADD COLUMN lifetime_gems INTEGER DEFAULT 0`);
-  shouldBackfillLifetimeGems = true;
 } catch { /* column already present */ }
 // Per-player-day tally of problems he got right, and the record he is chasing.
 // Creates the tables and, on an existing database, backfills what the attempt
@@ -357,15 +333,10 @@ db.query(`UPDATE topic_mastery SET review_interval_days = 1, review_due_at = ?
 
 // ---- Rewards: gems / streaks / daily quests / shield -----------------------
 
-type ProfileStateRow = { gems: number; lifetime_gems: number; streak: number; best_streak: number; shields: number; crazy_coins: number; dimes: number; equipped_pickaxe: string; equipped_pad_theme: string; equipped_gem_style: string };
+type ProfileStateRow = { gems: number; lifetime_gems: number; streak: number; best_streak: number; shields: number; crazy_coins: number; dimes: number };
 type QuestRow = { quest_key: string; label: string; target: number; progress: number; reward: number; done: number };
 
 const utcDay = () => new Date().toISOString().slice(0, 10);
-
-// Bonus gems awarded when the client's hoard meter fills up (kept in sync with
-// HOARD_BONUS on the client, which renders the "+N" banner).
-const HOARD_BONUS = 10;
-const LEGACY_CRAZY_COIN_COST = 200;
 
 /** The daily quests, regenerated lazily per UTC day. Keep the legacy keys
  *  for the first three so an in-progress day survives deploys. */
@@ -405,145 +376,28 @@ function streakBonus(streak: number): number {
 
 /** Read (creating if missing) the per-profile reward state. */
 function getProfileState(profileId: string): ProfileStateRow {
-  let row = db.query(`SELECT gems, lifetime_gems, streak, best_streak, shields, crazy_coins, dimes, equipped_pickaxe, equipped_pad_theme, equipped_gem_style FROM profile_state WHERE profile_id = ?`)
+  let row = db.query(`SELECT gems, lifetime_gems, streak, best_streak, shields, crazy_coins, dimes FROM profile_state WHERE profile_id = ?`)
     .get(profileId) as ProfileStateRow | null;
   if (!row) {
-    db.query(`INSERT OR IGNORE INTO profile_state (profile_id, gems, lifetime_gems, streak, best_streak, shields, crazy_coins, equipped_pickaxe, equipped_pad_theme, equipped_gem_style, updated_at)
-              VALUES (?, 0, 0, 0, 0, 0, 0, 'wooden', 'pad_classic', 'gem_classic', ?)`).run(profileId, Date.now());
-    row = { gems: 0, lifetime_gems: 0, streak: 0, best_streak: 0, shields: 0, crazy_coins: 0, dimes: 0, equipped_pickaxe: "wooden", equipped_pad_theme: "pad_classic", equipped_gem_style: "gem_classic" };
+    db.query(`INSERT OR IGNORE INTO profile_state (profile_id, gems, lifetime_gems, streak, best_streak, shields, crazy_coins, updated_at)
+              VALUES (?, 0, 0, 0, 0, 0, 0, ?)`).run(profileId, Date.now());
+    row = { gems: 0, lifetime_gems: 0, streak: 0, best_streak: 0, shields: 0, crazy_coins: 0, dimes: 0 };
   }
   // Existing rows predating the columns come back with NULL — normalize to the defaults.
-  if (!row.equipped_pickaxe) row.equipped_pickaxe = "wooden";
   if (!row.crazy_coins) row.crazy_coins = 0;
   if (!row.dimes) row.dimes = 0;
-  if (!row.equipped_pad_theme) row.equipped_pad_theme = "pad_classic";
-  if (!row.equipped_gem_style) row.equipped_gem_style = "gem_classic";
   return row;
 }
 
 function saveProfileState(profileId: string, s: ProfileStateRow): void {
-  db.query(`UPDATE profile_state SET gems = ?, lifetime_gems = ?, streak = ?, best_streak = ?, shields = ?, crazy_coins = ?, dimes = ?, equipped_pickaxe = ?, equipped_pad_theme = ?, equipped_gem_style = ?, updated_at = ?
+  db.query(`UPDATE profile_state SET gems = ?, lifetime_gems = ?, streak = ?, best_streak = ?, shields = ?, crazy_coins = ?, dimes = ?, updated_at = ?
             WHERE profile_id = ?`)
-    .run(s.gems, s.lifetime_gems, s.streak, s.best_streak, s.shields, s.crazy_coins, s.dimes, s.equipped_pickaxe, s.equipped_pad_theme, s.equipped_gem_style, Date.now(), profileId);
+    .run(s.gems, s.lifetime_gems, s.streak, s.best_streak, s.shields, s.crazy_coins, s.dimes, Date.now(), profileId);
 }
 
 function creditGems(state: ProfileStateRow, amount: number): void {
   state.gems += amount;
   state.lifetime_gems += amount;
-}
-
-// ---- Pickaxe-skin shop -----------------------------------------------------
-
-/** Server-owned catalog of pickaxe skins, in ladder order. `wooden` is the free,
- *  default-owned, default-equipped starter. */
-const PICKAXE_CATALOG = [
-  { key: "wooden", name: "Wooden Pickaxe", price: 0 },
-  { key: "stone", name: "Stone Pickaxe", price: 50 },
-  { key: "iron", name: "Iron Pickaxe", price: 120 },
-  { key: "silver", name: "Silver Pickaxe", price: 250 },
-  { key: "gold", name: "Gold Pickaxe", price: 450 },
-  { key: "diamond", name: "Diamond Pickaxe", price: 800 },
-  { key: "obsidian", name: "Obsidian Pickaxe", price: 1400 },
-  { key: "legendary", name: "Legendary Pickaxe", price: 2500 },
-] as const;
-
-const catalogEntry = (key: string) => PICKAXE_CATALOG.find((c) => c.key === key) ?? null;
-
-/** Number-pad style themes: pure-cosmetic gem sinks with varied price anchors
- *  (they double as numbers for the gem-shop math costume + Socratic moments). */
-const PAD_THEME_CATALOG = [
-  { key: "pad_ocean", name: "Ocean Pad", price: 75 },
-  { key: "pad_lava", name: "Lava Pad", price: 160 },
-  { key: "pad_galaxy", name: "Galaxy Pad", price: 340 },
-  { key: "pad_rainbow", name: "Rainbow Pad", price: 650 },
-] as const;
-const padThemeEntry = (key: string) => PAD_THEME_CATALOG.find((c) => c.key === key) ?? null;
-
-/** Authored models for the geode/gem currently embedded in the mine wall. */
-const GEM_STYLE_CATALOG = [
-  { key: "gem_emerald", name: "Mega Emerald", price: 90 },
-  { key: "gem_ruby", name: "Power Ruby", price: 220 },
-  { key: "gem_diamond", name: "Super Diamond", price: 480 },
-  { key: "gem_dragonheart", name: "Dragonheart Gem", price: 900 },
-] as const;
-const gemStyleEntry = (key: string) => GEM_STYLE_CATALOG.find((c) => c.key === key) ?? null;
-
-// Old data has no transaction ledger, but owned catalog items and unredeemed
-// Crazy Coins preserve a guaranteed portion of past spending. Use that evidence
-// to establish a conservative lifetime floor, then track every award exactly.
-if (shouldBackfillLifetimeGems) {
-  const priceByKey = new Map<string, number>([
-    ...PICKAXE_CATALOG.map((item) => [item.key, item.price] as const),
-    ...PAD_THEME_CATALOG.map((item) => [item.key, item.price] as const),
-    ...GEM_STYLE_CATALOG.map((item) => [item.key, item.price] as const),
-  ]);
-  const profiles = db.query(`SELECT profile_id, gems, crazy_coins FROM profile_state`)
-    .all() as { profile_id: string; gems: number; crazy_coins: number }[];
-  for (const profile of profiles) {
-    const owned = db.query(`SELECT item_key FROM owned_items WHERE profile_id = ?`)
-      .all(profile.profile_id) as { item_key: string }[];
-    const recordedSpending = owned.reduce((sum, item) => sum + (priceByKey.get(item.item_key) ?? 0), 0);
-    const lifetimeGems = profile.gems + recordedSpending + profile.crazy_coins * LEGACY_CRAZY_COIN_COST;
-    db.query(`UPDATE profile_state SET lifetime_gems = ? WHERE profile_id = ?`)
-      .run(lifetimeGems, profile.profile_id);
-  }
-}
-
-// Full durability per tier = how many gems it mines before wearing out. Pricier
-// tiers last much longer (a real reason to climb the ladder, not just looks).
-// wooden = the free fallback, never wears. Tunable — start soft.
-const DURABILITY: Record<string, number> = {
-  stone: 40, iron: 60, silver: 90, gold: 130, diamond: 180, obsidian: 250, legendary: 350,
-};
-const maxDurability = (key: string): number | null => (key === "wooden" ? null : DURABILITY[key] ?? 60);
-// Gentle repair cost: ~10% of the purchase price (min 5). wooden never repairs.
-const repairCost = (key: string): number => {
-  const cat = catalogEntry(key);
-  return cat && cat.price > 0 ? Math.max(5, Math.ceil(cat.price * 0.1)) : 0;
-};
-
-/** Whether the profile owns the item. `wooden` is always owned (free starter). */
-function ownsItem(profileId: string, itemKey: string): boolean {
-  if (itemKey === "wooden") return true;
-  const row = db.query(`SELECT 1 FROM owned_items WHERE profile_id = ? AND item_key = ?`)
-    .get(profileId, itemKey);
-  return !!row;
-}
-
-/** Current durability of an owned pickaxe (NULL column ⇒ full; unowned ⇒ 0). */
-function itemDurability(profileId: string, key: string): number {
-  const max = maxDurability(key);
-  if (max === null) return Infinity; // wooden
-  const row = db.query(`SELECT durability FROM owned_items WHERE profile_id = ? AND item_key = ?`)
-    .get(profileId, key) as { durability: number | null } | null;
-  if (!row) return 0;
-  return row.durability == null ? max : row.durability;
-}
-
-function setItemDurability(profileId: string, key: string, val: number): void {
-  db.query(`UPDATE owned_items SET durability = ? WHERE profile_id = ? AND item_key = ?`)
-    .run(val, profileId, key);
-}
-
-/** Read (and optionally wear −1) the equipped pickaxe's durability. On wear to 0
- *  it breaks: the equip auto-reverts to wooden (skin stays owned at 0 until repaired).
- *  Mutates `state.equipped_pickaxe` on break; the caller persists state. */
-function equippedDurability(
-  profileId: string,
-  state: ProfileStateRow,
-  wear: boolean,
-): { key: string; current: number | null; max: number | null; broke: boolean } {
-  const key = state.equipped_pickaxe;
-  const max = maxDurability(key);
-  if (max === null) return { key, current: null, max: null, broke: false }; // wooden
-  let cur = itemDurability(profileId, key);
-  let broke = false;
-  if (wear) {
-    cur = Math.max(0, cur - 1);
-    setItemDurability(profileId, key, cur);
-    if (cur <= 0) { state.equipped_pickaxe = "wooden"; broke = true; }
-  }
-  return { key, current: cur, max, broke };
 }
 
 /** Ensure today's quest rows exist; return them. */
@@ -726,7 +580,7 @@ const PROBLEM_DRAFT_SCHEMA = {
   type: "object",
   properties: {
     skill: { type: "string", enum: [...SKILLS] },
-    prompt: { type: "string", description: "Written form on the rock, e.g. \"8 + 7\" or \"5, 10, 15, ?\"" },
+    prompt: { type: "string", description: "Written form shown on screen, e.g. \"8 + 7\" or \"5, 10, 15, ?\"" },
     spoken: { type: "string", description: "Kid-friendly spoken form, e.g. \"What is 8 plus 7?\"" },
     answer: { type: "integer", description: "The correct numeric answer the kid keys in" },
     difficulty: { type: "number", description: "0..1" },
@@ -747,7 +601,7 @@ const BRANCHES_TOOL = {
   },
 } as const;
 
-const SYSTEM = `You are the adaptive tutor inside "Institute", a gem-mine math game for one 6-year-old. Each turn you produce the next problem for BOTH outcomes of the problem he is solving right now — "right" (he answers correctly) and "wrong" (he misses it) — so the game can instantly load whichever happens.
+const SYSTEM = `You are the adaptive tutor inside "Institute", a fantasy dungeon RPG math game for one 6-year-old. Every right answer powers a spell against a horde of monsters. Each turn you produce the next problem for BOTH outcomes of the problem he is solving right now — "right" (he answers correctly) and "wrong" (he misses it) — so the game can instantly load whichever happens.
 
 You are given his LIVE per-skill mastery and concrete difficulty targets computed from his real attempts. Follow that data and those targets. Do NOT assume fixed strengths or weaknesses — they change as he learns.
 
@@ -760,7 +614,7 @@ Rules:
 - In "spoken", write any SEQUENCE of numbers as words ("eight, ten, twelve" — never "8, 10, 12"): the voice engine garbles digit runs. Single numbers inside a sentence may stay as digits.
 - No dashes of any kind in "prompt", "spoken", or "hint". Use a comma or start a new sentence: the voice engine mangles dashes and can even switch language on them.
 - He is American: money is ALWAYS dollars and cents (penny/nickel/dime/quarter) — never pounds or pence.
-- About 1 in 3 problems, when it fits naturally, tell the "spoken" story in HIS game's gem economy instead of plain arithmetic. Real prices you may reference: stone pickaxe 50, ocean pad 75, iron pickaxe 120, lava pad 160, silver pickaxe 250, galaxy pad 340, gold pickaxe 450, rainbow pad 650, diamond pickaxe 800, shield 40 gems. Use third-person characters (a miner saving up, a shopkeeper) — NEVER "you have N gems" (he compares it against his live gem counter). The numbers you were told to target stay EXACTLY the same; never invent a different price for a named item.
+- About 1 in 3 problems, when it fits naturally, tell the "spoken" story in HIS game's adventure world instead of plain arithmetic: heroes, dungeons, treasure chests, potions, and gems as money. Real Merchant prices you may reference, in gems: ${SHOP_PRICES.map((p) => `${p.name} ${p.price}`).join(", ")}. Use third-person characters (a knight saving up, the camp Merchant) — NEVER "you have N gems" (he compares it against his live gem counter). The numbers you were told to target stay EXACTLY the same; never invent a different price for a named item.
 - "hint" teaches a concrete strategy he can act on if he's stuck (make-a-ten, count-on, count-back) — a real method, never just restating the answer. For a missing addend that crosses ten, the strategy is "add a ten first, then adjust the ones" — never "count up to ten then add the two jumps". For division, the strategy is "skip-count by the divisor" (count by 3s up to 12 → four jumps → 4) — not dealing items out to friends one at a time.
 Return via the next_problems tool only.`;
 
@@ -1107,8 +961,6 @@ app.post("/tutor/attempt", async (c) => {
     // client calls only when the problem gives up and moves on.
     gemsEarned = 0;
   }
-  // A correct answer mines a gem — that swing wears the equipped pickaxe.
-  const durability = equippedDurability(profileId, state, correct);
   saveProfileState(profileId, state);
 
   return c.json({
@@ -1124,7 +976,6 @@ app.post("/tutor/attempt", async (c) => {
       shieldUsed,
       questsCompleted,
       allDailiesCrazyCoin,
-      durability,
       daily,
     },
   });
@@ -1177,31 +1028,13 @@ app.post("/reward/retry-solve", async (c) => {
     firstTry: false,
     gemsEarned: 1,
   });
-  const durability = equippedDurability(profileId, state, true); // a mined gem wears it
   saveProfileState(profileId, state);
   return c.json({
     ok: true,
     reward: {
       gemsEarned: 1, totalGems: state.gems, lifetimeGems: state.lifetime_gems, streak: state.streak, bestStreak: state.best_streak,
-      shields: state.shields, milestone: null, shieldUsed: false, questsCompleted, allDailiesCrazyCoin, durability,
+      shields: state.shields, milestone: null, shieldUsed: false, questsCompleted, allDailiesCrazyCoin,
       daily,
-    },
-  });
-});
-
-// Hoard meter filled → award a flat bonus on top. Purely client-triggered (no
-// adversary in a kid's game); the server stays the gem authority by crediting +
-// returning the new total. Quests are untouched (the bonus is "extra").
-app.post("/reward/hoard-bonus", async (c) => {
-  const { profileId } = await c.req.json();
-  const state = getProfileState(profileId);
-  creditGems(state, HOARD_BONUS);
-  saveProfileState(profileId, state);
-  return c.json({
-    ok: true,
-    reward: {
-      gemsEarned: HOARD_BONUS, totalGems: state.gems, lifetimeGems: state.lifetime_gems, streak: state.streak, bestStreak: state.best_streak,
-      shields: state.shields, milestone: null, shieldUsed: false, questsCompleted: [],
     },
   });
 });
@@ -1218,9 +1051,6 @@ app.get("/state", (c) => {
     shields: s.shields,
     quests: questView(getQuests(profileId)),
     weeklyQuest: questView([getWeeklyQuest(profileId)])[0],
-    equipped: s.equipped_pickaxe,
-    durability: equippedDurability(profileId, s, false),
-    equippedGemStyle: s.equipped_gem_style,
     daily: dailyRecordState(db, profileId, Date.now()),
   });
 });
@@ -1234,194 +1064,6 @@ app.post("/daily-record/ack", async (c) => {
   const { profileId, eventId } = DailyRecordAckSchema.parse(await c.req.json());
   acknowledgeRecordEvent(db, profileId, eventId, Date.now());
   return c.json({ ok: true });
-});
-
-// ---- Pickaxe-skin shop endpoints -------------------------------------------
-
-// Catalog + balance + ownership/equipped flags (server is the source of truth).
-app.get("/shop", (c) => {
-  const profileId = c.req.query("profileId") ?? "sam";
-  const s = getProfileState(profileId);
-  const items = PICKAXE_CATALOG.map((cat) => {
-    const max = maxDurability(cat.key);
-    const owned = ownsItem(profileId, cat.key);
-    return {
-      key: cat.key,
-      name: cat.name,
-      price: cat.price,
-      owned,
-      equipped: s.equipped_pickaxe === cat.key,
-      // current durability if owned; else show it full so the shop previews the tier's stat
-      durability: max === null ? null : (owned ? itemDurability(profileId, cat.key) : max),
-      maxDurability: max,
-      repairCost: repairCost(cat.key),
-    };
-  });
-  const padThemes = PAD_THEME_CATALOG.map((t) => ({
-    key: t.key, name: t.name, price: t.price,
-    owned: ownsItem(profileId, t.key),
-    equipped: s.equipped_pad_theme === t.key,
-  }));
-  const gemStyles = GEM_STYLE_CATALOG.map((style) => ({
-    key: style.key, name: style.name, price: style.price,
-    owned: ownsItem(profileId, style.key),
-    equipped: s.equipped_gem_style === style.key,
-  }));
-  return c.json({
-    gems: s.gems,
-    equipped: s.equipped_pickaxe,
-    items,
-    padThemes,
-    equippedPadTheme: s.equipped_pad_theme,
-    gemStyles,
-    equippedGemStyle: s.equipped_gem_style,
-  });
-});
-
-// Buy a skin: spend gems, record ownership, and auto-equip it.
-app.post("/shop/buy", async (c) => {
-  const { profileId, itemKey } = await c.req.json();
-  const s = getProfileState(profileId);
-  const cat = catalogEntry(itemKey);
-  if (!cat || itemKey === "wooden" || ownsItem(profileId, itemKey)) {
-    return c.json({ ok: false, reason: "unavailable", gems: s.gems });
-  }
-  if (s.gems < cat.price) {
-    return c.json({ ok: false, reason: "not enough gems", gems: s.gems });
-  }
-  s.gems -= cat.price;
-  s.equipped_pickaxe = itemKey;
-  const max = maxDurability(itemKey);
-  db.query(`INSERT OR IGNORE INTO owned_items (profile_id, item_key, durability) VALUES (?, ?, ?)`)
-    .run(profileId, itemKey, max);
-  setItemDurability(profileId, itemKey, max ?? 0); // fresh + full even if re-owned
-  saveProfileState(profileId, s);
-  return c.json({
-    ok: true,
-    gems: s.gems,
-    equipped: s.equipped_pickaxe,
-    item: { key: cat.key, name: cat.name, price: cat.price },
-    durability: equippedDurability(profileId, s, false),
-  });
-});
-
-// Equip an already-owned skin (or wooden, always allowed). Blocks equipping a
-// broken skin (durability 0) — it must be repaired first.
-app.post("/shop/equip", async (c) => {
-  const { profileId, itemKey } = await c.req.json();
-  // Pad themes share owned_items — never let one be equipped as a pickaxe.
-  if (padThemeEntry(itemKey) || gemStyleEntry(itemKey)) {
-    return c.json({ ok: false, reason: "not a pickaxe" });
-  }
-  if (itemKey === "wooden" || ownsItem(profileId, itemKey)) {
-    if (itemKey !== "wooden" && itemDurability(profileId, itemKey) <= 0) {
-      return c.json({ ok: false, reason: "broken" });
-    }
-    const s = getProfileState(profileId);
-    s.equipped_pickaxe = itemKey;
-    saveProfileState(profileId, s);
-    return c.json({ ok: true, equipped: s.equipped_pickaxe, durability: equippedDurability(profileId, s, false) });
-  }
-  return c.json({ ok: false, reason: "not owned" });
-});
-
-// Repair an owned pickaxe: spend gems → refill durability → re-equip it (so a
-// just-broken tool is instantly back in hand). Never destroys the skin.
-app.post("/shop/repair", async (c) => {
-  const { profileId, itemKey } = await c.req.json();
-  const s = getProfileState(profileId);
-  const max = maxDurability(itemKey);
-  if (itemKey === "wooden" || max === null || !ownsItem(profileId, itemKey)) {
-    return c.json({ ok: false, reason: "unavailable", gems: s.gems });
-  }
-  const cost = repairCost(itemKey);
-  if (s.gems < cost) return c.json({ ok: false, reason: "not enough gems", gems: s.gems });
-  s.gems -= cost;
-  setItemDurability(profileId, itemKey, max);
-  s.equipped_pickaxe = itemKey;
-  saveProfileState(profileId, s);
-  return c.json({ ok: true, gems: s.gems, equipped: itemKey, durability: equippedDurability(profileId, s, false) });
-});
-
-// Buy a pad theme: spend gems, record ownership, auto-equip. Pure cosmetic —
-// no durability, no repair; switching back to the classic look is always free.
-app.post("/shop/buy-pad-theme", async (c) => {
-  const { profileId, themeKey } = await c.req.json();
-  const s = getProfileState(profileId);
-  const cat = padThemeEntry(themeKey);
-  if (!cat || ownsItem(profileId, themeKey)) {
-    return c.json({ ok: false, reason: "unavailable", gems: s.gems });
-  }
-  if (s.gems < cat.price) {
-    return c.json({ ok: false, reason: "not enough gems", gems: s.gems });
-  }
-  s.gems -= cat.price;
-  s.equipped_pad_theme = themeKey;
-  db.query(`INSERT OR IGNORE INTO owned_items (profile_id, item_key) VALUES (?, ?)`)
-    .run(profileId, themeKey);
-  saveProfileState(profileId, s);
-  return c.json({ ok: true, gems: s.gems, equippedPadTheme: s.equipped_pad_theme, item: { key: cat.key, name: cat.name, price: cat.price } });
-});
-
-// Equip an owned pad theme (or the free classic).
-app.post("/shop/equip-pad-theme", async (c) => {
-  const { profileId, themeKey } = await c.req.json();
-  const s = getProfileState(profileId);
-  if (themeKey === "pad_classic" || (padThemeEntry(themeKey) && ownsItem(profileId, themeKey))) {
-    s.equipped_pad_theme = themeKey;
-    saveProfileState(profileId, s);
-    return c.json({ ok: true, equippedPadTheme: s.equipped_pad_theme });
-  }
-  return c.json({ ok: false, reason: "not owned" });
-});
-
-// Buy a mine-target model: spend gems, record ownership, and auto-equip it.
-app.post("/shop/buy-gem-style", async (c) => {
-  const { profileId, styleKey } = await c.req.json();
-  const s = getProfileState(profileId);
-  const cat = gemStyleEntry(styleKey);
-  if (!cat || ownsItem(profileId, styleKey)) {
-    return c.json({ ok: false, reason: "unavailable", gems: s.gems });
-  }
-  if (s.gems < cat.price) {
-    return c.json({ ok: false, reason: "not enough gems", gems: s.gems });
-  }
-  s.gems -= cat.price;
-  s.equipped_gem_style = styleKey;
-  db.query(`INSERT OR IGNORE INTO owned_items (profile_id, item_key) VALUES (?, ?)`)
-    .run(profileId, styleKey);
-  saveProfileState(profileId, s);
-  return c.json({
-    ok: true,
-    gems: s.gems,
-    equippedGemStyle: s.equipped_gem_style,
-    item: { key: cat.key, name: cat.name, price: cat.price },
-  });
-});
-
-// Equip an owned mine-target model (or the free classic geode).
-app.post("/shop/equip-gem-style", async (c) => {
-  const { profileId, styleKey } = await c.req.json();
-  const s = getProfileState(profileId);
-  if (styleKey === "gem_classic" || (gemStyleEntry(styleKey) && ownsItem(profileId, styleKey))) {
-    s.equipped_gem_style = styleKey;
-    saveProfileState(profileId, s);
-    return c.json({ ok: true, equippedGemStyle: s.equipped_gem_style });
-  }
-  return c.json({ ok: false, reason: "not owned" });
-});
-
-// Buy a shield: 40 gems → +1 shield. Saves a streak on the next wrong answer.
-app.post("/shop/buy-shield", async (c) => {
-  const { profileId } = await c.req.json();
-  const s = getProfileState(profileId);
-  if (s.gems >= 40) {
-    s.gems -= 40;
-    s.shields += 1;
-    saveProfileState(profileId, s);
-    return c.json({ ok: true, gems: s.gems, shields: s.shields });
-  }
-  return c.json({ ok: false, reason: "not enough gems", gems: s.gems, shields: s.shields });
 });
 
 // Redeem whole rewards. A stable request ID makes a lost response safe to retry.
@@ -1482,7 +1124,7 @@ export function leaksAnswer(text: string, answer: number): boolean {
   return new RegExp(`(?<!\\d)${answer}(?!\\d)`).test(text);
 }
 
-const EXPLAIN_SYSTEM = `You are the warm tutor voice inside a gem-mine math game, explaining ONE problem to a 6-year-old American boy who tapped "explain". Rules:
+const EXPLAIN_SYSTEM = `You are the warm tutor voice inside a fantasy dungeon RPG math game, explaining ONE problem to a 6-year-old American boy who tapped "explain". Rules:
 - Think through the numbers PRIVATELY first, then speak only the finished explanation. The spoken text must read like you knew the plan all along — never search out loud, never change course (no "hmm", no "actually", no "wait", no "or you could").
 - Pick ONE strategy — the single most natural one for these exact numbers — and teach only that one. Never mention another way, a strategy you are NOT using, or why some other approach doesn't apply. Just teach the one that works.
 - For adding several numbers: if two of them make exactly ten, start with that pair; otherwise just add the two biggest first and then the last one. Don't hunt for tens that aren't there.
@@ -1565,7 +1207,7 @@ async function keepOnlyIfIntelligible(text: string, mp3: ArrayBuffer): Promise<v
 
 // ---- New-topic demonstration ------------------------------------------------
 
-const DEMO_SYSTEM = `You are the warm tutor voice inside a gem-mine math game. A 6-year-old American boy has just discovered a BRAND-NEW kind of problem he has never seen before. He is only WATCHING right now — nothing is being tested. Show him how this kind works, start to finish, using the example given. Rules:
+const DEMO_SYSTEM = `You are the warm tutor voice inside a fantasy dungeon RPG math game. A 6-year-old American boy has just discovered a BRAND-NEW kind of problem he has never seen before. He is only WATCHING right now — nothing is being tested. Show him how this kind works, start to finish, using the example given. Rules:
 - Think through it PRIVATELY first, then speak only the finished demonstration. Never search out loud or change course (no "hmm", no "actually", no "wait").
 - At most 70 spoken words. Short plain sentences a child can follow by ear. No emoji, no markdown, no lists.
 - No dashes of any kind. Use a comma or start a new sentence: the voice engine mangles dashes and can even switch language on them.
@@ -1574,7 +1216,7 @@ const DEMO_SYSTEM = `You are the warm tutor voice inside a gem-mine math game. A
 - For division (like 12 ÷ 3): teach SKIP-COUNTING by the divisor — count by threes up to twelve (three, six, nine, twelve) and count the jumps. Do NOT narrate dealing items out one at a time to a group of friends; that's slow and rambly.
 - For a fraction of an amount (like 1/4 of 20): split into that many EQUAL parts, so divide by the bottom number; for 3/4, find one quarter first and then take three of them. For a leftover (like 23 ÷ 4): skip count by the divisor but STOP before passing the number, then subtract to find what is left over.
 - For halving a bigger number (like half of 158): split it into hundreds, tens, and ones (100, 50, 8), halve each part (50, 25, 4), then add them. Odd tens halve like money: half of 50 is 25, half of 30 is 15.
-- Sound excited about the discovery, never like a lesson: "You found a new kind of gem!"
+- Sound excited about the discovery, never like a lesson: "You found a new kind of magic!"
 - Never ask him a question except the final invitation.
 - Money is ALWAYS American: dollars and cents, penny/nickel/dime/quarter.
 - Finish with "Now you try one!"`;
@@ -1590,7 +1232,7 @@ app.post("/tutor/demo", async (c) => {
   // Easiest end of the topic's range, and never costumed — a first look should
   // be as plain as possible.
   const example = problemForTopic(topic, 0.2);
-  const fallback = `You found a new kind of gem! Here's how it works.${example.hint ? " " + example.hint : ""} So ${example.prompt} is ${example.answer}. Now you try one!`;
+  const fallback = `You found a new kind of magic! Here's how it works.${example.hint ? " " + example.hint : ""} So ${example.prompt} is ${example.answer}. Now you try one!`;
   const key = `${topicId}::${example.prompt}`;
   const cached = demoCache.get(key);
   const reply = (script: string) => {
@@ -1655,7 +1297,7 @@ app.post("/tutor/skip", async (c) => {
   return c.json({ ok: true });
 });
 
-const WALKTHROUGH_SYSTEM = `You are the warm tutor voice inside a gem-mine math game. A 6-year-old American boy just pressed "I'm not sure how to do this one" — he has told you he is stuck, so this is a WORKED EXAMPLE, not a quiz. Rules:
+const WALKTHROUGH_SYSTEM = `You are the warm tutor voice inside a fantasy dungeon RPG math game. A 6-year-old American boy just pressed "I'm not sure how to do this one" — he has told you he is stuck, so this is a WORKED EXAMPLE, not a quiz. Rules:
 - Think through the numbers PRIVATELY first, then speak only the finished walkthrough. Never search out loud, never change course (no "hmm", no "actually", no "wait").
 - Pick ONE strategy and walk it all the way to the end using his actual numbers. DO say the final answer — he needs to see it done.
 - For a missing addend that crosses ten (like 6 + ? = 17): add a whole ten first, then adjust — six plus ten is sixteen, and it just needs one more to reach seventeen. NEVER count up to ten and then add the two jumps together (4 then 7): that ends in a second hard sum and hurts more than it helps. (Only state the final number if these rules say you may.)

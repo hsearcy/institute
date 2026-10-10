@@ -293,20 +293,25 @@ describe("topic-graph tutor flow", () => {
 
   test("lifetime gems rise with rewards and never fall when gems are spent", async () => {
     const profileId = "lifetime-gems";
-    for (let i = 0; i < 8; i++) {
-      await call("POST", "/reward/hoard-bonus", { profileId });
+    for (let i = 0; i < 40; i++) {
+      await call("POST", "/tutor/attempt", {
+        profileId, problemId: `lifetime-earn-${i}`, skill: "add_within_20",
+        correct: true, solveMs: 10_000, difficulty: 0.4,
+      });
     }
 
     let state = await call("GET", `/state?profileId=${profileId}`);
-    expect(state).toMatchObject({ gems: 80, lifetimeGems: 80 });
+    const earned = state.gems;
+    expect(earned).toBeGreaterThanOrEqual(80);
+    expect(state.lifetimeGems).toBe(earned);
 
-    const purchase = await call("POST", "/shop/buy-pad-theme", {
-      profileId,
-      themeKey: "pad_ocean",
+    // Spending at the camp Merchant debits the wallet, never lifetime earnings.
+    const purchase = await call("POST", "/rpg/shop/buy", {
+      profileId, requestId: "lifetime-buy", itemId: "cinderwand",
     });
-    expect(purchase).toMatchObject({ ok: true, gems: 5 });
+    expect(purchase).toMatchObject({ duplicate: false, gems: earned - 80 });
     state = await call("GET", `/state?profileId=${profileId}`);
-    expect(state).toMatchObject({ gems: 5, lifetimeGems: 80 });
+    expect(state).toMatchObject({ gems: earned - 80, lifetimeGems: earned });
 
     const answer = await call("POST", "/tutor/attempt", {
       profileId,
@@ -316,7 +321,8 @@ describe("topic-graph tutor flow", () => {
       solveMs: 10_000,
       difficulty: 0.4,
     });
-    expect(answer.reward).toMatchObject({ totalGems: 6, lifetimeGems: 81 });
+    const { gemsEarned } = answer.reward;
+    expect(answer.reward).toMatchObject({ totalGems: earned - 80 + gemsEarned, lifetimeGems: earned + gemsEarned });
   });
 
   test("first problem comes from a root topic and carries topicId + label", async () => {
@@ -510,108 +516,6 @@ describe("topic-graph tutor flow", () => {
     expect(leaksAnswer("the answer is 4", 4)).toBe(true);
     expect(leaksAnswer("count 14 gems", 4)).toBe(false); // 4 inside 14 is fine
     expect(leaksAnswer("what do 6 and how many make 10?", 4)).toBe(false);
-  });
-});
-
-describe("pad theme shop", () => {
-  const P = "pad-shopper";
-  test("buy deducts gems, records ownership, auto-equips; insufficient rejected", async () => {
-    // fund the profile with correct answers
-    for (let i = 0; i < 5; i++) {
-      await call("POST", "/tutor/attempt", {
-        profileId: P, problemId: `f-${i}`, skill: "add_within_20",
-        topicId: "mt_e8CZ7E5qW7", correct: true, solveMs: 3000, difficulty: 0.5,
-      });
-    }
-    const broke = await call("POST", "/shop/buy-pad-theme", { profileId: P, themeKey: "pad_rainbow" });
-    expect(broke.ok).toBe(false); // 650 > a handful of gems
-    const { grantShieldForTest } = await import("./index.ts"); // reuse pattern: fund via attempts instead
-    void grantShieldForTest;
-    // cheat gems up via hoard bonuses (server-authoritative credit endpoint)
-    for (let i = 0; i < 8; i++) await call("POST", "/reward/hoard-bonus", { profileId: P });
-    const buy = await call("POST", "/shop/buy-pad-theme", { profileId: P, themeKey: "pad_ocean" });
-    expect(buy.ok).toBe(true);
-    expect(buy.equippedPadTheme).toBe("pad_ocean");
-    const shop = await call("GET", `/shop?profileId=${P}`);
-    expect(shop.equippedPadTheme).toBe("pad_ocean");
-    expect(shop.padThemes.find((t: any) => t.key === "pad_ocean").owned).toBe(true);
-    // double-buy rejected
-    expect((await call("POST", "/shop/buy-pad-theme", { profileId: P, themeKey: "pad_ocean" })).ok).toBe(false);
-  });
-  test("equip: classic always; unowned rejected; pad keys can't equip as pickaxes", async () => {
-    expect((await call("POST", "/shop/equip-pad-theme", { profileId: P, themeKey: "pad_classic" })).ok).toBe(true);
-    expect((await call("POST", "/shop/equip-pad-theme", { profileId: P, themeKey: "pad_galaxy" })).ok).toBe(false);
-    expect((await call("POST", "/shop/equip", { profileId: P, itemKey: "pad_ocean" })).ok).toBe(false);
-  });
-});
-
-describe("gem style shop", () => {
-  const P = "gem-style-shopper";
-
-  test("buy deducts gems, records ownership, auto-equips, and persists in state", async () => {
-    for (let i = 0; i < 10; i++) {
-      await call("POST", "/reward/hoard-bonus", { profileId: P });
-    }
-
-    const buy = await call("POST", "/shop/buy-gem-style", {
-      profileId: P,
-      styleKey: "gem_emerald",
-    });
-    expect(buy).toMatchObject({
-      ok: true,
-      gems: 10,
-      equippedGemStyle: "gem_emerald",
-      item: { key: "gem_emerald", name: "Mega Emerald", price: 90 },
-    });
-
-    const shop = await call("GET", `/shop?profileId=${P}`);
-    expect(shop.equippedGemStyle).toBe("gem_emerald");
-    expect(shop.gemStyles.find((style: any) => style.key === "gem_emerald"))
-      .toMatchObject({ owned: true, equipped: true });
-
-    const state = await call("GET", `/state?profileId=${P}`);
-    expect(state.equippedGemStyle).toBe("gem_emerald");
-    expect((await call("POST", "/shop/buy-gem-style", {
-      profileId: P,
-      styleKey: "gem_emerald",
-    })).ok).toBe(false);
-  });
-
-  test("classic is always equipable while unowned and cross-category keys are rejected", async () => {
-    expect((await call("POST", "/shop/equip-gem-style", {
-      profileId: P,
-      styleKey: "gem_classic",
-    }))).toMatchObject({ ok: true, equippedGemStyle: "gem_classic" });
-
-    expect((await call("POST", "/shop/equip-gem-style", {
-      profileId: P,
-      styleKey: "gem_dragonheart",
-    })).ok).toBe(false);
-
-    expect((await call("POST", "/shop/equip", {
-      profileId: P,
-      itemKey: "gem_emerald",
-    }))).toMatchObject({ ok: false, reason: "not a pickaxe" });
-
-    expect((await call("POST", "/shop/equip-pad-theme", {
-      profileId: P,
-      themeKey: "gem_emerald",
-    })).ok).toBe(false);
-  });
-
-  test("unaffordable and unknown styles are rejected without changing balance", async () => {
-    const profileId = "gem-style-broke";
-    const expensive = await call("POST", "/shop/buy-gem-style", {
-      profileId,
-      styleKey: "gem_dragonheart",
-    });
-    expect(expensive).toMatchObject({ ok: false, reason: "not enough gems", gems: 0 });
-
-    const unknown = await call("POST", "/shop/buy-gem-style", {
-      profileId,
-      styleKey: "gem_unknown",
-    });
-    expect(unknown).toMatchObject({ ok: false, reason: "unavailable", gems: 0 });
   });
 });
 

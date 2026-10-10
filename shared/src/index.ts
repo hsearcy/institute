@@ -3,7 +3,7 @@
 // never slip through (the v1 tutor's worst bug class was JS↔Ruby schema drift).
 import { z } from "zod";
 
-/** The skill ladder = the depth of the mine. MVP focuses on the first two. */
+/** The legacy per-skill ladder, kept for attempt rows and mastery stats. */
 export const SKILLS = [
   "add_within_20",
   "subtraction",
@@ -37,7 +37,7 @@ export const ProblemVisualSchema = z.discriminatedUnion("kind", [
 ]);
 export type ProblemVisual = z.infer<typeof ProblemVisualSchema>;
 
-/** One math problem = one gem to mine. */
+/** One math problem. */
 export const ProblemSchema = z.object({
   /** Unique id (the server stamps this). */
   id: z.string(),
@@ -48,13 +48,13 @@ export const ProblemSchema = z.object({
   topicLabel: z.string().optional(),
   /** He has never met this topic: show the worked demonstration first. */
   newTopic: z.boolean().optional(),
-  /** Written form shown on the rock, e.g. "8 + 7" or "5, 10, 15, ?". */
+  /** Written form shown on screen, e.g. "8 + 7" or "5, 10, 15, ?". */
   prompt: z.string().min(1).max(40),
   /** Kid-friendly spoken form the tutor reads, e.g. "What is eight plus seven?". */
   spoken: z.string().min(1).max(160),
   /** The correct numeric answer (what the kid keys in). */
   answer: z.number().int().min(0).max(999),
-  /** 0..1 difficulty, for telemetry and the gem-rarity mapping. */
+  /** 0..1 difficulty, for telemetry and adaptivity. */
   difficulty: z.number().min(0).max(1),
   /** A warm, kid-friendly strategy hint (e.g. make-a-ten), shown if he gets stuck. */
   hint: z.string().max(200).optional(),
@@ -64,7 +64,7 @@ export const ProblemSchema = z.object({
 export type Problem = z.infer<typeof ProblemSchema>;
 
 /** Speculative pre-generation: the next problem for BOTH outcomes of the current
- *  one, so whichever the kid does, the next gem is already loaded (zero wait). */
+ *  one, so whichever the kid does, the next problem is already loaded (zero wait). */
 export const BranchesSchema = z.object({
   right: ProblemSchema, // got it right → build on it / stretch
   wrong: ProblemSchema, // got it wrong → reinforce / ease off
@@ -256,17 +256,6 @@ export const DailyRecordAckSchema = z.object({
 });
 export type DailyRecordAck = z.infer<typeof DailyRecordAckSchema>;
 
-/** Live durability of the equipped pickaxe. `current`/`max` are null for wooden
- *  (the free starter never wears). `broke` = it just hit 0 this action and the
- *  equip auto-reverted to wooden. */
-export const DurabilitySchema = z.object({
-  key: z.string(),
-  current: z.number().int().nullable(),
-  max: z.number().int().nullable(),
-  broke: z.boolean(),
-});
-export type Durability = z.infer<typeof DurabilitySchema>;
-
 /** The reward delta returned by POST /tutor/attempt for one first-try answer. */
 export const RewardSchema = z.object({
   gemsEarned: z.number().int(),
@@ -282,10 +271,8 @@ export const RewardSchema = z.object({
   streakLost: z.number().int().optional(),
   /** True the moment the LAST daily quest completes: a Crazy Coin was just awarded. */
   allDailiesCrazyCoin: z.boolean().optional(),
-  /** Equipped-pickaxe durability after this action (absent when nothing wore). */
-  durability: DurabilitySchema.nullable().optional(),
   /** Today's correct-answer count + record after this answer (absent when the
-   *  action didn't solve a problem, e.g. a miss or the hoard bonus). */
+   *  action didn't solve a problem, e.g. a miss). */
   daily: DailyProgressSchema.optional(),
 });
 export type Reward = z.infer<typeof RewardSchema>;
@@ -300,67 +287,11 @@ export const StateSchema = z.object({
   quests: z.array(QuestSchema),
   /** Sunday–Saturday quest for completing the full daily board on five days. */
   weeklyQuest: QuestSchema,
-  /** The equipped pickaxe skin key (defaults to "wooden"). */
-  equipped: z.string(),
-  /** Durability of the equipped pickaxe (null current/max for wooden). */
-  durability: DurabilitySchema.nullable().optional(),
-  /** The equipped mine-target model (defaults to "gem_classic"). */
-  equippedGemStyle: z.string().optional(),
   /** Today vs his all-time daily record, plus history for the stats graph.
    *  Optional so a client running against an older server still parses. */
   daily: DailyRecordSchema.optional(),
 });
 export type State = z.infer<typeof StateSchema>;
-
-// ---- Pickaxe-skin shop -----------------------------------------------------
-
-/** One catalog entry in the pickaxe-skin shop, as returned by GET /shop. */
-export const ShopItemSchema = z.object({
-  key: z.string(),
-  name: z.string(),
-  price: z.number().int(),
-  owned: z.boolean(),
-  equipped: z.boolean(),
-  /** Current durability (null = wooden/infinite; equals maxDurability if unowned). */
-  durability: z.number().int().nullable(),
-  /** Full durability for this tier (null for wooden). */
-  maxDurability: z.number().int().nullable(),
-  /** Gem cost to fully repair this tier (0 for wooden). */
-  repairCost: z.number().int(),
-});
-export type ShopItem = z.infer<typeof ShopItemSchema>;
-
-/** The shop view returned by GET /shop: balance, equipped skin, and full catalog. */
-/** A number-pad style theme in the shop (pure cosmetic gem sink). */
-export const PadThemeSchema = z.object({
-  key: z.string(),
-  name: z.string(),
-  price: z.number().int(),
-  owned: z.boolean(),
-  equipped: z.boolean(),
-});
-export type PadTheme = z.infer<typeof PadThemeSchema>;
-
-/** A cosmetic model for the gem/geode being mined. */
-export const GemStyleSchema = z.object({
-  key: z.string(),
-  name: z.string(),
-  price: z.number().int(),
-  owned: z.boolean(),
-  equipped: z.boolean(),
-});
-export type GemStyle = z.infer<typeof GemStyleSchema>;
-
-export const ShopStateSchema = z.object({
-  gems: z.number().int(),
-  equipped: z.string(),
-  items: z.array(ShopItemSchema),
-  padThemes: z.array(PadThemeSchema).optional(),
-  equippedPadTheme: z.string().optional(),
-  gemStyles: z.array(GemStyleSchema).optional(),
-  equippedGemStyle: z.string().optional(),
-});
-export type ShopState = z.infer<typeof ShopStateSchema>;
 
 // ---- Curated skill graph (Marble taxonomy) ---------------------------------
 export * from "./topics.ts";

@@ -4,7 +4,7 @@
 
 The world keeps moving while you think, but combat waits for your answer. Travel and targeting are automatic. Fifteen abilities span Flame, Frost, and Storm, including Flame Cleave, Meteor, Phoenix Dive, Blizzard, Frost Guardian, and Ball Lightning; each six-encounter expedition ends with a guardian and loot. Distinct rooms include a furnace hall, a lost reliquary, a broken bridge, and a crystal gallery, with automatic travel and progressively denser hordes.
 
-The learning graph, mastery rules, spaced review, prerequisite rescue, demonstrations, spoken hints, and original reward system remain in place. Existing learners start a new RPG hero while keeping their learning progress and gem collection. The original mine and shops remain available at `?mode=mine`.
+The learning graph, mastery rules, spaced review, prerequisite rescue, demonstrations, spoken hints, and original reward system remain in place. Existing learners start a new RPG hero while keeping their learning progress and gem collection.
 
 - `web/` — Bun + Vite + TypeScript + Three.js client
 - `server/` — Bun + Hono + bun:sqlite tutor server (Anthropic LLM problem generation with deterministic fallback and answer verification)

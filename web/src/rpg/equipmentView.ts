@@ -41,6 +41,6 @@ export function renderEquipmentView(state: RpgState, armor: string, playing: boo
     ${RPG_ITEMS.some(item => !state.inventory.includes(item.id)) ? `<details class="rpg-collection-goals"><summary>Pin a relic to discover</summary><div>${RPG_ITEMS.filter(item => !state.inventory.includes(item.id)).map(item => `<button data-pin-kind="item" data-pin-id="${item.id}" aria-pressed="${state.goal?.kind === 'item' && state.goal.id === item.id}">${relicArt(item.id)}<span>${esc(item.name)}<small>${item.rarity === 'legendary' ? 'Guardian treasure' : 'Dungeon discovery or merchant'}</small></span></button>`).join('')}</div></details>` : ''}
 
     ${armor}
-    <footer class="rpg-button-row rpg-armory-footer"><button data-action="forge">Upgrade or reclaim copies</button><button class="rpg-primary" data-action="close">${playing ? 'Return to dungeon' : 'Back to camp'}</button><a href="?mode=mine" class="rpg-text-button">Gem collection & original shop</a></footer>
+    <footer class="rpg-button-row rpg-armory-footer"><button data-action="forge">Upgrade or reclaim copies</button><button class="rpg-primary" data-action="close">${playing ? 'Return to dungeon' : 'Back to camp'}</button></footer>
   </div>`;
 }

@@ -1,6 +1,6 @@
 // Deterministic-enough local problem generator. Used to bootstrap the very first
 // problem instantly (no LLM wait at startup) and as the always-available fallback
-// if the LLM is slow or errors — so the gem-mine loop is never blocked.
+// if the LLM is slow or errors — so the game loop is never blocked.
 import type { ProblemVisual, Skill } from "@institute/shared";
 
 export type ProblemDraft = {

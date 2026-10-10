@@ -124,9 +124,8 @@ test('adventure shop shares the old gem wallet and preserves daily/weekly quests
   expect(after.lifetimeGems).toBe(legacy.lifetimeGems);
   expect(after.quests).toEqual(legacy.quests);
   expect(after.weeklyQuest).toEqual(legacy.weeklyQuest);
-  expect(after.equipped).toBe(legacy.equipped);
   expect(await call(`/mastery?profileId=${profileId}`)).toEqual(mastery);
-  expect((await call(`/shop?profileId=${profileId}`)).gems).toBe(bought.gems);
+  expect((await call(`/rpg/camp?profileId=${profileId}`)).gems).toBe(bought.gems);
   const reloaded = await call(`/rpg/state?profileId=${profileId}`);
   expect(reloaded.loot.filter((item: any) => item.itemId === 'cinderwand')).toHaveLength(1);
 });

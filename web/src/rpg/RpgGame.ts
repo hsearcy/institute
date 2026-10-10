@@ -2,10 +2,10 @@ import {chooseNextAdventure, renderNextAdventure, tierSelect, tierRewards, type 
 import { HeroAssetLoadError } from './world/tripoHeroRuntime';
 import type { Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgReward, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
 import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, rpgEncounterCombat, rpgNextRelicHunt, rpgSalvageValue, rpgAnswerPower, ProblemSchema } from '@institute/shared';
-import { fetchState, fetchMastery, redeemCrazyCoin, redeemDime, type Demo } from '../game/tutor';
-import { speak } from '../game/audio';
+import { fetchState, fetchMastery, redeemCrazyCoin, redeemDime, type Demo } from './tutor';
+import { speak } from './voice';
 import * as dungeonSound from './sound';
-import { API, PROFILE } from '../game/config';
+import { API, PROFILE } from './config';
 import { getRpgState, getRpgCamp, mutateRpg, resolveEncounter, attemptStatus, request, ApiError } from './api';
 import { DungeonWorld } from './DungeonWorld';
 import { icon, spellArt, skillArt, relicArt, escapeHtml as esc } from './icons';

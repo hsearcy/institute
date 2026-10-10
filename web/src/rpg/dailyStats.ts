@@ -1,7 +1,7 @@
 // Pure shaping for the daily-record panel: bar geometry, labels, summary tiles,
 // and the "how close am I?" line. No DOM here, so it is unit-testable and the
 // graph stays a handful of divs (no chart library in a 6-year-old's game).
-import type { DailyCount, DailyRecord, DailyRecordEvent, DailyTracking } from '@institute/shared';
+import type { DailyCount, DailyRecord, DailyTracking } from '@institute/shared';
 
 /** Days shown in the graph. Two weeks reads well even on a phone. */
 export const CHART_DAYS = 14;
@@ -131,63 +131,9 @@ export function trackingNote(tracking: DailyTracking): string | null {
 
 /** The one warm line at the top of the panel. */
 export function encouragement(daily: DailyRecord): string {
-  if (daily.record === 0) return 'Mine your first gem to start the record!';
+  if (daily.record === 0) return 'Solve your first problem to start the record!';
   if (daily.today === 0) return `Your record is ${daily.record} in one day. Ready to chase it?`;
   if (daily.isRecord) return `${daily.today} today, that is your best day EVER!`;
   const togo = daily.record - daily.today + 1;
   return `${daily.today} today. ${togo} more beats your record of ${daily.record}!`;
-}
-
-/** The HUD chip's accessible name — both numbers spelled out, plus what a tap
- *  does. Takes anything carrying the two counts (state payload or answer delta). */
-export function chipLabel(counts: { today: number; record: number } | null): string {
-  const today = counts?.today ?? 0;
-  const record = counts?.record ?? 0;
-  return `Right today: ${today}. Best day ever: ${record}. Tap to see your stats.`;
-}
-
-// ---- Record celebrations: at-least-once delivery, shown-once display --------
-//
-// The server keeps a record moment queued until the client acknowledges it, so a
-// dropped response or a reload mid-party still gets its celebration. Delivery is
-// therefore at-LEAST-once. What makes the VISIBLE result once is this: every
-// event carries a stable id, and ids already shown are remembered locally. The
-// only way to see one twice is to clear browser storage before the
-// acknowledgement lands — a deliberate trade against silently losing the moment.
-
-/** How many shown ids to remember. Comfortably more than a record streak. */
-export const PRESENTED_EVENT_MEMORY = 40;
-
-/** Events that still deserve a celebration, in server order. */
-export function unpresentedEvents(
-  events: readonly DailyRecordEvent[],
-  presentedIds: readonly string[],
-): DailyRecordEvent[] {
-  const seen = new Set(presentedIds);
-  const fresh: DailyRecordEvent[] = [];
-  for (const e of events) {
-    if (seen.has(e.id)) continue;
-    seen.add(e.id); // a duplicate inside one payload is still one party
-    fresh.push(e);
-  }
-  return fresh;
-}
-
-/** Add an id to the shown list, newest last, oldest evicted past the cap. */
-export function rememberPresented(
-  presentedIds: readonly string[],
-  id: string,
-  cap = PRESENTED_EVENT_MEMORY,
-): string[] {
-  const kept = presentedIds.filter((existing) => existing !== id);
-  kept.push(id);
-  return kept.slice(-cap);
-}
-
-/** Where Tab should land inside a modal, so focus never escapes to the game
- *  behind it. `current` is -1 when focus is somewhere outside the trap. */
-export function focusTrapIndex(count: number, current: number, shiftKey: boolean): number {
-  if (count <= 0) return -1;
-  if (current < 0) return shiftKey ? count - 1 : 0;
-  return shiftKey ? (current - 1 + count) % count : (current + 1) % count;
 }

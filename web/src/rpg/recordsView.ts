@@ -1,5 +1,5 @@
 import type { DailyRecord } from '@institute/shared';
-import { chartBars, encouragement, statTiles, trackingNote } from '../game/dailyStats';
+import { chartBars, encouragement, statTiles, trackingNote } from './dailyStats';
 import { escapeHtml as esc } from './icons';
 
 export function renderMathRecords(daily?: DailyRecord): string {

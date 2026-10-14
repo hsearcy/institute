@@ -18,6 +18,17 @@ bun run dev:web      # game on :5188, API proxy to :8787
 bun test server shared scripts web/unit-tests
 ```
 
+### API keys
+
+Copy `.env.example` to `.env` in the repo root. Every key is optional. The game runs with none; each missing key turns off one feature.
+
+| key | service | without it |
+| --- | --- | --- |
+| `ANTHROPIC_API_KEY` | [Anthropic](https://console.anthropic.com/) — word problems, hints, walkthroughs | built-in deterministic problems and hints |
+| `ELEVENLABS_API_KEY` | [ElevenLabs](https://elevenlabs.io/) — spoken hints (`ELEVENLABS_VOICE_ID` picks the voice) | hints are text only |
+| `DEEPGRAM_API_KEY` | [Deepgram](https://deepgram.com/) — checks each spoken take against its text | every take is kept unchecked |
+| `TRIPO_API_KEY` | [Tripo](https://www.tripo3d.ai/) — 3D asset scripts in `scripts/tripo` | not needed to play |
+
 For a safe local preview with seeded existing learning progress, run `bun --no-env-file scripts/rpg-local-server.ts`, then in another terminal:
 
 ```sh
@@ -53,3 +64,9 @@ Browser tests start an offline tutor with a fresh temporary SQLite database. Ins
 The skill graph is curated from the [Marble Skill Taxonomy](https://github.com/withmarbleapp/os-taxonomy)
 (v1) · © Generative Spark, Inc. (Marble) · https://withmarble.com — database under
 ODbL 1.0, Marble-authored content under CC BY-SA 4.0. See `data/taxonomy/NOTICE`.
+
+## License
+
+[PolyForm Noncommercial 1.0.0](LICENSE.md). You may use, change and share this code for any noncommercial purpose: personal use, study, teaching, research, charities and schools. Commercial use needs separate permission. Third-party parts keep their own licenses: the Marble taxonomy data (above), the CC0 lich source in `scripts/blender/sources/cc0-lich`, and the OFL fonts.
+
+Required Notice: Copyright 2026 Houston Searcy (https://github.com/hsearcy)

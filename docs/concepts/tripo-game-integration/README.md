@@ -1,3 +1,0 @@
-Four approved Tripo candidates installed as runtime assets. Boss has a separate model ID; encounter counts and heights are retained. Imported floor alignment is nested below whole-model movement. No paid rigging tasks were run.
-
-Validation: production build passed; 37 roster/animation tests passed. Actual DungeonWorld boss encounter rendered in Windows Brave. Captured scene: 191 draw calls, 1,445,017 triangles; this is one scene sample, not a general performance guarantee. Old rigid-joint tests retain their original assets as fixtures; current static models are checked for safe no-op joint updates.

@@ -1,9 +1,0 @@
-{
-  "id": "inferno",
-  "method": "Local full-volume geometry with concept-projected engraving and textured PBR backs",
-  "triangles": 9448,
-  "bytes": 1010712,
-  "concept": "references/inferno-front.png",
-  "grip": "Physical wearable anchor",
-  "status": "Candidate; independent visual review required"
-}

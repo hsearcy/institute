@@ -1,9 +1,0 @@
-{
-  "seconds": 10.577569484710693,
-  "sourceSHA256": {
-    "build_studies.py": "724e8d0bfb7d8f776dbadd678c543b965abd71ecab29aeb94dacc835429b1d7d",
-    "surfaces.py": "bee5b55391332e076d1a1071f2b0800a4f8931ef6c18ee140c16da5dfdc35bf7",
-    "metal_weapons.py": "93f28d5797610608d123c62120857d6b3e3de663964ff6b4786acaec10891c8a"
-  },
-  "restoredScene": "Scene"
-}

@@ -1,5 +1,0 @@
-# Authored skeleton free-arm orientation v14
-
-Same final controlled lethal-reaction native and side views as v12/v13, using positive runtime ticks and the exact shafts-v10 GLB through a route override at metadata height 1.85. Public skeleton unchanged. These stills do not establish answer/receipt, arrival, continuous motion or performance behavior.
-
-The free arm now turns away from the skull, with the palm toward the floor beside the torso. Shoulder attachment, pelvis/leg support and asymmetric sword-arm position remain unchanged. Dense actual-vertex audits sweep 268 states at 240 Hz for both grounded variants; hip anchors stay exact, final free elbow remains below 0.11 m, and extra floor penetration remains below 0.74 mm. Independent complete static terminal slack is 8: the hand lies beside the torso, legs trail and sword arm remains asymmetric, with no visible attachment/floor regression in the shown pair. Native model presence remains 7.5. Actual fall → settle → hold motion with the final remnant candidate still requires its own review.

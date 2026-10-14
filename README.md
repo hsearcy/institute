@@ -24,7 +24,7 @@ For a safe local preview with seeded existing learning progress, run `bun --no-e
 TUTOR_PROXY_TARGET=http://127.0.0.1:8799 VITE_PROFILE_ID=rpg-playtest bun --no-env-file run --cwd web dev
 ```
 
-Open `http://127.0.0.1:5188`. This uses a disposable database in `/tmp`; it does not touch Ares or a real learner's records. Use `rpg-archmage` instead of `rpg-playtest` to inspect all 15 spells, skill upgrades, equipment, and regions. See [operations and Ares upgrade instructions](docs/rpg-operations.md) before switching a live deployment.
+Open `http://127.0.0.1:5188`. This uses a disposable database in `/tmp`; it does not touch Ares or a real learner's records. Use `rpg-archmage` instead of `rpg-playtest` to inspect all 15 spells, skill upgrades, equipment, and regions.
 
 ## Playing
 
@@ -40,7 +40,7 @@ bun run --cwd web verify:spellbook
 python scripts/blender/validate_assets.py
 ```
 
-Browser tests start an offline tutor with a fresh temporary SQLite database. Install Playwright Chromium first if needed (`cd web && bun x playwright install chromium`). Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to use an existing Chromium executable. The game assets are bundled: [original Blender models](scripts/blender/README.md), [original sound design](scripts/audio/README.md), and locally hosted OFL fonts. Concept direction is in [the art notes](docs/concepts/math-dungeon-rpg/direction-v2.md).
+Browser tests start an offline tutor with a fresh temporary SQLite database. Install Playwright Chromium first if needed (`cd web && bun x playwright install chromium`). Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to use an existing Chromium executable. The game assets are bundled: [original Blender models](scripts/blender/README.md), [original sound design](scripts/audio/README.md), and locally hosted OFL fonts.
 
 ## Configuration
 

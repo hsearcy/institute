@@ -7,8 +7,8 @@ CC0 creator-published lich foundation; its source, fixed hashes, license evidenc
 and cache recovery are documented in [sources/cc0-lich](sources/cc0-lich/README.md).
 Other runtime models retain their project-authored procedural sources.
 
-The second revision responds to the approved [horde viewport](../../docs/concepts/math-dungeon-rpg/04-horde-viewport.png)
-and [Fire Nova](../../docs/concepts/math-dungeon-rpg/05-fire-nova.png) concepts with
+The second revision responds to the approved horde viewport
+and Fire Nova concepts with
 chipped Gothic masonry, carved capitals, layered armor, tailored cloth, anatomically
 readable skeletons, hollow wraiths, and a fractured crystal guardian. The concept
 images remain the visual target; these are realtime assets, not a reproduction of
@@ -213,7 +213,6 @@ triangle budgets. Exported bounds match the prior models exactly.
 
 ![Optimized wall relief reimport review](previews/v2/masonry-relief-exported.png)
 
-
 ## Progression armor appearances
 
 `detailed/hero_variants.py` builds three complete heroes on the original proportions:
@@ -240,7 +239,6 @@ Blender scenes and renders transparent 512 × 640 PNG portraits to
 and these final-file portraits run in the full `build_assets.py` pipeline. Source
 atlases remain under `scripts/blender/textures/hero-{appearance}-*.png`.
 
-
 ## Revenant and reinforced skeleton
 
 `detailed/revenant.py` builds a substantial undead knight from the common skeletal
@@ -265,7 +263,6 @@ in `scripts/blender/textures/` rather than the runtime public tree.
 
 ![Reimported final skeleton and revenant GLBs](previews/v2/revenant-exported.png)
 
-
 ## Guardian granite surface revision
 
 The guardian now uses a dedicated dark granite shader with broad warm mineral
@@ -286,7 +283,6 @@ bake or optimization settings changed. Both before/after exports have identical
 joint pivots/hierarchy. The optimized replacement is 2,641,856 bytes.
 
 ![Previous guardian surface left, revised final GLB right, identical studio lighting](previews/v2/guardian-surface-comparison.png)
-
 
 ## CC0 wraith foundation and rigid articulation
 
@@ -328,6 +324,3 @@ under `experiments`, with their limitations recorded rather than called finished
 
 ![Final GLB reimport at the actual camera elevation](previews/v2/wraith-cc0-cloth-v2-exported-game-angle.png)
 
-![Native-camera Embercrypt readability](../../docs/rpg-playtest/wraith-accepted/embercrypt.png)
-
-![Native-camera Stormspire readability](../../docs/rpg-playtest/wraith-accepted/stormspire.png)

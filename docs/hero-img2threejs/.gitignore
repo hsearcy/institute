@@ -1,5 +1,0 @@
-# Raw browser geometry remains locally available to the skill. Compressed copies
-# preserve its evidence without committing redundant multi-megabyte JSON text.
-review/**/mesh-buffers.json
-review/**/geometry-gates.json
-review/**/visible-geometry.json

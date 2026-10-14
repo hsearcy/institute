@@ -1,9 +1,0 @@
-# Destination variety
-
-Player promise: Choose a different place for each adventure, with clear enemies and useful treasure.
-Core loop: Solve to cast, defeat each group, collect relics at stages three and six, then choose another trip. Existing hints, retry, saved progress, spell choice and upgrades remain in use.
-Scope: Four new destinations with six authored stages each: forest ruins, rocky coast, quarry, and palace garden. Early access; mixed elemental loot. Existing vault IDs and save data stay valid. Difficulty is explicit rather than based on catalogue order.
-World plan: Region-aware combat layouts and route points. Ground y=0; six centers 20 units apart. Broad clearing to broken monument, first treasure, crossing, dense perimeter, boss landmark. Each setting has a separate silhouette and material kit. Scenery stays outside combat and travel footprints. Repeated parts merge by material per room; only near rooms draw. One outdoor scene lives at a time; resources released on destination change.
-Art sources: Reuse reviewed imported characters and weapons. CC0 Poly Haven terrain photographs (sources.json); authored repeatable trees, rock shelves, roots, rails, stone ruins, plant clumps and fountain. No new character generation. Existing combat audio retained.
-Budget: Additional outdoor scene target below 150 draw calls and 150k triangles near camera; shared textures at 1K, one existing shadow key. Measure whole game separately (imported actors dominate).
-Skills read: brainstorming; threejs director, gameplay, graphics, UI, debug, QA; 3D and image generators. Gameplay/level design, graphics implementation/model/render/technical art, QA references read. UI worker owns UI references and tests. Visual evidence harness will cover all four outdoor areas, vault return, desktop and narrow viewport. Build, unit tests, real browser transition and cast checks required before completion.

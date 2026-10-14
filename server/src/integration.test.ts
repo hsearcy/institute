@@ -375,6 +375,19 @@ describe("topic-graph tutor flow", () => {
     expect(m.topics.find((t: any) => t.id === "mt_ghF3Vv6taM").state).toBe("practicing");
   });
 
+  test("a table topic masters only on fast UNHELPED recall; answers after the whole-table hint do not count", async () => {
+    const answer = (profileId: string, i: number, aided: boolean) => call("POST", "/tutor/attempt", {
+      profileId, problemId: `${profileId}-${i}`, skill: "multiplication",
+      topicId: "tt_3", correct: true, solveMs: 2000, difficulty: 0.95, aided,
+    });
+    for (let i = 0; i < 12; i++) await answer("tbl1", i, true);
+    let m = await call("GET", "/mastery?profileId=tbl1");
+    expect(m.topics.find((t: any) => t.id === "tt_3").state).toBe("practicing");
+    for (let i = 0; i < 12; i++) await answer("tbl2", i, false);
+    m = await call("GET", "/mastery?profileId=tbl2");
+    expect(m.topics.find((t: any) => t.id === "tt_3").state).toBe("mastered");
+  });
+
   test("branches fall back locally and stay on the current topic", async () => {
     const first = await call("POST", "/tutor/first", { profileId: "kid4" });
     const b = await call("POST", "/tutor/branches", { profileId: "kid4", current: first });

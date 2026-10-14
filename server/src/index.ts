@@ -114,6 +114,8 @@ try { db.exec(`ALTER TABLE attempts ADD COLUMN topic_id TEXT`); } catch { /* col
 // "I'm not sure yet" presses: honest not-knowing, recorded WITHOUT any streak or
 // shield cost. Counts as a not-correct attempt so the tutor eases up on its own.
 try { db.exec(`ALTER TABLE attempts ADD COLUMN skipped INTEGER DEFAULT 0`); } catch { /* column exists */ }
+// 1 = answered after the help visual (e.g. the whole times table) was shown.
+try { db.exec(`ALTER TABLE attempts ADD COLUMN aided INTEGER DEFAULT 0`); } catch { /* column exists */ }
 // Which topics he has already been shown the worked demonstration for, so a
 // brand-new kind of problem is never a cold graded question — and never
 // demonstrated twice.
@@ -244,9 +246,9 @@ function recordTopicMastery(profileId: string, topicId: string, correct: boolean
   const aided = topic.gen.kind === "table";
   const recentSolveMs = (db.query(
     `SELECT solve_ms FROM attempts WHERE profile_id = ? AND topic_id = ? AND correct = 1
-       AND difficulty >= ?
+       AND difficulty >= ? AND COALESCE(aided, 0) <= ?
      ORDER BY created_at DESC, id DESC LIMIT 8`,
-  ).all(profileId, topicId, aided ? UNAIDED_FROM : 0) as { solve_ms: number }[]).map((r) => r.solve_ms);
+  ).all(profileId, topicId, aided ? UNAIDED_FROM : 0, aided ? 0 : 1) as { solve_ms: number }[]).map((r) => r.solve_ms);
   const state = topicState({
     lifetimeAttempts: attempts, recentResults, lifetimeRatio: corr / attempts,
     recentSolveMs, fluentMs: topic.fluentMs, minFluentSolves: aided ? 4 : undefined,
@@ -918,10 +920,10 @@ app.post("/tutor/attempt", async (c) => {
   const { profileId, problemId, skill, correct, solveMs } = body;
   const difficulty = typeof body.difficulty === "number" ? body.difficulty : 0.5;
   db.query(
-    `INSERT INTO attempts (profile_id, problem_id, skill, topic_id, correct, solve_ms, difficulty, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO attempts (profile_id, problem_id, skill, topic_id, correct, solve_ms, difficulty, aided, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(profileId, problemId, skill, typeof body.topicId === "string" ? body.topicId : null,
-    correct ? 1 : 0, Math.round(solveMs ?? 0), difficulty, Date.now());
+    correct ? 1 : 0, Math.round(solveMs ?? 0), difficulty, body.aided === true ? 1 : 0, Date.now());
   recordMastery(profileId, skill, !!correct, difficulty);
   if (typeof body.topicId === "string") recordTopicMastery(profileId, body.topicId, !!correct, difficulty);
 

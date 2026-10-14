@@ -89,6 +89,9 @@ describe("per-table topics", () => {
           expect(p.visual?.target ?? k).toBe(k);
           expect(() => ProblemSchema.parse({ ...p, id: "x" })).not.toThrow();
           if (d >= UNAIDED_FROM) expect(p.visual).toBeUndefined();
+          // Help always offers the WHOLE table, and the hint points at the fact before.
+          expect(p.helpVisual?.rows.map((r) => r.factor)).toEqual(Array.from({ length: 12 }, (_, i) => i + 1).filter((f) => f !== k));
+          expect(p.hint).toBe(`Find ${n} × ${k - 1} = ${n * (k - 1)}. Add one more ${n}.`);
         }
         expect(seen.size).toBe(11);
       }

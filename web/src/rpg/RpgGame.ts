@@ -40,10 +40,12 @@ import { TutorialNarrator } from './TutorialNarrator';
 type Session = {
   expeditionId: string; encounterIndex: number; problem: Problem; firstAttempt: boolean | null;
   wrongCount: number; demoSeen: boolean; elapsedMs?: number; answerMs?: number; branches?: Branches; walkthrough?: boolean;
+  /** The problem's help visual (e.g. the whole times table) has been shown. */
+  helped?: boolean;
   rewardShown?: boolean;
   celebrationsShown?: boolean;
   celebrations?: CelebrationEvent[];
-  pending?: { correct: boolean; assisted: boolean; solveMs: number; answerMs?: number; wrongCount?: number; spellId?: RpgSpellId };
+  pending?: { correct: boolean; assisted: boolean; aided?: boolean; solveMs: number; answerMs?: number; wrongCount?: number; spellId?: RpgSpellId };
 };
 const sessionKey = `institute:rpg:problem:v1:${API}:${PROFILE}`;
 
@@ -410,7 +412,7 @@ export class RpgGame {
     if (this.disposed) return;
     this.closeDialog(true); this.entered = ''; this.updateAnswer();
     this.el('rpg-problem').textContent = p.prompt;
-    this.renderVisual(p.visual);
+    this.renderVisual(session.helped && p.helpVisual ? p.helpVisual : p.visual);
     this.el('rpg-answer-form').dataset.problemId = p.id;
     this.el('rpg-topic').textContent = p.topicLabel ?? 'POWER YOUR SPELL';
     this.el('rpg-hint').hidden = true;
@@ -448,7 +450,7 @@ export class RpgGame {
   private async submit(): Promise<void> {
     if (!this.session || this.busy || this.panel || !this.entered || !this.playing) return;
     this.stopClock(); this.busy = true;
-    this.session.pending = { correct: Number(this.entered) === this.session.problem.answer, assisted: false, solveMs: Math.round(this.session.elapsedMs ?? 0), answerMs: Math.floor(this.session.answerMs ?? 0), wrongCount: this.session.wrongCount, spellId: this.state!.selectedSpellId };
+    this.session.pending = { correct: Number(this.entered) === this.session.problem.answer, assisted: false, aided: !!this.session.helped, solveMs: Math.round(this.session.elapsedMs ?? 0), answerMs: Math.floor(this.session.answerMs ?? 0), wrongCount: this.session.wrongCount, spellId: this.state!.selectedSpellId };
     this.saveSession();
     await this.runSafely(() => this.finishPending());
   }
@@ -466,7 +468,7 @@ export class RpgGame {
     if (!status.recorded) {
       if (pending.assisted) await request('/tutor/skip', { problemId: p.id, skill: p.skill, topicId: p.topicId, difficulty: p.difficulty });
       else {
-        const attempt = await request<{ reward: Reward }>('/tutor/attempt', { problemId: p.id, skill: p.skill, topicId: p.topicId, difficulty: p.difficulty, correct: pending.correct, solveMs: pending.solveMs });
+        const attempt = await request<{ reward: Reward }>('/tutor/attempt', { problemId: p.id, skill: p.skill, topicId: p.topicId, difficulty: p.difficulty, correct: pending.correct, solveMs: pending.solveMs, aided: pending.aided === true });
         this.recordLearningReward(attempt.reward);
       }
       status = await attemptStatus(p.id);
@@ -536,6 +538,7 @@ export class RpgGame {
       session.pending = undefined; session.wrongCount = Math.min(3, session.wrongCount + 1);
       if (session.wrongCount >= 3) session.walkthrough = true;
       this.saveSession(); this.entered = ''; this.updateAnswer(); this.busy = false;
+      if (session.wrongCount > 1) this.showHelpVisual();
       this.hint(session.wrongCount > 1 ? (p.hint ?? 'Try a different way, or ask me to show you.') : 'Almost. Try again, or let’s work it out together.');
       if (session.wrongCount >= 3) await this.walkthrough();
       else { this.startClock(); this.updatePower(); }
@@ -641,14 +644,28 @@ export class RpgGame {
     for (const box of boxes) { box.dataset.size = rows.length > 6 ? 'full' : 'short'; box.innerHTML = html; box.hidden = false; }
   }
 
+  /** Swap in the problem's fuller help visual (the whole times table) and
+   *  remember it, so a reload keeps it up and the answer is recorded as helped. */
+  private showHelpVisual(): boolean {
+    const p = this.session?.problem;
+    if (!this.session || !p?.helpVisual) return false;
+    this.session.helped = true; this.saveSession();
+    this.renderVisual(p.helpVisual);
+    return true;
+  }
+
   private hint(text: string): void { this.el('rpg-hint').textContent = text; this.el('rpg-hint').hidden = false; }
   private async help(): Promise<void> {
     if (!this.session || this.busy) return;
     this.showDialog('help', `<p class="rpg-eyebrow">YOUR MAGIC CAN WAIT</p><h2 id="rpg-dialog-title">Let’s work it out</h2><div class="rpg-demo-equation">${esc(this.session.problem.prompt)}</div><p>You have all the time you need.</p><div class="rpg-help-choice"><button data-action="explain">${icon('help')}<strong>Give me a hint</strong><span>Help me find a way to solve it.</span></button><button data-action="walkthrough">${icon('sound')}<strong>I'm not sure yet</strong><span>Show me how, step by step.</span></button></div><button class="rpg-text-button" data-action="close">I want to try again</button>`);
   }
   private async explain(): Promise<void> {
-    if (!this.session || this.busy) return; this.busy = true;
+    if (!this.session || this.busy) return;
     const p = this.session.problem;
+    // A times-table fact: the hint IS the whole table, plus a line pointing at
+    // the fact just before this one (no model call, nothing to wait for).
+    if (this.showHelpVisual() && p.hint) { this.closeDialog(true); this.hint(p.hint); void this.say(p.hint); return; }
+    this.busy = true;
     this.showDialog('hint', '<h2 id="rpg-dialog-title">Finding a helpful hint…</h2>');
     const text = await request<{ text: string }>('/tutor/explain', { problem: p }).then(result => result.text).catch(() => null) ?? p.hint ?? 'Read the question slowly. What is it asking you to find?';
     this.busy = false; this.closeDialog(true); this.hint(text); void this.say(text);

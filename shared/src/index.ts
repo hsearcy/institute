@@ -60,6 +60,9 @@ export const ProblemSchema = z.object({
   hint: z.string().max(200).optional(),
   /** Optional on-screen context (see ProblemVisualSchema). */
   visual: ProblemVisualSchema.optional(),
+  /** Fuller context shown only when he asks for help (or after a second miss),
+   *  e.g. the whole times table with this fact as "?". */
+  helpVisual: ProblemVisualSchema.optional(),
 });
 export type Problem = z.infer<typeof ProblemSchema>;
 

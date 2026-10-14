@@ -11,6 +11,7 @@ export type ProblemDraft = {
   difficulty: number;
   hint?: string;
   visual?: ProblemVisual;
+  helpVisual?: ProblemVisual;
 };
 
 const ri = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;

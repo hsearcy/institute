@@ -160,8 +160,11 @@ export function problemForTopic(topic: Topic, difficulty: number): TopicProblemD
       const t = g.table;
       const k = ri(2, TABLE_MAX);
       const visual = factLadder(t, k, d);
+      // Asking for help always brings up the WHOLE table (difficulty 0 = full),
+      // so the hint can point at the fact right before this one.
+      const helpVisual = factLadder(t, k, 0);
       return { ...base, prompt: `${t} × ${k}`, spoken: `What is ${t} times ${k}?`, answer: t * k,
-        hint: tableHint(t, k, visual), visual };
+        hint: tableHint(t, k, helpVisual), visual, helpVisual };
     }
     case "div": {
       const b = g.divisors[ri(0, g.divisors.length - 1)];

@@ -1,10 +1,10 @@
 # Institute
 
-**The Sunken Vault** is a browser dungeon RPG powered by Institute's existing adaptive math tutor. Solve a problem to unleash a spell through a horde, collect rare equipment, gain experience, and grow three branching skill trees with 33 nodes and 23 relics across three expeditions.
+**Institute** is an adaptive math tutor for kids, played as a browser dungeon RPG. Every spell is a math answer: solve a problem to unleash it through a horde, collect rare equipment, gain experience, and grow three branching skill trees with 33 nodes and 23 relics across three expeditions.
+
+Under the game is a real mastery map: 58 math topics in 6 domains, each unlocked by the skills it builds on. The tutor picks the next topic from that map, keeps mastered topics fresh with spaced review, rescues a stuck topic with its prerequisites, and demonstrates each new kind of problem before the first try. Hints are spoken and shown on screen. The parent journal shows what is mastered, practicing, ready, or locked, with a question to ask your child for each topic.
 
 The world keeps moving while you think, but combat waits for your answer. Travel and targeting are automatic. Fifteen abilities span Flame, Frost, and Storm, including Flame Cleave, Meteor, Phoenix Dive, Blizzard, Frost Guardian, and Ball Lightning; each six-encounter expedition ends with a guardian and loot. Distinct rooms include a furnace hall, a lost reliquary, a broken bridge, and a crystal gallery, with automatic travel and progressively denser hordes.
-
-The learning graph, mastery rules, spaced review, prerequisite rescue, demonstrations, spoken hints, and original reward system remain in place. Existing learners start a new RPG hero while keeping their learning progress and gem collection.
 
 - `web/` — Bun + Vite + TypeScript + Three.js client
 - `server/` — Bun + Hono + bun:sqlite tutor server (Anthropic LLM problem generation with deterministic fallback and answer verification)

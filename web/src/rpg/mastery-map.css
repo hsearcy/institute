@@ -1,0 +1,70 @@
+/* Voyage map: a full-height dialog with the 3D stage beside the ship's log. */
+#rpg-ui[data-panel="mastery-map"] .rpg-dialog{width:min(1480px,100%);height:calc(100dvh - 52px);padding:22px 24px 18px;text-align:left;}
+#rpg-ui[data-panel="mastery-map"] #rpg-dialog-content{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.rpg-voyage{flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;}
+.rpg-voyage-heading .rpg-eyebrow{font-size:10px;letter-spacing:2px;margin:0 0 6px;}
+.rpg-dialog .rpg-voyage-heading h2{margin:0;font-size:26px;}
+.rpg-voyage-body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 320px;border:1px solid #6d5d3b;}
+.rpg-voyage-stage{position:relative;min-height:0;overflow:hidden;background:#0d1a20;}
+.rpg-voyage-canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab;}
+.rpg-voyage-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.rpg-voyage-labels>div{position:absolute;white-space:nowrap;}
+.rpg-voyage-tag{pointer-events:auto;cursor:pointer;transform:translate(-50%,-150%);font:600 11px/1.2 'DM Sans',sans-serif;color:#efe6d2;background:#0b1416d9;border:1px solid #4d5f52;padding:3px 7px;border-radius:3px;}
+.rpg-voyage-tag.mastered{border-color:#e8c27a99;color:#e8c27a;}
+.rpg-voyage-tag.practicing{border-color:#7fd6cf;color:#7fd6cf;font-size:12px;}
+.rpg-voyage-tag.ready{color:#efe6d2;}
+.rpg-voyage-tag.locked{color:#aeb8b3;background:#0b1416b3;border-color:#4d5f5299;font-weight:500;}
+.rpg-voyage-tag{transition:opacity .15s,transform .15s;}
+.has-selection .rpg-voyage-tag.faded{opacity:.18;}
+.rpg-voyage-tag.chain-below,.rpg-voyage-tag.chain-above{z-index:2;font-size:12px;opacity:1;transform:translate(-50%,-150%) scale(1.12);}
+.rpg-voyage-tag.chain-below{background:#2b2210f2;border-color:#ffcf6e;color:#ffdf9e;box-shadow:0 0 12px #ffcf6e66;}
+.rpg-voyage-tag.chain-above{background:#0e2a28f2;border-color:#7ff5ea;color:#aefaf3;box-shadow:0 0 12px #7ff5ea66;}
+.rpg-voyage-tag.selected{z-index:3;font-size:13px;background:#efe6d2;color:#0b1416;border-color:#fff;box-shadow:0 0 16px #ffffffaa;transform:translate(-50%,-150%) scale(1.2);}
+.rpg-voyage-banner{pointer-events:auto;cursor:pointer;transform:translate(-50%,0);text-align:center;text-shadow:0 1px 8px #000,0 0 2px #000;}
+.rpg-voyage-banner:hover b{color:#e8c27a;}
+.rpg-voyage-banner b{display:block;font:700 14px/1.15 'Cinzel',Georgia,serif;letter-spacing:.08em;color:#efe6d2;}
+.rpg-voyage-banner span{font:600 11px/1.4 'DM Sans',sans-serif;letter-spacing:.06em;color:#9fb0a6;}
+.rpg-voyage-banner.explored span{color:#e8c27a;}
+.rpg-voyage-here{transform:translate(-50%,-160%);font:700 10px/1 'DM Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#0b1416;background:#7fd6cf;padding:5px 8px;border-radius:3px;}
+.rpg-dialog .rpg-voyage-hint{position:absolute;left:14px;bottom:10px;margin:0;font-size:12px;color:#c4cfc8;text-shadow:0 1px 4px #000;pointer-events:none;}
+.rpg-voyage-log{min-width:0;overflow:auto;display:flex;flex-direction:column;gap:18px;padding:18px 16px;background:#14211ef2;border-left:1px solid #6d5d3b;scrollbar-width:thin;}
+.rpg-voyage-log .rpg-eyebrow{font-size:10px;letter-spacing:2px;margin:0 0 8px;}
+.rpg-voyage-log h3{font:600 17px/1.3 'Cinzel',Georgia,serif;color:#efe2c3;margin:0 0 6px;}
+.rpg-dialog .rpg-voyage-log p{margin:0 0 8px;font-size:13px;line-height:1.6;color:#aebdb2;}
+.rpg-dialog .rpg-voyage-log .rpg-voyage-now{color:#7fd6cf;}
+.rpg-voyage-islands{list-style:none;margin:0;padding:0;display:grid;gap:6px;}
+#rpg-ui .rpg-voyage-islands button{width:100%;display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:3px 10px;align-items:center;text-align:left;background:#182826;border:1px solid #4d5f52;border-radius:5px;padding:9px 10px;color:#efe6d2;font:500 13px/1.3 'DM Sans',sans-serif;cursor:pointer;}
+#rpg-ui .rpg-voyage-islands button:hover{border-color:#e8c27a;}
+#rpg-ui .rpg-voyage-islands button.current{border-color:#7fd6cf;}
+.rpg-voyage-step{grid-row:span 2;text-align:center;font:700 13px/1 'Cinzel',Georgia,serif;color:#9fb0a6;}
+.explored .rpg-voyage-step{color:#e8c27a;}.current .rpg-voyage-step{color:#7fd6cf;}
+.rpg-voyage-count{font-size:12px;color:#9fb0a6;font-variant-numeric:tabular-nums;}
+.rpg-voyage-bar{grid-column:2/4;display:flex;height:4px;border-radius:2px;overflow:hidden;background:#ffffff14;}
+.rpg-voyage-bar i{display:block;height:100%;}
+.rpg-voyage-bar .mastered,.rpg-voyage-key .mastered{background:#e8c27a;}
+.rpg-voyage-bar .practicing,.rpg-voyage-key .practicing{background:#7fd6cf;}
+.rpg-voyage-bar .ready,.rpg-voyage-key .ready{background:#efe6d266;}
+.rpg-voyage-key .locked{background:#6b7470;}
+.rpg-voyage-card{border:1px solid #4d5f52;border-radius:6px;padding:13px;background:#132227;}
+.rpg-voyage-card .rpg-eyebrow{text-transform:uppercase;line-height:1.5;}
+.rpg-voyage-card h4{margin:0 0 3px;font:600 17px/1.3 'DM Sans',sans-serif;color:#efe6d2;}
+.rpg-dialog .rpg-voyage-card .rpg-voyage-full{font-size:12px;}
+.rpg-voyage-card .rpg-journal-status{margin:2px 0 10px;}
+.rpg-voyage-card strong{color:#efe6d2;}
+.rpg-voyage-card small{color:#8fa198;}
+.rpg-voyage-key{display:grid;gap:7px;font-size:12px;color:#aebdb2;}
+.rpg-voyage-key span{display:flex;align-items:center;gap:8px;}
+.rpg-voyage-key i{width:10px;height:10px;border-radius:50%;flex:none;}
+.rpg-voyage-key b{margin-left:auto;color:#efe6d2;font-variant-numeric:tabular-nums;}
+.rpg-voyage-footer{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;}
+.rpg-journal-map-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+@media(max-width:900px){
+  #rpg-ui[data-panel="mastery-map"] .rpg-dialog{height:auto;padding:20px 14px 16px;}
+  #rpg-ui[data-panel="mastery-map"] #rpg-dialog-content{overflow:auto;}
+  .rpg-voyage,.rpg-voyage-body{flex:none;}
+  .rpg-voyage-body{grid-template-columns:1fr;}
+  .rpg-voyage-stage{height:62dvh;}
+  .rpg-voyage-log{border-left:0;border-top:1px solid #6d5d3b;overflow:visible;}
+}
+.rpg-dialog .rpg-voyage-card .rpg-voyage-chain{font-size:12px;}
+.rpg-voyage-chain .below{color:#ffcf6e;}.rpg-voyage-chain .above{color:#7ff5ea;}

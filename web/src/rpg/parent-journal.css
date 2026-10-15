@@ -67,3 +67,5 @@
  .rpg-journal-topic-card{padding:12px 11px;}.rpg-journal-topic-heading{align-items:start;flex-wrap:wrap;gap:7px;}.rpg-journal-topic-heading h4{font-size:16px;width:100%;}.rpg-journal-topic-heading .rpg-journal-status{font-size:10px;}
  .rpg-parent-journal .rpg-journal-prompt{font-size:13px;}.rpg-journal-tags{gap:5px;font-size:10px;}.rpg-parent-journal .rpg-journal-topic-name{font-size:11px;}
 }
+.rpg-parent-journal .rpg-journal-records{margin-top:12px;}
+.rpg-parent-journal .rpg-journal-records .rpg-records>h3{display:none;}

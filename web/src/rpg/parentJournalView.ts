@@ -1,6 +1,7 @@
 import type { State } from '@institute/shared';
 import type { Mastery, MasteryTopic } from './tutor';
 import { escapeHtml as esc, icon } from './icons';
+import { renderMathRecords } from './recordsView';
 
 /** Stable learning order within a domain; cross-domain prerequisites remain named on cards. */
 export function orderJournalTopics(topics: readonly MasteryTopic[]): MasteryTopic[] {
@@ -49,8 +50,9 @@ export function renderParentJournal(profile: string, mastery: Mastery | null, le
     <header class="rpg-journal-heading"><p class="rpg-eyebrow">PARENT JOURNAL · ${esc(profile)}</p><h2 id="rpg-dialog-title">The learning journey</h2><p>See what he knows, what he is practicing, and what comes next.</p></header>
     <div class="rpg-journal-stats"><span><b>${mastery ? counts.mastered : '…'}</b>topics mastered</span><span><b>${legacy?.gems ?? '…'}</b>gems kept</span><span><b data-parent-balance="coin">${mastery?.crazyCoins ?? '…'}</b>Crazy Coins</span><span><b data-parent-balance="dime">${mastery ? mastery.dimes ?? 0 : '…'}</b>dimes to pay</span><span><b>${expeditions}</b>expeditions cleared</span></div>
     <details class="rpg-journal-rewards"><summary>Daily quests & rewards</summary><div class="rpg-quest-list">${legacy ? legacy.quests.map(quest => `<p><span>${esc(quest.label)}</span><b>${quest.progress} / ${quest.target} ${quest.done ? '✓' : ''}</b></p>`).join('') || '<p>No daily quests available yet.</p>' : '<p>Could not load daily quests.</p>'}</div><button data-action="redeem" ${(mastery?.crazyCoins ?? 0) < 1 ? 'disabled' : ''}>Redeem one Crazy Coin</button><button data-action="redeem-dime" ${(mastery?.dimes ?? 0) < 1 ? 'disabled' : ''}>Redeem one dime · $0.10</button><p>Each boss has a separate 10% chance to award a Crazy Coin and a dime. Redeem a dime when you pay it.</p><p data-parent-redemption-status role="status" aria-live="polite"></p></details>
+    <details class="rpg-journal-rewards rpg-journal-records"><summary>Math records</summary>${legacy ? renderMathRecords(legacy.daily) : '<p>Could not load math records.</p>'}</details>
     <section class="rpg-learning-map" aria-label="Math learning map">
-      <div class="rpg-journal-map-heading"><div><p class="rpg-eyebrow">MATH MASTERY</p><h3>A path through each skill</h3></div>${mastery && topics.length ? `<span>${topics.length} topics · ${domains.size} domains</span>` : ''}</div>
+      <div class="rpg-journal-map-heading"><div><p class="rpg-eyebrow">MATH MASTERY</p><h3>A path through each skill</h3></div>${mastery && topics.length ? `<div class="rpg-journal-map-actions"><span>${topics.length} topics · ${domains.size} domains</span><button data-action="mastery-map">Open the voyage map</button></div>` : ''}</div>
       ${mastery && topics.length ? `<div class="rpg-journal-legend" aria-label="Topic status totals">${(['mastered', 'practicing', 'ready', 'locked'] as const).map(key => `<span class="rpg-journal-status ${key}"><b>${counts[key]}</b> ${key[0].toUpperCase() + key.slice(1)}</span>`).join('')}</div>
       <nav class="rpg-journal-domains" aria-label="Jump to a math domain">${[...domains].map(([domain, entries], index) => `<a href="#rpg-journal-domain-${index}">${esc(domain)}<span>${entries.filter(topic => topic.state === 'mastered').length} / ${entries.length}</span></a>`).join('')}</nav>
       <p class="rpg-journal-guide">Follow each path from top to bottom. “Builds on” names the skills needed first.</p>

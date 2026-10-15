@@ -17,6 +17,10 @@ import { renderVictoryView } from './victoryView';
 import './victory-v3.css';
 import { renderParentJournal } from './parentJournalView';
 import './parent-journal.css';
+import './mastery-map.css';
+import { buildVoyage } from './masteryMapModel';
+import { renderVoyageDetail, renderVoyagePanel } from './masteryMapView';
+import type { MasteryMapScene } from './masteryMap';
 import { renderEquipmentView } from './equipmentView';
 import './equipment-v3.css';
 import './landscape-v3.css';
@@ -878,6 +882,22 @@ export class RpgGame {
     this.el('rpg-dialog-content').innerHTML = renderParentJournal(PROFILE, mastery, legacy, this.state?.expeditionsCompleted ?? 0);
   }
 
+  private voyageMap: MasteryMapScene | null = null;
+  private async showMasteryMap(): Promise<void> {
+    this.showDialog('mastery-map', '<h2 id="rpg-dialog-title">The voyage map</h2><p>Charting the islands…</p>', true);
+    const [mastery, { MasteryMapScene }] = await Promise.all([fetchMastery(), import('./masteryMap')]);
+    if (this.panel !== 'mastery-map') return;
+    const voyage = mastery ? buildVoyage(mastery.topics) : null;
+    const content = this.el('rpg-dialog-content');
+    content.innerHTML = renderVoyagePanel(PROFILE, voyage);
+    const stage = content.querySelector<HTMLElement>('[data-voyage-stage]');
+    if (!voyage || !stage) return;
+    const detail = content.querySelector<HTMLElement>('[data-voyage-detail]')!;
+    this.voyageMap = new MasteryMapScene(stage, voyage, { onSelect: topic => { detail.innerHTML = renderVoyageDetail(topic, voyage); } });
+    content.querySelectorAll<HTMLButtonElement>('[data-voyage-island]').forEach(button => button.addEventListener('click', () => this.voyageMap?.focusIsland(Number(button.dataset.voyageIsland))));
+  }
+  private disposeMasteryMap(): void { this.voyageMap?.dispose(); this.voyageMap = null; }
+
   private parentRedemptionBusy = false;
   private async redeemParentReward(currency: 'coin' | 'dime'): Promise<void> {
     if (this.parentRedemptionBusy || this.panel !== 'parent') return;
@@ -940,6 +960,7 @@ export class RpgGame {
     const page = RPG_TUTORIAL_PAGES[this.tutorialState.index];
     this.root.dataset.tutorialPanel = page.panel ?? '';
     this.root.dataset.tutorialPage = page.id;
+    this.disposeMasteryMap();
     this.panel = ''; this.root.dataset.panel = ''; this.el('rpg-overlay').hidden = true;
     this.el('rpg-controls').hidden = page.phase === 'story';
     // A display-only example before the first lesson. Never request or answer a
@@ -1005,6 +1026,7 @@ export class RpgGame {
   private showDialog(name: string, html: string, wide = false, preserveScroll = false): void {
     const content = this.el('rpg-dialog-content');
     const scrollTop = preserveScroll && this.panel === name ? content.scrollTop : 0;
+    this.disposeMasteryMap();
     if (!this.panel) { this.stopClock(); this.saveSession(); }
     this.panel = name; this.root.dataset.panel = name; this.world.setPaused(true);
     this.el('rpg-overlay').hidden = false;
@@ -1203,6 +1225,7 @@ export class RpgGame {
       case 'confirm-retreat': void this.retreat(); break;
       case 'camp': this.showCamp(); break;
       case 'parent': void this.showParent(); break;
+      case 'mastery-map': void this.showMasteryMap(); break;
       case 'help': void this.help(); break;
       case 'hear': if (this.session) void this.say(this.session.problem.spoken); break;
       case 'explain': void this.explain(); break;

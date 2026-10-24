@@ -1,7 +1,7 @@
 import { getRoomLayout, type RoomPoint } from './roomLayout';
 
-/** The hero engages a horde when any living enemy is this close. */
-export const ENGAGE_RADIUS = 4.6;
+/** The hero engages a horde when any living enemy is this close: combat begins on sight, while the hero still moves. */
+export const ENGAGE_RADIUS = 6.5;
 /** Before engagement the horde waits in the far part of its room. */
 const STAGE_DEPTH = .6;
 const HERO_RADIUS = .38;

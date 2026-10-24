@@ -29,7 +29,7 @@ test('every room entry is walkable floor and starts outside the staged horde rea
       assert.ok(heroWalkable(room, regionId)(entry.x, entry.z), `room ${room} entry`);
       const staged = enemyPositions(room, 10, regionId).map(point => stagedEnemyPoint(room, point, regionId));
       const nearest = Math.min(...staged.map(point => Math.hypot(point.x - entry.x, point.z - (entry.z + 20 * room))));
-      assert.ok(nearest > ENGAGE_RADIUS * .9, `room ${room} horde is ${nearest.toFixed(2)} from the entry`);
+      assert.ok(nearest > ENGAGE_RADIUS, `room ${room} horde is ${nearest.toFixed(2)} from the entry`);
     }
   }
 });

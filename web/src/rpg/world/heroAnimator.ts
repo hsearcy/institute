@@ -122,6 +122,12 @@ export class HeroAnimator {
   /** Releases a held one-shot (knockdown, victory) back to locomotion. */
   release(): void { if (this.shot) this.shot.hold = false; }
 
+  /** The player moves on before a one-shot ends: fade it out into the gait now. */
+  interrupt(): void {
+    const shot = this.shot; if (!shot) return;
+    shot.hold = false; shot.age = Math.max(shot.age, shot.action.getClip().duration - FADE_OUT);
+  }
+
   /** Restores a saved state after a model swap. */
   restore(name: string, time: number): void {
     if (this.fullBody.has(name) || this.upperBody.has(name)) { if (this.play(name)) { this.shot!.age = time; this.shot!.action.time = time; } }
@@ -142,7 +148,8 @@ export class HeroAnimator {
     }
     const weights = locomotionWeights(speed, this.walkSpeed, this.runSpeed);
     // One gait phase drives both cycles, advancing by distance travelled.
-    const stride = weights.run > 0 ? this.walkSpeed * (1 - weights.run) + this.runSpeed * weights.run : this.walkSpeed;
+    // Past the clip's own pace the stride lengthens too, so a fast run does not become a scurry.
+    const stride = (weights.run > 0 ? this.walkSpeed * (1 - weights.run) + this.runSpeed * weights.run : this.walkSpeed) * (speed > this.runSpeed ? Math.sqrt(speed / this.runSpeed) : 1);
     if (speed > .02 && stride > 0) this.phase = (this.phase + delta * speed / stride) % 1;
     this.updateIdleVariant(delta, weights.idle === 1 && !this.shot);
     const variantWeight = this.variant ? Math.min(1, this.idleTime / 0.6, (this.variant.getClip().duration - this.variant.time) / .6) : 0;

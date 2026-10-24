@@ -4,6 +4,7 @@
  * Presentation only: a strike always meets the ward, and nothing here touches
  * health, rewards or the answer clock.
  */
+/** `originX/Z` is the anchor the enemy holds near: its formation point, pulled toward a hero who moves away. */
 export type HordeActor = { id: string; x: number; z: number; originX: number; originZ: number; brute: boolean; canStrike: boolean; phase: number };
 export type HordeGoal = { x: number; z: number; run: boolean; faceHero: boolean };
 export type HordeEvent = { kind: 'swing' | 'impact' | 'recoil'; id: string };
@@ -16,7 +17,7 @@ const RUSH_TIMEOUT = 3;
 const WANDER = .65;
 
 type Mode = 'hold' | 'rush' | 'swing' | 'recoil';
-type Plan = { mode: Mode; postX: number; postZ: number; nextPostAt: number; startedAt: number; impacted: boolean; recoilX: number; recoilZ: number };
+type Plan = { mode: Mode; offX: number; offZ: number; nextPostAt: number; startedAt: number; impacted: boolean; recoilX: number; recoilZ: number };
 
 const hash = (n: number) => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
 
@@ -46,7 +47,7 @@ export class HordeDirector {
     const goals = new Map<string, HordeGoal>(), events: HordeEvent[] = [];
     const living = new Set(actors.map(actor => actor.id));
     for (const id of this.plans.keys()) if (!living.has(id)) this.plans.delete(id);
-    for (const actor of actors) if (!this.plans.has(actor.id)) this.plans.set(actor.id, this.post(actor, now, { mode: 'hold', postX: actor.originX, postZ: actor.originZ, nextPostAt: 0, startedAt: now, impacted: false, recoilX: 0, recoilZ: 0 }));
+    for (const actor of actors) if (!this.plans.has(actor.id)) this.plans.set(actor.id, this.post(actor, now, { mode: 'hold', offX: 0, offZ: 0, nextPostAt: 0, startedAt: now, impacted: false, recoilX: 0, recoilZ: 0 }));
     if (!active) this.nextStrikeAt = Math.max(this.nextStrikeAt, now + 1.3);
     const busy = [...this.plans.values()].filter(plan => plan.mode === 'rush' || plan.mode === 'swing').length;
     if (active && now >= this.nextStrikeAt && busy < (actors.length >= 6 ? 2 : 1)) {
@@ -95,18 +96,18 @@ export class HordeDirector {
         plan.mode = 'hold'; this.post(actor, now, plan);
       }
       if (now >= plan.nextPostAt) this.post(actor, now, plan);
-      const home = Math.hypot(plan.postX - actor.x, plan.postZ - actor.z);
-      goals.set(actor.id, { x: plan.postX, z: plan.postZ, run: home > 2.4, faceHero: home < .25 });
+      // The post rides on the anchor, so the horde follows a hero on the move.
+      const postX = actor.originX + plan.offX, postZ = actor.originZ + plan.offZ, home = Math.hypot(postX - actor.x, postZ - actor.z);
+      goals.set(actor.id, { x: postX, z: postZ, run: home > 1.6, faceHero: home < .25 });
     }
     return { goals, events };
   }
 
-  /** A new spot to pace to: across the hero's line, near the formation point. */
+  /** A new spot to pace to: across the hero's line, near the anchor. */
   private post(actor: HordeActor, now: number, plan: Plan): Plan {
     const seed = actor.phase * 13.1 + Math.floor(now / 2.7);
     const side = hash(seed) * 2 - 1, depth = hash(seed + 5.3) * 2 - 1;
-    const toX = actor.originX, toZ = actor.originZ;
-    plan.postX = toX + side * WANDER; plan.postZ = toZ + depth * WANDER * .5;
+    plan.offX = side * WANDER; plan.offZ = depth * WANDER * .5;
     plan.nextPostAt = now + 2.6 + hash(seed + 9.1) * 2.8;
     return plan;
   }

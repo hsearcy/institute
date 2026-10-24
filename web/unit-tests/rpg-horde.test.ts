@@ -50,3 +50,12 @@ test('enemies without an attack clip only pace', () => {
   const { events, maxBusy } = simulate(horde(3, false), 12);
   assert.equal(events.length, 0); assert.equal(maxBusy, 0);
 });
+
+test('the horde follows its anchor when the hero moves on', () => {
+  const director = new HordeDirector(), actors = horde(3, false);
+  director.reset(0);
+  const before = director.update(1, actors, { x: 0, z: 0 }, true).goals.get('e1')!;
+  actors.forEach(actor => { actor.originX += 6; });
+  const after = director.update(1.1, actors, { x: 6, z: 0 }, true).goals.get('e1')!;
+  assert.ok(Math.abs(after.x - before.x - 6) < 1e-9 && after.z === before.z && after.run);
+});

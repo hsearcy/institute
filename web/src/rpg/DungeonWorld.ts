@@ -40,7 +40,7 @@ import { createChainSequence, chainLightningGeometry, chainLightningMaterial, cr
 import { RoomCutaway } from './world/RoomCutaway';
 import { ITEM_MODELS } from './itemModels';
 import { createHitReaction, sampleHitReaction, type HitReaction, type CombatHit } from './world/hitReactions';
-import { advanceHeroTravel, setPlanarHeroHeading, settleHeroTravel, type HeroWalkCycle } from './world/heroLocomotion';
+import { advanceHeroTravel, setPlanarHeroHeading, type HeroWalkCycle } from './world/heroLocomotion';
 import { cloneErosionProgramMaterial, createElectricDissolve, createSkinnedDissolve } from './world/electricDissolve';
 import { createVaultScenery } from './world/scenery';
 import { brokenGateWallCrown, gateBreach, roomHasTomb } from './world/gateComposition';
@@ -68,6 +68,10 @@ const HERO_CAST: Record<string, string> = {
 };
 /** Sounds the world asks for; the game decides whether they play. */
 export type CombatSound = 'impact' | 'impact-heavy' | 'ward' | 'swing' | 'soul' | 'collapse';
+/** Top running speed, faster than the run clip's measured pace: an action-RPG hero covers a room in a few seconds. */
+const HERO_RUN_SPEED = 4.4;
+/** Seconds a cast holds the hero still before the player may move on. */
+const CAST_ROOT = .7, CLEAVE_ROOT = .85;
 const ELEMENT_FLASH = { fire: new THREE.Color(1, .45, .12), electric: new THREE.Color(.55, .75, 1.3), frost: new THREE.Color(.55, 1, 1.3), other: new THREE.Color(1, .95, .85) };
 type Fragment = { position: THREE.Vector3; velocity: THREE.Vector3; rotation: THREE.Vector3; spin: THREE.Vector3; scale: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; hot: boolean; bounced: boolean };
 type Particle = { position: THREE.Vector3; velocity: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; size: number };
@@ -154,6 +158,10 @@ export class DungeonWorld {
   private attacking = false;
   private attackAge = 0;
   private attackHeading?: number;
+  private castRoot = 0;
+  /** Targets of the current spell that no hit has reached yet, and when the last hit landed. */
+  private attackPending = new Set<string>();
+  private attackHitAt = 0;
   private attackDuration = 2.65;
   private lastAttack: { spellId: string; effect: string; options: AttackOptions } | null = null;
   private heroMotion?: (age: number) => THREE.Vector3;
@@ -165,7 +173,6 @@ export class DungeonWorld {
   /** Free movement: the hero explores until a horde is near, then combat begins. */
   private engaged = false;
   private engageReady = false;
-  private engageStartedAt = 0;
   private engageWaiters: (() => void)[] = [];
   private exploreRoute: THREE.Vector3[] = [];
   private readonly exploreKeys = new Set<string>();
@@ -289,8 +296,10 @@ export class DungeonWorld {
     this.buildDungeon(); this.installScenery(); this.setEncounter(0); this.resize();
   }
 
-  /** True while the hero may walk freely: no horde engaged, no spell, no panel. */
-  get exploring(): boolean { return !this.engaged && !this.attacking && !this.paused; }
+  /** True while the hero may move: in combat too, except while a cast roots the hero or a panel is open. */
+  get exploring(): boolean { return !this.rooted && !this.paused; }
+
+  private get rooted(): boolean { return this.attacking && this.attackAge < this.castRoot; }
 
   private installExploreInput(): void {
     const signal = this.inputAbort.signal, ray = new THREE.Raycaster(), floor = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -314,7 +323,9 @@ export class DungeonWorld {
     this.canvas.addEventListener('pointercancel', release, { signal });
     const ARROWS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
     window.addEventListener('keydown', event => {
-      if (!ARROWS.includes(event.key) || event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
+      // The digit-only answer box keeps no use for arrows, so they steer the hero.
+      const typing = (event.target instanceof HTMLInputElement && !event.target.dataset.steer) || event.target instanceof HTMLTextAreaElement;
+      if (!ARROWS.includes(event.key) || typing) return;
       if (!this.exploring) return;
       event.preventDefault(); this.exploreKeys.add(event.key); this.exploreRoute.length = 0;
     }, { signal });
@@ -405,7 +416,7 @@ export class DungeonWorld {
     return Math.atan2(focus.x - this.hero.position.x, focus.z - this.hero.position.z);
   }
 
-  /** Free-movement order, as from a click on the floor. Ignored during combat. */
+  /** Free-movement order, as from a click on the floor. Ignored while a cast roots the hero. */
   walkTo(x: number, z: number): void {
     if (!this.exploring) return;
     this.exploreRoute = heroClickRoute({ x: this.hero.position.x, z: this.hero.position.z }, { x, z }, this.encounter, this.regionId)
@@ -421,14 +432,29 @@ export class DungeonWorld {
   /** The hero stands at the combat mark with the horde in formation. */
   get combatReady(): boolean { return this.engageReady || !this.enemies.some(enemy => !enemy.dead); }
 
-  /** Starts combat with the current horde now, as when the hero walks up to it. */
+  /** Starts combat with the current horde now, as when the hero comes in sight of it. The hero keeps moving. */
   engage(): void {
     if (this.engaged) return;
-    this.engaged = true; this.engageReady = false; this.engageStartedAt = this.elapsed;
-    this.exploreRoute.length = 0; this.exploreKeys.clear(); this.pointerSteering = false;
-    // Take the combat mark: spells and their framing assume it.
-    this.heroTravelWaypoints = heroClickRoute({ x: this.hero.position.x, z: this.hero.position.z }, { x: this.destination.x, z: this.destination.z }, this.encounter, this.regionId)
-      .map(point => new THREE.Vector3(point.x, 0, point.z));
+    this.engaged = true;
+    this.finishEngage();
+  }
+
+  /**
+   * Where an enemy holds while the fight is live: its formation point, unless
+   * the hero moves away or into the formation. Then the horde closes in or
+   * gives room, but never past a wall.
+   */
+  private enemyAnchor(enemy: Enemy): THREE.Vector3 {
+    const hero = this.hero.position, away = enemy.origin.clone().sub(hero).setY(0), gap = away.length();
+    const far = enemy.brute ? 5.6 : 4.8, near = enemy.brute ? 3.4 : 2.4;
+    if (gap <= far && gap >= near) return enemy.origin;
+    if (gap < 1e-3) away.set(0, 0, -1);
+    const reach = gap > far ? far : near, walkable = heroWalkable(this.encounter, this.regionId);
+    for (const scale of [1, .8, .6, .45]) {
+      const at = hero.clone().addScaledVector(away.clone().normalize(), reach * scale);
+      if (walkable(at.x, at.z)) return at;
+    }
+    return enemy.origin;
   }
 
   private finishEngage(): void {
@@ -1436,12 +1462,8 @@ export class DungeonWorld {
       // A restored answer resolves at once: the horde is already in formation.
       this.engaged = true; this.enemies.forEach(enemy => enemy.at.copy(enemy.origin)); this.finishEngage();
     }
-    if ((this.heroUsesAuthoredMotion || this.heroTravelWaypoints.length > 0) && settleHeroTravel(this.hero.position, this.camera.position, this.cameraTarget, this.destination)) {
-      this.heroTravelSpeed = 0; this.heroVisual.position.set(0, 0, 0);
-      setPlanarHeroHeading(this.heroVisual.rotation, Math.PI * .9);
-      this.camera.updateMatrixWorld(); this.renderer.shadowMap.needsUpdate = true;
-    }
-    this.heroTravelWaypoints.length = 0;
+    // The hero casts where they stand, and may run on once the spell is away.
+    this.heroTravelWaypoints.length = 0; this.heroTravelSpeed = 0; this.heroVisual.position.set(0, 0, 0);
     const spell = RPG_SPELLS.find(spell => spell.id === spellId);
     const effect = spell?.effect ?? 'nova', school = spell?.school ?? 'ember';
     const bonus = RPG_SPELL_SHAPES.find(shape => shape.id === options.spellShape && shape.spellId === spellId);
@@ -1457,13 +1479,16 @@ export class DungeonWorld {
     this.releaseCharge();
     this.novaContacts = undefined;
     this.setElectricMaterials(true, school === 'ember' && !physicalCleave ? 'burn' : 'electric');
-    this.attacking = true; this.attackAge = 0;
+    this.attackPending = new Set(targets.map(enemy => enemy.id)); this.attackHitAt = this.elapsed;
+    this.attacking = true; this.attackAge = 0; this.castRoot = effect === 'cleave' || effect === 'phoenix-dive' ? CLEAVE_ROOT : CAST_ROOT;
     if (!this.heroAnimator?.play(effect === 'cleave' || effect === 'phoenix-dive' ? 'cleave' : HERO_CAST[effect] ?? 'cast')) this.heroAnimator?.play('cast');
     this.attackDuration = effect === 'cleave' ? 2.2 : ['firestorm', 'blizzard', 'tempest', 'frost-guardian'].includes(effect) ? 3 : 2.7;
     const origin = this.hero.position.clone().setY(.12);
-    const target = origin.clone().add(new THREE.Vector3(.3, 0, -3.8));
+    // Area spells land on the struck enemies, wherever the hero cast from.
+    const center = targets.reduce((sum, enemy) => sum.add(enemy.root.position), new THREE.Vector3()).divideScalar(targets.length);
+    const target = center.clone().setY(origin.y);
     const directional = ['ice-lance', 'arc-lance', 'glacial-surge', 'phoenix-dive'].includes(effect);
-    this.attackHeading = directional ? targetHeading(origin, targets[0].root.position) : undefined;
+    this.attackHeading = targetHeading(origin, directional ? targets[0].root.position : center);
     if (this.attackHeading !== undefined) setPlanarHeroHeading(this.heroVisual.rotation, this.attackHeading);
     const castOrigin = () => {
       const at = new THREE.Vector3(), marker = this.heroVisual.getObjectByName('CastOrigin');
@@ -2257,6 +2282,7 @@ export class DungeonWorld {
   }
 
   private hitEnemy(enemy: Enemy, _color: number, hit?: CombatHit, contactOrigin?: THREE.Vector3): void {
+    this.attackPending.delete(enemy.id); this.attackHitAt = this.elapsed;
     if (enemy.dead) return;
     const school = RPG_SPELLS.find(spell => spell.id === this.lastAttack?.spellId)?.school;
     const physicalCleave = this.lastAttack?.effect === 'cleave' && !(this.lastAttack.options.burning || this.lastAttack.options.wide || this.lastAttack.options.echo);
@@ -2446,8 +2472,8 @@ export class DungeonWorld {
     while (this.exploreRoute.length && this.hero.position.distanceToSquared(this.exploreRoute[0]!) <= .06 ** 2) this.exploreRoute.shift();
     const exploring = this.exploring;
     let travelTarget = this.heroTravelWaypoints[0] ?? this.destination;
-    if (!this.engaged) {
-      // Explore: go where the player points; otherwise stay put.
+    if (!this.heroTravelWaypoints.length) {
+      // Go where the player points, in combat too; otherwise stay put.
       const keys = this.exploreKeys, steer = new THREE.Vector3(
         (keys.has('ArrowRight') ? 1 : 0) - (keys.has('ArrowLeft') ? 1 : 0), 0, (keys.has('ArrowDown') ? 1 : 0) - (keys.has('ArrowUp') ? 1 : 0));
       if (exploring && steer.lengthSq() > 0) {
@@ -2457,8 +2483,12 @@ export class DungeonWorld {
       } else travelTarget = exploring ? this.exploreRoute[0] ?? this.hero.position : this.hero.position;
     }
     const distance = this.hero.position.distanceTo(travelTarget);
-    const walking = distance > .025 && !this.attacking;
-    const travel = this.heroUsesAuthoredMotion && walking ? advanceHeroTravel(distance, this.heroTravelSpeed, delta, this.heroWalkCycle, this.heroAnimator?.runSpeed) : undefined;
+    const walking = distance > .025 && !this.rooted;
+    if (walking && this.attacking && this.heroMotion) {
+      // The player moves on while the spell plays out: drop the cast pose and run.
+      this.heroMotion = undefined; this.heroVisual.position.x = this.heroVisual.position.z = 0; this.heroAnimator?.interrupt();
+    }
+    const travel = this.heroUsesAuthoredMotion && walking ? advanceHeroTravel(distance, this.heroTravelSpeed, delta, this.heroWalkCycle, Math.max(HERO_RUN_SPEED, this.heroAnimator?.runSpeed ?? 0)) : undefined;
     this.heroTravelSpeed = travel?.speed ?? 0;
     const heroFrom = this.hero.position.clone();
     const shadowInterval = distance > .08 || this.attacking ? (this.softwareRenderer ? .2 : .065) : .65;
@@ -2466,7 +2496,7 @@ export class DungeonWorld {
       this.renderer.shadowMap.needsUpdate = true; this.lastShadowUpdate = this.elapsed;
     }
     if (walking) {
-      if (this.engaged) this.hero.position.lerp(travelTarget, travel ? travel.distance / distance : 1 - Math.exp(-delta * 2.1));
+      if (this.heroTravelWaypoints.length) this.hero.position.lerp(travelTarget, travel ? travel.distance / distance : 1 - Math.exp(-delta * 2.1));
       else {
         const step = travel ? travel.distance : distance * (1 - Math.exp(-delta * 2.1));
         const next = slideStep({ x: this.hero.position.x, z: this.hero.position.z }, (travelTarget.x - this.hero.position.x) / distance * step, (travelTarget.z - this.hero.position.z) / distance * step, heroWalkable(this.encounter, this.regionId));
@@ -2496,7 +2526,11 @@ export class DungeonWorld {
         this.heroVisual.rotation.y += Math.sin(Math.min(this.attackAge / .7, 1) * Math.PI) * .18;
         this.heroVisual.position.y += Math.sin(Math.min(this.attackAge / .5, 1) * Math.PI) * .35;
       }
-      if (this.attackAge >= this.attackDuration) { this.attacking = false; this.heroMotion = undefined; this.heroVisual.position.x = this.heroVisual.position.z = 0; this.attackResolve?.(); this.attackResolve = undefined; }
+      // The next problem may come as soon as every blow has landed: the spell's
+      // afterglow plays on. A cleared room waits for its last body to fall.
+      const landed = !this.attackPending.size && !this.heroMotion && this.attackAge >= this.castRoot + .15
+        && this.elapsed - this.attackHitAt > .45 && this.enemies.some(enemy => !enemy.dead);
+      if (this.attackAge >= this.attackDuration || landed) { this.attacking = false; this.heroMotion = undefined; this.heroVisual.position.x = this.heroVisual.position.z = 0; this.attackResolve?.(); this.attackResolve = undefined; }
     }
     this.heldEquipment?.update(this.elapsed);
     for (const pickup of this.floorLoot.update(delta, this.elapsed, this.hero.position, this.exploring, heroWalkable(this.encounter, this.regionId))) {
@@ -2513,16 +2547,11 @@ export class DungeonWorld {
     this.rune.rotation.z = this.elapsed * .14;
     this.rune.scale.setScalar(ACTOR_SCALE * (1 + Math.sin(this.elapsed * 2) * .04));
     const living = this.enemies.filter(enemy => !enemy.dead);
-    if (!this.engaged && living.length && !this.paused && living.some(enemy => enemy.at.distanceTo(this.hero.position) < ENGAGE_RADIUS * (enemy.brute ? 1.25 : 1))) this.engage();
-    if (this.engaged && !this.engageReady) {
-      const settled = !this.heroTravelWaypoints.length && this.hero.position.distanceToSquared(this.destination) < .05 ** 2
-        && living.every(enemy => enemy.at.distanceToSquared(enemy.origin) < .02 ** 2);
-      if (settled || this.elapsed - this.engageStartedAt > 3) this.finishEngage();
-    }
+    if (!this.engaged && living.length && !this.paused && living.some(enemy => enemy.at.distanceTo(this.hero.position) < ENGAGE_RADIUS)) this.engage();
     // Combat stays live while a problem waits: the horde paces, and one enemy
     // at a time strikes the hero's ward. Spells and panels hold every strike.
     const plan = this.engageReady ? this.horde.update(this.elapsed, living.map(enemy => ({
-      id: enemy.id, x: enemy.at.x, z: enemy.at.z, originX: enemy.origin.x, originZ: enemy.origin.z, brute: enemy.brute, phase: enemy.phase,
+      id: enemy.id, x: enemy.at.x, z: enemy.at.z, ...((anchor: THREE.Vector3) => ({ originX: anchor.x, originZ: anchor.z }))(this.enemyAnchor(enemy)), brute: enemy.brute, phase: enemy.phase,
       canStrike: !!enemy.clips?.has('attack') && !(enemy.root.userData.hitReaction && !sampleHitReaction(enemy.root.userData.hitReaction, this.elapsed).complete),
     })), this.hero.position, this.engageReady && !this.attacking && !this.paused && !this.charge) : undefined;
     for (const event of plan?.events ?? []) this.hordeEvent(event.kind, this.enemies.find(enemy => enemy.id === event.id)!);
@@ -2673,7 +2702,7 @@ export class DungeonWorld {
       this.burstLight.color.setHex(reaction.element === 'fire' ? 0xffa35a : reaction.element === 'electric' ? 0x8abbff : frostfall ? 0x76bcca : 0xd6dce8);
       this.burstLight.intensity = (chain ? 2 : frostfall ? 3 : 9) * response.light;
     }
-    this.cameraTarget.lerp(this.hero.position, 1 - Math.exp(-delta * 3.7));
+    this.cameraTarget.lerp(this.hero.position, 1 - Math.exp(-delta * 5));
     this.zoomPunch *= Math.exp(-delta * 7);
     const zoom = 1 + (this.zoomPunch > .001 ? this.zoomPunch : 0);
     if (this.camera.zoom !== zoom) { this.camera.zoom = zoom; this.camera.updateProjectionMatrix(); }
@@ -2696,11 +2725,8 @@ export class DungeonWorld {
     if (this.softwareRenderer) this.renderer.render(this.scene, this.camera); else this.composer.render(delta);
   }
 
-  /** Includes queued doorway waypoints, not merely the current walk clip. */
-  get traveling(): boolean {
-    return this.heroTravelWaypoints.length > 0
-      || this.hero.position.distanceToSquared(this.destination) > .025 ** 2;
-  }
+  /** Queued doorway waypoints; free movement is not travel. */
+  get traveling(): boolean { return this.heroTravelWaypoints.length > 0; }
 
   get lootScreenPosition(): { x: number; y: number } | null {
     const relic = this.floorLoot.relicPosition; if (!relic) return null;

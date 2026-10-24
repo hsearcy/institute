@@ -527,6 +527,7 @@ export class RpgGame {
       this.renderState(); this.showReward(result.reward, session);
       this.el('rpg-save-status').textContent = '◆ Adventure saved on your server';
       if (this.state.expedition!.cleared) {
+        this.world.celebrate();
         this.session = null; this.saveSession(); this.busy = false; this.showVictory(result.reward); return;
       }
       const sameRoom = this.state.expedition!.encounterIndex === session.encounterIndex;

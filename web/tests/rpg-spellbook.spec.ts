@@ -124,7 +124,7 @@ async function wear(page: Page, appearanceId: RpgAppearanceId): Promise<void> {
   await expect.poll(async () => (await state(page)).appearanceId).toBe(appearanceId);
   await expect(page.locator(`[data-appearance="${appearanceId}"]`)).toHaveAttribute('aria-pressed', 'true');
   await expect.poll(() => page.evaluate(() => (window as any).__game.world.diagnostics.appearance)).toBe(appearanceId);
-  await expect.poll(() => page.evaluate(() => [...(window as any).__game.world.diagnostics.heroClips].sort())).toEqual(['cast', 'cleave', 'idle', 'walk']);
+  await expect.poll(() => page.evaluate(() => [...(window as any).__game.world.diagnostics.heroClips].sort())).toEqual(['cast', 'cleave', 'dodge', 'hit', 'hit-heavy', 'hit-side', 'idle', 'idle-look', 'knockdown', 'run', 'victory', 'walk']);
   expect(await state(page)).toEqual({ ...before, appearanceId });
   expect(await (await page.request.get(`/mastery?profileId=${profile}`)).json()).toEqual(learning);
   expect(await page.evaluate(() => (window as any).__game.session.problem)).toEqual(problem);
@@ -201,7 +201,7 @@ test('all fifteen spellbook abilities cast distinct effects, honor equipment, an
       expect((await state(page)).xp).toBe(saved.xp);
       expect((await state(page)).appearanceId).toBe(appearanceId);
       await expect.poll(() => page.evaluate(() => (window as any).__game.world.diagnostics.appearance)).toBe(appearanceId);
-      await expect.poll(() => page.evaluate(() => [...(window as any).__game.world.diagnostics.heroClips].sort())).toEqual(['cast', 'cleave', 'idle', 'walk']);
+      await expect.poll(() => page.evaluate(() => [...(window as any).__game.world.diagnostics.heroClips].sort())).toEqual(['cast', 'cleave', 'dodge', 'hit', 'hit-heavy', 'hit-side', 'idle', 'idle-look', 'knockdown', 'run', 'victory', 'walk']);
       expect(await page.evaluate(() => (window as any).__game.session.problem)).toEqual(exactProblem);
       expect(await (await page.request.get(`/mastery?profileId=${profile}`)).json()).toEqual(learning);
       await expect(page.locator('#rpg-answer-form')).toHaveAttribute('data-problem-id', problemId!);

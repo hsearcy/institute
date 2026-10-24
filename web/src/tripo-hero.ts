@@ -4,8 +4,9 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const parameters = new URLSearchParams(location.search);
-const gameAsset = parameters.get('asset') === 'game';
-const assetPath = gameAsset ? '/assets/rpg/tripo-hero-game.glb' : '/assets/rpg/tripo-hero.glb';
+const gameAsset = parameters.get('asset') === 'game' || parameters.get('asset') === 'motions';
+// `motions` is the local untrimmed clip review from scripts/add-tripo-hero-motions.py --review.
+const assetPath = parameters.get('asset') === 'motions' ? '/assets/rpg/review/hero-motion-review.glb' : gameAsset ? '/assets/rpg/tripo-hero-game.glb' : '/assets/rpg/tripo-hero.glb';
 type View = 'front' | 'threequarter' | 'back' | 'face';
 const canvas = document.querySelector<HTMLCanvasElement>('#tripo-canvas')!;
 const status = document.querySelector<HTMLParagraphElement>('#status')!;

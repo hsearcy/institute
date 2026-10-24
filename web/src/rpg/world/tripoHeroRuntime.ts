@@ -69,10 +69,10 @@ export function measureTripoWalkCycle(instance: Object3D, clip?: AnimationClip):
   let hips: Object3D | undefined;
   copy.traverse(node => {
     const name = node.name.toLowerCase().replace(/[^a-z]/g, '');
-    if (/leftfoot$|rightfoot$|^lfoot$|^rfoot$/.test(name)) feet.push(node);
+    if (/leftfoot$|rightfoot$|^lfoot$|^rfoot$|^foot[lr]$/.test(name)) feet.push(node);
     // Tripo native has both Hip and Pelvis; Hip owns the gait reference.
     if (name === 'hip') hips = node;
-    else if (!hips && /hips$/.test(name)) hips = node;
+    else if (!hips && /hips$|^pelvis$/.test(name)) hips = node;
   });
   if (!feet.length || !hips) return undefined;
   const mixer = new AnimationMixer(copy);

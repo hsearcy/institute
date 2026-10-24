@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { observePopulationCap, expectPopulationCap, expectWorldHealth } from './rpg-combat-assertions';
+import { observePopulationCap, expectPopulationCap, expectWorldHealth, autoEngage } from './rpg-combat-assertions';
 import type { Problem, RpgState } from '../../shared/src/index';
 
 const profile = 'rpg-playtest';
@@ -41,7 +41,7 @@ async function answer(page: Page, value: number): Promise<void> {
 // Real tutor/database writes on a fresh scratch server. Only HTTP delivery is
 // interrupted: route.fetch() lets the server commit, then abort loses its reply.
 test('reloading and retrying every saved phase keeps learning, XP, shields, and skill points consistent', async ({ page }) => {
-  await observePopulationCap(page);
+  await observePopulationCap(page); await autoEngage(page);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(() => localStorage.setItem('institute:rpg:muted', 'true'));

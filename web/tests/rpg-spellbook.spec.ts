@@ -2,7 +2,7 @@ import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { writeFile } from 'node:fs/promises';
 import { RPG_SPELLS, RPG_SCHOOLS, RPG_SKILLS, rpgSpellUnlocked, rpgEncounterCombat, rpgEncounterKills, rpgSpellModifiers, type RpgResolveResult, type RpgSpellId, type RpgAppearanceId, type RpgState } from '../../shared/src/rpg';
 import type { Problem } from '../../shared/src/index';
-import { observePopulationCap, expectPopulationCap, expectWorldHealth } from './rpg-combat-assertions';
+import { observePopulationCap, expectPopulationCap, expectWorldHealth, autoEngage } from './rpg-combat-assertions';
 
 const profile = 'rpg-archmage';
 const captureSequences = process.env.RPG_CAPTURE_SEQUENCE === '1';
@@ -133,7 +133,7 @@ async function wear(page: Page, appearanceId: RpgAppearanceId): Promise<void> {
 }
 
 test('all fifteen spellbook abilities cast distinct effects, honor equipment, and persist across three expeditions', async ({ page }, info) => {
-  await observePopulationCap(page);
+  await observePopulationCap(page); await autoEngage(page);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(() => localStorage.setItem('institute:rpg:muted', 'true'));

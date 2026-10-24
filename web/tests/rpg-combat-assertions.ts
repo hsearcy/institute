@@ -35,3 +35,17 @@ export async function expectWorldHealth(page: Page, expected: readonly RpgCombat
   }))), { timeout: 30_000 }).toEqual(expected);
   await expect.poll(() => page.evaluate(() => (window as any).__game.world.enemies.every((enemy: any) => enemy.hp > 0 || enemy.dead)), { timeout: 30_000 }).toBe(true);
 }
+
+/**
+ * Free movement holds each problem until the hero walks up to the horde.
+ * Combat tests skip the walk: the hero engages as soon as a room opens.
+ * Set `window.__rpgWalkByHand = true` to test the walk itself.
+ */
+export async function autoEngage(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    setInterval(() => {
+      const world = (window as any).__game?.world;
+      if (world && !(window as any).__rpgWalkByHand && world.exploring && !world.combatReady) world.engage();
+    }, 150);
+  });
+}

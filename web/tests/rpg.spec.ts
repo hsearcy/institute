@@ -3,7 +3,7 @@ import { writeFile } from 'node:fs/promises';
 import type { Problem, RpgState } from '../../shared/src/index';
 import { rpgEncounterCombat, rpgNextRelicHunt } from '../../shared/src/rpg';
 
-import { observePopulationCap, expectPopulationCap, expectWorldHealth } from './rpg-combat-assertions';
+import { observePopulationCap, expectPopulationCap, expectWorldHealth, autoEngage } from './rpg-combat-assertions';
 
 const profile = 'rpg-playtest';
 const shaderFailures = new WeakMap<Page, string[]>();
@@ -11,7 +11,7 @@ const assetFailures = new WeakMap<Page, string[]>();
 // Fault tests use the real renderer/simulation at a small software framebuffer;
 // full-quality visuals and frame rate are inspected separately in live Chromium.
 test.beforeEach(async ({page}) => {
-  await observePopulationCap(page);
+  await observePopulationCap(page); await autoEngage(page);
   const failures: string[] = [];
   shaderFailures.set(page, failures);
   const missingAssets: string[] = [];
@@ -453,4 +453,32 @@ test('Camp Records tab shows saved math stats on desktop and phone', async ({ pa
   await tabs.getByRole('button', { name: 'Quest board', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Daily quests', exact: true })).toBeVisible();
   await expect(records).toHaveCount(0);
+});
+
+test('free movement: the problem waits until the hero walks up to the horde', async ({ page }) => {
+  await page.addInitScript(() => { (window as any).__rpgWalkByHand = true; });
+  await page.goto('/');
+  const start = page.getByRole('button',{name:/Continue adventure|Enter the dungeon/}), guide = page.getByRole('button',{name:'Skip guide',exact:true});
+  await expect(start.or(guide).first()).toBeVisible({ timeout: 60_000 });
+  if (await guide.isVisible()) await guide.click();
+  await start.click();
+  await expect(page.locator('#rpg-explore')).toBeVisible();
+  await expect(page.locator('#rpg-answer-form')).toBeHidden();
+  const entry = await page.evaluate(() => (window as any).__game.world.diagnostics.hero);
+  // Click the floor most of the way toward the nearest monster, as a player would.
+  for (let i = 0; i < 6 && !await page.evaluate(() => (window as any).__game.world.combatReady); i++) {
+    const point = await page.evaluate(() => {
+      const world = (window as any).__game.world, hero = world.hero.position;
+      const near = world.enemies.filter((e: any) => !e.dead).sort((a: any, b: any) => a.at.distanceTo(hero) - b.at.distanceTo(hero))[0];
+      if (!near || !world.exploring) return null;
+      const at = hero.clone().lerp(near.at, .7).project(world.camera), box = world.renderer.domElement.getBoundingClientRect();
+      return { x: box.left + (at.x + 1) / 2 * box.width, y: box.top + (1 - at.y) / 2 * box.height };
+    });
+    if (point) await page.mouse.click(point.x, point.y);
+    await page.waitForTimeout(1500);
+  }
+  await expect.poll(() => page.evaluate(() => (window as any).__game.world.combatReady), { timeout: 30_000 }).toBe(true);
+  await expect(page.locator('#rpg-explore')).toBeHidden();
+  await expect(page.locator('#rpg-answer-form')).toBeVisible();
+  expect(await page.evaluate(() => (window as any).__game.world.diagnostics.hero)).not.toEqual(entry);
 });

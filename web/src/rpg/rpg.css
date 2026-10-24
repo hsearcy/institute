@@ -126,3 +126,12 @@ body.rpg-mode { background:#101719; color:#ede8d8; font-family:'DM Sans',system-
 @media(max-width:410px){.rpg-hotbar{gap:5px}.rpg-level-orb{width:40px;height:40px}#rpg-ui .rpg-spell{width:60px}.rpg-gear-button{display:none!important}.rpg-spellbar{gap:4px}.rpg-location h1{font-size:19px}.rpg-top nav{gap:1px}#rpg-ui .rpg-top nav button{width:29px}.rpg-skill-trees{gap:8px}.rpg-dialog.wide{padding:25px 13px}.rpg-node-icon{right:-3px;padding:2px}.rpg-dialog h2 small{margin:8px 0}.rpg-dialog .rpg-title{font-size:38px}}
 @media(max-height:640px) and (min-width:761px){.rpg-controls{bottom:12px}.rpg-hotbar{margin-top:7px;padding:4px 15px}.rpg-answer-panel{padding:7px 15px}.rpg-keypad{position:absolute;right:-170px;bottom:0;width:160px;grid-template-columns:repeat(3,1fr)}#rpg-ui .rpg-keypad button{height:36px}.rpg-dialog{padding:24px}.rpg-dialog .rpg-title{font-size:35px}.rpg-dialog .rpg-seal{width:40px;height:40px;margin:5px auto 20px}.rpg-camp-stats{margin:13px 0}.rpg-dialog .rpg-camp-story{margin:10px 0}}
 @media(prefers-reduced-motion:reduce){#rpg-ui *,#rpg-ui *:before,#rpg-ui *:after{animation:none!important;transition:none!important}}
+/* Free movement: the problem waits while the hero explores. */
+#rpg-ui.rpg-exploring .rpg-answer-panel,#rpg-ui.rpg-exploring .rpg-keypad { display:none; }
+.rpg-explore { display:flex; flex-direction:column; align-items:center; gap:4px; margin:0 auto 12px; padding:12px 26px; width:max-content; max-width:100%; color:#ecdcb6; background:linear-gradient(115deg,#1b2528f0,#101a1de8); border:1px solid #a07f49; border-radius:5px; box-shadow:0 10px 34px #0009; text-align:center; animation:rpg-explore-in .5s ease-out both; }
+.rpg-explore strong { font-family:Cinzel,Georgia,serif; font-size:19px; letter-spacing:1.5px; color:#f0cd86; text-shadow:0 0 18px #ffb34b55; }
+.rpg-explore span { font-size:14px; color:#c9c5b4; }
+@keyframes rpg-explore-in { from { opacity:0; transform:translateY(10px); } }
+/* Slow motion while a problem waits: the world dims at its edges. */
+#rpg-ui::after { content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:0; transition:opacity .6s ease; background:radial-gradient(ellipse 70% 62% at 50% 46%,transparent 55%,#04121acc 100%); }
+#rpg-ui.rpg-slowmo::after { opacity:1; }

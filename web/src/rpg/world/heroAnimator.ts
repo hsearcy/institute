@@ -1,21 +1,32 @@
 import { AnimationClip, LoopOnce, type AnimationAction, type AnimationMixer, type Object3D } from 'three';
 import type { HeroWalkCycle } from './heroLocomotion';
 
-/** Bones that an upper-body action owns while the legs keep their gait. */
-const UPPER_BONE = /^(Waist|Spine0\d|Neck|Head|[LR]_(Clavicle|Upperarm|Forearm|Hand))/;
 const LOCOMOTION = ['idle', 'walk', 'run'] as const;
-/** Clips that play once over the whole body; the legs stop. */
-const FULL_BODY = new Set(['dodge', 'hit', 'hit-side', 'hit-heavy', 'knockdown', 'victory']);
-/** Clips that play once and, while moving, take only the upper body. */
-const UPPER_BODY = new Set(['cleave', 'cast']);
+
+export type ActorClipRoles = {
+  /** Bones that an upper-body action owns while the legs keep their gait. */
+  upperBone: RegExp;
+  /** Clips that play once over the whole body; the legs stop. */
+  fullBody: readonly string[];
+  /** Clips that play once and, while moving, take only the upper body. */
+  upperBody: readonly string[];
+  /** One-shots that keep their last pose until another action plays. */
+  held: readonly string[];
+};
+export const HERO_CLIP_ROLES: ActorClipRoles = {
+  upperBone: /^(Waist|Spine0\d|Neck|Head|[LR]_(Clavicle|Upperarm|Forearm|Hand))/,
+  fullBody: ['dodge', 'hit', 'hit-side', 'hit-heavy', 'knockdown', 'victory'],
+  upperBody: ['cleave', 'cast'],
+  held: ['knockdown'],
+};
 const FADE_IN = .12, FADE_OUT = .2;
 const IDLE_VARIANT_AFTER = 9;
 
 export type HeroGait = { walk?: HeroWalkCycle; run?: HeroWalkCycle };
 type Shot = { name: string; action: AnimationAction; upper: boolean; age: number; hold: boolean };
 
-function subclip(clip: AnimationClip, upper: boolean): AnimationClip {
-  const tracks = clip.tracks.filter(track => UPPER_BONE.test(track.name.split('.')[0]!) === upper);
+function subclip(clip: AnimationClip, upper: boolean, upperBone: RegExp): AnimationClip {
+  const tracks = clip.tracks.filter(track => upperBone.test(track.name.split('.')[0]!) === upper);
   return new AnimationClip(`${clip.name}:${upper ? 'upper' : 'lower'}`, clip.duration, tracks);
 }
 
@@ -52,24 +63,36 @@ export class HeroAnimator {
   private variant?: AnimationAction;
   readonly walkSpeed: number;
   readonly runSpeed: number;
+  private readonly fullBody: Set<string>;
+  private readonly upperBody: Set<string>;
+  private readonly held: Set<string>;
 
-  constructor(private readonly mixer: AnimationMixer, clips: readonly AnimationClip[], gait: HeroGait) {
+  constructor(private readonly mixer: AnimationMixer, clips: readonly AnimationClip[], gait: HeroGait, roles: ActorClipRoles = HERO_CLIP_ROLES) {
+    this.fullBody = new Set(roles.fullBody); this.upperBody = new Set(roles.upperBody); this.held = new Set(roles.held);
     const byName = new Map(clips.map(clip => [clip.name.toLowerCase(), clip]));
     for (const [name, clip] of byName) {
       const full = mixer.clipAction(clip); full.setEffectiveWeight(0).play(); this.full.set(name, full);
       if ((LOCOMOTION as readonly string[]).includes(name)) {
         for (const [map, upper] of [[this.lower, false], [this.upper, true]] as const) {
-          const action = mixer.clipAction(subclip(clip, upper)); action.setEffectiveWeight(0).play(); map.set(name, action);
+          const action = mixer.clipAction(subclip(clip, upper, roles.upperBone)); action.setEffectiveWeight(0).play(); map.set(name, action);
         }
       }
-      if (UPPER_BODY.has(name)) {
-        const action = mixer.clipAction(subclip(clip, true)); action.setEffectiveWeight(0).play(); this.shotUpper.set(name, action);
+      if (this.upperBody.has(name)) {
+        const action = mixer.clipAction(subclip(clip, true, roles.upperBone)); action.setEffectiveWeight(0).play(); this.shotUpper.set(name, action);
       }
     }
     // Locomotion and the idle variant keep their own time; one-shots are re-timed on play.
     for (const action of [...this.lower.values(), ...this.upper.values()]) action.setEffectiveTimeScale(0);
     this.walkSpeed = gaitSpeed(gait.walk);
     this.runSpeed = this.full.has('run') ? Math.max(gaitSpeed(gait.run), this.walkSpeed * 1.6) : this.walkSpeed;
+  }
+
+  /** Starts idle and gait at an offset so a crowd does not move in step. */
+  desync(seconds: number): void {
+    this.phase = ((seconds % 1) + 1) % 1;
+    for (const map of [this.lower, this.upper]) {
+      const idle = map.get('idle'); if (idle) idle.time = seconds % idle.getClip().duration;
+    }
   }
 
   has(name: string): boolean { return this.full.has(name); }
@@ -86,12 +109,12 @@ export class HeroAnimator {
   /** Plays a one-shot. `hold` keeps its last pose until another action plays. */
   play(name: string, options: { hold?: boolean } = {}): boolean {
     if (!this.full.has(name)) return false;
-    const upper = UPPER_BODY.has(name) && this.speed > .2 && this.shotUpper.has(name);
+    const upper = this.upperBody.has(name) && this.speed > .2 && this.shotUpper.has(name);
     const action = upper ? this.shotUpper.get(name)! : this.full.get(name)!;
     if (this.shot && this.shot.action !== action) this.shot.action.setEffectiveWeight(0);
     action.reset().setEffectiveTimeScale(1).setEffectiveWeight(0); action.clampWhenFinished = true;
     action.setLoop(LoopOnce, 1); action.play();
-    this.shot = { name, action, upper, age: 0, hold: !!options.hold || name === 'knockdown' };
+    this.shot = { name, action, upper, age: 0, hold: !!options.hold || this.held.has(name) };
     this.endVariant();
     return true;
   }
@@ -101,7 +124,7 @@ export class HeroAnimator {
 
   /** Restores a saved state after a model swap. */
   restore(name: string, time: number): void {
-    if (FULL_BODY.has(name) || UPPER_BODY.has(name)) { if (this.play(name)) { this.shot!.age = time; this.shot!.action.time = time; } }
+    if (this.fullBody.has(name) || this.upperBody.has(name)) { if (this.play(name)) { this.shot!.age = time; this.shot!.action.time = time; } }
   }
 
   get time(): number { return this.shot?.action.time ?? this.phase; }

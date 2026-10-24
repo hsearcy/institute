@@ -28,14 +28,16 @@ import { phoenixFeatherMaterial, stormWispMaterial } from './world/materials';
 import { enemyRoster } from './world/enemyRoster';
 import { EnemyAnimator } from './world/EnemyAnimator';
 import { HeldEquipment, tripoHeroEquipment } from './world/HeldEquipment';
-import { HeroAnimator } from './world/heroAnimator';
+import { HeroAnimator, type ActorClipRoles } from './world/heroAnimator';
+import { FloorLoot, type LootPickup } from './world/floorLoot';
+import { ENGAGE_RADIUS, heroClickRoute, heroWalkable, roomEntry, slideStep, stagedEnemyPoint } from './world/exploration';
 import { TRIPO_HERO_MODEL, createTripoHeroInstance, tintTripoHero, measureTripoWalkCycle, HeroAssetLoadError } from './world/tripoHeroRuntime';
 import { createCleaveStrike, cleaveEdgeMaterial, steelBladeWakeMaterial, CLEAVE_RELEASE, CLEAVE_SPEED } from './world/cleave';
 import { createChainSequence, chainLightningGeometry, chainLightningMaterial, createChainCharge, CHAIN_BOLT_LIFETIME } from './world/chain';
 import { RoomCutaway } from './world/RoomCutaway';
 import { ITEM_MODELS } from './itemModels';
 import { createHitReaction, sampleHitReaction, type HitReaction, type CombatHit } from './world/hitReactions';
-import { advanceHeroTravel, heroDoorwayRoute, setPlanarHeroHeading, settleHeroTravel, type HeroWalkCycle } from './world/heroLocomotion';
+import { advanceHeroTravel, setPlanarHeroHeading, settleHeroTravel, type HeroWalkCycle } from './world/heroLocomotion';
 import { cloneErosionProgramMaterial, createElectricDissolve, createSkinnedDissolve } from './world/electricDissolve';
 import { createVaultScenery } from './world/scenery';
 import { brokenGateWallCrown, gateBreach, roomHasTomb } from './world/gateComposition';
@@ -47,7 +49,16 @@ import { stoneMaterial, floorRelief, flameMaterial, fireSheetMaterial, firePlume
 // Shared visual size; weapons inherit the hero scale through their sockets.
 const ACTOR_SCALE = 1.25;
 
-type Enemy = { id: string; hp: number; maxHp: number; root: THREE.Group; visual: THREE.Object3D; origin: THREE.Vector3; phase: number; brute: boolean; dead: boolean; modelId: string; height: number; deathAt: number; animator: EnemyAnimator };
+type Enemy = { id: string; hp: number; maxHp: number; root: THREE.Group; visual: THREE.Object3D; origin: THREE.Vector3; phase: number; brute: boolean; dead: boolean; modelId: string; height: number; deathAt: number; animator: EnemyAnimator;
+  /** Where the body stands now: staged at the back of the room until the hero engages, then at `origin`. */
+  at: THREE.Vector3; speed: number; clips?: HeroAnimator };
+/** Retargeted Tripo clips on the authored enemy rig (scripts/retarget-enemy-motions.py). */
+const ENEMY_CLIP_ROLES: ActorClipRoles = {
+  upperBone: /^(Spine|Chest|Head|UpperArm|Forearm|Hand|Weapon|Shield)/,
+  fullBody: ['hit', 'hit-side', 'death', 'death-fall'], upperBody: ['attack'], held: ['death', 'death-fall'],
+};
+/** Combat runs in slow motion while a problem waits; spells play at full speed. */
+const COMBAT_TIME_SCALE = .12;
 type Fragment = { position: THREE.Vector3; velocity: THREE.Vector3; rotation: THREE.Vector3; spin: THREE.Vector3; scale: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; hot: boolean; bounced: boolean };
 type Particle = { position: THREE.Vector3; velocity: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; size: number };
 type AttackOptions = { spellShape?: import('@institute/shared').RpgSpellShape; combat?: RpgCombatResult; echo?: boolean; wide?: boolean; burning?: boolean; shards?: boolean; chains?: boolean; pierce?: boolean; orbit?: boolean; summon?: boolean; itemId?: string; kills?: number; drop?: { name: string; rarity: string }; xp?: number };
@@ -126,8 +137,6 @@ export class DungeonWorld {
   private encounter = 0;
   private regionId = 'sunken-vault';
   private equipment = '';
-  private lootPosition: THREE.Vector3 | null = null;
-  private lootExpiresAt = 0;
   private disposed = false;
   private paused = false;
   private combatSafeTop = 0;
@@ -141,6 +150,24 @@ export class DungeonWorld {
   private heroTravelSpeed = 0;
   private heroWalkCycle?: HeroWalkCycle;
   private heroTravelWaypoints: THREE.Vector3[] = [];
+  private readonly enemyClipSets = new Map<string, THREE.AnimationClip[]>();
+  private readonly enemyGaits = new Map<string, { walk?: HeroWalkCycle; run?: HeroWalkCycle }>();
+  /** Free movement: the hero explores until a horde is near, then combat begins. */
+  private engaged = false;
+  private engageReady = false;
+  private engageStartedAt = 0;
+  private engageWaiters: (() => void)[] = [];
+  private exploreRoute: THREE.Vector3[] = [];
+  private readonly exploreKeys = new Set<string>();
+  private pointerSteering = false;
+  private readonly moveMarker: THREE.Mesh;
+  private readonly floorLoot: FloorLoot;
+  /** Floor chevrons toward the next horde while it is out of reach. */
+  private readonly guide = new THREE.Group();
+  /** A relic or mote reached the hero (presentation only). */
+  onLootPickup?: (pickup: LootPickup) => void;
+  private timeScale = 1;
+  private readonly inputAbort = new AbortController();
   private readonly summoned: { root: THREE.Group; age: number; duration: number; update: (t: number) => void }[] = [];
   private shake = 0;
   private attackResolve?: () => void;
@@ -226,7 +253,101 @@ export class DungeonWorld {
     this.bloom = new UnrealBloomPass(new THREE.Vector2(800, 500), .36, .5, 1.25);
     this.bloom.enabled = !this.softwareRenderer;
     this.composer.addPass(this.bloom); this.composer.addPass(new OutputPass());
+    this.moveMarker = new THREE.Mesh(new THREE.RingGeometry(.28, .36, 40), new THREE.MeshBasicMaterial({ color: 0xe9c983, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    this.moveMarker.rotation.x = -Math.PI / 2; this.moveMarker.position.y = .05; this.scene.add(this.moveMarker);
+    this.floorLoot = new FloorLoot(this.glowMap); this.scene.add(this.floorLoot.group);
+    const chevron = new THREE.Shape([new THREE.Vector2(-.34, -.12), new THREE.Vector2(0, .2), new THREE.Vector2(.34, -.12), new THREE.Vector2(.34, -.26), new THREE.Vector2(0, .06), new THREE.Vector2(-.34, -.26)]);
+    const chevronGeometry = new THREE.ShapeGeometry(chevron);
+    for (let i = 0; i < 3; i++) {
+      const mark = new THREE.Mesh(chevronGeometry, new THREE.MeshBasicMaterial({ color: 0xf0c672, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+      // Lie flat; the shape's +Y (its tip) becomes the group's +Z travel direction.
+      mark.rotation.x = Math.PI / 2; mark.position.z = 1.35 + i * .55; this.guide.add(mark);
+    }
+    this.guide.visible = false; this.scene.add(this.guide);
+    this.installExploreInput();
     this.buildDungeon(); this.installScenery(); this.setEncounter(0); this.resize();
+  }
+
+  /** True while the hero may walk freely: no horde engaged, no spell, no panel. */
+  get exploring(): boolean { return !this.engaged && !this.attacking && !this.paused; }
+
+  private installExploreInput(): void {
+    const signal = this.inputAbort.signal, ray = new THREE.Raycaster(), floor = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const floorPoint = (event: PointerEvent) => {
+      const bounds = this.canvas.getBoundingClientRect();
+      ray.setFromCamera(new THREE.Vector2((event.clientX - bounds.left) / bounds.width * 2 - 1, -((event.clientY - bounds.top) / bounds.height) * 2 + 1), this.camera);
+      return ray.ray.intersectPlane(floor, new THREE.Vector3()) ?? undefined;
+    };
+    const steer = (event: PointerEvent, marker: boolean) => {
+      const point = floorPoint(event); if (!point) return;
+      this.walkTo(point.x, point.z);
+      if (marker) { this.moveMarker.position.set(point.x, .05, point.z); this.moveMarker.userData.shownAt = this.elapsed; }
+    };
+    this.canvas.addEventListener('pointerdown', event => {
+      if (!this.exploring || (event.pointerType === 'mouse' && event.button !== 0)) return;
+      this.pointerSteering = true; this.canvas.setPointerCapture(event.pointerId); steer(event, true);
+    }, { signal });
+    this.canvas.addEventListener('pointermove', event => { if (this.pointerSteering && this.exploring) steer(event, false); }, { signal });
+    const release = () => { this.pointerSteering = false; };
+    this.canvas.addEventListener('pointerup', release, { signal });
+    this.canvas.addEventListener('pointercancel', release, { signal });
+    const ARROWS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+    window.addEventListener('keydown', event => {
+      if (!ARROWS.includes(event.key) || event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
+      if (!this.exploring) return;
+      event.preventDefault(); this.exploreKeys.add(event.key); this.exploreRoute.length = 0;
+    }, { signal });
+    window.addEventListener('keyup', event => { this.exploreKeys.delete(event.key); }, { signal });
+    window.addEventListener('blur', () => { this.exploreKeys.clear(); this.pointerSteering = false; }, { signal });
+  }
+
+  private updateGuide(delta: number): void {
+    const living = this.enemies.filter(enemy => !enemy.dead);
+    const nearest = living.reduce<Enemy | undefined>((best, enemy) => !best || enemy.at.distanceToSquared(this.hero.position) < best.at.distanceToSquared(this.hero.position) ? enemy : best, undefined);
+    const far = nearest ? nearest.at.distanceTo(this.hero.position) > ENGAGE_RADIUS + 2.4 : false;
+    const target = this.exploring && nearest && far ? heroClickRoute({ x: this.hero.position.x, z: this.hero.position.z }, { x: nearest.at.x, z: nearest.at.z }, this.encounter, this.regionId)[0] : undefined;
+    const weight = this.guide.userData.weight = THREE.MathUtils.damp(this.guide.userData.weight ?? 0, target ? 1 : 0, 5, delta);
+    this.guide.visible = weight > .01;
+    if (!this.guide.visible) return;
+    if (target) this.guide.rotation.y = Math.atan2(target.x - this.hero.position.x, target.z - this.hero.position.z);
+    this.guide.position.copy(this.hero.position).setY(.05);
+    this.guide.children.forEach((mark, i) => {
+      const wave = (Math.sin(this.elapsed * 4.2 - i * 1.1) + 1) / 2;
+      ((mark as THREE.Mesh).material as THREE.MeshBasicMaterial).opacity = weight * (.22 + wave * .55);
+    });
+  }
+
+  /** Free-movement order, as from a click on the floor. Ignored during combat. */
+  walkTo(x: number, z: number): void {
+    if (!this.exploring) return;
+    this.exploreRoute = heroClickRoute({ x: this.hero.position.x, z: this.hero.position.z }, { x, z }, this.encounter, this.regionId)
+      .map(point => new THREE.Vector3(point.x, 0, point.z));
+  }
+
+  /** Resolves when the hero has engaged the current horde and combat may show a problem. */
+  waitForEngage(): Promise<void> {
+    if (this.engageReady || !this.enemies.some(enemy => !enemy.dead)) return Promise.resolve();
+    return new Promise(resolve => this.engageWaiters.push(resolve));
+  }
+
+  /** The hero stands at the combat mark with the horde in formation. */
+  get combatReady(): boolean { return this.engageReady || !this.enemies.some(enemy => !enemy.dead); }
+
+  /** Starts combat with the current horde now, as when the hero walks up to it. */
+  engage(): void {
+    if (this.engaged) return;
+    this.engaged = true; this.engageReady = false; this.engageStartedAt = this.elapsed;
+    this.exploreRoute.length = 0; this.exploreKeys.clear(); this.pointerSteering = false;
+    // Take the combat mark: spells and their framing assume it.
+    this.heroTravelWaypoints = heroClickRoute({ x: this.hero.position.x, z: this.hero.position.z }, { x: this.destination.x, z: this.destination.z }, this.encounter, this.regionId)
+      .map(point => new THREE.Vector3(point.x, 0, point.z));
+  }
+
+  private finishEngage(): void {
+    if (this.engageReady) return;
+    this.engageReady = true;
+    const waiters = this.engageWaiters; this.engageWaiters = [];
+    waiters.forEach(resolve => resolve());
   }
 
   async load(): Promise<void> {
@@ -237,6 +358,7 @@ export class DungeonWorld {
         const gltf = await loader.loadAsync(`/assets/rpg/${name}.glb`);
         if (this.disposed) return;
         if (name === TRIPO_HERO_MODEL) this.heroClipSets.set(name, gltf.animations);
+        else if (gltf.animations.length && ['skeleton', 'revenant', 'guardian', 'vault-guardian-boss'].includes(name)) this.enemyClipSets.set(name, gltf.animations);
         gltf.scene.traverse(object => {
           if (object instanceof THREE.Mesh) {
             object.castShadow = true; object.receiveShadow = name !== TRIPO_HERO_MODEL && !name.startsWith('items/') && !['skeleton', 'revenant', 'wraith', 'guardian', 'vault-guardian-boss', 'imp'].includes(name);
@@ -289,7 +411,7 @@ export class DungeonWorld {
     this.enemies.forEach(enemy => {
       enemy.height = this.enemyHeight(enemy.modelId, enemy.height / ACTOR_SCALE) * ACTOR_SCALE;
       const visual = this.model(enemy.modelId, enemy.height) ?? (enemy.modelId === 'revenant' ? this.model('skeleton', enemy.height) : undefined);
-      if (visual) { enemy.root.remove(enemy.visual); this.releaseProcedural(enemy.visual); enemy.visual = visual; enemy.root.add(visual); enemy.animator = new EnemyAnimator(visual, {kind: enemy.modelId, phase: enemy.phase}); }
+      if (visual) { enemy.root.remove(enemy.visual); this.releaseProcedural(enemy.visual); enemy.visual = visual; enemy.root.add(visual); enemy.animator = new EnemyAnimator(visual, {kind: enemy.modelId, phase: enemy.phase}); enemy.clips = this.enemyClipAnimator(visual, enemy.modelId, enemy.height, enemy.phase); }
     });
     this.batchEnemies();
     this.addModelProps();
@@ -459,6 +581,23 @@ export class DungeonWorld {
       const actor = new THREE.Group(); actor.add(clone); return actor;
     }
     return clone;
+  }
+
+  /** Clip-driven animation for an enemy model that carries retargeted clips. */
+  private enemyClipAnimator(visual: THREE.Object3D, modelId: string, height: number, phase: number): HeroAnimator | undefined {
+    if (visual.userData.procedural) return undefined;
+    const clips = this.enemyClipSets.get(modelId) ?? (modelId === 'revenant' && !this.models.has('revenant') ? this.enemyClipSets.get('skeleton') : undefined);
+    if (!clips?.length) return undefined;
+    const key = `${modelId}:${height.toFixed(2)}`;
+    let gait = this.enemyGaits.get(key);
+    if (!gait) {
+      const clip = (name: string) => clips.find(clip => clip.name === name);
+      gait = { walk: measureTripoWalkCycle(visual, clip('walk')), run: measureTripoWalkCycle(visual, clip('run')) };
+      this.enemyGaits.set(key, gait);
+    }
+    const animator = new HeroAnimator(new THREE.AnimationMixer(visual), clips, gait, ENEMY_CLIP_ROLES);
+    animator.desync(phase * 3.1); animator.update(0, 0);
+    return animator;
   }
 
   private mesh(geometry: THREE.BufferGeometry, material: THREE.Material, x = 0, y = 0, z = 0): THREE.Mesh {
@@ -870,9 +1009,17 @@ export class DungeonWorld {
     this.enemies.length = 0; this.enemyGroup.clear();
     const layout = getRoomLayout(this.encounter, this.regionId);
     this.destination.set(layout.heroX, 0, -this.encounter * 20 + layout.heroZ);
-    this.heroTravelWaypoints = heroDoorwayRoute(was, this.encounter, this.regionId).map(point => new THREE.Vector3(point.x, 0, point.z));
-    if (!this.frame || previousRegion !== this.regionId || Math.abs(was - this.encounter) > 1) { this.hero.position.copy(this.destination); this.cameraTarget.copy(this.destination); }
-    if (this.hero.position.distanceToSquared(this.destination) < .025 ** 2) this.heroTravelWaypoints.length = 0;
+    // A new room starts in exploration: the hero walks in on his own.
+    const newRoom = !this.frame || previousRegion !== this.regionId || was !== this.encounter;
+    if (newRoom) {
+      this.engaged = this.engageReady = false; this.exploreRoute.length = 0; this.heroTravelWaypoints.length = 0;
+      this.floorLoot.forgetFarFrom(this.hero.position, 34);
+    }
+    if (!this.frame || previousRegion !== this.regionId || Math.abs(was - this.encounter) > 1) {
+      this.floorLoot.clear();
+      const entry = roomEntry(this.encounter, this.regionId);
+      this.hero.position.set(entry.x, 0, entry.z); this.cameraTarget.copy(this.hero.position);
+    }
     // A hard population limit, independent of spell power and old receipt totals.
     const count = Math.max(1, Math.min(10, Math.trunc(health?.length ?? enemyCount ?? 10)));
     const formation = enemyPositions(this.encounter, count, this.regionId), roster = enemyRoster(this.encounter, count);
@@ -881,9 +1028,13 @@ export class DungeonWorld {
       const height = this.enemyHeight(modelId, roster[i].height) * ACTOR_SCALE;
       const root = new THREE.Group();
       const origin = new THREE.Vector3(formation[i].x, 0, -this.encounter * 20 + formation[i].z);
-      root.position.copy(origin); root.rotation.y = Math.atan2(this.destination.x - origin.x, this.destination.z - origin.z);
+      const staged = stagedEnemyPoint(this.encounter, formation[i], this.regionId);
+      const at = this.engaged ? origin.clone() : new THREE.Vector3(staged.x, 0, -this.encounter * 20 + staged.z);
+      root.position.copy(at); root.rotation.y = Math.atan2(this.destination.x - origin.x, this.destination.z - origin.z);
       const visual = this.makeEnemy(brute, boss, modelId, height); root.add(visual); this.enemyGroup.add(root);
-      this.enemies.push({ id: `enemy-${i}`, hp: 100, maxHp: 100, root, visual, origin, phase: i * 1.77, brute, dead: false, modelId, height, deathAt: 0, animator: new EnemyAnimator(visual, { kind: modelId, phase: i * 1.77 }) });
+      const enemy: Enemy = { id: `enemy-${i}`, hp: 100, maxHp: 100, root, visual, origin, at, speed: 0, phase: i * 1.77, brute, dead: false, modelId, height, deathAt: 0, animator: new EnemyAnimator(visual, { kind: modelId, phase: i * 1.77 }) };
+      enemy.clips = this.enemyClipAnimator(visual, modelId, height, enemy.phase);
+      this.enemies.push(enemy);
     }
     if (health) this.setCombatState(health);
     const ember = this.regionId.includes('ember') || this.regionId.includes('forge');
@@ -1193,6 +1344,10 @@ export class DungeonWorld {
     const targets = options.combat ? living.filter(enemy => hitById.has(enemy.id))
       : living.slice(0, Math.max(0, options.kills ?? living.length));
     if (!targets.length) return;
+    if (!this.engageReady) {
+      // A restored answer resolves at once: the horde is already in formation.
+      this.engaged = true; this.enemies.forEach(enemy => enemy.at.copy(enemy.origin)); this.finishEngage();
+    }
     if ((this.heroUsesAuthoredMotion || this.heroTravelWaypoints.length > 0) && settleHeroTravel(this.hero.position, this.camera.position, this.cameraTarget, this.destination)) {
       this.heroTravelSpeed = 0; this.heroVisual.position.set(0, 0, 0);
       setPlanarHeroHeading(this.heroVisual.rotation, Math.PI * .9);
@@ -2021,8 +2176,10 @@ export class DungeonWorld {
     enemy.root.userData.hitReaction = reaction;
     enemy.hp = hit ? hit.hpAfter : 0;
     enemy.dead = reaction.lethal;
+    enemy.clips?.play(enemy.dead ? (Math.sin(enemy.phase * 7.3) > 0 ? 'death-fall' : 'death') : reaction.side > 0 ? 'hit-side' : 'hit');
     if (enemy.dead) {
       enemy.deathAt = this.elapsed;
+      this.schedule(.6, () => this.floorLoot.dropMotes(enemy.root.position.clone(), enemy.brute ? 9 : 4, this.elapsed));
       this.attackDuration = Math.max(this.attackDuration, this.attackAge + reaction.duration + .08);
     }
     this.renderer.shadowMap.needsUpdate = true;
@@ -2056,15 +2213,12 @@ export class DungeonWorld {
   private spawnLoot(origin: THREE.Vector3, drop: { name: string; rarity: string }): void {
     const colors: Record<string, number> = { common: 0xb8c2c5, uncommon: 0x79dcb1, rare: 0x6aa9ff, epic: 0xc38aff, legendary: 0xffba57 };
     const color = colors[drop.rarity] ?? colors.rare;
-    const position = origin.clone().add(new THREE.Vector3(2.1, .1, -.9)); this.lootPosition = position.clone(); this.lootExpiresAt = this.elapsed + 3.2;
+    const position = origin.clone().add(new THREE.Vector3(2.1, .1, -.9));
+    // The relic stays on the floor until the hero walks over it.
+    const at = slideStep({ x: origin.x, z: origin.z }, position.x - origin.x, position.z - origin.z, heroWalkable(this.encounter, this.regionId));
+    position.set(at.x, .1, at.z);
     this.emit(position, color, 35, 1.7, 1.5);
-    const geometry = new THREE.CylinderGeometry(.014, .09, 4.1, 8, 1, true);
-    const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .7, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false }));
-    mesh.position.copy(position); mesh.position.y += 2.05;
-    this.effectsGroup.add(mesh); this.effects.push({ mesh, startedAt: this.elapsed, age: 0, duration: 3.2, kind: 'beam', radius: 1 });
-    const glint = new THREE.Mesh(new THREE.OctahedronGeometry(.18), new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: .5, metalness: .6, roughness: .25 }));
-    glint.position.copy(position).y = .27;
-    this.effect(glint, 3.2, t => { glint.rotation.y = t * 6; glint.position.y = .27 + Math.sin(t * 8) * .06; });
+    this.floorLoot.dropRelic(position, color, this.elapsed);
   }
 
   private emit(origin: THREE.Vector3, color: number, count: number, speed: number, life: number): void {
@@ -2180,24 +2334,46 @@ export class DungeonWorld {
     }
     this.elapsed = frameTime;
     while (this.heroTravelWaypoints.length && this.hero.position.distanceToSquared(this.heroTravelWaypoints[0]!) <= .025 ** 2) this.heroTravelWaypoints.shift();
-    const travelTarget = this.heroTravelWaypoints[0] ?? this.destination;
+    while (this.exploreRoute.length && this.hero.position.distanceToSquared(this.exploreRoute[0]!) <= .06 ** 2) this.exploreRoute.shift();
+    const exploring = this.exploring;
+    let travelTarget = this.heroTravelWaypoints[0] ?? this.destination;
+    if (!this.engaged) {
+      // Explore: go where the player points; otherwise stay put.
+      const keys = this.exploreKeys, steer = new THREE.Vector3(
+        (keys.has('ArrowRight') ? 1 : 0) - (keys.has('ArrowLeft') ? 1 : 0), 0, (keys.has('ArrowDown') ? 1 : 0) - (keys.has('ArrowUp') ? 1 : 0));
+      if (exploring && steer.lengthSq() > 0) {
+        // Screen directions on the isometric camera (offset 17, 25, 20).
+        const right = new THREE.Vector3(20, 0, -17).normalize(), down = new THREE.Vector3(17, 0, 20).normalize();
+        travelTarget = this.hero.position.clone().addScaledVector(right.multiplyScalar(steer.x).add(down.multiplyScalar(steer.z)).normalize(), 3);
+      } else travelTarget = exploring ? this.exploreRoute[0] ?? this.hero.position : this.hero.position;
+    }
     const distance = this.hero.position.distanceTo(travelTarget);
     const walking = distance > .025 && !this.attacking;
     const travel = this.heroUsesAuthoredMotion && walking ? advanceHeroTravel(distance, this.heroTravelSpeed, delta, this.heroWalkCycle, this.heroAnimator?.runSpeed) : undefined;
     this.heroTravelSpeed = travel?.speed ?? 0;
-    this.heroAnimator?.update(delta, travel && delta > 0 ? travel.distance / delta : 0);
+    const heroFrom = this.hero.position.clone();
     const shadowInterval = distance > .08 || this.attacking ? (this.softwareRenderer ? .2 : .065) : .65;
     if (this.elapsed - this.lastShadowUpdate > shadowInterval) {
       this.renderer.shadowMap.needsUpdate = true; this.lastShadowUpdate = this.elapsed;
     }
     if (walking) {
-      const heading = Math.atan2(travelTarget.x - this.hero.position.x, travelTarget.z - this.hero.position.z);
-      this.hero.position.lerp(travelTarget, travel ? travel.distance / distance : 1 - Math.exp(-delta * 2.1));
+      if (this.engaged) this.hero.position.lerp(travelTarget, travel ? travel.distance / distance : 1 - Math.exp(-delta * 2.1));
+      else {
+        const step = travel ? travel.distance : distance * (1 - Math.exp(-delta * 2.1));
+        const next = slideStep({ x: this.hero.position.x, z: this.hero.position.z }, (travelTarget.x - this.hero.position.x) / distance * step, (travelTarget.z - this.hero.position.z) / distance * step, heroWalkable(this.encounter, this.regionId));
+        if (next.x === this.hero.position.x && next.z === this.hero.position.z) { this.exploreRoute.length = 0; this.heroTravelSpeed = 0; }
+        this.hero.position.set(next.x, 0, next.z);
+      }
+    }
+    // Animate the distance actually covered: a hero pressed against a wall stands.
+    this.heroAnimator?.update(delta, travel && delta > 0 ? Math.min(travel.distance, this.hero.position.distanceTo(heroFrom)) / delta : 0);
+    if (walking) {
       this.heroVisual.position.y = this.heroUsesAuthoredMotion ? 0 : Math.abs(Math.sin(this.elapsed * 11)) * .09;
-      setPlanarHeroHeading(this.heroVisual.rotation, heading);
+      setPlanarHeroHeading(this.heroVisual.rotation, Math.atan2(travelTarget.x - heroFrom.x, travelTarget.z - heroFrom.z));
     } else {
       this.heroVisual.position.y = this.heroUsesAuthoredMotion ? 0 : Math.sin(this.elapsed * 2.4) * .018;
       const heading = this.attacking && this.attackHeading !== undefined ? this.attackHeading
+        : !this.engaged ? this.heroVisual.rotation.y
         : THREE.MathUtils.lerp(this.heroVisual.rotation.y, Math.PI * .9, 1 - Math.exp(-delta * 4));
       setPlanarHeroHeading(this.heroVisual.rotation, heading);
     }
@@ -2214,10 +2390,43 @@ export class DungeonWorld {
       if (this.attackAge >= this.attackDuration) { this.attacking = false; this.heroMotion = undefined; this.heroVisual.position.x = this.heroVisual.position.z = 0; this.attackResolve?.(); this.attackResolve = undefined; }
     }
     this.heldEquipment?.update(this.elapsed);
+    for (const pickup of this.floorLoot.update(delta, this.elapsed, this.hero.position, this.exploring, heroWalkable(this.encounter, this.regionId))) {
+      this.emit(pickup.at, pickup.color, pickup.kind === 'relic' ? 46 : 5, pickup.kind === 'relic' ? 1.6 : .5, pickup.kind === 'relic' ? 1.3 : .5);
+      if (pickup.kind === 'relic') { this.burstLight.position.copy(pickup.at).setY(2.2); this.burstLight.color.setHex(pickup.color); this.burstLight.intensity = 60; }
+      this.onLootPickup?.(pickup);
+    }
+    this.updateGuide(delta);
+    const markerAge = this.elapsed - (this.moveMarker.userData.shownAt ?? -9);
+    (this.moveMarker.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 1 - markerAge / .55) * .85;
+    this.moveMarker.scale.setScalar(1 + markerAge * 1.2);
     this.rune.rotation.z = this.elapsed * .14;
     this.rune.scale.setScalar(ACTOR_SCALE * (1 + Math.sin(this.elapsed * 2) * .04));
+    const living = this.enemies.filter(enemy => !enemy.dead);
+    if (!this.engaged && living.length && !this.paused && living.some(enemy => enemy.at.distanceTo(this.hero.position) < ENGAGE_RADIUS * (enemy.brute ? 1.25 : 1))) this.engage();
+    if (this.engaged && !this.engageReady) {
+      const settled = !this.heroTravelWaypoints.length && this.hero.position.distanceToSquared(this.destination) < .05 ** 2
+        && living.every(enemy => enemy.at.distanceToSquared(enemy.origin) < .02 ** 2);
+      if (settled || this.elapsed - this.engageStartedAt > 3) this.finishEngage();
+    }
+    // The world slows while a problem waits and runs at full speed for spells.
+    const timeTarget = this.engageReady && living.length && !this.attacking ? COMBAT_TIME_SCALE : 1;
+    this.timeScale += (timeTarget - this.timeScale) * (1 - Math.exp(-delta * (timeTarget < this.timeScale ? 4 : 14)));
+    const enemyDelta = delta * this.timeScale;
     for (const enemy of this.enemies) {
       if (enemy.dead && !enemy.root.visible) continue;
+      if (!enemy.dead && this.engaged) {
+        // The horde closes in on its combat formation at a stride-matched run.
+        const to = enemy.origin.clone().sub(enemy.at).setY(0), gap = to.length();
+        const step = Math.min(gap, (enemy.clips?.runSpeed ?? 3.2) * enemyDelta);
+        if (gap > 1e-4) enemy.at.addScaledVector(to, step / gap);
+        enemy.speed = enemyDelta > 0 && gap > 1e-4 ? step / enemyDelta : 0;
+      } else enemy.speed = 0;
+      if (enemy.clips && !enemy.dead) {
+        const toward = enemy.speed > .1 ? enemy.origin.clone().sub(enemy.at) : this.hero.position.clone().sub(enemy.at);
+        const heading = Math.atan2(toward.x, toward.z), turn = Math.atan2(Math.sin(heading - enemy.root.rotation.y), Math.cos(heading - enemy.root.rotation.y));
+        enemy.root.rotation.y += turn * (1 - Math.exp(-enemyDelta * 7));
+      }
+      const grounded = !!enemy.clips || enemy.animator.ownsGroundedPose;
       const reaction = enemy.root.userData.hitReaction as HitReaction | undefined;
       const response = reaction ? sampleHitReaction(reaction, this.elapsed) : undefined;
       const groundedCollapse = Boolean(reaction);
@@ -2227,18 +2436,19 @@ export class DungeonWorld {
         const away = reaction ? new THREE.Vector3(reaction.dx, 0, reaction.dz) : enemy.origin.clone().sub(this.hero.position).setY(0).normalize();
         if (reaction) enemy.root.position.set(reaction.x, 0, reaction.z).addScaledVector(away, response!.displacement);
         else enemy.root.position.copy(enemy.origin).addScaledVector(away, (1 - Math.pow(1 - t, 3)) * (enemy.brute ? 1 : 1.7));
-        enemy.root.position.y = groundedCollapse ? 0 : Math.sin(t * Math.PI) * (enemy.brute ? .45 : .85);
-        enemy.root.rotation.x = groundedCollapse ? 0 : -t * (enemy.animator.articulated ? .24 : 1.35);
-        enemy.root.rotation.z = groundedCollapse ? 0 : Math.sin(enemy.phase) * t * (enemy.animator.articulated ? .13 : .7);
+        // A death clip already falls; only the procedural bodies need a tumble.
+        enemy.root.position.y = groundedCollapse || enemy.clips ? 0 : Math.sin(t * Math.PI) * (enemy.brute ? .45 : .85);
+        enemy.root.rotation.x = groundedCollapse || enemy.clips ? 0 : -t * (enemy.animator.articulated ? .24 : 1.35);
+        enemy.root.rotation.z = groundedCollapse || enemy.clips ? 0 : Math.sin(enemy.phase) * t * (enemy.animator.articulated ? .13 : .7);
         if (groundedCollapse) { enemy.visual.position.y *= Math.exp(-delta * 30); enemy.visual.rotation.z *= Math.exp(-delta * 24); }
         enemy.root.scale.setScalar(groundedCollapse ? 1 : Math.max(.005, 1 - Math.max(0, t - .58) / .42));
         enemy.root.userData.electricDissolve = groundedCollapse ? response?.erosion ?? 0 : 0;
         if (t === 1) enemy.root.visible = false;
       } else {
         const approach = this.hero.position.clone().sub(enemy.origin).setY(0).normalize();
-        const feint = (enemy.animator.ownsGroundedPose ? 0 : 1) * (.5 + Math.sin(this.elapsed * .8 + enemy.phase) * .5) * (enemy.brute ? .55 : enemy.modelId === 'revenant' ? .62 : .9);
-        enemy.root.position.copy(enemy.origin);
-        if (!enemy.animator.ownsGroundedPose && enemy.modelId !== 'wraith') enemy.root.position.set(enemy.origin.x + approach.x * feint + Math.sin(this.elapsed * .65 + enemy.phase) * .16, 0, enemy.origin.z + approach.z * feint + Math.cos(this.elapsed * .72 + enemy.phase) * .16);
+        const feint = (grounded ? 0 : 1) * (.5 + Math.sin(this.elapsed * .8 + enemy.phase) * .5) * (enemy.brute ? .55 : enemy.modelId === 'revenant' ? .62 : .9);
+        enemy.root.position.copy(enemy.at);
+        if (!grounded && enemy.modelId !== 'wraith') enemy.root.position.set(enemy.at.x + approach.x * feint + Math.sin(this.elapsed * .65 + enemy.phase) * .16, 0, enemy.at.z + approach.z * feint + Math.cos(this.elapsed * .72 + enemy.phase) * .16);
         if (reaction && response && !response.complete) {
           const impactPosition = new THREE.Vector3(reaction.x + reaction.dx * response.displacement, 0, reaction.z + reaction.dz * response.displacement);
           enemy.root.position.lerp(impactPosition, response.control);
@@ -2247,9 +2457,10 @@ export class DungeonWorld {
         enemy.root.scale.setScalar(1); enemy.root.userData.electricDissolve = 0;
         // Authored foot support already settles the soles through each pose.
         // A second whole-model bounce would lift those planted feet afterward.
-        enemy.visual.position.y = enemy.animator.ownsGroundedPose ? 0 : (enemy.modelId === 'wraith' ? .12 + Math.sin(this.elapsed * .85 + enemy.phase) * .035 : Math.abs(Math.sin(this.elapsed * 4.7 + enemy.phase)) * (enemy.brute || enemy.modelId === 'revenant' ? .035 : .075)) * (1 - (response?.control ?? 0));
-        enemy.visual.rotation.z = enemy.animator.ownsGroundedPose ? 0 : Math.sin(this.elapsed * (enemy.modelId === 'wraith' ? .8 : 1.5) + enemy.phase) * (enemy.modelId === 'wraith' ? .008 : .035) * (1 - (response?.control ?? 0));
+        enemy.visual.position.y = grounded ? 0 : (enemy.modelId === 'wraith' ? .12 + Math.sin(this.elapsed * .85 + enemy.phase) * .035 : Math.abs(Math.sin(this.elapsed * 4.7 + enemy.phase)) * (enemy.brute || enemy.modelId === 'revenant' ? .035 : .075)) * (1 - (response?.control ?? 0));
+        enemy.visual.rotation.z = grounded ? 0 : Math.sin(this.elapsed * (enemy.modelId === 'wraith' ? .8 : 1.5) + enemy.phase) * (enemy.modelId === 'wraith' ? .008 : .035) * (1 - (response?.control ?? 0));
       }
+      if (enemy.clips) { enemy.clips.update(enemyDelta, enemy.speed); continue; }
       enemy.animator.update(this.elapsed, {
         moving: (.35 + Math.abs(Math.cos(this.elapsed * .8 + enemy.phase)) * .4) * (1 - (response?.control ?? 0)),
         threat: (this.paused ? .25 : .8) * (1 - (response?.control ?? 0)),
@@ -2368,8 +2579,8 @@ export class DungeonWorld {
   }
 
   get lootScreenPosition(): { x: number; y: number } | null {
-    if (!this.lootPosition || this.elapsed >= this.lootExpiresAt) return null;
-    const projected = this.lootPosition.clone().add(new THREE.Vector3(0, .65, 0)).project(this.camera);
+    const relic = this.floorLoot.relicPosition; if (!relic) return null;
+    const projected = relic.clone().add(new THREE.Vector3(0, .65, 0)).project(this.camera);
     return { x: (projected.x + 1) * this.width * .5, y: (1 - projected.y) * this.height * .5 };
   }
 
@@ -2391,11 +2602,12 @@ export class DungeonWorld {
   }
 
   get diagnostics(): Record<string, unknown> {
-    return { appearance: this.appearance, heroModelId: this.heroModelId, heroWalkCycle: this.heroWalkCycle, drawWarmup: this.drawWarmup, lastAttack: this.lastAttack, lastSpellId: this.lastAttack?.spellId, lastSpellEffect: this.lastAttack?.effect, heroAnimation: this.heroAnimator?.current ?? 'procedural', heroClips: this.heroAnimator?.clips ?? [], encounter: this.encounter, region: this.regionId, enemies: this.enemies.filter(enemy => !enemy.dead).length, articulatedEnemies: this.enemies.filter(enemy => enemy.animator.articulated).length, enemyRoster: this.enemies.reduce<Record<string, number>>((counts, enemy) => { counts[enemy.modelId] = (counts[enemy.modelId] ?? 0) + 1; return counts; }, {}), attacking: this.attacking, paused: this.paused, modelsLoaded: this.loadedModels, drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, particles: this.particles.length, fragments: this.fragments.length, hero: this.hero.position.toArray(), softwareRenderer: this.softwareRenderer, fps: Math.round(this.framesPerSecond), quality: ['full', 'balanced', 'performance'][this.quality], renderer: this.renderer.getContext().getParameter(this.renderer.getContext().VERSION) };
+    return { appearance: this.appearance, heroModelId: this.heroModelId, heroWalkCycle: this.heroWalkCycle, drawWarmup: this.drawWarmup, lastAttack: this.lastAttack, lastSpellId: this.lastAttack?.spellId, lastSpellEffect: this.lastAttack?.effect, heroAnimation: this.heroAnimator?.current ?? 'procedural', heroClips: this.heroAnimator?.clips ?? [], enemyAnimations: this.enemies.map(enemy => enemy.clips?.current ?? 'procedural'), engaged: this.engaged, combatReady: this.combatReady, timeScale: +this.timeScale.toFixed(3), floorLoot: this.floorLoot.counts, encounter: this.encounter, region: this.regionId, enemies: this.enemies.filter(enemy => !enemy.dead).length, articulatedEnemies: this.enemies.filter(enemy => enemy.animator.articulated).length, enemyRoster: this.enemies.reduce<Record<string, number>>((counts, enemy) => { counts[enemy.modelId] = (counts[enemy.modelId] ?? 0) + 1; return counts; }, {}), attacking: this.attacking, paused: this.paused, modelsLoaded: this.loadedModels, drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, particles: this.particles.length, fragments: this.fragments.length, hero: this.hero.position.toArray(), softwareRenderer: this.softwareRenderer, fps: Math.round(this.framesPerSecond), quality: ['full', 'balanced', 'performance'][this.quality], renderer: this.renderer.getContext().getParameter(this.renderer.getContext().VERSION) };
   }
 
   dispose(): void {
     if (this.disposed) return; this.disposed = true; cancelAnimationFrame(this.frame); this.attackResolve?.(); this.scheduled.length = 0;
+    this.inputAbort.abort(); this.finishEngage(); this.floorLoot.dispose();
     this.roomCutaway.clear();
     for (const effect of this.effects) if (effect.mesh instanceof THREE.InstancedMesh) effect.mesh.dispose();
     this.releaseEnemyInstances();

@@ -27,11 +27,12 @@ export function sampleHitReaction(reaction: HitReaction, now: number) {
   const age = Math.max(0, now - reaction.at);
   const impulse = smooth(age / .045) * (1 - smooth((age - .11) / .25));
   const recovery = smooth((age - .40) / .7);
-  const pressure = reaction.lethal ? smooth(age / .12) : (.55 * smooth(age / .10) + .45 * smooth((age - .22) / .18)) * (1 - recovery);
+  // A killing blow throws the body back with a fast start and a sliding stop.
+  const pressure = reaction.lethal ? 1 - Math.pow(1 - clamp(age / .42), 3) : (.55 * smooth(age / .10) + .45 * smooth((age - .22) / .18)) * (1 - recovery);
   const step = smooth((age - .08) / .20);
   return {
     age, recoil: impulse * reaction.strength,
-    displacement: pressure * reaction.strength * (reaction.element === 'fire' ? .34 : .22),
+    displacement: pressure * reaction.strength * (reaction.lethal ? 1.15 : reaction.element === 'fire' ? .34 : .22),
     // Suppress idle stepping during the catch so planted feet do not jitter.
     control: reaction.lethal ? 1 : 1 - recovery,
     brace: smooth((age - .10) / .23) * (1 - smooth((age - .55) / .55)) * reaction.strength,

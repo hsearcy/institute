@@ -134,4 +134,4 @@ body.rpg-mode { background:#101719; color:#ede8d8; font-family:'DM Sans',system-
 @keyframes rpg-explore-in { from { opacity:0; transform:translateY(10px); } }
 /* Slow motion while a problem waits: the world dims at its edges. */
 #rpg-ui::after { content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:0; transition:opacity .6s ease; background:radial-gradient(ellipse 70% 62% at 50% 46%,transparent 55%,#04121acc 100%); }
-#rpg-ui.rpg-slowmo::after { opacity:1; }
+#rpg-ui.rpg-combat::after { opacity:.7; }

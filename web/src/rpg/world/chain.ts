@@ -4,7 +4,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 export const CHAIN_FIRST_CONTACT = .35;
 export const CHAIN_CONTACT_SPAN = .52;
 export const CHAIN_ECHO_DELAY = .45;
-export const CHAIN_BOLT_LIFETIME = .16;
+export const CHAIN_BOLT_LIFETIME = .22;
 
 /** A single leading flash and decisive decay keep the next jump dominant. */
 export function chainLightningMaterial(charge = false): ShaderMaterial {
@@ -15,13 +15,13 @@ export function chainLightningMaterial(charge = false): ShaderMaterial {
     fragmentShader: `varying vec2 vUv;varying float vStrength;uniform float progress;uniform float opacity;uniform float charge;
       void main(){float d=abs(vUv.y-.5)*2.,aa=max(fwidth(d),.045);
         float core=1.-smoothstep(.11,.21+aa,d);
-        float envelope=exp(-d*d*5.)*.20;
+        float envelope=exp(-d*d*3.2)*.42;
         float front=.68+progress*1.8;
         float impulse=exp(-pow((vUv.x-front)/.2,2.));
         float flash=charge>.5?(.8+.2*pow(sin(progress*29.),2.)):(1.-smoothstep(.2,1.,progress));
         float ends=smoothstep(0.,.012,vUv.x)*(1.-smoothstep(.97,1.,vUv.x));
         float strength=vStrength*(.72+.28*impulse);
-        vec3 color=vec3(1.45,1.7,2.)*core+vec3(.15,.46,1.2)*envelope;
+        vec3 color=vec3(1.6,1.85,2.2)*core+vec3(.2,.5,1.4)*envelope;
         gl_FragColor=vec4(color,clamp((core+envelope)*flash*strength*ends*opacity,0.,1.));}`,
     transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide, forceSinglePass: true, toneMapped: false,
   });

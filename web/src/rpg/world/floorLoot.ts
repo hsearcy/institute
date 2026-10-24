@@ -2,6 +2,8 @@ import * as THREE from 'three';
 
 /** Pickup reach for a mote (magnet) and for a relic (walk over it). */
 const MOTE_MAGNET = 2.6;
+/** Souls stream to the hero on their own after this long, wherever he stands. */
+const MOTE_SEEK_AFTER = .95;
 const ITEM_REACH = 1.05;
 const MOTE_COLOR = 0x8ff3dc;
 
@@ -62,10 +64,14 @@ export class FloorLoot {
       if (elapsed < mote.born) { mote.sprite.visible = false; continue; }
       mote.sprite.visible = true;
       const resting = elapsed - mote.born > .9;
-      if (mote.flight === undefined && resting && mote.at.distanceTo(hero) < MOTE_MAGNET) mote.flight = 0;
+      if (mote.flight === undefined && resting && (mote.at.distanceTo(hero) < MOTE_MAGNET || elapsed - mote.born > MOTE_SEEK_AFTER + (i % 5) * .07)) {
+        mote.flight = 0; mote.velocity.set(0, 3.2, 0);
+      }
       if (mote.flight !== undefined) {
         mote.flight += delta;
-        mote.at.lerp(chest, 1 - Math.exp(-delta * (4 + mote.flight * 18)));
+        // Lift first, then home in faster and faster: a soul drawn to the hero.
+        mote.at.addScaledVector(mote.velocity, delta); mote.velocity.multiplyScalar(Math.exp(-delta * 5));
+        mote.at.lerp(chest, 1 - Math.exp(-delta * (2.5 + mote.flight * mote.flight * 40)));
         if (mote.at.distanceTo(chest) < .25) {
           picked.push({ kind: 'mote', at: mote.at.clone(), color: MOTE_COLOR });
           this.group.remove(mote.sprite); this.motes.splice(i, 1); continue;

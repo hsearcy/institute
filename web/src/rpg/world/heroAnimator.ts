@@ -15,7 +15,7 @@ export type ActorClipRoles = {
 };
 export const HERO_CLIP_ROLES: ActorClipRoles = {
   upperBone: /^(Waist|Spine0\d|Neck|Head|[LR]_(Clavicle|Upperarm|Forearm|Hand))/,
-  fullBody: ['dodge', 'hit', 'hit-side', 'hit-heavy', 'knockdown', 'victory'],
+  fullBody: ['dodge', 'hit', 'hit-side', 'hit-heavy', 'knockdown', 'victory', 'cast-throw', 'cast-raise', 'cast-thrust'],
   upperBody: ['cleave', 'cast'],
   held: ['knockdown'],
 };

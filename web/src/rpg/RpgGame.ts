@@ -125,6 +125,7 @@ export class RpgGame {
     document.body.classList.add('rpg-mode');
     this.world = new DungeonWorld(canvas);
     this.world.onLootPickup = pickup => { if (pickup.kind === 'relic' && !this.muted) dungeonSound.loot(); };
+    this.world.onSound = sound => { if (!this.muted) dungeonSound.combat(sound); };
     this.root.id = 'rpg-ui';
     this.root.innerHTML = `
       <header class="rpg-top"><div class="rpg-location"><span class="rpg-eyebrow">INSTITUTE <b>◆</b> THE SUNKEN VAULT</span><h1 id="rpg-region">The Embercrypt</h1><p id="rpg-room">A new adventure awaits</p></div>
@@ -376,7 +377,7 @@ export class RpgGame {
 
   private showCamp(): void {
     const s = this.state!;
-    this.stopClock(); this.saveSession(); this.playing = false; this.el('rpg-controls').hidden = true; this.root.classList.remove('rpg-slowmo');
+    this.stopClock(); this.saveSession(); this.playing = false; this.el('rpg-controls').hidden = true; this.root.classList.remove('rpg-combat');
     const resume = s.expedition && !s.expedition.cleared;
     if (resume) this.setEncounter();
     this.showDialog('camp', `<div class="rpg-seal">${icon('sword')}</div><p class="rpg-eyebrow">INSTITUTE PRESENTS</p><h2 id="rpg-dialog-title" class="rpg-title">The Sunken<br><em>Vault</em></h2><p class="rpg-camp-story">Ancient halls. Hidden relics.<br>A little magic goes a long way.</p><div class="rpg-camp-stats"><span>LEVEL <b>${s.level}</b></span><span>RELICS <b>${s.inventory.length}</b></span><span>GUARDIANS <b>${s.expeditionsCompleted}</b></span></div>${s.totalKills === 0 ? `<div class="rpg-starter-spells" aria-label="Your starting sword attack">${(['cleave'] as RpgSpellId[]).map(id => `<button data-spell="${id}" aria-pressed="${s.selectedSpellId === id}" class="${s.selectedSpellId === id ? 'selected' : ''}">${spellArt(id)}<span>${RPG_SPELLS.find(spell => spell.id === id)!.name}</span></button>`).join('')}</div>` : ''}${s.goal ? renderPinnedGoal(s, this.campState) : this.spellGoalCard() ? `<button class="rpg-goal-card" data-action="spell-goal">${this.spellGoalCard()}</button>` : ''}<button class="rpg-primary rpg-large" data-action="begin">${resume ? 'Continue adventure' : 'Enter the dungeon'} <span>→</span></button><button class="rpg-text-button" data-action="map">Choose an expedition</button><button class="rpg-text-button" data-action="tutorial">${icon('help')} How to play · Story & tour</button><div class="rpg-camp-menu"><button data-action="quests">${icon('ring')} Quest board</button><button data-action="merchant">◆ Merchant${this.campState ? ` · ${this.campState.gems} gems` : ''}</button><button data-action="forge">${icon('forge')} Blacksmith</button><button data-action="spellbook">${icon('storm')} Spellbook</button><button data-action="skills">${icon('tree')} Skill trees${s.skillPoints ? ` · ${s.skillPoints} new` : ''}</button><button data-action="inventory">${icon('bag')} Equipment</button><button data-action="parent">Parent journal</button></div><p class="rpg-camp-note">Solve to unleash your spells. Take all the time you need.</p>`);
@@ -413,7 +414,7 @@ export class RpgGame {
       this.el('rpg-explore').hidden = true; this.root.classList.remove('rpg-exploring');
       if (this.disposed || this.session !== session) return;
     }
-    this.root.classList.add('rpg-slowmo');
+    this.root.classList.add('rpg-combat');
     if (p.newTopic && p.topicId && !session.demoSeen && !this.demoTopics.has(p.topicId)) {
       // Unlike the legacy convenience helper, a transport failure must not
       // silently skip the child's first worked demonstration.
@@ -468,6 +469,7 @@ export class RpgGame {
     this.stopClock(); this.busy = true;
     this.session.pending = { correct: Number(this.entered) === this.session.problem.answer, assisted: false, aided: !!this.session.helped, solveMs: Math.round(this.session.elapsedMs ?? 0), answerMs: Math.floor(this.session.answerMs ?? 0), wrongCount: this.session.wrongCount, spellId: this.state!.selectedSpellId };
     this.saveSession();
+    if (this.session.pending.correct) this.world.anticipate(this.state!.selectedSpellId);
     await this.runSafely(() => this.finishPending());
   }
   /** Reconcile before sending: legacy attempts/retry rewards are not idempotent. */
@@ -523,7 +525,7 @@ export class RpgGame {
           const before = result.reward.combat.enemiesBefore;
           this.world.setEncounter(session.encounterIndex, this.state!.expedition!.regionId, before.length, before);
         }
-        this.root.classList.remove('rpg-slowmo');
+        this.root.classList.remove('rpg-combat');
         if (!this.muted) dungeonSound.cast(result.reward.spellId);
         await this.world.attack(result.reward.spellId, {
           combat: result.reward.combat, spellShape: result.reward.spellShape,

@@ -30,6 +30,9 @@ import { EnemyAnimator } from './world/EnemyAnimator';
 import { HeldEquipment, tripoHeroEquipment } from './world/HeldEquipment';
 import { HeroAnimator, type ActorClipRoles } from './world/heroAnimator';
 import { FloorLoot, type LootPickup } from './world/floorLoot';
+import { HordeDirector } from './world/hordeDirector';
+import { HeroWard } from './world/heroWard';
+import { DamageNumbers } from './world/damageNumbers';
 import { ENGAGE_RADIUS, heroClickRoute, heroWalkable, roomEntry, slideStep, stagedEnemyPoint } from './world/exploration';
 import { TRIPO_HERO_MODEL, createTripoHeroInstance, tintTripoHero, measureTripoWalkCycle, HeroAssetLoadError } from './world/tripoHeroRuntime';
 import { createCleaveStrike, cleaveEdgeMaterial, steelBladeWakeMaterial, CLEAVE_RELEASE, CLEAVE_SPEED } from './world/cleave';
@@ -57,8 +60,15 @@ const ENEMY_CLIP_ROLES: ActorClipRoles = {
   upperBone: /^(Spine|Chest|Head|UpperArm|Forearm|Hand|Weapon|Shield)/,
   fullBody: ['hit', 'hit-side', 'death', 'death-fall'], upperBody: ['attack'], held: ['death', 'death-fall'],
 };
-/** Combat runs in slow motion while a problem waits; spells play at full speed. */
-const COMBAT_TIME_SCALE = .12;
+/** Each spell's body motion. All casts release at .45 s, so effect timing holds. */
+const HERO_CAST: Record<string, string> = {
+  meteor: 'cast-throw', 'ball-lightning': 'cast-throw',
+  tempest: 'cast-raise', blizzard: 'cast-raise', firestorm: 'cast-raise', 'frost-guardian': 'cast-raise',
+  'ice-lance': 'cast-thrust', 'arc-lance': 'cast-thrust', 'glacial-surge': 'cast-thrust',
+};
+/** Sounds the world asks for; the game decides whether they play. */
+export type CombatSound = 'impact' | 'impact-heavy' | 'ward' | 'swing' | 'soul' | 'collapse';
+const ELEMENT_FLASH = { fire: new THREE.Color(1, .45, .12), electric: new THREE.Color(.55, .75, 1.3), frost: new THREE.Color(.55, 1, 1.3), other: new THREE.Color(1, .95, .85) };
 type Fragment = { position: THREE.Vector3; velocity: THREE.Vector3; rotation: THREE.Vector3; spin: THREE.Vector3; scale: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; hot: boolean; bounced: boolean };
 type Particle = { position: THREE.Vector3; velocity: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; size: number };
 type AttackOptions = { spellShape?: import('@institute/shared').RpgSpellShape; combat?: RpgCombatResult; echo?: boolean; wide?: boolean; burning?: boolean; shards?: boolean; chains?: boolean; pierce?: boolean; orbit?: boolean; summon?: boolean; itemId?: string; kills?: number; drop?: { name: string; rarity: string }; xp?: number };
@@ -166,7 +176,17 @@ export class DungeonWorld {
   private readonly guide = new THREE.Group();
   /** A relic or mote reached the hero (presentation only). */
   onLootPickup?: (pickup: LootPickup) => void;
-  private timeScale = 1;
+  onSound?: (sound: CombatSound) => void;
+  /** Live combat: the horde paces and strikes at the ward while a problem waits. */
+  private readonly horde = new HordeDirector();
+  private readonly ward = new HeroWard();
+  private readonly damageNumbers = new DamageNumbers();
+  /** Real seconds left in a hit-stop, and when the last one began. */
+  private hitStop = 0;
+  private lastHitStopAt = -9;
+  private zoomPunch = 0;
+  /** Energy gathering in the hero's hand between a correct answer and its cast. */
+  private charge?: { sprite: THREE.Sprite; startedAt: number; color: number };
   private readonly inputAbort = new AbortController();
   private readonly summoned: { root: THREE.Group; age: number; duration: number; update: (t: number) => void }[] = [];
   private shake = 0;
@@ -256,6 +276,7 @@ export class DungeonWorld {
     this.moveMarker = new THREE.Mesh(new THREE.RingGeometry(.28, .36, 40), new THREE.MeshBasicMaterial({ color: 0xe9c983, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
     this.moveMarker.rotation.x = -Math.PI / 2; this.moveMarker.position.y = .05; this.scene.add(this.moveMarker);
     this.floorLoot = new FloorLoot(this.glowMap); this.scene.add(this.floorLoot.group);
+    this.hero.add(this.ward.mesh); this.scene.add(this.damageNumbers.group);
     const chevron = new THREE.Shape([new THREE.Vector2(-.34, -.12), new THREE.Vector2(0, .2), new THREE.Vector2(.34, -.12), new THREE.Vector2(.34, -.26), new THREE.Vector2(0, .06), new THREE.Vector2(-.34, -.26)]);
     const chevronGeometry = new THREE.ShapeGeometry(chevron);
     for (let i = 0; i < 3; i++) {
@@ -317,6 +338,73 @@ export class DungeonWorld {
     });
   }
 
+  /** A director event: a rush ends in a swing, the blade meets the ward, the ward throws the enemy back. */
+  private hordeEvent(kind: 'swing' | 'impact' | 'recoil', enemy: Enemy | undefined): void {
+    if (!enemy || enemy.dead) return;
+    if (kind === 'swing') { enemy.clips?.play('attack'); this.onSound?.('swing'); return; }
+    if (kind === 'recoil') { enemy.clips?.play(Math.sin(enemy.phase * 3.1) > 0 ? 'hit' : 'hit-side'); return; }
+    const chest = this.hero.position.clone().setY(1.05), from = enemy.root.position.clone().setY(enemy.brute ? 1.7 : 1.2);
+    this.ward.flash(from, this.elapsed);
+    const contact = chest.clone().add(from.clone().sub(chest).setLength(1.15));
+    this.emit(contact, 0xbff2ff, enemy.brute ? 16 : 10, 1.6, .35);
+    this.burstLight.position.copy(contact); this.burstLight.color.setHex(0x9fe8ff); this.burstLight.intensity = Math.max(this.burstLight.intensity, 14);
+    this.shake = Math.max(this.shake, enemy.brute ? .1 : .05);
+    this.onSound?.('ward');
+  }
+
+  /**
+   * A correct answer is known at once, but the cast waits for the server.
+   * Gather the spell in the hero's hand meanwhile, so the answer feels instant.
+   */
+  anticipate(spellId: string): void {
+    if (this.disposed || this.attacking || this.charge || !this.engageReady) return;
+    const spell = RPG_SPELLS.find(spell => spell.id === spellId);
+    const color = spell?.effect === 'cleave' ? 0xe8f0ff : spell?.school === 'frost' ? 0x8bdef1 : spell?.school === 'storm' ? 0x9ab8ff : 0xff9a3c;
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.glowMap, color, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+    sprite.renderOrder = 5; sprite.scale.setScalar(.01); this.scene.add(sprite);
+    this.charge = { sprite, startedAt: this.elapsed, color };
+  }
+
+  private handPosition(target = new THREE.Vector3()): THREE.Vector3 {
+    const marker = this.heroVisual.getObjectByName('CastOrigin');
+    if (marker) return marker.getWorldPosition(target);
+    return this.heroVisual.localToWorld(target.set(-.28, 1.24, .32));
+  }
+
+  private updateCharge(delta: number): void {
+    const charge = this.charge; if (!charge) return;
+    const age = this.elapsed - charge.startedAt;
+    // A failed request never leaves a glow behind.
+    if (this.attacking || age > 3) { this.releaseCharge(!this.attacking); return; }
+    const hand = this.handPosition(), grow = Math.min(1, age / .4);
+    charge.sprite.position.copy(hand);
+    charge.sprite.scale.setScalar((.25 + grow * .75) * (1 + Math.sin(age * 38) * .08));
+    charge.sprite.material.opacity = .55 + grow * .45;
+    // Motes of the element converge on the hand.
+    if (Math.random() < delta * 40) {
+      const from = new THREE.Vector3(Math.random() - .5, Math.random() * .8 - .2, Math.random() - .5).normalize().multiplyScalar(1 + Math.random() * .4);
+      this.directedParticle(hand.clone().add(from), from.clone().multiplyScalar(-3.2), charge.color, .3, .3);
+    }
+    this.burstLight.position.copy(hand); this.burstLight.color.setHex(charge.color);
+    this.burstLight.intensity = Math.max(this.burstLight.intensity, 6 + grow * 10);
+  }
+
+  private releaseCharge(quietly = false): void {
+    const charge = this.charge; if (!charge) return;
+    this.charge = undefined;
+    if (!quietly) this.emit(charge.sprite.position.clone(), charge.color, 14, 1.4, .35);
+    this.scene.remove(charge.sprite); charge.sprite.material.dispose();
+  }
+
+  /** In combat the hero watches the enemy that strikes, or else the horde. */
+  private combatFocusHeading(): number {
+    const living = this.enemies.filter(enemy => !enemy.dead);
+    if (!living.length) return this.heroVisual.rotation.y;
+    const striker = living.find(enemy => enemy.id === this.horde.striker);
+    const focus = striker?.at ?? living.reduce((sum, enemy) => sum.add(enemy.at), new THREE.Vector3()).divideScalar(living.length);
+    return Math.atan2(focus.x - this.hero.position.x, focus.z - this.hero.position.z);
+  }
+
   /** Free-movement order, as from a click on the floor. Ignored during combat. */
   walkTo(x: number, z: number): void {
     if (!this.exploring) return;
@@ -345,7 +433,7 @@ export class DungeonWorld {
 
   private finishEngage(): void {
     if (this.engageReady) return;
-    this.engageReady = true;
+    this.engageReady = true; this.horde.reset(this.elapsed);
     const waiters = this.engageWaiters; this.engageWaiters = [];
     waiters.forEach(resolve => resolve());
   }
@@ -1366,9 +1454,11 @@ export class DungeonWorld {
     const anchoredChain = !!chainOrigin;
     this.chainUsesHandOrigin = anchoredChain;
     this.lastAttack = { spellId, effect, options: { ...options } };
+    this.releaseCharge();
     this.novaContacts = undefined;
     this.setElectricMaterials(true, school === 'ember' && !physicalCleave ? 'burn' : 'electric');
-    this.attacking = true; this.attackAge = 0; this.heroAnimator?.play(effect === 'cleave' || effect === 'phoenix-dive' ? 'cleave' : 'cast');
+    this.attacking = true; this.attackAge = 0;
+    if (!this.heroAnimator?.play(effect === 'cleave' || effect === 'phoenix-dive' ? 'cleave' : HERO_CAST[effect] ?? 'cast')) this.heroAnimator?.play('cast');
     this.attackDuration = effect === 'cleave' ? 2.2 : ['firestorm', 'blizzard', 'tempest', 'frost-guardian'].includes(effect) ? 3 : 2.7;
     const origin = this.hero.position.clone().setY(.12);
     const target = origin.clone().add(new THREE.Vector3(.3, 0, -3.8));
@@ -2162,7 +2252,7 @@ export class DungeonWorld {
   private chainBolt(from: THREE.Vector3, arrival: THREE.Vector3, echo = false): void {
     const view = this.camera.getWorldDirection(new THREE.Vector3()).negate();
     const material = chainLightningMaterial(); material.uniforms.opacity.value = echo ? .7 : 1;
-    const mesh = new THREE.Mesh(chainLightningGeometry(from, arrival, view, Math.floor(Math.random() * 0x7fffffff)), material);
+    const mesh = new THREE.Mesh(chainLightningGeometry(from, arrival, view, Math.floor(Math.random() * 0x7fffffff), true, echo ? .12 : .16), material);
     this.effect(mesh, CHAIN_BOLT_LIFETIME, progress => { material.uniforms.progress.value = progress; });
   }
 
@@ -2174,8 +2264,25 @@ export class DungeonWorld {
     const reactionOrigin = contactOrigin ?? this.hero.position;
     const reaction = createHitReaction({ at: this.elapsed, x: enemy.root.position.x, z: enemy.root.position.z, sourceX: reactionOrigin.x, sourceZ: reactionOrigin.z, phase: enemy.phase, heavy: enemy.brute, maxHp: enemy.maxHp, hit, element });
     enemy.root.userData.hitReaction = reaction;
+    const damage = hit?.damage ?? enemy.hp;
     enemy.hp = hit ? hit.hpAfter : 0;
     enemy.dead = reaction.lethal;
+    // Contact feel: a flash in the element's color, the number, a sound and,
+    // for heavy blows, a short hit-stop and a camera punch.
+    enemy.root.userData.hitFlash = { at: this.elapsed, color: ELEMENT_FLASH[school === 'frost' && !physicalCleave ? 'frost' : element === 'fire' ? 'fire' : element === 'electric' ? 'electric' : 'other'] };
+    this.damageNumbers.spawn(enemy.root.position.clone().add(new THREE.Vector3((Math.random() - .5) * .5, enemy.height + .15, 0)), damage, reaction.lethal ? 'kill' : damage >= enemy.maxHp * .45 ? 'big' : 'hit');
+    this.onSound?.(reaction.lethal || enemy.brute ? 'impact-heavy' : 'impact');
+    if ((reaction.lethal || enemy.brute || physicalCleave) && this.elapsed - this.lastHitStopAt > .3) {
+      this.hitStop = reaction.lethal && enemy.brute ? .12 : reaction.lethal ? .07 : .05; this.lastHitStopAt = this.elapsed;
+    }
+    if (reaction.lethal) this.zoomPunch = Math.max(this.zoomPunch, enemy.brute ? .045 : .018);
+    if (reaction.lethal) this.schedule(.42, () => {
+      // The body lands: a puff of grave dust and the clatter of bone.
+      const at = enemy.root.position.clone().setY(.05);
+      this.emit(at.clone().setY(.2), 0x6f675a, enemy.brute ? 22 : 12, enemy.brute ? 1.3 : .9, .7);
+      this.debris(at, enemy.brute ? 6 : 3, false, .35, { direction: at.clone().sub(this.hero.position).setY(0), spread: 1.4, lift: .25, grounded: true });
+      this.onSound?.('collapse');
+    });
     enemy.clips?.play(enemy.dead ? (Math.sin(enemy.phase * 7.3) > 0 ? 'death-fall' : 'death') : reaction.side > 0 ? 'hit-side' : 'hit');
     if (enemy.dead) {
       enemy.deathAt = this.elapsed;
@@ -2323,6 +2430,8 @@ export class DungeonWorld {
         }
       }
     }
+    // Hit-stop: a heavy contact holds the whole world for a few real frames.
+    if (this.hitStop > 0) { this.hitStop -= delta; delta *= .04; }
     this.elapsed += delta; this.resize();
     // Releases use elapsed wall time even on a slow GPU. Execute nested cues at
     // their authored times so a late frame cannot stretch a three-second cast.
@@ -2369,12 +2478,12 @@ export class DungeonWorld {
     this.heroAnimator?.update(delta, travel && delta > 0 ? Math.min(travel.distance, this.hero.position.distanceTo(heroFrom)) / delta : 0);
     if (walking) {
       this.heroVisual.position.y = this.heroUsesAuthoredMotion ? 0 : Math.abs(Math.sin(this.elapsed * 11)) * .09;
-      setPlanarHeroHeading(this.heroVisual.rotation, Math.atan2(travelTarget.x - heroFrom.x, travelTarget.z - heroFrom.z));
+      setPlanarHeroHeading(this.heroVisual.rotation, turnToward(this.heroVisual.rotation.y, Math.atan2(travelTarget.x - heroFrom.x, travelTarget.z - heroFrom.z), delta, 16));
     } else {
       this.heroVisual.position.y = this.heroUsesAuthoredMotion ? 0 : Math.sin(this.elapsed * 2.4) * .018;
       const heading = this.attacking && this.attackHeading !== undefined ? this.attackHeading
-        : !this.engaged ? this.heroVisual.rotation.y
-        : THREE.MathUtils.lerp(this.heroVisual.rotation.y, Math.PI * .9, 1 - Math.exp(-delta * 4));
+        : !this.engaged || this.attacking ? this.heroVisual.rotation.y
+        : turnToward(this.heroVisual.rotation.y, this.combatFocusHeading(), delta, 6);
       setPlanarHeroHeading(this.heroVisual.rotation, heading);
     }
     if (this.attacking) {
@@ -2393,8 +2502,10 @@ export class DungeonWorld {
     for (const pickup of this.floorLoot.update(delta, this.elapsed, this.hero.position, this.exploring, heroWalkable(this.encounter, this.regionId))) {
       this.emit(pickup.at, pickup.color, pickup.kind === 'relic' ? 46 : 5, pickup.kind === 'relic' ? 1.6 : .5, pickup.kind === 'relic' ? 1.3 : .5);
       if (pickup.kind === 'relic') { this.burstLight.position.copy(pickup.at).setY(2.2); this.burstLight.color.setHex(pickup.color); this.burstLight.intensity = 60; }
+      if (pickup.kind === 'mote') this.onSound?.('soul');
       this.onLootPickup?.(pickup);
     }
+    this.ward.update(this.elapsed); this.damageNumbers.update(delta); this.updateCharge(delta);
     this.updateGuide(delta);
     const markerAge = this.elapsed - (this.moveMarker.userData.shownAt ?? -9);
     (this.moveMarker.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 1 - markerAge / .55) * .85;
@@ -2408,23 +2519,29 @@ export class DungeonWorld {
         && living.every(enemy => enemy.at.distanceToSquared(enemy.origin) < .02 ** 2);
       if (settled || this.elapsed - this.engageStartedAt > 3) this.finishEngage();
     }
-    // The world slows while a problem waits and runs at full speed for spells.
-    const timeTarget = this.engageReady && living.length && !this.attacking ? COMBAT_TIME_SCALE : 1;
-    this.timeScale += (timeTarget - this.timeScale) * (1 - Math.exp(-delta * (timeTarget < this.timeScale ? 4 : 14)));
-    const enemyDelta = delta * this.timeScale;
+    // Combat stays live while a problem waits: the horde paces, and one enemy
+    // at a time strikes the hero's ward. Spells and panels hold every strike.
+    const plan = this.engageReady ? this.horde.update(this.elapsed, living.map(enemy => ({
+      id: enemy.id, x: enemy.at.x, z: enemy.at.z, originX: enemy.origin.x, originZ: enemy.origin.z, brute: enemy.brute, phase: enemy.phase,
+      canStrike: !!enemy.clips?.has('attack') && !(enemy.root.userData.hitReaction && !sampleHitReaction(enemy.root.userData.hitReaction, this.elapsed).complete),
+    })), this.hero.position, this.engageReady && !this.attacking && !this.paused && !this.charge) : undefined;
+    for (const event of plan?.events ?? []) this.hordeEvent(event.kind, this.enemies.find(enemy => enemy.id === event.id)!);
     for (const enemy of this.enemies) {
       if (enemy.dead && !enemy.root.visible) continue;
+      let heading: number | undefined;
       if (!enemy.dead && this.engaged) {
-        // The horde closes in on its combat formation at a stride-matched run.
-        const to = enemy.origin.clone().sub(enemy.at).setY(0), gap = to.length();
-        const step = Math.min(gap, (enemy.clips?.runSpeed ?? 3.2) * enemyDelta);
+        // Engaging: run to formation. In combat: walk, rush or recoil to the director's goal.
+        const goal = plan?.goals.get(enemy.id) ?? { x: enemy.origin.x, z: enemy.origin.z, run: true, faceHero: false };
+        const to = new THREE.Vector3(goal.x - enemy.at.x, 0, goal.z - enemy.at.z), gap = to.length();
+        const pace = goal.run ? enemy.clips?.runSpeed ?? 3.2 : enemy.clips?.walkSpeed || 1.3;
+        const step = Math.min(gap, pace * delta);
         if (gap > 1e-4) enemy.at.addScaledVector(to, step / gap);
-        enemy.speed = enemyDelta > 0 && gap > 1e-4 ? step / enemyDelta : 0;
+        enemy.speed = delta > 0 && gap > 1e-4 ? step / delta : 0;
+        if (!goal.faceHero && enemy.speed > .1) heading = Math.atan2(to.x, to.z);
       } else enemy.speed = 0;
       if (enemy.clips && !enemy.dead) {
-        const toward = enemy.speed > .1 ? enemy.origin.clone().sub(enemy.at) : this.hero.position.clone().sub(enemy.at);
-        const heading = Math.atan2(toward.x, toward.z), turn = Math.atan2(Math.sin(heading - enemy.root.rotation.y), Math.cos(heading - enemy.root.rotation.y));
-        enemy.root.rotation.y += turn * (1 - Math.exp(-enemyDelta * 7));
+        heading ??= Math.atan2(this.hero.position.x - enemy.at.x, this.hero.position.z - enemy.at.z);
+        enemy.root.rotation.y = turnToward(enemy.root.rotation.y, heading, delta, 8);
       }
       const grounded = !!enemy.clips || enemy.animator.ownsGroundedPose;
       const reaction = enemy.root.userData.hitReaction as HitReaction | undefined;
@@ -2460,7 +2577,7 @@ export class DungeonWorld {
         enemy.visual.position.y = grounded ? 0 : (enemy.modelId === 'wraith' ? .12 + Math.sin(this.elapsed * .85 + enemy.phase) * .035 : Math.abs(Math.sin(this.elapsed * 4.7 + enemy.phase)) * (enemy.brute || enemy.modelId === 'revenant' ? .035 : .075)) * (1 - (response?.control ?? 0));
         enemy.visual.rotation.z = grounded ? 0 : Math.sin(this.elapsed * (enemy.modelId === 'wraith' ? .8 : 1.5) + enemy.phase) * (enemy.modelId === 'wraith' ? .008 : .035) * (1 - (response?.control ?? 0));
       }
-      if (enemy.clips) { enemy.clips.update(enemyDelta, enemy.speed); continue; }
+      if (enemy.clips) { enemy.clips.update(delta, enemy.speed); continue; }
       enemy.animator.update(this.elapsed, {
         moving: (.35 + Math.abs(Math.cos(this.elapsed * .8 + enemy.phase)) * .4) * (1 - (response?.control ?? 0)),
         threat: (this.paused ? .25 : .8) * (1 - (response?.control ?? 0)),
@@ -2470,7 +2587,11 @@ export class DungeonWorld {
         collapse: groundedCollapse ? 'grounded' : undefined,
       });
     }
-    for (const actor of this.skinnedEnemies) actor.dissolve.set(actor.root.userData.electricDissolve ?? 0);
+    for (const actor of this.skinnedEnemies) {
+      actor.dissolve.set(actor.root.userData.electricDissolve ?? 0);
+      const flash = actor.root.userData.hitFlash as { at: number; color: THREE.Color } | undefined, age = flash ? this.elapsed - flash.at : 9;
+      actor.dissolve.flash(flash?.color ?? ELEMENT_FLASH.other, age < .3 ? Math.exp(-age * 12) * 1.2 : 0);
+    }
     if (this.enemyInstances.length) {
       this.enemyGroup.updateMatrixWorld(true);
       this.enemyInstances.forEach(instance => {
@@ -2553,6 +2674,9 @@ export class DungeonWorld {
       this.burstLight.intensity = (chain ? 2 : frostfall ? 3 : 9) * response.light;
     }
     this.cameraTarget.lerp(this.hero.position, 1 - Math.exp(-delta * 3.7));
+    this.zoomPunch *= Math.exp(-delta * 7);
+    const zoom = 1 + (this.zoomPunch > .001 ? this.zoomPunch : 0);
+    if (this.camera.zoom !== zoom) { this.camera.zoom = zoom; this.camera.updateProjectionMatrix(); }
     const shake = this.shake;
     this.camera.position.copy(this.cameraTarget).add(new THREE.Vector3(17 + (Math.random() - .5) * shake, 25, 20 + (Math.random() - .5) * shake));
     this.camera.lookAt(this.cameraTarget.x, .2, this.cameraTarget.z - 1.8);
@@ -2602,12 +2726,12 @@ export class DungeonWorld {
   }
 
   get diagnostics(): Record<string, unknown> {
-    return { appearance: this.appearance, heroModelId: this.heroModelId, heroWalkCycle: this.heroWalkCycle, drawWarmup: this.drawWarmup, lastAttack: this.lastAttack, lastSpellId: this.lastAttack?.spellId, lastSpellEffect: this.lastAttack?.effect, heroAnimation: this.heroAnimator?.current ?? 'procedural', heroClips: this.heroAnimator?.clips ?? [], enemyAnimations: this.enemies.map(enemy => enemy.clips?.current ?? 'procedural'), engaged: this.engaged, combatReady: this.combatReady, timeScale: +this.timeScale.toFixed(3), floorLoot: this.floorLoot.counts, encounter: this.encounter, region: this.regionId, enemies: this.enemies.filter(enemy => !enemy.dead).length, articulatedEnemies: this.enemies.filter(enemy => enemy.animator.articulated).length, enemyRoster: this.enemies.reduce<Record<string, number>>((counts, enemy) => { counts[enemy.modelId] = (counts[enemy.modelId] ?? 0) + 1; return counts; }, {}), attacking: this.attacking, paused: this.paused, modelsLoaded: this.loadedModels, drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, particles: this.particles.length, fragments: this.fragments.length, hero: this.hero.position.toArray(), softwareRenderer: this.softwareRenderer, fps: Math.round(this.framesPerSecond), quality: ['full', 'balanced', 'performance'][this.quality], renderer: this.renderer.getContext().getParameter(this.renderer.getContext().VERSION) };
+    return { appearance: this.appearance, heroModelId: this.heroModelId, heroWalkCycle: this.heroWalkCycle, drawWarmup: this.drawWarmup, lastAttack: this.lastAttack, lastSpellId: this.lastAttack?.spellId, lastSpellEffect: this.lastAttack?.effect, heroAnimation: this.heroAnimator?.current ?? 'procedural', heroClips: this.heroAnimator?.clips ?? [], enemyAnimations: this.enemies.map(enemy => enemy.clips?.current ?? 'procedural'), engaged: this.engaged, combatReady: this.combatReady, striker: this.horde.striker ?? null, hitStop: this.hitStop > 0, floorLoot: this.floorLoot.counts, encounter: this.encounter, region: this.regionId, enemies: this.enemies.filter(enemy => !enemy.dead).length, articulatedEnemies: this.enemies.filter(enemy => enemy.animator.articulated).length, enemyRoster: this.enemies.reduce<Record<string, number>>((counts, enemy) => { counts[enemy.modelId] = (counts[enemy.modelId] ?? 0) + 1; return counts; }, {}), attacking: this.attacking, paused: this.paused, modelsLoaded: this.loadedModels, drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, particles: this.particles.length, fragments: this.fragments.length, hero: this.hero.position.toArray(), softwareRenderer: this.softwareRenderer, fps: Math.round(this.framesPerSecond), quality: ['full', 'balanced', 'performance'][this.quality], renderer: this.renderer.getContext().getParameter(this.renderer.getContext().VERSION) };
   }
 
   dispose(): void {
     if (this.disposed) return; this.disposed = true; cancelAnimationFrame(this.frame); this.attackResolve?.(); this.scheduled.length = 0;
-    this.inputAbort.abort(); this.finishEngage(); this.floorLoot.dispose();
+    this.inputAbort.abort(); this.finishEngage(); this.floorLoot.dispose(); this.ward.dispose(); this.damageNumbers.dispose(); this.releaseCharge(true);
     this.roomCutaway.clear();
     for (const effect of this.effects) if (effect.mesh instanceof THREE.InstancedMesh) effect.mesh.dispose();
     this.releaseEnemyInstances();
@@ -2624,4 +2748,10 @@ export class DungeonWorld {
     this.stoneFragments.dispose(); this.hotFragments.dispose();
     this.environment.dispose(); this.bloom.dispose(); this.composer.dispose(); this.renderer.dispose();
   }
+}
+
+/** Turns an angle toward a target along the short way, at a damped rate. */
+function turnToward(from: number, to: number, delta: number, rate: number): number {
+  const turn = Math.atan2(Math.sin(to - from), Math.cos(to - from));
+  return from + turn * (1 - Math.exp(-delta * rate));
 }

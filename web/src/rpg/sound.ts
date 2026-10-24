@@ -3,11 +3,13 @@
  */
 import { rpgSpellSchool, type RpgSpellId } from '@institute/shared';
 
-type Clip = 'fire-nova' | 'frost-shatter' | 'chain-lightning' | 'loot' | 'level-up' | 'boss-defeat' | 'footstep' | 'dungeon-ambience';
-const clips: Clip[] = ['fire-nova', 'frost-shatter', 'chain-lightning', 'loot', 'level-up', 'boss-defeat', 'footstep', 'dungeon-ambience'];
+type Clip = 'fire-nova' | 'frost-shatter' | 'chain-lightning' | 'loot' | 'level-up' | 'boss-defeat' | 'footstep' | 'dungeon-ambience'
+  | 'impact' | 'impact-heavy' | 'ward' | 'swing' | 'soul' | 'collapse';
+const clips: Clip[] = ['fire-nova', 'frost-shatter', 'chain-lightning', 'loot', 'level-up', 'boss-defeat', 'footstep', 'dungeon-ambience', 'impact', 'impact-heavy', 'ward', 'swing', 'soul', 'collapse'];
 const volume: Record<Clip, number> = {
   'fire-nova': .72, 'frost-shatter': .68, 'chain-lightning': .52,
   loot: .31, 'level-up': .44, 'boss-defeat': .50, footstep: .13, 'dungeon-ambience': .19,
+  impact: .46, 'impact-heavy': .55, ward: .3, swing: .24, soul: .16, collapse: .34,
 };
 let context: AudioContext | null = null;
 let master: GainNode | null = null;
@@ -144,11 +146,12 @@ function play(clip: Clip, pitchVariation = 0): void {
   if (!canPlay() || !context || !master) return;
   const c = context;
   const now = c.currentTime;
-  const minInterval = clip === 'footstep' ? .23 : .08;
+  const minInterval = clip === 'footstep' ? .23 : clip === 'impact' || clip === 'soul' ? .045 : .08;
   if (now - (lastPlayed.get(clip) ?? -Infinity) < minInterval) return;
   lastPlayed.set(clip, now);
   const buffer = buffers.get(clip);
-  if (!buffer) { void load(clip); fallback(clip); return; }
+  // Combat contacts repeat often: skip them rather than beep while loading.
+  if (!buffer) { void load(clip); if (!['impact', 'impact-heavy', 'ward', 'swing', 'soul', 'collapse'].includes(clip)) fallback(clip); return; }
   // Keep accidental repeated UI events from building a loud stack.
   if (voices.size >= 12) return;
   const source = c.createBufferSource();
@@ -229,6 +232,10 @@ export function rewardFanfare(kind: 'quest' | 'level' | 'daily-board'): void {
 /** Stone collapse followed by a warm victory interval; call on boss defeat. */
 export function boss(): void { play('boss-defeat'); }
 export function footstep(): void { play('footstep', .16); }
+/** Combat contact. Never signals harm to the hero: wards and enemy hits only. */
+export function combat(kind: 'impact' | 'impact-heavy' | 'ward' | 'swing' | 'soul' | 'collapse'): void {
+  play(kind, kind === 'soul' ? .3 : kind === 'ward' ? .06 : .14);
+}
 
 /** Safe before unlock(); starts after the first gesture/preload, only once. */
 export function startAmbience(): void {

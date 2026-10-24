@@ -51,6 +51,42 @@
       "peakDbFS": -12.49,
       "rmsDbFS": -25.77,
       "bytes": 529244
+    },
+    "impact": {
+      "seconds": 0.42,
+      "peakDbFS": -2.73,
+      "rmsDbFS": -18.49,
+      "bytes": 18566
+    },
+    "impact-heavy": {
+      "seconds": 0.8,
+      "peakDbFS": -1.89,
+      "rmsDbFS": -15.39,
+      "bytes": 35324
+    },
+    "ward": {
+      "seconds": 0.75,
+      "peakDbFS": -2.77,
+      "rmsDbFS": -19.85,
+      "bytes": 33120
+    },
+    "swing": {
+      "seconds": 0.34,
+      "peakDbFS": -1.72,
+      "rmsDbFS": -15.91,
+      "bytes": 15038
+    },
+    "soul": {
+      "seconds": 0.42,
+      "peakDbFS": -1.72,
+      "rmsDbFS": -14.85,
+      "bytes": 18566
+    },
+    "collapse": {
+      "seconds": 0.95,
+      "peakDbFS": -2.44,
+      "rmsDbFS": -18.4,
+      "bytes": 41940
     }
   }
 }

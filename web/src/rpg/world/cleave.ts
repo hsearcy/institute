@@ -1,4 +1,4 @@
-import { AdditiveBlending, NormalBlending, BufferAttribute, BufferGeometry, DoubleSide, DynamicDrawUsage, Mesh, ShaderMaterial, Vector3 } from 'three';
+import { AdditiveBlending, BufferAttribute, BufferGeometry, DoubleSide, DynamicDrawUsage, Mesh, ShaderMaterial, Vector3 } from 'three';
 import { bladeWakeMaterial } from './materials';
 
 // The fresh Tripo slash is retimed to meet the blade effect at .18 seconds.
@@ -32,15 +32,16 @@ export function cleaveEdgeMaterial(elemental = false): ShaderMaterial {
           // A thin curved leading edge and layered slipstream. Constant lip
           // thickness avoids turning the tapered ribbon into a luminous wedge.
           float taper=pow(max(0.,sin(u*3.14159)),.6);
-          float core=exp(-pow((v-.91)/.052,2.));
-          float slip=exp(-pow((v-.7)/.22,2.))*.3;
-          float strand=exp(-pow((v-(.52+sin(u*8.-time*6.)*.035))/.019,2.))*.19;
-          float a=(core*.85+slip+strand)*taper*opacity;
-          vec3 steel=mix(vec3(.24,.3,.37),vec3(.7,.79,.87),core);
-          gl_FragColor=vec4(steel,a);return;
+          // A bright cutting lip over a cool slipstream reads on dark stone.
+          float core=exp(-pow((v-.91)/.06,2.));
+          float slip=exp(-pow((v-.7)/.22,2.))*.42;
+          float strand=exp(-pow((v-(.52+sin(u*8.-time*6.)*.035))/.019,2.))*.26;
+          float a=(core*.95+slip+strand)*taper*opacity;
+          vec3 steel=mix(vec3(.32,.46,.62),vec3(1.5,1.6,1.7),core);
+          gl_FragColor=vec4(steel*a,a);return;
         }
         float taper=smoothstep(0.,.22,u)*(1.-smoothstep(.55,1.,u));
-        float aa=max(fwidth(v)*.6,.018),width=mix(.012,.11,taper);
+        float aa=max(fwidth(v)*.6,.018),width=mix(.03,.2,taper);
         float lip=1.-smoothstep(width*.3,width+aa,abs(v-(1.-width)));
         float hot=exp(-pow((u-.38)/.17,2.));
         float tail=tongue(u,v,.16,.67,.14,.047)
@@ -48,11 +49,11 @@ export function cleaveEdgeMaterial(elemental = false): ShaderMaterial {
           +tongue(u,v,.76,.55,.12,.035)*.6;
         float ends=smoothstep(0.,.055,u)*(1.-smoothstep(.91,1.,u));
         float edge=lip*(.12+.88*taper)*(.65+.2*hot);
-        float a=(edge+tail*.18)*ends*opacity;
+        float a=(edge+tail*.32)*ends*opacity;
         vec3 ember=vec3(.65,.105,.008);
         vec3 steelHeat=mix(vec3(1.,.34,.055),vec3(1.75,1.03,.3),hot);
         gl_FragColor=vec4(mix(ember,steelHeat,lip),a);}`,
-    transparent: true, blending: elemental ? AdditiveBlending : NormalBlending, depthWrite: false, side: DoubleSide, toneMapped: false,
+    transparent: true, blending: AdditiveBlending, depthWrite: false, side: DoubleSide, toneMapped: false,
   });
 }
 

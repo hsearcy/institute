@@ -35,8 +35,9 @@ const fragmentDeclarations = `
 `;
 
 type Shader = Parameters<THREE.Material['onBeforeCompile']>[0];
-function patch(shader: Shader, surface: boolean, burn = false, progress?: THREE.IUniform<number>): void {
+function patch(shader: Shader, surface: boolean, burn = false, progress?: THREE.IUniform<number>, flash?: THREE.IUniform<THREE.Color>): void {
   if (progress) shader.uniforms.uElectricDissolve = progress;
+  if (flash) shader.uniforms.uHitFlash = flash;
   shader.vertexShader = (progress ? `varying float vElectricDissolve;
 varying vec3 vElectricWorld;
 uniform float uElectricDissolve;
@@ -50,10 +51,11 @@ uniform float uElectricDissolve;
       vElectricDissolve=instanceDissolve;
       vElectricWorld=(modelMatrix*instanceMatrix*vec4(transformed,1.)).xyz;
     #endif`}`);
-  shader.fragmentShader = fragmentDeclarations + shader.fragmentShader;
+  shader.fragmentShader = (flash ? 'uniform vec3 uHitFlash;\n' : '') + fragmentDeclarations + shader.fragmentShader;
   shader.fragmentShader = shader.fragmentShader.replace('#include <alphatest_fragment>', `#include <alphatest_fragment>
     if(vElectricDissolve>0.001 && electricField()<vElectricDissolve) discard;`);
   if (surface) shader.fragmentShader = shader.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+      ${flash ? 'totalEmissiveRadiance+=uHitFlash*(.18+1.6*pow(1.-clamp(dot(normal,normalize(vViewPosition)),0.,1.),2.2));' : ''}
       if(vElectricDissolve>0.001) {
         float edge=1.-smoothstep(0.,.012,electricField()-vElectricDissolve);
         edge*=smoothstep(.48,.75,electricNoise(vElectricWorld*3.5+2.1));
@@ -64,15 +66,17 @@ uniform float uElectricDissolve;
 /** Per-actor copies for a SkinnedMesh. Geometry, skin attributes and maps remain shared. */
 export function createSkinnedDissolve(source: THREE.BufferGeometry, materials: THREE.Material | THREE.Material[]) {
   const progress: THREE.IUniform<number> = { value: 0 };
+  // A brief emissive flash where a hit lands, in the element's color.
+  const flash: THREE.IUniform<THREE.Color> = { value: new THREE.Color(0, 0, 0) };
   const originals = Array.isArray(materials) ? materials : [materials];
   const copyMaterials = (burn: boolean) => originals.map(original => {
     const material = original.clone();
     material.onBeforeCompile = (shader, renderer) => {
       original.onBeforeCompile.call(material, shader, renderer);
       // project_vertex follows skinning and displacement in both stock shaders.
-      patch(shader, true, burn, progress);
+      patch(shader, true, burn, progress, flash);
     };
-    material.customProgramCacheKey = () => `${original.customProgramCacheKey()}|skinned-${burn ? 'burn' : 'electric'}-erosion-v1`;
+    material.customProgramCacheKey = () => `${original.customProgramCacheKey()}|skinned-${burn ? 'burn' : 'electric'}-erosion-flash-v2`;
     return material;
   });
   const copies = copyMaterials(false);
@@ -87,6 +91,7 @@ export function createSkinnedDissolve(source: THREE.BufferGeometry, materials: T
       return Array.isArray(materials) ? selected : selected[0];
     },
     set(value: number) { progress.value = Number.isFinite(value) ? THREE.MathUtils.clamp(value, 0, 1) : 0; },
+    flash(color: THREE.Color, amount: number) { flash.value.copy(color).multiplyScalar(Math.max(0, amount)); },
     dispose() { copies.forEach(material => material.dispose()); burnCopies?.forEach(material => material.dispose()); depth.dispose(); },
   };
 }

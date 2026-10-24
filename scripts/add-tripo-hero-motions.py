@@ -8,7 +8,7 @@ vertical bob stays, and provider scale tracks are dropped.
 
 --review appends every clip untrimmed as `raw:<name>` for inspection.
 
-Sources (October 23 2026): native rig task b2cf2e29-0960-44bc-8cbd-aa22b94cf9e2
+Sources (October 23 2026; school casts October 24 2026): native rig task b2cf2e29-0960-44bc-8cbd-aa22b94cf9e2
 (v1.0-20240301), one FBX retarget per `preset:biped:<clip>` (10 credits
 each), converted by scripts/blender/fbx_motion_to_glb.py. Input --hero is the
 four-clip tripo-hero-game.glb from commit 414a3ea.
@@ -47,6 +47,11 @@ CLIPS = {
     'knockdown': dict(clip='fall', keys=([.2, 2.1], [0, 1.45]), cape=0),
     'victory': dict(clip='victory_celebration', keys=([.3, 1.63, 4.1, 5.3], [0, .7, 2.6, 3.4])),
     'idle-look': dict(clip='look_around', loop=True, cape=.013),
+    # School casts. Each release lands at .45 s, the release of the authored
+    # `cast` clip, so spell effects keep their timing.
+    'cast-throw': dict(clip='pitch_baseball', keys=([.95, 1.5, 1.9, 2.2, 2.35], [0, .3, .45, .62, .95]), cape=.05),
+    'cast-raise': dict(clip='basketball_shot', keys=([1.1, 1.8, 2.4, 3.0, 3.6], [0, .3, .5, .85, 1.25]), cape=.05),
+    'cast-thrust': dict(clip='box_01', keys=([.15, .45, .65, 1.0, 1.5], [0, .25, .42, .7, 1.1]), cape=.04),
 }
 
 

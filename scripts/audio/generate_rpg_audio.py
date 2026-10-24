@@ -138,9 +138,57 @@ def ambience():
     # FFT noise and every tone above are periodic at exactly twelve seconds.
     return d
 
+# Combat feel: contact, deflection and collapse. Appended after ambience so the
+# seeded noise of every earlier clip stays identical when this file is rerun.
+def impact():
+    d=np.zeros(round(.42*RATE));t=timeline(.42)
+    layer(d,noise(.42,500,4200)*envelope(t,.001,.022),0,.42)
+    layer(d,tone(.36,128,58,.002,.07,.3),0,.62)
+    for i in range(4):
+        layer(d,noise(.03,1800,5200)*envelope(timeline(.03),.001,.006),.012+i*.021+RNG.random()*.01,.11)
+    return room(d,.08)
+
+def impact_heavy():
+    d=np.zeros(round(.8*RATE));t=timeline(.8)
+    layer(d,noise(.8,60,2600)*envelope(t,.002,.06),0,.38)
+    layer(d,tone(.7,96,38,.002,.16,.35),0,.85)
+    layer(d,noise(.5,900,4200)*envelope(timeline(.5),.001,.03),.005,.2)
+    return room(d,.14)
+
+def ward():
+    d=np.zeros(round(.75*RATE))
+    layer(d,noise(.05,1500,5500)*envelope(timeline(.05),.001,.008),0,.22)
+    for freq,gain,decay in [(1318.5,.24,.2),(1975.5,.13,.15),(2637,.06,.1)]:
+        layer(d,bell(.7,freq*(.99+RNG.random()*.02),decay),0,gain)
+    layer(d,tone(.3,420,300,.002,.05),0,.14)
+    return room(d,.18)
+
+def swing():
+    d=np.zeros(round(.34*RATE));t=timeline(.34)
+    sweep=noise(.34,350,2400)*np.sin(np.pi*t/.34)**2.2
+    layer(d,sweep,0,.16)
+    return d
+
+def soul():
+    d=np.zeros(round(.42*RATE))
+    for i,freq in enumerate((1174.66,1479.98,1760)):
+        layer(d,bell(.36,freq,.09),i*.045,.11*(1-i*.2))
+    layer(d,noise(.25,2400,6000)*envelope(timeline(.25),.03,.05),0,.02)
+    return room(d,.2)
+
+def collapse():
+    d=np.zeros(round(.95*RATE))
+    layer(d,tone(.4,140,62,.002,.06,.3),0,.42)
+    for i in range(16):
+        length=.025+RNG.random()*.04;at=.04+i*.05+RNG.random()*.03
+        layer(d,noise(length,1200,5200)*envelope(timeline(length),.001,.007),at,.15*(1-i/20))
+        if i%4==0: layer(d,tone(.08,700+RNG.random()*500,None,.001,.02),at,.05)
+    layer(d,noise(.5,80,700)*envelope(timeline(.5),.01,.09),.12,.14)
+    return room(d,.1)
+
 OUT.mkdir(parents=True,exist_ok=True)
 metadata={}
-for name,generator in [('fire-nova',fire),('frost-shatter',frost),('chain-lightning',storm),('loot',loot),('level-up',levelup),('boss-defeat',boss),('footstep',footstep),('dungeon-ambience',ambience)]:
+for name,generator in [('fire-nova',fire),('frost-shatter',frost),('chain-lightning',storm),('loot',loot),('level-up',levelup),('boss-defeat',boss),('footstep',footstep),('dungeon-ambience',ambience),('impact',impact),('impact-heavy',impact_heavy),('ward',ward),('swing',swing),('soul',soul),('collapse',collapse)]:
     signal=generator().astype(np.float64)
     signal-=signal.mean()
     if name!='dungeon-ambience':

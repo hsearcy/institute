@@ -945,7 +945,7 @@ export class DungeonWorld {
             object.castShadow = true; object.receiveShadow = name !== TRIPO_HERO_MODEL && !name.startsWith('items/') && !['skeleton', 'revenant', 'wraith', 'guardian', 'vault-guardian-boss', 'imp'].includes(name);
             if (name === TRIPO_HERO_MODEL || name.startsWith('items/') || ['skeleton', 'revenant', 'guardian', 'vault-guardian-boss', 'imp', 'wraith'].includes(name)) {
               for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
-                if (material instanceof THREE.MeshStandardMaterial) { material.envMap = this.environment.texture; material.envMapIntensity = name === TRIPO_HERO_MODEL || name.startsWith('items/') ? .55 : .225; }
+                if (material instanceof THREE.MeshStandardMaterial) { material.envMap = this.environment.texture; material.envMapIntensity = name === TRIPO_HERO_MODEL ? .35 : name.startsWith('items/') ? .55 : .225; }
               }
             }
             if (object.material instanceof THREE.MeshStandardMaterial && /glow_flame|glow_amber/.test(object.material.name)) {
@@ -1563,7 +1563,8 @@ export class DungeonWorld {
     if (this.heroModelId === modelId) return;
     const model = this.model(modelId, 1.8);
     if (!model) return; // The required new hero is still loading.
-    this.heroLight.intensity = 18;
+    // Enough to keep the hero readable in dark halls without bleaching skin and polished plate.
+    this.heroLight.intensity = 8;
     const previousVisual = this.heroVisual;
     const previousAnimation = this.heroAnimator?.current ?? 'idle';
     const previousTime = this.heroAnimator?.time ?? 0;
@@ -1630,7 +1631,7 @@ export class DungeonWorld {
         gltf.scene.traverse(object => {
           if (!(object instanceof THREE.Mesh)) return;
           for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
-            if (material instanceof THREE.MeshStandardMaterial) { material.envMap = this.environment.texture; material.envMapIntensity = .55; }
+            if (material instanceof THREE.MeshStandardMaterial) { material.envMap = this.environment.texture; material.envMapIntensity = .35; }
           }
         });
         if (this.disposed) return undefined;

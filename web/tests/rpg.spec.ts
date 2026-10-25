@@ -52,13 +52,14 @@ async function ready(page: Page): Promise<void> {
       const game = (window as any).__game;
       return {
         busy: game.busy,
+        seeking: game.seeking,
         attribute: document.querySelector<HTMLElement>('#rpg-ui')!.dataset.busy,
         castDisabled: document.querySelector<HTMLButtonElement>('#rpg-cast')!.disabled,
         overlayHidden: document.querySelector<HTMLElement>('#rpg-overlay')!.hidden,
         panel: game.panel,
       };
     });
-  }, { timeout: 60_000 }).toEqual({ busy: false, attribute: 'false', castDisabled: false, overlayHidden: true, panel: '' });
+  }, { timeout: 60_000 }).toEqual({ busy: false, seeking: false, attribute: 'false', castDisabled: false, overlayHidden: true, panel: '' });
 }
 function captureProblems(page: Page): Map<string, Problem> {
   const problems = new Map<string, Problem>();

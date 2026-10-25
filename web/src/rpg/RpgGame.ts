@@ -89,6 +89,8 @@ export class RpgGame {
   private abort = new AbortController();
   private combatLayoutObserver: ResizeObserver;
   private clockRunning = false;
+  /** The hero searches for the horde: menus work, the problem and its clock wait. */
+  private seeking = false;
   private readonly answerClock = new AnswerClock();
   private powerRefresh: ReturnType<typeof setInterval> | null = null;
   private retrying = false;
@@ -256,7 +258,7 @@ export class RpgGame {
   }
   private stopClock(): void { this.answerClock.stop(); this.checkpointClock(); this.clockRunning = false; }
   private startClock(): void {
-    if (this.disposed || this.tutorialState || this.busy || this.panel || !this.playing || document.hidden || !this.session || this.session.pending || this.session.walkthrough) return;
+    if (this.disposed || this.tutorialState || this.busy || this.seeking || this.panel || !this.playing || document.hidden || !this.session || this.session.pending || this.session.walkthrough) return;
     if (!this.speechDepth) this.answerClock.start();
     if (this.clockRunning || this.session.firstAttempt !== null) return;
     this.shownAt = performance.now(); this.clockRunning = true;
@@ -410,9 +412,13 @@ export class RpgGame {
       this.root.classList.add('rpg-exploring');
       this.el('rpg-explore-how').textContent = matchMedia('(pointer: coarse)').matches ? 'Tap the floor to walk.' : 'Click the floor to walk, or use the arrow keys.';
       this.el('rpg-explore').hidden = false;
+      // The menus stay usable while the hero searches; the answer clock waits for the problem.
+      this.seeking = true; this.busy = false;
       await this.world.waitForEngage();
+      this.seeking = false;
       this.el('rpg-explore').hidden = true; this.root.classList.remove('rpg-exploring');
       if (this.disposed || this.session !== session) return;
+      this.busy = true;
     }
     this.root.classList.add('rpg-combat');
     if (p.newTopic && p.topicId && !session.demoSeen && !this.demoTopics.has(p.topicId)) {
@@ -465,7 +471,7 @@ export class RpgGame {
     this.el('rpg-cast').title = `Attack power: ${percent}%. Quick answers hit harder; each wrong try costs 10%.`;
   }
   private async submit(): Promise<void> {
-    if (!this.session || this.busy || this.panel || !this.entered || !this.playing) return;
+    if (!this.session || this.busy || this.seeking || this.panel || !this.entered || !this.playing) return;
     this.stopClock(); this.busy = true;
     this.session.pending = { correct: Number(this.entered) === this.session.problem.answer, assisted: false, aided: !!this.session.helped, solveMs: Math.round(this.session.elapsedMs ?? 0), answerMs: Math.floor(this.session.answerMs ?? 0), wrongCount: this.session.wrongCount, spellId: this.state!.selectedSpellId };
     this.saveSession();
@@ -1223,6 +1229,8 @@ export class RpgGame {
     if (button.dataset.region) { void this.begin(button.dataset.region, Number(button.dataset.tier) || this.selectedTier); return; }
     const action = button.dataset.action;
     if (this.busy && !['retry','sound','demo-go','demo-hear'].includes(action ?? '')) return;
+    // No problem is on screen while the hero searches for the horde.
+    if (this.seeking && ['hear','help','explain','walkthrough'].includes(action ?? '')) return;
     switch (action) {
       case 'next-adventure': if (this.nextAdventure && this.state?.expedition?.cleared) void this.begin(this.nextAdventure.regionId, this.nextAdventure.tier); break;
       case 'begin': void this.begin(); break;

@@ -16,7 +16,7 @@ const PART_BONES: Record<Part, readonly string[]> = {
 /** The bone each part's gear follows through the animation. */
 const PART_ANCHOR: Record<Part, string> = { head: 'Head', torso: 'Spine02', handL: 'L_Hand', handR: 'R_Hand', footL: 'L_Foot', footR: 'R_Foot' };
 
-interface Measured { box: Box3; anchor: Object3D; bind: Matrix4 }
+interface Measured { box: Box3; anchor: Object3D; bind: Matrix4; elbow?: Vector3 }
 
 /**
  * Rigid gear on the Tripo hero's bones. The body is measured once in its bind
@@ -67,7 +67,8 @@ export class WornGear {
     if (!boxes.has('handR') && swordHand) { boxes.set('handR', swordHand.box); anchors.handR = swordHand.bone; }
     for (const [part, box] of boxes) {
       const anchor = hero.getObjectByName(anchors[part]), bind = binds.get(anchors[part]);
-      if (anchor && bind) this.parts.set(part, { box, anchor, bind });
+      const elbow = part === 'handL' ? binds.get('L_Forearm') : part === 'handR' ? binds.get('R_Forearm') : undefined;
+      if (anchor && bind) this.parts.set(part, { box, anchor, bind, elbow: elbow && new Vector3().setFromMatrixPosition(elbow) });
     }
   }
 
@@ -91,7 +92,7 @@ export class WornGear {
       if (!halves) return;
       const middle = this.parts.get('torso')?.box.getCenter(new Vector3()).x ?? 0;
       const fit = (part: Part): Fit => kind === 'boots' ? fitBoot : (body, item, origin) =>
-        fitGlove(body, item, origin, this.parts.get(part)!.bind, new Vector3(Math.sign(body.getCenter(new Vector3()).x - middle) || 1, 0, 0));
+        fitGlove(body, item, origin, this.parts.get(part)!, new Vector3(Math.sign(body.getCenter(new Vector3()).x - middle) || 1, 0, 0));
       const [left, right]: [Part, Part] = kind === 'gloves' ? ['handL', 'handR'] : ['footL', 'footR'];
       place(left, halves[0], fit(left)); place(right, halves[1], fit(right));
     } else {
@@ -167,14 +168,16 @@ function fitHelm(body: Box3, item: Box3, origin: Vector3): Matrix4 {
   const b = size(body), band = Math.min(size(item).x / 2, .15), scale = b.x * .5 * 1.1 / band;
   const c = centre(body);
   // A thin band (circlet) sits on the brow; a full helm's band is a little higher, over the hood.
-  const brow = size(item).y < .14 ? .7 : .77;
+  const brow = size(item).y < .14 ? .78 : .87;
   return placeAt(scale, origin, new Vector3(c.x, body.min.y + b.y * brow, c.z));
 }
 
 function fitChest(body: Box3, _item: Box3, origin: Vector3): Matrix4 {
-  const b = size(body), scale = b.x * 1.2 / .32;
-  const c = centre(body);
-  return placeAt(scale, origin.clone().setY(origin.y + .25), new Vector3(c.x, body.max.y + b.y * .02, body.max.z - .108 * scale * 1.2));
+  // Width and height follow the shoulders; depth follows the chest, so the body never shows through.
+  const b = size(body), wide = b.x * 1.25 / .32, deep = b.z * 1.18 / .216;
+  const c = centre(body), scale = new Vector3(wide, wide, deep);
+  const neck = origin.clone().setY(origin.y + .25).multiply(scale);
+  return new Matrix4().compose(new Vector3(c.x, body.max.y + b.y * .02, c.z).sub(neck), new Quaternion(), scale);
 }
 
 function fitAmulet(body: Box3, item: Box3): Matrix4 {
@@ -189,13 +192,17 @@ function fitBoot(body: Box3, item: Box3): Matrix4 {
   return placeAt(scale, from, new Vector3(c.x, body.min.y - .005, c.z));
 }
 
-/** Fingers (+Y) follow the bind-pose hand bone; the back of the hand (+Z) faces away from the body. */
-function fitGlove(body: Box3, _item: Box3, origin: Vector3, bind: Matrix4, outward: Vector3): Matrix4 {
-  const along = new Vector3().setFromMatrixColumn(bind, 1).normalize();
+/** Fingers (+Y) run from the wrist into the hand; the back of the hand (+Z) faces away from the body. */
+function fitGlove(body: Box3, _item: Box3, origin: Vector3, hand: Measured, outward: Vector3): Matrix4 {
+  // Fingers continue the forearm, from the elbow through the wrist.
+  const wrist = new Vector3().setFromMatrixPosition(hand.bind);
+  const along = (hand.elbow ? wrist.clone().sub(hand.elbow) : centre(body).sub(wrist)).normalize();
   const back = outward.clone().addScaledVector(along, -outward.dot(along)).normalize();
   const side = new Vector3().crossVectors(along, back).normalize();
   const rotation = new Quaternion().setFromRotationMatrix(new Matrix4().makeBasis(side, along, back));
   const extent = size(body), reach = Math.max(extent.x, extent.y, extent.z);
+  // The hero makes a fist, so the glove's palm sits just short of the fist's centre and
+  // its fingers wrap past the knuckles instead of hanging below them.
   const scale = reach * 1.6 / .19;
-  return placeAt(scale, origin.clone().setY(origin.y + .03), centre(body), rotation);
+  return placeAt(scale, origin, wrist.lerp(centre(body), .7), rotation);
 }

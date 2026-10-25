@@ -34,6 +34,7 @@ import { HeroWard } from './world/heroWard';
 import { DamageNumbers } from './world/damageNumbers';
 import { ENGAGE_RADIUS, slideStep } from './world/exploration';
 import { Level, rectCenter, type Area, type Rect } from './world/levelGen';
+import type { ScoutView } from './minimapModel';
 import { packPositions } from './world/formation';
 import { buildChunk, disposeChunk, CHEST_OPEN_ANGLE, type BuiltChunk, type VaultMaterials } from './world/levelChunks';
 import { updateHeroCutout } from './world/heroCutout';
@@ -466,6 +467,16 @@ export class DungeonWorld {
 
   /** The hero stands at the combat mark with the horde in formation. */
   get combatReady(): boolean { return this.engageReady || !this.enemies.some(enemy => !enemy.dead); }
+
+  /** The level, hero and pack as the minimap and the pack's idle sounds need them. */
+  get scout(): (ScoutView & { level: Level }) | undefined {
+    const level = this.level; if (!level) return undefined;
+    const living = this.enemies.filter(enemy => !enemy.dead);
+    const pack = living.length ? { x: living.reduce((sum, enemy) => sum + enemy.at.x, 0) / living.length, z: living.reduce((sum, enemy) => sum + enemy.at.z, 0) / living.length } : undefined;
+    return { level, areas: level.areas, corridors: level.corridors, openExits: level.openExits, chests: level.chests,
+      hero: { x: this.hero.position.x, z: this.hero.position.z }, heading: this.heroVisual.rotation.y, pack, packArea: pack ? this.packArea?.id : undefined,
+      packOnScreen: this.elapsed - this.packSeenAt < 1, engaged: this.engaged, searching: this.engageWaiters.length > 0 && !this.paused };
+  }
 
   /** Starts combat with the current horde now, as when the hero comes in sight of it. The hero keeps moving. */
   engage(): void {

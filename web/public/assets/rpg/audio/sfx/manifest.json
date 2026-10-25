@@ -638,6 +638,59 @@
           "bytes": 18853
         }
       ]
+    },
+    "lurk-rattle": {
+      "kind": "sfx",
+      "prompt": "skeletons waiting in a dark stone hall out of sight: a dry restless rattle of bones and a little armor clink, then quiet, slightly distant, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "lurk-rattle-1.mp3",
+          "seconds": 0.63,
+          "bytes": 7881
+        },
+        {
+          "file": "lurk-rattle-2.mp3",
+          "seconds": 0.63,
+          "bytes": 7881
+        },
+        {
+          "file": "lurk-rattle-3.mp3",
+          "seconds": 0.73,
+          "bytes": 9135
+        }
+      ]
+    },
+    "lurk-growl": {
+      "kind": "sfx",
+      "prompt": "a monster lurking in a dark dungeon room: one low rumbling growl, a little distant, creepy but not scary for kids, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "lurk-growl-1.mp3",
+          "seconds": 1.18,
+          "bytes": 14464
+        },
+        {
+          "file": "lurk-growl-2.mp3",
+          "seconds": 1.1,
+          "bytes": 13524
+        }
+      ]
+    },
+    "lurk-scrape": {
+      "kind": "sfx",
+      "prompt": "a rusty sword tip dragged slowly across a stone floor in a dungeon room nearby, with a faint bony shuffle, slightly distant, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "lurk-scrape-1.mp3",
+          "seconds": 1.15,
+          "bytes": 14151
+        },
+        {
+          "file": "lurk-scrape-2.mp3",
+          "seconds": 1.12,
+          "bytes": 13837
+        }
+      ]
     }
   },
   "source": "scripts/audio/generate_rpg_sfx.py (ElevenLabs sound generation, eleven_text_to_sound_v2)",

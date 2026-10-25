@@ -12,6 +12,7 @@ const VOLUME: Record<string, number> = {
   'hit-frost': 1.5, 'hit-heavy': .85, 'hit-blade': .75, 'hit-fire': .7, 'hit-storm': .7,
   'blast-fire': .8, 'blast-frost': .9, 'blast-storm': .8,
   swing: .32, ward: .5, collapse: .5, alert: .55, step: .32, soul: .32,
+  'lurk-rattle': .5, 'lurk-growl': .42, 'lurk-scrape': .4,
   'charge-ember': .45, 'charge-frost': .5, 'charge-storm': .5,
   'relic-drop': .7, 'chest-open': .75, 'relic-pickup': .6, reward: .5, 'room-clear': .6, 'level-up': .75, 'boss-defeat': .85,
   'ui-click': .45, 'ui-select': .5, 'ui-open': .35, 'answer-correct': .55, 'answer-wrong': .5,
@@ -147,7 +148,7 @@ function canPlay(): boolean {
 }
 
 /** Plays a random variant of a clip, never the same take twice in a row. */
-function play(id: string, options: { volume?: number; pitch?: number; delay?: number } = {}): void {
+function play(id: string, options: { volume?: number; pitch?: number; delay?: number; pan?: number } = {}): void {
   if (!canPlay() || !context || !master) return;
   const c = context, now = c.currentTime;
   if (now - (lastPlayed.get(id) ?? -Infinity) < (MIN_GAP[id] ?? .08)) return;
@@ -168,9 +169,11 @@ function play(id: string, options: { volume?: number; pitch?: number; delay?: nu
   source.buffer = buffer;
   source.playbackRate.value = 1 + (Math.random() - .5) * (options.pitch ?? .08);
   const gain = c.createGain(); gain.gain.value = (options.volume ?? 1) * (VOLUME[id] ?? (id.startsWith('cast-') ? CAST_VOLUME : .6));
-  source.connect(gain).connect(master!);
+  const panner = options.pan && c.createStereoPanner ? c.createStereoPanner() : null;
+  if (panner) { panner.pan.value = Math.max(-1, Math.min(1, options.pan!)); source.connect(gain).connect(panner).connect(master!); }
+  else source.connect(gain).connect(master!);
   voices.add(source);
-  source.onended = () => { voices.delete(source); source.disconnect(); gain.disconnect(); };
+  source.onended = () => { voices.delete(source); source.disconnect(); gain.disconnect(); panner?.disconnect(); };
   source.start(now + (options.delay ?? 0));
 }
 
@@ -203,6 +206,15 @@ export function world(kind: WorldSound): void {
   if (kind.startsWith('impact-')) { play(kind.replace('impact-', 'hit-'), { pitch: .12 }); return; }
   if (kind === 'step') { footstep(); return; }
   play(kind, { pitch: kind === 'soul' ? .3 : kind === 'room-clear' ? 0 : .08 });
+}
+const LURK = ['lurk-rattle', 'lurk-rattle', 'lurk-growl', 'lurk-scrape'] as const;
+/**
+ * An unseen pack stirs: a bone rattle, a low growl or a blade scraping stone.
+ * `gain` (0..1) rises as the hero comes near; `pan` (-1..1) is its side of the screen.
+ */
+export function lurk(gain: number, pan: number): void {
+  if (gain <= 0) return;
+  play(LURK[Math.floor(Math.random() * LURK.length)]!, { volume: Math.min(1, gain), pan, pitch: .12 });
 }
 export const chargeSound = (school: RpgSchoolId): WorldSound => `charge-${school}`;
 

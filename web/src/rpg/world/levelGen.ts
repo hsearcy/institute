@@ -38,6 +38,8 @@ export type Corridor = { readonly id: number; readonly rects: readonly Rect[]; r
 export type Chunk = { readonly key: string; readonly bounds: Rect; readonly rects: readonly Rect[]; readonly area?: Area; readonly corridor?: Corridor };
 
 export const HERO_RADIUS = .38;
+/** How far from a chest or shrine's edge the hero may stand when it asks for its problem; a route to it ends about 1.3 m from its edge. */
+export const LOCK_REACH = 1.6;
 /** How far into its hallway a sealed door stands, and how thick its slab is. */
 export const DOOR_INSET = 1.4;
 const DOOR_DEPTH = .7;

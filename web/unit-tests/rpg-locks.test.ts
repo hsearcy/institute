@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
 import { rpgShrineBoon, RPG_BOON_IDS } from '@institute/shared';
-import { Level, rectCenter, type Biome } from '../src/rpg/world/levelGen';
+import { Level, LOCK_REACH, rectCenter, type Biome } from '../src/rpg/world/levelGen';
 
 const BIOMES: Biome[] = ['vault', 'forest', 'coast', 'quarry', 'garden'];
 
@@ -108,3 +108,19 @@ test('doors and shrines grow the same for the same seed', () => {
   assert.deepEqual(a.doors.map(door => [door.id, door.rect]), b.doors.map(door => [door.id, door.rect]));
   assert.deepEqual(a.shrines.map(shrine => shrine.id), b.shrines.map(shrine => shrine.id));
 });
+
+test('a walk to a treasury chest ends close enough for it to ask its problem', () => {
+  let checked = 0;
+  for (const biome of ['vault', 'forest'] as Biome[]) for (let seed = 1; seed < 30; seed++) {
+    const level = new Level(seed, biome);
+    level.expandAround(level.start.x, level.start.z, 60);
+    for (const door of level.doors) level.openDoor(door.id);
+    for (const area of level.areas.filter(candidate => candidate.kind === 'treasury')) {
+      const chest = area.features.find(feature => feature.kind === 'chest')!;
+      const route = level.path(level.start, { x: chest.x, z: chest.z }), end = route[route.length - 1]!;
+      assert.ok(Math.hypot(end.x - chest.x, end.z - chest.z) < chest.radius + LOCK_REACH, `${biome}/${seed}: the hero stops out of reach`);
+      checked++;
+    }
+  }
+  assert.ok(checked > 10);
+}, 30_000);

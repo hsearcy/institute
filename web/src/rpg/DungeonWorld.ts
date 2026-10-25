@@ -33,7 +33,7 @@ import { HordeDirector } from './world/hordeDirector';
 import { HeroWard } from './world/heroWard';
 import { DamageNumbers } from './world/damageNumbers';
 import { ENGAGE_RADIUS, slideStep } from './world/exploration';
-import { Level, farPoint, rectCenter, HERO_RADIUS, type Area, type Feature, type Rect } from './world/levelGen';
+import { Level, farPoint, rectCenter, HERO_RADIUS, LOCK_REACH, type Area, type Feature, type Rect } from './world/levelGen';
 import { BreakableKit, BreakableDebris, breakableHeight } from './world/breakables';
 import { EliteAura, ELITE_COLOR, ELITE_SCALE, eliteName } from './world/elite';
 import type { ScoutView } from './minimapModel';
@@ -711,8 +711,8 @@ export class DungeonWorld {
     const level = this.level; if (!level) return undefined;
     const hero = this.hero.position, reach = (x: number, z: number, radius: number) => Math.hypot(x - hero.x, z - hero.z) < radius;
     const candidates: { key: string; target: LockTarget; within: boolean }[] = [
-      ...level.chests.filter(chest => !chest.opened).map(chest => ({ key: `chest:${chest.id}`, target: { kind: 'chest' as const, id: chest.id }, within: reach(chest.x, chest.z, (chest.radius + 1.25) * scale) })),
-      ...level.shrines.filter(shrine => !shrine.opened).map(shrine => ({ key: `shrine:${shrine.id}`, target: { kind: 'shrine' as const, id: shrine.id }, within: reach(shrine.x, shrine.z, (shrine.radius + 1.3) * scale) })),
+      ...level.chests.filter(chest => !chest.opened).map(chest => ({ key: `chest:${chest.id}`, target: { kind: 'chest' as const, id: chest.id }, within: reach(chest.x, chest.z, (chest.radius + LOCK_REACH) * scale) })),
+      ...level.shrines.filter(shrine => !shrine.opened).map(shrine => ({ key: `shrine:${shrine.id}`, target: { kind: 'shrine' as const, id: shrine.id }, within: reach(shrine.x, shrine.z, (shrine.radius + LOCK_REACH) * scale) })),
       // A door asks from its hall side, where the hero stops against the slab.
       ...level.doors.filter(door => !door.opened).map(door => {
         const r = door.rect, gap = Math.hypot(Math.max(r.minX - hero.x, 0, hero.x - r.maxX), Math.max(r.minZ - hero.z, 0, hero.z - r.maxZ));

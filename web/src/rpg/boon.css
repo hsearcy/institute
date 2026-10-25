@@ -1,5 +1,5 @@
 /* The boon badge: calm by design. No blinking, no warning colour, no rush. */
-#rpg-ui .rpg-boon { position:absolute; z-index:4; right:30px; top:84px; display:flex; align-items:center; gap:11px; padding:7px 16px 7px 8px; border:1px solid #6d5a37; border-radius:32px; background:linear-gradient(115deg,#141d20ee,#0c1417e0); box-shadow:0 8px 26px #0008, inset 0 0 0 1px #00000060; color:#ecdcb6; pointer-events:none; animation:rpg-boon-in .7s ease-out both; transition:opacity 1.2s ease, transform 1.2s ease; }
+#rpg-ui .rpg-boon { position:absolute; z-index:4; right:30px; top:236px; display:flex; align-items:center; gap:11px; padding:7px 16px 7px 8px; border:1px solid #6d5a37; border-radius:32px; background:linear-gradient(115deg,#141d20ee,#0c1417e0); box-shadow:0 8px 26px #0008, inset 0 0 0 1px #00000060; color:#ecdcb6; pointer-events:none; animation:rpg-boon-in .7s ease-out both; transition:opacity 1.2s ease, transform 1.2s ease; }
 #rpg-ui .rpg-boon[hidden] { display:none; }
 #rpg-ui .rpg-boon.rpg-boon-ending { opacity:0; transform:translateY(-4px); }
 .rpg-boon-icon { position:relative; width:48px; height:48px; flex:none; }
@@ -13,10 +13,14 @@
 /* While a problem waits, the clock rests: the ring dims a little and holds still. */
 #rpg-ui .rpg-boon.rpg-boon-resting .rpg-boon-time { opacity:.55; }
 @keyframes rpg-boon-in { from { opacity:0; transform:translateY(6px) scale(.97); } }
+/* Under the minimap, at each of its sizes. */
+@media (max-width: 1200px) { #rpg-ui .rpg-boon { right:24px; top:212px; } }
 @media (max-width: 720px) {
-  #rpg-ui .rpg-boon { right:12px; top:72px; padding:5px 12px 5px 6px; gap:8px; }
+  #rpg-ui .rpg-boon { right:12px; top:218px; padding:5px 12px 5px 6px; gap:8px; }
   .rpg-boon-text span { display:none; }
 }
+/* Phone landscape: the minimap moves to the lower left, so the badge keeps the top corner. */
+@media (max-width: 1000px) and (max-height: 500px) and (min-aspect-ratio: 3/2) { #rpg-ui .rpg-boon { top:72px; } }
 @media (prefers-reduced-motion: reduce) { #rpg-ui .rpg-boon { animation:none; } .rpg-boon-time { transition:none; } }
 /* A shrine's or a door's lock panel. */
 .rpg-answer-panel.rpg-chest-lock[data-lock="shrine"] { border-color:var(--lock-boon, #e2b65a); box-shadow:0 12px 40px #0009,inset 0 0 0 3px #1d2a2a,0 0 26px color-mix(in srgb, var(--lock-boon, #ffbe4a) 25%, transparent); }

@@ -223,6 +223,11 @@ export class HeldEquipment {
 
   get itemId(): string | undefined { return this.mounted?.userData.itemId; }
 
+  /** Hide a worn head relic while a helm covers it; everything else always shows. */
+  setHelmWorn(helm: boolean): void {
+    if (this.mounted) this.mounted.visible = !(helm && this.mounted.userData.attachment === 'head');
+  }
+
   /** Actual mounted endpoints, including the current hand pose and actor scale.
    * Caller-owned vectors avoid allocations in a live weapon trail.
    */

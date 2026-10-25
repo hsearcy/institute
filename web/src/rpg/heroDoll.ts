@@ -112,11 +112,12 @@ export class HeroDoll {
     this.wanted = { ...worn };
     for (const kind of WORN_KINDS) {
       const baseId = worn[kind];
-      if (!baseId) { this.worn?.remove(kind); continue; }
+      if (!baseId) { this.worn?.remove(kind); if (kind === 'helm') this.held?.setHelmWorn(false); continue; }
       if (this.worn?.worn()[kind] === baseId) continue;
       void this.source.gearModel(baseId).then(model => {
         if (this.disposed || this.wanted[kind] !== baseId || !model || !this.hero) return;
         this.worn?.wear(kind, baseId, model);
+        this.held?.setHelmWorn(!!this.worn?.worn().helm);
         this.ownMaterials();
       });
     }
@@ -126,7 +127,7 @@ export class HeroDoll {
   private hold(itemId: string): void {
     if (!this.held || this.held.itemId === itemId) return;
     const model = this.source.itemModel(itemId);
-    if (model && this.held.replace(model)) this.ownMaterials();
+    if (model && this.held.replace(model)) { this.ownMaterials(); this.held.setHelmWorn(!!this.worn?.worn().helm); }
   }
 
   /** Mounted gear shares the world's materials; give the doll its own copies without the world's envMap. */

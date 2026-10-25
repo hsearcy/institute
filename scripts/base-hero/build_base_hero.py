@@ -230,8 +230,23 @@ def main():
     armature = next(i for i, node in enumerate(old.doc['nodes']) if node.get('name') == 'Armature')
     old.doc['nodes'].append({'name': 'base_body', 'mesh': len(old.doc['meshes']) - 1, 'skin': skin_index, 'extras': {'sourcePart': 'base_body'}})
     old.doc['nodes'][armature].setdefault('children', []).append(len(old.doc['nodes']) - 1)
+    # The head socket (crowns) was measured on the old hood; seat it on the new hair.
+    world = eq.world_matrices(old.doc)
+    index = {node.get('name'): i for i, node in enumerate(old.doc['nodes'])}
+    to_armature = np.linalg.inv(world[armature])
+    head_vertices = aligned[joint_node[np.arange(len(aligned)), 0] == index['Head']]
+    crown = head_vertices[head_vertices[:, 1] > head_vertices[:, 1].max() - .06]
+    socket = index['TripoHeadSocket']
+    seat = to_armature @ world[socket]
+    target = np.array([crown[:, 0].mean(), head_vertices[:, 1].max() - .035, crown[:, 2].mean()])
+    seat[:3, 3] = target
+    parent = next(i for i, node in enumerate(old.doc['nodes']) if socket in node.get('children', []))
+    local = np.linalg.inv(to_armature @ world[parent]) @ seat
+    node = old.doc['nodes'][socket]
+    for key in ('translation', 'rotation', 'scale'): node.pop(key, None)
+    node['matrix'] = local.T.reshape(-1).tolist()
     old.save(args.output)
-    report = {'rightFistVertices': int((hand > .5).sum()), 'armTurns': arm_turns, 'scale': scale, 'offset': offset.tolist(), 'span': span, 'rise': rise, 'removed': removed, 'skin': skin_index,
+    report = {'headSocket': target.round(4).tolist(), 'rightFistVertices': int((hand > .5).sum()), 'armTurns': arm_turns, 'scale': scale, 'offset': offset.tolist(), 'span': span, 'rise': rise, 'removed': removed, 'skin': skin_index,
               'vertices': len(aligned), 'triangles': len(indices) // 3, 'meanNeighbourDistance': float(distance[:, 0].mean()),
               'p95NeighbourDistance': float(np.percentile(distance[:, 0], 95))}
     print(json.dumps(report, indent=2))

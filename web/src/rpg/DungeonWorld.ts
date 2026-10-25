@@ -1602,11 +1602,12 @@ export class DungeonWorld {
     this.wornWanted = { ...worn };
     for (const kind of WORN_KINDS) {
       const baseId = worn[kind];
-      if (!baseId) { this.wornGear?.remove(kind); continue; }
+      if (!baseId) { this.wornGear?.remove(kind); if (kind === 'helm') this.heldEquipment?.setHelmWorn(false); continue; }
       if (this.wornGear?.worn()[kind] === baseId) continue;
       void this.gearModel(baseId).then(source => {
         if (this.disposed || this.wornWanted[kind] !== baseId || !source) return;
         this.wornGear?.wear(kind, baseId, source); this.renderer.shadowMap.needsUpdate = true;
+        this.heldEquipment?.setHelmWorn(!!this.wornGear?.worn().helm);
       });
     }
   }
@@ -1657,6 +1658,7 @@ export class DungeonWorld {
     });
     const authoredItem = ITEM_MODELS[itemId];
     if (authoredItem) this.heldEquipment?.replace(this.models.get(authoredItem.model));
+    this.heldEquipment?.setHelmWorn(!!this.wornGear?.worn().helm);
     this.renderer.shadowMap.needsUpdate = true;
   }
 

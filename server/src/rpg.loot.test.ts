@@ -34,7 +34,7 @@ test('rolled drop and guaranteed material receipt survive retries without granti
     expect(result.reward.loot?.itemId).toBe('cinderwand');
     expect(result.reward.loot!.bonusPower).toBeGreaterThan(0);
     expect(result.reward.loot!.bonusTargets).toBe(1);
-    expect(result.reward.forgeDust).toBe(3);
+    expect(result.reward.forgeDust).toBe(3 + (result.reward.steadyDust ?? 0)); // plus the steady-ward bonus
     const before = db.query('SELECT state_json FROM rpg_profiles').get() as { state_json: string };
     const solves = db.query('SELECT * FROM daily_solves').all(), attempts = db.query('SELECT * FROM attempts').all();
     random.mockImplementation(() => { throw new Error('A receipt must never reroll loot'); });
@@ -42,7 +42,7 @@ test('rolled drop and guaranteed material receipt survive retries without granti
     expect(retry.duplicate).toBe(true);
     expect(retry.reward).toEqual(result.reward);
     expect(retry.state.loot).toEqual(result.state.loot);
-    expect(retry.state.forgeDust).toBe(3);
+    expect(retry.state.forgeDust).toBe(3 + (result.reward.steadyDust ?? 0));
     expect(db.query('SELECT state_json FROM rpg_profiles').get()).toEqual(before);
     expect(db.query('SELECT * FROM daily_solves').all()).toEqual(solves);
     expect(db.query('SELECT * FROM attempts').all()).toEqual(attempts);
@@ -71,10 +71,11 @@ test('each highest-tier clear unlocks one harder tier; old active encounters ret
   try {
     expect(() => startRpgExpedition(db, 'sam', 'embercrypt', 2)).toThrow('highest dungeon tier');
     const started = startRpgExpedition(db, 'sam');
-    for (let room = 0; room < 6; room++) finishRoom(db, `room-${room}`);
+    let steady = 0;
+    for (let room = 0; room < 6; room++) steady += finishRoom(db, `room-${room}`).result.reward.steadyDust ?? 0;
     const cleared = getRpgState(db, 'sam');
     expect(cleared.bestTier).toBe(1);
-    expect(cleared.forgeDust).toBe(rpgDungeonForgeDust(1));
+    expect(cleared.forgeDust).toBe(rpgDungeonForgeDust(1) + steady);
     const tier2 = startRpgExpedition(db, 'sam', 'embercrypt', 2);
     expect(tier2.expedition!.tier).toBe(2);
     expect(tier2.expedition!.combat!.enemies[0].maxHp).toBeGreaterThan(started.expedition!.combat!.enemies[0].maxHp);

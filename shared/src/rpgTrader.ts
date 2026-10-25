@@ -5,9 +5,10 @@
 // enter the attempts table or topic mastery.
 import { RPG_ITEMS, type RpgState } from './rpg';
 import { rpgTier } from './rpgLoot';
+import { RPG_WARD_TONIC, RPG_WARD_TONIC_FIGHTS } from './rpgWard';
 
-export type RpgTraderWareId = 'wisdom-potion' | 'lucky-charm' | 'fresh-roll';
-export const RPG_TRADER_WARE_IDS = ['wisdom-potion', 'lucky-charm', 'fresh-roll'] as const;
+export type RpgTraderWareId = 'wisdom-potion' | 'lucky-charm' | 'fresh-roll' | 'ward-tonic';
+export const RPG_TRADER_WARE_IDS = ['wisdom-potion', 'lucky-charm', 'fresh-roll', 'ward-tonic'] as const;
 export interface RpgTraderWare { id: RpgTraderWareId; name: string; description: string; price: number }
 
 export const RPG_WISDOM_POTION_XP = 30;
@@ -23,6 +24,7 @@ export function rpgTraderWares(state: Pick<RpgState, 'bestTier'>): RpgTraderWare
     { id: 'wisdom-potion', name: 'Wisdom potion', description: `Drink it for +${RPG_WISDOM_POTION_XP} XP right away.`, price: 18 },
     { id: 'lucky-charm', name: 'Lucky charm', description: 'The next chest you unlock holds a relic.', price: 24 },
     { id: 'fresh-roll', name: 'Fresh roll', description: 'A new copy of a relic you own, with brand-new bonuses. Your old copy stays.', price: rpgFreshRollPrice(state) },
+    { id: 'ward-tonic', name: 'Ward tonic', description: `Your ward starts each of your next ${RPG_WARD_TONIC_FIGHTS} fights with +${RPG_WARD_TONIC} more.`, price: 15 },
   ];
 }
 
@@ -33,6 +35,7 @@ export function rpgTraderBlocked(state: RpgState, wareId: RpgTraderWareId, itemI
   const dust = state.forgeDust ?? 0;
   if (dust < ware.price) return `You need ${ware.price - dust} more forge dust.`;
   if (wareId === 'lucky-charm' && (state.chestCharms ?? 0) >= RPG_MAX_CHEST_CHARMS) return `Your pack holds ${RPG_MAX_CHEST_CHARMS} charms already. Open a chest first.`;
+  if (wareId === 'ward-tonic' && (state.wardTonics ?? 0) > 0) return `Your tonic still lasts ${state.wardTonics} more fight${state.wardTonics === 1 ? '' : 's'}.`;
   if (wareId === 'fresh-roll') {
     if (!itemId || itemId === 'apprentice' || !RPG_ITEMS.some(item => item.id === itemId)) return 'Choose one of your relics.';
     if (!state.inventory.includes(itemId)) return 'Find this relic before asking for a fresh roll.';

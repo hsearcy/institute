@@ -102,7 +102,8 @@ describe('shrines grant a boon for one solved problem', () => {
     }
     expect(reward!.combat!.encounterCleared).toBe(true);
     expect(reward!.bountyDust).toBeGreaterThan(0);
-    expect(reward!.forgeDust).toBe(reward!.bountyDust! * 2);
+    // A steady finish (more than half the ward) adds its own small bonus on top.
+    expect(reward!.forgeDust).toBe(reward!.bountyDust! * 2 + (reward!.steadyDust ?? 0));
     expect(getRpgState(db, 'sam').expedition!.boon).toBeUndefined();
   });
 

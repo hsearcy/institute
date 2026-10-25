@@ -3,10 +3,12 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import {
   rpgRollBossBonus, rpgLootSpellShape, RPG_CHESTS_PER_EXPEDITION, RPG_CHEST_XP, rpgEquippedLoot, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellAvailable, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER, rpgDepth, rpgDepthSteps, rpgDepthXp, rpgChestStory, RPG_FURY_DAMAGE, RPG_GUARDIAN_ENCOUNTER, rpgGuardianAwake, rpgNextPackIndex, rpgPacksCleared,
+  rpgCreateGear, rpgPickGearBase, rpgRollGearRarity, rpgGearStats, rpgWardMax, rpgWardCounterstrike, rpgSteadyDust, rpgDustFindBonus, rpgStoreGear, rpgNormalizeGear, RPG_WARD_TONIC, RPG_GEAR_PACK_CHANCE, RPG_GEAR_CHEST_CHANCE,
   rpgCreateEliteLoot, RPG_BREAKABLE_DUST, RPG_BREAKABLE_DUST_CHANCE, RPG_BREAKABLE_DUST_PER_EXPEDITION, RPG_BREAKABLE_DUST_PER_DAY, RPG_BREAKABLES_PER_EXPEDITION,
   type RpgBreakResult, type RpgBreakReward, type RpgState, type RpgReward, type RpgResolveResult, type RpgChestResult, type RpgChestReward,
 } from '@institute/shared';
 import { servedProblem } from './servedProblems';
+import { RpgGearError, GearEquipSchema, GearSlotSchema, GearSalvageSchema, rpgEquipGear, rpgUnequipGear, rpgSalvageGear } from './rpgGear';
 import { ensureRpgLockSchema, rpgProblemOpenedLock, rpgBoonForCast, rpgPauseBoon, activateRpgShrine, openRpgDoor } from './rpgLocks';
 
 /** Additive tables only: never migrate, reset, or award learning state. */
@@ -77,7 +79,7 @@ export class RpgError extends Error {
 export function getRpgState(db: Database, profileId: string): RpgState {
   const row = db.query('SELECT state_json FROM rpg_profiles WHERE profile_id = ?').get(profileId) as { state_json: string } | null;
   if (row) {
-    const state = rpgNormalizeLoot(JSON.parse(row.state_json) as RpgState);
+    const state = rpgNormalizeGear(rpgNormalizeLoot(JSON.parse(row.state_json) as RpgState));
     // Existing JSON saves gain a default only in the response. Reading never
     // rewrites the profile or changes any earned learning/adventure progress.
     state.appearanceId = rpgAppearanceUnlocked(state.appearanceId, rpgLevel(state.xp).level) ? state.appearanceId : 'wayfarer';
@@ -85,10 +87,10 @@ export function getRpgState(db: Database, profileId: string): RpgState {
     if (state.expedition && !state.expedition.cleared) state.expedition.combat = rpgEncounterCombat(state);
     return state;
   }
-  return rpgNormalizeLoot({
+  return rpgNormalizeGear(rpgNormalizeLoot({
     profileId, xp: 0, ...rpgLevel(0), skillPoints: 0, skills: {}, inventory: ['apprentice'],
     equippedItemId: 'apprentice', selectedSpellId: 'cleave', appearanceId: 'wayfarer', totalKills: 0, expeditionsCompleted: 0, expedition: null,
-  });
+  }));
 }
 
 export function saveRpgState(db: Database, state: RpgState): void {
@@ -206,8 +208,18 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
       AND correct = 0 AND COALESCE(skipped, 0) = 0`).get(body.profileId, body.problemId) as { count: number };
     const powerPercent = rpgAnswerPower(body.answerMs, Math.max(body.wrongCount ?? 0, recordedWrong.count));
     const before = rpgEncounterCombat(state);
+    // A fight's first cast fills the ward; a waiting tonic adds to it for this fight only.
+    if (before.ward === undefined) {
+      if ((state.wardTonics ?? 0) > 0) { state.wardTonics = state.wardTonics! - 1; before.wardBonus = RPG_WARD_TONIC; }
+      before.ward = rpgWardMax(state, before);
+    }
     const boon = rpgBoonForCast(expedition, Date.now(), body.answerMs, body.boonActive === true);
     const cast = rpgApplyCombat(state, before, spellId, powerPercent, boon?.id === 'fury' ? RPG_FURY_DAMAGE : 1);
+    // Only a cast lets the monsters still standing strike back, once each.
+    const worn = rpgGearStats(state);
+    const ward = rpgWardCounterstrike({ ward: before.ward, max: rpgWardMax(state, before), survivors: cast.combat.enemies, encounterIndex: before.encounterIndex,
+      tier: expedition.tier, depth: expedition.depth, warding: worn.warding, wardMend: worn.wardMend });
+    cast.combat.ward = ward.value;
     expedition.combat = cast.combat;
     const bossDefeated = cast.result.encounterCleared && expedition.encounterIndex === expedition.encountersTotal - 1;
     const kills = cast.result.defeatedIds.length;
@@ -230,7 +242,11 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
     const bountyDust = boon?.id === 'bounty' && cast.result.encounterCleared ? rpgRoomForgeDust(tier, bossDefeated) : 0;
     if (bountyDust) delete expedition.boon;
     rpgPauseBoon(expedition, body.answerMs);
-    const forgeDust = (cast.result.encounterCleared ? rpgRoomForgeDust(tier, bossDefeated) + rpgDepthSteps(expedition.depth) : 0) + bountyDust;
+    const foughtDust = (cast.result.encounterCleared ? rpgRoomForgeDust(tier, bossDefeated) + rpgDepthSteps(expedition.depth) : 0) + bountyDust;
+    const dustFound = rpgDustFindBonus(state, foughtDust);
+    // Ending a fight with more than half the ward pays a little more.
+    const steadyDust = cast.result.encounterCleared ? rpgSteadyDust(ward.value, ward.max, expedition.depth) : 0;
+    const forgeDust = foughtDust + dustFound + steadyDust;
     state.forgeDust = (state.forgeDust ?? 0) + forgeDust;
     if (item && !duplicateItem) state.inventory.push(item.id);
     if (duplicateItem) xp += RPG_DUPLICATE_ITEM_XP;
@@ -248,7 +264,14 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
     const shape = rpgLootSpellShape(rpgEquippedLoot(state));
     const spellShape = shape?.spellId === spellId ? shape.id : undefined;
     const { bossCrazyCoins, bossDimes } = bossDefeated ? rpgRollBossBonus(Math.random, tier) : { bossCrazyCoins: 0, bossDimes: 0 };
-    const reward: RpgReward = { spellShape, bossCrazyCoins, bossDimes, xp, kills, levelUp: levelsGained > 0, levelsGained, item, newItems: item && !duplicateItem ? [item] : [], duplicateItem, bossDefeated, spellId, combat: cast.result, loot, forgeDust, tier, ...(elite && cast.result.encounterCleared ? { elite: true } : {}), ...(boon ? { boon: boon.id } : {}), ...(bountyDust ? { bountyDust } : {}) };
+    // Armour or jewellery: elites and guardians always leave a finer piece; other packs sometimes.
+    const better = elite || bossDefeated;
+    const found = cast.result.encounterCleared && (better || Math.random() < RPG_GEAR_PACK_CHANCE)
+      ? rpgCreateGear(rpgPickGearBase(Math.random, tier).id, tier, Math.random, rpgRollGearRarity(Math.random, tier, better)) : undefined;
+    const stored = found ? rpgStoreGear(state, found) : undefined;
+    const reward: RpgReward = { spellShape, bossCrazyCoins, bossDimes, xp, kills, levelUp: levelsGained > 0, levelsGained, item, newItems: item && !duplicateItem ? [item] : [], duplicateItem, bossDefeated, spellId, combat: cast.result, loot, forgeDust, tier, ...(elite && cast.result.encounterCleared ? { elite: true } : {}), ...(boon ? { boon: boon.id } : {}), ...(bountyDust ? { bountyDust } : {}),
+      ward, ...(steadyDust ? { steadyDust } : {}), ...(dustFound ? { dustFound } : {}), ...(found ? { gear: found } : {}),
+      ...(stored?.salvaged ? { gearSalvaged: { name: stored.salvaged.name, rarity: stored.salvaged.rarity, forgeDust: stored.dust } } : {}) };
     db.query(`INSERT INTO rpg_cast_claims (profile_id, problem_id, expedition_id, encounter_index, reward_json, created_at)
       VALUES (?, ?, ?, ?, ?, ?)`).run(body.profileId, body.problemId, expedition.id, body.encounterIndex, JSON.stringify(reward), Date.now());
     saveRpgState(db, state);
@@ -307,7 +330,12 @@ export function openRpgChest(db: Database, input: z.infer<typeof ChestSchema>): 
     // here from the problem the tutor served (never from the client).
     const served = servedProblem(db, body.profileId, body.problemId);
     const story = served ? rpgChestStory({ id: body.problemId, ...served }, tier, full) : null;
-    const xp = full ? RPG_CHEST_XP : 0, forgeDust = full ? story?.forgeDust ?? rpgRoomForgeDust(tier) : 0;
+    const counted = full ? story?.forgeDust ?? rpgRoomForgeDust(tier) : 0;
+    // Worn gear finds a little more on top of what the story counted.
+    const dustFound = rpgDustFindBonus(state, counted);
+    const xp = full ? RPG_CHEST_XP : 0, forgeDust = counted + dustFound;
+    const found = full && Math.random() < RPG_GEAR_CHEST_CHANCE ? rpgCreateGear(rpgPickGearBase(Math.random, tier).id, tier, Math.random) : undefined;
+    const stored = found ? rpgStoreGear(state, found) : undefined;
     expedition.chestsOpened = opened.count + 1;
     const oldLevel = state.level;
     rpgPauseBoon(expedition);
@@ -316,7 +344,9 @@ export function openRpgChest(db: Database, input: z.infer<typeof ChestSchema>): 
     const levelsGained = state.level - oldLevel;
     state.skillPoints += levelsGained;
     const reward: RpgChestReward = { chestId: body.chestId, xp, forgeDust, levelUp: levelsGained > 0, levelsGained, item, newItems: item && !duplicateItem ? [item] : [], duplicateItem, loot, tier,
-      ...(story?.counted != null ? { counted: { treasure: story.treasure, amount: story.counted } } : {}), ...(charm ? { charm: true } : {}) };
+      ...(story?.counted != null ? { counted: { treasure: story.treasure, amount: story.counted } } : {}), ...(charm ? { charm: true } : {}),
+      ...(dustFound ? { dustFound } : {}), ...(found ? { gear: found } : {}),
+      ...(stored?.salvaged ? { gearSalvaged: { name: stored.salvaged.name, rarity: stored.salvaged.rarity, forgeDust: stored.dust } } : {}) };
     db.query(`INSERT INTO rpg_chest_claims (profile_id, problem_id, expedition_id, chest_id, reward_json, created_at) VALUES (?, ?, ?, ?, ?, ?)`)
       .run(body.profileId, body.problemId, expedition.id, body.chestId, JSON.stringify(reward), Date.now());
     saveRpgState(db, state);
@@ -366,6 +396,7 @@ export function createRpgRoutes(db: Database, applyMiss?: (profileId: string) =>
   app.onError((error, c) => {
     if (error instanceof z.ZodError) return c.json({ error: 'Invalid adventure request.' }, 400);
     if (error instanceof RpgError) return c.json({ error: error.message }, error.status);
+    if (error instanceof RpgGearError) return c.json({ error: error.message }, 400);
     if (error instanceof SyntaxError) return c.json({ error: 'Invalid JSON.' }, 400);
     console.error('[rpg]', error);
     return c.json({ error: 'Your adventure could not be saved. Please try again.' }, 500);
@@ -473,6 +504,25 @@ export function createRpgRoutes(db: Database, applyMiss?: (profileId: string) =>
     if (!rpgSpellAvailable(state)) state.selectedSpellId = 'cleave';
     saveRpgState(db, state);
     return c.json(state);
+  });
+  // Armour and jewellery: wear, take off, or break a spare copy into forge dust.
+  const gearChange = (profileId: string, change: (state: RpgState) => void) => db.transaction(() => {
+    const state = getRpgState(db, profileId);
+    change(state);
+    saveRpgState(db, state);
+    return state;
+  })();
+  app.post('/gear/equip', async (c) => {
+    const { profileId, gearId, slot } = GearEquipSchema.parse(await c.req.json());
+    return c.json(gearChange(profileId, state => rpgEquipGear(state, gearId, slot)));
+  });
+  app.post('/gear/unequip', async (c) => {
+    const { profileId, slot } = GearSlotSchema.parse(await c.req.json());
+    return c.json(gearChange(profileId, state => rpgUnequipGear(state, slot)));
+  });
+  app.post('/gear/salvage', async (c) => {
+    const { profileId, gearId } = GearSalvageSchema.parse(await c.req.json());
+    return c.json(gearChange(profileId, state => rpgSalvageGear(state, gearId)));
   });
   app.post('/goal', async (c) => {
     const { profileId, goal } = ProfileSchema.extend({ goal: z.object({ kind: z.enum(['item', 'upgrade', 'skill']), id: z.string().min(1).max(100) }).nullable() }).parse(await c.req.json());

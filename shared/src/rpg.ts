@@ -1,4 +1,5 @@
 import { rpgLootSpellShape, rpgLootCombatAffix, rpgEffectiveSkills, rpgEquippedLoot, rpgLootAffixes, rpgLootSkillBonus, rpgLootPower, rpgTier } from './rpgLoot';
+import type { RpgBoon, RpgBoonId } from './rpgLocks';
 
 /** Adventure content only. Never used by tutor selection, mastery, or review. */
 export const RPG_DUPLICATE_ITEM_XP = 16;
@@ -138,7 +139,7 @@ export interface RpgCombatResult {
   defeatedIds: string[]; encounterCleared: boolean; remainingEnemies: number;
   damage: number; coverage: number; powerPercent?: number;
 }
-export interface RpgExpedition { id: string; regionId: string; encounterIndex: number; encountersTotal: number; cleared: boolean; startedAt: number; combat?: RpgCombatState; tier?: number }
+export interface RpgExpedition { id: string; regionId: string; encounterIndex: number; encountersTotal: number; cleared: boolean; startedAt: number; combat?: RpgCombatState; tier?: number; boon?: RpgBoon }
 export type RpgSpellShape = 'twin-orb' | 'meteor-shower' | 'split-lance'
   | 'aftershock' | 'rift-slash' | 'blazing-wake' | 'volcanic-ground' | 'crystal-bloom'
   | 'frozen-fault' | 'whiteout' | 'glacial-hammer' | 'thunder-web' | 'overcharge' | 'resonance' | 'storm-pillars';
@@ -157,7 +158,7 @@ export interface RpgState {
   loot?: RpgLootInstance[]; equippedLootId?: string | null; forgeDust?: number;
   dungeonTier?: number; bestTier?: number; goal?: RpgGoal | null;
 }
-export interface RpgReward { xp: number; kills: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; bossDefeated: boolean; spellId: RpgSpellId; combat?: RpgCombatResult; loot?: RpgLootInstance; forgeDust?: number; tier?: number; bossCrazyCoins?: number; bossDimes?: number; spellShape?: RpgSpellShape }
+export interface RpgReward { xp: number; kills: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; bossDefeated: boolean; spellId: RpgSpellId; combat?: RpgCombatResult; loot?: RpgLootInstance; forgeDust?: number; tier?: number; bossCrazyCoins?: number; bossDimes?: number; spellShape?: RpgSpellShape; boon?: RpgBoonId; bountyDust?: number }
 export interface RpgResolveResult { state: RpgState; reward: RpgReward; duplicate: boolean }
 /** A chest opened with a solved problem: smaller than a fight's reward, sometimes a relic. */
 export interface RpgChestReward { chestId: string; xp: number; forgeDust: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; loot?: RpgLootInstance; tier: number }
@@ -317,10 +318,11 @@ export function rpgAnswerPower(answerMs = 0, wrongCount = 0): number {
 }
 
 /** Pure authoritative cast preview; callers persist the returned state atomically. */
-export function rpgApplyCombat(state: RpgLoadout, combat: RpgCombatState, spellId = state.selectedSpellId, powerPercent = 100): { combat: RpgCombatState; result: RpgCombatResult } {
+export function rpgApplyCombat(state: RpgLoadout, combat: RpgCombatState, spellId = state.selectedSpellId, powerPercent = 100, damageMultiplier = 1): { combat: RpgCombatState; result: RpgCombatResult } {
   const stats = rpgSpellCombatStats(state, spellId);
   const power = Number.isFinite(powerPercent) ? Math.max(30, Math.min(100, powerPercent)) : 100;
-  const damage = Math.max(1, Math.round(stats.damage * power / 100));
+  const boost = Number.isFinite(damageMultiplier) ? Math.max(1, Math.min(2, damageMultiplier)) : 1;
+  const damage = Math.max(1, Math.round(stats.damage * power / 100 * boost));
   const affix = rpgLootCombatAffix(rpgEquippedLoot(state));
   const next: RpgCombatState = { ...combat, casts: combat.casts + 1, enemies: combat.enemies.map(enemy => ({ ...enemy })) };
   const hits = next.enemies.filter(enemy => enemy.hp > 0).slice(0, stats.targets).map(enemy => {

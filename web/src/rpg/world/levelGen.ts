@@ -7,10 +7,11 @@
 export type Rect = Readonly<{ minX: number; maxX: number; minZ: number; maxZ: number }>;
 export type Side = 'north' | 'south' | 'east' | 'west';
 export type Biome = 'vault' | 'forest' | 'coast' | 'quarry' | 'garden';
-export type AreaKind = 'entry' | 'hall' | 'sanctum';
+/** A treasury is a small dead-end room behind a sealed door; no pack ever waits there. */
+export type AreaKind = 'entry' | 'hall' | 'sanctum' | 'treasury';
 export type FeatureKind = 'pier' | 'brazier' | 'crystals' | 'tomb' | 'rubble' | 'chest' | 'landmark' | 'altar'
-  | 'tree' | 'boulder' | 'column' | 'fountain' | 'wreck' | 'cart';
-/** A solid object on the floor. The hero and the horde walk round its radius. A chest can be opened. */
+  | 'tree' | 'boulder' | 'column' | 'fountain' | 'wreck' | 'cart' | 'shrine';
+/** A solid object on the floor. The hero and the horde walk round its radius. A chest opens; a shrine is spent once used. */
 export type Feature = Readonly<{ id: string; kind: FeatureKind; x: number; z: number; radius: number; turn: number; scale: number }> & { opened?: boolean };
 export type Area = {
   readonly id: number; readonly kind: AreaKind; readonly rect: Rect; readonly name: string; readonly seed: number;
@@ -18,12 +19,24 @@ export type Area = {
   readonly back: Side;
   readonly features: Feature[]; readonly exits: Exit[]; visited: boolean;
 };
-export type Exit = { readonly id: number; readonly area: number; readonly side: Side; readonly at: number; state: 'open' | 'linked' | 'sealed'; corridor?: number };
+/** A locked exit grows a short hallway with a sealed door, then a treasury. */
+export type Exit = { readonly id: number; readonly area: number; readonly side: Side; readonly at: number; state: 'open' | 'linked' | 'sealed'; corridor?: number; readonly locked?: boolean };
+/**
+ * A sealed door across a hallway, just inside the doorway it leads from.
+ * `side` points from the hall towards the treasury. Closed, its slab blocks
+ * every step; a solved problem opens it.
+ */
+export type Door = { readonly id: string; readonly corridor: number; readonly area: number; readonly x: number; readonly z: number; readonly side: Side; readonly width: number; readonly rect: Rect; opened: boolean };
 export type Corridor = { readonly id: number; readonly rects: readonly Rect[]; readonly from: number; readonly to: number };
 /** A piece of the level that is built and released as one batch. */
 export type Chunk = { readonly key: string; readonly bounds: Rect; readonly rects: readonly Rect[]; readonly area?: Area; readonly corridor?: Corridor };
 
 export const HERO_RADIUS = .38;
+/** How far into its hallway a sealed door stands, and how thick its slab is. */
+export const DOOR_INSET = 1.4;
+const DOOR_DEPTH = .7;
+const LOCKED_CHANCE = .3;
+const SHRINE_CHANCE = .32;
 const MARGIN = 2;
 const DIRECTION: Record<Side, { x: number; z: number }> = { north: { x: 0, z: -1 }, south: { x: 0, z: 1 }, east: { x: 1, z: 0 }, west: { x: -1, z: 0 } };
 const OPPOSITE: Record<Side, Side> = { north: 'south', south: 'north', east: 'west', west: 'east' };
@@ -41,6 +54,7 @@ const NAMES: Record<Biome, readonly string[]> = {
   garden: ['The Rose Walk', 'The Silent Fountain', 'The Cypress Walk', 'The Overgrown Court', 'The Marble Steps', 'The Hedge Maze',
     'The Lily Pond', 'The Sundial Lawn', 'The Ivy Gate'],
 };
+const TREASURY: Record<Biome, string> = { vault: 'The Sealed Treasury', forest: 'The Hidden Hollow', coast: 'The Smugglers’ Cache', quarry: 'The Locked Store', garden: 'The Walled Garden' };
 const SANCTUM: Record<Biome, string> = { vault: 'The Guardian Sanctum', forest: 'The Heartwood Circle', coast: 'The Stormwatch Point', quarry: 'The Foreman Terrace', garden: 'The Crown Pavilion' };
 
 /** Small seeded generator: the same seed always grows the same piece. */
@@ -56,6 +70,7 @@ export const rectCenter = (rect: Rect) => ({ x: (rect.minX + rect.maxX) / 2, z: 
 export class Level {
   readonly areas: Area[] = [];
   readonly corridors: Corridor[] = [];
+  readonly doors: Door[] = [];
   private readonly exits: Exit[] = [];
   /** Floor cells: an area id, or -1 - id for a corridor. */
   private readonly floor = new Map<number, number>();
@@ -110,7 +125,7 @@ export class Level {
    * however far it is. Used to make room for the guardian.
    */
   growNearest(x: number, z: number, kind: AreaKind): Area | undefined {
-    const open = this.exits.filter(exit => exit.state === 'open')
+    const open = this.exits.filter(exit => exit.state === 'open' && !exit.locked)
       .sort((a, b) => { const p = this.doorCenter(a), q = this.doorCenter(b); return Math.hypot(p.x - x, p.z - z) - Math.hypot(q.x - x, q.z - z); });
     for (const exit of open) { const area = this.expand(exit, kind); if (area) return area; }
     return undefined;
@@ -118,6 +133,17 @@ export class Level {
 
   /** Every chest grown so far, open or closed. */
   get chests(): Feature[] { return this.areas.flatMap(area => area.features.filter(feature => feature.kind === 'chest')); }
+
+  /** Every shrine grown so far, spent or not. */
+  get shrines(): Feature[] { return this.areas.flatMap(area => area.features.filter(feature => feature.kind === 'shrine')); }
+
+  /** Opens a sealed door: its hallway is walkable from now on. Returns false when there is no such closed door. */
+  openDoor(id: string): boolean {
+    const door = this.doors.find(candidate => candidate.id === id);
+    if (!door || door.opened) return false;
+    door.opened = true; this.passCache.clear();
+    return true;
+  }
 
   get openExits(): { x: number; z: number }[] { return this.exits.filter(exit => exit.state === 'open').map(exit => this.doorCenter(exit)); }
 
@@ -144,6 +170,11 @@ export class Level {
     for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
       if (!this.floor.has(cellKey(Math.floor(x + dx * radius), Math.floor(z + dz * radius)))) return false;
     }
+    for (const door of this.doors) {
+      if (door.opened) continue;
+      const r = door.rect, dx = Math.max(r.minX - x, 0, x - r.maxX), dz = Math.max(r.minZ - z, 0, z - r.maxZ);
+      if (dx * dx + dz * dz < radius * radius) return false;
+    }
     const owner = this.floor.get(cellKey(Math.floor(x), Math.floor(z))) ?? -1;
     return owner < 0 || this.areas[owner]!.features.every(feature => Math.hypot(x - feature.x, z - feature.z) >= feature.radius + radius);
   }
@@ -151,17 +182,24 @@ export class Level {
   /** A walking route that avoids walls and features, simplified to straight legs. */
   path(from: { x: number; z: number }, to: { x: number; z: number }): { x: number; z: number }[] {
     // A click into the dark between areas walks to the nearest floor near it.
+    // A goal behind a sealed door walks up to the door instead.
+    to = this.beforeSealedDoor(to) ?? to;
     const start = this.nearestCell(from.x, from.z), goal = this.nearestCell(to.x, to.z, 12);
     if (!start || !goal) return [];
-    const startKey = cellKey(start.x, start.z), goalKey = cellKey(goal.x, goal.z);
+    const startKey = cellKey(start.x, start.z);
+    let goalKey = cellKey(goal.x, goal.z);
     const open = new MinHeap(), came = new Map<number, number>(), cost = new Map<number, number>([[startKey, 0]]);
     open.push(startKey, 0);
     const position = (key: number) => ({ x: Math.floor(key / 65536) - 32768, z: key % 65536 - 32768 });
     let found = false, visited = 0;
+    // The reached cell nearest the goal: a goal behind a sealed door walks up to the door.
+    let nearest = startKey, nearestGap = Math.hypot(goal.x - start.x, goal.z - start.z);
     while (open.size && visited++ < 40000) {
       const key = open.pop()!;
       if (key === goalKey) { found = true; break; }
       const cell = position(key);
+      const gap = Math.hypot(goal.x - cell.x, goal.z - cell.z);
+      if (gap < nearestGap) { nearest = key; nearestGap = gap; }
       for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]] as const) {
         const nx = cell.x + dx, nz = cell.z + dz, next = cellKey(nx, nz);
         if (!this.passable(nx, nz)) continue;
@@ -173,10 +211,12 @@ export class Level {
         open.push(next, step + Math.hypot(goal.x - nx, goal.z - nz));
       }
     }
-    if (!found) return [];
+    if (!found && nearest === startKey) return [];
+    const reachable = found;
+    if (!found) goalKey = nearest;
     const cells: { x: number; z: number }[] = [];
     for (let key: number | undefined = goalKey; key !== undefined && key !== startKey; key = came.get(key)) { const cell = position(key); cells.unshift({ x: cell.x + .5, z: cell.z + .5 }); }
-    const target = this.walkable(to.x, to.z) ? { x: to.x, z: to.z } : cells[cells.length - 1] ?? { x: goal.x + .5, z: goal.z + .5 };
+    const target = reachable && this.walkable(to.x, to.z) ? { x: to.x, z: to.z } : cells[cells.length - 1] ?? { x: goal.x + .5, z: goal.z + .5 };
     if (cells.length) cells[cells.length - 1] = target; else cells.push(target);
     // String pulling: keep only the turns a straight walk cannot skip.
     const route: { x: number; z: number }[] = [];
@@ -186,6 +226,20 @@ export class Level {
       if (!next || !this.clearLine(anchor, next)) { route.push(cells[i]!); anchor = cells[i]!; }
     }
     return route;
+  }
+
+  /** The hall-side front of the closed door that seals off this point, if one does. */
+  private beforeSealedDoor(point: { x: number; z: number }): { x: number; z: number } | undefined {
+    for (const door of this.doors) {
+      if (door.opened) continue;
+      const corridor = this.corridors[door.corridor]!, room = this.areas[corridor.to]!.rect, d = DIRECTION[door.side];
+      const inRoom = point.x >= room.minX && point.x <= room.maxX && point.z >= room.minZ && point.z <= room.maxZ;
+      // Past the door along its hallway: ahead of the slab and inside one of the hallway's rects.
+      const ahead = (point.x - door.x) * d.x + (point.z - door.z) * d.z > 0
+        && corridor.rects.some(r => point.x >= r.minX && point.x <= r.maxX && point.z >= r.minZ && point.z <= r.maxZ);
+      if (inRoom || ahead) return { x: door.x - d.x * 1.15, z: door.z - d.z * 1.15 };
+    }
+    return undefined;
   }
 
   /** True when a body can walk the straight line between two points. */
@@ -226,13 +280,15 @@ export class Level {
 
   /** Builds a hallway and a new area behind an exit, or seals it when nothing fits. */
   private expand(exit: Exit, kind: AreaKind = 'hall'): Area | undefined {
-    const rng = random(hash(this.seed, exit.id, kind === 'sanctum' ? 7 : 3));
+    if (exit.locked) kind = 'treasury';
+    const treasury = kind === 'treasury';
+    const rng = random(hash(this.seed, exit.id, kind === 'sanctum' ? 7 : treasury ? 13 : 3));
     const width = this.corridorWidth, half = width / 2, door = this.doorCenter(exit);
     for (let attempt = 0; attempt < 8; attempt++) {
       const segments: Rect[] = [];
       let side = exit.side, x = door.x, z = door.z;
-      const bend = attempt < 6 && rng() < .4;
-      for (const length of bend ? [4 + Math.floor(rng() * 5), 4 + Math.floor(rng() * 7)] : [6 + Math.floor(rng() * 9)]) {
+      const bend = !treasury && attempt < 6 && rng() < .4;
+      for (const length of bend ? [4 + Math.floor(rng() * 5), 4 + Math.floor(rng() * 7)] : [treasury ? 4 + Math.floor(rng() * 2) : 6 + Math.floor(rng() * 9)]) {
         const d = DIRECTION[side];
         // A turn starts from the far edge of the previous segment's end square.
         const rect = d.x ? { minX: Math.min(x, x + d.x * length), maxX: Math.max(x, x + d.x * length), minZ: z - half, maxZ: z + half }
@@ -246,7 +302,7 @@ export class Level {
           side = turn;
         }
       }
-      const areaWidth = kind === 'sanctum' ? 22 : 12 + Math.floor(rng() * 6) * 2, areaDepth = kind === 'sanctum' ? 22 : 12 + Math.floor(rng() * 5) * 2;
+      const areaWidth = kind === 'sanctum' ? 22 : treasury ? 10 : 12 + Math.floor(rng() * 6) * 2, areaDepth = kind === 'sanctum' ? 22 : treasury ? 10 : 12 + Math.floor(rng() * 5) * 2;
       const d = DIRECTION[side];
       const span = d.x ? areaDepth : areaWidth, offset = Math.floor(half + 1 + rng() * Math.max(0, span - width - 2));
       const rect: Rect = d.x
@@ -262,6 +318,16 @@ export class Level {
       for (const segment of segments) this.claim(segment, -1 - corridor.id, `corridor:${corridor.id}`);
       exit.state = 'linked'; exit.corridor = corridor.id;
       this.changed.add(`area:${exit.area}`);
+      if (treasury) {
+        // The door stands a little inside the hallway, square across it.
+        const d0 = DIRECTION[exit.side], across = d0.x ? { x: 0, z: 1 } : { x: 1, z: 0 }, at = { x: door.x + d0.x * DOOR_INSET, z: door.z + d0.z * DOOR_INSET };
+        const halfDepth = DOOR_DEPTH / 2;
+        this.doors.push({
+          id: `door-${this.seed}-${exit.area}-${exit.side}`, corridor: corridor.id, area: exit.area, x: at.x, z: at.z, side: exit.side, width, opened: false,
+          rect: { minX: at.x - (across.x * half + Math.abs(d0.x) * halfDepth), maxX: at.x + (across.x * half + Math.abs(d0.x) * halfDepth),
+            minZ: at.z - (across.z * half + Math.abs(d0.z) * halfDepth), maxZ: at.z + (across.z * half + Math.abs(d0.z) * halfDepth) },
+        });
+      }
       return this.addArea(kind, rect, OPPOSITE[side], { x, z });
     }
     exit.state = 'sealed'; this.changed.add(`area:${exit.area}`);
@@ -271,21 +337,24 @@ export class Level {
   private addArea(kind: AreaKind, rect: Rect, back: Side, arrival?: { x: number; z: number }): Area {
     const id = this.areas.length, seed = hash(this.seed, id, rect.minX, rect.minZ), rng = random(seed);
     const names = NAMES[this.biome];
-    const name = kind === 'sanctum' ? SANCTUM[this.biome] : kind === 'entry' ? names[0]! : names[(this.nameIndex++ % (names.length - 1)) + 1]!;
+    const name = kind === 'sanctum' ? SANCTUM[this.biome] : kind === 'treasury' ? TREASURY[this.biome] : kind === 'entry' ? names[0]! : names[(this.nameIndex++ % (names.length - 1)) + 1]!;
     const area: Area = { id, kind, rect, name, seed, back, features: [], exits: [], visited: kind === 'entry' };
     this.areas.push(area);
     this.claim(rect, id, `area:${id}`);
-    if (kind !== 'sanctum') {
+    if (kind !== 'sanctum' && kind !== 'treasury') {
       // Every hall leads on; most branch. The way back is the arrival doorway.
+      // A hall with two or more ways on may seal one of them with a door.
+      const lockRng = random(hash(this.seed, id, 29));
       const sides = (['north', 'east', 'west', 'south'] as Side[]).filter(side => side !== back);
       const chosen = sides.filter(() => rng() < (kind === 'entry' ? .75 : .55));
       if (!chosen.length) chosen.push(sides[Math.floor(rng() * sides.length)]!);
+      const lockedSide = kind === 'hall' && chosen.length >= 2 && lockRng() < LOCKED_CHANCE ? chosen[Math.floor(lockRng() * chosen.length)] : undefined;
       for (const side of chosen) {
         const length = side === 'north' || side === 'south' ? rect.maxX - rect.minX : rect.maxZ - rect.minZ;
         const low = side === 'north' || side === 'south' ? rect.minX : rect.minZ;
         const inset = this.corridorWidth / 2 + 2;
         const at = low + inset + Math.floor(rng() * Math.max(1, length - inset * 2 + 1));
-        const exit: Exit = { id: hash(this.seed, id, sides.indexOf(side) + 11), area: id, side, at, state: 'open' };
+        const exit: Exit = { id: hash(this.seed, id, sides.indexOf(side) + 11), area: id, side, at, state: 'open', ...(side === lockedSide ? { locked: true } : {}) };
         area.exits.push(exit); this.exits.push(exit);
       }
     }
@@ -324,6 +393,14 @@ export class Level {
         if (place(kind, x, z, radius, .8 + rng() * .5)) n++;
       }
     };
+    if (area.kind === 'treasury') {
+      // The prize stands at the far wall, lit on either side.
+      const far = farPoint(area, 2.4);
+      features.push({ id: `${this.seed}-${area.id}-chest`, kind: 'chest', x: far.x, z: far.z, radius: .6, turn: 0, scale: 1 });
+      const sideways = area.back === 'north' || area.back === 'south' ? { x: 1, z: 0 } : { x: 0, z: 1 };
+      for (const sign of [-1, 1]) features.push({ id: `${this.seed}-${area.id}-light-${sign}`, kind: this.biome === 'vault' ? 'brazier' : 'column', x: far.x + sideways.x * sign * 2.6, z: far.z + sideways.z * sign * 2.6, radius: .55, turn: rng() * 6, scale: 1 });
+      return features;
+    }
     if (area.kind === 'sanctum') {
       const far = farPoint(area, 2.2);
       features.push({ id: `${this.seed}-${area.id}-altar`, kind: 'altar', x: far.x, z: far.z, radius: 1.5, turn: 0, scale: 1 });
@@ -347,6 +424,8 @@ export class Level {
       if (rng() < .3) scatter('chest', 1, .6, 1.4);
       if (rng() < .4) scatter('column', 1 + Math.floor(rng() * 2), .7, 1.4);
     }
+    // A shrine rests against a wall in some halls (its own draw, so the rest of the layout stays put).
+    if (area.kind === 'hall' && random(hash(this.seed, area.id, 31))() < SHRINE_CHANCE) scatter('shrine', 1, .85, 1.7);
     return features;
   }
 }

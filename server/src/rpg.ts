@@ -2,9 +2,10 @@ import type { Database } from 'bun:sqlite';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
-  rpgRollBossBonus, rpgLootSpellShape, RPG_CHESTS_PER_EXPEDITION, RPG_CHEST_XP, rpgEquippedLoot, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellAvailable, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER,
+  rpgRollBossBonus, rpgLootSpellShape, RPG_CHESTS_PER_EXPEDITION, RPG_CHEST_XP, rpgEquippedLoot, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellAvailable, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER, RPG_FURY_DAMAGE,
   type RpgState, type RpgReward, type RpgResolveResult, type RpgChestResult, type RpgChestReward,
 } from '@institute/shared';
+import { ensureRpgLockSchema, rpgProblemOpenedLock, rpgBoonForCast, rpgPauseBoon, activateRpgShrine, openRpgDoor } from './rpgLocks';
 
 /** Additive tables only: never migrate, reset, or award learning state. */
 export function ensureRpgSchema(db: Database): void {
@@ -56,9 +57,10 @@ export function ensureRpgSchema(db: Database): void {
       PRIMARY KEY (profile_id, problem_id)
     );
   `);
+  ensureRpgLockSchema(db);
 }
 
-class RpgError extends Error {
+export class RpgError extends Error {
   constructor(message: string, readonly status: 400 | 404 | 409 = 400) { super(message); }
 }
 
@@ -107,6 +109,8 @@ const ResolveSchema = z.object({
   expeditionId: z.string().min(1).max(100), encounterIndex: z.number().int().min(0).max(5),
   spellId: z.enum(RPG_SPELL_IDS).optional(), assisted: z.boolean().optional(),
   answerMs: z.number().finite().min(0).optional(), wrongCount: z.number().int().min(0).optional(),
+  /** The client's boon clock still runs; the server honours it only within its own allowance. */
+  boonActive: z.boolean().optional(),
 });
 
 /** One recorded learning outcome can trigger one cast, even after reloads or HTTP retries.
@@ -133,6 +137,7 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
     if (db.query('SELECT 1 FROM rpg_chest_claims WHERE profile_id = ? AND problem_id = ?').get(body.profileId, body.problemId)) {
       throw new RpgError('This problem already opened a chest.', 409);
     }
+    if (rpgProblemOpenedLock(db, body.profileId, body.problemId)) throw new RpgError('This problem already opened a shrine or a door.', 409);
     const expedition = state.expedition;
     if (!expedition || expedition.cleared || expedition.id !== body.expeditionId || expedition.encounterIndex !== body.encounterIndex) {
       throw new RpgError('Your adventure has moved on. Reload its saved checkpoint.', 409);
@@ -150,7 +155,8 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
       AND correct = 0 AND COALESCE(skipped, 0) = 0`).get(body.profileId, body.problemId) as { count: number };
     const powerPercent = rpgAnswerPower(body.answerMs, Math.max(body.wrongCount ?? 0, recordedWrong.count));
     const before = rpgEncounterCombat(state);
-    const cast = rpgApplyCombat(state, before, spellId, powerPercent);
+    const boon = rpgBoonForCast(expedition, Date.now(), body.answerMs, body.boonActive === true);
+    const cast = rpgApplyCombat(state, before, spellId, powerPercent, boon?.id === 'fury' ? RPG_FURY_DAMAGE : 1);
     expedition.combat = cast.combat;
     const bossDefeated = cast.result.encounterCleared && expedition.encounterIndex === expedition.encountersTotal - 1;
     const kills = cast.result.defeatedIds.length;
@@ -167,7 +173,11 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
     const tier = rpgTier(expedition.tier);
     const loot = item ? rpgCreateLoot(item.id, tier, Math.random, bossDefeated) : undefined;
     if (loot) state.loot!.push(loot);
-    const forgeDust = cast.result.encounterCleared ? rpgRoomForgeDust(tier, bossDefeated) : 0;
+    // Bounty doubles the dust of the fight it ends, then it is spent.
+    const bountyDust = boon?.id === 'bounty' && cast.result.encounterCleared ? rpgRoomForgeDust(tier, bossDefeated) : 0;
+    if (bountyDust) delete expedition.boon;
+    rpgPauseBoon(expedition, body.answerMs);
+    const forgeDust = (cast.result.encounterCleared ? rpgRoomForgeDust(tier, bossDefeated) : 0) + bountyDust;
     state.forgeDust = (state.forgeDust ?? 0) + forgeDust;
     if (item && !duplicateItem) state.inventory.push(item.id);
     if (duplicateItem) xp += RPG_DUPLICATE_ITEM_XP;
@@ -180,7 +190,7 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
     const shape = rpgLootSpellShape(rpgEquippedLoot(state));
     const spellShape = shape?.spellId === spellId ? shape.id : undefined;
     const { bossCrazyCoins, bossDimes } = bossDefeated ? rpgRollBossBonus(Math.random, tier) : { bossCrazyCoins: 0, bossDimes: 0 };
-    const reward: RpgReward = { spellShape, bossCrazyCoins, bossDimes, xp, kills, levelUp: levelsGained > 0, levelsGained, item, newItems: item && !duplicateItem ? [item] : [], duplicateItem, bossDefeated, spellId, combat: cast.result, loot, forgeDust, tier };
+    const reward: RpgReward = { spellShape, bossCrazyCoins, bossDimes, xp, kills, levelUp: levelsGained > 0, levelsGained, item, newItems: item && !duplicateItem ? [item] : [], duplicateItem, bossDefeated, spellId, combat: cast.result, loot, forgeDust, tier, ...(boon ? { boon: boon.id } : {}), ...(bountyDust ? { bountyDust } : {}) };
     db.query(`INSERT INTO rpg_cast_claims (profile_id, problem_id, expedition_id, encounter_index, reward_json, created_at)
       VALUES (?, ?, ?, ?, ?, ?)`).run(body.profileId, body.problemId, expedition.id, body.encounterIndex, JSON.stringify(reward), Date.now());
     saveRpgState(db, state);
@@ -211,6 +221,7 @@ export function openRpgChest(db: Database, input: z.infer<typeof ChestSchema>): 
     const cast = db.query(`SELECT 1 FROM rpg_claims WHERE profile_id = ? AND problem_id = ?
       UNION ALL SELECT 1 FROM rpg_cast_claims WHERE profile_id = ? AND problem_id = ? LIMIT 1`).get(body.profileId, body.problemId, body.profileId, body.problemId);
     if (cast) throw new RpgError('This problem already powered a spell.', 409);
+    if (rpgProblemOpenedLock(db, body.profileId, body.problemId)) throw new RpgError('This problem already opened a shrine or a door.', 409);
     const expedition = state.expedition;
     if (!expedition || expedition.cleared || expedition.id !== body.expeditionId) throw new RpgError('Your adventure has moved on. Reload its saved checkpoint.', 409);
     if (db.query('SELECT 1 FROM rpg_chest_claims WHERE profile_id = ? AND expedition_id = ? AND chest_id = ?').get(body.profileId, expedition.id, body.chestId)) {
@@ -233,6 +244,7 @@ export function openRpgChest(db: Database, input: z.infer<typeof ChestSchema>): 
     if (item && !duplicateItem) state.inventory.push(item.id);
     const xp = full ? RPG_CHEST_XP : 0, forgeDust = full ? rpgRoomForgeDust(tier) : 0;
     const oldLevel = state.level;
+    rpgPauseBoon(expedition);
     state.xp += xp; state.forgeDust = (state.forgeDust ?? 0) + forgeDust;
     Object.assign(state, rpgLevel(state.xp));
     const levelsGained = state.level - oldLevel;
@@ -310,6 +322,8 @@ export function createRpgRoutes(db: Database, applyMiss?: (profileId: string) =>
     return c.json(result);
   });
   app.post('/chest', async (c) => c.json(openRpgChest(db, await c.req.json())));
+  app.post('/shrine', async (c) => c.json(activateRpgShrine(db, await c.req.json())));
+  app.post('/door', async (c) => c.json(openRpgDoor(db, await c.req.json())));
   app.post('/upgrade', async (c) => {
     const { profileId, skillId, requestId } = ProfileSchema.extend({ skillId: z.string(), requestId: z.string().min(1).max(100).optional() }).parse(await c.req.json());
     const state = db.transaction(() => {

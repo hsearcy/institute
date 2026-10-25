@@ -36,6 +36,9 @@ import { ENGAGE_RADIUS, slideStep } from './world/exploration';
 import { Level, rectCenter, type Area, type Rect } from './world/levelGen';
 import { packPositions } from './world/formation';
 import { buildChunk, disposeChunk, CHEST_OPEN_ANGLE, type BuiltChunk, type VaultMaterials } from './world/levelChunks';
+import { animateDoor, animateShrine, boonColor, DOOR_FLARE_SECONDS } from './world/lockVisuals';
+import { BoonAura } from './world/boonAura';
+import type { RpgBoonId, RpgLockKind } from '@institute/shared';
 import { updateHeroCutout } from './world/heroCutout';
 import { TRIPO_HERO_MODEL, createTripoHeroInstance, tintTripoHero, measureTripoWalkCycle, HeroAssetLoadError } from './world/tripoHeroRuntime';
 import { createCleaveStrike, cleaveEdgeMaterial, steelBladeWakeMaterial, CLEAVE_RELEASE, CLEAVE_SPEED } from './world/cleave';
@@ -63,8 +66,12 @@ const HERO_CAST: Record<string, string> = {
   tempest: 'cast-raise', blizzard: 'cast-raise', firestorm: 'cast-raise', 'frost-guardian': 'cast-raise',
   'ice-lance': 'cast-thrust', 'arc-lance': 'cast-thrust', 'glacial-surge': 'cast-thrust',
 };
-/** How a search for the horde ended: in combat, or at a closed chest. */
-export type SearchEnd = { chest?: string };
+/** Something the hero opens with a solved problem: a chest, a shrine or a sealed door. */
+export type LockTarget = { kind: RpgLockKind; id: string };
+/** How a search for the horde ended: in combat, or at a lock on the way. */
+export type SearchEnd = { lock?: LockTarget };
+/** Swiftness: run speed multiplier while the boon lasts. */
+const SWIFT_RUN = 1.4;
 /** Sounds the world asks for; the game decides whether they play. */
 export type CombatSound = WorldSound;
 /** Top running speed, faster than the run clip's measured pace: an action-RPG hero covers a room in a few seconds. */
@@ -183,9 +190,13 @@ export class DungeonWorld {
   private engaged = false;
   private engageReady = false;
   private engageWaiters: ((reached: SearchEnd) => void)[] = [];
-  /** A chest that already asked for a problem; it asks again once the hero walks away and back. */
-  private chestAsked?: string;
+  /** A lock that already asked for a problem; it asks again once the hero walks away and back. */
+  private lockAsked?: string;
   private readonly chestOpenings = new Map<string, number>();
+  /** When each door opened or shrine woke, for their animations. */
+  private readonly lockOpenings = new Map<string, number>();
+  private readonly boonAura: BoonAura;
+  private boon: RpgBoonId | null = null;
   private exploreRoute: THREE.Vector3[] = [];
   private readonly exploreKeys = new Set<string>();
   private pointerSteering = false;
@@ -295,6 +306,7 @@ export class DungeonWorld {
     this.moveMarker = new THREE.Mesh(new THREE.RingGeometry(.28, .36, 40), new THREE.MeshBasicMaterial({ color: 0xe9c983, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
     this.moveMarker.rotation.x = -Math.PI / 2; this.moveMarker.position.y = .05; this.scene.add(this.moveMarker);
     this.floorLoot = new FloorLoot(this.glowMap); this.scene.add(this.floorLoot.group);
+    this.boonAura = new BoonAura(this.glowMap); this.scene.add(this.boonAura.group);
     this.hero.add(this.ward.mesh); this.scene.add(this.damageNumbers.group);
     this.installExploreInput();
     this.setEncounter(0); this.resize();
@@ -436,32 +448,84 @@ export class DungeonWorld {
     });
   }
 
-  /** Lids swing, closed chests glow, and a closed chest within reach ends the search. */
-  private updateChests(): void {
-    const hero = this.hero.position;
-    for (const built of this.chunks.values()) for (const chest of built.chests) {
-      const { feature, hinge, glow } = chest;
-      const started = this.chestOpenings.get(feature.id);
-      if (hinge) {
-        // An overshoot and settle, like a heavy lid thrown back.
-        const t = started === undefined ? (feature.opened ? 1 : 0) : Math.min(1, (this.elapsed - started) / .55);
-        const ease = 1 + 2.2 * Math.pow(t - 1, 3) + 1.2 * Math.pow(t - 1, 2);
-        hinge.rotation.x = CHEST_OPEN_ANGLE * (feature.opened ? ease : 0);
+  /** The door's rune flares, then the slab grinds down into the floor and the hallway opens. */
+  openDoor(id: string): void {
+    const level = this.level, door = level?.doors.find(candidate => candidate.id === id);
+    if (!level || !door || door.opened) return;
+    level.openDoor(id); this.lockOpenings.set(`door:${id}`, this.elapsed);
+    this.onSound?.('door-open');
+    const at = new THREE.Vector3(door.x, 0, door.z);
+    this.emit(at.clone().setY(1.7), 0xffc45a, 22, .9, .8);
+    this.schedule(DOOR_FLARE_SECONDS, () => {
+      this.shake = Math.max(this.shake, .18);
+      for (let n = 0; n < 4; n++) this.schedule(n * .35, () => this.emit(at.clone().setY(.15), 0x8f8676, 14, .7, 1.1));
+    });
+    this.renderer.shadowMap.needsUpdate = true;
+  }
+
+  /** The shrine's crystal flares and its light passes to the hero as a boon. */
+  activateShrine(id: string, boon: RpgBoonId): void {
+    const feature = this.level?.shrines.find(shrine => shrine.id === id);
+    if (!feature || feature.opened) { this.setBoon(boon); return; }
+    feature.opened = true; this.lockOpenings.set(`shrine:${id}`, this.elapsed);
+    this.onSound?.('shrine-activate');
+    const color = boonColor(boon).getHex(), at = new THREE.Vector3(feature.x, 2.05, feature.z);
+    this.emit(at, color, 30, 1.1, 1.2);
+    this.burstLight.position.copy(at); this.burstLight.color.setHex(color); this.burstLight.intensity = 30;
+    this.schedule(.45, () => { this.emit(this.hero.position.clone().setY(1), color, 18, .8, .9); this.setBoon(boon); });
+  }
+
+  /** A boon's calm glow on the hero, and Swiftness's quicker run; null ends it. */
+  setBoon(boon: RpgBoonId | null): void {
+    this.boon = boon;
+    this.boonAura.set(boon ? boonColor(boon) : null);
+  }
+
+  /** Lids swing, doors sink, shrines turn, and a closed lock within reach ends the search. */
+  private updateLocks(): void {
+    for (const built of this.chunks.values()) {
+      for (const chest of built.chests) {
+        const { feature, hinge, glow } = chest;
+        const started = this.chestOpenings.get(feature.id);
+        if (hinge) {
+          // An overshoot and settle, like a heavy lid thrown back.
+          const t = started === undefined ? (feature.opened ? 1 : 0) : Math.min(1, (this.elapsed - started) / .55);
+          const ease = 1 + 2.2 * Math.pow(t - 1, 3) + 1.2 * Math.pow(t - 1, 2);
+          hinge.rotation.x = CHEST_OPEN_ANGLE * (feature.opened ? ease : 0);
+        }
+        glow.visible = !feature.opened;
+        if (glow.visible) { glow.material.opacity = .32 + .22 * Math.sin(this.elapsed * 3 + feature.x); glow.scale.setScalar(1.2 + .15 * Math.sin(this.elapsed * 2.2 + feature.z)); }
       }
-      glow.visible = !feature.opened;
-      if (glow.visible) { glow.material.opacity = .32 + .22 * Math.sin(this.elapsed * 3 + feature.x); glow.scale.setScalar(1.2 + .15 * Math.sin(this.elapsed * 2.2 + feature.z)); }
+      for (const door of built.doors) animateDoor(door, this.elapsed, this.lockOpenings.get(`door:${door.door.id}`));
+      for (const shrine of built.shrines) animateShrine(shrine, this.elapsed, this.lockOpenings.get(`shrine:${shrine.feature.id}`));
     }
     const level = this.level; if (!level) return;
-    const near = level.chests.find(chest => !chest.opened && Math.hypot(chest.x - hero.x, chest.z - hero.z) < chest.radius + 1.25);
-    if (this.chestAsked && !near) {
-      const asked = level.chests.find(chest => chest.id === this.chestAsked);
-      if (!asked || Math.hypot(asked.x - hero.x, asked.z - hero.z) > asked.radius + 2.6) this.chestAsked = undefined;
-    }
-    if (near && near.id !== this.chestAsked && !this.engaged && this.engageWaiters.length && !this.paused) {
-      this.chestAsked = near.id; this.exploreRoute.length = 0; this.pointerSteering = false;
+    const near = this.lockNear(1);
+    if (this.lockAsked && near?.key !== this.lockAsked && !this.lockNear(2.1, this.lockAsked)) this.lockAsked = undefined;
+    if (near && near.key !== this.lockAsked && !this.engaged && this.engageWaiters.length && !this.paused) {
+      this.lockAsked = near.key; this.exploreRoute.length = 0; this.pointerSteering = false;
       const waiters = this.engageWaiters; this.engageWaiters = [];
-      waiters.forEach(resolve => resolve({ chest: near.id }));
+      waiters.forEach(resolve => resolve({ lock: near.target }));
     }
+  }
+
+  /**
+   * The closed lock within reach of the hero, if any; `scale` widens the
+   * reach (to tell when the hero has walked away), `only` limits it to one lock.
+   */
+  private lockNear(scale: number, only?: string): { key: string; target: LockTarget } | undefined {
+    const level = this.level; if (!level) return undefined;
+    const hero = this.hero.position, reach = (x: number, z: number, radius: number) => Math.hypot(x - hero.x, z - hero.z) < radius;
+    const candidates: { key: string; target: LockTarget; within: boolean }[] = [
+      ...level.chests.filter(chest => !chest.opened).map(chest => ({ key: `chest:${chest.id}`, target: { kind: 'chest' as const, id: chest.id }, within: reach(chest.x, chest.z, (chest.radius + 1.25) * scale) })),
+      ...level.shrines.filter(shrine => !shrine.opened).map(shrine => ({ key: `shrine:${shrine.id}`, target: { kind: 'shrine' as const, id: shrine.id }, within: reach(shrine.x, shrine.z, (shrine.radius + 1.3) * scale) })),
+      // A door asks from its hall side, where the hero stops against the slab.
+      ...level.doors.filter(door => !door.opened).map(door => {
+        const r = door.rect, gap = Math.hypot(Math.max(r.minX - hero.x, 0, hero.x - r.maxX), Math.max(r.minZ - hero.z, 0, hero.z - r.maxZ));
+        return { key: `door:${door.id}`, target: { kind: 'door' as const, id: door.id }, within: gap < 1.1 * scale };
+      }),
+    ];
+    return candidates.find(candidate => candidate.within && (!only || candidate.key === only));
   }
 
   /** The hero stands at the combat mark with the horde in formation. */
@@ -853,7 +917,7 @@ export class DungeonWorld {
       this.lastPackCheckAt = this.elapsed;
       this.updatePack();
     }
-    this.updateChests();
+    this.updateLocks();
     if (this.elapsed - this.lastLightsAt > .5) { this.lastLightsAt = this.elapsed; this.updateLights(); }
     this.easeFraming(delta);
     // The wide ground moves in whole texture repeats, so its pattern stays put.
@@ -929,7 +993,7 @@ export class DungeonWorld {
         area = level.areas.find(candidate => candidate.kind === 'sanctum') ?? level.growNearest(hero.x, hero.z, 'sanctum');
       }
       area ??= this.nearestOpenArea() ?? level.growNearest(hero.x, hero.z, 'hall')
-        ?? level.areas.filter(candidate => candidate.kind !== 'entry').sort((a, b) => b.rect.maxX - b.rect.minX - (a.rect.maxX - a.rect.minX))[0] ?? level.areas[0]!;
+        ?? level.areas.filter(candidate => candidate.kind !== 'entry' && candidate.kind !== 'treasury').sort((a, b) => b.rect.maxX - b.rect.minX - (a.rect.maxX - a.rect.minX))[0] ?? level.areas[0]!;
       this.packArea = area; this.streamLevel(Infinity);
     }
     const formation = packPositions(level, area, this.enemies.length), center = rectCenter(area.rect);
@@ -2228,7 +2292,7 @@ export class DungeonWorld {
       // The player moves on while the spell plays out: drop the cast pose and run.
       this.heroMotion = undefined; this.heroVisual.position.x = this.heroVisual.position.z = 0; this.heroAnimator?.interrupt();
     }
-    const travel = this.heroUsesAuthoredMotion && walking ? advanceHeroTravel(distance, this.heroTravelSpeed, delta, this.heroWalkCycle, Math.max(HERO_RUN_SPEED, this.heroAnimator?.runSpeed ?? 0)) : undefined;
+    const travel = this.heroUsesAuthoredMotion && walking ? advanceHeroTravel(distance, this.heroTravelSpeed, delta, this.heroWalkCycle, Math.max(HERO_RUN_SPEED, this.heroAnimator?.runSpeed ?? 0) * (this.boon === 'swiftness' ? SWIFT_RUN : 1)) : undefined;
     this.heroTravelSpeed = travel?.speed ?? 0;
     const heroFrom = this.hero.position.clone();
     const shadowInterval = distance > .08 || this.attacking ? (this.softwareRenderer ? .2 : .065) : .65;
@@ -2274,6 +2338,7 @@ export class DungeonWorld {
       if (this.attackAge >= this.attackDuration || landed) { this.attacking = false; this.heroMotion = undefined; this.heroVisual.position.x = this.heroVisual.position.z = 0; this.attackResolve?.(); this.attackResolve = undefined; }
     }
     this.heldEquipment?.update(this.elapsed);
+    this.boonAura.update(delta, this.elapsed, this.hero.position);
     for (const pickup of this.floorLoot.update(delta, this.elapsed, this.hero.position, this.exploring, this.walkable)) {
       this.emit(pickup.at, pickup.color, pickup.kind === 'relic' ? 46 : 5, pickup.kind === 'relic' ? 1.6 : .5, pickup.kind === 'relic' ? 1.3 : .5);
       if (pickup.kind === 'relic') { this.burstLight.position.copy(pickup.at).setY(2.2); this.burstLight.color.setHex(pickup.color); this.burstLight.intensity = 60; }
@@ -2488,6 +2553,7 @@ export class DungeonWorld {
 
   dispose(): void {
     if (this.disposed) return; this.disposed = true; cancelAnimationFrame(this.frame); this.attackResolve?.(); this.scheduled.length = 0;
+    this.boonAura.dispose();
     this.inputAbort.abort(); this.finishEngage(); this.floorLoot.dispose(); this.ward.dispose(); this.damageNumbers.dispose(); this.releaseCharge(true);
     for (const built of this.chunks.values()) disposeChunk(built);
     this.chunks.clear(); this.outdoorKit?.dispose(); this.outdoorGround?.geometry.dispose();

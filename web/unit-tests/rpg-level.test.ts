@@ -37,6 +37,8 @@ test('levels grow in every direction without overlap, and every area can be reac
       assert.ok(touching(corridor.rects[0]!, level.areas[corridor.from]!.rect) && touching(corridor.rects[corridor.rects.length - 1]!, level.areas[corridor.to]!.rect));
     }
     const start = level.start;
+    // Treasuries wait behind sealed doors; rpg-locks.test.ts covers the closed doors.
+    for (const door of level.doors) level.openDoor(door.id);
     for (const area of level.areas.slice(1)) {
       const goal = rectCenter(area.rect);
       const route = level.path(start, goal);
@@ -47,7 +49,7 @@ test('levels grow in every direction without overlap, and every area can be reac
     const xs = level.areas.map(area => rectCenter(area.rect).x), zs = level.areas.map(area => rectCenter(area.rect).z);
     assert.ok(Math.max(...xs) - Math.min(...xs) > 20 || Math.max(...zs) - Math.min(...zs) > 20, `${biome}/${seed}: the level does not spread`);
   }
-});
+}, 30_000);
 
 test('walls stop the hero and features block their floor', () => {
   const level = explore(5, 'vault');
@@ -62,7 +64,7 @@ test('every hall fits a full pack and a sanctum fits the guardian and its guard'
     const level = explore(11, biome, 10);
     const sanctum = level.growNearest(level.start.x, level.start.z, 'sanctum');
     assert.ok(sanctum, `${biome}: no room for a sanctum`);
-    for (const area of level.areas.filter(area => area.kind !== 'entry')) {
+    for (const area of level.areas.filter(area => area.kind !== 'entry' && area.kind !== 'treasury')) {
       const formation = packPositions(level, area, 10);
       assert.equal(formation.length, 10);
       for (const [i, point] of formation.entries()) {

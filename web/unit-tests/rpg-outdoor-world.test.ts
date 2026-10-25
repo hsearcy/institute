@@ -42,6 +42,8 @@ for (const region of ['mosswood', 'tidebreak', 'old-quarry', 'kingsgarden']) {
           assert(piece.group.children.length >= 2, `${chunk.key} needs a trail and scenery`);
           let trail: THREE.Mesh | undefined;
           for (const object of piece.group.children) {
+            // Shrines and sealed doors are their own small groups, animated apart from the merged scenery.
+            if (/^(door|shrine)-/.test(object.name)) continue;
             assert(object instanceof THREE.Mesh);
             const geometry = object.geometry, positions = geometry.getAttribute('position');
             assert(positions.count > 0);

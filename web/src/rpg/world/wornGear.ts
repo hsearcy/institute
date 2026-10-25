@@ -180,10 +180,12 @@ function fitChest(body: Box3, _item: Box3, origin: Vector3): Matrix4 {
   return new Matrix4().compose(new Vector3(c.x, body.max.y + b.y * .02, c.z).sub(neck), new Quaternion(), scale);
 }
 
-function fitAmulet(body: Box3, item: Box3): Matrix4 {
-  const b = size(body), i = size(item), scale = b.x * .5 / i.x;
-  const c = centre(body), from = new Vector3(centre(item).x, item.max.y, centre(item).z);
-  return placeAt(scale, from, new Vector3(c.x, body.max.y + b.y * .02, body.max.z - .02));
+/** Amulets hang from a chain loop drawn upright around the authored origin (+.1 up).
+ * Tilting the loop back lays it around the neck, with the pendant on the chest. */
+function fitAmulet(body: Box3, _item: Box3, origin: Vector3): Matrix4 {
+  const b = size(body), scale = b.x * .6 / .15, c = centre(body);
+  const tilt = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), -55 * Math.PI / 180);
+  return placeAt(scale, origin.clone().setY(origin.y + .1), new Vector3(c.x, body.max.y - b.y * .03, c.z + b.z * .08), tilt);
 }
 
 function fitBoot(body: Box3, item: Box3): Matrix4 {
@@ -203,6 +205,6 @@ function fitGlove(body: Box3, _item: Box3, origin: Vector3, hand: Measured, outw
   const extent = size(body), reach = Math.max(extent.x, extent.y, extent.z);
   // The hero makes a fist, so the glove's palm sits just short of the fist's centre and
   // its fingers wrap past the knuckles instead of hanging below them.
-  const scale = reach * 1.6 / .19;
-  return placeAt(scale, origin, wrist.lerp(centre(body), .7), rotation);
+  const scale = reach * 1.75 / .19;
+  return placeAt(scale, origin, wrist.lerp(centre(body), .9), rotation);
 }

@@ -140,9 +140,24 @@ export interface RpgCombatResult {
   defeatedIds: string[]; encounterCleared: boolean; remainingEnemies: number;
   damage: number; coverage: number; powerPercent?: number;
 }
-export interface RpgExpedition { id: string; regionId: string; encounterIndex: number; encountersTotal: number; cleared: boolean; startedAt: number; combat?: RpgCombatState; tier?: number;
+/** `depth` counts the guardians felled in a row in this region (1 = first descent);
+ * `previousId` names the cleared expedition this depth went deeper from. */
+export interface RpgExpedition { id: string; regionId: string; encounterIndex: number; encountersTotal: number; cleared: boolean; startedAt: number; combat?: RpgCombatState; tier?: number; depth?: number; previousId?: string;
   /** Chests opened this expedition (paying or empty). */
   chestsOpened?: number }
+
+/** Deeper levels grow gently: a few steps, then the same challenge again. */
+export const RPG_MAX_DEPTH_STEPS = 3;
+export const RPG_MAX_DEPTH = 99;
+export function rpgDepth(value?: number): number {
+  return Number.isFinite(value) ? Math.max(1, Math.min(RPG_MAX_DEPTH, Math.floor(value!))) : 1;
+}
+/** Steps of extra challenge and reward a depth adds: 0 at depth 1, at most RPG_MAX_DEPTH_STEPS. */
+export function rpgDepthSteps(depth?: number): number { return Math.min(RPG_MAX_DEPTH_STEPS, rpgDepth(depth) - 1); }
+/** Enemy health grows 10% per step; at most +30%. */
+export function rpgDepthHealth(hp: number, depth?: number): number { return Math.ceil(hp * (10 + rpgDepthSteps(depth)) / 10); }
+/** Experience for a cleared pack or guardian at a depth. */
+export function rpgDepthXp(boss: boolean, depth?: number): number { return boss ? 90 + 10 * rpgDepthSteps(depth) : 32 + 4 * rpgDepthSteps(depth); }
 export type RpgSpellShape = 'twin-orb' | 'meteor-shower' | 'split-lance'
   | 'aftershock' | 'rift-slash' | 'blazing-wake' | 'volcanic-ground' | 'crystal-bloom'
   | 'frozen-fault' | 'whiteout' | 'glacial-hammer' | 'thunder-web' | 'overcharge' | 'resonance' | 'storm-pillars';
@@ -314,7 +329,7 @@ export function rpgEncounterCombat(state: Pick<RpgState, 'expedition'> & Partial
     const baseHp = (boss ? 36 : index % 7 === 0 ? 12 : [6, 6, 8, 8, 10][index % 5]) + difficulty * (boss ? 8 : 2) + Math.floor(room / 2) * (boss ? 0 : 2);
     const tier = rpgTier(state.expedition?.tier);
     // Health and item power grow together; broad loot rolls can beat the next step.
-    const normalHp = Math.ceil(baseHp * (tier + 3) / 4);
+    const normalHp = rpgDepthHealth(Math.ceil(baseHp * (tier + 3) / 4), state.expedition?.depth);
     if (index === elite) { const maxHp = rpgEliteMaxHp(normalHp); return { id: `enemy-${index}`, hp: maxHp, maxHp, elite: true }; }
     return { id: `enemy-${index}`, hp: normalHp, maxHp: normalHp };
   }) };

@@ -1,7 +1,7 @@
 import {chooseNextAdventure, renderNextAdventure, tierSelect, tierRewards, type NextAdventure} from './nextAdventureView';
 import { HeroAssetLoadError } from './world/tripoHeroRuntime';
 import type { RpgTraderWareId, RpgTraderResult, Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgReward, RpgChestResult, RpgBreakResult, RpgItem, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
-import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, rpgEncounterCombat, rpgNextRelicHunt, rpgSalvageValue, rpgAnswerPower, ProblemSchema } from '@institute/shared';
+import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, rpgEncounterCombat, rpgNextRelicHunt, rpgSalvageValue, rpgAnswerPower, rpgDepth, ProblemSchema } from '@institute/shared';
 import { fetchState, fetchMastery, redeemCrazyCoin, redeemDime, type Demo } from './tutor';
 import { speak } from './voice';
 import * as dungeonSound from './sound';
@@ -302,8 +302,9 @@ export class RpgGame {
   private renderAreaLabel(): void {
     const expedition = this.state?.expedition;
     const region = RPG_REGIONS.find(r => r.id === expedition?.regionId) ?? RPG_REGIONS[0];
+    const depth = rpgDepth(expedition?.depth);
     this.el('rpg-room').textContent = expedition && !expedition.cleared
-      ? `${this.areaName || region.subtitle} · ${expedition.encounterIndex + 1} / ${expedition.encountersTotal}` : region.subtitle;
+      ? `${depth > 1 ? `Depth ${depth} · ` : ''}${this.areaName || region.subtitle} · ${expedition.encounterIndex + 1} / ${expedition.encountersTotal}` : region.subtitle;
   }
   private renderState(): void {
     const s = this.state; if (!s || this.disposed) return;
@@ -732,7 +733,52 @@ export class RpgGame {
   private showVictory(reward: RpgReward): void {
     const s = this.state!; const region = RPG_REGIONS.find(r => r.id === s.expedition?.regionId)!;
     this.nextAdventure = chooseNextAdventure(s);
-    this.showDialog('victory', renderVictoryView(s, reward, region.bossName, this.campState, this.nextAdventure));
+    // The way down opens where the guardian fell, behind the treasure screen.
+    const deeper = !!this.world.openDescent();
+    this.showDialog('victory', renderVictoryView(s, reward, region.bossName, this.campState, this.nextAdventure, deeper));
+  }
+  /** Walk into the way down: the next depth of this region starts at once. */
+  private async goDeeper(): Promise<void> {
+    const cleared = this.state?.expedition;
+    if (!cleared?.cleared || this.busy) return;
+    this.closeDialog(true); this.playing = true; this.el('rpg-controls').hidden = false;
+    this.el('rpg-room').textContent = 'Step into the way down';
+    this.root.classList.add('rpg-exploring');
+    const title = this.el('rpg-explore').querySelector('strong')!, searching = title.textContent;
+    title.textContent = 'A way down!';
+    this.el('rpg-explore-how').textContent = 'Walk into the glowing well to go deeper.';
+    this.el('rpg-explore').hidden = false;
+    this.world.walkToDescent();
+    const entered = await this.world.waitForDescent();
+    title.textContent = searching;
+    this.el('rpg-explore').hidden = true; this.root.classList.remove('rpg-exploring');
+    if (!entered || this.disposed || this.state?.expedition?.id !== cleared.id) return;
+    await this.descend(cleared.id);
+  }
+  private async descend(expeditionId: string): Promise<void> {
+    if (this.busy) return;
+    this.busy = true;
+    // The view sinks into the well's light, and rises again on the new depth.
+    const veil = document.createElement('div'); veil.className = 'rpg-descent-veil'; this.root.append(veil);
+    veil.style.setProperty('--descent', RPG_REGIONS.find(region => region.id === this.state?.expedition?.regionId)?.color ?? '#6fd8ee');
+    const reveal = () => { void veil.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 700, easing: 'ease-out', fill: 'forwards' }).finished.finally(() => veil.remove()); };
+    await this.runSafely(async () => {
+      try {
+        await veil.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 380, easing: 'ease-in', fill: 'forwards' }).finished;
+        this.state = await mutateRpg('descend', { expeditionId });
+        this.closeDialog(true); this.playing = true; this.el('rpg-controls').hidden = false;
+        this.restoreSession(); this.renderState(); this.setEncounter();
+        // Hold the light until the new level draws at an even pace (at most ~1 s).
+        for (let frame = 0, steady = 0, last = performance.now(); frame < 60 && steady < 3; frame++) {
+          await new Promise(resolve => requestAnimationFrame(resolve));
+          const now = performance.now(); steady = now - last < 40 ? steady + 1 : 0; last = now;
+        }
+      } finally { reveal(); }
+      const depth = rpgDepth(this.state.expedition?.depth);
+      this.toast(`Depth ${depth}. The monsters are a little stronger here, and so are the rewards.`, 3600, `Depth ${depth}`);
+      if (matchMedia('(pointer: coarse)').matches) this.el('rpg-keypad').hidden = false;
+      await this.showProblem(await request<Problem>('/tutor/first', {}));
+    });
   }
 
   /** On-screen context beside the problem. Today: the fact ladder for a single
@@ -1381,6 +1427,7 @@ export class RpgGame {
     // No problem is on screen while the hero searches for the horde.
     if (this.seeking && ['hear','help','explain','walkthrough'].includes(action ?? '')) return;
     switch (action) {
+      case 'go-deeper': void this.goDeeper(); break;
       case 'next-adventure': if (this.nextAdventure && this.state?.expedition?.cleared) void this.begin(this.nextAdventure.regionId, this.nextAdventure.tier); break;
       case 'begin': void this.begin(); break;
       case 'close': this.closeDialog(); break;

@@ -254,3 +254,20 @@ test('next dungeon defaults to the highest unlocked tier after a lower-tier clea
   state.bestTier=100;
   expect(chooseNextAdventure(state).tier).toBe(100);
 });
+
+test('victory offers the way down to the next depth, and names a deeper clear', () => {
+  const state = fixture();
+  const reward = { xp: 100, kills: 1, levelUp: false, levelsGained: 0, item: null, newItems: [], duplicateItem: false, bossDefeated: true, spellId: 'ember' as const };
+  state.expedition = { id: 'e', regionId: 'mosswood', encounterIndex: 5, encountersTotal: 6, cleared: true, startedAt: 0, depth: 2 };
+  const deeper = renderVictoryView(state, reward, 'Guardian', null, { regionId: 'tidebreak', tier: 1 }, true);
+  expect(deeper).toContain('DEPTH 2 COMPLETE');
+  expect(deeper).toContain('data-action="go-deeper"');
+  expect(deeper).toContain('Go deeper · Depth 3');
+  // The way down leads; the other area remains a choice.
+  expect(deeper.indexOf('go-deeper')).toBeLessThan(deeper.indexOf('data-action="next-adventure"'));
+  state.expedition.depth = undefined;
+  const plain = renderVictoryView(state, reward, 'Guardian', null, { regionId: 'tidebreak', tier: 1 });
+  expect(plain).toContain('EXPEDITION COMPLETE');
+  expect(plain).not.toContain('go-deeper');
+  expect(plain).toContain('class="rpg-primary rpg-next-start"');
+});

@@ -42,3 +42,13 @@
 .rpg-active-expedition { margin:16px 0; padding:14px; border:1px solid #987e4d; background:#201f16; }
 .rpg-active-expedition small { display:block; margin-top:10px; line-height:1.5; color:#c5bfae; }
 @media(max-width:400px) { .rpg-next-areas button { font-size:12px; padding:9px 7px; gap:6px; } }
+/* The way down: a portal-coloured primary above the next-area choice. */
+#rpg-ui .rpg-go-deeper { position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; gap:2px; width:100%; min-height:54px; margin-bottom:8px; border-color:#7fe3f0 !important; background:radial-gradient(120% 160% at 50% 120%, #2fb7cf 0%, #155a73 45%, #0d2633 100%) !important; color:#effcff !important; box-shadow:0 0 0 1px #0b1d24, 0 0 22px #3fc6d855, inset 0 1px 0 #b8f4ff66; }
+#rpg-ui .rpg-go-deeper span { position:relative; z-index:1; font-size:16px; font-weight:800; letter-spacing:.04em; }
+#rpg-ui .rpg-go-deeper small { position:relative; z-index:1; font-size:11px; font-weight:500; color:#bfe9f1; letter-spacing:.01em; }
+#rpg-ui .rpg-go-deeper::after { content:""; position:absolute; inset:-120% -10%; background:conic-gradient(from 0deg, transparent 0 70%, #b8f4ff26 80%, transparent 90%); animation:rpg-deeper-swirl 4.5s linear infinite; pointer-events:none; }
+#rpg-ui .rpg-go-deeper + .rpg-next-start { min-height:40px; background:transparent !important; border:1px solid #8d7748 !important; color:#e8d9b7 !important; font-size:13px; }
+@keyframes rpg-deeper-swirl { to { transform:rotate(1turn); } }
+@media (prefers-reduced-motion: reduce) { #rpg-ui .rpg-go-deeper::after { animation:none; } }
+/* Going deeper: the screen fills with the well's light, then the new depth rises out of it. */
+#rpg-ui .rpg-descent-veil { position:fixed; inset:0; z-index:40; pointer-events:none; opacity:0; --descent:#6fd8ee; background:radial-gradient(circle at 50% 56%, #fffaf0 0%, var(--descent) 10%, color-mix(in srgb, var(--descent) 40%, #071318) 28%, #071318 60%, #020507 100%); }

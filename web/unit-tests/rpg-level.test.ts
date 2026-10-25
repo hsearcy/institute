@@ -100,3 +100,20 @@ test('every feature has its own id, and chests stand in dungeons and in the wild
   }
 });
 
+test('a guardian that follows the hero grows its sanctum near him and never seals the level shut', () => {
+  for (const biome of BIOMES) for (const seed of [3, 8, 21]) {
+    const level = explore(seed, biome, 12);
+    const at = level.start;
+    // Tries that fail to fit a sanctum leave their exits open for halls.
+    const before = level.openExits.length;
+    const sanctum = level.growNearest(at.x, at.z, 'sanctum', 24);
+    if (!sanctum) assert.equal(level.openExits.length, before, `${biome}/${seed}: a failed sanctum sealed exits`);
+    else {
+      const route = level.path(at, rectCenter(sanctum.rect));
+      assert.ok(route.length, `${biome}/${seed}: the sanctum cannot be reached`);
+    }
+    // Many tries far away never use up every exit.
+    for (let n = 0; n < 6; n++) level.growNearest(at.x + 200, at.z + 200, 'sanctum');
+    assert.ok(level.openExits.length > 0 || level.areas.some(area => area.kind === 'hall' && area.exits.some(exit => exit.state === 'open')) || level.areas.length > 20, `${biome}/${seed}: the level has no way on`);
+  }
+}, 30_000);

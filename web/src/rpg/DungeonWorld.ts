@@ -86,6 +86,8 @@ const HERO_RUN_SPEED = 4.4;
 const CAST_ROOT = .7, CLEAVE_ROOT = .85;
 /** Seconds off screen before an unfought pack may move nearer to the hero. */
 const PACK_FORGET_SECONDS = 4;
+/** A pack that follows the hero only grows a new area from exits this near him. */
+const PACK_REGROW_REACH = 24;
 const ELEMENT_FLASH = { fire: new THREE.Color(1, .45, .12), electric: new THREE.Color(.55, .75, 1.3), frost: new THREE.Color(.55, 1, 1.3), other: new THREE.Color(1, .95, .85) };
 type Fragment = { position: THREE.Vector3; velocity: THREE.Vector3; rotation: THREE.Vector3; spin: THREE.Vector3; scale: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; hot: boolean; bounced: boolean };
 type Particle = { position: THREE.Vector3; velocity: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; size: number };
@@ -363,15 +365,43 @@ export class DungeonWorld {
       }
       return best;
     };
+    /** A closed chest, a sleeping shrine, a sealed door or the way down under the pointer. */
+    const interactAt = (event: PointerEvent): { x: number; z: number } | undefined => {
+      if (!floorPoint(event) || !this.level) return undefined;
+      const hero = this.hero.position, center = new THREE.Vector3();
+      const spots = [
+        ...this.level.chests.filter(chest => !chest.opened).map(chest => ({ x: chest.x, z: chest.z, radius: chest.radius + .2, height: .9 })),
+        ...this.level.shrines.filter(shrine => !shrine.opened).map(shrine => ({ x: shrine.x, z: shrine.z, radius: shrine.radius + .2, height: 2.2 })),
+        ...this.level.doors.filter(door => !door.opened).map(door => ({ x: door.x, z: door.z, radius: door.width / 2, height: 2.6 })),
+        ...(this.descent ? [{ x: this.descent.at.x, z: this.descent.at.z, radius: DESCENT_ENTER_RADIUS + .4, height: 1.2 }] : []),
+      ];
+      let best: { x: number; z: number } | undefined, nearest = Infinity;
+      for (const spot of spots) {
+        if (Math.hypot(spot.x - hero.x, spot.z - hero.z) > 30) continue;
+        for (const y of [spot.height * .2, spot.height * .6, spot.height]) {
+          center.set(spot.x, y, spot.z);
+          const along = ray.ray.origin.distanceTo(center);
+          if (ray.ray.distanceToPoint(center) < spot.radius && along < nearest) { nearest = along; best = spot; }
+        }
+      }
+      return best;
+    };
     this.canvas.addEventListener('pointerdown', event => {
       if (!this.exploring || (event.pointerType === 'mouse' && event.button !== 0)) return;
       const target = breakableAt(event);
       if (target) { this.targetBreakable(target); return; }
+      const spot = interactAt(event);
+      if (spot) {
+        // Walk up to it; the lock asks for its problem (or the way down opens) on arrival.
+        this.breakTarget = undefined; this.pointerSteering = false; this.walkTo(spot.x, spot.z);
+        this.moveMarker.position.set(spot.x, .05, spot.z); this.moveMarker.userData.shownAt = this.elapsed;
+        return;
+      }
       this.pointerSteering = true; this.canvas.setPointerCapture(event.pointerId); steer(event, true);
     }, { signal });
     this.canvas.addEventListener('pointermove', event => {
       if (this.pointerSteering && this.exploring) { steer(event, false); return; }
-      if (event.pointerType === 'mouse') this.canvas.style.cursor = this.exploring && breakableAt(event) ? 'pointer' : '';
+      if (event.pointerType === 'mouse') this.canvas.style.cursor = this.exploring && (breakableAt(event) || interactAt(event)) ? 'pointer' : '';
     }, { signal });
     const release = () => { this.pointerSteering = false; };
     this.canvas.addEventListener('pointerup', release, { signal });
@@ -516,9 +546,6 @@ export class DungeonWorld {
     if (!descent) return Promise.resolve(false);
     return new Promise(resolve => descent.waiters.push(resolve));
   }
-
-  /** Sends the hero to the way down, as a click on it would. */
-  walkToDescent(): void { if (this.descent) this.walkTo(this.descent.at.x, this.descent.at.z); }
 
   private updateDescent(delta: number): void {
     const descent = this.descent; if (!descent) return;
@@ -1260,13 +1287,16 @@ export class DungeonWorld {
     // A pack this far away is no longer ahead of the hero: a new area grows for it.
     const lost = from(this.packArea) > 44;
     let next: Area | undefined;
-    if (this.encounter === 5) next = lost ? level.growNearest(hero.x, hero.z, 'sanctum') : undefined;
-    else {
+    if (this.encounter === 5) {
+      // The guardian takes the nearest sanctum already grown, or a new one close by.
+      if (lost) next = level.areas.filter(area => area.kind === 'sanctum').sort((a, b) => from(a) - from(b))[0];
+      if (lost && (!next || from(next) > 44)) next = level.growNearest(hero.x, hero.z, 'sanctum', PACK_REGROW_REACH);
+    } else {
       next = this.nearestOpenArea();
       if (next && from(next) + 4 >= from(this.packArea)) next = undefined;
-      if (!next && lost) next = level.growNearest(hero.x, hero.z, 'hall');
+      if (!next && lost) next = level.growNearest(hero.x, hero.z, 'hall', PACK_REGROW_REACH);
     }
-    if (!next || next === this.packArea) return;
+    if (!next || next === this.packArea || from(next) >= from(this.packArea)) return;
     this.packArea = next; this.streamLevel(Infinity); this.placePack(); this.batchEnemies();
   }
 

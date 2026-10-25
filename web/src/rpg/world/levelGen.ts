@@ -129,11 +129,13 @@ export class Level {
   }
 
   /**
-   * Grows the open exit nearest a point into a new area of the given kind,
-   * however far it is. Used to make room for the guardian.
+   * Grows the open exit nearest a point into a new area of the given kind.
+   * Only exits within `within` metres are tried, so a pack that follows the
+   * hero never lands far away, nor uses up exits across the whole level.
    */
-  growNearest(x: number, z: number, kind: AreaKind): Area | undefined {
-    const open = this.exits.filter(exit => exit.state === 'open' && !exit.locked)
+  growNearest(x: number, z: number, kind: AreaKind, within = Infinity): Area | undefined {
+    const near = (exit: Exit) => { const door = this.doorCenter(exit); return Math.hypot(door.x - x, door.z - z) <= within; };
+    const open = this.exits.filter(exit => exit.state === 'open' && !exit.locked && near(exit))
       .sort((a, b) => { const p = this.doorCenter(a), q = this.doorCenter(b); return Math.hypot(p.x - x, p.z - z) - Math.hypot(q.x - x, q.z - z); });
     for (const exit of open) { const area = this.expand(exit, kind); if (area) return area; }
     return undefined;
@@ -352,6 +354,8 @@ export class Level {
       }
       return this.addArea(kind, rect, OPPOSITE[side], { x, z });
     }
+    // A sanctum is large: an exit too tight for one may still fit a hall later.
+    if (kind === 'sanctum') return undefined;
     exit.state = 'sealed'; this.changed.add(`area:${exit.area}`);
     return undefined;
   }

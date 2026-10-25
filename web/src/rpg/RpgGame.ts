@@ -473,8 +473,8 @@ export class RpgGame {
     const story = session.lock?.kind === 'chest' ? session.chestStory : null;
     if (story) {
       const label = this.el('rpg-problem');
-      label.replaceChildren(Object.assign(document.createElement('span'), { className: 'rpg-chest-story', textContent: story.text }),
-        Object.assign(document.createElement('span'), { className: 'rpg-chest-equation', textContent: p.prompt }));
+      // Only the story: working out the sum from the words is the point.
+      label.replaceChildren(Object.assign(document.createElement('span'), { className: 'rpg-chest-story', textContent: story.text }));
     } else this.el('rpg-problem').textContent = p.prompt;
     this.renderVisual(session.helped && p.helpVisual ? p.helpVisual : p.visual);
     this.el('rpg-answer-form').dataset.problemId = p.id;
@@ -775,9 +775,13 @@ export class RpgGame {
   private showVictory(reward: RpgReward): void {
     const s = this.state!; const region = RPG_REGIONS.find(r => r.id === s.expedition?.regionId)!;
     this.nextAdventure = chooseNextAdventure(s);
-    // The way down opens where the guardian fell, behind the treasure screen.
-    const deeper = !!this.world.openDescent();
-    this.showDialog('victory', renderVictoryView(s, reward, region.bossName, this.campState, this.nextAdventure, deeper));
+    // The way down opens where the guardian fell. No treasure screen: the relic
+    // already lies on the floor, and the hero walks on when he is ready.
+    if (!this.world.openDescent()) { this.showDialog('victory', renderVictoryView(s, reward, region.bossName, this.campState, this.nextAdventure)); return; }
+    // Real-world bonus treasure is still named, after the room-cleared message.
+    const bonus = [reward.bossCrazyCoins ? '+1 Crazy Coin' : '', reward.bossDimes ? '+1 dime' : ''].filter(Boolean).join(' · ');
+    if (bonus) setTimeout(() => { if (!this.disposed) this.toast(`Bonus treasure! ${bonus}. Saved in the parent journal.`, 4200, 'Bonus treasure!'); }, 2800);
+    void this.goDeeper();
   }
   /** Walk into the way down: the next depth of this region starts at once. */
   private async goDeeper(): Promise<void> {
@@ -788,9 +792,8 @@ export class RpgGame {
     this.root.classList.add('rpg-exploring');
     const title = this.el('rpg-explore').querySelector('strong')!, searching = title.textContent;
     title.textContent = 'A way down!';
-    this.el('rpg-explore-how').textContent = 'Walk into the glowing well to go deeper.';
+    this.el('rpg-explore-how').textContent = 'Pick up your treasure, then walk into the glowing well to go deeper.';
     this.el('rpg-explore').hidden = false;
-    this.world.walkToDescent();
     const entered = await this.world.waitForDescent();
     title.textContent = searching;
     this.el('rpg-explore').hidden = true; this.root.classList.remove('rpg-exploring');

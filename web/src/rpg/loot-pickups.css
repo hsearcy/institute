@@ -1,0 +1,45 @@
+/* Chest rewards picked up by the hero: a small label rises beside him per pickup. */
+.rpg-pickups { position:absolute; inset:0; pointer-events:none; z-index:7; overflow:hidden; }
+.rpg-pickup {
+  position:absolute; transform:translate(-50%,-100%); padding:2px 10px 3px;
+  font:700 17px/1.2 Cinzel,Georgia,serif; letter-spacing:.4px; white-space:nowrap;
+  color:var(--pickup,#f0cd86); background:linear-gradient(90deg,#0a0f1000,#0a0f10b8 18%,#0a0f10b8 82%,#0a0f1000);
+  text-shadow:0 2px 3px #000,0 0 10px color-mix(in srgb,var(--pickup,#f0cd86) 55%,transparent);
+  animation:rpg-pickup-rise 2.4s cubic-bezier(.2,.8,.3,1) forwards;
+}
+.rpg-pickup-xp { color:#9fe4f7; }
+.rpg-pickup-dust { color:#ffd27a; }
+.rpg-pickup-dust:before { content:'✦ '; font-size:13px; }
+/* A relic is the best part: its name in its rarity color, a little larger, with a thin frame. */
+.rpg-pickup-relic {
+  font-size:18px; padding:3px 12px 4px; border-top:1px solid color-mix(in srgb,var(--pickup) 70%,transparent); border-bottom:1px solid color-mix(in srgb,var(--pickup) 70%,transparent);
+  background:linear-gradient(90deg,#0a0f1000,#0a0f10d8 14%,#0a0f10d8 86%,#0a0f1000); animation-duration:2.9s;
+}
+.rpg-pickup-relic:before { content:'◆ '; font-size:12px; vertical-align:2px; }
+@keyframes rpg-pickup-rise {
+  0% { opacity:0; translate:0 10px; scale:.7; }
+  12% { opacity:1; translate:0 0; scale:1.12; }
+  22% { scale:1; }
+  72% { opacity:1; translate:0 -16px; }
+  100% { opacity:0; translate:0 -30px; }
+}
+#rpg-ui[data-panel]:not([data-panel=""]) .rpg-pickups { display:none; }
+@media (max-width:760px), (max-width:1000px) and (max-height:500px) and (min-aspect-ratio:3/2) {
+  .rpg-pickup { font-size:14px; padding:2px 8px; }
+  .rpg-pickup-relic { font-size:15px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .rpg-pickup { animation:rpg-pickup-fade 2.4s linear forwards; }
+  @keyframes rpg-pickup-fade { 0%,80% { opacity:1; } 100% { opacity:0; } }
+}
+
+/* Hint and "I don't know" wait a moment after a new problem appears: a thin gold
+ * line fills under each, then they wake up. Dimmed, not broken. */
+#rpg-ui .rpg-help-buttons .rpg-direct-help { position:relative; overflow:hidden; transition:opacity .25s ease; }
+#rpg-ui .rpg-help-arming .rpg-direct-help:disabled { opacity:.62; cursor:default; }
+#rpg-ui .rpg-help-arming .rpg-direct-help::after {
+  content:''; position:absolute; left:0; right:0; bottom:0; height:2px;
+  background:linear-gradient(90deg,#a07f49,#f0cd86); transform-origin:left; transform:scaleX(0);
+  animation:rpg-help-arm var(--help-guard,2s) linear forwards;
+}
+@keyframes rpg-help-arm { to { transform:scaleX(1); } }

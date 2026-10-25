@@ -28,7 +28,7 @@ import { enemyRoster } from './world/enemyRoster';
 import { EnemyAnimator } from './world/EnemyAnimator';
 import { HeldEquipment, tripoHeroEquipment } from './world/HeldEquipment';
 import { HeroAnimator, type ActorClipRoles } from './world/heroAnimator';
-import { FloorLoot, type LootPickup } from './world/floorLoot';
+import { FloorLoot, RARITY_COLORS, type LootPickup, type RewardToken } from './world/floorLoot';
 import { HordeDirector } from './world/hordeDirector';
 import { HeroWard } from './world/heroWard';
 import { DamageNumbers } from './world/damageNumbers';
@@ -516,10 +516,11 @@ export class DungeonWorld {
     return new Promise(resolve => this.engageWaiters.push(resolve));
   }
 
-  /** The chest unlocked: the lid swings up, gold and souls spill out. */
-  openChest(id: string): void {
+  /** The chest unlocked: the lid swings up and its rewards spill out, then fly
+   * to the hero. Returns false when there is no closed chest to show it. */
+  openChest(id: string, rewards: RewardToken[] = []): boolean {
     const feature = this.level?.chests.find(chest => chest.id === id);
-    if (!feature || feature.opened) return;
+    if (!feature || feature.opened) return false;
     feature.opened = true; this.chestOpenings.set(id, this.elapsed);
     const at = new THREE.Vector3(feature.x, .7, feature.z);
     this.onSound?.('chest-open');
@@ -527,8 +528,10 @@ export class DungeonWorld {
       this.emit(at.clone().setY(1), 0xffc860, 46, 2.2, 1.1);
       this.emit(at.clone().setY(.9), 0xfff0b8, 18, 1.2, .7);
       this.burstLight.position.copy(at).setY(1.6); this.burstLight.color.setHex(0xffc460); this.burstLight.intensity = 46;
-      this.floorLoot.dropMotes(at.clone().setY(.1), 7, this.elapsed);
+      if (rewards.length) this.floorLoot.dropRewards(at, rewards, this.elapsed, this.camera.position);
+      else this.floorLoot.dropMotes(at.clone().setY(.1), 7, this.elapsed);
     });
+    return true;
   }
 
   /** Opens the way down where the guardian stood. Returns where it is. */
@@ -2453,8 +2456,7 @@ export class DungeonWorld {
   }
 
   private spawnLoot(origin: THREE.Vector3, drop: { name: string; rarity: string }): void {
-    const colors: Record<string, number> = { common: 0xb8c2c5, uncommon: 0x79dcb1, rare: 0x6aa9ff, epic: 0xc38aff, legendary: 0xffba57 };
-    const color = colors[drop.rarity] ?? colors.rare;
+    const color = RARITY_COLORS[drop.rarity] ?? RARITY_COLORS.rare!;
     const position = origin.clone().add(new THREE.Vector3(2.1, .1, -.9));
     // The relic stays on the floor until the hero walks over it.
     const at = slideStep({ x: origin.x, z: origin.z }, position.x - origin.x, position.z - origin.z, this.walkable);
@@ -2667,9 +2669,11 @@ export class DungeonWorld {
     this.heldEquipment?.update(this.elapsed);
     this.boonAura.update(delta, this.elapsed, this.hero.position);
     for (const pickup of this.floorLoot.update(delta, this.elapsed, this.hero.position, this.exploring, this.walkable)) {
-      this.emit(pickup.at, pickup.color, pickup.kind === 'relic' ? 46 : 5, pickup.kind === 'relic' ? 1.6 : .5, pickup.kind === 'relic' ? 1.3 : .5);
-      if (pickup.kind === 'relic') { this.burstLight.position.copy(pickup.at).setY(2.2); this.burstLight.color.setHex(pickup.color); this.burstLight.intensity = 60; }
-      if (pickup.kind === 'mote') this.onSound?.('soul');
+      const relic = pickup.kind === 'relic' || pickup.reward?.kind === 'relic';
+      this.emit(pickup.at, pickup.color, relic ? 46 : pickup.reward ? 16 : 5, relic ? 1.6 : pickup.reward ? .9 : .5, relic ? 1.3 : pickup.reward ? .6 : .5);
+      if (relic) { this.burstLight.position.copy(pickup.at).setY(2.2); this.burstLight.color.setHex(pickup.color); this.burstLight.intensity = 60; }
+      if (pickup.kind === 'mote' || pickup.reward?.kind === 'xp') this.onSound?.('soul');
+      if (pickup.reward?.kind === 'dust') this.onSound?.('dust-pickup');
       this.onLootPickup?.(pickup);
     }
     this.ward.update(this.elapsed); this.damageNumbers.update(delta); this.updateCharge(delta);

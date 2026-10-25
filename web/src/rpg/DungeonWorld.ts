@@ -35,7 +35,7 @@ import { DamageNumbers } from './world/damageNumbers';
 import { ENGAGE_RADIUS, slideStep } from './world/exploration';
 import { Level, rectCenter, type Area, type Rect } from './world/levelGen';
 import { packPositions } from './world/formation';
-import { buildChunk, disposeChunk, type BuiltChunk, type VaultMaterials } from './world/levelChunks';
+import { buildChunk, disposeChunk, CHEST_OPEN_ANGLE, type BuiltChunk, type VaultMaterials } from './world/levelChunks';
 import { updateHeroCutout } from './world/heroCutout';
 import { TRIPO_HERO_MODEL, createTripoHeroInstance, tintTripoHero, measureTripoWalkCycle, HeroAssetLoadError } from './world/tripoHeroRuntime';
 import { createCleaveStrike, cleaveEdgeMaterial, steelBladeWakeMaterial, CLEAVE_RELEASE, CLEAVE_SPEED } from './world/cleave';
@@ -63,6 +63,8 @@ const HERO_CAST: Record<string, string> = {
   tempest: 'cast-raise', blizzard: 'cast-raise', firestorm: 'cast-raise', 'frost-guardian': 'cast-raise',
   'ice-lance': 'cast-thrust', 'arc-lance': 'cast-thrust', 'glacial-surge': 'cast-thrust',
 };
+/** How a search for the horde ended: in combat, or at a closed chest. */
+export type SearchEnd = { chest?: string };
 /** Sounds the world asks for; the game decides whether they play. */
 export type CombatSound = WorldSound;
 /** Top running speed, faster than the run clip's measured pace: an action-RPG hero covers a room in a few seconds. */
@@ -110,7 +112,6 @@ export class DungeonWorld {
   private packArea?: Area;
   private packSeen = false;
   private heroArea?: Area;
-  private guideRoute: { x: number; z: number }[] = [];
   private lastStreamAt = -9;
   private lastLightsAt = -9;
   private lastPackCheckAt = -9;
@@ -179,14 +180,15 @@ export class DungeonWorld {
   /** Free movement: the hero explores until a horde is near, then combat begins. */
   private engaged = false;
   private engageReady = false;
-  private engageWaiters: (() => void)[] = [];
+  private engageWaiters: ((reached: SearchEnd) => void)[] = [];
+  /** A chest that already asked for a problem; it asks again once the hero walks away and back. */
+  private chestAsked?: string;
+  private readonly chestOpenings = new Map<string, number>();
   private exploreRoute: THREE.Vector3[] = [];
   private readonly exploreKeys = new Set<string>();
   private pointerSteering = false;
   private readonly moveMarker: THREE.Mesh;
   private readonly floorLoot: FloorLoot;
-  /** Floor chevrons toward the next horde while it is out of reach. */
-  private readonly guide = new THREE.Group();
   /** The hero walked into a new area of the level. */
   onAreaEnter?: (name: string) => void;
   /** A relic or mote reached the hero (presentation only). */
@@ -292,14 +294,6 @@ export class DungeonWorld {
     this.moveMarker.rotation.x = -Math.PI / 2; this.moveMarker.position.y = .05; this.scene.add(this.moveMarker);
     this.floorLoot = new FloorLoot(this.glowMap); this.scene.add(this.floorLoot.group);
     this.hero.add(this.ward.mesh); this.scene.add(this.damageNumbers.group);
-    const chevron = new THREE.Shape([new THREE.Vector2(-.34, -.12), new THREE.Vector2(0, .2), new THREE.Vector2(.34, -.12), new THREE.Vector2(.34, -.26), new THREE.Vector2(0, .06), new THREE.Vector2(-.34, -.26)]);
-    const chevronGeometry = new THREE.ShapeGeometry(chevron);
-    for (let i = 0; i < 3; i++) {
-      const mark = new THREE.Mesh(chevronGeometry, new THREE.MeshBasicMaterial({ color: 0xf0c672, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
-      // Lie flat; the shape's +Y (its tip) becomes the group's +Z travel direction.
-      mark.rotation.x = Math.PI / 2; mark.position.z = 1.35 + i * .55; this.guide.add(mark);
-    }
-    this.guide.visible = false; this.scene.add(this.guide);
     this.installExploreInput();
     this.setEncounter(0); this.resize();
   }
@@ -339,23 +333,6 @@ export class DungeonWorld {
     }, { signal });
     window.addEventListener('keyup', event => { this.exploreKeys.delete(event.key); }, { signal });
     window.addEventListener('blur', () => { this.exploreKeys.clear(); this.pointerSteering = false; }, { signal });
-  }
-
-  private updateGuide(delta: number): void {
-    const living = this.enemies.filter(enemy => !enemy.dead);
-    const nearest = living.reduce<Enemy | undefined>((best, enemy) => !best || enemy.at.distanceToSquared(this.hero.position) < best.at.distanceToSquared(this.hero.position) ? enemy : best, undefined);
-    const far = nearest ? nearest.at.distanceTo(this.hero.position) > ENGAGE_RADIUS + 2.4 : false;
-    // The chevrons point along the walking route, round walls and corners.
-    const target = this.exploring && nearest && far ? this.guideRoute.find(point => Math.hypot(point.x - this.hero.position.x, point.z - this.hero.position.z) > 1.2) : undefined;
-    const weight = this.guide.userData.weight = THREE.MathUtils.damp(this.guide.userData.weight ?? 0, target ? 1 : 0, 5, delta);
-    this.guide.visible = weight > .01;
-    if (!this.guide.visible) return;
-    if (target) this.guide.rotation.y = Math.atan2(target.x - this.hero.position.x, target.z - this.hero.position.z);
-    this.guide.position.copy(this.hero.position).setY(.05);
-    this.guide.children.forEach((mark, i) => {
-      const wave = (Math.sin(this.elapsed * 4.2 - i * 1.1) + 1) / 2;
-      ((mark as THREE.Mesh).material as THREE.MeshBasicMaterial).opacity = weight * (.22 + wave * .55);
-    });
   }
 
   /** A director event: a rush ends in a swing, the blade meets the ward, the ward throws the enemy back. */
@@ -433,10 +410,56 @@ export class DungeonWorld {
       .map(point => new THREE.Vector3(point.x, 0, point.z));
   }
 
-  /** Resolves when the hero has engaged the current horde and combat may show a problem. */
-  waitForEngage(): Promise<void> {
-    if (this.engageReady || !this.enemies.some(enemy => !enemy.dead)) return Promise.resolve();
+  /**
+   * Resolves when the search ends: the hero engaged the horde, or reached a
+   * closed chest first. Either one may show the waiting problem.
+   */
+  waitForEngage(): Promise<SearchEnd> {
+    if (this.engageReady || !this.enemies.some(enemy => !enemy.dead)) return Promise.resolve({});
     return new Promise(resolve => this.engageWaiters.push(resolve));
+  }
+
+  /** The chest unlocked: the lid swings up, gold and souls spill out. */
+  openChest(id: string): void {
+    const feature = this.level?.chests.find(chest => chest.id === id);
+    if (!feature || feature.opened) return;
+    feature.opened = true; this.chestOpenings.set(id, this.elapsed);
+    const at = new THREE.Vector3(feature.x, .7, feature.z);
+    this.onSound?.('chest-open');
+    this.schedule(.28, () => {
+      this.emit(at.clone().setY(1), 0xffc860, 46, 2.2, 1.1);
+      this.emit(at.clone().setY(.9), 0xfff0b8, 18, 1.2, .7);
+      this.burstLight.position.copy(at).setY(1.6); this.burstLight.color.setHex(0xffc460); this.burstLight.intensity = 46;
+      this.floorLoot.dropMotes(at.clone().setY(.1), 7, this.elapsed);
+    });
+  }
+
+  /** Lids swing, closed chests glow, and a closed chest within reach ends the search. */
+  private updateChests(): void {
+    const hero = this.hero.position;
+    for (const built of this.chunks.values()) for (const chest of built.chests) {
+      const { feature, hinge, glow } = chest;
+      const started = this.chestOpenings.get(feature.id);
+      if (hinge) {
+        // An overshoot and settle, like a heavy lid thrown back.
+        const t = started === undefined ? (feature.opened ? 1 : 0) : Math.min(1, (this.elapsed - started) / .55);
+        const ease = 1 + 2.2 * Math.pow(t - 1, 3) + 1.2 * Math.pow(t - 1, 2);
+        hinge.rotation.x = CHEST_OPEN_ANGLE * (feature.opened ? ease : 0);
+      }
+      glow.visible = !feature.opened;
+      if (glow.visible) { glow.material.opacity = .32 + .22 * Math.sin(this.elapsed * 3 + feature.x); glow.scale.setScalar(1.2 + .15 * Math.sin(this.elapsed * 2.2 + feature.z)); }
+    }
+    const level = this.level; if (!level) return;
+    const near = level.chests.find(chest => !chest.opened && Math.hypot(chest.x - hero.x, chest.z - hero.z) < chest.radius + 1.25);
+    if (this.chestAsked && !near) {
+      const asked = level.chests.find(chest => chest.id === this.chestAsked);
+      if (!asked || Math.hypot(asked.x - hero.x, asked.z - hero.z) > asked.radius + 2.6) this.chestAsked = undefined;
+    }
+    if (near && near.id !== this.chestAsked && !this.engaged && this.engageWaiters.length && !this.paused) {
+      this.chestAsked = near.id; this.exploreRoute.length = 0; this.pointerSteering = false;
+      const waiters = this.engageWaiters; this.engageWaiters = [];
+      waiters.forEach(resolve => resolve({ chest: near.id }));
+    }
   }
 
   /** The hero stands at the combat mark with the horde in formation. */
@@ -473,7 +496,7 @@ export class DungeonWorld {
     if (this.engageReady) return;
     this.engageReady = true; this.horde.reset(this.elapsed);
     const waiters = this.engageWaiters; this.engageWaiters = [];
-    waiters.forEach(resolve => resolve());
+    waiters.forEach(resolve => resolve({}));
   }
 
   async load(): Promise<void> {
@@ -807,7 +830,7 @@ export class DungeonWorld {
     this.level = new Level(Math.floor(Math.random() * 2 ** 30), biome);
     const start = this.level.start;
     this.hero.position.set(start.x, 0, start.z); this.cameraTarget.copy(this.hero.position);
-    this.engaged = this.engageReady = false; this.exploreRoute.length = 0; this.guideRoute = [];
+    this.engaged = this.engageReady = false; this.exploreRoute.length = 0;
     this.packArea = undefined; this.packSeen = false; this.heroArea = this.level.areas[0];
     this.floorLoot.clear();
     this.setEnvironment();
@@ -815,7 +838,7 @@ export class DungeonWorld {
     this.onAreaEnter?.(this.level.areas[0]!.name);
   }
 
-  /** Streaming, area entry, pack placement, guide route, lights and ground, at their own pace. */
+  /** Streaming, area entry, pack placement, chests, lights and ground, at their own pace. */
   private updateLevel(delta: number): void {
     const level = this.level; if (!level) return;
     if (this.elapsed - this.lastStreamAt > .25) { this.lastStreamAt = this.elapsed; this.streamLevel(); }
@@ -827,10 +850,8 @@ export class DungeonWorld {
     if (this.elapsed - this.lastPackCheckAt > .5) {
       this.lastPackCheckAt = this.elapsed;
       this.updatePack();
-      const living = this.enemies.filter(enemy => !enemy.dead);
-      const goal = this.packArea && !this.engaged && living.length ? living.reduce((sum, enemy) => sum.add(enemy.at), new THREE.Vector3()).divideScalar(living.length) : undefined;
-      this.guideRoute = goal ? level.path({ x: this.hero.position.x, z: this.hero.position.z }, { x: goal.x, z: goal.z }) : [];
     }
+    this.updateChests();
     if (this.elapsed - this.lastLightsAt > .5) { this.lastLightsAt = this.elapsed; this.updateLights(); }
     this.easeFraming(delta);
     // The wide ground moves in whole texture repeats, so its pattern stays put.
@@ -2246,7 +2267,6 @@ export class DungeonWorld {
       this.onLootPickup?.(pickup);
     }
     this.ward.update(this.elapsed); this.damageNumbers.update(delta); this.updateCharge(delta);
-    this.updateGuide(delta);
     const markerAge = this.elapsed - (this.moveMarker.userData.shownAt ?? -9);
     (this.moveMarker.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 1 - markerAge / .55) * .85;
     this.moveMarker.scale.setScalar(1 + markerAge * 1.2);

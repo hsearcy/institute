@@ -2,8 +2,8 @@ import type { Database } from 'bun:sqlite';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
-  rpgRollBossBonus, rpgLootSpellShape, rpgEquippedLoot, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellAvailable, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER,
-  type RpgState, type RpgReward, type RpgResolveResult,
+  rpgRollBossBonus, rpgLootSpellShape, RPG_CHESTS_PER_EXPEDITION, RPG_CHEST_XP, rpgEquippedLoot, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellAvailable, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER,
+  type RpgState, type RpgReward, type RpgResolveResult, type RpgChestResult, type RpgChestReward,
 } from '@institute/shared';
 
 /** Additive tables only: never migrate, reset, or award learning state. */
@@ -35,6 +35,16 @@ export function ensureRpgSchema(db: Database): void {
       created_at INTEGER NOT NULL,
       PRIMARY KEY (profile_id, problem_id),
       UNIQUE (profile_id, expedition_id, encounter_index)
+    );
+    CREATE TABLE IF NOT EXISTS rpg_chest_claims (
+      profile_id TEXT NOT NULL,
+      problem_id TEXT NOT NULL,
+      expedition_id TEXT NOT NULL,
+      chest_id TEXT NOT NULL,
+      reward_json TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      PRIMARY KEY (profile_id, problem_id),
+      UNIQUE (profile_id, expedition_id, chest_id)
     );
     CREATE TABLE IF NOT EXISTS rpg_cast_claims (
       profile_id TEXT NOT NULL,
@@ -120,6 +130,9 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
       reward.newItems = (reward.newItems ?? []).map(old => RPG_ITEMS.find(item => item.id === old.id) ?? old);
       return { state, reward, duplicate: true };
     }
+    if (db.query('SELECT 1 FROM rpg_chest_claims WHERE profile_id = ? AND problem_id = ?').get(body.profileId, body.problemId)) {
+      throw new RpgError('This problem already opened a chest.', 409);
+    }
     const expedition = state.expedition;
     if (!expedition || expedition.cleared || expedition.id !== body.expeditionId || expedition.encounterIndex !== body.encounterIndex) {
       throw new RpgError('Your adventure has moved on. Reload its saved checkpoint.', 409);
@@ -170,6 +183,63 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
     const reward: RpgReward = { spellShape, bossCrazyCoins, bossDimes, xp, kills, levelUp: levelsGained > 0, levelsGained, item, newItems: item && !duplicateItem ? [item] : [], duplicateItem, bossDefeated, spellId, combat: cast.result, loot, forgeDust, tier };
     db.query(`INSERT INTO rpg_cast_claims (profile_id, problem_id, expedition_id, encounter_index, reward_json, created_at)
       VALUES (?, ?, ?, ?, ?, ?)`).run(body.profileId, body.problemId, expedition.id, body.encounterIndex, JSON.stringify(reward), Date.now());
+    saveRpgState(db, state);
+    return { state, reward, duplicate: false };
+  })();
+}
+
+const ChestSchema = z.object({
+  profileId: z.string().min(1).max(100), problemId: z.string().min(1).max(200),
+  expeditionId: z.string().min(1).max(100), chestId: z.string().min(1).max(100),
+});
+
+/**
+ * A chest opens with one solved problem, as a cast does: the tutor's receipt
+ * decides, an assisted or skipped problem cannot open it, and one problem pays
+ * once. A problem that powered a cast cannot open a chest, nor the reverse.
+ */
+export function openRpgChest(db: Database, input: z.infer<typeof ChestSchema>): RpgChestResult {
+  const body = ChestSchema.parse(input);
+  return db.transaction(() => {
+    const state = getRpgState(db, body.profileId);
+    const receipt = db.query('SELECT expedition_id, chest_id, reward_json FROM rpg_chest_claims WHERE profile_id = ? AND problem_id = ?')
+      .get(body.profileId, body.problemId) as { expedition_id: string; chest_id: string; reward_json: string } | null;
+    if (receipt) {
+      if (receipt.expedition_id !== body.expeditionId || receipt.chest_id !== body.chestId) throw new RpgError('This problem already opened another chest.', 409);
+      return { state, reward: JSON.parse(receipt.reward_json) as RpgChestReward, duplicate: true };
+    }
+    const cast = db.query(`SELECT 1 FROM rpg_claims WHERE profile_id = ? AND problem_id = ?
+      UNION ALL SELECT 1 FROM rpg_cast_claims WHERE profile_id = ? AND problem_id = ? LIMIT 1`).get(body.profileId, body.problemId, body.profileId, body.problemId);
+    if (cast) throw new RpgError('This problem already powered a spell.', 409);
+    const expedition = state.expedition;
+    if (!expedition || expedition.cleared || expedition.id !== body.expeditionId) throw new RpgError('Your adventure has moved on. Reload its saved checkpoint.', 409);
+    if (db.query('SELECT 1 FROM rpg_chest_claims WHERE profile_id = ? AND expedition_id = ? AND chest_id = ?').get(body.profileId, expedition.id, body.chestId)) {
+      throw new RpgError('This chest is already open.', 409);
+    }
+    const solve = db.query('SELECT solved_at FROM daily_solves WHERE profile_id = ? AND problem_id = ?')
+      .get(body.profileId, body.problemId) as { solved_at: number } | null;
+    const skipped = db.query('SELECT 1 FROM attempts WHERE profile_id = ? AND problem_id = ? AND skipped = 1 LIMIT 1').get(body.profileId, body.problemId);
+    if (skipped || !solve || solve.solved_at < expedition.startedAt) throw new RpgError('Finish this problem with your tutor to open the chest.');
+    const opened = db.query('SELECT COUNT(*) AS count FROM rpg_chest_claims WHERE profile_id = ? AND expedition_id = ?')
+      .get(body.profileId, expedition.id) as { count: number };
+    const tier = rpgTier(expedition.tier);
+    const full = opened.count < RPG_CHESTS_PER_EXPEDITION;
+    // One chest in four holds a relic from the hero's current collection pool.
+    const pool = RPG_ITEMS.filter(item => item.id !== 'apprentice' && item.requiredClears <= state.expeditionsCompleted);
+    const item = full && pool.length && Math.random() < .25 ? pool[Math.floor(Math.random() * pool.length)]! : null;
+    const duplicateItem = !!item && state.inventory.includes(item.id);
+    const loot = item ? rpgCreateLoot(item.id, tier, Math.random) : undefined;
+    if (loot) state.loot!.push(loot);
+    if (item && !duplicateItem) state.inventory.push(item.id);
+    const xp = full ? RPG_CHEST_XP : 0, forgeDust = full ? rpgRoomForgeDust(tier) : 0;
+    const oldLevel = state.level;
+    state.xp += xp; state.forgeDust = (state.forgeDust ?? 0) + forgeDust;
+    Object.assign(state, rpgLevel(state.xp));
+    const levelsGained = state.level - oldLevel;
+    state.skillPoints += levelsGained;
+    const reward: RpgChestReward = { chestId: body.chestId, xp, forgeDust, levelUp: levelsGained > 0, levelsGained, item, newItems: item && !duplicateItem ? [item] : [], duplicateItem, loot, tier };
+    db.query(`INSERT INTO rpg_chest_claims (profile_id, problem_id, expedition_id, chest_id, reward_json, created_at) VALUES (?, ?, ?, ?, ?, ?)`)
+      .run(body.profileId, body.problemId, expedition.id, body.chestId, JSON.stringify(reward), Date.now());
     saveRpgState(db, state);
     return { state, reward, duplicate: false };
   })();
@@ -239,6 +309,7 @@ export function createRpgRoutes(db: Database, applyMiss?: (profileId: string) =>
     })();
     return c.json(result);
   });
+  app.post('/chest', async (c) => c.json(openRpgChest(db, await c.req.json())));
   app.post('/upgrade', async (c) => {
     const { profileId, skillId, requestId } = ProfileSchema.extend({ skillId: z.string(), requestId: z.string().min(1).max(100).optional() }).parse(await c.req.json());
     const state = db.transaction(() => {

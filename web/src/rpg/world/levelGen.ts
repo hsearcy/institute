@@ -10,8 +10,8 @@ export type Biome = 'vault' | 'forest' | 'coast' | 'quarry' | 'garden';
 export type AreaKind = 'entry' | 'hall' | 'sanctum';
 export type FeatureKind = 'pier' | 'brazier' | 'crystals' | 'tomb' | 'rubble' | 'chest' | 'landmark' | 'altar'
   | 'tree' | 'boulder' | 'column' | 'fountain' | 'wreck' | 'cart';
-/** A solid object on the floor. The hero and the horde walk round its radius. */
-export type Feature = Readonly<{ kind: FeatureKind; x: number; z: number; radius: number; turn: number; scale: number }>;
+/** A solid object on the floor. The hero and the horde walk round its radius. A chest can be opened. */
+export type Feature = Readonly<{ id: string; kind: FeatureKind; x: number; z: number; radius: number; turn: number; scale: number }> & { opened?: boolean };
 export type Area = {
   readonly id: number; readonly kind: AreaKind; readonly rect: Rect; readonly name: string; readonly seed: number;
   /** The side the hero comes in from; a sanctum's guardian waits at the far side. */
@@ -116,6 +116,9 @@ export class Level {
     return undefined;
   }
 
+  /** Every chest grown so far, open or closed. */
+  get chests(): Feature[] { return this.areas.flatMap(area => area.features.filter(feature => feature.kind === 'chest')); }
+
   get openExits(): { x: number; z: number }[] { return this.exits.filter(exit => exit.state === 'open').map(exit => this.doorCenter(exit)); }
 
   /** Openings in an area's walls: linked or still open exits. */
@@ -147,7 +150,8 @@ export class Level {
 
   /** A walking route that avoids walls and features, simplified to straight legs. */
   path(from: { x: number; z: number }, to: { x: number; z: number }): { x: number; z: number }[] {
-    const start = this.nearestCell(from.x, from.z), goal = this.nearestCell(to.x, to.z);
+    // A click into the dark between areas walks to the nearest floor near it.
+    const start = this.nearestCell(from.x, from.z), goal = this.nearestCell(to.x, to.z, 12);
     if (!start || !goal) return [];
     const startKey = cellKey(start.x, start.z), goalKey = cellKey(goal.x, goal.z);
     const open = new MinHeap(), came = new Map<number, number>(), cost = new Map<number, number>([[startKey, 0]]);
@@ -200,9 +204,9 @@ export class Level {
     this.passCache.set(key, result); return result;
   }
 
-  private nearestCell(x: number, z: number): { x: number; z: number } | undefined {
+  private nearestCell(x: number, z: number, reach = 4): { x: number; z: number } | undefined {
     const cx = Math.floor(x), cz = Math.floor(z);
-    for (let ring = 0; ring <= 4; ring++) {
+    for (let ring = 0; ring <= reach; ring++) {
       let best: { x: number; z: number } | undefined, distance = Infinity;
       for (let dx = -ring; dx <= ring; dx++) for (let dz = -ring; dz <= ring; dz++) {
         if (Math.max(Math.abs(dx), Math.abs(dz)) !== ring || !this.passable(cx + dx, cz + dz)) continue;
@@ -310,7 +314,7 @@ export class Level {
     const place = (kind: FeatureKind, x: number, z: number, radius: number, scale = 1) => {
       const inside = x - radius > r.minX + .3 && x + radius < r.maxX - .3 && z - radius > r.minZ + .3 && z + radius < r.maxZ - .3;
       if (!inside || !lanes(x, z, radius) || features.some(other => Math.hypot(other.x - x, other.z - z) < other.radius + radius + .6)) return false;
-      features.push({ kind, x, z, radius, turn: rng() * Math.PI * 2, scale }); return true;
+      features.push({ id: `${this.seed}-${area.id}-${features.length}`, kind, x, z, radius, turn: rng() * Math.PI * 2, scale }); return true;
     };
     const scatter = (kind: FeatureKind, count: number, radius: number, edge: number) => {
       for (let n = 0, tries = 0; n < count && tries < count * 12; tries++) {
@@ -322,7 +326,7 @@ export class Level {
     };
     if (area.kind === 'sanctum') {
       const far = farPoint(area, 2.2);
-      features.push({ kind: 'altar', x: far.x, z: far.z, radius: 1.5, turn: 0, scale: 1 });
+      features.push({ id: `${this.seed}-${area.id}-altar`, kind: 'altar', x: far.x, z: far.z, radius: 1.5, turn: 0, scale: 1 });
       for (const [dx, dz] of [[-7, -6], [7, -6], [-7, 6], [7, 6]] as const) place(this.biome === 'vault' ? 'pier' : 'column', center.x + dx, center.z + dz, .95);
       return features;
     }
@@ -340,6 +344,7 @@ export class Level {
       if (this.biome === 'garden' && rng() < .5) place('fountain', center.x + (rng() < .5 ? -1 : 1) * width / 4, center.z - depth / 4, 2.2);
       if (this.biome === 'coast' && rng() < .45) scatter('wreck', 1, 1.8, 2.2);
       if (this.biome === 'quarry' && rng() < .55) scatter('cart', 1, 1.2, 1.6);
+      if (rng() < .3) scatter('chest', 1, .6, 1.4);
       if (rng() < .4) scatter('column', 1 + Math.floor(rng() * 2), .7, 1.4);
     }
     return features;

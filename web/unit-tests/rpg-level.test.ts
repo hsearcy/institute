@@ -85,3 +85,16 @@ test('the same seed and the same exploration grow the same level', () => {
   assert.deepEqual(a.areas.map(area => [area.rect, area.name, area.features.length]), b.areas.map(area => [area.rect, area.name, area.features.length]));
   assert.notDeepEqual(a.areas.map(area => area.rect), explore(322, 'forest').areas.map(area => area.rect));
 });
+
+test('every feature has its own id, and chests stand in dungeons and in the wild', () => {
+  for (const biome of BIOMES) {
+    const ids = new Set<string>(), chests = [1, 2, 3, 4].flatMap(seed => {
+      const level = explore(seed, biome, 10);
+      for (const feature of level.areas.flatMap(area => area.features)) { assert.ok(!ids.has(feature.id), `${biome}: ${feature.id} repeats`); ids.add(feature.id); }
+      return level.chests;
+    });
+    assert.ok(chests.length > 0, `${biome}: no chests`);
+    assert.ok(chests.every(chest => !chest.opened));
+  }
+});
+

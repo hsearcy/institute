@@ -1,6 +1,6 @@
 import {chooseNextAdventure, renderNextAdventure, tierSelect, tierRewards, type NextAdventure} from './nextAdventureView';
 import { HeroAssetLoadError } from './world/tripoHeroRuntime';
-import type { Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgReward, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
+import type { Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgReward, RpgChestResult, RpgItem, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
 import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, rpgEncounterCombat, rpgNextRelicHunt, rpgSalvageValue, rpgAnswerPower, ProblemSchema } from '@institute/shared';
 import { fetchState, fetchMastery, redeemCrazyCoin, redeemDime, type Demo } from './tutor';
 import { speak } from './voice';
@@ -48,6 +48,8 @@ type Session = {
   rewardShown?: boolean;
   celebrationsShown?: boolean;
   celebrations?: CelebrationEvent[];
+  /** The problem is a chest's lock: a correct answer opens this chest instead of casting. */
+  chest?: string;
   pending?: { correct: boolean; assisted: boolean; aided?: boolean; solveMs: number; answerMs?: number; wrongCount?: number; spellId?: RpgSpellId };
 };
 const sessionKey = `institute:rpg:problem:v1:${API}:${PROFILE}`;
@@ -415,20 +417,21 @@ export class RpgGame {
     this.answerClock.restore(this.session!.answerMs ?? 0);
     this.saveSession(); this.busy = true;
     const session = this.session!;
-    if (!this.world.combatReady) {
-      // Free movement: the problem waits until the hero walks up to the horde.
+    if (!this.world.combatReady && !session.chest) {
+      // Free movement: the problem waits until the hero walks up to the horde, or to a chest.
       this.root.classList.add('rpg-exploring');
       this.el('rpg-explore-how').textContent = matchMedia('(pointer: coarse)').matches ? 'Tap the floor to walk.' : 'Click the floor to walk, or use the arrow keys.';
       this.el('rpg-explore').hidden = false;
       // The menus stay usable while the hero searches; the answer clock waits for the problem.
       this.seeking = true; this.busy = false;
-      await this.world.waitForEngage();
+      const reached = await this.world.waitForEngage();
       this.seeking = false;
+      if (reached.chest && this.session === session) { session.chest = reached.chest; this.saveSession(); }
       this.el('rpg-explore').hidden = true; this.root.classList.remove('rpg-exploring');
       if (this.disposed || this.session !== session) return;
       this.busy = true;
     }
-    this.root.classList.add('rpg-combat');
+    if (!session.chest) this.root.classList.add('rpg-combat');
     if (p.newTopic && p.topicId && !session.demoSeen && !this.demoTopics.has(p.topicId)) {
       // Unlike the legacy convenience helper, a transport failure must not
       // silently skip the child's first worked demonstration.
@@ -445,7 +448,11 @@ export class RpgGame {
     this.el('rpg-problem').textContent = p.prompt;
     this.renderVisual(session.helped && p.helpVisual ? p.helpVisual : p.visual);
     this.el('rpg-answer-form').dataset.problemId = p.id;
-    this.el('rpg-topic').textContent = p.topicLabel ?? 'POWER YOUR SPELL';
+    this.el('rpg-topic').textContent = session.chest ? `Unlock the chest · ${p.topicLabel ?? 'Solve to open'}` : p.topicLabel ?? 'POWER YOUR SPELL';
+    // The button's leading text: a lock opens; a spell is unleashed with its power.
+    const castLabel = this.el('rpg-cast').firstChild;
+    if (castLabel?.nodeType === Node.TEXT_NODE) castLabel.textContent = session.chest ? 'Unlock ' : 'Unleash ';
+    this.el('rpg-answer-form').classList.toggle('rpg-chest-lock', !!session.chest);
     this.el('rpg-hint').hidden = true;
     this.el<HTMLInputElement>('rpg-answer').disabled = false;
     this.el<HTMLButtonElement>('rpg-cast').disabled = false;
@@ -484,7 +491,7 @@ export class RpgGame {
     this.session.pending = { correct: Number(this.entered) === this.session.problem.answer, assisted: false, aided: !!this.session.helped, solveMs: Math.round(this.session.elapsedMs ?? 0), answerMs: Math.floor(this.session.answerMs ?? 0), wrongCount: this.session.wrongCount, spellId: this.state!.selectedSpellId };
     this.saveSession();
     dungeonSound.answer(this.session.pending.correct);
-    if (this.session.pending.correct) this.world.anticipate(this.state!.selectedSpellId);
+    if (this.session.pending.correct && !this.session.chest) this.world.anticipate(this.state!.selectedSpellId);
     await this.runSafely(() => this.finishPending());
   }
   /** Reconcile before sending: legacy attempts/retry rewards are not idempotent. */
@@ -519,6 +526,7 @@ export class RpgGame {
       await this.nextProblem();
       return;
     }
+    if (pending.correct && session.chest) { await this.finishChest(session, p.id, session.chest); return; }
     if (pending.correct) {
       const spellId = pending.spellId ?? this.state!.selectedSpellId;
       const result = await resolveEncounter({ problemId: p.id, expeditionId: session.expeditionId, encounterIndex: session.encounterIndex, spellId, answerMs: pending.answerMs ?? pending.solveMs, wrongCount: pending.wrongCount ?? session.wrongCount });
@@ -579,6 +587,52 @@ export class RpgGame {
       else { this.startClock(); this.updatePower(); }
     }
   }
+  /** A chest opened by a solved problem: the lid flies up, then XP, dust and sometimes a relic. */
+  private async finishChest(session: Session, problemId: string, chestId: string): Promise<void> {
+    const result = await request<RpgChestResult>('/rpg/chest', { problemId, expeditionId: session.expeditionId, chestId });
+    this.el<HTMLButtonElement>('rpg-cast').disabled = true;
+    this.el<HTMLInputElement>('rpg-answer').disabled = true;
+    this.el('rpg-answer-form').classList.add('correct');
+    this.world.openChest(chestId);
+    this.state = result.state;
+    this.renderState();
+    const reward = result.reward;
+    if (!session.celebrationsShown) {
+      for (const event of session.celebrations ?? []) this.celebrations.celebrate(event);
+      if (reward.levelUp) this.celebrations.celebrate({
+        id: `${session.problem.id}:level`, kind: 'level', title: 'LEVEL UP!', level: result.state.level,
+        subtitle: 'Your magic is growing!', reward: `+${reward.levelsGained} skill point${reward.levelsGained === 1 ? '' : 's'}`,
+      });
+      session.celebrationsShown = true; this.saveSession();
+    }
+    if (reward.item && (reward.loot || !reward.duplicateItem)) this.showItemDrop(reward.item);
+    if (reward.xp) this.showXpGain(reward.xp);
+    this.toast(reward.xp ? `Chest unlocked! +${reward.xp} XP · +${reward.forgeDust} forge dust` : 'Chest unlocked! It was empty.', 2800, 'Chest unlocked');
+    this.el('rpg-save-status').textContent = '◆ Adventure saved on your server';
+    await this.nextProblem();
+  }
+  private showItemDrop(item: RpgItem, lootId?: string): void {
+    this.discoveryLootId = lootId ?? null; this.discovery = item.id; this.renderDiscovery();
+    const label = this.el('rpg-world-loot');
+    label.textContent = item.name; label.dataset.rarity = item.rarity;
+    this.lootLabelUntil = performance.now() + 4000;
+    if (this.lootLabelFrame !== null) cancelAnimationFrame(this.lootLabelFrame);
+    this.updateLootLabel();
+  }
+  private showXpGain(xp: number): void {
+    this.el('rpg-xp-gain').textContent = `+${xp} XP`;
+    const xpStrip = this.root.querySelector<HTMLElement>('.rpg-xp')!;
+    xpStrip.classList.remove('rpg-xp-earned');
+    void xpStrip.offsetWidth; xpStrip.classList.add('rpg-xp-earned');
+    if (this.xpGainTimer) clearTimeout(this.xpGainTimer);
+    this.xpGainTimer = setTimeout(() => { xpStrip.classList.remove('rpg-xp-earned'); this.xpGainTimer = null; }, 2200);
+    const floating = this.el('rpg-floating-xp');
+    floating.textContent = `+${xp} XP`;
+    const position = this.world.heroScreenPosition;
+    floating.style.left = `${position.x}px`; floating.style.top = `${Math.max(100,position.y-45)}px`;
+    floating.classList.remove('rpg-xp-rise');
+    void floating.offsetWidth; floating.classList.add('rpg-xp-rise');
+  }
   private showReward(reward: RpgReward, session: Session): void {
     if (!session.celebrationsShown) {
       for (const event of session.celebrations ?? []) this.celebrations.celebrate(event);
@@ -588,26 +642,8 @@ export class RpgGame {
       });
       session.celebrationsShown = true; this.saveSession();
     }
-    if (reward.item && (reward.loot || !reward.duplicateItem)) {
-      this.discoveryLootId = reward.loot?.id ?? null; this.discovery = reward.item.id; this.renderDiscovery();
-      const label = this.el('rpg-world-loot');
-      label.textContent = reward.item.name; label.dataset.rarity = reward.item.rarity;
-      this.lootLabelUntil = performance.now() + 4000;
-      if (this.lootLabelFrame !== null) cancelAnimationFrame(this.lootLabelFrame);
-      this.updateLootLabel();
-    }
-    this.el('rpg-xp-gain').textContent = `+${reward.xp} XP`;
-    const xpStrip = this.root.querySelector<HTMLElement>('.rpg-xp')!;
-    xpStrip.classList.remove('rpg-xp-earned');
-    void xpStrip.offsetWidth; xpStrip.classList.add('rpg-xp-earned');
-    if (this.xpGainTimer) clearTimeout(this.xpGainTimer);
-    this.xpGainTimer = setTimeout(() => { xpStrip.classList.remove('rpg-xp-earned'); this.xpGainTimer = null; }, 2200);
-    const floating = this.el('rpg-floating-xp');
-    floating.textContent = `+${reward.xp} XP`;
-    const position = this.world.heroScreenPosition;
-    floating.style.left = `${position.x}px`; floating.style.top = `${Math.max(100,position.y-45)}px`;
-    floating.classList.remove('rpg-xp-rise');
-    void floating.offsetWidth; floating.classList.add('rpg-xp-rise');
+    if (reward.item && (reward.loot || !reward.duplicateItem)) this.showItemDrop(reward.item, reward.loot?.id);
+    this.showXpGain(reward.xp);
     const level = reward.levelUp ? ` · Level ${this.state!.level}!` : '';
     const outcome = reward.combat && !reward.combat.encounterCleared
       ? `${reward.kills ? `${reward.kills} defeated · ` : ''}${reward.combat.remainingEnemies} enemies remain`

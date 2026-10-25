@@ -11,7 +11,32 @@ import type { OutdoorHelpers, OutdoorKit } from './outdoorWorld';
 export type ChunkTorch = { flame: THREE.Mesh; position: THREE.Vector3; phase: number };
 /** A point that may borrow one of the world's few real lights. */
 export type ChunkGlow = { position: THREE.Vector3; warm: boolean };
-export type BuiltChunk = { readonly key: string; readonly group: THREE.Group; readonly torches: ChunkTorch[]; readonly glows: ChunkGlow[]; readonly runes: THREE.Object3D[] };
+/** A chest's lid turns on its hinge; the glow marks a chest still closed. */
+export type ChunkChest = { readonly feature: Feature; readonly hinge?: THREE.Object3D; readonly glow: THREE.Sprite };
+export type BuiltChunk = { readonly key: string; readonly group: THREE.Group; readonly torches: ChunkTorch[]; readonly glows: ChunkGlow[]; readonly runes: THREE.Object3D[]; readonly chests: ChunkChest[] };
+/** Lid angle of an open chest, about its back hinge. */
+export const CHEST_OPEN_ANGLE = -1.95;
+
+/**
+ * The chest model with its lid on a hinge at the back top edge (model space:
+ * y .6, z -.36), and a soft glow above it while it is closed.
+ */
+function placeChest(context: ChunkContext, group: THREE.Group, feature: Feature): ChunkChest | undefined {
+  const object = context.model('chest', .82); if (!object) return undefined;
+  object.position.x = feature.x; object.position.z = feature.z; object.rotation.y = feature.turn; object.userData.shared = true;
+  group.add(object);
+  const lid = object.getObjectByName('Lid_Baked');
+  let hinge: THREE.Object3D | undefined;
+  if (lid?.parent) {
+    hinge = new THREE.Group(); hinge.name = 'ChestHinge'; hinge.position.set(0, .6, -.36);
+    lid.parent.add(hinge); hinge.add(lid); lid.position.set(0, -.6, .36);
+    hinge.rotation.x = feature.opened ? CHEST_OPEN_ANGLE : 0;
+  }
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xffc860, map: context.glowMap, transparent: true, opacity: .55, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+  glow.position.set(feature.x, 1.05, feature.z); glow.scale.setScalar(1.3); glow.visible = !feature.opened; glow.userData.ownedMaterial = true;
+  group.add(glow);
+  return { feature, hinge, glow };
+}
 export type VaultMaterials = Record<'floor' | 'wall' | 'trim' | 'dark' | 'crystalStone' | 'runeGold' | 'gold', THREE.MeshStandardMaterial>;
 export type ChunkContext = {
   readonly level: Level;
@@ -68,7 +93,7 @@ function chunkSeed(chunk: Chunk): number {
 function buildVaultChunk(context: ChunkContext, chunk: Chunk): BuiltChunk {
   const { level, materials } = context, rng = random(chunkSeed(chunk));
   const group = new THREE.Group(); group.name = `chunk-${chunk.key}`;
-  const torches: ChunkTorch[] = [], glows: ChunkGlow[] = [], runes: THREE.Object3D[] = [];
+  const torches: ChunkTorch[] = [], glows: ChunkGlow[] = [], runes: THREE.Object3D[] = [], chests: ChunkChest[] = [];
   const batches = new Map<THREE.Material, THREE.BufferGeometry[]>();
   const frost = context.regionId.includes('frost'), storm = context.regionId.includes('storm');
   const add = (geometry: THREE.BufferGeometry, material: THREE.Material, x: number, y: number, z: number, turn = 0) => {
@@ -232,7 +257,7 @@ function buildVaultChunk(context: ChunkContext, chunk: Chunk): BuiltChunk {
         add(fallen, materials.trim, x, 0, z, feature.turn);
         break;
       }
-      case 'chest': prop('chest', .82, x, z, feature.turn); break;
+      case 'chest': { const chest = placeChest(context, group, feature); if (chest) chests.push(chest); break; }
       case 'landmark':
         if ((area.id + Math.round(x)) % 2) { if (prop('furnace', 3.2, x, z, feature.turn)) torch(x, .35, z + .25); }
         else { prop('reliquary', 3.0, x, z, feature.turn); glows.push({ position: new THREE.Vector3(x, 1.8, z), warm: false }); }
@@ -259,7 +284,7 @@ function buildVaultChunk(context: ChunkContext, chunk: Chunk): BuiltChunk {
     mesh.matrixAutoUpdate = false; mesh.updateMatrix(); group.add(mesh);
   }
   applyHeroCutoutTo(group, [materials.floor, materials.dark]);
-  return { key: chunk.key, group, torches, glows, runes };
+  return { key: chunk.key, group, torches, glows, runes, chests };
 }
 
 function buildOutdoorChunk(context: ChunkContext, kit: OutdoorKit, chunk: Chunk): BuiltChunk {
@@ -303,8 +328,10 @@ function buildOutdoorChunk(context: ChunkContext, kit: OutdoorKit, chunk: Chunk)
     if (chunk.area) for (const feature of chunk.area.features) outdoorFeature(helpers, feature, chunk.area);
   });
   group.name = `chunk-${chunk.key}`;
+  const chests: ChunkChest[] = [];
+  for (const feature of chunk.area?.features ?? []) if (feature.kind === 'chest') { const chest = placeChest(context, group, feature); if (chest) chests.push(chest); }
   applyHeroCutoutTo(group, [kit.materials.ground, kit.materials.path, kit.materials.water, kit.materials.foam, kit.materials.grass]);
-  return { key: chunk.key, group, torches: [], glows: [], runes: [] };
+  return { key: chunk.key, group, torches: [], glows: [], runes: [], chests };
 }
 
 function outdoorFeature(helpers: OutdoorHelpers, feature: Feature, area: Area): void {

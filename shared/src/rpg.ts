@@ -159,6 +159,12 @@ export interface RpgState {
 }
 export interface RpgReward { xp: number; kills: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; bossDefeated: boolean; spellId: RpgSpellId; combat?: RpgCombatResult; loot?: RpgLootInstance; forgeDust?: number; tier?: number; bossCrazyCoins?: number; bossDimes?: number; spellShape?: RpgSpellShape }
 export interface RpgResolveResult { state: RpgState; reward: RpgReward; duplicate: boolean }
+/** A chest opened with a solved problem: smaller than a fight's reward, sometimes a relic. */
+export interface RpgChestReward { chestId: string; xp: number; forgeDust: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; loot?: RpgLootInstance; tier: number }
+export interface RpgChestResult { state: RpgState; reward: RpgChestReward; duplicate: boolean }
+/** Chests one expedition can pay out; more may stand in a big level, but they are empty. */
+export const RPG_CHESTS_PER_EXPEDITION = 8;
+export const RPG_CHEST_XP = 16;
 
 type RelicProgress = Pick<RpgState, 'inventory' | 'expeditionsCompleted' | 'totalKills'>;
 export interface RpgRelicHunt { regionId: string; itemId: string; encounterIndex: number; regional: boolean; duplicate: boolean }

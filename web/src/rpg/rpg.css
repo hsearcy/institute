@@ -45,6 +45,8 @@ body.rpg-mode { background:#101719; color:#ede8d8; font-family:'DM Sans',system-
 .rpg-route .current { color:#fff0c3; text-shadow:0 0 10px #ff9d24; }
 .rpg-controls { position:absolute; left:50%; bottom:20px; width:min(780px, calc(100vw - 40px)); transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; z-index:5; }
 .rpg-answer-panel { width:100%; padding:12px 14px 12px 22px; border:1px solid #a07f49; outline:3px solid #101619aa; box-shadow:0 12px 40px #0009,inset 0 0 0 3px #262d26; background:linear-gradient(115deg,#1b2528f5,#101a1ded); border-radius:5px; display:flex; gap:13px; align-items:center; pointer-events:auto; backdrop-filter:blur(12px); }
+.rpg-answer-panel.rpg-chest-lock { border-color:#e2b65a; box-shadow:0 12px 40px #0009,inset 0 0 0 3px #3a2f17,0 0 26px #ffbe4a33; }
+#rpg-ui #rpg-answer-form.rpg-chest-lock #rpg-power { display:none; }
 .rpg-question { flex:1; min-width:0; }
 .rpg-question .rpg-eyebrow { font-size:9px; letter-spacing:1.7px; display:block; color:#beb59b; margin-bottom:4px; }
 .rpg-question label { font:500 clamp(22px,2.1vw,31px) 'Cinzel',Georgia,serif; color:#fff0d6; display:block; overflow-wrap:anywhere; line-height:1.3; }

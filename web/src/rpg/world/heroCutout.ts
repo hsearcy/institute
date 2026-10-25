@@ -35,7 +35,7 @@ export function applyHeroCutout(material: THREE.Material): void {
         float along = dot(offset, uCutView);
         float across = length(offset - along * uCutView);
         // In front of the hero, above the floor, and inside the circle: dither out.
-        float inside = (1.0 - smoothstep(uCutRadius * .72, uCutRadius, across)) * (1.0 - smoothstep(-1.6, -.4, along)) * smoothstep(.22, .6, vCutWorld.y);
+        float inside = (1.0 - smoothstep(uCutRadius * .72, uCutRadius, across)) * (1.0 - smoothstep(-1.6, -.4, along)) * smoothstep(.95, 1.4, vCutWorld.y);
         // An ordered 4x4 pattern reads as a clean fade, not as noise.
         ivec2 cell = ivec2(mod(gl_FragCoord.xy, 4.0));
         int index = cell.x + cell.y * 4;

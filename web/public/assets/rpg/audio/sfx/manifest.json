@@ -627,6 +627,17 @@
           "bytes": 353219
         }
       ]
+    },
+    "chest-open": {
+      "kind": "sfx",
+      "prompt": "opening an old wooden treasure chest: an iron latch clicks, the heavy lid creaks open, then gold coins spill and jingle with a bright magical sparkle, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "chest-open.mp3",
+          "seconds": 1.54,
+          "bytes": 18853
+        }
+      ]
     }
   },
   "source": "scripts/audio/generate_rpg_sfx.py (ElevenLabs sound generation, eleven_text_to_sound_v2)",

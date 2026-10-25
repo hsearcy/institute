@@ -4,7 +4,8 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { RPG_SPELLS, RPG_SPELL_IDS, RPG_SKILLS, RPG_ITEMS, rpgLevel, rpgSpellUnlocked, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgEncounterKills, rpgEncounterCombat, rpgSpellCombatStats, rpgNextRelicHunt, rpgNormalizeLoot } from '@institute/shared';
-import { ensureRpgSchema, getRpgState, startRpgExpedition, resolveRpgEncounter, createRpgRoutes } from './rpg';
+import { ensureRpgSchema, getRpgState, startRpgExpedition, resolveRpgEncounter, createRpgRoutes, openRpgChest } from './rpg';
+import { RPG_CHESTS_PER_EXPEDITION, RPG_CHEST_XP } from '@institute/shared';
 
 function legacyDb(): Database {
   const db = new Database(':memory:');
@@ -590,4 +591,50 @@ test('New outdoor destinations start at tier one with no clears and preserve lea
       expect(snapshot(db)).toBe(before);
     } finally { db.close(); }
   }
+});
+
+describe('treasure chests open with a solved problem', () => {
+  const chest = (db: Database, problemId: string, chestId: string) => openRpgChest(db, { profileId: 'sam', problemId, expeditionId: getRpgState(db, 'sam').expedition!.id, chestId });
+
+  test('a solved problem opens one chest once, and retries replay the same reward', () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    startRpgExpedition(db, 'sam');
+    expect(() => chest(db, 'unsolved', 'c1')).toThrow('Finish this problem');
+    solved(db, 'sam', 'p1');
+    const learning = snapshot(db);
+    const first = chest(db, 'p1', 'c1');
+    expect(first.duplicate).toBe(false);
+    expect(first.reward.xp).toBe(RPG_CHEST_XP);
+    expect(first.reward.forgeDust).toBeGreaterThan(0);
+    expect(first.state.xp).toBe(RPG_CHEST_XP);
+    // Learning records are only read, never written.
+    expect(snapshot(db)).toBe(learning);
+    const retry = chest(db, 'p1', 'c1');
+    expect(retry.duplicate).toBe(true); expect(retry.reward).toEqual(first.reward);
+    expect(getRpgState(db, 'sam').xp).toBe(RPG_CHEST_XP);
+    expect(() => chest(db, 'p1', 'c2')).toThrow('another chest');
+    solved(db, 'sam', 'p2');
+    expect(() => chest(db, 'p2', 'c1')).toThrow('already open');
+  });
+
+  test('a problem pays for a spell or a chest, never both, and skipped problems open nothing', () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    startRpgExpedition(db, 'sam');
+    solved(db, 'sam', 'cast'); resolve(db, 'sam', 'cast');
+    expect(() => chest(db, 'cast', 'c1')).toThrow('powered a spell');
+    solved(db, 'sam', 'chest'); chest(db, 'chest', 'c1');
+    expect(() => resolve(db, 'sam', 'chest')).toThrow();
+    db.query('INSERT INTO attempts (id, profile_id, problem_id, correct, skipped, created_at) VALUES (99, ?, ?, 0, 1, ?)').run('sam', 'skipped', Date.now());
+    solved(db, 'sam', 'skipped');
+    expect(() => chest(db, 'skipped', 'c2')).toThrow('Finish this problem');
+  });
+
+  test('chests past the limit for one expedition open empty', () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    startRpgExpedition(db, 'sam');
+    for (let n = 0; n < RPG_CHESTS_PER_EXPEDITION; n++) { solved(db, 'sam', `p${n}`); expect(chest(db, `p${n}`, `c${n}`).reward.xp).toBe(RPG_CHEST_XP); }
+    solved(db, 'sam', 'extra');
+    const empty = chest(db, 'extra', 'c-extra').reward;
+    expect(empty).toMatchObject({ xp: 0, forgeDust: 0, item: null });
+  });
 });

@@ -560,6 +560,9 @@ def pair(maker, offset, rot=0):
         copy.data.flip_normals()
         copy.data.transform(Matrix.Rotation(math.radians(rot), 4, 'Z'))
         copy.data.transform(Matrix.Translation(offset))
+        # Tag the mirrored side so export can split it off: the game wears each side on its own bone.
+        group = copy.vertex_groups.new(name='pair_copy')
+        group.add(range(len(copy.data.vertices)), 1.0, 'REPLACE')
 
 
 def flared_cuff(name, mat, z0=-.05, z1=-.13, r0=(.046, .036), r1=(.062, .052), solid=.006):
@@ -756,6 +759,9 @@ def join_all(item_id):
     lo = Vector([min(v.co[i] for v in obj.data.vertices) for i in range(3)])
     hi = Vector([max(v.co[i] for v in obj.data.vertices) for i in range(3)])
     obj.data.transform(Matrix.Translation(-(lo + hi) / 2))
+    # Where the authored origin (helm brow band, torso waist, glove palm) lands after
+    # recentring, in Blender axes. The game fits worn gear to the body from it.
+    obj['sourceOrigin'] = [round(-(lo[i] + hi[i]) / 2, 5) for i in range(3)]
     obj.data.calc_loop_triangles()
     return obj
 
@@ -832,9 +838,28 @@ def runtime_material(obj, images, item_id):
     obj.data.materials.clear(); obj.data.materials.append(mat)
 
 
+def split_pair(obj):
+    """Gloves and boots: separate the mirrored copy into '<id>_mirror'. The
+    original side stays '<id>' (thumb toward +x, so it is the left hand/foot)."""
+    if 'pair_copy' not in obj.vertex_groups: return []
+    activate(obj); bpy.ops.object.mode_set(mode='EDIT'); bpy.ops.mesh.select_all(action='DESELECT')
+    obj.vertex_groups.active = obj.vertex_groups['pair_copy']; bpy.ops.object.vertex_group_select()
+    bpy.ops.mesh.separate(type='SELECTED'); bpy.ops.object.mode_set(mode='OBJECT')
+    parts = [o for o in bpy.context.selected_objects if o is not obj]
+    for part in parts:
+        part.name = obj.name + '_mirror'; part.data.name = part.name
+        part.vertex_groups.clear()
+    obj.vertex_groups.clear()
+    return parts
+
+
 def export(obj, path, item):
     obj['gearBaseId'] = item['id']; obj['gearKind'] = item['kind']; obj['sourceUnits'] = 'meters'
+    mirrors = split_pair(obj)
     activate(obj)
+    for part in mirrors:
+        part['gearBaseId'] = item['id']; part['gearKind'] = item['kind']; part['gearSide'] = 'mirror'; part['sourceOrigin'] = obj['sourceOrigin']; part.select_set(True)
+    if mirrors: obj['gearSide'] = 'original'
     bpy.ops.export_scene.gltf(filepath=str(path), export_format='GLB', use_selection=True, export_extras=True,
                               export_image_format='JPEG', export_jpeg_quality=82, export_yup=True,
                               export_texcoords=True, export_normals=True, export_tangents=False,

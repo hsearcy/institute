@@ -27,6 +27,8 @@ import { phoenixFeatherMaterial, stormWispMaterial } from './world/materials';
 import { enemyRoster } from './world/enemyRoster';
 import { EnemyAnimator } from './world/EnemyAnimator';
 import { HeldEquipment, tripoHeroEquipment } from './world/HeldEquipment';
+import { WornGear, WORN_KINDS, type WornKind } from './world/wornGear';
+import { gearModelUrl } from './icons';
 import { HeroAnimator, type ActorClipRoles } from './world/heroAnimator';
 import { FloorLoot, RARITY_COLORS, type LootPickup, type RewardToken } from './world/floorLoot';
 import { HordeDirector } from './world/hordeDirector';
@@ -117,6 +119,10 @@ export class DungeonWorld {
   private heroAnimator?: HeroAnimator;
   private heroUsesAuthoredMotion = false;
   private heldEquipment?: HeldEquipment;
+  private wornGear?: WornGear;
+  private wornWanted: Partial<Record<WornKind, string>> = {};
+  private readonly gearModels = new Map<string, Promise<THREE.Group | undefined>>();
+  private readonly gearLoaded: THREE.Group[] = [];
   private cleaveCandidate = true;
   private chainCandidate = true;
   private chainUsesHandOrigin = false;
@@ -1561,6 +1567,7 @@ export class DungeonWorld {
     const previousAnimation = this.heroAnimator?.current ?? 'idle';
     const previousTime = this.heroAnimator?.time ?? 0;
     this.heldEquipment?.clear(); this.heldEquipment = undefined;
+    this.wornGear?.clear(); this.wornGear = undefined;
     this.heroMixer?.stopAllAction(); this.heroMixer?.uncacheRoot(this.heroVisual);
     this.heroAnimator = undefined;
     this.hero.remove(this.heroVisual); this.releaseProcedural(this.heroVisual);
@@ -1579,13 +1586,46 @@ export class DungeonWorld {
     this.heroWalkCycle = measureTripoWalkCycle(model, clip('walk'));
     const runCycle = measureTripoWalkCycle(model, clip('run'));
     this.heldEquipment = tripoHeroEquipment(model);
+    this.wornGear = new WornGear(model);
     this.heroUsesAuthoredMotion = (this.heroClipSets.get(modelId)?.length ?? 0) > 0;
     tintTripoHero(model, 'wayfarer');
     this.heroModelId = modelId; this.appearance = 'wayfarer';
     this.heroMixer = new THREE.AnimationMixer(this.heroVisual);
     this.heroAnimator = new HeroAnimator(this.heroMixer, clips, { walk: this.heroWalkCycle, run: runCycle });
     this.heroAnimator.restore(previousAnimation, previousTime); this.heroAnimator.update(0, 0);
-    this.setEquipment(this.equipment); this.renderer.shadowMap.needsUpdate = true;
+    this.setEquipment(this.equipment); this.setWornGear(this.wornWanted); this.renderer.shadowMap.needsUpdate = true;
+  }
+
+  /** Show worn armour and jewellery on the hero. Keys are gear kinds, values gear base ids. */
+  setWornGear(worn: Partial<Record<WornKind, string>>): void {
+    this.wornWanted = { ...worn };
+    for (const kind of WORN_KINDS) {
+      const baseId = worn[kind];
+      if (!baseId) { this.wornGear?.remove(kind); continue; }
+      if (this.wornGear?.worn()[kind] === baseId) continue;
+      void this.gearModel(baseId).then(source => {
+        if (this.disposed || this.wornWanted[kind] !== baseId || !source) return;
+        this.wornGear?.wear(kind, baseId, source); this.renderer.shadowMap.needsUpdate = true;
+      });
+    }
+  }
+
+  private gearModel(baseId: string): Promise<THREE.Group | undefined> {
+    let pending = this.gearModels.get(baseId);
+    if (!pending) {
+      pending = new GLTFLoader().loadAsync(gearModelUrl(baseId)).then(gltf => {
+        gltf.scene.traverse(object => {
+          if (!(object instanceof THREE.Mesh)) return;
+          for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
+            if (material instanceof THREE.MeshStandardMaterial) { material.envMap = this.environment.texture; material.envMapIntensity = .55; }
+          }
+        });
+        if (this.disposed) return undefined;
+        this.gearLoaded.push(gltf.scene); return gltf.scene;
+      }, () => undefined); // A missing model leaves the hero unchanged.
+      this.gearModels.set(baseId, pending);
+    }
+    return pending;
   }
 
   setEquipment(itemId: string): void {
@@ -2969,6 +3009,7 @@ export class DungeonWorld {
       if (object instanceof THREE.Mesh || object instanceof THREE.Points || object instanceof THREE.Sprite) { geometries.add(object.geometry); for (const material of Array.isArray(object.material) ? object.material : [object.material]) { materials.add(material); for (const value of Object.values(material)) if (value instanceof THREE.Texture && value !== this.environment.texture) textures.add(value); } }
     };
     this.scene.traverse(collect); this.models.forEach(model => model.traverse(collect));
+    this.gearLoaded.forEach(model => model.traverse(collect));
     geometries.forEach(geometry => geometry.dispose()); materials.forEach(material => material.dispose()); textures.forEach(texture => texture.dispose());
     this.heroMixer?.stopAllAction(); this.heroMixer?.uncacheRoot(this.heroVisual);
     this.preparedMaterials.forEach(material => material.dispose());

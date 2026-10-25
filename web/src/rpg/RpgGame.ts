@@ -54,7 +54,7 @@ import type { RewardToken } from './world/floorLoot';
 import { HELP_GUARD_MS, HelpGuard } from './helpGuard';
 import './loot-pickups.css';
 import { WardHud, WARD_HTML, showGearLabel } from './wardHud';
-import { rpgGearRunSpeed } from '@institute/shared';
+import { rpgGearRunSpeed, rpgEquippedGear } from '@institute/shared';
 
 type Session = {
   expeditionId: string; encounterIndex: number; problem: Problem; firstAttempt: boolean | null;
@@ -408,6 +408,8 @@ export class RpgGame {
     gear.insertAdjacentHTML('afterbegin',relicArt(item.id));
     this.world.setEquipment(s.equippedItemId);
     this.world.setAppearance(s.appearanceId);
+    const worn = rpgEquippedGear(s);
+    this.world.setWornGear({ helm: worn.helm?.baseId, chest: worn.chest?.baseId, gloves: worn.gloves?.baseId, boots: worn.boots?.baseId, amulet: worn.amulet?.baseId });
     this.renderSpellGoal();
     const boss = !!expedition && !expedition.cleared && expedition.encounterIndex === 5;
     this.el('rpg-boss').hidden = !boss || !this.playing;

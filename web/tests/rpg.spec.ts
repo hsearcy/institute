@@ -467,7 +467,7 @@ test('free movement: the problem waits until the hero walks up to the horde', as
   await expect(page.locator('#rpg-answer-form')).toBeHidden();
   const entry = await page.evaluate(() => (window as any).__game.world.diagnostics.hero);
   // Walk toward the nearest monster until a problem shows: the fight, or a chest's lock on the way.
-  const problemShown = () => page.evaluate(() => { const game = (window as any).__game; return game.world.combatReady || !!game.session?.chest; });
+  const problemShown = () => page.evaluate(() => { const game = (window as any).__game; return game.world.combatReady || !!game.session?.lock; });
   for (let i = 0; i < 14 && !await problemShown(); i++) {
     const point = await page.evaluate(() => {
       const world = (window as any).__game.world, hero = world.hero.position;

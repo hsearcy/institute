@@ -1,5 +1,6 @@
 import {chooseNextAdventure, renderNextAdventure, tierSelect, tierRewards, type NextAdventure} from './nextAdventureView';
 import { HeroAssetLoadError } from './world/tripoHeroRuntime';
+import { RPG_BOONS, type RpgShrineResult, type RpgDoorResult } from '@institute/shared';
 import type { RpgTraderWareId, RpgTraderResult, Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgReward, RpgChestResult, RpgBreakResult, RpgItem, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
 import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, rpgEncounterCombat, rpgNextRelicHunt, rpgSalvageValue, rpgAnswerPower, rpgDepth, ProblemSchema } from '@institute/shared';
 import { fetchState, fetchMastery, redeemCrazyCoin, redeemDime, type Demo } from './tutor';
@@ -7,7 +8,9 @@ import { speak } from './voice';
 import * as dungeonSound from './sound';
 import { API, PROFILE } from './config';
 import { getRpgState, getRpgCamp, mutateRpg, resolveEncounter, attemptStatus, request, ApiError } from './api';
-import { DungeonWorld } from './DungeonWorld';
+import { DungeonWorld, type LockTarget } from './DungeonWorld';
+import { BoonHud } from './boonHud';
+import { finishLockText, lockLabels } from './locks';
 import { icon, spellArt, skillArt, relicArt, escapeHtml as esc } from './icons';
 import './rpg.css';
 import './ui-v2.css';
@@ -52,7 +55,9 @@ type Session = {
   rewardShown?: boolean;
   celebrationsShown?: boolean;
   celebrations?: CelebrationEvent[];
-  /** The problem is a chest's lock: a correct answer opens this chest instead of casting. */
+  /** The problem is a lock: a correct answer opens this chest, shrine or door instead of casting. */
+  lock?: LockTarget;
+  /** Sessions saved before shrines and doors named only a chest. */
   chest?: string;
   /** The same problem told as the chest's story (fixed when the chest is reached). */
   chestStory?: { text: string; spoken: string } | null;
@@ -99,6 +104,8 @@ export class RpgGame {
   private clockRunning = false;
   /** The hero searches for the horde: menus work, the problem and its clock wait. */
   private seeking = false;
+  /** A shrine's boon: its clock runs only while the hero explores. */
+  private readonly boonHud = new BoonHud(() => this.seeking && !this.panel && this.playing && !document.hidden, () => this.world.setBoon(null));
   private areaName = '';
   private readonly answerClock = new AnswerClock();
   private powerRefresh: ReturnType<typeof setInterval> | null = null;
@@ -164,6 +171,7 @@ export class RpgGame {
       visible: () => this.playing && !this.panel && !this.tutorialState,
       onLurk: (gain, pan) => { if (!this.muted) dungeonSound.lurk(gain, pan); },
     });
+    this.root.append(this.boonHud.element);
     this.celebrations = new Celebrations(this.root, {
       soundEnabled: () => !this.muted,
       onStart: event => { if (event.kind === 'level') this.root.classList.add('rpg-level-celebrating'); },
@@ -258,6 +266,7 @@ export class RpgGame {
         && [null, true, false].includes(saved.firstAttempt)
         && Number.isInteger(saved.wrongCount) && saved.wrongCount >= 0 && saved.wrongCount <= 3) {
         this.session = saved;
+        if (saved.chest && !saved.lock) { saved.lock = { kind: 'chest', id: saved.chest }; delete saved.chest; }
         this.session.elapsedMs = Math.max(0, Number(saved.elapsedMs) || 0);
         this.session.answerMs = Math.max(0, Number(saved.answerMs ?? saved.elapsedMs) || 0);
       } else { this.session = null; localStorage.removeItem(sessionKey); }
@@ -417,6 +426,8 @@ export class RpgGame {
       this.closeDialog(true); this.playing = true; this.el('rpg-controls').hidden = false;
       dungeonSound.startAmbience();
       this.restoreSession(); this.renderState();
+      this.boonHud.restore(this.state.expedition?.boon);
+      this.world.setBoon(this.boonHud.active);
       this.setEncounter(this.session?.pending ? this.session.encounterIndex : undefined);
       if (matchMedia('(pointer: coarse)').matches) this.el('rpg-keypad').hidden = false;
       if (this.session?.pending) { this.primeBranches(this.session); await this.finishPending(); return; }
@@ -431,8 +442,8 @@ export class RpgGame {
     this.answerClock.restore(this.session!.answerMs ?? 0);
     this.saveSession(); this.busy = true;
     const session = this.session!;
-    if (!this.world.combatReady && !session.chest) {
-      // Free movement: the problem waits until the hero walks up to the horde, or to a chest.
+    if (!this.world.combatReady && !session.lock) {
+      // Free movement: the problem waits until the hero walks up to the horde, or to a lock.
       this.root.classList.add('rpg-exploring');
       this.el('rpg-explore-how').textContent = matchMedia('(pointer: coarse)').matches ? 'Tap the floor to walk.' : 'Click the floor to walk, or use the arrow keys.';
       this.el('rpg-explore').hidden = false;
@@ -440,12 +451,12 @@ export class RpgGame {
       this.seeking = true; this.busy = false;
       const reached = await this.world.waitForEngage();
       this.seeking = false;
-      if (reached.chest && this.session === session) { session.chest = reached.chest; session.chestStory = chestLockStory(p, this.state!); this.saveSession(); }
+      if (reached.lock && this.session === session) { session.lock = reached.lock; if (reached.lock.kind === 'chest') session.chestStory = chestLockStory(p, this.state!); this.saveSession(); }
       this.el('rpg-explore').hidden = true; this.root.classList.remove('rpg-exploring');
       if (this.disposed || this.session !== session) return;
       this.busy = true;
     }
-    if (!session.chest) this.root.classList.add('rpg-combat');
+    if (!session.lock) this.root.classList.add('rpg-combat');
     if (p.newTopic && p.topicId && !session.demoSeen && !this.demoTopics.has(p.topicId)) {
       // Unlike the legacy convenience helper, a transport failure must not
       // silently skip the child's first worked demonstration.
@@ -459,7 +470,7 @@ export class RpgGame {
     }
     if (this.disposed) return;
     this.closeDialog(true); this.entered = ''; this.updateAnswer();
-    const story = session.chest ? session.chestStory : null;
+    const story = session.lock?.kind === 'chest' ? session.chestStory : null;
     if (story) {
       const label = this.el('rpg-problem');
       label.replaceChildren(Object.assign(document.createElement('span'), { className: 'rpg-chest-story', textContent: story.text }),
@@ -467,11 +478,15 @@ export class RpgGame {
     } else this.el('rpg-problem').textContent = p.prompt;
     this.renderVisual(session.helped && p.helpVisual ? p.helpVisual : p.visual);
     this.el('rpg-answer-form').dataset.problemId = p.id;
-    this.el('rpg-topic').textContent = session.chest ? `Unlock the chest · ${p.topicLabel ?? 'Solve to open'}` : p.topicLabel ?? 'POWER YOUR SPELL';
+    const lock = session.lock ? lockLabels(session.lock) : undefined;
+    this.el('rpg-topic').textContent = lock ? `${lock.title} · ${p.topicLabel ?? 'Solve to open'}` : p.topicLabel ?? 'POWER YOUR SPELL';
     // The button's leading text: a lock opens; a spell is unleashed with its power.
     const castLabel = this.el('rpg-cast').firstChild;
-    if (castLabel?.nodeType === Node.TEXT_NODE) castLabel.textContent = session.chest ? 'Unlock ' : 'Unleash ';
-    this.el('rpg-answer-form').classList.toggle('rpg-chest-lock', !!session.chest);
+    if (castLabel?.nodeType === Node.TEXT_NODE) castLabel.textContent = lock ? `${lock.button} ` : 'Unleash ';
+    const form = this.el('rpg-answer-form');
+    form.classList.toggle('rpg-chest-lock', !!lock);
+    if (lock) form.dataset.lock = session.lock!.kind; else delete form.dataset.lock;
+    if (lock?.color) form.style.setProperty('--lock-boon', lock.color); else form.style.removeProperty('--lock-boon');
     this.el('rpg-hint').hidden = true;
     this.el<HTMLInputElement>('rpg-answer').disabled = false;
     this.el<HTMLButtonElement>('rpg-cast').disabled = false;
@@ -510,7 +525,7 @@ export class RpgGame {
     this.session.pending = { correct: Number(this.entered) === this.session.problem.answer, assisted: false, aided: !!this.session.helped, solveMs: Math.round(this.session.elapsedMs ?? 0), answerMs: Math.floor(this.session.answerMs ?? 0), wrongCount: this.session.wrongCount, spellId: this.state!.selectedSpellId };
     this.saveSession();
     dungeonSound.answer(this.session.pending.correct);
-    if (this.session.pending.correct && !this.session.chest) this.world.anticipate(this.state!.selectedSpellId);
+    if (this.session.pending.correct && !this.session.lock) this.world.anticipate(this.state!.selectedSpellId);
     await this.runSafely(() => this.finishPending());
   }
   /** Reconcile before sending: legacy attempts/retry rewards are not idempotent. */
@@ -545,10 +560,13 @@ export class RpgGame {
       await this.nextProblem();
       return;
     }
-    if (pending.correct && session.chest) { await this.finishChest(session, p.id, session.chest); return; }
+    if (pending.correct && session.lock?.kind === 'chest') { await this.finishChest(session, p.id, session.lock.id); return; }
+    if (pending.correct && session.lock) { await this.finishLock(session, p.id, session.lock); return; }
     if (pending.correct) {
       const spellId = pending.spellId ?? this.state!.selectedSpellId;
-      const result = await resolveEncounter({ problemId: p.id, expeditionId: session.expeditionId, encounterIndex: session.encounterIndex, spellId, answerMs: pending.answerMs ?? pending.solveMs, wrongCount: pending.wrongCount ?? session.wrongCount });
+      const result = await resolveEncounter({ problemId: p.id, expeditionId: session.expeditionId, encounterIndex: session.encounterIndex, spellId, answerMs: pending.answerMs ?? pending.solveMs, wrongCount: pending.wrongCount ?? session.wrongCount, boonActive: this.boonHud.active !== null });
+      // Bounty pays out with the fight it ends, then it is spent.
+      if (result.reward.bountyDust && this.boonHud.active === 'bounty') this.boonHud.end();
       const item = RPG_ITEMS.find(i => i.id === this.state!.equippedItemId)!;
       const applies = rpgItemApplies(item, result.reward.spellId);
       const modifiers = rpgSpellModifiers(this.state!,result.reward.spellId);
@@ -584,6 +602,7 @@ export class RpgGame {
       this.renderState(); this.showReward(result.reward, session);
       this.el('rpg-save-status').textContent = '◆ Adventure saved on your server';
       if (this.state.expedition!.cleared) {
+        this.boonHud.end();
         this.world.celebrate();
         this.session = null; this.saveSession(); this.busy = false; this.showVictory(result.reward); return;
       }
@@ -641,6 +660,29 @@ export class RpgGame {
       this.world.showBreakDust(breakableId);
       this.toast(`+${result.reward.forgeDust} forge dust`, 1600);
     } catch { /* A break is only decoration when the server cannot answer. */ }
+  }
+
+  /** A shrine or a door opened by a solved problem: the world plays it, the server keeps it. */
+  private async finishLock(session: Session, problemId: string, lock: LockTarget): Promise<void> {
+    const body = { problemId, expeditionId: session.expeditionId, targetId: lock.id };
+    this.el<HTMLButtonElement>('rpg-cast').disabled = true;
+    this.el<HTMLInputElement>('rpg-answer').disabled = true;
+    this.el('rpg-answer-form').classList.add('correct');
+    if (lock.kind === 'shrine') {
+      const result = await request<RpgShrineResult>('/rpg/shrine', body);
+      this.state = result.state;
+      this.world.activateShrine(lock.id, result.boon.id);
+      this.boonHud.start(result.boon.id);
+      this.toast(finishLockText(lock, result.boon.id), 3200, RPG_BOONS[result.boon.id].name);
+    } else {
+      const result = await request<RpgDoorResult>('/rpg/door', body);
+      this.state = result.state;
+      this.world.openDoor(lock.id);
+      this.toast(finishLockText(lock), 2800, 'Door open');
+    }
+    this.renderState();
+    this.el('rpg-save-status').textContent = '◆ Adventure saved on your server';
+    await this.nextProblem();
   }
   private showItemDrop(item: RpgItem, lootId?: string): void {
     this.discoveryLootId = lootId ?? null; this.discovery = item.id; this.renderDiscovery();
@@ -1449,7 +1491,7 @@ export class RpgGame {
       case 'parent': void this.showParent(); break;
       case 'mastery-map': void this.showMasteryMap(); break;
       case 'help': void this.help(); break;
-      case 'hear': if (this.session) void this.say((this.session.chest && this.session.chestStory?.spoken) || this.session.problem.spoken); break;
+      case 'hear': if (this.session) void this.say((this.session.lock?.kind === 'chest' && this.session.chestStory?.spoken) || this.session.problem.spoken); break;
       case 'explain': void this.explain(); break;
       case 'walkthrough': if (!this.busy) void this.runSafely(() => this.walkthrough()); break;
       case 'keypad': this.el('rpg-keypad').hidden = !this.el('rpg-keypad').hidden; break;
@@ -1495,7 +1537,7 @@ export class RpgGame {
     if (event.key === 'Enter') { event.preventDefault(); void this.submit(); }
   };
   dispose(): void {
-    this.tutorialNarrator.dispose(); this.tutorialOverlay?.destroy(); this.tutorialHost?.remove();
+    this.tutorialNarrator.dispose(); this.tutorialOverlay?.destroy(); this.tutorialHost?.remove(); this.boonHud.dispose();
     this.stopClock(); this.saveSession(); this.disposed = true; this.abort.abort(); this.panelResolve?.();
     this.combatLayoutObserver.disconnect();
     if (this.toastTimer) clearTimeout(this.toastTimer);

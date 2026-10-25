@@ -8,6 +8,7 @@ import { applyHeroCutoutTo } from './heroCutout';
 import { isBreakable, random, rectCenter, type Area, type Chunk, type Feature, type Level, type Side } from './levelGen';
 import type { BreakableKit } from './breakables';
 import type { OutdoorHelpers, OutdoorKit } from './outdoorWorld';
+import { placeDoor, placeShrine, type ChunkDoor, type ChunkShrine } from './lockVisuals';
 
 export type ChunkTorch = { flame: THREE.Mesh; position: THREE.Vector3; phase: number };
 /** A point that may borrow one of the world's few real lights. */
@@ -16,7 +17,7 @@ export type ChunkGlow = { position: THREE.Vector3; warm: boolean };
 export type ChunkChest = { readonly feature: Feature; readonly hinge?: THREE.Object3D; readonly glow: THREE.Sprite };
 /** A barrel, urn or crate still whole; it is removed from the chunk when broken. */
 export type ChunkBreakable = { readonly feature: Feature; readonly object: THREE.Group };
-export type BuiltChunk = { readonly key: string; readonly group: THREE.Group; readonly torches: ChunkTorch[]; readonly glows: ChunkGlow[]; readonly runes: THREE.Object3D[]; readonly chests: ChunkChest[]; readonly breakables?: ChunkBreakable[] };
+export type BuiltChunk = { readonly key: string; readonly group: THREE.Group; readonly torches: ChunkTorch[]; readonly glows: ChunkGlow[]; readonly runes: THREE.Object3D[]; readonly chests: ChunkChest[]; readonly doors: ChunkDoor[]; readonly shrines: ChunkShrine[]; readonly breakables?: ChunkBreakable[] };
 /** Lid angle of an open chest, about its back hinge. */
 export const CHEST_OPEN_ANGLE = -1.95;
 
@@ -106,6 +107,7 @@ function buildVaultChunk(context: ChunkContext, chunk: Chunk): BuiltChunk {
   const { level, materials } = context, rng = random(chunkSeed(chunk));
   const group = new THREE.Group(); group.name = `chunk-${chunk.key}`;
   const torches: ChunkTorch[] = [], glows: ChunkGlow[] = [], runes: THREE.Object3D[] = [], chests: ChunkChest[] = [];
+  const doors: ChunkDoor[] = [], shrines: ChunkShrine[] = [];
   const batches = new Map<THREE.Material, THREE.BufferGeometry[]>();
   const frost = context.regionId.includes('frost'), storm = context.regionId.includes('storm');
   const add = (geometry: THREE.BufferGeometry, material: THREE.Material, x: number, y: number, z: number, turn = 0) => {
@@ -270,6 +272,7 @@ function buildVaultChunk(context: ChunkContext, chunk: Chunk): BuiltChunk {
         break;
       }
       case 'chest': { const chest = placeChest(context, group, feature); if (chest) chests.push(chest); break; }
+      case 'shrine': shrines.push(placeShrine(group, materials, context.glowMap, feature)); break;
       case 'landmark':
         if ((area.id + Math.round(x)) % 2) { if (prop('furnace', 3.2, x, z, feature.turn)) torch(x, .35, z + .25); }
         else { prop('reliquary', 3.0, x, z, feature.turn); glows.push({ position: new THREE.Vector3(x, 1.8, z), warm: false }); }
@@ -295,8 +298,9 @@ function buildVaultChunk(context: ChunkContext, chunk: Chunk): BuiltChunk {
     mesh.castShadow = material !== materials.floor && material !== materials.dark; mesh.receiveShadow = true;
     mesh.matrixAutoUpdate = false; mesh.updateMatrix(); group.add(mesh);
   }
+  if (chunk.corridor) for (const door of level.doors) if (door.corridor === chunk.corridor.id) doors.push(placeDoor(group, materials, context.glowMap, door));
   applyHeroCutoutTo(group, [materials.floor, materials.dark]);
-  return { key: chunk.key, group, torches, glows, runes, chests };
+  return { key: chunk.key, group, torches, glows, runes, chests, doors, shrines };
 }
 
 function buildOutdoorChunk(context: ChunkContext, kit: OutdoorKit, chunk: Chunk): BuiltChunk {
@@ -342,8 +346,12 @@ function buildOutdoorChunk(context: ChunkContext, kit: OutdoorKit, chunk: Chunk)
   group.name = `chunk-${chunk.key}`;
   const chests: ChunkChest[] = [];
   for (const feature of chunk.area?.features ?? []) if (feature.kind === 'chest') { const chest = placeChest(context, group, feature); if (chest) chests.push(chest); }
+  // Weathered stone of the wild, with the vault's gold and iron fittings.
+  const lockMaterials = { wall: kit.materials.stone, trim: kit.materials.rock, dark: context.materials.dark, gold: context.materials.gold };
+  const shrines = (chunk.area?.features ?? []).filter(feature => feature.kind === 'shrine').map(feature => placeShrine(group, lockMaterials, context.glowMap, feature));
+  const doors = chunk.corridor ? level.doors.filter(door => door.corridor === chunk.corridor!.id).map(door => placeDoor(group, lockMaterials, context.glowMap, door)) : [];
   applyHeroCutoutTo(group, [kit.materials.ground, kit.materials.path, kit.materials.water, kit.materials.foam, kit.materials.grass]);
-  return { key: chunk.key, group, torches: [], glows: [], runes: [], chests };
+  return { key: chunk.key, group, torches: [], glows: [], runes: [], chests, doors, shrines };
 }
 
 function outdoorFeature(helpers: OutdoorHelpers, feature: Feature, area: Area): void {

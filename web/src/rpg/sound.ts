@@ -14,7 +14,7 @@ const VOLUME: Record<string, number> = {
   swing: .32, ward: .5, collapse: .5, alert: .55, step: .32, soul: .32,
   'lurk-rattle': .5, 'lurk-growl': .42, 'lurk-scrape': .4,
   'charge-ember': .45, 'charge-frost': .5, 'charge-storm': .5,
-  'relic-drop': .7, 'chest-open': .75, 'relic-pickup': .6, reward: .5, 'room-clear': .6, 'level-up': .75, 'boss-defeat': .85,
+  'relic-drop': .7, 'chest-open': .75, 'shrine-activate': .6, 'door-open': .7, 'relic-pickup': .6, reward: .5, 'room-clear': .6, 'level-up': .75, 'boss-defeat': .85,
   'break-wood': .62, 'break-pottery': .6, 'dust-pickup': .5, 'elite-alert': .7, 'elite-defeat': .75,
   'ui-click': .45, 'ui-select': .5, 'ui-open': .35, 'answer-correct': .55, 'answer-wrong': .5,
 };
@@ -202,7 +202,7 @@ export type WorldSound =
   | 'impact-fire' | 'impact-frost' | 'impact-storm' | 'impact-blade' | 'impact-heavy'
   | 'blast-fire' | 'blast-frost' | 'blast-storm'
   | 'charge-ember' | 'charge-frost' | 'charge-storm'
-  | 'ward' | 'swing' | 'soul' | 'collapse' | 'step' | 'alert' | 'room-clear' | 'relic-drop' | 'chest-open'
+  | 'ward' | 'swing' | 'soul' | 'collapse' | 'step' | 'alert' | 'room-clear' | 'relic-drop' | 'chest-open' | 'shrine-activate' | 'door-open'
   | 'break-wood' | 'break-pottery' | 'dust-pickup' | 'elite-alert' | 'elite-defeat';
 export function world(kind: WorldSound): void {
   if (kind.startsWith('impact-')) { play(kind.replace('impact-', 'hit-'), { pitch: .12 }); return; }

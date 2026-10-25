@@ -63,6 +63,8 @@ SPEC = {
     "soul": ("a small glowing soul orb absorbed into a hero: a soft ethereal whoosh with a gentle sparkling chime" + FX, .6, 3, .6, "sfx"),
     "relic-drop": ("a legendary item drops in an action RPG: a heavy gem thud on a stone floor, then a bright magical shimmering beam" + FX, 1.6, 1, .6, "sfx"),
     "chest-open": ("opening an old wooden treasure chest: an iron latch clicks, the heavy lid creaks open, then gold coins spill and jingle with a bright magical sparkle" + FX, 1.8, 1, .6, "sfx"),
+    "shrine-activate": ("touching an ancient magical shrine: a soft warm resonant hum swelling gently into a calm glowing shimmer of bell tones and a soft airy breath, peaceful and gentle, not loud" + FX, 2.2, 1, .55, "sfx"),
+    "door-open": ("a heavy sealed stone door with glowing runes unlocking in a dungeon: a soft magical rune chime, then the stone slab grinding slowly down into the floor with a deep rumble and settling dust" + FX, 2.4, 1, .55, "sfx"),
     "relic-pickup": ("picking up a magical relic: a bright sparkling chime swell with a warm magical shimmer" + FX, 1.2, 1, .6, "sfx"),
     "reward": ("a reward: gold coins and gems jingling into a leather pouch with a soft sparkle" + FX, 1.0, 1, .6, "sfx"),
     "room-clear": ("a room of monsters is cleared: a short triumphant magical whoosh rising into a bright bell shimmer" + FX, 1.8, 1, .55, "sfx"),

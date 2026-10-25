@@ -766,6 +766,28 @@
           "bytes": 16658
         }
       ]
+    },
+    "shrine-activate": {
+      "kind": "sfx",
+      "prompt": "touching an ancient magical shrine: a soft warm resonant hum swelling gently into a calm glowing shimmer of bell tones and a soft airy breath, peaceful and gentle, not loud, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "shrine-activate.mp3",
+          "seconds": 1.88,
+          "bytes": 22928
+        }
+      ]
+    },
+    "door-open": {
+      "kind": "sfx",
+      "prompt": "a heavy sealed stone door with glowing runes unlocking in a dungeon: a soft magical rune chime, then the stone slab grinding slowly down into the floor with a deep rumble and settling dust, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "door-open.mp3",
+          "seconds": 2.06,
+          "bytes": 25122
+        }
+      ]
     }
   },
   "source": "scripts/audio/generate_rpg_sfx.py (ElevenLabs sound generation, eleven_text_to_sound_v2)",

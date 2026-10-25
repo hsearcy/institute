@@ -65,6 +65,8 @@ test('a breakable is solid until it breaks, then the hero walks through its spot
 test('breakables in a hallway never close it', () => {
   for (const biome of BIOMES) for (const seed of [9, 314, 77, 1201, 5150]) {
     const level = grow(seed, biome);
+    // Sealed doors close their hallways on purpose; only breakables are under test.
+    for (const door of level.doors) level.openDoor(door.id);
     for (const corridor of level.corridors) {
       const first = corridor.rects[0]!, last = corridor.rects[corridor.rects.length - 1]!;
       const from = { x: (first.minX + first.maxX) / 2, z: (first.minZ + first.maxZ) / 2 }, to = { x: (last.minX + last.maxX) / 2, z: (last.minZ + last.maxZ) / 2 };

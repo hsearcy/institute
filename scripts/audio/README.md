@@ -1,6 +1,6 @@
 # RPG sound design
 
-The RPG uses 85 clips made with ElevenLabs sound generation
+The RPG uses 87 clips made with ElevenLabs sound generation
 (`eleven_text_to_sound_v2`). Every prompt is in `rpg_sfx_spec.py`.
 
 | Group | Clips |

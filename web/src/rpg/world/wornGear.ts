@@ -45,6 +45,9 @@ export class WornGear {
   /** The plain body as one mesh per region (head, chest, gloves, legs, boots). */
   private readonly bodyRegions = new Map<string, SkinnedMesh>();
   private amuletSource?: Object3D;
+  /** Bind-pose body points near the chest front, hero space (for seating pendants). */
+  private readonly chestFront: Vector3[] = [];
+  private readonly bodyToHero = new Matrix4();
   private readonly toHero = new Matrix4();
 
   constructor(hero: Object3D) {
@@ -56,6 +59,7 @@ export class WornGear {
     // Bind-pose geometry is the raw vertex data; no pose is applied to the live skeleton.
     hero.updateMatrixWorld(true);
     this.toHero.copy(hero.matrixWorld).invert();
+    if (this.body) this.bodyToHero.copy(this.toHero).multiply(this.body.matrixWorld);
     const owner = new Map<string, Part>();
     for (const [part, bones] of Object.entries(PART_BONES) as [Part, readonly string[]][]) for (const bone of bones) owner.set(bone, part);
     const boxes = new Map<Part, Box3>(), binds = new Map<string, Matrix4>(), point = new Vector3();
@@ -74,6 +78,7 @@ export class WornGear {
         let best = 0, bone = -1;
         for (let c = 0; c < 4; c++) { const w = weights.getComponent(i, c); if (w > best) { best = w; bone = indices.getComponent(i, c); } }
         point.fromBufferAttribute(positions, i).applyMatrix4(toHero); whole.expandByPoint(point);
+        if (mesh === this.body && i % 3 === 0) this.chestFront.push(point.clone());
         only = only === -1 || only === bone ? bone : undefined;
         const part = owner.get(mesh.skeleton.bones[bone]?.name ?? '');
         if (!part) continue;
@@ -165,8 +170,7 @@ export class WornGear {
       const geometry = gearGeometry(source);
       if (!geometry) return;
       const piece = { mesh: geometry.mesh, box: new Box3().setFromObject(geometry.mesh), origin: geometry.origin };
-      const lift = this.mounted.has('chest') ? .028 : 0;
-      place(kind === 'helm' ? 'head' : 'torso', piece, kind === 'helm' ? fitHelm : kind === 'chest' ? fitChest : (body, item, origin) => fitAmulet(body, item, origin, lift));
+      place(kind === 'helm' ? 'head' : 'torso', piece, kind === 'helm' ? fitHelm : kind === 'chest' ? fitChest : (body, item, origin) => this.seatPendant(fitAmulet(body, item, origin), piece.mesh));
     }
     this.mounted.set(kind, { id, nodes });
     if (kind === 'chest') this.refitAmulet();
@@ -192,6 +196,39 @@ export class WornGear {
       if (region) node.visible = best.get(region)?.node === node;
     }
     for (const [region, mesh] of this.bodyRegions) mesh.visible = !best.has(region);
+  }
+
+  /**
+   * Rest the pendant on whatever is in front of the chest (worn armour or the
+   * shirt): the lowest part of the amulet moves until its back just touches it.
+   */
+  private seatPendant(fit: Matrix4, mesh: Mesh): Matrix4 {
+    const positions = mesh.geometry.getAttribute('position');
+    const toHero = fit.clone().multiply(mesh.matrix), points: Vector3[] = [];
+    for (let i = 0; i < positions.count; i += 2) points.push(new Vector3().fromBufferAttribute(positions, i).applyMatrix4(toHero));
+    const low = Math.min(...points.map(p => p.y)), pendant = points.filter(p => p.y < low + .025);
+    if (!pendant.length) return fit;
+    const centre = pendant.reduce((sum, p) => sum.add(p), new Vector3()).divideScalar(pendant.length);
+    const back = Math.min(...pendant.map(p => p.z));
+    // The surface in front of the chest at the pendant: the worn chest piece when there is one.
+    const surface: Vector3[] = [...this.chestFront];
+    const chest = this.mounted.get('chest');
+    if (chest?.fitted) for (const node of chest.nodes) {
+      if (!(node instanceof Mesh) || !node.visible) continue;
+      const attr = node.geometry.getAttribute('position');
+      for (let i = 0; i < attr.count; i += 2) surface.push(new Vector3().fromBufferAttribute(attr, i).applyMatrix4(this.bodyToHero));
+    } else if (chest) for (const node of chest.nodes) {
+      node.updateMatrixWorld(true);
+      node.traverse(child => {
+        if (!(child instanceof Mesh)) return;
+        const attr = child.geometry.getAttribute('position'), m = this.toHero.clone().multiply(child.matrixWorld);
+        for (let i = 0; i < attr.count; i += 2) surface.push(new Vector3().fromBufferAttribute(attr, i).applyMatrix4(m));
+      });
+    }
+    const near = surface.filter(p => Math.abs(p.y - centre.y) < .03 && Math.abs(p.x - centre.x) < .03);
+    if (!near.length) return fit;
+    const front = Math.max(...near.map(p => p.z));
+    return new Matrix4().makeTranslation(0, 0, front + .004 - back).multiply(fit);
   }
 
   /** An amulet hangs over the chest piece when one is worn. */
@@ -298,10 +335,10 @@ function fitChest(body: Box3, _item: Box3, origin: Vector3): Matrix4 {
 
 /** Amulets hang from a chain loop drawn upright around the authored origin (+.1 up).
  * Tilting the loop back lays it around the neck, with the pendant on the chest. */
-function fitAmulet(body: Box3, _item: Box3, origin: Vector3, lift = 0): Matrix4 {
+function fitAmulet(body: Box3, _item: Box3, origin: Vector3): Matrix4 {
   const b = size(body), scale = b.x * .6 / .15, c = centre(body);
   const tilt = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), -55 * Math.PI / 180);
-  return placeAt(scale * (1 + lift * 4), origin.clone().setY(origin.y + .1), new Vector3(c.x, body.max.y - b.y * .03, c.z + b.z * .08 + lift), tilt);
+  return placeAt(scale, origin.clone().setY(origin.y + .1), new Vector3(c.x, body.max.y - b.y * .03, c.z + b.z * .08), tilt);
 }
 
 function fitBoot(body: Box3, item: Box3): Matrix4 {

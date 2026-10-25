@@ -71,6 +71,8 @@ export type CombatSound = WorldSound;
 const HERO_RUN_SPEED = 4.4;
 /** Seconds a cast holds the hero still before the player may move on. */
 const CAST_ROOT = .7, CLEAVE_ROOT = .85;
+/** Seconds off screen before an unfought pack may move nearer to the hero. */
+const PACK_FORGET_SECONDS = 4;
 const ELEMENT_FLASH = { fire: new THREE.Color(1, .45, .12), electric: new THREE.Color(.55, .75, 1.3), frost: new THREE.Color(.55, 1, 1.3), other: new THREE.Color(1, .95, .85) };
 type Fragment = { position: THREE.Vector3; velocity: THREE.Vector3; rotation: THREE.Vector3; spin: THREE.Vector3; scale: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; hot: boolean; bounced: boolean };
 type Particle = { position: THREE.Vector3; velocity: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; size: number };
@@ -108,9 +110,9 @@ export class DungeonWorld {
   private outdoorKit?: OutdoorKit;
   private outdoorRegion = '';
   private outdoorGround?: THREE.Mesh;
-  /** The area that holds the current pack, and whether the player has seen it there. */
+  /** The area that holds the current pack, and when the player last saw it there. */
   private packArea?: Area;
-  private packSeen = false;
+  private packSeenAt = -Infinity;
   private heroArea?: Area;
   private lastStreamAt = -9;
   private lastLightsAt = -9;
@@ -778,7 +780,7 @@ export class DungeonWorld {
       // The next pack waits somewhere ahead; the hero stays where the last fight ended.
       // A cleared area counts as explored even if the fight was won from its doorway.
       if (this.packArea) this.packArea.visited = true;
-      this.engaged = this.engageReady = false; this.packArea = undefined; this.packSeen = false;
+      this.engaged = this.engageReady = false; this.packArea = undefined; this.packSeenAt = -Infinity;
       this.floorLoot.forgetFarFrom(this.hero.position, 34);
     }
     // A hard population limit, independent of spell power and old receipt totals.
@@ -831,7 +833,7 @@ export class DungeonWorld {
     const start = this.level.start;
     this.hero.position.set(start.x, 0, start.z); this.cameraTarget.copy(this.hero.position);
     this.engaged = this.engageReady = false; this.exploreRoute.length = 0;
-    this.packArea = undefined; this.packSeen = false; this.heroArea = this.level.areas[0];
+    this.packArea = undefined; this.packSeenAt = -Infinity; this.heroArea = this.level.areas[0];
     this.floorLoot.clear();
     this.setEnvironment();
     this.streamLevel(Infinity);
@@ -915,7 +917,7 @@ export class DungeonWorld {
 
   /**
    * The current pack waits in the nearest unexplored area, and the guardian in
-   * a sanctum grown for it. Until the player has seen the pack, it moves to
+   * a sanctum grown for it. While the pack is off screen, it moves to
    * whichever unexplored area is nearest, so every path leads to a fight.
    */
   private placePack(): void {
@@ -949,20 +951,32 @@ export class DungeonWorld {
       .sort((a, b) => { const p = rectCenter(a.rect), q = rectCenter(b.rect); return Math.hypot(p.x - hero.x, p.z - hero.z) - Math.hypot(q.x - hero.x, q.z - hero.z); })[0];
   }
 
-  /** Moves an unseen pack to a nearer unexplored area, and marks it seen once on screen. */
+  /**
+   * Moves a pack that has been off screen for a few seconds to a nearer
+   * unexplored area. A glimpse at the screen edge must not pin it there: a
+   * player who then turns the other way still walks into it.
+   */
   private updatePack(): void {
     if (this.engaged || !this.enemies.length || !this.packArea) return;
     const seen = this.enemies.some(enemy => {
       const at = enemy.root.position.clone().setY(enemy.height * .5).project(this.camera);
       return Math.abs(at.x) < 1.1 && Math.abs(at.y) < 1.1;
     });
-    if (seen) { this.packSeen = true; return; }
-    if (this.packSeen || this.encounter === 5) return;
-    const nearer = this.nearestOpenArea();
-    if (nearer && nearer !== this.packArea) {
-      const hero = this.hero.position, a = rectCenter(nearer.rect), b = rectCenter(this.packArea.rect);
-      if (Math.hypot(a.x - hero.x, a.z - hero.z) + 4 < Math.hypot(b.x - hero.x, b.z - hero.z)) { this.packArea = nearer; this.placePack(); this.batchEnemies(); }
+    if (seen) { this.packSeenAt = this.elapsed; return; }
+    if (this.elapsed - this.packSeenAt < PACK_FORGET_SECONDS) return;
+    const hero = this.hero.position, level = this.level!;
+    const from = (area: Area) => { const at = rectCenter(area.rect); return Math.hypot(at.x - hero.x, at.z - hero.z); };
+    // A pack this far away is no longer ahead of the hero: a new area grows for it.
+    const lost = from(this.packArea) > 44;
+    let next: Area | undefined;
+    if (this.encounter === 5) next = lost ? level.growNearest(hero.x, hero.z, 'sanctum') : undefined;
+    else {
+      next = this.nearestOpenArea();
+      if (next && from(next) + 4 >= from(this.packArea)) next = undefined;
+      if (!next && lost) next = level.growNearest(hero.x, hero.z, 'hall');
     }
+    if (!next || next === this.packArea) return;
+    this.packArea = next; this.streamLevel(Infinity); this.placePack(); this.batchEnemies();
   }
 
   private setEnvironment(): void {

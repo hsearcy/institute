@@ -40,6 +40,8 @@ from scipy.spatial import cKDTree
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location('tripo_equipment', ROOT / 'scripts' / 'prepare-tripo-equipment.py')
 eq = importlib.util.module_from_spec(spec); spec.loader.exec_module(eq)
+spec = importlib.util.spec_from_file_location('regions', ROOT / 'scripts' / 'base-hero' / 'regions.py')
+regions = importlib.util.module_from_spec(spec); spec.loader.exec_module(regions)
 
 TEXTURE = 2048
 NEIGHBOURS = 8
@@ -242,15 +244,24 @@ def main():
     hand_gap = np.minimum(*(np.linalg.norm(aligned - joints_bind[f'{side}_Hand'], axis=1) for side in 'LR'))
     mixed = (final_arm[triangles].any(1) & ~final_arm[triangles].all(1)) & (hand_gap[triangles].min(1) < .1)
     indices = triangles[~mixed].reshape(-1)
-    index_accessor = append(old, indices.astype('<u4'), 'SCALAR', component=5125, target=34963)
-    old.doc['meshes'].append({'name': 'base_body', 'primitives': [{'attributes': attributes, 'indices': index_accessor, 'material': len(old.doc['materials']) - 1}]})
+    # One node per body region, so a worn piece can hide exactly the body it replaces.
+    region = regions.classify(aligned, lambda name: joints_bind[name])
+    triangles = indices.reshape(-1, 3)
+    tri_region = np.array([np.bincount(r, minlength=len(regions.REGIONS)).argmax() for r in region[triangles]])
     removed = []
     for node in old.doc['nodes']:
         if 'mesh' in node and 'skin' in node:
             removed.append(node['name']); del node['mesh']; del node['skin']
     armature = next(i for i, node in enumerate(old.doc['nodes']) if node.get('name') == 'Armature')
-    old.doc['nodes'].append({'name': 'base_body', 'mesh': len(old.doc['meshes']) - 1, 'skin': skin_index, 'extras': {'sourcePart': 'base_body'}})
-    old.doc['nodes'][armature].setdefault('children', []).append(len(old.doc['nodes']) - 1)
+    region_triangles = {}
+    for k, name in enumerate(regions.REGIONS):
+        part = triangles[tri_region == k].reshape(-1)
+        region_triangles[name] = int(len(part) // 3)
+        if not len(part): continue
+        index_accessor = append(old, part.astype('<u4'), 'SCALAR', component=5125, target=34963)
+        old.doc['meshes'].append({'name': f'base_body_{name}', 'primitives': [{'attributes': attributes, 'indices': index_accessor, 'material': len(old.doc['materials']) - 1}]})
+        old.doc['nodes'].append({'name': f'base_body_{name}', 'mesh': len(old.doc['meshes']) - 1, 'skin': skin_index, 'extras': {'sourcePart': 'base_body', 'bodyRegion': name}})
+        old.doc['nodes'][armature].setdefault('children', []).append(len(old.doc['nodes']) - 1)
     # The head socket (crowns) was measured on the old hood; seat it on the new hair.
     world = eq.world_matrices(old.doc)
     index = {node.get('name'): i for i, node in enumerate(old.doc['nodes'])}
@@ -267,7 +278,7 @@ def main():
     for key in ('translation', 'rotation', 'scale'): node.pop(key, None)
     node['matrix'] = local.T.reshape(-1).tolist()
     old.save(args.output)
-    report = {'cutTriangles': int(mixed.sum()), 'headSocket': target.round(4).tolist(), 'rightFistVertices': int((hand > .5).sum()), 'armTurns': arm_turns, 'scale': scale, 'offset': offset.tolist(), 'span': span, 'rise': rise, 'removed': removed, 'skin': skin_index,
+    report = {'regions': region_triangles, 'cutTriangles': int(mixed.sum()), 'headSocket': target.round(4).tolist(), 'rightFistVertices': int((hand > .5).sum()), 'armTurns': arm_turns, 'scale': scale, 'offset': offset.tolist(), 'span': span, 'rise': rise, 'removed': removed, 'skin': skin_index,
               'vertices': len(aligned), 'triangles': len(indices) // 3, 'meanNeighbourDistance': float(distance[:, 0].mean()),
               'p95NeighbourDistance': float(np.percentile(distance[:, 0], 95))}
     print(json.dumps(report, indent=2))

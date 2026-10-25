@@ -1622,10 +1622,11 @@ export class DungeonWorld {
 
   /** A gear base's free-standing model, or (fitted) its skinned on-body model. */
   gearModel(baseId: string, fitted = false): Promise<THREE.Group | undefined> {
-    const key = fitted ? `worn:${baseId}` : baseId;
-    let pending = this.gearModels.get(key);
+    const url = fitted ? wornGearUrl(baseId) : gearModelUrl(baseId);
+    if (!url) return Promise.resolve(undefined);
+    let pending = this.gearModels.get(url);
     if (!pending) {
-      pending = new GLTFLoader().loadAsync(fitted ? wornGearUrl(baseId) : gearModelUrl(baseId)).then(gltf => {
+      pending = new GLTFLoader().loadAsync(url).then(gltf => {
         gltf.scene.traverse(object => {
           if (!(object instanceof THREE.Mesh)) return;
           for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
@@ -1635,7 +1636,7 @@ export class DungeonWorld {
         if (this.disposed) return undefined;
         this.gearLoaded.push(gltf.scene); return gltf.scene;
       }, () => undefined); // A missing model leaves the hero unchanged.
-      this.gearModels.set(key, pending);
+      this.gearModels.set(url, pending);
     }
     return pending;
   }

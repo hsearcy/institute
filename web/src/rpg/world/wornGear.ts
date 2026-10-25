@@ -26,8 +26,10 @@ interface Measured { box: Box3; anchor: Object3D; bind: Matrix4; elbow?: Vector3
  */
 export class WornGear {
   private readonly parts = new Map<Part, Measured>();
-  private readonly mounted = new Map<WornKind, { id: string; nodes: Object3D[]; fitted?: boolean }>();
+  private readonly mounted = new Map<WornKind, { id: string; nodes: Object3D[]; fitted?: boolean; hides?: SkinnedMesh[] }>();
   private body?: SkinnedMesh;
+  /** The plain body as one mesh per region (head, chest, gloves, legs, boots). */
+  private readonly bodyRegions = new Map<string, SkinnedMesh>();
   private amuletSource?: Object3D;
   private readonly toHero = new Matrix4();
 
@@ -35,6 +37,7 @@ export class WornGear {
     const skinned: SkinnedMesh[] = [];
     hero.traverse(node => { if (node instanceof SkinnedMesh && node.userData.sourcePart !== 'cape') skinned.push(node); });
     if (!skinned.length) return;
+    for (const mesh of skinned) if (typeof mesh.userData.bodyRegion === 'string') this.bodyRegions.set(mesh.userData.bodyRegion, mesh);
     this.body = skinned.find(mesh => mesh.userData.sourcePart === 'base_body') ?? skinned.reduce((a, b) => a.geometry.getAttribute('position').count >= b.geometry.getAttribute('position').count ? a : b);
     // Bind-pose geometry is the raw vertex data; no pose is applied to the live skeleton.
     hero.updateMatrixWorld(true);
@@ -88,7 +91,8 @@ export class WornGear {
     const body = this.body;
     if (!body) return false;
     const meshes: SkinnedMesh[] = [];
-    source.traverse(node => { if (node instanceof SkinnedMesh) meshes.push(node); });
+    // A set file holds several pieces; each mesh names its gear base.
+    source.traverse(node => { if (node instanceof SkinnedMesh && (node.userData.wornGear ?? id) === id) meshes.push(node); });
     if (!meshes.length) return false;
     source.updateMatrixWorld(true);
     const heroSlot = new Map(body.skeleton.bones.map((bone, i) => [bone.name, i]));
@@ -116,7 +120,10 @@ export class WornGear {
       nodes.push(worn);
     }
     this.remove(kind);
-    this.mounted.set(kind, { id, nodes, fitted: true });
+    // A worn piece is a whole body region of a dressed hero: hide the plain region it replaces.
+    const hides = meshes.map(mesh => this.bodyRegions.get(mesh.userData.bodyRegion)).filter((mesh): mesh is SkinnedMesh => !!mesh);
+    for (const mesh of hides) mesh.visible = false;
+    this.mounted.set(kind, { id, nodes, fitted: true, hides });
     if (kind === 'chest') this.refitAmulet();
     return true;
   }
@@ -166,6 +173,7 @@ export class WornGear {
       node.removeFromParent();
       if (node instanceof Mesh && node.userData.wornOwnsGeometry) node.geometry.dispose();
     }
+    for (const mesh of worn.hides ?? []) mesh.visible = true;
     this.mounted.delete(kind);
     if (kind === 'chest') this.refitAmulet();
   }

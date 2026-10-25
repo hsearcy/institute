@@ -58,7 +58,13 @@ export function skillArt(id: string, spellId: string): string {
 /** Armour and jewellery icons, rendered in Blender from each base's exact GLB. */
 export const gearIconUrl = (baseId: string) => `/assets/rpg/gear/${encodeURIComponent(baseId)}.webp`;
 export const gearModelUrl = (baseId: string) => `/assets/rpg/gear/${encodeURIComponent(baseId)}.glb`;
-export const wornGearUrl = (baseId: string) => `/assets/rpg/gear/worn/${encodeURIComponent(baseId)}.glb`;
+/** Body-fitted armour: each set file holds the helm, chest, gloves and boots cut from one dressed hero. */
+const WORN_SETS: Record<string, string> = {
+  leather_cap: 'cloth', padded_tunic: 'cloth', cloth_wraps: 'cloth', soft_boots: 'cloth',
+  iron_helm: 'iron', warden_plate: 'iron', iron_gauntlets: 'iron', traveler_boots: 'iron',
+  rune_circlet: 'mage', scale_mail: 'mage', spellweave_gloves: 'mage', windstep_boots: 'mage',
+};
+export const wornGearUrl = (baseId: string) => WORN_SETS[baseId] ? `/assets/rpg/gear/worn/${WORN_SETS[baseId]}.glb` : undefined;
 export function gearArt(baseId: string): string {
   return `<span class="rpg-gear-art" aria-hidden="true" style="background-image:url('${gearIconUrl(baseId)}')"></span>`;
 }

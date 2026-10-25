@@ -48,10 +48,19 @@ class Hero:
     def __init__(self):
         bpy.ops.wm.read_factory_settings(use_empty=True)
         bpy.ops.import_scene.gltf(filepath=str(HERO))
-        self.body = bpy.data.objects['base_body']
         self.arm = next(o for o in bpy.context.scene.objects if o.type == 'ARMATURE')
+        parts = [o for o in bpy.context.scene.objects if o.type == 'MESH' and o.name.startswith('base_body')]
         for o in list(bpy.context.scene.objects):
-            if o.type == 'MESH' and o is not self.body: bpy.data.objects.remove(o)
+            if o.type == 'MESH' and o not in parts: bpy.data.objects.remove(o)
+        # The body ships as one mesh per region; work on the whole body.
+        bpy.ops.object.select_all(action='DESELECT')
+        for o in parts: o.select_set(True)
+        bpy.context.view_layer.objects.active = parts[0]
+        if len(parts) > 1: bpy.ops.object.join()
+        self.body = bpy.context.active_object; self.body.name = 'base_body'
+        bm = bmesh.new(); bm.from_mesh(self.body.data)
+        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-6)
+        bm.to_mesh(self.body.data); bm.free()
         world = self.body.matrix_world
         # Forward is -Y in Blender here (the rig faces game +Z); up is +Z.
         self.forward = Vector((0, -1, 0))

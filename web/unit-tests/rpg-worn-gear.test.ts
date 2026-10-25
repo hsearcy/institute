@@ -95,3 +95,27 @@ test('a hero without a skin wears nothing', () => {
   worn.wear('helm', 'iron_helm', gear(.3, .3));
   assert.deepEqual(worn.worn(), {});
 });
+
+test('a fitted piece binds to the hero skeleton by bone name', () => {
+  const { model, bone } = hero(), worn = new WornGear(model);
+  // The source file has its own copy of the rig, with the bones in another order.
+  const names = ['Head', 'Root', 'Spine02'], bones = names.map(name => { const b = new Bone(); b.name = name; return b; });
+  bones[1].add(bones[0], bones[2]);
+  bones[0].position.copy(bone('Head').position); bones[2].position.copy(bone('Spine02').position);
+  const geometry = new BufferGeometry();
+  geometry.setAttribute('position', new Float32BufferAttribute([0, 1.8, 0, .1, 1.8, 0, 0, 1.9, 0], 3));
+  geometry.setAttribute('skinIndex', new Uint16BufferAttribute([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 4));
+  geometry.setAttribute('skinWeight', new Float32BufferAttribute([1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0], 4));
+  const piece = new SkinnedMesh(geometry, new MeshStandardMaterial()); piece.add(bones[1]); piece.bind(new Skeleton(bones));
+  const source = new Group(); source.add(piece);
+  assert.equal(worn.wearFitted('helm', 'leather_cap', source), true);
+  const body = model.getObjectByProperty('isSkinnedMesh', true) as SkinnedMesh;
+  const fitted = body.parent!.children.find(child => child.name === 'Worn_helm') as SkinnedMesh;
+  assert.ok(fitted, 'the shell sits beside the body');
+  assert.equal(fitted.skeleton, body.skeleton);
+  const head = body.skeleton.bones.findIndex(b => b.name === 'Head');
+  assert.equal(fitted.geometry.getAttribute('skinIndex').getX(0), head);
+  assert.deepEqual(worn.worn(), { helm: 'leather_cap' });
+  worn.remove('helm');
+  assert.equal(body.parent!.children.includes(fitted), false);
+});

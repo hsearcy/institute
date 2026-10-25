@@ -1,14 +1,14 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { createTripoHeroInstance } from './world/tripoHeroRuntime';
-import { WornGear, WORN_KINDS, type WornKind } from './world/wornGear';
+import { WornGear, WORN_KINDS, wearGear, type WornKind } from './world/wornGear';
 import { tripoHeroEquipment, type HeldEquipment } from './world/HeldEquipment';
 
 /** What the dungeon world lends the doll: its loaded hero and the gear model cache. */
 export interface HeroDollSource {
   hero: THREE.Object3D;
   clips: readonly THREE.AnimationClip[];
-  gearModel(baseId: string): Promise<THREE.Object3D | undefined>;
+  gearModel(baseId: string, fitted?: boolean): Promise<THREE.Object3D | undefined>;
   /** The loaded model of a relic (weapon or held item), when it has one. */
   itemModel(itemId: string): THREE.Object3D | undefined;
 }
@@ -114,9 +114,10 @@ export class HeroDoll {
       const baseId = worn[kind];
       if (!baseId) { this.worn?.remove(kind); if (kind === 'helm') this.held?.setHelmWorn(false); continue; }
       if (this.worn?.worn()[kind] === baseId) continue;
-      void this.source.gearModel(baseId).then(model => {
-        if (this.disposed || this.wanted[kind] !== baseId || !model || !this.hero) return;
-        this.worn?.wear(kind, baseId, model);
+      const target = this.worn;
+      if (!target) continue;
+      void wearGear(target, kind, baseId, (id, fitted) => this.source.gearModel(id, fitted), () => !this.disposed && this.wanted[kind] === baseId).then(() => {
+        if (this.disposed) return;
         this.held?.setHelmWorn(!!this.worn?.worn().helm);
         this.ownMaterials();
       });

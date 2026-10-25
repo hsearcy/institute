@@ -58,6 +58,7 @@ export function skillArt(id: string, spellId: string): string {
 /** Armour and jewellery icons, rendered in Blender from each base's exact GLB. */
 export const gearIconUrl = (baseId: string) => `/assets/rpg/gear/${encodeURIComponent(baseId)}.webp`;
 export const gearModelUrl = (baseId: string) => `/assets/rpg/gear/${encodeURIComponent(baseId)}.glb`;
+export const wornGearUrl = (baseId: string) => `/assets/rpg/gear/worn/${encodeURIComponent(baseId)}.glb`;
 export function gearArt(baseId: string): string {
   return `<span class="rpg-gear-art" aria-hidden="true" style="background-image:url('${gearIconUrl(baseId)}')"></span>`;
 }

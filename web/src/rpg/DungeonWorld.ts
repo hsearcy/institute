@@ -27,8 +27,8 @@ import { phoenixFeatherMaterial, stormWispMaterial } from './world/materials';
 import { enemyRoster } from './world/enemyRoster';
 import { EnemyAnimator } from './world/EnemyAnimator';
 import { HeldEquipment, tripoHeroEquipment } from './world/HeldEquipment';
-import { WornGear, WORN_KINDS, type WornKind } from './world/wornGear';
-import { gearModelUrl } from './icons';
+import { WornGear, WORN_KINDS, wearGear, type WornKind } from './world/wornGear';
+import { gearModelUrl, wornGearUrl } from './icons';
 import type { HeroDollSource } from './heroDoll';
 import { HeroAnimator, type ActorClipRoles } from './world/heroAnimator';
 import { FloorLoot, RARITY_COLORS, type LootPickup, type RewardToken } from './world/floorLoot';
@@ -1604,9 +1604,11 @@ export class DungeonWorld {
       const baseId = worn[kind];
       if (!baseId) { this.wornGear?.remove(kind); if (kind === 'helm') this.heldEquipment?.setHelmWorn(false); continue; }
       if (this.wornGear?.worn()[kind] === baseId) continue;
-      void this.gearModel(baseId).then(source => {
-        if (this.disposed || this.wornWanted[kind] !== baseId || !source) return;
-        this.wornGear?.wear(kind, baseId, source); this.renderer.shadowMap.needsUpdate = true;
+      const target = this.wornGear;
+      if (!target) continue;
+      void wearGear(target, kind, baseId, (id, fitted) => this.gearModel(id, fitted), () => !this.disposed && this.wornGear === target && this.wornWanted[kind] === baseId).then(() => {
+        if (this.disposed) return;
+        this.renderer.shadowMap.needsUpdate = true;
         this.heldEquipment?.setHelmWorn(!!this.wornGear?.worn().helm);
       });
     }
@@ -1615,13 +1617,15 @@ export class DungeonWorld {
   /** The loaded hero and gear cache, lent to the character sheet's live portrait. */
   dollSource(): HeroDollSource | undefined {
     const hero = this.models.get(TRIPO_HERO_MODEL);
-    return hero && !this.disposed ? { hero, clips: this.heroClipSets.get(TRIPO_HERO_MODEL) ?? [], gearModel: baseId => this.gearModel(baseId), itemModel: itemId => ITEM_MODELS[itemId] ? this.models.get(ITEM_MODELS[itemId].model) : undefined } : undefined;
+    return hero && !this.disposed ? { hero, clips: this.heroClipSets.get(TRIPO_HERO_MODEL) ?? [], gearModel: (baseId, fitted) => this.gearModel(baseId, fitted), itemModel: itemId => ITEM_MODELS[itemId] ? this.models.get(ITEM_MODELS[itemId].model) : undefined } : undefined;
   }
 
-  gearModel(baseId: string): Promise<THREE.Group | undefined> {
-    let pending = this.gearModels.get(baseId);
+  /** A gear base's free-standing model, or (fitted) its skinned on-body model. */
+  gearModel(baseId: string, fitted = false): Promise<THREE.Group | undefined> {
+    const key = fitted ? `worn:${baseId}` : baseId;
+    let pending = this.gearModels.get(key);
     if (!pending) {
-      pending = new GLTFLoader().loadAsync(gearModelUrl(baseId)).then(gltf => {
+      pending = new GLTFLoader().loadAsync(fitted ? wornGearUrl(baseId) : gearModelUrl(baseId)).then(gltf => {
         gltf.scene.traverse(object => {
           if (!(object instanceof THREE.Mesh)) return;
           for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
@@ -1631,7 +1635,7 @@ export class DungeonWorld {
         if (this.disposed) return undefined;
         this.gearLoaded.push(gltf.scene); return gltf.scene;
       }, () => undefined); // A missing model leaves the hero unchanged.
-      this.gearModels.set(baseId, pending);
+      this.gearModels.set(key, pending);
     }
     return pending;
   }

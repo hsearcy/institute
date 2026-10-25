@@ -179,6 +179,20 @@ def main():
         arm_turns[side] = {'degrees': float(np.degrees(np.arccos(np.clip(np.dot(source, target) / np.linalg.norm(source) / np.linalg.norm(target), -1, 1)))), 'stretch': float(stretch)}
     normals = normals / np.linalg.norm(normals, axis=1, keepdims=True)
     dense, distance = skin(aligned)
+    # Hands hang beside the thighs in the rest pose, so neighbours can mix limbs.
+    # An arm vertex never follows a leg bone, and a leg vertex never follows an arm bone.
+    limb = {c: ('arm' if any(names[n].startswith(f'{s}_{b}') for s in 'LR' for b in ('Upperarm', 'Forearm', 'Hand'))
+                else 'leg' if any(names[n].startswith(f'{s}_{b}') for s in 'LR' for b in ('Thigh', 'Calf', 'Foot', 'ToeBase'))
+                else 'body') for n, c in column.items()}
+    arm_cols = [c for c, kind in limb.items() if kind == 'arm']; leg_cols = [c for c, kind in limb.items() if kind == 'leg']
+    arm_share = dense[:, arm_cols].sum(1) / dense.sum(1)
+    on_arm = arm_share > .5
+    # Away from the shoulder, an arm vertex follows arm bones only (no hip or waist pull).
+    shoulder_gap = np.minimum(*(np.linalg.norm(aligned - joints_bind[f'{side}_Upperarm'], axis=1) for side in 'LR'))
+    body_cols = [c for c, kind in limb.items() if kind == 'body']
+    dense[np.ix_((arm_share > .8) & (shoulder_gap > .09), body_cols)] = 0
+    dense[np.ix_(on_arm, leg_cols)] = 0; dense[np.ix_(~on_arm, arm_cols)] *= (dense[~on_arm][:, leg_cols].sum(1) < .5)[:, None]
+    dense /= dense.sum(1, keepdims=True)
     # The old right fist was skinned to the forearm twist, away from the sword grip on
     # R_Hand. Give the new fist to the hand bone, as on the left, fading in past the wrist.
     elbow, wrist = joints_bind['R_Forearm'], joints_bind['R_Hand']
@@ -221,6 +235,13 @@ def main():
         'JOINTS_0': append(old, joint_slots, 'VEC4', component=5123, target=34962),
         'WEIGHTS_0': append(old, top_weights.astype('<f4'), 'VEC4', target=34962),
     }
+    # Where a fingertip touches the shorts, the mesh joins hand and thigh; those
+    # triangles would stretch into a strip whenever the arm moves. Cut them apart.
+    final_arm = (top_weights * np.isin(top, arm_cols)).sum(1) > .5
+    triangles = indices.reshape(-1, 3)
+    hand_gap = np.minimum(*(np.linalg.norm(aligned - joints_bind[f'{side}_Hand'], axis=1) for side in 'LR'))
+    mixed = (final_arm[triangles].any(1) & ~final_arm[triangles].all(1)) & (hand_gap[triangles].min(1) < .1)
+    indices = triangles[~mixed].reshape(-1)
     index_accessor = append(old, indices.astype('<u4'), 'SCALAR', component=5125, target=34963)
     old.doc['meshes'].append({'name': 'base_body', 'primitives': [{'attributes': attributes, 'indices': index_accessor, 'material': len(old.doc['materials']) - 1}]})
     removed = []
@@ -246,7 +267,7 @@ def main():
     for key in ('translation', 'rotation', 'scale'): node.pop(key, None)
     node['matrix'] = local.T.reshape(-1).tolist()
     old.save(args.output)
-    report = {'headSocket': target.round(4).tolist(), 'rightFistVertices': int((hand > .5).sum()), 'armTurns': arm_turns, 'scale': scale, 'offset': offset.tolist(), 'span': span, 'rise': rise, 'removed': removed, 'skin': skin_index,
+    report = {'cutTriangles': int(mixed.sum()), 'headSocket': target.round(4).tolist(), 'rightFistVertices': int((hand > .5).sum()), 'armTurns': arm_turns, 'scale': scale, 'offset': offset.tolist(), 'span': span, 'rise': rise, 'removed': removed, 'skin': skin_index,
               'vertices': len(aligned), 'triangles': len(indices) // 3, 'meanNeighbourDistance': float(distance[:, 0].mean()),
               'p95NeighbourDistance': float(np.percentile(distance[:, 0], 95))}
     print(json.dumps(report, indent=2))

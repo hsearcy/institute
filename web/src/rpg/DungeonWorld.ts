@@ -494,7 +494,7 @@ export class DungeonWorld {
     const color = colors[rarity] ?? colors.common!;
     const angle = Math.random() * Math.PI * 2;
     const at = slideStep({ x: this.hero.position.x, z: this.hero.position.z }, Math.sin(angle) * 1.7, Math.cos(angle) * 1.7, this.walkable);
-    const mesh = new THREE.Mesh(new THREE.OctahedronGeometry(.26, 0), new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 1.4, roughness: .3, metalness: .2 }));
+    const mesh = new THREE.Mesh(new THREE.OctahedronGeometry(.34, 0), new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 1.4, roughness: .3, metalness: .2 }));
     mesh.position.set(at.x, .5, at.z); mesh.scale.set(1, 1.4, 1); this.scene.add(mesh);
     this.emit(mesh.position.clone(), color, 26, 1.3, 1.2); this.onSound?.('relic-drop');
     this.gearDrops.push({ mesh, color, born: this.elapsed, from: mesh.position.clone() });
@@ -504,9 +504,9 @@ export class DungeonWorld {
     for (const drop of [...this.gearDrops]) {
       const age = this.elapsed - drop.born;
       drop.mesh.rotation.y = age * 2.4;
-      if (age < 1.1) { drop.mesh.position.y = .5 + Math.abs(Math.sin(age * 5)) * .45 * (1 - age / 1.1); continue; }
+      if (age < 1.8) { drop.mesh.position.y = .5 + Math.abs(Math.sin(age * 5)) * .45 * Math.max(0, 1 - age / 1.1); continue; }
       // Then it flies into the hero's pack, as a relic does when walked over.
-      const t = Math.min(1, (age - 1.1) / .45), target = this.hero.position.clone().setY(1.1);
+      const t = Math.min(1, (age - 1.8) / .45), target = this.hero.position.clone().setY(1.1);
       drop.mesh.position.lerpVectors(drop.from.clone().setY(.5), target, t * t);
       drop.mesh.scale.setScalar(1 - t * .7);
       if (t >= 1) {

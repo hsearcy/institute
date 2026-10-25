@@ -2,7 +2,7 @@
 #rpg-ui .rpg-level-orb { overflow: visible; }
 .rpg-ward {
   position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%);
-  width: 118%; min-width: 64px; height: 13px; z-index: 3;
+  width: 108%; min-width: 64px; height: 17px; z-index: 3;
   border: 2px solid #8f7a4c; border-radius: 8px; background: linear-gradient(#0b1418, #142228);
   box-shadow: inset 0 1px 3px #000c, 0 0 0 1px #0b100e, 0 2px 5px #000a;
   overflow: hidden; pointer-events: none;
@@ -16,10 +16,10 @@
 }
 .rpg-ward-value {
   position: relative; display: block; text-align: center;
-  font: bold 9px/9px Georgia, serif; color: #f4f1e4; text-shadow: 0 1px 2px #000, 0 0 3px #000;
+  font: bold 11px/13px Georgia, serif; color: #fff; text-shadow: 0 1px 2px #000, 0 0 3px #000, 0 0 5px #000;
 }
 .rpg-ward::before {
-  content: ''; position: absolute; left: 3px; top: 1px; width: 7px; height: 8px; z-index: 1;
+  content: ''; position: absolute; left: 4px; top: 2px; width: 9px; height: 10px; z-index: 1;
   background: #e8f6ff; opacity: .85;
   clip-path: polygon(50% 0, 100% 18%, 92% 62%, 50% 100%, 8% 62%, 0 18%);
 }

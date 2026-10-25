@@ -10,15 +10,15 @@ export function chestLockStory(problem: Problem, state: RpgState): { text: strin
   return story ? { text: story.text, spoken: story.spoken } : null;
 }
 
-/** The toast after a chest opens: what he counted, then what the server paid. */
+/** The short story toast after a chest opens. The rewards themselves fly to
+ * the hero as pickups with their own labels, so the toast does not list them. */
 export function chestRewardText(reward: RpgChestReward): string {
   if (!reward.xp) return 'Chest unlocked! It was empty.';
-  const paid = `+${reward.xp} XP · +${reward.forgeDust} forge dust`;
   const counted = reward.counted;
-  if (reward.charm && reward.item) return `Chest unlocked! Your lucky charm found ${reward.item.name}! ${paid}`;
-  if (counted?.treasure === 'dust') return `Chest unlocked! You counted ${counted.amount} forge dust. It is yours! +${reward.xp} XP`;
-  if (counted?.treasure === 'gold') return `Chest unlocked! ${counted.amount} gold coins glitter inside. ${paid}`;
-  return `Chest unlocked! ${paid}`;
+  if (reward.charm && reward.item) return `Chest unlocked! Your lucky charm found ${reward.item.name}!`;
+  if (counted?.treasure === 'dust') return `Chest unlocked! You counted ${counted.amount} forge dust. It is yours!`;
+  if (counted?.treasure === 'gold') return `Chest unlocked! ${counted.amount} gold coins glitter inside.`;
+  return 'Chest unlocked!';
 }
 
 /** The same notice for the narrow phone strip. */

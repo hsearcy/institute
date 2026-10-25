@@ -130,9 +130,12 @@ body.rpg-mode { background:#101719; color:#ede8d8; font-family:'DM Sans',system-
 @media(prefers-reduced-motion:reduce){#rpg-ui *,#rpg-ui *:before,#rpg-ui *:after{animation:none!important;transition:none!important}}
 /* Free movement: the problem waits while the hero explores. */
 #rpg-ui.rpg-exploring .rpg-answer-panel,#rpg-ui.rpg-exploring .rpg-keypad { display:none; }
-.rpg-explore { display:flex; flex-direction:column; align-items:center; gap:4px; margin:0 auto 12px; padding:12px 26px; width:max-content; max-width:100%; color:#ecdcb6; background:linear-gradient(115deg,#1b2528f0,#101a1de8); border:1px solid #a07f49; border-radius:5px; box-shadow:0 10px 34px #0009; text-align:center; animation:rpg-explore-in .5s ease-out both; }
-.rpg-explore strong { font-family:Cinzel,Georgia,serif; font-size:19px; letter-spacing:1.5px; color:#f0cd86; text-shadow:0 0 18px #ffb34b55; }
-.rpg-explore span { font-size:14px; color:#c9c5b4; }
+/* A small pill above the spell bar while the hero walks: one line, out of the way. */
+.rpg-explore { display:flex; flex-wrap:wrap; justify-content:center; align-items:baseline; column-gap:10px; row-gap:1px; margin:0 auto 8px; padding:5px 16px 6px; width:max-content; max-width:100%; color:#ecdcb6; background:linear-gradient(115deg,#1b2528e0,#101a1dd8); border:1px solid #a07f4999; border-radius:999px; box-shadow:0 4px 16px #0007; text-align:center; pointer-events:none; animation:rpg-explore-in .4s ease-out both; }
+.rpg-explore strong { font-family:Cinzel,Georgia,serif; font-size:14px; letter-spacing:1.2px; color:#f0cd86; text-shadow:0 0 12px #ffb34b44; white-space:nowrap; }
+.rpg-explore strong:before { content:'◆'; margin-right:8px; font-size:9px; color:#a07f49; vertical-align:2px; }
+.rpg-explore span { font-size:12px; color:#c9c5b4; }
+.rpg-explore span[hidden] { display:none; }
 @keyframes rpg-explore-in { from { opacity:0; transform:translateY(10px); } }
 /* Slow motion while a problem waits: the world dims at its edges. */
 #rpg-ui::after { content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:0; transition:opacity .6s ease; background:radial-gradient(ellipse 70% 62% at 50% 46%,transparent 55%,#04121acc 100%); }

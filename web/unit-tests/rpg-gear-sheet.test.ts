@@ -55,8 +55,8 @@ test('Details card compares with the worn item and offers equip and salvage', ()
   const state = fixture();
   const html = renderGearSheet(state, { ...emptyGearUi(), selectedId: 'h2' });
   expect(html).toContain('<li>+20 ward</li>');
-  expect(html).toContain('<li class="up"><span aria-hidden="true">▲</span>6 more ward</li>');
-  expect(html).toContain('<li class="down"><span aria-hidden="true">▼</span>1 less damage to every attack</li>');
+  expect(html).toContain('<li class="up"><span aria-hidden="true">▲</span>+6 ward</li>');
+  expect(html).toContain('<li class="down"><span aria-hidden="true">▼</span>−1 damage to every attack</li>');
   expect(html).toContain('data-gear-equip="h2" data-slot="helm"');
   expect(html).toContain(`Turn into ${rpgGearSalvageValue(state.gear![2]!)} forge dust`);
   expect(html).toContain('data-gear-viewer="leather_cap"');

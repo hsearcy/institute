@@ -27,13 +27,13 @@ export class GearViewer {
     this.renderer = renderer;
     renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = .92;
     const canvas = renderer.domElement; canvas.className = 'rpg-gear-canvas'; canvas.setAttribute('aria-hidden', 'true');
     const pmrem = new THREE.PMREMGenerator(renderer);
     const environment = pmrem.fromScene(new RoomEnvironment(), .04).texture; pmrem.dispose();
-    this.scene.environment = environment;
+    this.scene.environment = environment; this.scene.environmentIntensity = .55;
     // Same intent as the icon studio: warm key, cool rim, soft top fill.
-    const key = new THREE.DirectionalLight(0xffecd0, 2.2); key.position.set(-1.5, 1.2, 2.5);
+    const key = new THREE.DirectionalLight(0xffecd0, 1.7); key.position.set(-1.5, 1.2, 2.5);
     const rim = new THREE.DirectionalLight(0xb8d4ff, 1.6); rim.position.set(2, 1.5, -2);
     this.scene.add(key, rim, new THREE.HemisphereLight(0xd9e2ff, 0x2a2018, .55), this.pivot);
     try {
@@ -42,9 +42,9 @@ export class GearViewer {
       const box = new THREE.Box3().setFromObject(gltf.scene), size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
       gltf.scene.position.sub(center);
       this.pivot.add(gltf.scene);
-      const radius = Math.max(size.x, size.y, size.z) * .62;
+      const radius = size.length() * .5 * .86;
       const distance = radius / Math.sin(THREE.MathUtils.degToRad(this.camera.fov / 2));
-      this.camera.position.set(0, radius * .55, distance); this.camera.lookAt(0, 0, 0);
+      this.camera.position.set(0, distance * .28, distance); this.camera.lookAt(0, 0, 0);
       this.pivot.rotation.x = .12;
     } catch {
       return; // Missing model: the icon remains.

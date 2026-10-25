@@ -43,7 +43,7 @@ export function gearComparison(item: RpgGearInstance, worn?: RpgGearInstance): G
     const { label, percent } = RPG_GEAR_STAT_LABELS[stat];
     const amount = `${Math.abs(delta)}${percent ? '%' : ''}`;
     return { stat, delta, direction: delta > 0 ? 'up' : delta < 0 ? 'down' : 'same',
-      text: delta > 0 ? `${amount} more ${label}` : delta < 0 ? `${amount} less ${label}` : `Same ${label}` };
+      text: delta > 0 ? `+${amount} ${label}` : delta < 0 ? `−${amount} ${label}` : `Same ${label}` };
   });
 }
 

@@ -1,7 +1,7 @@
 import {chooseNextAdventure, renderNextAdventure, tierSelect, tierRewards, type NextAdventure} from './nextAdventureView';
 import { HeroAssetLoadError } from './world/tripoHeroRuntime';
 import { RPG_BOONS, type RpgShrineResult, type RpgDoorResult } from '@institute/shared';
-import type { RpgTraderWareId, RpgTraderResult, Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgReward, RpgChestResult, RpgBreakResult, RpgItem, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
+import type { RpgTraderWareId, RpgTraderResult, Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgReward, RpgChestResult, RpgBreakResult, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
 import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, rpgEncounterCombat, rpgNextRelicHunt, rpgSalvageValue, rpgAnswerPower, rpgDepth, rpgGuardianAwake, rpgPacksCleared, RPG_GUARDIAN_PACKS, RPG_GUARDIAN_ENCOUNTER, ProblemSchema } from '@institute/shared';
 import { renderGuardianTrack } from './guardianTrack';
 import { fetchState, fetchMastery, redeemCrazyCoin, redeemDime, type Demo } from './tutor';
@@ -49,7 +49,7 @@ import { TutorialNarrator } from './TutorialNarrator';
 import { TraderDesk } from './traderView';
 import { chestLockStory, chestRewardText, chestRewardShort } from './chestLock';
 import './chest-story.css';
-import { chestRewardTokens, cssColor, freeLabelSlot } from './rewardPickups';
+import { chestRewardTokens, cssColor, freeLabelSlot, monsterRelicToken } from './rewardPickups';
 import type { RewardToken } from './world/floorLoot';
 import { HELP_GUARD_MS, HelpGuard } from './helpGuard';
 import './loot-pickups.css';
@@ -95,8 +95,6 @@ export class RpgGame {
     if (cast) { cast.disabled = value; cast.setAttribute('aria-busy', String(value)); }
     if (input) input.disabled = value;
     this.syncHelpButtons();
-    const discoveryEquip = this.root.querySelector<HTMLButtonElement>('.rpg-discovery-equip');
-    if (discoveryEquip) discoveryEquip.disabled = value;
     this.root.querySelectorAll<HTMLButtonElement>('[data-appearance]').forEach(button => {
       button.disabled = value || button.dataset.locked === 'true' || button.getAttribute('aria-pressed') === 'true';
     });
@@ -133,14 +131,10 @@ export class RpgGame {
   private retrying = false;
   private storageReady = false;
   private speechDepth = 0;
-  private discovery: string | null = null;
-  private lootLabelFrame: number | null = null;
   private healthFrame: number | null = null;
-  private lootLabelUntil = 0;
   private campState: RpgCampState | null = null;
   private legacyState: State | null = null;
   private selectedTier = 1;
-  private discoveryLootId: string | null = null;
   private readonly celebrations: Celebrations;
   private displayedXpLevel = 0;
   private xpGainTimer: ReturnType<typeof setTimeout> | null = null;
@@ -178,7 +172,7 @@ export class RpgGame {
       <nav aria-label="Adventure menu"><button data-action="map" title="Expeditions" aria-label="Expeditions">${icon('map')}</button><button data-action="skills" title="Skill trees" aria-label="Skill trees">${icon('tree')}<i id="rpg-points" hidden></i></button><button data-action="inventory" title="Equipment" aria-label="Equipment">${icon('bag')}</button><button id="rpg-blacksmith" data-action="blacksmith" title="Blacksmith" aria-label="Blacksmith">${icon('forge')}<i id="rpg-forge-ready" aria-hidden="true" hidden>↑</i></button><button data-action="quests" title="Quest board and camp" aria-label="Quest board and camp">${icon('ring')}</button><button data-action="sound" title="Toggle tutor voice" aria-label="Mute tutor voice">${icon('sound')}</button><button data-action="pause" title="Pause and save" aria-label="Pause and save">Ⅱ</button></nav></header>
       <div class="rpg-route" aria-label="Expedition progress" id="rpg-route"></div><button id="rpg-next-spell" class="rpg-next-spell" data-action="spell-goal" hidden></button>
       <div id="rpg-boss" class="rpg-boss" hidden><span>GUARDIAN</span><strong></strong><div role="progressbar" aria-label="Guardian health" aria-valuemin="0" aria-valuemax="36" aria-valuenow="36"><i></i></div></div>
-      <div id="rpg-toast" class="rpg-toast" role="status" aria-live="polite" hidden></div><aside id="rpg-discovery" class="rpg-discovery" aria-label="New relic" aria-live="polite" hidden></aside><div id="rpg-floating-xp" class="rpg-floating-xp" aria-hidden="true"></div><div id="rpg-world-loot" class="rpg-world-loot" aria-hidden="true" hidden></div><div id="rpg-pickups" class="rpg-pickups" role="status" aria-live="polite"></div>
+      <div id="rpg-toast" class="rpg-toast" role="status" aria-live="polite" hidden></div><div id="rpg-floating-xp" class="rpg-floating-xp" aria-hidden="true"></div><div id="rpg-pickups" class="rpg-pickups" role="status" aria-live="polite"></div>
       <section class="rpg-controls" id="rpg-controls" hidden aria-label="Spell controls">
         <div class="rpg-ladder" id="rpg-ladder" hidden></div>
         <div class="rpg-hint" id="rpg-hint" role="status" hidden></div>
@@ -624,7 +618,6 @@ export class RpgGame {
         if (this.toastTimer) clearTimeout(this.toastTimer);
         this.toastTimer = null;
         this.el('rpg-toast').hidden = true;
-        this.discovery = null; this.renderDiscovery();
         this.el('rpg-floating-xp').classList.remove('rpg-xp-rise');
         if (result.duplicate && result.reward.combat) {
           // A lost response can leave the fetched save ahead of this visual
@@ -641,7 +634,7 @@ export class RpgGame {
           chains: modifiers.includes('chain'), pierce: modifiers.includes('pierce'),
           orbit: modifiers.includes('orbit'), summon: modifiers.includes('summon'),
           itemId: applies ? item.id : undefined, kills: result.reward.kills,
-          drop: result.reward.item && (result.reward.loot || !result.reward.duplicateItem) ? {name:result.reward.item.name,rarity:result.reward.item.rarity} : undefined, xp:result.reward.xp,
+          drop: monsterRelicToken(result.reward), xp:result.reward.xp,
         });
         session.rewardShown = true; this.saveSession();
       }
@@ -767,14 +760,6 @@ export class RpgGame {
     };
     this.helpGuardTimer = setTimeout(release, HELP_GUARD_MS + 10);
   }
-  private showItemDrop(item: RpgItem, lootId?: string): void {
-    this.discoveryLootId = lootId ?? null; this.discovery = item.id; this.renderDiscovery();
-    const label = this.el('rpg-world-loot');
-    label.textContent = item.name; label.dataset.rarity = item.rarity;
-    this.lootLabelUntil = performance.now() + 4000;
-    if (this.lootLabelFrame !== null) cancelAnimationFrame(this.lootLabelFrame);
-    this.updateLootLabel();
-  }
   /** The XP strip glows with what was just earned. */
   private pulseXpStrip(xp: number): void {
     this.el('rpg-xp-gain').textContent = `+${xp} XP`;
@@ -784,7 +769,7 @@ export class RpgGame {
     if (this.xpGainTimer) clearTimeout(this.xpGainTimer);
     this.xpGainTimer = setTimeout(() => { xpStrip.classList.remove('rpg-xp-earned'); this.xpGainTimer = null; }, 2200);
   }
-  /** A chest reward reached the hero: a small label rises beside him, stacked
+  /** A reward (chest treasure or a fallen enemy's relic) reached the hero: a small label rises beside him, stacked
    * above any label still showing so two never overlap. */
   private collectReward(token: RewardToken): void {
     if (token.kind === 'xp' && token.amount) this.pulseXpStrip(token.amount);
@@ -795,6 +780,7 @@ export class RpgGame {
     if (token.rarity) label.dataset.rarity = token.rarity;
     label.style.setProperty('--pickup', cssColor(token.color));
     label.textContent = token.label;
+    if (token.itemId) label.insertAdjacentHTML('afterbegin', relicArt(token.itemId));
     const at = this.world.heroScreenPosition;
     label.style.left = `${Math.min(innerWidth - 90, Math.max(90, at.x))}px`;
     label.style.top = `${Math.max(96, at.y - 26 - slot * 27)}px`;
@@ -821,7 +807,6 @@ export class RpgGame {
       });
       session.celebrationsShown = true; this.saveSession();
     }
-    if (reward.item && (reward.loot || !reward.duplicateItem)) this.showItemDrop(reward.item, reward.loot?.id);
     this.showXpGain(reward.xp);
     const level = reward.levelUp ? ` · Level ${this.state!.level}!` : '';
     const outcome = reward.combat && !reward.combat.encounterCleared
@@ -838,15 +823,6 @@ export class RpgGame {
       else dungeonSound.reward();
     }
   }
-  private updateLootLabel = (): void => {
-    const label = this.el('rpg-world-loot');
-    // The name stays over a relic that still waits on the floor.
-    if (this.disposed || (performance.now() > this.lootLabelUntil && !this.world.lootScreenPosition)) { label.hidden = true; this.lootLabelFrame = null; return; }
-    const position = this.world.lootScreenPosition;
-    label.hidden = !position || position.y < 80 || position.y > innerHeight - 180 || position.x < 20 || position.x > innerWidth - 20;
-    if (position) { label.style.left = `${position.x}px`; label.style.top = `${position.y-30}px`; }
-    this.lootLabelFrame = requestAnimationFrame(this.updateLootLabel);
-  };
   private updateEnemyHealth = (): void => {
     if (this.disposed) return;
     const boss = this.world.bossHealth;
@@ -869,15 +845,6 @@ export class RpgGame {
     }
     this.healthFrame = requestAnimationFrame(this.updateEnemyHealth);
   };
-  private renderDiscovery(): void {
-    const item = RPG_ITEMS.find(item => item.id === this.discovery);
-    const panel = this.el('rpg-discovery');
-    panel.hidden = !item;
-    if (!item) return;
-    panel.dataset.rarity = item.rarity;
-    const loot = this.state?.loot?.find(entry => entry.id === this.discoveryLootId);
-    panel.innerHTML = `<button data-action="dismiss-loot" class="rpg-discovery-close" aria-label="Dismiss new relic">×</button><p class="rpg-eyebrow">${item.rarity.toUpperCase()} RELIC DISCOVERED</p><div class="rpg-discovery-body">${relicArt(item.id)}<div><h3>${item.name}</h3><p>${esc(loot ? lootStats(loot, this.state!) : item.description)}</p></div></div><button class="rpg-discovery-equip" ${loot ? `data-loot-equip="${esc(loot.id)}"` : `data-discovery-item="${item.id}"`} ${this.busy ? 'disabled' : ''}>${loot ? this.state?.equippedLootId === loot.id ? '✓ Equipped' : 'Equip this roll' : this.state?.equippedItemId === item.id ? '✓ Equipped' : 'Equip this relic'}</button><small>Already saved in your equipment</small>`;
-  }
   private nextAdventure: NextAdventure | null = null;
   private showVictory(reward: RpgReward): void {
     const s = this.state!; const region = RPG_REGIONS.find(r => r.id === s.expedition?.regionId)!;
@@ -1541,9 +1508,6 @@ export class RpgGame {
         this.showSkills(); if (!this.muted) dungeonSound.levelUp();
       }); return;
     }
-    if (button.dataset.discoveryItem) {
-      void this.changeLoadout('equip', {itemId:button.dataset.discoveryItem}, () => { this.discovery = null; this.renderDiscovery(); this.toast('Relic equipped. Unleash its magic!'); }); return;
-    }
     if (button.dataset.nextRegion && this.nextAdventure && this.state) {
       this.nextAdventure.regionId = button.dataset.nextRegion;
       this.el('rpg-next-adventure').outerHTML = renderNextAdventure(this.state, this.nextAdventure);
@@ -1569,7 +1533,7 @@ export class RpgGame {
       void this.changeLoadout('equip', { lootId: button.dataset.lootEquip }, () => {
         if (this.panel === 'forge' && this.campState && this.legacyState) this.showDialog('forge', renderCampWorkshop(this.state!, this.campState, this.legacyState, 'forge'), true);
         else if (this.panel === 'inventory') this.showInventory();
-        this.discovery = null; this.renderDiscovery(); this.toast('Relic roll equipped. Try its new power!');
+        this.toast('Relic roll equipped. Try its new power!');
       }); return;
     }
     if (button.dataset.item) {
@@ -1592,7 +1556,6 @@ export class RpgGame {
       case 'rune-detail': this.skillDetailOpen = !this.skillDetailOpen; this.showSkills(); this.root.querySelector<HTMLElement>('.rpg-dialog')!.scrollTop = 0; break;
       case 'spellbook': this.showSpellbook(); break;
       case 'spell-goal': this.showSpellGoal(); break;
-      case 'dismiss-loot': this.discovery = null; this.renderDiscovery(); break;
       case 'inventory': this.showInventory(); break;
       case 'blacksmith': void this.showWorkshop('forge', true); break;
       case 'quests': case 'merchant': case 'forge': case 'records': void this.showWorkshop(action); break;
@@ -1655,7 +1618,6 @@ export class RpgGame {
     this.stopClock(); this.saveSession(); this.disposed = true; this.abort.abort(); this.panelResolve?.();
     this.combatLayoutObserver.disconnect();
     if (this.toastTimer) clearTimeout(this.toastTimer);
-    if (this.lootLabelFrame !== null) cancelAnimationFrame(this.lootLabelFrame);
     if (this.healthFrame !== null) cancelAnimationFrame(this.healthFrame);
     if (this.xpGainTimer) clearTimeout(this.xpGainTimer);
     if (this.powerRefresh) clearInterval(this.powerRefresh);

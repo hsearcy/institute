@@ -85,7 +85,7 @@ async function captureCombatLayouts(page: Page, info: TestInfo, phase: string): 
       const name = `${phase}-${viewport.width}x${viewport.height}`;
       const geometry = await page.evaluate(() => {
         const game = (window as any).__game, world = game.world;
-        const rectangles = Object.fromEntries(['#game-canvas', '.rpg-controls', '#rpg-toast', '#rpg-boss', '#rpg-discovery'].map(selector => {
+        const rectangles = Object.fromEntries(['#game-canvas', '.rpg-controls', '#rpg-toast', '#rpg-boss'].map(selector => {
           const element = document.querySelector(selector) as HTMLElement;
           const rect = element.getBoundingClientRect();
           return [selector, { hidden: element.hidden, text: element.textContent, x: rect.x, y: rect.y, width: rect.width, height: rect.height }];
@@ -96,9 +96,9 @@ async function captureCombatLayouts(page: Page, info: TestInfo, phase: string): 
           return { id: enemy.id, hp: enemy.hp, maxHp: enemy.maxHp, dead: enemy.dead,
             head: { x: canvas.left + (head.x + 1) * canvas.width / 2, y: canvas.top + (1 - head.y) * canvas.height / 2 } };
         });
-        return { browserTime: performance.now(), viewport: { width: innerWidth, height: innerHeight }, rectangles, enemies, state: game.state, diagnostics: world.diagnostics };
+        return { browserTime: performance.now(), viewport: { width: innerWidth, height: innerHeight }, rectangles, relicCard: !!document.querySelector('.rpg-discovery'), enemies, state: game.state, diagnostics: world.diagnostics };
       });
-      expect(geometry.rectangles['#rpg-discovery'].hidden, 'An earlier relic card must not cover the next cast').toBe(true);
+      expect(geometry.relicCard, 'A relic falls and flies to the hero; no corner card covers the next cast').toBe(false);
       const notice = geometry.rectangles['#rpg-toast'], boss = geometry.rectangles['#rpg-boss'];
       if (!notice.hidden && !boss.hidden) {
         const overlapWidth = Math.min(notice.x + notice.width, boss.x + boss.width) - Math.max(notice.x, boss.x);

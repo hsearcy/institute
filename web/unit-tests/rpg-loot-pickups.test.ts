@@ -61,3 +61,26 @@ test('gear found in a chest falls out as its own pickup', async () => {
     gear: { id: 'g', baseId: 'soft_boots', kind: 'boots', rarity: 'epic', tier: 1, name: 'Swift Soft Boots', stats: { speed: 5 } } } as never);
   expect(tokens.map(token => token.label)).toEqual(['+16 XP', '+8 forge dust', 'Swift Soft Boots']);
 });
+
+test('a relic from fallen enemies drops as a pickup with its art, name and rarity color', async () => {
+  const { monsterRelicToken } = await import('../src/rpg/rewardPickups');
+  const roll = { id: 'roll-1', itemId: relic.id } as never;
+  expect(monsterRelicToken({ item: relic, loot: roll, duplicateItem: true })).toEqual({ kind: 'relic', label: 'Ember Ring', color: RARITY_COLORS.epic!, rarity: 'epic', itemId: 'ember-ring' });
+  expect(monsterRelicToken({ item: relic, duplicateItem: false })?.itemId).toBe('ember-ring');
+  // No relic, or an old duplicate with no fresh roll: nothing falls.
+  expect(monsterRelicToken({ item: null, duplicateItem: false })).toBeUndefined();
+  expect(monsterRelicToken({ item: relic, duplicateItem: true })).toBeUndefined();
+  // A chest relic carries the same art.
+  expect(chestRewardTokens({ ...base, item: relic, newItems: [relic] })[2]!.itemId).toBe('ember-ring');
+});
+
+test('a monster relic flies to the hero by itself, even while a problem is up', async () => {
+  const { monsterRelicToken } = await import('../src/rpg/rewardPickups');
+  const loot = new FloorLoot(new Texture()), hero = new Vector3(4, 0, 2);
+  loot.dropRewards(new Vector3(0, .7, 0), [monsterRelicToken({ item: relic, duplicateItem: false })!], 0);
+  const picked: string[] = [];
+  for (let t = 0; t < 4; t += 1 / 60) for (const pickup of loot.update(1 / 60, t, hero, false, () => true)) picked.push(pickup.reward?.label ?? pickup.kind);
+  expect(picked).toEqual(['Ember Ring']);
+  expect(loot.rewardsPending).toBe(0);
+  loot.dispose();
+});

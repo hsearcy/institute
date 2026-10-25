@@ -1,10 +1,12 @@
 import { chooseNextAdventure, renderNextAdventure, type NextAdventure } from './nextAdventureView';
-import { RPG_REGIONS, RPG_DUPLICATE_ITEM_XP, type RpgReward, type RpgState, type RpgCampState } from '@institute/shared';
+import { RPG_REGIONS, RPG_DUPLICATE_ITEM_XP, rpgDepth, type RpgReward, type RpgState, type RpgCampState } from '@institute/shared';
 import { lootStats } from './campView';
 import { escapeHtml as esc, relicArt, spellArt } from './icons';
 
 /** Reward presentation consumes the recorded receipt, never infers another drop. */
-export function renderVictoryView(state: RpgState, reward: RpgReward, bossName: string, _camp?: RpgCampState | null, next: NextAdventure = chooseNextAdventure(state)): string {
+/** `deeper` offers the way down into the next depth of the same region. */
+export function renderVictoryView(state: RpgState, reward: RpgReward, bossName: string, _camp?: RpgCampState | null, next: NextAdventure = chooseNextAdventure(state), deeper = false): string {
+  const depth = rpgDepth(state.expedition?.depth);
   const item = reward.item, converted = !!item && reward.duplicateItem && !reward.loot;
   const label = reward.loot ? 'BOSS RELIC ROLL' : converted ? 'DUPLICATE RELIC' : item ? `${item.rarity.toUpperCase()} RELIC DISCOVERED` : 'GUARDIAN REWARD';
   const description = reward.loot ? lootStats(reward.loot, state) : converted
@@ -12,7 +14,7 @@ export function renderVictoryView(state: RpgState, reward: RpgReward, bossName: 
     : item?.description ?? 'One step closer to your next spell.';
   const progress = Math.min(100, Math.max(0, state.xpIntoLevel / state.xpForNextLevel * 100));
   return `<div class="rpg-treasure" data-rarity="${item?.rarity ?? 'rare'}">
-    <header class="rpg-treasure-heading"><p class="rpg-eyebrow">EXPEDITION COMPLETE</p><h2 id="rpg-dialog-title">${esc(bossName)} <em>defeated.</em></h2><p>The halls are yours.</p></header>
+    <header class="rpg-treasure-heading"><p class="rpg-eyebrow">${depth > 1 ? `DEPTH ${depth} COMPLETE` : 'EXPEDITION COMPLETE'}</p><h2 id="rpg-dialog-title">${esc(bossName)} <em>defeated.</em></h2><p>The halls are yours.</p></header>
     <section class="rpg-victory-reward rpg-treasure-reward" aria-label="Guardian treasure">
       <div class="rpg-treasure-display"><div class="rpg-treasure-bezel">${item ? relicArt(item.id) : spellArt(reward.spellId)}</div><span class="rpg-treasure-gem" aria-hidden="true">◆</span></div>
       <div class="rpg-treasure-copy"><small>${esc(label)}</small><strong>${esc(item?.name ?? 'Magic grows stronger')}</strong><span>${esc(description)}</span>${item && !converted ? '<p class="rpg-treasure-saved">Saved in your equipment</p>' : ''}${reward.forgeDust ? `<p>+${reward.forgeDust} forge dust from this guardian</p>` : ''}</div>
@@ -24,6 +26,6 @@ export function renderVictoryView(state: RpgState, reward: RpgReward, bossName: 
     </section>
     ${state.skillPoints ? `<button class="rpg-treasure-skill" data-action="skills"><span class="rpg-treasure-point">${state.skillPoints}</span><span><strong>Shape your next spell</strong><small>Spend ${state.skillPoints} skill point${state.skillPoints > 1 ? 's' : ''}</small></span><span aria-hidden="true">→</span></button>` : ''}
     ${renderNextAdventure(state, next)}
-    <footer class="rpg-treasure-actions"><button class="rpg-primary rpg-next-start" data-action="next-adventure">Go to ${esc(RPG_REGIONS.find(region=>region.id===next.regionId)?.name??'next area')} →</button><div><button data-action="inventory">Inspect loot</button><button data-action="camp">Save & leave</button></div><small>Adventure saved</small></footer>
+    <footer class="rpg-treasure-actions">${deeper ? `<button class="rpg-primary rpg-go-deeper" data-action="go-deeper"><span>Go deeper · Depth ${depth + 1}</span><small>A way down has opened. Tougher monsters, bigger rewards.</small></button>` : ''}<button class="${deeper ? '' : 'rpg-primary '}rpg-next-start" data-action="next-adventure">Go to ${esc(RPG_REGIONS.find(region=>region.id===next.regionId)?.name??'next area')} →</button><div><button data-action="inventory">Inspect loot</button><button data-action="camp">Save & leave</button></div><small>Adventure saved</small></footer>
   </div>`;
 }

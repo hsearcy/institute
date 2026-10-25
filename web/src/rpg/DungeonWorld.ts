@@ -33,7 +33,8 @@ import { HordeDirector } from './world/hordeDirector';
 import { HeroWard } from './world/heroWard';
 import { DamageNumbers } from './world/damageNumbers';
 import { ENGAGE_RADIUS, slideStep } from './world/exploration';
-import { Level, rectCenter, type Area, type Rect } from './world/levelGen';
+import { Level, farPoint, rectCenter, type Area, type Rect } from './world/levelGen';
+import { createDescentPortal, DESCENT_ENTER_RADIUS, type DescentPortal } from './world/descentPortal';
 import { packPositions } from './world/formation';
 import { buildChunk, disposeChunk, CHEST_OPEN_ANGLE, type BuiltChunk, type VaultMaterials } from './world/levelChunks';
 import { updateHeroCutout } from './world/heroCutout';
@@ -186,6 +187,10 @@ export class DungeonWorld {
   /** A chest that already asked for a problem; it asks again once the hero walks away and back. */
   private chestAsked?: string;
   private readonly chestOpenings = new Map<string, number>();
+  /** The way down that opens where a guardian fell; its waiters resolve when the hero steps in. */
+  private descent?: { portal: DescentPortal; at: THREE.Vector3; openedAt: number; waiters: ((entered: boolean) => void)[]; entered: boolean };
+  /** The next level of this region, built a chunk at a time while the way down stands open. */
+  private nextLevel?: { level: Level; regionId: string; chunks: Map<string, BuiltChunk> };
   private exploreRoute: THREE.Vector3[] = [];
   private readonly exploreKeys = new Set<string>();
   private pointerSteering = false;
@@ -434,6 +439,80 @@ export class DungeonWorld {
       this.burstLight.position.copy(at).setY(1.6); this.burstLight.color.setHex(0xffc460); this.burstLight.intensity = 46;
       this.floorLoot.dropMotes(at.clone().setY(.1), 7, this.elapsed);
     });
+  }
+
+  /** Opens the way down where the guardian stood. Returns where it is. */
+  openDescent(): { x: number; z: number } | undefined {
+    if (this.descent) return { x: this.descent.at.x, z: this.descent.at.z };
+    const level = this.level; if (!level) return undefined;
+    // Where the guardian fell, kept clear of the altar; else the sanctum's heart, else beside the hero.
+    const boss = this.encounter === 5 ? this.enemies.find(enemy => enemy.id === 'enemy-0') : undefined;
+    const sanctum = this.packArea?.kind === 'sanctum' ? this.packArea : level.areas.find(area => area.kind === 'sanctum');
+    let spot = boss && level.walkable(boss.at.x, boss.at.z, 1) ? { x: boss.at.x, z: boss.at.z } : sanctum ? farPoint(sanctum, 7.2) : { x: this.hero.position.x, z: this.hero.position.z - 3 };
+    const altar = level.areas.flatMap(area => area.features).find(feature => feature.kind === 'altar' && Math.hypot(feature.x - spot.x, feature.z - spot.z) < 5);
+    if (altar && sanctum) spot = farPoint(sanctum, 7.2);
+    const frost = this.regionId.includes('frost'), storm = this.regionId.includes('storm'), ember = this.regionId.includes('ember');
+    const color = frost ? 0x6fd8ff : storm ? 0xa58bff : ember ? 0xff8a3c : 0x3fc6d8;
+    const portal = createDescentPortal(color, this.glowMap, this.materials.trim, this.materials.gold);
+    const at = new THREE.Vector3(spot.x, 0, spot.z);
+    portal.group.position.copy(at); this.scene.add(portal.group);
+    this.descent = { portal, at, openedAt: this.elapsed, waiters: [], entered: false };
+    this.prepareNextLevel();
+    this.emit(at.clone().setY(.6), color, 40, 2.4, 1.2);
+    this.burstLight.position.copy(at).setY(2); this.burstLight.color.setHex(color); this.burstLight.intensity = 50;
+    this.renderer.shadowMap.needsUpdate = true;
+    return { x: at.x, z: at.z };
+  }
+
+  /** Resolves true when the hero walks into the open way down, false if it closes first. */
+  waitForDescent(): Promise<boolean> {
+    const descent = this.descent;
+    if (!descent) return Promise.resolve(false);
+    return new Promise(resolve => descent.waiters.push(resolve));
+  }
+
+  /** Sends the hero to the way down, as a click on it would. */
+  walkToDescent(): void { if (this.descent) this.walkTo(this.descent.at.x, this.descent.at.z); }
+
+  private updateDescent(delta: number): void {
+    const descent = this.descent; if (!descent) return;
+    descent.portal.update(this.elapsed - descent.openedAt, delta);
+    const hero = this.hero.position;
+    if (descent.entered || this.paused || !descent.waiters.length || Math.hypot(hero.x - descent.at.x, hero.z - descent.at.z) > DESCENT_ENTER_RADIUS) return;
+    descent.entered = true; this.exploreRoute.length = 0;
+    this.emit(descent.at.clone().setY(1), descent.portal.light.color.getHex(), 60, 3, 1.1);
+    this.burstLight.position.copy(descent.at).setY(2.4); this.burstLight.color.copy(descent.portal.light.color); this.burstLight.intensity = 80;
+    this.onSound?.('relic-drop');
+    const waiters = descent.waiters; descent.waiters = [];
+    waiters.forEach(resolve => resolve(true));
+  }
+
+  /** Starts the next level now, so stepping into it does not wait on its floor. */
+  private prepareNextLevel(): void {
+    this.discardNextLevel();
+    const level = new Level(Math.floor(Math.random() * 2 ** 30), outdoorKind(this.regionId) ?? 'vault');
+    level.expandAround(level.start.x, level.start.z, 30); level.takeChanges();
+    this.nextLevel = { level, regionId: this.regionId, chunks: new Map() };
+  }
+
+  /** One chunk per call, nearest the next level's entry first. */
+  private prebuildNextLevel(): void {
+    const next = this.nextLevel; if (!next) return;
+    const start = next.level.start, near = (rect: Rect) => Math.hypot(Math.max(rect.minX - start.x, 0, start.x - rect.maxX), Math.max(rect.minZ - start.z, 0, start.z - rect.maxZ));
+    const chunk = next.level.chunks.filter(candidate => !next.chunks.has(candidate.key) && near(candidate.bounds) < 36)
+      .sort((a, b) => near(a.bounds) - near(b.bounds))[0];
+    if (chunk) next.chunks.set(chunk.key, buildChunk({ ...this.chunkContext, level: next.level }, chunk));
+  }
+
+  private discardNextLevel(): void {
+    this.nextLevel?.chunks.forEach(disposeChunk);
+    this.nextLevel = undefined;
+  }
+
+  private closeDescent(): void {
+    this.descent?.portal.dispose();
+    this.descent?.waiters.forEach(resolve => resolve(false));
+    this.descent = undefined;
   }
 
   /** Lids swing, closed chests glow, and a closed chest within reach ends the search. */
@@ -826,16 +905,25 @@ export class DungeonWorld {
 
   /** A fresh level for this region; the hero starts at its entry. */
   private startLevel(): void {
+    this.closeDescent();
     for (const built of this.chunks.values()) disposeChunk(built);
     this.chunks.clear(); this.torches.length = 0; this.floatingRunes.length = 0;
     const biome = outdoorKind(this.regionId) ?? 'vault';
-    this.level = new Level(Math.floor(Math.random() * 2 ** 30), biome);
+    const next = this.nextLevel?.regionId === this.regionId ? this.nextLevel : undefined;
+    if (!next) this.discardNextLevel();
+    this.nextLevel = undefined;
+    this.level = next?.level ?? new Level(Math.floor(Math.random() * 2 ** 30), biome);
     const start = this.level.start;
     this.hero.position.set(start.x, 0, start.z); this.cameraTarget.copy(this.hero.position);
     this.engaged = this.engageReady = false; this.exploreRoute.length = 0;
     this.packArea = undefined; this.packSeenAt = -Infinity; this.heroArea = this.level.areas[0];
     this.floorLoot.clear();
     this.setEnvironment();
+    // A level prepared behind the way down arrives already built.
+    if (next) {
+      for (const [key, built] of next.chunks) { this.floorGroup.add(built.group); this.chunks.set(key, built); this.torches.push(...built.torches); this.floatingRunes.push(...built.runes); }
+      this.renderer.shadowMap.needsUpdate = true; this.lastLightsAt = -9;
+    }
     this.streamLevel(Infinity);
     this.onAreaEnter?.(this.level.areas[0]!.name);
   }
@@ -854,6 +942,8 @@ export class DungeonWorld {
       this.updatePack();
     }
     this.updateChests();
+    this.updateDescent(delta);
+    this.prebuildNextLevel();
     if (this.elapsed - this.lastLightsAt > .5) { this.lastLightsAt = this.elapsed; this.updateLights(); }
     this.easeFraming(delta);
     // The wide ground moves in whole texture repeats, so its pattern stays put.
@@ -2490,6 +2580,7 @@ export class DungeonWorld {
     if (this.disposed) return; this.disposed = true; cancelAnimationFrame(this.frame); this.attackResolve?.(); this.scheduled.length = 0;
     this.inputAbort.abort(); this.finishEngage(); this.floorLoot.dispose(); this.ward.dispose(); this.damageNumbers.dispose(); this.releaseCharge(true);
     for (const built of this.chunks.values()) disposeChunk(built);
+    this.discardNextLevel(); this.closeDescent();
     this.chunks.clear(); this.outdoorKit?.dispose(); this.outdoorGround?.geometry.dispose();
     for (const effect of this.effects) if (effect.mesh instanceof THREE.InstancedMesh) effect.mesh.dispose();
     this.releaseEnemyInstances();

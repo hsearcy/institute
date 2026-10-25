@@ -2,7 +2,7 @@ import type { Database } from 'bun:sqlite';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
-  rpgRollBossBonus, rpgLootSpellShape, RPG_CHESTS_PER_EXPEDITION, RPG_CHEST_XP, rpgEquippedLoot, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellAvailable, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER,
+  rpgRollBossBonus, rpgLootSpellShape, RPG_CHESTS_PER_EXPEDITION, RPG_CHEST_XP, rpgEquippedLoot, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellAvailable, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgDepth, rpgDepthSteps, rpgDepthXp, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER,
   type RpgState, type RpgReward, type RpgResolveResult, type RpgChestResult, type RpgChestReward,
 } from '@institute/shared';
 
@@ -102,6 +102,26 @@ export function startRpgExpedition(db: Database, profileId: string, regionId?: s
   })();
 }
 
+/**
+ * After a guardian falls, the hero may go deeper into the same region at once:
+ * a new expedition (new id, new receipts, new six packs) one depth lower, at
+ * the same tier. A retry after success returns the depth already entered.
+ */
+export function descendRpgExpedition(db: Database, profileId: string, expeditionId: string): RpgState {
+  return db.transaction(() => {
+    const state = getRpgState(db, profileId);
+    const current = state.expedition;
+    if (current?.previousId === expeditionId) return state;
+    if (!current || !current.cleared || current.id !== expeditionId) throw new RpgError('Defeat this guardian before going deeper.', 409);
+    const region = RPG_REGIONS.find(r => r.id === current.regionId);
+    if (!region) throw new RpgError('Unknown dungeon.');
+    state.expedition = { id: crypto.randomUUID(), regionId: region.id, tier: rpgTier(current.tier), depth: rpgDepth(rpgDepth(current.depth) + 1), previousId: current.id, encounterIndex: 0, encountersTotal: 6, cleared: false, startedAt: Date.now() };
+    state.expedition.combat = rpgEncounterCombat(state);
+    saveRpgState(db, state);
+    return state;
+  })();
+}
+
 const ResolveSchema = z.object({
   profileId: z.string().min(1).max(100), problemId: z.string().min(1).max(200),
   expeditionId: z.string().min(1).max(100), encounterIndex: z.number().int().min(0).max(5),
@@ -154,7 +174,7 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
     expedition.combat = cast.combat;
     const bossDefeated = cast.result.encounterCleared && expedition.encounterIndex === expedition.encountersTotal - 1;
     const kills = cast.result.defeatedIds.length;
-    let xp = bossDefeated ? 90 : 32;
+    let xp = rpgDepthXp(bossDefeated, expedition.depth);
     const oldLevel = state.level;
     // Relic forecasts use progress at the room's start, even when several
     // casts were needed. In particular, the first-room gift cannot disappear
@@ -167,7 +187,7 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
     const tier = rpgTier(expedition.tier);
     const loot = item ? rpgCreateLoot(item.id, tier, Math.random, bossDefeated) : undefined;
     if (loot) state.loot!.push(loot);
-    const forgeDust = cast.result.encounterCleared ? rpgRoomForgeDust(tier, bossDefeated) : 0;
+    const forgeDust = cast.result.encounterCleared ? rpgRoomForgeDust(tier, bossDefeated) + rpgDepthSteps(expedition.depth) : 0;
     state.forgeDust = (state.forgeDust ?? 0) + forgeDust;
     if (item && !duplicateItem) state.inventory.push(item.id);
     if (duplicateItem) xp += RPG_DUPLICATE_ITEM_XP;
@@ -266,6 +286,10 @@ export function createRpgRoutes(db: Database, applyMiss?: (profileId: string) =>
   app.get('/state', (c) => {
     const { profileId } = ProfileSchema.parse({ profileId: c.req.query('profileId') ?? 'sam' });
     return c.json(getRpgState(db, profileId));
+  });
+  app.post('/descend', async (c) => {
+    const { profileId, expeditionId } = ProfileSchema.extend({ expeditionId: z.string().min(1).max(100) }).parse(await c.req.json());
+    return c.json(descendRpgExpedition(db, profileId, expeditionId));
   });
   app.post('/start', async (c) => {
     const { profileId, regionId, tier } = ProfileSchema.extend({ regionId: z.string().optional(), tier: z.number().int().min(1).max(RPG_MAX_DUNGEON_TIER).optional() }).parse(await c.req.json());

@@ -4,7 +4,8 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { RPG_SPELLS, RPG_SPELL_IDS, RPG_SKILLS, RPG_ITEMS, rpgLevel, rpgSpellUnlocked, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgEncounterKills, rpgEncounterCombat, rpgSpellCombatStats, rpgNextRelicHunt, rpgNormalizeLoot } from '@institute/shared';
-import { ensureRpgSchema, getRpgState, startRpgExpedition, resolveRpgEncounter, createRpgRoutes, openRpgChest } from './rpg';
+import { ensureRpgSchema, getRpgState, startRpgExpedition, resolveRpgEncounter, createRpgRoutes, openRpgChest, descendRpgExpedition } from './rpg';
+import { RPG_MAX_DEPTH_STEPS, rpgDepthHealth, rpgDepthXp, rpgRoomForgeDust } from '@institute/shared';
 import { RPG_CHESTS_PER_EXPEDITION, RPG_CHEST_XP } from '@institute/shared';
 
 function legacyDb(): Database {
@@ -636,5 +637,104 @@ describe('treasure chests open with a solved problem', () => {
     solved(db, 'sam', 'extra');
     const empty = chest(db, 'extra', 'c-extra').reward;
     expect(empty).toMatchObject({ xp: 0, forgeDust: 0, item: null });
+  });
+});
+
+describe('going deeper after the guardian', () => {
+  const clearExpedition = (db: Database, prefix: string) => {
+    let last;
+    for (let i = 0; i < 6; i++) last = clearRoom(db, 'sam', `${prefix}-${i}`);
+    return last!;
+  };
+
+  test('a cleared expedition descends once into a new depth of the same region, tier and six packs', async () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    try {
+      const first = startRpgExpedition(db, 'sam', 'embercrypt').expedition!;
+      // Only a felled guardian opens the way down.
+      expect(() => descendRpgExpedition(db, 'sam', first.id)).toThrow('Defeat this guardian');
+      const boss = clearExpedition(db, 'd1');
+      expect(boss.reward.bossDefeated).toBe(true);
+      expect(boss.state.expeditionsCompleted).toBe(1);
+      const deeper = descendRpgExpedition(db, 'sam', first.id);
+      expect(deeper.expedition).toMatchObject({ regionId: 'embercrypt', tier: 1, depth: 2, previousId: first.id, encounterIndex: 0, encountersTotal: 6, cleared: false });
+      expect(deeper.expedition!.id).not.toBe(first.id);
+      // A lost response retried returns the same depth, not a third one.
+      const retried = await call(db, '/descend', { profileId: 'sam', expeditionId: first.id });
+      expect(retried.status).toBe(200);
+      expect(((await retried.json()) as any).expedition.id).toBe(deeper.expedition!.id);
+      expect(getRpgState(db, 'sam').expedition!.depth).toBe(2);
+      // An unknown or stale expedition cannot descend.
+      expect((await call(db, '/descend', { profileId: 'sam', expeditionId: 'nope' })).status).toBe(409);
+      // The new depth plays all six packs and pays its own guardian once.
+      const second = clearExpedition(db, 'd2');
+      expect(second.reward.bossDefeated).toBe(true);
+      expect(second.reward.xp).toBeGreaterThanOrEqual(rpgDepthXp(true, 2));
+      expect(second.state).toMatchObject({ expeditionsCompleted: 2, expedition: { depth: 2, cleared: true } });
+      const third = descendRpgExpedition(db, 'sam', second.state.expedition!.id);
+      expect(third.expedition).toMatchObject({ depth: 3, previousId: second.state.expedition!.id });
+      // The return to camp still works from any depth, and a new start begins at the top.
+      expect((await call(db, '/retreat', { profileId: 'sam' })).status).toBe(200);
+      expect(getRpgState(db, 'sam').expedition).toBeNull();
+      expect(() => descendRpgExpedition(db, 'sam', third.expedition!.id)).toThrow('Defeat this guardian');
+      expect(startRpgExpedition(db, 'sam', 'embercrypt').expedition!.depth).toBeUndefined();
+    } finally { db.close(); }
+  });
+
+  test('the guardian of each depth pays once and old receipts cannot be replayed deeper', () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    try {
+      const first = startRpgExpedition(db, 'sam').expedition!;
+      const boss = clearExpedition(db, 'r1');
+      const bossProblem = db.query(`SELECT problem_id FROM rpg_cast_claims WHERE expedition_id = ? AND encounter_index = 5 AND json_extract(reward_json, '$.bossDefeated') = 1`).get(first.id) as { problem_id: string };
+      solved(db, 'sam', 'chest-1');
+      // A cleared depth opens no more chests.
+      expect(() => openRpgChest(db, { profileId: 'sam', problemId: 'chest-1', expeditionId: first.id, chestId: 'c' })).toThrow('moved on');
+      const deeper = descendRpgExpedition(db, 'sam', first.id).expedition!;
+      const xp = getRpgState(db, 'sam').xp;
+      // The old guardian's receipt replays only for its own depth, and pays nothing new.
+      const replay = resolveRpgEncounter(db, { profileId: 'sam', problemId: bossProblem.problem_id, expeditionId: first.id, encounterIndex: 5 });
+      expect(replay.duplicate).toBe(true); expect(replay.reward).toEqual(boss.reward);
+      expect(() => resolveRpgEncounter(db, { profileId: 'sam', problemId: bossProblem.problem_id, expeditionId: deeper.id, encounterIndex: 0 })).toThrow('already powered');
+      // A new problem cannot be spent on the finished depth.
+      solved(db, 'sam', 'late');
+      expect(() => resolveRpgEncounter(db, { profileId: 'sam', problemId: 'late', expeditionId: first.id, encounterIndex: 5 })).toThrow('moved on');
+      expect(getRpgState(db, 'sam').xp).toBe(xp);
+      // A chest problem in the deeper level pays once, and never also as a cast.
+      solved(db, 'sam', 'chest-2');
+      const opened = openRpgChest(db, { profileId: 'sam', problemId: 'chest-2', expeditionId: deeper.id, chestId: 'c' });
+      expect(opened.duplicate).toBe(false);
+      expect(() => openRpgChest(db, { profileId: 'sam', problemId: 'chest-2', expeditionId: first.id, chestId: 'c' })).toThrow('another chest');
+      expect(() => resolveRpgEncounter(db, { profileId: 'sam', problemId: 'chest-2', expeditionId: deeper.id, encounterIndex: 0 })).toThrow('opened a chest');
+      // A problem solved before the descent cannot power the new depth.
+      db.query('INSERT INTO daily_solves VALUES (?, ?, ?)').run('sam', 'before', deeper.startedAt - 1000);
+      expect(() => resolveRpgEncounter(db, { profileId: 'sam', problemId: 'before', expeditionId: deeper.id, encounterIndex: 0 })).toThrow('Finish this problem');
+      // Exactly one guardian clear was counted for the first depth.
+      expect(db.query(`SELECT COUNT(*) AS n FROM rpg_cast_claims WHERE expedition_id = ? AND json_extract(reward_json, '$.bossDefeated') = 1`).get(first.id)).toEqual({ n: 1 });
+      expect(getRpgState(db, 'sam').expeditionsCompleted).toBe(1);
+    } finally { db.close(); }
+  });
+
+  test('deeper packs are a little tougher and pay a little more, within a cap', () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    try {
+      expect(rpgDepthHealth(10, 1)).toBe(10);
+      expect(rpgDepthHealth(10, 2)).toBe(11);
+      expect(rpgDepthHealth(10, 50)).toBe(10 + RPG_MAX_DEPTH_STEPS);
+      expect(rpgDepthXp(false, 1)).toBe(32); expect(rpgDepthXp(true, 1)).toBe(90);
+      expect(rpgDepthXp(false, 99)).toBe(rpgDepthXp(false, 1 + RPG_MAX_DEPTH_STEPS));
+      const first = startRpgExpedition(db, 'sam').expedition!;
+      clearExpedition(db, 'h1');
+      const deeper = descendRpgExpedition(db, 'sam', first.id);
+      // Same room, same hero level: only the depth differs.
+      const shallow = rpgEncounterCombat({ level: deeper.level, expedition: { ...deeper.expedition!, depth: 1, combat: undefined } }).enemies.map(enemy => enemy.maxHp);
+      const deep = deeper.expedition!.combat!.enemies.map(enemy => enemy.maxHp);
+      expect(deep).toHaveLength(shallow.length);
+      deep.forEach((hp, i) => { expect(hp).toBeGreaterThanOrEqual(shallow[i]!); expect(hp).toBeLessThanOrEqual(Math.ceil(shallow[i]! * 1.1)); });
+      expect(deep.some((hp, i) => hp > shallow[i]!)).toBe(true);
+      const room = clearRoom(db, 'sam', 'h2-0');
+      expect(room.reward.xp).toBeGreaterThanOrEqual(rpgDepthXp(false, 2));
+      expect(room.reward.forgeDust).toBe(rpgRoomForgeDust(1) + 1);
+    } finally { db.close(); }
   });
 });

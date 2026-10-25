@@ -3,6 +3,8 @@ import { mutateRpg } from './api';
 import { PROFILE } from './config';
 import { emptyGearUi, renderGearSheet, type GearSheetUi } from './gearView';
 import { GearViewer } from './gearViewer';
+import { HeroDoll, type HeroDollSource } from './heroDoll';
+import { rpgEquippedGear } from '@institute/shared';
 
 export interface GearSheetHost {
   state(): RpgState | null;
@@ -13,6 +15,8 @@ export interface GearSheetHost {
   toast(text: string): void;
   busy(): boolean;
   root(): HTMLElement;
+  /** The world's loaded hero, when it is ready. */
+  doll(): HeroDollSource | undefined;
 }
 
 const SEEN_KEY = `institute.rpg.gearSeen.${PROFILE}`;
@@ -21,6 +25,7 @@ const SEEN_KEY = `institute.rpg.gearSeen.${PROFILE}`;
 export class GearSheet {
   private ui: GearSheetUi = emptyGearUi();
   private viewer: GearViewer | null = null;
+  private doll: HeroDoll | null = null;
   private pending = false;
 
   constructor(private host: GearSheetHost) {
@@ -37,9 +42,18 @@ export class GearSheet {
     this.disposeViewer();
     const stage = this.host.root().querySelector<HTMLElement>('[data-gear-viewer]');
     if (stage) { this.viewer = new GearViewer(stage, stage.dataset.gearViewer!); void this.viewer.mount(); }
+    const portrait = this.host.root().querySelector<HTMLElement>('[data-hero-doll]'), state = this.host.state();
+    if (!portrait || !state) return;
+    if (!this.doll) { const source = this.host.doll(); if (source) this.doll = new HeroDoll(source); }
+    const worn = rpgEquippedGear(state);
+    this.doll?.attach(portrait, { helm: worn.helm?.baseId, chest: worn.chest?.baseId, gloves: worn.gloves?.baseId, boots: worn.boots?.baseId, amulet: worn.amulet?.baseId });
   }
 
-  disposeViewer(): void { this.viewer?.dispose(); this.viewer = null; }
+  /** Redraws keep the live portrait (its canvas moves to the new markup); leaving the sheet frees it. */
+  disposeViewer(keepDoll = false): void {
+    this.viewer?.dispose(); this.viewer = null;
+    if (!keepDoll) { this.doll?.dispose(); this.doll = null; }
+  }
 
   /** Returns true when the click belonged to the character sheet. */
   handle(button: HTMLElement): boolean {

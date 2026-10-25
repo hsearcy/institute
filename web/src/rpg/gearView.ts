@@ -127,7 +127,7 @@ export function renderGearSheet(state: RpgState, ui: GearSheetUi): string {
   return `<section class="rpg-gear-sheet" aria-label="Your hero's gear">
     <div class="rpg-gear-sheet-top">
       <div class="rpg-paper-doll" role="group" aria-label="Gear you are wearing">
-        <div class="rpg-doll-hero" style="grid-area:hero"><img src="/assets/rpg/appearances/${esc(state.appearanceId ?? 'wayfarer')}.png" alt="" draggable="false"></div>
+        <div class="rpg-doll-hero" style="grid-area:hero" data-hero-doll title="Drag to turn your hero"><img src="/assets/rpg/appearances/${esc(state.appearanceId ?? 'wayfarer')}.png" alt="" draggable="false"></div>
         ${RPG_GEAR_SLOTS.map(slot => slotButton(slot, equipped[slot], slot === selectedSlot)).join('')}
         <a class="rpg-doll-slot rpg-doll-weapon ${relic.rarity}" style="grid-area:weapon" href="#rpg-relic-collection" aria-label="Relic: ${esc(relic.name)}. See your relics">${relicArt(relic.id)}<small>Relic</small></a>
       </div>

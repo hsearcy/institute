@@ -29,6 +29,7 @@ import { EnemyAnimator } from './world/EnemyAnimator';
 import { HeldEquipment, tripoHeroEquipment } from './world/HeldEquipment';
 import { WornGear, WORN_KINDS, type WornKind } from './world/wornGear';
 import { gearModelUrl } from './icons';
+import type { HeroDollSource } from './heroDoll';
 import { HeroAnimator, type ActorClipRoles } from './world/heroAnimator';
 import { FloorLoot, RARITY_COLORS, type LootPickup, type RewardToken } from './world/floorLoot';
 import { HordeDirector } from './world/hordeDirector';
@@ -1610,7 +1611,13 @@ export class DungeonWorld {
     }
   }
 
-  private gearModel(baseId: string): Promise<THREE.Group | undefined> {
+  /** The loaded hero and gear cache, lent to the character sheet's live portrait. */
+  dollSource(): HeroDollSource | undefined {
+    const hero = this.models.get(TRIPO_HERO_MODEL);
+    return hero && !this.disposed ? { hero, clips: this.heroClipSets.get(TRIPO_HERO_MODEL) ?? [], gearModel: baseId => this.gearModel(baseId) } : undefined;
+  }
+
+  gearModel(baseId: string): Promise<THREE.Group | undefined> {
     let pending = this.gearModels.get(baseId);
     if (!pending) {
       pending = new GLTFLoader().loadAsync(gearModelUrl(baseId)).then(gltf => {

@@ -114,7 +114,7 @@ export class RpgGame {
   private gearSheet = new GearSheet({
     state: () => this.state, apply: state => { this.state = state; this.renderState(); },
     rerender: () => { if (this.panel === 'inventory') this.showInventory(); },
-    toast: text => this.toast(text), busy: () => this.busy, root: () => this.root,
+    toast: text => this.toast(text), busy: () => this.busy, root: () => this.root, doll: () => this.world.dollSource(),
   });
   private demoTopics = new Set<string>();
   private retryAction: (() => Promise<void>) | null = null;
@@ -1390,7 +1390,7 @@ export class RpgGame {
   private showDialog(name: string, html: string, wide = false, preserveScroll = false): void {
     const content = this.el('rpg-dialog-content');
     const scrollTop = preserveScroll && this.panel === name ? content.scrollTop : 0;
-    this.gearSheet.disposeViewer();
+    this.gearSheet.disposeViewer(name === 'inventory' && this.panel === 'inventory');
     this.disposeMasteryMap();
     if (!this.panel) { this.stopClock(); this.saveSession(); }
     this.panel = name; this.root.dataset.panel = name; this.world.setPaused(true);

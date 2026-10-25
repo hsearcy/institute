@@ -1,4 +1,4 @@
-/* Chest rewards picked up by the hero: a small label rises beside him per pickup. */
+/* Rewards picked up by the hero (chest treasure and relics from fallen enemies): a small label rises beside him per pickup. */
 .rpg-pickups { position:absolute; inset:0; pointer-events:none; z-index:7; overflow:hidden; }
 .rpg-pickup {
   position:absolute; transform:translate(-50%,-100%); padding:2px 10px 3px;
@@ -16,6 +16,9 @@
   background:linear-gradient(90deg,#0a0f1000,#0a0f10d8 14%,#0a0f10d8 86%,#0a0f1000); animation-duration:2.9s;
 }
 .rpg-pickup-relic:before { content:'◆ '; font-size:12px; vertical-align:2px; }
+/* A relic shows its own art beside its name instead of the diamond. */
+.rpg-pickup-relic:has(.rpg-relic-art):before { content:none; }
+.rpg-pickup .rpg-relic-art { display:inline-block; width:34px; margin:0 8px 0 -4px; vertical-align:middle; border-color:var(--pickup); box-shadow:0 0 0 2px #080b0c,0 0 10px color-mix(in srgb,var(--pickup) 60%,transparent); }
 @keyframes rpg-pickup-rise {
   0% { opacity:0; translate:0 10px; scale:.7; }
   12% { opacity:1; translate:0 0; scale:1.12; }
@@ -27,6 +30,7 @@
 @media (max-width:760px), (max-width:1000px) and (max-height:500px) and (min-aspect-ratio:3/2) {
   .rpg-pickup { font-size:14px; padding:2px 8px; }
   .rpg-pickup-relic { font-size:15px; }
+  .rpg-pickup .rpg-relic-art { width:28px; }
 }
 @media (prefers-reduced-motion:reduce) {
   .rpg-pickup { animation:rpg-pickup-fade 2.4s linear forwards; }

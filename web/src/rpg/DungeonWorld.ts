@@ -31,7 +31,7 @@ import { WornGear, WORN_KINDS, type WornKind } from './world/wornGear';
 import { gearModelUrl } from './icons';
 import type { HeroDollSource } from './heroDoll';
 import { HeroAnimator, type ActorClipRoles } from './world/heroAnimator';
-import { FloorLoot, RARITY_COLORS, type LootPickup, type RewardToken } from './world/floorLoot';
+import { FloorLoot, type LootPickup, type RewardToken } from './world/floorLoot';
 import { HordeDirector } from './world/hordeDirector';
 import { HeroWard } from './world/heroWard';
 import { DamageNumbers } from './world/damageNumbers';
@@ -99,7 +99,7 @@ const DOOR_FRONT: Record<'north' | 'south' | 'east' | 'west', { x: number; z: nu
 const ELEMENT_FLASH = { fire: new THREE.Color(1, .45, .12), electric: new THREE.Color(.55, .75, 1.3), frost: new THREE.Color(.55, 1, 1.3), other: new THREE.Color(1, .95, .85) };
 type Fragment = { position: THREE.Vector3; velocity: THREE.Vector3; rotation: THREE.Vector3; spin: THREE.Vector3; scale: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; hot: boolean; bounced: boolean };
 type Particle = { position: THREE.Vector3; velocity: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; size: number };
-type AttackOptions = { spellShape?: import('@institute/shared').RpgSpellShape; combat?: RpgCombatResult; echo?: boolean; wide?: boolean; burning?: boolean; shards?: boolean; chains?: boolean; pierce?: boolean; orbit?: boolean; summon?: boolean; itemId?: string; kills?: number; drop?: { name: string; rarity: string }; xp?: number };
+type AttackOptions = { spellShape?: import('@institute/shared').RpgSpellShape; combat?: RpgCombatResult; echo?: boolean; wide?: boolean; burning?: boolean; shards?: boolean; chains?: boolean; pierce?: boolean; orbit?: boolean; summon?: boolean; itemId?: string; kills?: number; drop?: RewardToken; xp?: number };
 type Effect = { mesh: THREE.Mesh; startedAt: number; age: number; duration: number; kind: 'ring' | 'slash' | 'beam' | 'ground' | 'shard' | 'custom'; radius: number; update?: (t: number, delta: number) => void };
 
 /** Presentation only. Time, animations and damage never decide learning or rewards. */
@@ -2575,14 +2575,11 @@ export class DungeonWorld {
     }
   }
 
-  private spawnLoot(origin: THREE.Vector3, drop: { name: string; rarity: string }): void {
-    const color = RARITY_COLORS[drop.rarity] ?? RARITY_COLORS.rare!;
-    const position = origin.clone().add(new THREE.Vector3(2.1, .1, -.9));
-    // The relic stays on the floor until the hero walks over it.
-    const at = slideStep({ x: origin.x, z: origin.z }, position.x - origin.x, position.z - origin.z, this.walkable);
-    position.set(at.x, .1, at.z);
-    this.emit(position, color, 35, 1.7, 1.5);
-    this.floorLoot.dropRelic(position, color, this.elapsed); this.onSound?.('relic-drop');
+  /** A fallen enemy's relic lands on the floor, rests a moment, then flies to the hero like chest treasure. */
+  private spawnLoot(origin: THREE.Vector3, drop: RewardToken): void {
+    const at = origin.clone().setY(.7);
+    this.emit(at.clone().setY(.4), drop.color, 35, 1.7, 1.5);
+    this.floorLoot.dropRewards(at, [drop], this.elapsed, this.camera.position); this.onSound?.('relic-drop');
   }
 
   private emit(origin: THREE.Vector3, color: number, count: number, speed: number, life: number): void {
@@ -2973,12 +2970,6 @@ export class DungeonWorld {
     updateHeroCutout(this.hero.position, this.camera);
     this.renderer.info.reset();
     if (this.softwareRenderer) this.renderer.render(this.scene, this.camera); else this.composer.render(delta);
-  }
-
-  get lootScreenPosition(): { x: number; y: number } | null {
-    const relic = this.floorLoot.relicPosition; if (!relic) return null;
-    const projected = relic.clone().add(new THREE.Vector3(0, .65, 0)).project(this.camera);
-    return { x: (projected.x + 1) * this.width * .5, y: (1 - projected.y) * this.height * .5 };
   }
 
   get heroScreenPosition(): { x: number; y: number } {

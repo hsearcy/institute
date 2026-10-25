@@ -14,7 +14,8 @@ export function renderEquipmentView(state: RpgState, armor: string, playing: boo
   const lockedItems = RPG_ITEMS.filter(item => !state.inventory.includes(item.id));
   return `<div class="rpg-armory">
     <header class="rpg-armory-heading"><p class="rpg-eyebrow">RELICS OF THE VAULT</p><h2 id="rpg-dialog-title">Your equipment <small>${state.inventory.length} / ${RPG_ITEMS.length} found</small></h2><p>Comparing <strong>${esc(spell.name)}</strong>. Power adds damage per target. Skill bonuses work while equipped. Attacks hit at most 10 targets.</p></header>
-    <div class="rpg-armory-bench">
+    ${armor}
+    <div class="rpg-armory-bench" id="rpg-relic-collection">
       <section class="rpg-armory-equipped ${equipped.rarity}" aria-label="Equipped relic">
         <div class="rpg-armory-display"><div class="rpg-armory-bezel">${relicArt(equipped.id)}</div><span aria-hidden="true">◆</span></div>
         <div class="rpg-armory-copy"><small>${equipped.rarity.toUpperCase()} · EQUIPPED</small><h3>${esc(equipped.name)}</h3>${renderRelicStats(equipped, equippedCopy, state)}</div>
@@ -39,8 +40,6 @@ export function renderEquipmentView(state: RpgState, armor: string, playing: boo
       </section>
     </div>
     ${RPG_ITEMS.some(item => !state.inventory.includes(item.id)) ? `<details class="rpg-collection-goals"><summary>Pin a relic to discover</summary><div>${RPG_ITEMS.filter(item => !state.inventory.includes(item.id)).map(item => `<button data-pin-kind="item" data-pin-id="${item.id}" aria-pressed="${state.goal?.kind === 'item' && state.goal.id === item.id}">${relicArt(item.id)}<span>${esc(item.name)}<small>${item.rarity === 'legendary' ? 'Guardian treasure' : 'Dungeon discovery or merchant'}</small></span></button>`).join('')}</div></details>` : ''}
-
-    ${armor}
     <footer class="rpg-button-row rpg-armory-footer"><button data-action="forge">Upgrade or reclaim copies</button><button class="rpg-primary" data-action="close">${playing ? 'Return to dungeon' : 'Back to camp'}</button></footer>
   </div>`;
 }

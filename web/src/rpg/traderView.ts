@@ -11,6 +11,8 @@ const ART: Record<RpgTraderWareId, string> = {
   'wisdom-potion': '/assets/rpg/trader/wisdom-potion.webp',
   'lucky-charm': '/assets/rpg/trader/lucky-charm.webp',
   'fresh-roll': '',
+  // The potion bottle, tinted ward-blue.
+  'ward-tonic': '/assets/rpg/trader/wisdom-potion.webp',
 };
 
 export interface TraderPurchase { wareId: RpgTraderWareId; itemId?: string; seenDust: number; answer: number; requestId: string }
@@ -58,7 +60,7 @@ export class TraderDesk {
 
 const wareArt = (ware: RpgTraderWare, itemId?: string): string => ware.id === 'fresh-roll'
   ? `<span class="rpg-trader-ware-art relic">${itemId ? relicArt(itemId) : '<span class="rpg-trader-dice" aria-hidden="true">⟳</span>'}</span>`
-  : `<span class="rpg-trader-ware-art" style="background-image:url('${ART[ware.id]}')" aria-hidden="true"></span>`;
+  : `<span class="rpg-trader-ware-art" style="background-image:url('${ART[ware.id]}')${ware.id === 'ward-tonic' ? ';filter:hue-rotate(150deg) saturate(1.2)' : ''}" aria-hidden="true"></span>`;
 
 const relicName = (itemId?: string) => RPG_ITEMS.find(item => item.id === itemId)?.name ?? '';
 const wareLabel = (ware: RpgTraderWare, itemId?: string) => ware.id === 'fresh-roll' && itemId ? `fresh ${relicName(itemId)} roll` : ware.name.toLowerCase();
@@ -94,6 +96,7 @@ function renderDone(state: RpgState, desk: TraderDesk): string {
   const after = done.dustBefore - done.price;
   const line = done.wareId === 'wisdom-potion' ? 'You drink the wisdom potion. Your magic grows!'
     : done.wareId === 'lucky-charm' ? 'The lucky charm hangs from your pack. Your next chest holds a relic!'
+    : done.wareId === 'ward-tonic' ? 'You drink the ward tonic. Your ward will glow stronger in your next fights!'
     : `A fresh ${relicName(done.itemId)} roll is in your backpack. Compare it at the Blacksmith.`;
   return `<section class="rpg-trader-done" role="status">${wareArt(ware, done.itemId)}<div><p class="rpg-eyebrow">TRADE COMPLETE</p><h3>${done.dustBefore} − ${done.price} = ${after}</h3><p>${esc(line)}</p><p class="rpg-trader-left">✦ ${after} forge dust left</p><div class="rpg-trader-actions"><button class="rpg-primary" data-trader="again">Keep browsing</button>${done.wareId === 'fresh-roll' ? '<button data-action="forge">Open the Blacksmith</button>' : ''}</div></div></section>`;
 }

@@ -446,6 +446,77 @@ export class DungeonWorld {
     this.onSound?.('ward');
   }
 
+  /** Run speed from boots and other gear (1 = no gear). */
+  gearRunSpeed = 1;
+  private kneelAt = -99; private kneelFor = 0; private kneelGlow?: THREE.Sprite;
+  private gearDrops: { mesh: THREE.Mesh; color: number; born: number; from: THREE.Vector3 }[] = [];
+
+  /**
+   * After a cast, the monsters still standing strike the ward, one after
+   * another. Only presentation: the server already counted what the ward lost.
+   */
+  wardVolley(count: number): number {
+    const living = this.enemies.filter(enemy => !enemy.dead).slice(0, Math.max(0, Math.min(4, count)));
+    living.forEach((enemy, index) => {
+      this.schedule(index * .24, () => this.hordeEvent('swing', enemy));
+      this.schedule(index * .24 + .22, () => this.hordeEvent('impact', enemy));
+      this.schedule(index * .24 + .4, () => this.hordeEvent('recoil', enemy));
+    });
+    return living.length ? (living.length - 1) * .24 + .3 : 0;
+  }
+
+  /** The ward ran out: the hero kneels in a soft golden glow while it refills. Nothing is lost. */
+  kneel(seconds = 2): void {
+    this.kneelAt = this.elapsed; this.kneelFor = seconds;
+    if (!this.kneelGlow) {
+      this.kneelGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.glowMap, color: 0xffe2a0, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+      this.kneelGlow.position.y = 1; this.kneelGlow.scale.setScalar(3.4); this.kneelGlow.renderOrder = 5;
+      this.hero.add(this.kneelGlow);
+    }
+    this.emit(this.hero.position.clone().setY(.4), 0xffe6b0, 22, .7, 1.6);
+  }
+
+  private updateKneel(): void {
+    const age = this.elapsed - this.kneelAt;
+    if (!this.kneelGlow) return;
+    const k = age < this.kneelFor ? Math.max(0, Math.min(1, age / .4, (this.kneelFor - age) / .5)) : 0;
+    this.heroVisual.position.y = -.22 * k;
+    (this.kneelGlow.material as THREE.SpriteMaterial).opacity = k * (.5 + Math.sin(age * 3) * .08);
+    if (age >= this.kneelFor) {
+      this.heroVisual.position.y = 0; this.hero.remove(this.kneelGlow);
+      this.kneelGlow.material.dispose(); this.kneelGlow = undefined;
+    }
+  }
+
+  /** Armour or jewellery falls beside the hero, glows in its rarity's colour, then flies to the hero's pack. */
+  dropGear(rarity: string): void {
+    const colors: Record<string, number> = { common: 0xc9d1d3, rare: 0x6aa9ff, epic: 0xc38aff, legendary: 0xffba57 };
+    const color = colors[rarity] ?? colors.common!;
+    const angle = Math.random() * Math.PI * 2;
+    const at = slideStep({ x: this.hero.position.x, z: this.hero.position.z }, Math.sin(angle) * 1.7, Math.cos(angle) * 1.7, this.walkable);
+    const mesh = new THREE.Mesh(new THREE.OctahedronGeometry(.34, 0), new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 1.4, roughness: .3, metalness: .2 }));
+    mesh.position.set(at.x, .5, at.z); mesh.scale.set(1, 1.4, 1); this.scene.add(mesh);
+    this.emit(mesh.position.clone(), color, 26, 1.3, 1.2); this.onSound?.('relic-drop');
+    this.gearDrops.push({ mesh, color, born: this.elapsed, from: mesh.position.clone() });
+  }
+
+  private updateGearDrops(): void {
+    for (const drop of [...this.gearDrops]) {
+      const age = this.elapsed - drop.born;
+      drop.mesh.rotation.y = age * 2.4;
+      if (age < 1.8) { drop.mesh.position.y = .5 + Math.abs(Math.sin(age * 5)) * .45 * Math.max(0, 1 - age / 1.1); continue; }
+      // Then it flies into the hero's pack, as a relic does when walked over.
+      const t = Math.min(1, (age - 1.8) / .45), target = this.hero.position.clone().setY(1.1);
+      drop.mesh.position.lerpVectors(drop.from.clone().setY(.5), target, t * t);
+      drop.mesh.scale.setScalar(1 - t * .7);
+      if (t >= 1) {
+        this.emit(target, drop.color, 16, .8, .7); this.onLootPickup?.({ kind: 'relic', at: target, color: drop.color });
+        this.scene.remove(drop.mesh); drop.mesh.geometry.dispose(); (drop.mesh.material as THREE.Material).dispose();
+        this.gearDrops.splice(this.gearDrops.indexOf(drop), 1);
+      }
+    }
+  }
+
   /**
    * A correct answer is known at once, but the cast waits for the server.
    * Gather the spell in the hero's hand meanwhile, so the answer feels instant.
@@ -2621,7 +2692,7 @@ export class DungeonWorld {
       // The player moves on while the spell plays out: drop the cast pose and run.
       this.heroMotion = undefined; this.heroVisual.position.x = this.heroVisual.position.z = 0; this.heroAnimator?.interrupt();
     }
-    const travel = this.heroUsesAuthoredMotion && walking ? advanceHeroTravel(distance, this.heroTravelSpeed, delta, this.heroWalkCycle, Math.max(HERO_RUN_SPEED, this.heroAnimator?.runSpeed ?? 0) * (this.boon === 'swiftness' ? SWIFT_RUN : 1)) : undefined;
+    const travel = this.heroUsesAuthoredMotion && walking ? advanceHeroTravel(distance, this.heroTravelSpeed, delta, this.heroWalkCycle, Math.max(HERO_RUN_SPEED, this.heroAnimator?.runSpeed ?? 0) * (this.boon === 'swiftness' ? SWIFT_RUN : 1) * this.gearRunSpeed) : undefined;
     this.heroTravelSpeed = travel?.speed ?? 0;
     const heroFrom = this.hero.position.clone();
     const shadowInterval = distance > .08 || this.attacking ? (this.softwareRenderer ? .2 : .065) : .65;
@@ -2676,7 +2747,7 @@ export class DungeonWorld {
       if (pickup.reward?.kind === 'dust') this.onSound?.('dust-pickup');
       this.onLootPickup?.(pickup);
     }
-    this.ward.update(this.elapsed); this.damageNumbers.update(delta); this.updateCharge(delta);
+    this.ward.update(this.elapsed); this.damageNumbers.update(delta); this.updateCharge(delta); this.updateKneel(); this.updateGearDrops();
     const markerAge = this.elapsed - (this.moveMarker.userData.shownAt ?? -9);
     (this.moveMarker.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 1 - markerAge / .55) * .85;
     this.moveMarker.scale.setScalar(1 + markerAge * 1.2);

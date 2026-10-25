@@ -2,7 +2,7 @@ import type { Database } from 'bun:sqlite';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
-  RPG_TRADER_WARE_IDS, RPG_WISDOM_POTION_XP, rpgTraderWares, rpgTraderBlocked, rpgTraderQuestion,
+  RPG_TRADER_WARE_IDS, RPG_WISDOM_POTION_XP, RPG_WARD_TONIC_FIGHTS, rpgTraderWares, rpgTraderBlocked, rpgTraderQuestion,
   rpgCreateLoot, rpgLevel, rpgNormalizeLoot, rpgTier, type RpgState, type RpgTraderResult, type RpgTraderWareId,
 } from '@institute/shared';
 import { getRpgState, saveRpgState } from './rpg';
@@ -55,6 +55,10 @@ function applyWare(state: RpgState, wareId: RpgTraderWareId, itemId?: string): D
     const levelsGained = state.level - oldLevel;
     state.skillPoints += levelsGained;
     return { wareId, xpGained: RPG_WISDOM_POTION_XP, levelsGained };
+  }
+  if (wareId === 'ward-tonic') {
+    state.wardTonics = (state.wardTonics ?? 0) + RPG_WARD_TONIC_FIGHTS;
+    return { wareId };
   }
   if (wareId === 'lucky-charm') {
     state.chestCharms = (state.chestCharms ?? 0) + 1;

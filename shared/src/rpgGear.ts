@@ -117,10 +117,9 @@ export function rpgCreateGear(baseId: string, tier = 1, random: () => number = M
   const count = least + Math.floor(unit() * (most - least + 1));
   const pool = RPG_GEAR_AFFIXES.filter(affix => affix.kinds.includes(base.kind));
   const chosen: RpgGearAffix[] = [];
-  while (chosen.length < count && chosen.length < pool.length) {
-    const affix = pool[Math.floor(unit() * pool.length)]!;
-    if (!chosen.includes(affix)) chosen.push(affix);
-  }
+  // Draw from what is left, so even a repeating random source always finishes.
+  const left = [...pool];
+  while (chosen.length < count && left.length) chosen.push(left.splice(Math.floor(unit() * left.length), 1)[0]!);
   for (const affix of chosen) {
     const top = affix.max + affix.perTier * (level - 1);
     const value = Math.max(1, Math.round(affix.min + unit() * (top - affix.min)));

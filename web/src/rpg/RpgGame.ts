@@ -51,6 +51,8 @@ import { chestRewardTokens, cssColor, freeLabelSlot } from './rewardPickups';
 import type { RewardToken } from './world/floorLoot';
 import { HELP_GUARD_MS, HelpGuard } from './helpGuard';
 import './loot-pickups.css';
+import { WardHud, WARD_HTML, showGearLabel } from './wardHud';
+import { rpgGearRunSpeed } from '@institute/shared';
 
 type Session = {
   expeditionId: string; encounterIndex: number; problem: Problem; firstAttempt: boolean | null;
@@ -115,6 +117,7 @@ export class RpgGame {
   /** The hero searches for the horde: menus work, the problem and its clock wait. */
   private seeking = false;
   /** A shrine's boon: its clock runs only while the hero explores. */
+  private readonly wardHud = new WardHud(() => this.root);
   private readonly boonHud = new BoonHud(() => this.seeking && !this.panel && this.playing && !document.hidden, () => this.world.setBoon(null));
   private areaName = '';
   private readonly answerClock = new AnswerClock();
@@ -174,7 +177,7 @@ export class RpgGame {
         <div class="rpg-explore" id="rpg-explore" role="status" hidden><strong>Find the monsters!</strong><span id="rpg-explore-how">Click the floor to walk.</span></div>
         <form id="rpg-answer-form" class="rpg-answer-panel" autocomplete="off"><div class="rpg-question"><span id="rpg-topic" class="rpg-eyebrow">POWER YOUR SPELL</span><label for="rpg-answer" id="rpg-problem">Preparing your next spell…</label></div><input id="rpg-answer" data-steer="1" aria-label="Your answer" inputmode="none" autocomplete="off" maxlength="3" pattern="[0-9]*" type="text"><button class="rpg-primary" id="rpg-cast" type="submit">Unleash <span id="rpg-power">100%</span></button><div class="rpg-help-buttons"><button type="button" data-action="hear" aria-label="Read problem aloud" title="Hear the problem">${icon('sound')}</button><button type="button" data-action="explain" class="rpg-direct-help">${icon('help')}<span>Hint</span></button><button type="button" data-action="walkthrough" class="rpg-direct-help"><span>I don't know</span></button><button type="button" data-action="keypad" aria-label="Toggle number pad" title="Number pad">⌨</button></div></form>
         <div id="rpg-keypad" class="rpg-keypad" hidden>${[1,2,3,4,5,6,7,8,9,'⌫',0,'✓'].map(n => `<button type="button" data-digit="${n}" aria-label="${n === '⌫' ? 'Delete digit' : n === '✓' ? 'Submit answer' : n}">${n}</button>`).join('')}</div>
-        <footer class="rpg-hotbar"><div class="rpg-hud-art" aria-hidden="true"></div><div class="rpg-level-orb"><span>LEVEL</span><strong id="rpg-level">1</strong></div><div class="rpg-spellbar" id="rpg-spellbar"></div><span class="rpg-compact-spell-name" id="rpg-compact-spell-name" aria-hidden="true"></span><button class="rpg-gear-button" data-action="inventory" aria-label="Open equipment">${icon('sword')}<span id="rpg-equipped">Equipment</span></button><button class="rpg-magic-orb" data-action="spellbook" aria-label="Open spellbook"><span>SPELLS</span><strong id="rpg-spell-count">2</strong><small>Spellbook · B</small></button></footer>
+        <footer class="rpg-hotbar"><div class="rpg-hud-art" aria-hidden="true"></div><div class="rpg-level-orb">${WARD_HTML}<span>LEVEL</span><strong id="rpg-level">1</strong></div><div class="rpg-spellbar" id="rpg-spellbar"></div><span class="rpg-compact-spell-name" id="rpg-compact-spell-name" aria-hidden="true"></span><button class="rpg-gear-button" data-action="inventory" aria-label="Open equipment">${icon('sword')}<span id="rpg-equipped">Equipment</span></button><button class="rpg-magic-orb" data-action="spellbook" aria-label="Open spellbook"><span>SPELLS</span><strong id="rpg-spell-count">2</strong><small>Spellbook · B</small></button></footer>
         <div class="rpg-xp"><div class="rpg-xp-heading"><strong id="rpg-xp-next">Next: Level 2</strong><span id="rpg-xp-label">0 / 90 XP</span></div><div class="rpg-xp-track" id="rpg-xp-track" role="progressbar" aria-label="Experience toward next level" aria-valuemin="0" aria-valuemax="90" aria-valuenow="0"><i id="rpg-xp-fill"></i><span id="rpg-xp-gain" aria-hidden="true"></span></div></div>
       </section>
       <div class="rpg-ladder rpg-ladder-side" id="rpg-ladder-side" hidden></div>
@@ -353,6 +356,7 @@ export class RpgGame {
     this.renderAreaLabel();
     this.el('rpg-route').innerHTML = renderGuardianTrack(expedition, region.bossName);
     this.el('rpg-level').textContent = String(s.level);
+    this.wardHud.render(s); this.world.gearRunSpeed = rpgGearRunSpeed(s);
     const xpFill = this.el('rpg-xp-fill');
     const previousWidth = xpFill.style.width || '0%';
     const nextWidth = `${100 * s.xpIntoLevel / s.xpForNextLevel}%`;
@@ -633,6 +637,12 @@ export class RpgGame {
       }
       this.state = result.state;
       this.renderState(); this.showReward(result.reward, session);
+      if (!result.duplicate) {
+        // The survivors strike the ward; armour or jewellery falls beside the hero.
+        this.wardHud.play(result.reward, count => this.world.wardVolley(count), seconds => this.world.kneel(seconds));
+        const gear = result.reward.gear;
+        if (gear) { this.world.dropGear(gear.rarity); showGearLabel(this.root, gear, this.world.heroScreenPosition); }
+      }
       this.el('rpg-save-status').textContent = '◆ Adventure saved on your server';
       if (this.state.expedition!.cleared) {
         this.boonHud.end();
@@ -810,7 +820,8 @@ export class RpgGame {
     const compactOutcome = reward.combat && !reward.combat.encounterCleared
       ? `${reward.combat.remainingEnemies} enemies remain` : reward.elite ? 'Champion defeated' : 'Room cleared';
     // An elite pack's relic is the better of two rolls.
-    this.toast(`${reward.elite ? 'Champion defeated! A finer relic · ' : ''}${outcome}${level}`, reward.levelUp ? 4500 : 2600, compactOutcome);
+    const steady = reward.steadyDust ? ` · +${reward.forgeDust} forge dust · Steady!` : '';
+    this.toast(`${reward.elite ? 'Champion defeated! A finer relic · ' : ''}${outcome}${level}${steady}`, reward.levelUp || steady ? 4500 : 2600, `${compactOutcome}${reward.steadyDust ? ' · Steady!' : ''}`);
     if (!this.muted) {
       if (reward.bossDefeated) dungeonSound.boss();
       else if (reward.levelUp) { /* The queued celebration plays its fanfare. */ }

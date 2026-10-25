@@ -307,3 +307,4 @@ export * from "./rpgTrader";
 export * from "./rpgElite";
 export * from "./rpgLocks";
 export * from "./rpgGear";
+export * from "./rpgWard";

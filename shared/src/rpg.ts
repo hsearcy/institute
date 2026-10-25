@@ -1,4 +1,4 @@
-import type { RpgGearInstance, RpgGearSlot } from './rpgGear';
+import { rpgGearStats, type RpgGearInstance, type RpgGearSlot } from './rpgGear';
 import { rpgEliteRoom, rpgEliteMaxHp } from './rpgElite';
 import { rpgLootSpellShape, rpgLootCombatAffix, rpgEffectiveSkills, rpgEquippedLoot, rpgLootAffixes, rpgLootSkillBonus, rpgLootPower, rpgTier } from './rpgLoot';
 import type { RpgBoon, RpgBoonId } from './rpgLocks';
@@ -135,7 +135,11 @@ export const RPG_ITEMS: readonly RpgItem[] = [
 ];
 /** `elite` marks the one stronger enemy of an elite pack; the server decides it. */
 export interface RpgCombatEnemy { id: string; hp: number; maxHp: number; elite?: boolean }
-export interface RpgCombatState { version: 1; encounterIndex: number; casts: number; enemies: RpgCombatEnemy[] }
+export interface RpgCombatState { version: 1; encounterIndex: number; casts: number; enemies: RpgCombatEnemy[];
+  /** The hero's ward in this fight; absent until the first cast (a fresh fight starts full). See rpgWard.ts. */
+  ward?: number;
+  /** Extra ward a trader's tonic gave this fight. */
+  wardBonus?: number }
 export interface RpgCombatResult {
   enemiesBefore: RpgCombatEnemy[]; enemiesAfter: RpgCombatEnemy[];
   hits: { enemyId: string; damage: number; hpBefore: number; hpAfter: number }[];
@@ -193,6 +197,8 @@ export interface RpgState {
   chestCharms?: number;
   /** Armour and jewellery owned, and the copy in each slot (see rpgGear.ts). */
   gear?: RpgGearInstance[]; equippedGear?: Partial<Record<RpgGearSlot, string>>;
+  /** Fights left that start with a trader's ward tonic. */
+  wardTonics?: number;
 }
 export interface RpgReward { xp: number; kills: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; bossDefeated: boolean; spellId: RpgSpellId; combat?: RpgCombatResult; loot?: RpgLootInstance; forgeDust?: number; tier?: number; bossCrazyCoins?: number; bossDimes?: number; spellShape?: RpgSpellShape; elite?: boolean; boon?: RpgBoonId; bountyDust?: number;
   /** Armour or jewellery that fell, already saved in the hero's gear. */
@@ -200,10 +206,16 @@ export interface RpgReward { xp: number; kills: number; levelUp: boolean; levels
   /** The ward after the survivors struck back, and its most; `knelt` when it ran out and refilled (nothing is lost). */
   ward?: { value: number; max: number; lost: number; knelt: boolean };
   /** Forge dust for ending the fight with more than half the ward. */
-  steadyDust?: number }
+  steadyDust?: number;
+  /** Extra forge dust that worn gear found (dustFind); already inside forgeDust. */
+  dustFound?: number;
+  /** A full bag broke its weakest spare copy into forge dust to make room (not inside forgeDust). */
+  gearSalvaged?: RpgGearSalvaged }
+/** A spare copy broken into forge dust when the bag was full. */
+export interface RpgGearSalvaged { name: string; rarity: RpgRarity; forgeDust: number }
 export interface RpgResolveResult { state: RpgState; reward: RpgReward; duplicate: boolean }
 /** A chest opened with a solved problem: smaller than a fight's reward, sometimes a relic. */
-export interface RpgChestReward { gear?: RpgGearInstance; chestId: string; xp: number; forgeDust: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; loot?: RpgLootInstance; tier: number;
+export interface RpgChestReward { gear?: RpgGearInstance; gearSalvaged?: RpgGearSalvaged; dustFound?: number; chestId: string; xp: number; forgeDust: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; loot?: RpgLootInstance; tier: number;
   /** The treasure a chest word problem counted (its answer), when it was the chest's contents. */
   counted?: { treasure: 'dust' | 'gold'; amount: number };
   /** A lucky charm was used up on this chest. */
@@ -306,14 +318,16 @@ export function rpgSpellModifiers(state: RpgLoadout, spellId = state.selectedSpe
   if (item?.effect && rpgItemApplies(item, spellId)) effects.push(item.effect);
   return [...new Set(effects)];
 }
-export type RpgLoadout = Pick<RpgState, 'skills' | 'equippedItemId' | 'selectedSpellId'> & Partial<Pick<RpgState, 'loot' | 'equippedLootId'>>;
+export type RpgLoadout = Pick<RpgState, 'skills' | 'equippedItemId' | 'selectedSpellId'> & Partial<Pick<RpgState, 'loot' | 'equippedLootId' | 'gear' | 'equippedGear'>>;
 /** A spell changes damage and coverage, never the number of monsters spawned. */
 export function rpgSpellCombatStats(state: RpgLoadout, spellId = state.selectedSpellId): { damage: number; targets: number } {
   const item = RPG_ITEMS.find(entry => entry.id === state.equippedItemId);
   const equipped = rpgEquippedLoot(state), affixes = rpgLootAffixes(equipped);
   const namedPower = (affixes.spellId === spellId ? affixes.spellPower : 0)
     + (affixes.schoolId === rpgSpellSchool(spellId) ? affixes.schoolPower : 0);
-  const gearPower = (item && rpgItemApplies(item, spellId) ? item.power : 0) + rpgLootPower(equipped) + namedPower;
+  // Armour and jewellery add to every attack, or to their school's attacks, as relic bonuses do.
+  const worn = rpgGearStats(state);
+  const gearPower = (item && rpgItemApplies(item, spellId) ? item.power : 0) + rpgLootPower(equipped) + namedPower + worn.power + worn[rpgSpellSchool(spellId)];
   const skills = rpgEffectiveSkills(state);
   const skillPower = RPG_SKILLS.filter(skill => skillApplies(skill, spellId)).reduce((total, skill) => total + (skills[skill.id] ?? 0) * skill.powerPerRank, 0);
   const abilityPower = RPG_SPELLS.find(spell => spell.id === spellId)?.power ?? 0;

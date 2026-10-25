@@ -9,6 +9,8 @@ export function chestRewardTokens(reward: RpgChestReward): RewardToken[] {
   if (reward.forgeDust > 0) tokens.push({ kind: 'dust', label: `+${reward.forgeDust} forge dust`, color: DUST_COLOR, amount: reward.forgeDust });
   const item = reward.item;
   if (item && (reward.loot || !reward.duplicateItem)) tokens.push({ kind: 'relic', label: item.name, color: RARITY_COLORS[item.rarity] ?? RARITY_COLORS.rare!, rarity: item.rarity });
+  // Armour and jewellery fall out the same way as a relic.
+  if (reward.gear) tokens.push({ kind: 'relic', label: reward.gear.name, color: RARITY_COLORS[reward.gear.rarity] ?? RARITY_COLORS.rare!, rarity: reward.gear.rarity });
   return tokens;
 }
 

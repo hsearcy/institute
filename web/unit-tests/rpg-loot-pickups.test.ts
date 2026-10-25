@@ -54,3 +54,10 @@ test('chest treasures rest on the floor a moment, then fly to the hero on their 
   expect(loot.rewardsPending).toBe(0);
   loot.dispose();
 });
+
+test('gear found in a chest falls out as its own pickup', async () => {
+  const { chestRewardTokens } = await import('../src/rpg/rewardPickups');
+  const tokens = chestRewardTokens({ chestId: 'c', xp: 16, forgeDust: 8, levelUp: false, levelsGained: 0, item: null, newItems: [], duplicateItem: false, tier: 1,
+    gear: { id: 'g', baseId: 'soft_boots', kind: 'boots', rarity: 'epic', tier: 1, name: 'Swift Soft Boots', stats: { speed: 5 } } } as never);
+  expect(tokens.map(token => token.label)).toEqual(['+16 XP', '+8 forge dust', 'Swift Soft Boots']);
+});

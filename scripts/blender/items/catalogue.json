@@ -354,5 +354,277 @@
         "derivedFrom": "accepted-item-glb"
       }
     }
+  ],
+  "gear": [
+    {
+      "id": "leather_cap",
+      "kind": "helm",
+      "name": "Leather Cap",
+      "silhouette": "Rounded stitched dome, rolled band, ear flaps with laces, copper crown button",
+      "materials": "Grained brown leather, dark leather seams, copper",
+      "output": "web/public/assets/rpg/gear/leather_cap.glb",
+      "preview": {
+        "azimuth": 28,
+        "elevation": 22,
+        "margin": 1.12,
+        "background": "transparent",
+        "derivedFrom": "exact-gear-glb"
+      }
+    },
+    {
+      "id": "iron_helm",
+      "kind": "helm",
+      "name": "Iron Helm",
+      "silhouette": "Domed nasal helm with crest ridge, riveted brow band, cheek guards",
+      "materials": "Worn forged iron, blackened bands, steel rivets",
+      "output": "web/public/assets/rpg/gear/iron_helm.glb",
+      "preview": {
+        "azimuth": 28,
+        "elevation": 18,
+        "margin": 1.12,
+        "background": "transparent",
+        "derivedFrom": "exact-gear-glb"
+      }
+    },
+    {
+      "id": "rune_circlet",
+      "kind": "helm",
+      "name": "Rune Circlet",
+      "silhouette": "Slim oval band with pointed front peak, sapphire, four rune plates",
+      "materials": "Silver band, gold lips and peak, sapphire and moonstone",
+      "output": "web/public/assets/rpg/gear/rune_circlet.glb",
+      "preview": {
+        "azimuth": 18,
+        "elevation": 24,
+        "margin": 1.12,
+        "background": "transparent",
+        "derivedFrom": "exact-gear-glb"
+      }
+    },
+    {
+      "id": "padded_tunic",
+      "kind": "chest",
+      "name": "Padded Tunic",
+      "silhouette": "Quilted short-sleeved tunic, laced chest, belt and buckle",
+      "materials": "Diamond-quilted linen, dark leather trims, brass buckle",
+      "output": "web/public/assets/rpg/gear/padded_tunic.glb",
+      "preview": {
+        "azimuth": 20,
+        "elevation": 8,
+        "margin": 1.12,
+        "background": "transparent",
+        "derivedFrom": "exact-gear-glb"
+      }
+    },
+    {
+      "id": "scale_mail",
+      "kind": "chest",
+      "name": "Scale Mail",
+      "silhouette": "Torso of overlapping iron scales, shoulder straps, brass edging",
+      "materials": "Iron scales, dark leather straps, brass collar and hem",
+      "output": "web/public/assets/rpg/gear/scale_mail.glb",
+      "preview": {
+        "azimuth": 20,
+        "elevation": 8,
+        "margin": 1.12,
+        "background": "transparent",
+        "derivedFrom": "exact-gear-glb"
+      }
+    },
+    {
+      "id": "warden_plate",
+      "kind": "chest",
+      "name": "Warden Plate",
+      "silhouette": "Domed breastplate, layered pauldrons, faulds, gold shield emblem",
+      "materials": "Polished steel, gold trims, sapphire, blue padding",
+      "output": "web/public/assets/rpg/gear/warden_plate.glb",
+      "preview": {
+        "azimuth": 20,
+        "elevation": 10,
+        "margin": 1.12,
+        "background": "transparent",
+        "derivedFrom": "exact-gear-glb"
+      }
+    },
+    {
+      "id": "cloth_wraps",
+      "kind": "gloves",
+      "name": "Cloth Wraps",
+      "silhouette": "Pair of wrapped hands with trailing strip and cord knot",
+      "materials": "Banded linen wraps, cord",
+      "output": "web/public/assets/rpg/gear/cloth_wraps.glb",
+      "preview": {
+        "azimuth": 20,
+        "elevation": 16,
+        "margin": 1.12,
+        "background": "transparent",
+        "derivedFrom": "exact-gear-glb"
+      }
+    },
+    {
+      "id": "iron_gauntlets",
+      "kind": "gloves",
+      "name": "Iron Gauntlets",
+      "silhouette": "Pair of flared iron cuffs, plated hand backs, knuckle and finger plates",
+      "materials": "Iron, blackened iron, dark leather glove, steel rivets",
+      "output": "web/public/assets/rpg/gear/iron_gauntlets.glb",
+      "preview": {
+        "azimuth": 20,
+        "elevation": 16,
+        "margin": 1.12,
+        "background": "transparent",
+        "derivedFrom": "exact-gear-glb"
+      }
+    },
+    {
+      "id": "spellweave_gloves",
+      "kind": "gloves",
+      "name": "Spellweave Gloves",
+      "silhouette": "Pair of slim gloves with tall cuffs, amethyst on the back, gold veins",
+      "materials": "Violet leather, gold, amethyst",
+      "output": "web/public/assets/rpg/gear/spellweave_gloves.glb",
+      "preview": {
+        "azimuth": 20,
+        "elevation": 16,
+        "margin": 1.12,
+        "background": "transparent",
+        "derivedFrom": "exact-gear-glb"
+      }
+    },
+    {
+      "id": "soft_boots",
+      "kind": "boots",
+      "name": "Soft Boots",
+      "silhouette": "Pair of low folded-cuff boots with laces",
+      "materials": "Soft suede, dark leather sole, cord",
+      "output": "web/public/assets/rpg/gear/soft_boots.glb",
+      "preview": {
+        "azimuth": 35,
+        "elevation": 14,
+        "margin": 1.12,
+        "background": "transparent",
+        "derivedFrom": "exact-gear-glb"
+      }
+    },
+    {
+      "id": "traveler_boots",
+      "kind": "boots",
+      "name": "Traveler's Boots",
+      "silhouette": "Pair of tall cuffed boots with two buckle straps and toe guard",
+      "materials": "Brown leather, dark leather, brass",
+      "output": "web/public/assets/rpg/gear/traveler_boots.glb",
+      "preview": {
+        "azimuth": 35,
+        "elevation": 14,
+        "margin": 1.12,
+        "background": "transparent",
+        "derivedFrom": "exact-gear-glb"
+      }
+    },
+    {
+      "id": "windstep_boots",
+      "kind": "boots",
+      "name": "Windstep Boots",
+      "silhouette": "Pair of sleek boots with silver toe caps and feathered ankle wings",
+      "materials": "Teal leather, silver, moonstone",
+      "output": "web/public/assets/rpg/gear/windstep_boots.glb",
+      "preview": {
+        "azimuth": 35,
+        "elevation": 14,
+        "margin": 1.12,
+        "background": "transparent",
+        "derivedFrom": "exact-gear-glb"
+      }
+    },
+    {
+      "id": "bone_charm",
+      "kind": "amulet",
+      "name": "Bone Charm",
+      "silhouette": "Cord loop, curved fang, bone and amber beads",
+      "materials": "Bone, braided cord, amber",
+      "output": "web/public/assets/rpg/gear/bone_charm.glb",
+      "preview": {
+        "azimuth": 0,
+        "elevation": 6,
+        "margin": 1.12,
+        "background": "transparent",
+        "derivedFrom": "exact-gear-glb"
+      }
+    },
+    {
+      "id": "star_pendant",
+      "kind": "amulet",
+      "name": "Star Pendant",
+      "silhouette": "Silver link chain, five-point gold star, sapphire center",
+      "materials": "Silver, gold, sapphire",
+      "output": "web/public/assets/rpg/gear/star_pendant.glb",
+      "preview": {
+        "azimuth": 0,
+        "elevation": 6,
+        "margin": 1.12,
+        "background": "transparent",
+        "derivedFrom": "exact-gear-glb"
+      }
+    },
+    {
+      "id": "heart_amulet",
+      "kind": "amulet",
+      "name": "Heartstone Amulet",
+      "silhouette": "Gold link chain, puffed ruby heart in a clawed gold bezel",
+      "materials": "Gold, ruby",
+      "output": "web/public/assets/rpg/gear/heart_amulet.glb",
+      "preview": {
+        "azimuth": 0,
+        "elevation": 6,
+        "margin": 1.12,
+        "background": "transparent",
+        "derivedFrom": "exact-gear-glb"
+      }
+    },
+    {
+      "id": "copper_ring",
+      "kind": "ring",
+      "name": "Copper Ring",
+      "silhouette": "Hammered copper band with studded rim",
+      "materials": "Copper with green patina",
+      "output": "web/public/assets/rpg/gear/copper_ring.glb",
+      "preview": {
+        "azimuth": 30,
+        "elevation": 32,
+        "margin": 1.12,
+        "background": "transparent",
+        "derivedFrom": "exact-gear-glb"
+      }
+    },
+    {
+      "id": "silver_band",
+      "kind": "ring",
+      "name": "Silver Band",
+      "silhouette": "Silver band with two twisted rope edges and a moonstone",
+      "materials": "Silver, moonstone",
+      "output": "web/public/assets/rpg/gear/silver_band.glb",
+      "preview": {
+        "azimuth": 30,
+        "elevation": 32,
+        "margin": 1.12,
+        "background": "transparent",
+        "derivedFrom": "exact-gear-glb"
+      }
+    },
+    {
+      "id": "moon_signet",
+      "kind": "ring",
+      "name": "Moon Signet",
+      "silhouette": "Heavy gold signet with a silver crescent moon face",
+      "materials": "Gold, silver, sapphire",
+      "output": "web/public/assets/rpg/gear/moon_signet.glb",
+      "preview": {
+        "azimuth": 30,
+        "elevation": 40,
+        "margin": 1.12,
+        "background": "transparent",
+        "derivedFrom": "exact-gear-glb"
+      }
+    }
   ]
 }

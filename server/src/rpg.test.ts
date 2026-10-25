@@ -167,10 +167,13 @@ describe('additive RPG progression on legacy learning data', () => {
         const preview = rpgNextRelicHunt(initial, regionId)!;
         expect(preview).toMatchObject({ itemId: targetItem, encounterIndex: 2 });
         startRpgExpedition(db, profileId, regionId);
-        for (let room = 0; room <= preview.encounterIndex; room++) {
+        // An elite pack ahead can bring the relic sooner; the forecast for the started expedition knows it.
+        const active = rpgNextRelicHunt(getRpgState(db, profileId), regionId)!;
+        expect(active.itemId).toBe(targetItem);
+        for (let room = 0; room <= active.encounterIndex; room++) {
           const result = clearRoom(db, profileId, `${profileId}-${room}`);
           expect(result.reward.xp).toBe(32);
-          expect(result.reward.item?.id ?? null).toBe(room === 2 ? targetItem : null);
+          expect(result.reward.item?.id ?? null).toBe(room === active.encounterIndex ? targetItem : null);
 
         }
         expect(getRpgState(db, profileId).inventory).toEqual(['apprentice', 'cinderwand', targetItem]);
@@ -207,6 +210,8 @@ describe('additive RPG progression on legacy learning data', () => {
     const db = legacyDb(); ensureRpgSchema(db);
     try {
       const initial = startRpgExpedition(db, 'sam');
+      // A trip with no elite pack, so the next pack's health is the plain one.
+      initial.expedition!.id = 'plain-trip-1';
       solved(db, 'sam', 'pre-viewport-change');
       const request = { profileId: 'sam', problemId: 'pre-viewport-change', expeditionId: initial.expedition!.id, encounterIndex: 0 };
       const oldReward = { xp: 32, kills: 24, levelUp: false, levelsGained: 0, item: null, newItems: [], duplicateItem: false, bossDefeated: false, spellId: 'ember' as const };

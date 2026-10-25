@@ -48,6 +48,13 @@ SPEC = {
     "charge-frost": ("magical frost gathering in a hand: crystals forming with a rising shimmering chime and icy hiss" + FX, 1.0, 1, .6, "sfx"),
     "charge-storm": ("electric energy gathering in a hand: rising buzzing hum with small crackling sparks" + FX, 1.0, 1, .6, "sfx"),
 
+    # Breakables and elites.
+    "break-wood": ("a wooden barrel or crate smashed open by a sword: a sharp crunchy wood splinter crack, planks clattering on stone, a few small pebbles rolling" + FX, .9, 3, .65, "sfx"),
+    "break-pottery": ("a clay urn shattered by a sword: a bright crisp ceramic smash, shards tinkling and skittering across a stone floor" + FX, .9, 3, .65, "sfx"),
+    "dust-pickup": ("a pinch of glittering magic dust collected: a tiny soft sparkling twinkle, very short and gentle" + FX, .5, 1, .65, "sfx"),
+    "elite-alert": ("a champion monster revealed: a deep menacing growl over a heavy metallic war horn swell with a dark magical shimmer" + FX, 1.8, 1, .55, "sfx"),
+    "elite-defeat": ("a champion monster defeated: a heavy armored body crashing down, then a bright golden magical chime swell" + FX, 1.8, 1, .55, "sfx"),
+
     # Loot and rewards.
     "soul": ("a small glowing soul orb absorbed into a hero: a soft ethereal whoosh with a gentle sparkling chime" + FX, .6, 3, .6, "sfx"),
     "relic-drop": ("a legendary item drops in an action RPG: a heavy gem thud on a stone floor, then a bright magical shimmering beam" + FX, 1.6, 1, .6, "sfx"),

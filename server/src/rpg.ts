@@ -3,7 +3,8 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import {
   rpgRollBossBonus, rpgLootSpellShape, RPG_CHESTS_PER_EXPEDITION, RPG_CHEST_XP, rpgEquippedLoot, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellAvailable, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER,
-  type RpgState, type RpgReward, type RpgResolveResult, type RpgChestResult, type RpgChestReward,
+  rpgCreateEliteLoot, RPG_BREAKABLE_DUST, RPG_BREAKABLE_DUST_CHANCE, RPG_BREAKABLE_DUST_PER_EXPEDITION, RPG_BREAKABLE_DUST_PER_DAY, RPG_BREAKABLES_PER_EXPEDITION,
+  type RpgBreakResult, type RpgBreakReward, type RpgState, type RpgReward, type RpgResolveResult, type RpgChestResult, type RpgChestReward,
 } from '@institute/shared';
 
 /** Additive tables only: never migrate, reset, or award learning state. */
@@ -45,6 +46,14 @@ export function ensureRpgSchema(db: Database): void {
       created_at INTEGER NOT NULL,
       PRIMARY KEY (profile_id, problem_id),
       UNIQUE (profile_id, expedition_id, chest_id)
+    );
+    CREATE TABLE IF NOT EXISTS rpg_break_claims (
+      profile_id TEXT NOT NULL,
+      expedition_id TEXT NOT NULL,
+      breakable_id TEXT NOT NULL,
+      forge_dust INTEGER NOT NULL,
+      created_at INTEGER NOT NULL,
+      PRIMARY KEY (profile_id, expedition_id, breakable_id)
     );
     CREATE TABLE IF NOT EXISTS rpg_cast_claims (
       profile_id TEXT NOT NULL,
@@ -160,12 +169,14 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
     // casts were needed. In particular, the first-room gift cannot disappear
     // merely because earlier casts already defeated a weak enemy.
     const roomStartKills = state.totalKills - before.enemies.filter(enemy => enemy.hp === 0).length;
-    const item = cast.result.encounterCleared ? rpgRelicDrop({ ...state, totalKills: roomStartKills }, expedition.regionId, expedition.encounterIndex) : null;
+    // An elite pack always drops a relic, and its roll is the better of two.
+    const elite = before.enemies.some(enemy => enemy.elite);
+    const item = cast.result.encounterCleared ? rpgRelicDrop({ ...state, totalKills: roomStartKills }, expedition.regionId, expedition.encounterIndex, elite) : null;
     state.totalKills += kills;
     state.selectedSpellId = spellId;
     const duplicateItem = !!item && state.inventory.includes(item.id);
     const tier = rpgTier(expedition.tier);
-    const loot = item ? rpgCreateLoot(item.id, tier, Math.random, bossDefeated) : undefined;
+    const loot = item ? (elite && !bossDefeated ? rpgCreateEliteLoot(item.id, tier, Math.random) : rpgCreateLoot(item.id, tier, Math.random, bossDefeated)) : undefined;
     if (loot) state.loot!.push(loot);
     const forgeDust = cast.result.encounterCleared ? rpgRoomForgeDust(tier, bossDefeated) : 0;
     state.forgeDust = (state.forgeDust ?? 0) + forgeDust;
@@ -180,7 +191,7 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
     const shape = rpgLootSpellShape(rpgEquippedLoot(state));
     const spellShape = shape?.spellId === spellId ? shape.id : undefined;
     const { bossCrazyCoins, bossDimes } = bossDefeated ? rpgRollBossBonus(Math.random, tier) : { bossCrazyCoins: 0, bossDimes: 0 };
-    const reward: RpgReward = { spellShape, bossCrazyCoins, bossDimes, xp, kills, levelUp: levelsGained > 0, levelsGained, item, newItems: item && !duplicateItem ? [item] : [], duplicateItem, bossDefeated, spellId, combat: cast.result, loot, forgeDust, tier };
+    const reward: RpgReward = { spellShape, bossCrazyCoins, bossDimes, xp, kills, levelUp: levelsGained > 0, levelsGained, item, newItems: item && !duplicateItem ? [item] : [], duplicateItem, bossDefeated, spellId, combat: cast.result, loot, forgeDust, tier, ...(elite && cast.result.encounterCleared ? { elite: true } : {}) };
     db.query(`INSERT INTO rpg_cast_claims (profile_id, problem_id, expedition_id, encounter_index, reward_json, created_at)
       VALUES (?, ?, ?, ?, ?, ?)`).run(body.profileId, body.problemId, expedition.id, body.encounterIndex, JSON.stringify(reward), Date.now());
     saveRpgState(db, state);
@@ -241,6 +252,42 @@ export function openRpgChest(db: Database, input: z.infer<typeof ChestSchema>): 
     db.query(`INSERT INTO rpg_chest_claims (profile_id, problem_id, expedition_id, chest_id, reward_json, created_at) VALUES (?, ?, ?, ?, ?, ?)`)
       .run(body.profileId, body.problemId, expedition.id, body.chestId, JSON.stringify(reward), Date.now());
     saveRpgState(db, state);
+    return { state, reward, duplicate: false };
+  })();
+}
+
+const BreakSchema = z.object({
+  profileId: z.string().min(1).max(100), expeditionId: z.string().min(1).max(100),
+  breakableId: z.string().regex(/^[\w:-]{1,80}$/),
+});
+
+/**
+ * A barrel, urn or crate broken with no problem. It pays at most one forge
+ * dust, sometimes, and only up to small caps per expedition and per day, so
+ * math stays the main source of rewards. Each breakable pays once; a retry of
+ * the same one returns its first answer.
+ */
+export function breakRpgObject(db: Database, input: z.infer<typeof BreakSchema>, random: () => number = Math.random, now = Date.now()): RpgBreakResult {
+  const body = BreakSchema.parse(input);
+  return db.transaction(() => {
+    const state = getRpgState(db, body.profileId);
+    const receipt = db.query('SELECT forge_dust FROM rpg_break_claims WHERE profile_id = ? AND expedition_id = ? AND breakable_id = ?')
+      .get(body.profileId, body.expeditionId, body.breakableId) as { forge_dust: number } | null;
+    if (receipt) return { state, reward: { breakableId: body.breakableId, forgeDust: receipt.forge_dust }, duplicate: true };
+    const expedition = state.expedition;
+    if (!expedition || expedition.cleared || expedition.id !== body.expeditionId) throw new RpgError('Your adventure has moved on. Reload its saved checkpoint.', 409);
+    const reward: RpgBreakReward = { breakableId: body.breakableId, forgeDust: 0 };
+    const broken = db.query('SELECT COUNT(*) AS count, COALESCE(SUM(forge_dust), 0) AS dust FROM rpg_break_claims WHERE profile_id = ? AND expedition_id = ?')
+      .get(body.profileId, expedition.id) as { count: number; dust: number };
+    // Past the receipt limit, a break still shatters on screen but stores and pays nothing.
+    if (broken.count >= RPG_BREAKABLES_PER_EXPEDITION) return { state, reward, duplicate: false };
+    const day = db.query('SELECT COALESCE(SUM(forge_dust), 0) AS dust FROM rpg_break_claims WHERE profile_id = ? AND created_at >= ?')
+      .get(body.profileId, now - 24 * 60 * 60 * 1000) as { dust: number };
+    if (broken.dust + RPG_BREAKABLE_DUST <= RPG_BREAKABLE_DUST_PER_EXPEDITION && day.dust + RPG_BREAKABLE_DUST <= RPG_BREAKABLE_DUST_PER_DAY
+      && random() < RPG_BREAKABLE_DUST_CHANCE) reward.forgeDust = RPG_BREAKABLE_DUST;
+    db.query('INSERT INTO rpg_break_claims (profile_id, expedition_id, breakable_id, forge_dust, created_at) VALUES (?, ?, ?, ?, ?)')
+      .run(body.profileId, expedition.id, body.breakableId, reward.forgeDust, now);
+    if (reward.forgeDust) { state.forgeDust = (state.forgeDust ?? 0) + reward.forgeDust; saveRpgState(db, state); }
     return { state, reward, duplicate: false };
   })();
 }
@@ -310,6 +357,7 @@ export function createRpgRoutes(db: Database, applyMiss?: (profileId: string) =>
     return c.json(result);
   });
   app.post('/chest', async (c) => c.json(openRpgChest(db, await c.req.json())));
+  app.post('/break', async (c) => c.json(breakRpgObject(db, await c.req.json())));
   app.post('/upgrade', async (c) => {
     const { profileId, skillId, requestId } = ProfileSchema.extend({ skillId: z.string(), requestId: z.string().min(1).max(100).optional() }).parse(await c.req.json());
     const state = db.transaction(() => {

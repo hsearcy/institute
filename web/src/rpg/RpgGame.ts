@@ -1,6 +1,6 @@
 import {chooseNextAdventure, renderNextAdventure, tierSelect, tierRewards, type NextAdventure} from './nextAdventureView';
 import { HeroAssetLoadError } from './world/tripoHeroRuntime';
-import type { Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgReward, RpgChestResult, RpgItem, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
+import type { Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgReward, RpgChestResult, RpgBreakResult, RpgItem, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
 import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, rpgEncounterCombat, rpgNextRelicHunt, rpgSalvageValue, rpgAnswerPower, ProblemSchema } from '@institute/shared';
 import { fetchState, fetchMastery, redeemCrazyCoin, redeemDime, type Demo } from './tutor';
 import { speak } from './voice';
@@ -131,6 +131,7 @@ export class RpgGame {
     this.world.onLootPickup = pickup => { if (pickup.kind === 'relic' && !this.muted) dungeonSound.loot(); };
     this.world.onSound = sound => { if (!this.muted) dungeonSound.world(sound); };
     this.world.onAreaEnter = name => { this.areaName = name; this.renderAreaLabel(); };
+    this.world.onBreak = id => { void this.claimBreak(id); };
     this.root.id = 'rpg-ui';
     this.root.innerHTML = `
       <header class="rpg-top"><div class="rpg-location"><span class="rpg-eyebrow">INSTITUTE <b>◆</b> THE SUNKEN VAULT</span><h1 id="rpg-region">The Embercrypt</h1><p id="rpg-room">A new adventure awaits</p></div>
@@ -157,7 +158,7 @@ export class RpgGame {
       onEnd: event => { if (event.kind === 'level') this.root.classList.remove('rpg-level-celebrating'); },
     });
     const health = document.createElement('div'); health.id = 'rpg-health-bars';
-    health.innerHTML = Array.from({ length: 10 }, (_, i) => `<div class="rpg-enemy-health" data-enemy-health="enemy-${i}" role="img" hidden><i></i></div>`).join('');
+    health.innerHTML = Array.from({ length: 10 }, (_, i) => `<div class="rpg-enemy-health" data-enemy-health="enemy-${i}" role="img" hidden><i></i><b></b></div>`).join('');
     this.root.append(health);
     document.querySelector('#app')!.append(this.root);
     this.updateEnemyHealth();
@@ -611,6 +612,18 @@ export class RpgGame {
     this.el('rpg-save-status').textContent = '◆ Adventure saved on your server';
     await this.nextProblem();
   }
+  /** A barrel, urn or crate broke. The server decides whether it held a pinch of forge dust. */
+  private async claimBreak(breakableId: string): Promise<void> {
+    const expeditionId = this.state?.expedition?.id;
+    if (!expeditionId || this.state?.expedition?.cleared) return;
+    try {
+      const result = await request<RpgBreakResult>('/rpg/break', { expeditionId, breakableId });
+      if (result.duplicate || !result.reward.forgeDust || this.disposed || this.state?.expedition?.id !== expeditionId) return;
+      this.state.forgeDust = (this.state.forgeDust ?? 0) + result.reward.forgeDust;
+      this.world.showBreakDust(breakableId);
+      this.toast(`+${result.reward.forgeDust} forge dust`, 1600);
+    } catch { /* A break is only decoration when the server cannot answer. */ }
+  }
   private showItemDrop(item: RpgItem, lootId?: string): void {
     this.discoveryLootId = lootId ?? null; this.discovery = item.id; this.renderDiscovery();
     const label = this.el('rpg-world-loot');
@@ -649,8 +662,9 @@ export class RpgGame {
       ? `${reward.kills ? `${reward.kills} defeated · ` : ''}${reward.combat.remainingEnemies} enemies remain`
       : `${reward.kills} monsters defeated`;
     const compactOutcome = reward.combat && !reward.combat.encounterCleared
-      ? `${reward.combat.remainingEnemies} enemies remain` : 'Room cleared';
-    this.toast(`${outcome}${level}`, reward.levelUp ? 4500 : 2600, compactOutcome);
+      ? `${reward.combat.remainingEnemies} enemies remain` : reward.elite ? 'Champion defeated' : 'Room cleared';
+    // An elite pack's relic is the better of two rolls.
+    this.toast(`${reward.elite ? 'Champion defeated! A finer relic · ' : ''}${outcome}${level}`, reward.levelUp ? 4500 : 2600, compactOutcome);
     if (!this.muted) {
       if (reward.bossDefeated) dungeonSound.boss();
       else if (reward.levelUp) { /* The queued celebration plays its fanfare. */ }
@@ -681,7 +695,9 @@ export class RpgGame {
       const enemy = visible.get(bar.dataset.enemyHealth!); bar.hidden = !enemy;
       if (!enemy) continue;
       bar.style.left = `${enemy.x}px`; bar.style.top = `${enemy.y}px`;
-      bar.setAttribute('aria-label', `Enemy health ${enemy.hp} of ${enemy.maxHp}`);
+      bar.classList.toggle('elite', !!enemy.elite);
+      const name = bar.querySelector('b')!; if (name.textContent !== (enemy.elite ?? '')) name.textContent = enemy.elite ?? '';
+      bar.setAttribute('aria-label', `${enemy.elite ?? 'Enemy'} health ${enemy.hp} of ${enemy.maxHp}`);
       bar.firstElementChild!.setAttribute('style', `width:${100 * enemy.hp / enemy.maxHp}%`);
     }
     this.healthFrame = requestAnimationFrame(this.updateEnemyHealth);

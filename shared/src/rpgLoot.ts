@@ -117,6 +117,12 @@ export function rpgCreateLoot(itemId: string, tier = 1, random: () => number = M
   return result;
 }
 
+/** An elite's relic: the better of two rolls, by power. */
+export function rpgCreateEliteLoot(itemId: string, tier = 1, random: () => number = Math.random): RpgLootInstance {
+  const first = rpgCreateLoot(itemId, tier, random), second = rpgCreateLoot(itemId, tier, random);
+  return second.bonusPower > first.bonusPower ? second : first;
+}
+
 export function rpgEquippedLoot(state: Pick<RpgLoadout, 'equippedItemId' | 'loot' | 'equippedLootId'>): RpgLootInstance | undefined {
   return state.loot?.find(item => item.id === state.equippedLootId && item.itemId === state.equippedItemId);
 }

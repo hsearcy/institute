@@ -54,9 +54,11 @@ test('Forecasts skip an intervening duplicate when the boss has a new relic, pre
 });
 
 test('Resumed and completed expeditions forecast the proper room without mutating save state', () => {
-  const progress = state({ expedition: { id: 'saved', regionId: 'frostvault', encounterIndex: 4, encountersTotal: 6, cleared: false, startedAt: 1 } });
+  // 'saved-1' has no elite in room 4; 'saved-2' does, and an elite pack always drops a relic.
+  const progress = state({ expedition: { id: 'saved-1', regionId: 'frostvault', encounterIndex: 4, encountersTotal: 6, cleared: false, startedAt: 1 } });
   const before = structuredClone(progress);
   expect(rpgNextRelicHunt(progress, 'frostvault')).toMatchObject({ itemId: 'glacier', encounterIndex: 5 });
+  expect(rpgNextRelicHunt({ ...progress, expedition: { ...progress.expedition!, id: 'saved-2' } }, 'frostvault')).toMatchObject({ itemId: 'glacier', encounterIndex: 4 });
   expect(rpgNextRelicHunt(progress, 'embercrypt')).toMatchObject({ itemId: 'cleaver', encounterIndex: 2 });
   expect(progress).toEqual(before);
   progress.expedition!.cleared = true;

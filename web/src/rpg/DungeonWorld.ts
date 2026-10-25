@@ -33,7 +33,9 @@ import { HordeDirector } from './world/hordeDirector';
 import { HeroWard } from './world/heroWard';
 import { DamageNumbers } from './world/damageNumbers';
 import { ENGAGE_RADIUS, slideStep } from './world/exploration';
-import { Level, rectCenter, type Area, type Rect } from './world/levelGen';
+import { Level, rectCenter, HERO_RADIUS, type Area, type Feature, type Rect } from './world/levelGen';
+import { BreakableKit, BreakableDebris, breakableHeight } from './world/breakables';
+import { EliteAura, ELITE_COLOR, ELITE_SCALE, eliteName } from './world/elite';
 import { packPositions } from './world/formation';
 import { buildChunk, disposeChunk, CHEST_OPEN_ANGLE, type BuiltChunk, type VaultMaterials } from './world/levelChunks';
 import { updateHeroCutout } from './world/heroCutout';
@@ -51,7 +53,9 @@ const ACTOR_SCALE = 1.25;
 
 type Enemy = { id: string; hp: number; maxHp: number; root: THREE.Group; visual: THREE.Object3D; origin: THREE.Vector3; phase: number; brute: boolean; dead: boolean; modelId: string; height: number; deathAt: number; animator: EnemyAnimator;
   /** Where the body stands now: staged at the back of the room until the hero engages, then at `origin`. */
-  at: THREE.Vector3; speed: number; clips?: HeroAnimator };
+  at: THREE.Vector3; speed: number; clips?: HeroAnimator;
+  /** The pack's elite, chosen by the server: larger, with a gold aura and name plate. */
+  elite?: { name: string; aura: EliteAura } };
 /** Retargeted Tripo clips on the authored enemy rig (scripts/retarget-enemy-motions.py). */
 const ENEMY_CLIP_ROLES: ActorClipRoles = {
   upperBone: /^(Spine|Chest|Head|UpperArm|Forearm|Hand|Weapon|Shield)/,
@@ -186,6 +190,12 @@ export class DungeonWorld {
   /** A chest that already asked for a problem; it asks again once the hero walks away and back. */
   private chestAsked?: string;
   private readonly chestOpenings = new Map<string, number>();
+  private readonly breakableKit = new BreakableKit();
+  private readonly breakableDebris = new BreakableDebris(this.breakableKit);
+  /** A breakable the hero walks to; it breaks when he reaches it. */
+  private breakTarget?: string;
+  /** A breakable broke (presentation first); the game asks the server whether it held dust. */
+  onBreak?: (id: string) => void;
   private exploreRoute: THREE.Vector3[] = [];
   private readonly exploreKeys = new Set<string>();
   private pointerSteering = false;
@@ -294,7 +304,7 @@ export class DungeonWorld {
     this.composer.addPass(this.bloom); this.composer.addPass(new OutputPass());
     this.moveMarker = new THREE.Mesh(new THREE.RingGeometry(.28, .36, 40), new THREE.MeshBasicMaterial({ color: 0xe9c983, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
     this.moveMarker.rotation.x = -Math.PI / 2; this.moveMarker.position.y = .05; this.scene.add(this.moveMarker);
-    this.floorLoot = new FloorLoot(this.glowMap); this.scene.add(this.floorLoot.group);
+    this.floorLoot = new FloorLoot(this.glowMap); this.scene.add(this.floorLoot.group); this.scene.add(this.breakableDebris.group);
     this.hero.add(this.ward.mesh); this.scene.add(this.damageNumbers.group);
     this.installExploreInput();
     this.setEncounter(0); this.resize();
@@ -314,14 +324,37 @@ export class DungeonWorld {
     };
     const steer = (event: PointerEvent, marker: boolean) => {
       const point = floorPoint(event); if (!point) return;
+      this.breakTarget = undefined;
       this.walkTo(point.x, point.z);
       if (marker) { this.moveMarker.position.set(point.x, .05, point.z); this.moveMarker.userData.shownAt = this.elapsed; }
     };
+    /** The whole breakable under the pointer, nearest the camera. */
+    const breakableAt = (event: PointerEvent): Feature | undefined => {
+      if (!floorPoint(event) || !this.level) return undefined;
+      const hero = this.hero.position, center = new THREE.Vector3();
+      let best: Feature | undefined, nearest = Infinity;
+      for (const feature of this.level.breakables) {
+        if (feature.opened || Math.hypot(feature.x - hero.x, feature.z - hero.z) > 30) continue;
+        const height = breakableHeight(feature);
+        // Test two points up the body, so the top and the foot both take a click.
+        for (const y of [height * .3, height * .75]) {
+          center.set(feature.x, y, feature.z);
+          const along = ray.ray.origin.distanceTo(center);
+          if (ray.ray.distanceToPoint(center) < feature.radius * feature.scale + .14 && along < nearest) { nearest = along; best = feature; }
+        }
+      }
+      return best;
+    };
     this.canvas.addEventListener('pointerdown', event => {
       if (!this.exploring || (event.pointerType === 'mouse' && event.button !== 0)) return;
+      const target = breakableAt(event);
+      if (target) { this.targetBreakable(target); return; }
       this.pointerSteering = true; this.canvas.setPointerCapture(event.pointerId); steer(event, true);
     }, { signal });
-    this.canvas.addEventListener('pointermove', event => { if (this.pointerSteering && this.exploring) steer(event, false); }, { signal });
+    this.canvas.addEventListener('pointermove', event => {
+      if (this.pointerSteering && this.exploring) { steer(event, false); return; }
+      if (event.pointerType === 'mouse') this.canvas.style.cursor = this.exploring && breakableAt(event) ? 'pointer' : '';
+    }, { signal });
     const release = () => { this.pointerSteering = false; };
     this.canvas.addEventListener('pointerup', release, { signal });
     this.canvas.addEventListener('pointercancel', release, { signal });
@@ -331,7 +364,7 @@ export class DungeonWorld {
       const typing = (event.target instanceof HTMLInputElement && !event.target.dataset.steer) || event.target instanceof HTMLTextAreaElement;
       if (!ARROWS.includes(event.key) || typing) return;
       if (!this.exploring) return;
-      event.preventDefault(); this.exploreKeys.add(event.key); this.exploreRoute.length = 0;
+      event.preventDefault(); this.exploreKeys.add(event.key); this.exploreRoute.length = 0; this.breakTarget = undefined;
     }, { signal });
     window.addEventListener('keyup', event => { this.exploreKeys.delete(event.key); }, { signal });
     window.addEventListener('blur', () => { this.exploreKeys.clear(); this.pointerSteering = false; }, { signal });
@@ -464,6 +497,87 @@ export class DungeonWorld {
     }
   }
 
+  /** Walks to a breakable and smashes it on arrival, or at once when it is within reach. */
+  private targetBreakable(feature: Feature): void {
+    if (this.breakableInReach(feature)) { this.smash(feature); return; }
+    this.breakTarget = feature.id; this.pointerSteering = false;
+    // Walk to the near side of it, close enough to swing.
+    const hero = this.hero.position, away = Math.atan2(hero.x - feature.x, hero.z - feature.z), reach = feature.radius * feature.scale + HERO_RADIUS + .3;
+    this.walkTo(feature.x + Math.sin(away) * reach, feature.z + Math.cos(away) * reach);
+    this.moveMarker.position.set(feature.x, .05, feature.z); this.moveMarker.userData.shownAt = this.elapsed;
+  }
+
+  private breakableInReach(feature: Feature, extra = .55): boolean {
+    return Math.hypot(feature.x - this.hero.position.x, feature.z - this.hero.position.z) < feature.radius * feature.scale + HERO_RADIUS + extra;
+  }
+
+  /** The hero swings; the breakable bursts into pieces and is no longer in the way. */
+  private smash(feature: Feature): void {
+    const level = this.level; if (!level || !level.breakFeature(feature.id)) return;
+    if (this.breakTarget === feature.id) { this.breakTarget = undefined; this.exploreRoute.length = 0; }
+    const heading = Math.atan2(feature.x - this.hero.position.x, feature.z - this.hero.position.z);
+    if (!this.attacking) { setPlanarHeroHeading(this.heroVisual.rotation, heading); this.heroAnimator?.play('cleave'); }
+    this.schedule(this.attacking ? 0 : .2, () => {
+      for (const built of this.chunks.values()) for (const piece of built.breakables ?? []) if (piece.feature === feature) piece.object.removeFromParent();
+      const at = new THREE.Vector3(feature.x, breakableHeight(feature) * .45, feature.z);
+      this.breakableDebris.burst(feature, this.hero.position, (x, z) => level.isFloor(Math.floor(x), Math.floor(z)));
+      const urn = feature.kind === 'urn';
+      // A bright crack at the blow, then a cloud of dust that hangs a moment.
+      this.emit(at, 0xfff0d0, 10, 2.4, .25);
+      this.emit(at, urn ? 0xe0a882 : 0xd9c3a0, 28, 1.7, .75);
+      this.emit(at.clone().setY(.2), 0x9a8a74, 22, .8, 1.3);
+      this.burstLight.position.copy(at).setY(1.1); this.burstLight.color.setHex(0xffd9a0); this.burstLight.intensity = Math.max(this.burstLight.intensity, 10);
+      this.shake = Math.max(this.shake, .035);
+      this.renderer.shadowMap.needsUpdate = true;
+      this.onSound?.(urn ? 'break-pottery' : 'break-wood');
+      this.onBreak?.(feature.id);
+    });
+  }
+
+  /** The server said a broken breakable held forge dust: a glint of gold that flies to the hero. */
+  showBreakDust(id: string): void {
+    const feature = this.level?.breakables.find(entry => entry.id === id); if (!feature) return;
+    const at = new THREE.Vector3(feature.x, .5, feature.z);
+    this.emit(at, 0xffd88a, 26, 1.1, .9);
+    this.burstLight.position.copy(at).setY(1.2); this.burstLight.color.setHex(0xffcf73); this.burstLight.intensity = Math.max(this.burstLight.intensity, 18);
+    for (let i = 0; i < 14; i++) this.schedule(.15 + i * .03, () => {
+      const hand = this.hero.position.clone().setY(1.1), from = at.clone().add(new THREE.Vector3((Math.random() - .5) * .4, Math.random() * .5, (Math.random() - .5) * .4));
+      this.directedParticle(from, hand.sub(from).multiplyScalar(2.4), 0xffe2a0, .42, .32);
+    });
+    this.schedule(.55, () => this.onSound?.('dust-pickup'));
+  }
+
+  /** A target reached, or a breakable walked into with the arrow keys; elite auras; flying pieces. */
+  private updateBreakables(delta: number): void {
+    const level = this.level;
+    if (level && this.exploring) {
+      const target = this.breakTarget ? level.breakables.find(feature => feature.id === this.breakTarget) : undefined;
+      if (target && !target.opened && this.breakableInReach(target)) this.smash(target);
+      else if (this.breakTarget && (!target || target.opened || !this.exploreRoute.length)) {
+        // The walk ended as near as the floor allows: a long swing still reaches it.
+        if (target && !target.opened && this.breakableInReach(target, 1.3)) this.smash(target);
+        this.breakTarget = undefined;
+      }
+      if (this.exploreKeys.size) {
+        const facing = this.heroVisual.rotation.y, hero = this.hero.position;
+        const bumped = level.breakables.find(feature => !feature.opened && this.breakableInReach(feature, .12)
+          && Math.cos(Math.atan2(feature.x - hero.x, feature.z - hero.z) - facing) > .5);
+        if (bumped) this.smash(bumped);
+      }
+    }
+    for (const enemy of this.enemies) {
+      if (!enemy.elite) continue;
+      enemy.elite.aura.update(this.elapsed, delta, !enemy.dead);
+      // Gold embers rise around a living elite, so it stands out in a crowd.
+      if (!enemy.dead && enemy.root.visible && Math.random() < delta * 16) {
+        const angle = Math.random() * Math.PI * 2, radius = (enemy.brute ? 1.1 : .62) * (.7 + Math.random() * .5);
+        const from = enemy.root.position.clone().add(new THREE.Vector3(Math.cos(angle) * radius, .1 + Math.random() * enemy.height * .5, Math.sin(angle) * radius));
+        this.directedParticle(from, new THREE.Vector3(-Math.cos(angle) * .25, .9 + Math.random() * .8, -Math.sin(angle) * .25), Math.random() < .3 ? 0xfff0c0 : ELITE_COLOR, .8 + Math.random() * .5, .22 + Math.random() * .16);
+      }
+    }
+    this.breakableDebris.update(delta);
+  }
+
   /** The hero stands at the combat mark with the horde in formation. */
   get combatReady(): boolean { return this.engageReady || !this.enemies.some(enemy => !enemy.dead); }
 
@@ -471,6 +585,7 @@ export class DungeonWorld {
   engage(): void {
     if (this.engaged) return;
     this.engaged = true; this.onSound?.('alert');
+    if (this.enemies.some(enemy => enemy.elite && !enemy.dead)) this.onSound?.('elite-alert');
     // Spotted: the hero halts at the edge of the fight, then moves freely again.
     this.exploreRoute.length = 0; this.pointerSteering = false;
     this.finishEngage();
@@ -797,6 +912,7 @@ export class DungeonWorld {
     }
     this.placePack();
     if (health) this.setCombatState(health);
+    for (const enemy of this.enemies) if (health?.find(entry => entry.id === enemy.id)?.elite) this.makeElite(enemy);
     const ember = this.regionId.includes('ember') || this.regionId.includes('forge');
     const frost = this.regionId.includes('frost');
     const color = frost ? 0x49a4d2 : this.regionId.includes('storm') ? 0x7562c2 : 0x138cb6;
@@ -815,7 +931,16 @@ export class DungeonWorld {
     this.renderer.shadowMap.needsUpdate = true;
   }
 
+  /** The server's elite: larger, with a turning gold rune ring and a name of its own. */
+  private makeElite(enemy: Enemy): void {
+    enemy.visual.scale.multiplyScalar(ELITE_SCALE); enemy.height *= ELITE_SCALE;
+    const aura = new EliteAura(this.glowMap, enemy.height, enemy.brute ? 1.1 : .62);
+    enemy.root.add(aura.object);
+    enemy.elite = { name: eliteName(enemy.modelId, Number(enemy.id.replace(/\D/g, '')) + this.encounter), aura };
+  }
+
   private releaseEnemies(): void {
+    this.enemies.forEach(enemy => enemy.elite?.aura.dispose());
     this.enemies.forEach(enemy => this.releaseProcedural(enemy.visual));
     this.releaseEnemyInstances();
     const skeletons = new Set<THREE.Skeleton>();
@@ -834,7 +959,7 @@ export class DungeonWorld {
     this.hero.position.set(start.x, 0, start.z); this.cameraTarget.copy(this.hero.position);
     this.engaged = this.engageReady = false; this.exploreRoute.length = 0;
     this.packArea = undefined; this.packSeenAt = -Infinity; this.heroArea = this.level.areas[0];
-    this.floorLoot.clear();
+    this.floorLoot.clear(); this.breakableDebris.clear(); this.breakTarget = undefined;
     this.setEnvironment();
     this.streamLevel(Infinity);
     this.onAreaEnter?.(this.level.areas[0]!.name);
@@ -854,6 +979,7 @@ export class DungeonWorld {
       this.updatePack();
     }
     this.updateChests();
+    this.updateBreakables(delta);
     if (this.elapsed - this.lastLightsAt > .5) { this.lastLightsAt = this.elapsed; this.updateLights(); }
     this.easeFraming(delta);
     // The wide ground moves in whole texture repeats, so its pattern stays put.
@@ -862,7 +988,7 @@ export class DungeonWorld {
 
   private get chunkContext() {
     return { level: this.level!, regionId: this.regionId, materials: this.materials as unknown as VaultMaterials, outdoor: this.outdoorKit,
-      model: (name: string, height: number) => this.model(name, height), flame: this.livingFlame, glowMap: this.glowMap };
+      model: (name: string, height: number) => this.model(name, height), flame: this.livingFlame, glowMap: this.glowMap, breakables: this.breakableKit };
   }
 
   /**
@@ -2030,7 +2156,14 @@ export class DungeonWorld {
     enemy.clips?.play(enemy.dead ? (Math.sin(enemy.phase * 7.3) > 0 ? 'death-fall' : 'death') : reaction.side > 0 ? 'hit-side' : 'hit');
     if (enemy.dead) {
       enemy.deathAt = this.elapsed;
-      this.schedule(.6, () => this.floorLoot.dropMotes(enemy.root.position.clone(), enemy.brute ? 9 : 4, this.elapsed));
+      this.schedule(.6, () => this.floorLoot.dropMotes(enemy.root.position.clone(), enemy.brute ? 9 : enemy.elite ? 8 : 4, this.elapsed));
+      if (enemy.elite) this.schedule(.45, () => {
+        // The champion falls: a ring of gold light and a chime.
+        const at = enemy.root.position.clone().setY(.6);
+        this.emit(at, ELITE_COLOR, 44, 2, 1); this.emit(at.clone().setY(1.4), 0xfff1c4, 18, 1.1, .8);
+        this.burstLight.position.copy(at).setY(1.8); this.burstLight.color.setHex(ELITE_COLOR); this.burstLight.intensity = Math.max(this.burstLight.intensity, 40);
+        this.onSound?.('elite-defeat');
+      });
       this.attackDuration = Math.max(this.attackDuration, this.attackAge + reaction.duration + .08);
     }
     this.renderer.shadowMap.needsUpdate = true;
@@ -2475,15 +2608,16 @@ export class DungeonWorld {
     return boss ? { hp: boss.hp, maxHp: boss.maxHp } : null;
   }
 
-  get enemyHealthScreenPositions(): { id: string; hp: number; maxHp: number; x: number; y: number }[] {
-    return this.enemies.filter(enemy => !enemy.dead && enemy.hp < enemy.maxHp).map(enemy => {
+  get enemyHealthScreenPositions(): { id: string; hp: number; maxHp: number; x: number; y: number; elite?: string }[] {
+    // An elite's plate shows whenever it stands in view, wounded or not.
+    return this.enemies.filter(enemy => !enemy.dead && (enemy.hp < enemy.maxHp || enemy.elite)).map(enemy => {
       const at = enemy.root.position.clone().add(new THREE.Vector3(0, enemy.height + .28, 0)).project(this.camera);
-      return { id: enemy.id, hp: enemy.hp, maxHp: enemy.maxHp, x: (at.x + 1) * this.width * .5, y: (1 - at.y) * this.height * .5 };
+      return { id: enemy.id, hp: enemy.hp, maxHp: enemy.maxHp, x: (at.x + 1) * this.width * .5, y: (1 - at.y) * this.height * .5, elite: enemy.elite?.name };
     }).filter(at => at.x > 24 && at.x < this.width - 24 && at.y > 12 && at.y < this.height - 12);
   }
 
   get diagnostics(): Record<string, unknown> {
-    return { appearance: this.appearance, heroModelId: this.heroModelId, heroWalkCycle: this.heroWalkCycle, drawWarmup: this.drawWarmup, lastAttack: this.lastAttack, lastSpellId: this.lastAttack?.spellId, lastSpellEffect: this.lastAttack?.effect, heroAnimation: this.heroAnimator?.current ?? 'procedural', heroClips: this.heroAnimator?.clips ?? [], enemyAnimations: this.enemies.map(enemy => enemy.clips?.current ?? 'procedural'), engaged: this.engaged, combatReady: this.combatReady, striker: this.horde.striker ?? null, hitStop: this.hitStop > 0, floorLoot: this.floorLoot.counts, encounter: this.encounter, region: this.regionId, enemies: this.enemies.filter(enemy => !enemy.dead).length, articulatedEnemies: this.enemies.filter(enemy => enemy.animator.articulated).length, enemyRoster: this.enemies.reduce<Record<string, number>>((counts, enemy) => { counts[enemy.modelId] = (counts[enemy.modelId] ?? 0) + 1; return counts; }, {}), attacking: this.attacking, paused: this.paused, modelsLoaded: this.loadedModels, drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, particles: this.particles.length, fragments: this.fragments.length, hero: this.hero.position.toArray(), softwareRenderer: this.softwareRenderer, fps: Math.round(this.framesPerSecond), quality: ['full', 'balanced', 'performance'][this.quality], renderer: this.renderer.getContext().getParameter(this.renderer.getContext().VERSION) };
+    return { appearance: this.appearance, heroModelId: this.heroModelId, heroWalkCycle: this.heroWalkCycle, drawWarmup: this.drawWarmup, lastAttack: this.lastAttack, lastSpellId: this.lastAttack?.spellId, lastSpellEffect: this.lastAttack?.effect, heroAnimation: this.heroAnimator?.current ?? 'procedural', heroClips: this.heroAnimator?.clips ?? [], enemyAnimations: this.enemies.map(enemy => enemy.clips?.current ?? 'procedural'), engaged: this.engaged, combatReady: this.combatReady, striker: this.horde.striker ?? null, hitStop: this.hitStop > 0, floorLoot: this.floorLoot.counts, encounter: this.encounter, region: this.regionId, enemies: this.enemies.filter(enemy => !enemy.dead).length, articulatedEnemies: this.enemies.filter(enemy => enemy.animator.articulated).length, enemyRoster: this.enemies.reduce<Record<string, number>>((counts, enemy) => { counts[enemy.modelId] = (counts[enemy.modelId] ?? 0) + 1; return counts; }, {}), attacking: this.attacking, paused: this.paused, modelsLoaded: this.loadedModels, drawCalls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, particles: this.particles.length, fragments: this.fragments.length, breakables: this.level ? { whole: this.level.breakables.filter(feature => !feature.opened).length, broken: this.level.breakables.filter(feature => feature.opened).length } : null, breakDebris: this.breakableDebris.count, elites: this.enemies.filter(enemy => enemy.elite).map(enemy => ({ id: enemy.id, name: enemy.elite!.name, hp: enemy.hp, maxHp: enemy.maxHp, dead: enemy.dead })), hero: this.hero.position.toArray(), softwareRenderer: this.softwareRenderer, fps: Math.round(this.framesPerSecond), quality: ['full', 'balanced', 'performance'][this.quality], renderer: this.renderer.getContext().getParameter(this.renderer.getContext().VERSION) };
   }
 
   dispose(): void {
@@ -2503,7 +2637,7 @@ export class DungeonWorld {
     this.heroMixer?.stopAllAction(); this.heroMixer?.uncacheRoot(this.heroVisual);
     this.preparedMaterials.forEach(material => material.dispose());
     this.waveMap.dispose(); this.glowMap.dispose();
-    this.stoneFragments.dispose(); this.hotFragments.dispose();
+    this.stoneFragments.dispose(); this.hotFragments.dispose(); this.breakableDebris.dispose(); this.breakableKit.dispose();
     this.environment.dispose(); this.bloom.dispose(); this.composer.dispose(); this.renderer.dispose();
   }
 }

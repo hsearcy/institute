@@ -9,8 +9,13 @@ export type Side = 'north' | 'south' | 'east' | 'west';
 export type Biome = 'vault' | 'forest' | 'coast' | 'quarry' | 'garden';
 export type AreaKind = 'entry' | 'hall' | 'sanctum';
 export type FeatureKind = 'pier' | 'brazier' | 'crystals' | 'tomb' | 'rubble' | 'chest' | 'landmark' | 'altar'
-  | 'tree' | 'boulder' | 'column' | 'fountain' | 'wreck' | 'cart';
-/** A solid object on the floor. The hero and the horde walk round its radius. A chest can be opened. */
+  | 'tree' | 'boulder' | 'column' | 'fountain' | 'wreck' | 'cart' | BreakableKind;
+/** Props the hero smashes with no problem to solve. */
+export type BreakableKind = 'barrel' | 'urn' | 'crate';
+export const BREAKABLE_KINDS: readonly FeatureKind[] = ['barrel', 'urn', 'crate'];
+export const isBreakable = (feature: Pick<Feature, 'kind'>): boolean => BREAKABLE_KINDS.includes(feature.kind);
+/** A solid object on the floor. The hero and the horde walk round its radius.
+ * A chest can be opened; a breakable is `opened` once broken, and is then no longer solid. */
 export type Feature = Readonly<{ id: string; kind: FeatureKind; x: number; z: number; radius: number; turn: number; scale: number }> & { opened?: boolean };
 export type Area = {
   readonly id: number; readonly kind: AreaKind; readonly rect: Rect; readonly name: string; readonly seed: number;
@@ -19,7 +24,8 @@ export type Area = {
   readonly features: Feature[]; readonly exits: Exit[]; visited: boolean;
 };
 export type Exit = { readonly id: number; readonly area: number; readonly side: Side; readonly at: number; state: 'open' | 'linked' | 'sealed'; corridor?: number };
-export type Corridor = { readonly id: number; readonly rects: readonly Rect[]; readonly from: number; readonly to: number };
+/** A hallway. Its only features are breakables against its walls. */
+export type Corridor = { readonly id: number; readonly rects: readonly Rect[]; readonly from: number; readonly to: number; readonly features: Feature[] };
 /** A piece of the level that is built and released as one batch. */
 export type Chunk = { readonly key: string; readonly bounds: Rect; readonly rects: readonly Rect[]; readonly area?: Area; readonly corridor?: Corridor };
 
@@ -116,6 +122,17 @@ export class Level {
     return undefined;
   }
 
+  /** Every breakable grown so far, whole or broken. */
+  get breakables(): Feature[] { return [...this.areas, ...this.corridors].flatMap(owner => owner.features.filter(isBreakable)); }
+
+  /** Breaks a breakable: it is no longer solid. Returns false when it was already broken or is unknown. */
+  breakFeature(id: string): boolean {
+    const feature = this.breakables.find(entry => entry.id === id);
+    if (!feature || feature.opened) return false;
+    feature.opened = true; this.passCache.clear();
+    return true;
+  }
+
   /** Every chest grown so far, open or closed. */
   get chests(): Feature[] { return this.areas.flatMap(area => area.features.filter(feature => feature.kind === 'chest')); }
 
@@ -145,7 +162,8 @@ export class Level {
       if (!this.floor.has(cellKey(Math.floor(x + dx * radius), Math.floor(z + dz * radius)))) return false;
     }
     const owner = this.floor.get(cellKey(Math.floor(x), Math.floor(z))) ?? -1;
-    return owner < 0 || this.areas[owner]!.features.every(feature => Math.hypot(x - feature.x, z - feature.z) >= feature.radius + radius);
+    const features = owner >= 0 ? this.areas[owner]!.features : this.corridors[-1 - owner]?.features ?? [];
+    return features.every(feature => (feature.opened && isBreakable(feature)) || Math.hypot(x - feature.x, z - feature.z) >= feature.radius + radius);
   }
 
   /** A walking route that avoids walls and features, simplified to straight legs. */
@@ -257,9 +275,10 @@ export class Level {
         && this.corridors.every(corridor => corridor.rects.every(other => !overlaps(candidate, other, MARGIN))));
       // The new area keeps its distance from the parent and from the first leg of a bend.
       if (!clear || overlaps(rect, parent, MARGIN) || segments.slice(0, -1).some(segment => overlaps(rect, segment, MARGIN))) continue;
-      const corridor: Corridor = { id: this.corridors.length, rects: segments, from: exit.area, to: this.areas.length };
+      const corridor: Corridor = { id: this.corridors.length, rects: segments, from: exit.area, to: this.areas.length, features: [] };
       this.corridors.push(corridor);
       for (const segment of segments) this.claim(segment, -1 - corridor.id, `corridor:${corridor.id}`);
+      corridor.features.push(...this.corridorBreakables(corridor, rng));
       exit.state = 'linked'; exit.corridor = corridor.id;
       this.changed.add(`area:${exit.area}`);
       return this.addArea(kind, rect, OPPOSITE[side], { x, z });
@@ -291,6 +310,8 @@ export class Level {
     }
     area.features.push(...this.furnish(area, rng, arrival));
     for (const feature of area.features) {
+      // A breakable is solid only until it breaks, so it never marks route cells for good.
+      if (isBreakable(feature)) continue;
       for (let x = Math.floor(feature.x - feature.radius); x <= Math.ceil(feature.x + feature.radius); x++)
         for (let z = Math.floor(feature.z - feature.radius); z <= Math.ceil(feature.z + feature.radius); z++)
           if (Math.hypot(x + .5 - feature.x, z + .5 - feature.z) < feature.radius) this.blocked.add(cellKey(x, z));
@@ -311,9 +332,9 @@ export class Level {
     const features: Feature[] = [];
     const lanes = (x: number, z: number, radius: number) => doors.every(door => distanceToSegment(x, z, door, center) > radius + 2.2)
       && Math.hypot(x - center.x, z - center.z) > radius + 3.4;
-    const place = (kind: FeatureKind, x: number, z: number, radius: number, scale = 1) => {
+    const place = (kind: FeatureKind, x: number, z: number, radius: number, scale = 1, gap = .6) => {
       const inside = x - radius > r.minX + .3 && x + radius < r.maxX - .3 && z - radius > r.minZ + .3 && z + radius < r.maxZ - .3;
-      if (!inside || !lanes(x, z, radius) || features.some(other => Math.hypot(other.x - x, other.z - z) < other.radius + radius + .6)) return false;
+      if (!inside || !lanes(x, z, radius) || features.some(other => Math.hypot(other.x - x, other.z - z) < other.radius + radius + gap)) return false;
       features.push({ id: `${this.seed}-${area.id}-${features.length}`, kind, x, z, radius, turn: rng() * Math.PI * 2, scale }); return true;
     };
     const scatter = (kind: FeatureKind, count: number, radius: number, edge: number) => {
@@ -347,8 +368,51 @@ export class Level {
       if (rng() < .3) scatter('chest', 1, .6, 1.4);
       if (rng() < .4) scatter('column', 1 + Math.floor(rng() * 2), .7, 1.4);
     }
+    // Small groups of breakables stand against the walls, as in a storeroom.
+    const kinds = breakableKinds(this.biome);
+    for (let group = 0, groups = 1 + Math.floor(rng() * 3); group < groups; group++) {
+      for (let tries = 0; tries < 10; tries++) {
+        const alongX = rng() < .5, low = rng() < .5, edge = .85;
+        const x = alongX ? r.minX + 1.5 + rng() * (width - 3) : low ? r.minX + edge : r.maxX - edge;
+        const z = alongX ? (low ? r.minZ + edge : r.maxZ - edge) : r.minZ + 1.5 + rng() * (depth - 3);
+        const kind = kinds[Math.floor(rng() * kinds.length)]!;
+        if (!place(kind, x, z, BREAKABLE_RADIUS[kind as BreakableKind], .9 + rng() * .2)) continue;
+        // One or two more beside the first, along the wall.
+        for (let n = 0, more = Math.floor(rng() * 3); n < more; n++) {
+          const step = (n + 1) * (rng() < .5 ? -1 : 1) * 1.0;
+          const next = kinds[Math.floor(rng() * kinds.length)]!;
+          place(next, alongX ? x + step : x + (rng() - .5) * .3, alongX ? z + (rng() - .5) * .3 : z + step, BREAKABLE_RADIUS[next as BreakableKind], .9 + rng() * .2, .25);
+        }
+        break;
+      }
+    }
     return features;
   }
+
+  /** A few breakables along a hallway's walls, never in the middle of its floor. */
+  private corridorBreakables(corridor: Corridor, rng: () => number): Feature[] {
+    const kinds = breakableKinds(this.biome), features: Feature[] = [];
+    for (const [index, rect] of corridor.rects.entries()) {
+      const alongX = rect.maxX - rect.minX > rect.maxZ - rect.minZ, length = alongX ? rect.maxX - rect.minX : rect.maxZ - rect.minZ;
+      if (length < 5 || rng() > .55) continue;
+      const kind = kinds[Math.floor(rng() * kinds.length)]!, radius = BREAKABLE_RADIUS[kind as BreakableKind];
+      const along = 2 + rng() * (length - 4), side = rng() < .5;
+      const x = alongX ? rect.minX + along : side ? rect.minX + radius + .12 : rect.maxX - radius - .12;
+      const z = alongX ? (side ? rect.minZ + radius + .12 : rect.maxZ - radius - .12) : rect.minZ + along;
+      // Keep clear of the turn into another leg of the hallway.
+      const clearOfTurn = corridor.rects.every(other => other === rect || Math.hypot(Math.max(other.minX - x, 0, x - other.maxX), Math.max(other.minZ - z, 0, z - other.maxZ)) > radius + 1.4);
+      if (!clearOfTurn) continue;
+      features.push({ id: `${this.seed}-c${corridor.id}-${index}`, kind, x, z, radius, turn: rng() * Math.PI * 2, scale: .9 + rng() * .2 });
+    }
+    return features;
+  }
+}
+
+/** Footprint of each breakable, in metres. */
+export const BREAKABLE_RADIUS: Record<BreakableKind, number> = { barrel: .46, urn: .4, crate: .52 };
+/** Urns belong to the vault and the palace garden; barrels and crates to everywhere people stored things. */
+function breakableKinds(biome: Biome): BreakableKind[] {
+  return biome === 'vault' ? ['urn', 'urn', 'barrel', 'crate'] : biome === 'garden' ? ['urn', 'urn', 'crate'] : biome === 'forest' ? ['barrel', 'crate', 'urn'] : ['barrel', 'crate', 'crate'];
 }
 
 /** The middle of the side opposite the arrival, `inset` metres inside. */

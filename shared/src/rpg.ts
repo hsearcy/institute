@@ -1,3 +1,4 @@
+import { rpgEliteRoom, rpgEliteMaxHp } from './rpgElite';
 import { rpgLootSpellShape, rpgLootCombatAffix, rpgEffectiveSkills, rpgEquippedLoot, rpgLootAffixes, rpgLootSkillBonus, rpgLootPower, rpgTier } from './rpgLoot';
 
 /** Adventure content only. Never used by tutor selection, mastery, or review. */
@@ -130,7 +131,8 @@ export const RPG_ITEMS: readonly RpgItem[] = [
   { id: 'skybreaker', name: 'Skybreaker', rarity: 'legendary', description: 'All Storm attacks deal 12 more damage to each enemy.', power: 12, spellId: null, school: 'storm', scope: 'school', requiredClears: 5 },
   { id: 'stormsilver', name: 'Stormsilver Runeblade', rarity: 'epic', description: 'All Storm attacks deal 5 more damage to each enemy.', power: 5, spellId: null, school: 'storm', scope: 'school', requiredClears: 2 },
 ];
-export interface RpgCombatEnemy { id: string; hp: number; maxHp: number }
+/** `elite` marks the one stronger enemy of an elite pack; the server decides it. */
+export interface RpgCombatEnemy { id: string; hp: number; maxHp: number; elite?: boolean }
 export interface RpgCombatState { version: 1; encounterIndex: number; casts: number; enemies: RpgCombatEnemy[] }
 export interface RpgCombatResult {
   enemiesBefore: RpgCombatEnemy[]; enemiesAfter: RpgCombatEnemy[];
@@ -157,7 +159,7 @@ export interface RpgState {
   loot?: RpgLootInstance[]; equippedLootId?: string | null; forgeDust?: number;
   dungeonTier?: number; bestTier?: number; goal?: RpgGoal | null;
 }
-export interface RpgReward { xp: number; kills: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; bossDefeated: boolean; spellId: RpgSpellId; combat?: RpgCombatResult; loot?: RpgLootInstance; forgeDust?: number; tier?: number; bossCrazyCoins?: number; bossDimes?: number; spellShape?: RpgSpellShape }
+export interface RpgReward { xp: number; kills: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; bossDefeated: boolean; spellId: RpgSpellId; combat?: RpgCombatResult; loot?: RpgLootInstance; forgeDust?: number; tier?: number; bossCrazyCoins?: number; bossDimes?: number; spellShape?: RpgSpellShape; elite?: boolean }
 export interface RpgResolveResult { state: RpgState; reward: RpgReward; duplicate: boolean }
 /** A chest opened with a solved problem: smaller than a fight's reward, sometimes a relic. */
 export interface RpgChestReward { chestId: string; xp: number; forgeDust: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; loot?: RpgLootInstance; tier: number }
@@ -173,12 +175,13 @@ export interface RpgRelicHunt { regionId: string; itemId: string; encounterIndex
  * Region specialties give the destination meaning without withholding any relic
  * from a player who prefers to keep revisiting one dungeon.
  */
-export function rpgRelicDrop(state: RelicProgress, regionId: string, encounterIndex: number): RpgItem | null {
+export function rpgRelicDrop(state: RelicProgress, regionId: string, encounterIndex: number, elite = false): RpgItem | null {
   const region = RPG_REGIONS.find(entry => entry.id === regionId);
   if (!region || !Number.isInteger(encounterIndex) || encounterIndex < 0 || encounterIndex > 5) return null;
   if (state.totalKills === 0) return RPG_ITEMS.find(item => item.id === 'cinderwand')!;
   const boss = encounterIndex === 5;
-  if (encounterIndex !== 2 && !boss) return null;
+  // An elite pack always leaves a relic, in any room.
+  if (encounterIndex !== 2 && !boss && !elite) return null;
   const pool = RPG_ITEMS.filter(item => item.id !== 'apprentice' && item.requiredClears <= state.expeditionsCompleted
     && (boss || item.rarity !== 'legendary'));
   const missing = pool.filter(item => !state.inventory.includes(item.id));
@@ -207,7 +210,7 @@ export function rpgNextRelicHunt(state: RpgState, regionId: string): RpgRelicHun
   const progress: RelicProgress = { inventory: [...state.inventory], expeditionsCompleted: state.expeditionsCompleted, totalKills: state.totalKills - priorRoomKills };
   let nextDuplicate: RpgRelicHunt | null = null;
   for (let room = firstRoom; room < 6; room++) {
-    const item = rpgRelicDrop(progress, regionId, room);
+    const item = rpgRelicDrop(progress, regionId, room, !!active && rpgEliteRoom(state.expedition!.id, room));
     if (item) {
       const duplicate = progress.inventory.includes(item.id);
       const hunt = { regionId, itemId: item.id, encounterIndex: room, regional: !!region.relicSchool && item.school === region.relicSchool, duplicate };
@@ -296,13 +299,16 @@ export function rpgEncounterCombat(state: Pick<RpgState, 'expedition'> & Partial
   const levelCap = state.level !== undefined && Number.isFinite(state.level)
     ? Math.max(3, Math.min(10, Math.floor(state.level) + 2)) : 10;
   const count = Math.min([6, 7, 8, 8, 9, 10][room], levelCap);
+  // An elite pack: its last enemy is the elite, with more health.
+  const elite = rpgEliteRoom(state.expedition?.id, room) ? count - 1 : -1;
   return { version: 1, encounterIndex: room, casts: 0, enemies: Array.from({ length: count }, (_, index) => {
     const boss = room === 5 && index === 0;
     const baseHp = (boss ? 36 : index % 7 === 0 ? 12 : [6, 6, 8, 8, 10][index % 5]) + difficulty * (boss ? 8 : 2) + Math.floor(room / 2) * (boss ? 0 : 2);
     const tier = rpgTier(state.expedition?.tier);
     // Health and item power grow together; broad loot rolls can beat the next step.
-    const maxHp = Math.ceil(baseHp * (tier + 3) / 4);
-    return { id: `enemy-${index}`, hp: maxHp, maxHp };
+    const normalHp = Math.ceil(baseHp * (tier + 3) / 4);
+    if (index === elite) { const maxHp = rpgEliteMaxHp(normalHp); return { id: `enemy-${index}`, hp: maxHp, maxHp, elite: true }; }
+    return { id: `enemy-${index}`, hp: normalHp, maxHp: normalHp };
   }) };
 }
 

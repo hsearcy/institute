@@ -125,6 +125,16 @@ export class Minimap {
       c.strokeStyle = '#4a3410'; c.lineWidth = 1; c.stroke();
     }
 
+    // The guardian's sanctum: a tower mark, held at the rim when beyond the frame.
+    if (view.sanctum) {
+      const p = at(view.sanctum.x, view.sanctum.z), inset = 10;
+      const x = Math.max(inset, Math.min(w - inset, p.x)), y = Math.max(inset, Math.min(h - inset, p.y));
+      glow(c, x, y, 12, 'rgba(255,190,90,.4)');
+      c.font = '600 15px Georgia, serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.lineWidth = 3; c.strokeStyle = '#2a1a06'; c.strokeText('♜', x, y);
+      c.fillStyle = '#ffd27a'; c.fillText('♜', x, y);
+    }
+
     // The pack: a red mark once it is near enough to hear, held at the rim when beyond it.
     if (view.pack && packShown(view)) {
       const p = at(view.pack.x, view.pack.z), inset = 9;

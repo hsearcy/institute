@@ -28,6 +28,8 @@ async function finishDungeon(profileId: string, prefix: string, bonusRoll = .99)
     await call("POST", "/tutor/attempt", {
       profileId, problemId, skill: "add_within_20", correct: true, solveMs: 3000,
     });
+    // Five packs, then the hero walks into the sanctum and the guardian wakes.
+    if (state.expedition.encounterIndex !== 5 && (state.expedition.packsCleared ?? 0) >= 5) state = await call("POST", "/rpg/guardian", { profileId, expeditionId: state.expedition.id });
     lastRequest = { profileId, problemId, expeditionId: state.expedition.id, encounterIndex: state.expedition.encounterIndex };
     const before = await call("GET", `/state?profileId=${profileId}`);
     const random = spyOn(Math, 'random').mockReturnValue(bonusRoll);

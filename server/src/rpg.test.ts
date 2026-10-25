@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { RPG_SPELLS, RPG_SPELL_IDS, RPG_SKILLS, RPG_ITEMS, rpgLevel, rpgSpellUnlocked, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgEncounterKills, rpgEncounterCombat, rpgSpellCombatStats, rpgNextRelicHunt, rpgNormalizeLoot } from '@institute/shared';
-import { ensureRpgSchema, getRpgState, startRpgExpedition, resolveRpgEncounter, createRpgRoutes, openRpgChest, descendRpgExpedition } from './rpg';
+import { ensureRpgSchema, getRpgState, startRpgExpedition, resolveRpgEncounter, createRpgRoutes, openRpgChest, descendRpgExpedition, wakeRpgGuardian, saveRpgState } from './rpg';
 import { RPG_MAX_DEPTH_STEPS, rpgDepthHealth, rpgDepthXp, rpgRoomForgeDust } from '@institute/shared';
 import { RPG_CHESTS_PER_EXPEDITION, RPG_CHEST_XP } from '@institute/shared';
 
@@ -32,7 +32,13 @@ function resolve(db: Database, profileId: string, problemId: string, extra = {})
   const expedition = getRpgState(db, profileId).expedition!;
   return resolveRpgEncounter(db, { profileId, problemId, expeditionId: expedition.id, encounterIndex: expedition.encounterIndex, ...extra });
 }
-function clearRoom(db: Database, profileId: string, prefix: string) {
+/** Tests walk the classic route: five packs, then into the sanctum to wake the guardian. */
+function wakeIfDue(db: Database, profileId: string) {
+  const expedition = getRpgState(db, profileId).expedition;
+  if (expedition && !expedition.cleared && expedition.encounterIndex !== 5 && (expedition.packsCleared ?? 0) >= 5) wakeRpgGuardian(db, profileId, expedition.id);
+}
+function clearRoom(db: Database, profileId: string, prefix: string, wake = true) {
+  if (wake) wakeIfDue(db, profileId);
   const room = getRpgState(db, profileId).expedition!.encounterIndex;
   for (let cast = 0; cast < 16; cast++) {
     const problem = `${prefix}-cast-${cast}`;
@@ -740,6 +746,46 @@ describe('going deeper after the guardian', () => {
       const room = clearRoom(db, 'sam', 'h2-0');
       expect(room.reward.xp).toBeGreaterThanOrEqual(rpgDepthXp(false, 2));
       expect(room.reward.forgeDust).toBe(rpgRoomForgeDust(1) + 1);
+    } finally { db.close(); }
+  });
+});
+
+describe('endless packs and the sleeping guardian', () => {
+  test('packs never run out, and the guardian wakes only after four of them', () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    try {
+      const expedition = startRpgExpedition(db, 'sam', 'embercrypt').expedition!;
+      for (let pack = 0; pack < 3; pack++) clearRoom(db, 'sam', `early-${pack}`, false);
+      expect(() => wakeRpgGuardian(db, 'sam', expedition.id)).toThrow('still sleeps');
+      // Past the fifth pack the rooms cycle on; the guardian does not come by itself.
+      for (let pack = 3; pack < 9; pack++) {
+        const result = clearRoom(db, 'sam', `late-${pack}`, false);
+        expect(result.reward.bossDefeated).toBe(false);
+        expect(result.state.expedition!.encounterIndex).toBeGreaterThanOrEqual(1);
+        expect(result.state.expedition!.encounterIndex).toBeLessThanOrEqual(4);
+        expect(result.state.expedition!.packsCleared).toBe(pack + 1);
+      }
+      expect(getRpgState(db, 'sam').expedition!.cleared).toBe(false);
+      const woken = wakeRpgGuardian(db, 'sam', expedition.id);
+      expect(woken.expedition!.encounterIndex).toBe(5);
+      expect(woken.expedition!.combat!.encounterIndex).toBe(5);
+      // A retry keeps the woken guardian and its health.
+      expect(wakeRpgGuardian(db, 'sam', expedition.id).expedition!.combat).toEqual(woken.expedition!.combat);
+      const boss = clearRoom(db, 'sam', 'boss');
+      expect(boss.reward.bossDefeated).toBe(true);
+      expect(boss.state.expedition!.cleared).toBe(true);
+      expect(() => wakeRpgGuardian(db, 'sam', expedition.id)).toThrow('moved on');
+    } finally { db.close(); }
+  });
+
+  test('an expedition saved before endless packs counts its rooms as packs', () => {
+    const db = legacyDb(); ensureRpgSchema(db);
+    try {
+      const expedition = startRpgExpedition(db, 'sam', 'embercrypt').expedition!;
+      const state = getRpgState(db, 'sam');
+      state.expedition!.encounterIndex = 4; delete state.expedition!.packsCleared; delete state.expedition!.combat;
+      saveRpgState(db, state);
+      expect(wakeRpgGuardian(db, 'sam', expedition.id).expedition!.encounterIndex).toBe(5);
     } finally { db.close(); }
   });
 });

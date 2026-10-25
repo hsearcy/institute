@@ -89,6 +89,8 @@ const CAST_ROOT = .7, CLEAVE_ROOT = .85;
 const PACK_FORGET_SECONDS = 4;
 /** A pack that follows the hero only grows a new area from exits this near him. */
 const PACK_REGROW_REACH = 24;
+/** How far from the start the guardian's sanctum grows. */
+const GUARDIAN_DISTANCE = 60;
 /** From a sealed door back toward the hall it is opened from (its side points into the treasury). */
 const DOOR_FRONT: Record<'north' | 'south' | 'east' | 'west', { x: number; z: number }> = { north: { x: 0, z: 1 }, south: { x: 0, z: -1 }, east: { x: -1, z: 0 }, west: { x: 1, z: 0 } };
 const ELEMENT_FLASH = { fire: new THREE.Color(1, .45, .12), electric: new THREE.Color(.55, .75, 1.3), frost: new THREE.Color(.55, 1, 1.3), other: new THREE.Color(1, .95, .85) };
@@ -130,6 +132,10 @@ export class DungeonWorld {
   private outdoorGround?: THREE.Mesh;
   /** The area that holds the current pack, and when the player last saw it there. */
   private packArea?: Area;
+  /** The expedition this level belongs to. */
+  private levelKey?: string;
+  /** The hero stepped into the guardian's sanctum before the guardian's fight. */
+  onSanctumEnter?: () => void;
   private packSeenAt = -Infinity;
   private heroArea?: Area;
   private lastStreamAt = -9;
@@ -572,6 +578,7 @@ export class DungeonWorld {
   private prepareNextLevel(): void {
     this.discardNextLevel();
     const level = new Level(Math.floor(Math.random() * 2 ** 30), outdoorKind(this.regionId) ?? 'vault');
+    level.guardianDistance = GUARDIAN_DISTANCE;
     level.expandAround(level.start.x, level.start.z, 30); level.takeChanges();
     this.nextLevel = { level, regionId: this.regionId, chunks: new Map() };
   }
@@ -792,6 +799,9 @@ export class DungeonWorld {
     return candidates.find(candidate => candidate.within && (!only || candidate.key === only));
   }
 
+  /** The hero stands in the guardian's sanctum. */
+  get inSanctum(): boolean { return this.level?.areaAt(this.hero.position.x, this.hero.position.z)?.kind === 'sanctum'; }
+
   /** The hero stands at the combat mark with the horde in formation. */
   get combatReady(): boolean { return this.engageReady || !this.enemies.some(enemy => !enemy.dead); }
 
@@ -802,7 +812,7 @@ export class DungeonWorld {
     const pack = living.length ? { x: living.reduce((sum, enemy) => sum + enemy.at.x, 0) / living.length, z: living.reduce((sum, enemy) => sum + enemy.at.z, 0) / living.length } : undefined;
     return { level, areas: level.areas, corridors: level.corridors, openExits: level.openExits, chests: level.chests,
       hero: { x: this.hero.position.x, z: this.hero.position.z }, heading: this.heroVisual.rotation.y, pack, packArea: pack ? this.packArea?.id : undefined,
-      packOnScreen: this.elapsed - this.packSeenAt < 1, guardian: this.encounter === 5, engaged: this.engaged, searching: this.engageWaiters.length > 0 && !this.paused };
+      packOnScreen: this.elapsed - this.packSeenAt < 1, guardian: this.encounter === 5, sanctum: level.sanctum ? rectCenter(level.sanctum.rect) : undefined, engaged: this.engaged, searching: this.engageWaiters.length > 0 && !this.paused };
   }
 
   /** Starts combat with the current horde now, as when the hero comes in sight of it. The hero keeps moving. */
@@ -1107,13 +1117,18 @@ export class DungeonWorld {
     }
   }
 
-  setEncounter(index: number, regionId?: string, enemyCount?: number, health?: readonly RpgCombatEnemy[]): void {
-    const was = this.encounter, previousRegion = this.regionId;
+  /**
+   * `levelKey` names the expedition: a new one starts a fresh level. Packs
+   * never run out, so a lower encounter number no longer means a new level.
+   */
+  setEncounter(index: number, regionId?: string, enemyCount?: number, health?: readonly RpgCombatEnemy[], levelKey?: string): void {
+    const was = this.encounter, previousRegion = this.regionId, previousKey = this.levelKey;
+    if (levelKey !== undefined) this.levelKey = levelKey;
     this.encounter = Math.max(0, Math.min(5, index));
     if (regionId) this.regionId = regionId;
     this.releaseEnemies();
-    // A new expedition, a new region or a return to an earlier pack starts a fresh level.
-    const fresh = !this.level || previousRegion !== this.regionId || this.encounter < was;
+    // A new expedition or a new region starts a fresh level.
+    const fresh = !this.level || previousRegion !== this.regionId || (levelKey !== undefined ? levelKey !== previousKey : this.encounter < was);
     if (fresh) this.startLevel();
     else if (was !== this.encounter) {
       // The next pack waits somewhere ahead; the hero stays where the last fight ended.
@@ -1183,6 +1198,7 @@ export class DungeonWorld {
     if (!next) this.discardNextLevel();
     this.nextLevel = undefined;
     this.level = next?.level ?? new Level(Math.floor(Math.random() * 2 ** 30), biome);
+    this.level.guardianDistance = GUARDIAN_DISTANCE;
     const start = this.level.start;
     this.hero.position.set(start.x, 0, start.z); this.cameraTarget.copy(this.hero.position);
     this.engaged = this.engageReady = false; this.exploreRoute.length = 0;
@@ -1206,6 +1222,8 @@ export class DungeonWorld {
     if (area && area !== this.heroArea) {
       this.heroArea = area;
       if (!area.visited) { area.visited = true; this.onAreaEnter?.(area.name); }
+      // The game wakes the guardian here, once enough packs have fallen.
+      if (area.kind === 'sanctum' && this.encounter !== 5) this.onSanctumEnter?.();
     }
     if (this.elapsed - this.lastPackCheckAt > .5) {
       this.lastPackCheckAt = this.elapsed;
@@ -1290,7 +1308,7 @@ export class DungeonWorld {
         area = level.areas.find(candidate => candidate.kind === 'sanctum') ?? level.growNearest(hero.x, hero.z, 'sanctum');
       }
       area ??= this.nearestOpenArea() ?? level.growNearest(hero.x, hero.z, 'hall')
-        ?? level.areas.filter(candidate => candidate.kind !== 'entry' && candidate.kind !== 'treasury').sort((a, b) => b.rect.maxX - b.rect.minX - (a.rect.maxX - a.rect.minX))[0] ?? level.areas[0]!;
+        ?? level.areas.filter(candidate => candidate.kind !== 'entry' && candidate.kind !== 'treasury' && candidate.kind !== 'sanctum').sort((a, b) => b.rect.maxX - b.rect.minX - (a.rect.maxX - a.rect.minX))[0] ?? level.areas[0]!;
       this.packArea = area; this.streamLevel(Infinity);
     }
     const formation = packPositions(level, area, this.enemies.length), center = rectCenter(area.rect);

@@ -2,7 +2,8 @@ import {chooseNextAdventure, renderNextAdventure, tierSelect, tierRewards, type 
 import { HeroAssetLoadError } from './world/tripoHeroRuntime';
 import { RPG_BOONS, type RpgShrineResult, type RpgDoorResult } from '@institute/shared';
 import type { RpgTraderWareId, RpgTraderResult, Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgReward, RpgChestResult, RpgBreakResult, RpgItem, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
-import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, rpgEncounterCombat, rpgNextRelicHunt, rpgSalvageValue, rpgAnswerPower, rpgDepth, ProblemSchema } from '@institute/shared';
+import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, rpgEncounterCombat, rpgNextRelicHunt, rpgSalvageValue, rpgAnswerPower, rpgDepth, rpgGuardianAwake, rpgPacksCleared, RPG_GUARDIAN_PACKS, RPG_GUARDIAN_ENCOUNTER, ProblemSchema } from '@institute/shared';
+import { renderGuardianTrack } from './guardianTrack';
 import { fetchState, fetchMastery, redeemCrazyCoin, redeemDime, type Demo } from './tutor';
 import { speak } from './voice';
 import * as dungeonSound from './sound';
@@ -146,6 +147,7 @@ export class RpgGame {
     this.world.onLootPickup = pickup => { if (pickup.kind === 'relic' && !this.muted) dungeonSound.loot(); };
     this.world.onSound = sound => { if (!this.muted) dungeonSound.world(sound); };
     this.world.onAreaEnter = name => { this.areaName = name; this.renderAreaLabel(); };
+    this.world.onSanctumEnter = () => { void this.enterSanctum(); };
     this.world.onBreak = id => { void this.claimBreak(id); };
     this.root.id = 'rpg-ui';
     this.root.innerHTML = `
@@ -301,10 +303,26 @@ export class RpgGame {
         return branches;
       }).catch(() => null);
   }
+  /** In the sanctum: wake the guardian when enough packs have fallen, or say how many remain. */
+  private async enterSanctum(): Promise<void> {
+    const expedition = this.state?.expedition;
+    if (!expedition || expedition.cleared || expedition.encounterIndex === RPG_GUARDIAN_ENCOUNTER || !this.seeking || this.disposed) return;
+    const region = RPG_REGIONS.find(r => r.id === expedition.regionId) ?? RPG_REGIONS[0];
+    if (!rpgGuardianAwake(expedition)) {
+      const left = RPG_GUARDIAN_PACKS - rpgPacksCleared(expedition);
+      this.toast(`${region.bossName} sleeps. Defeat ${left} more pack${left === 1 ? '' : 's'} to wake it.`, 3600, `${left} more pack${left === 1 ? '' : 's'}`);
+      return;
+    }
+    try { this.state = await mutateRpg('guardian', { expeditionId: expedition.id }); } catch { return; }
+    if (this.disposed) return;
+    if (this.session?.expeditionId === expedition.id) { this.session.encounterIndex = this.state.expedition!.encounterIndex; this.saveSession(); }
+    this.renderState(); this.setEncounter();
+    this.toast(`${region.bossName} wakes!`, 3000, 'The guardian wakes');
+  }
   private setEncounter(index = this.state?.expedition?.encounterIndex): void {
     if (index === undefined || !this.state?.expedition) return;
     const combat = rpgEncounterCombat(this.state, index);
-    this.world.setEncounter(index, this.state.expedition.regionId, combat.enemies.length, combat.enemies);
+    this.world.setEncounter(index, this.state.expedition.regionId, combat.enemies.length, combat.enemies, this.state.expedition.id);
     dungeonSound.setAmbience(RPG_REGIONS.find(region => region.id === this.state!.expedition!.regionId)?.environment ?? 'vault');
   }
   /** The area the hero stands in, and how far the expedition has come. */
@@ -313,7 +331,7 @@ export class RpgGame {
     const region = RPG_REGIONS.find(r => r.id === expedition?.regionId) ?? RPG_REGIONS[0];
     const depth = rpgDepth(expedition?.depth);
     this.el('rpg-room').textContent = expedition && !expedition.cleared
-      ? `${depth > 1 ? `Depth ${depth} · ` : ''}${this.areaName || region.subtitle} · ${expedition.encounterIndex + 1} / ${expedition.encountersTotal}` : region.subtitle;
+      ? `${depth > 1 ? `Depth ${depth} · ` : ''}${this.areaName || region.subtitle}` : region.subtitle;
   }
   private renderState(): void {
     const s = this.state; if (!s || this.disposed) return;
@@ -321,7 +339,7 @@ export class RpgGame {
     const region = RPG_REGIONS.find(r => r.id === expedition?.regionId) ?? RPG_REGIONS[0];
     this.el('rpg-region').textContent = region.name;
     this.renderAreaLabel();
-    this.el('rpg-route').innerHTML = Array.from({ length: 6 }, (_, i) => `<span class="${expedition && (expedition.cleared || i < expedition.encounterIndex) ? 'complete' : i === expedition?.encounterIndex ? 'current' : ''}" title="${i === 5 ? esc(region.bossName) : `Pack ${i + 1}`}">${i === 5 ? '♜' : '◆'}</span>`).join('');
+    this.el('rpg-route').innerHTML = renderGuardianTrack(expedition, region.bossName);
     this.el('rpg-level').textContent = String(s.level);
     const xpFill = this.el('rpg-xp-fill');
     const previousWidth = xpFill.style.width || '0%';
@@ -449,6 +467,8 @@ export class RpgGame {
       this.el('rpg-explore').hidden = false;
       // The menus stay usable while the hero searches; the answer clock waits for the problem.
       this.seeking = true; this.busy = false;
+      // A search that starts in the sanctum (after a fight there) still wakes the guardian.
+      if (this.world.inSanctum) void this.enterSanctum();
       const reached = await this.world.waitForEngage();
       this.seeking = false;
       if (reached.lock && this.session === session) { session.lock = reached.lock; if (reached.lock.kind === 'chest') session.chestStory = chestLockStory(p, this.state!); this.saveSession(); }
@@ -583,7 +603,7 @@ export class RpgGame {
           // A lost response can leave the fetched save ahead of this visual
           // cast. Replay its bounded, exact before-state, not the next room.
           const before = result.reward.combat.enemiesBefore;
-          this.world.setEncounter(session.encounterIndex, this.state!.expedition!.regionId, before.length, before);
+          this.world.setEncounter(session.encounterIndex, this.state!.expedition!.regionId, before.length, before, session.expeditionId);
         }
         this.root.classList.remove('rpg-combat');
         if (!this.muted) dungeonSound.cast(result.reward.spellId);
@@ -606,8 +626,9 @@ export class RpgGame {
         this.world.celebrate();
         this.session = null; this.saveSession(); this.busy = false; this.showVictory(result.reward); return;
       }
-      const sameRoom = this.state.expedition!.encounterIndex === session.encounterIndex;
-      if (this.state.expedition!.id !== session.expeditionId || (!sameRoom && this.state.expedition!.encounterIndex !== session.encounterIndex + 1)) {
+      // Packs never run out: any next pack of the same expedition goes on here.
+      const sameRoom = this.state.expedition!.encounterIndex === session.encounterIndex && !result.reward.combat?.encounterCleared;
+      if (this.state.expedition!.id !== session.expeditionId) {
         this.session = null; this.saveSession(); this.busy = false; this.showCamp(); return;
       }
       if (sameRoom) this.world.setCombatState(rpgEncounterCombat(this.state).enemies);

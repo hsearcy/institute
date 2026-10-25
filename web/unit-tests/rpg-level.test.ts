@@ -117,3 +117,24 @@ test('a guardian that follows the hero grows its sanctum near him and never seal
     assert.ok(level.openExits.length > 0 || level.areas.some(area => area.kind === 'hall' && area.exits.some(exit => exit.state === 'open')) || level.areas.length > 20, `${biome}/${seed}: the level has no way on`);
   }
 }, 30_000);
+
+test('with a guardian distance, the sanctum grows once, that far from the start, and halls grow everywhere else', () => {
+  for (const biome of BIOMES) for (const seed of [2, 17]) {
+    const level = new Level(seed, biome); level.guardianDistance = 60;
+    let at = level.start;
+    level.expandAround(at.x, at.z);
+    assert.equal(level.sanctum, undefined, `${biome}/${seed}: a sanctum next to the start`);
+    for (let step = 0; step < 40 && !level.sanctum; step++) {
+      const exits = level.openExits; if (!exits.length) break;
+      // Head away from the start.
+      const target = exits.sort((a, b) => Math.hypot(b.x - level.start.x, b.z - level.start.z) - Math.hypot(a.x - level.start.x, a.z - level.start.z))[0]!;
+      const route = level.path(at, target); if (route.length) at = route[route.length - 1]!;
+      level.expandAround(at.x, at.z);
+    }
+    assert.ok(level.sanctum, `${biome}/${seed}: no sanctum grew`);
+    const center = rectCenter(level.sanctum!.rect);
+    assert.ok(Math.hypot(center.x - level.start.x, center.z - level.start.z) >= 60, `${biome}/${seed}: the sanctum is too near`);
+    assert.equal(level.areas.filter(area => area.kind === 'sanctum').length, 1);
+    assert.ok(level.path(level.start, center).length, `${biome}/${seed}: the sanctum cannot be reached`);
+  }
+}, 60_000);

@@ -96,6 +96,15 @@ export class Level {
     this.addArea('entry', { minX: -width / 2, maxX: width / 2, minZ: -depth / 2, maxZ: depth / 2 }, 'south');
   }
 
+  /**
+   * When set, the first area grown at least this far from the start is the
+   * guardian's sanctum: a fixed place to find, with packs on every way there.
+   */
+  guardianDistance?: number;
+
+  /** The guardian's sanctum, once grown. */
+  get sanctum(): Area | undefined { return this.areas.find(area => area.kind === 'sanctum'); }
+
   /** Where a new hero stands: just inside the south side of the entry. */
   get start(): { x: number; z: number } { const r = this.areas[0]!.rect; return { x: (r.minX + r.maxX) / 2, z: r.maxZ - 2.5 }; }
 
@@ -123,7 +132,12 @@ export class Level {
     for (const exit of this.exits) {
       if (exit.state !== 'open') continue;
       const door = this.doorCenter(exit);
-      if (Math.hypot(door.x - x, door.z - z) <= reach) { this.expand(exit); grew = true; }
+      if (Math.hypot(door.x - x, door.z - z) > reach) continue;
+      const start = this.start;
+      const sanctum = this.guardianDistance !== undefined && !this.sanctum && Math.hypot(door.x - start.x, door.z - start.z) >= this.guardianDistance;
+      // A sanctum that does not fit here leaves the exit for an ordinary hall.
+      if (!sanctum || !this.expand(exit, 'sanctum')) this.expand(exit);
+      grew = true;
     }
     return grew;
   }

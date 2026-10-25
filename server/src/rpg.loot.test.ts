@@ -1,7 +1,7 @@
 import { Database } from 'bun:sqlite';
 import { expect, spyOn, test } from 'bun:test';
 import { rpgDungeonForgeDust } from '@institute/shared';
-import { createRpgRoutes, ensureRpgSchema, getRpgState, resolveRpgEncounter, saveRpgState, startRpgExpedition } from './rpg';
+import { createRpgRoutes, ensureRpgSchema, getRpgState, resolveRpgEncounter, saveRpgState, startRpgExpedition, wakeRpgGuardian } from './rpg';
 
 function fixture() {
   const db = new Database(':memory:');
@@ -10,6 +10,9 @@ function fixture() {
   return db;
 }
 function finishRoom(db: Database, prefix: string) {
+  // Five packs, then the sanctum wakes the guardian.
+  const current = getRpgState(db, 'sam').expedition!;
+  if (!current.cleared && current.encounterIndex !== 5 && (current.packsCleared ?? 0) >= 5) wakeRpgGuardian(db, 'sam', current.id);
   for (let i = 0; i < 30; i++) {
     const expedition = getRpgState(db, 'sam').expedition!;
     const request = { profileId: 'sam', problemId: `${prefix}-${i}`, expeditionId: expedition.id, encounterIndex: expedition.encounterIndex };

@@ -2,7 +2,7 @@ import type { Database } from 'bun:sqlite';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
-  rpgRollBossBonus, rpgLootSpellShape, RPG_CHESTS_PER_EXPEDITION, RPG_CHEST_XP, rpgEquippedLoot, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellAvailable, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER, rpgDepth, rpgDepthSteps, rpgDepthXp, rpgChestStory, RPG_FURY_DAMAGE,
+  rpgRollBossBonus, rpgLootSpellShape, RPG_CHESTS_PER_EXPEDITION, RPG_CHEST_XP, rpgEquippedLoot, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellAvailable, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER, rpgDepth, rpgDepthSteps, rpgDepthXp, rpgChestStory, RPG_FURY_DAMAGE, RPG_GUARDIAN_ENCOUNTER, rpgGuardianAwake, rpgNextPackIndex, rpgPacksCleared,
   rpgCreateEliteLoot, RPG_BREAKABLE_DUST, RPG_BREAKABLE_DUST_CHANCE, RPG_BREAKABLE_DUST_PER_EXPEDITION, RPG_BREAKABLE_DUST_PER_DAY, RPG_BREAKABLES_PER_EXPEDITION,
   type RpgBreakResult, type RpgBreakReward, type RpgState, type RpgReward, type RpgResolveResult, type RpgChestResult, type RpgChestReward,
 } from '@institute/shared';
@@ -134,6 +134,27 @@ export function descendRpgExpedition(db: Database, profileId: string, expedition
   })();
 }
 
+/**
+ * The hero walked into the sanctum: after enough packs the guardian wakes and
+ * becomes the current encounter. Any half-fought pack is left behind. A retry
+ * returns the woken state.
+ */
+export function wakeRpgGuardian(db: Database, profileId: string, expeditionId: string): RpgState {
+  return db.transaction(() => {
+    const state = getRpgState(db, profileId);
+    const expedition = state.expedition;
+    if (!expedition || expedition.cleared || expedition.id !== expeditionId) throw new RpgError('Your adventure has moved on. Reload its saved checkpoint.', 409);
+    if (expedition.encounterIndex === RPG_GUARDIAN_ENCOUNTER) return state;
+    if (!rpgGuardianAwake(expedition)) throw new RpgError('The guardian still sleeps. Defeat more monsters first.', 409);
+    expedition.packsCleared = rpgPacksCleared(expedition);
+    expedition.encounterIndex = RPG_GUARDIAN_ENCOUNTER;
+    delete expedition.combat;
+    expedition.combat = rpgEncounterCombat(state);
+    saveRpgState(db, state);
+    return state;
+  })();
+}
+
 const ResolveSchema = z.object({
   profileId: z.string().min(1).max(100), problemId: z.string().min(1).max(200),
   expeditionId: z.string().min(1).max(100), encounterIndex: z.number().int().min(0).max(5),
@@ -218,7 +239,12 @@ export function resolveRpgEncounter(db: Database, input: z.infer<typeof ResolveS
     const levelsGained = state.level - oldLevel;
     state.skillPoints += levelsGained;
     if (bossDefeated) { expedition.cleared = true; state.expeditionsCompleted++; state.bestTier = Math.max(state.bestTier ?? 0, tier); }
-    else if (cast.result.encounterCleared) { expedition.encounterIndex++; expedition.combat = rpgEncounterCombat(state); }
+    else if (cast.result.encounterCleared) {
+      // Packs never run out: the next one waits ahead, and the guardian wakes only when the hero comes to it.
+      expedition.packsCleared = rpgPacksCleared(expedition) + 1;
+      expedition.encounterIndex = rpgNextPackIndex(expedition.encounterIndex);
+      expedition.combat = rpgEncounterCombat(state);
+    }
     const shape = rpgLootSpellShape(rpgEquippedLoot(state));
     const spellShape = shape?.spellId === spellId ? shape.id : undefined;
     const { bossCrazyCoins, bossDimes } = bossDefeated ? rpgRollBossBonus(Math.random, tier) : { bossCrazyCoins: 0, bossDimes: 0 };
@@ -359,6 +385,10 @@ export function createRpgRoutes(db: Database, applyMiss?: (profileId: string) =>
   app.post('/descend', async (c) => {
     const { profileId, expeditionId } = ProfileSchema.extend({ expeditionId: z.string().min(1).max(100) }).parse(await c.req.json());
     return c.json(descendRpgExpedition(db, profileId, expeditionId));
+  });
+  app.post('/guardian', async (c) => {
+    const { profileId, expeditionId } = ProfileSchema.extend({ expeditionId: z.string().min(1).max(100) }).parse(await c.req.json());
+    return c.json(wakeRpgGuardian(db, profileId, expeditionId));
   });
   app.post('/start', async (c) => {
     const { profileId, regionId, tier } = ProfileSchema.extend({ regionId: z.string().optional(), tier: z.number().int().min(1).max(RPG_MAX_DUNGEON_TIER).optional() }).parse(await c.req.json());

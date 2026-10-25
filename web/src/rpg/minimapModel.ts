@@ -22,6 +22,8 @@ export type ScoutView = Readonly<{
   packArea?: number;
   /** The pack was on screen within the last second. */
   packOnScreen: boolean;
+  /** The guardian's sanctum, once grown: always marked, at the rim when far. */
+  sanctum?: Point;
   /** The pack is the guardian's: the map always marks it, at the rim when far. */
   guardian?: boolean;
   engaged: boolean;

@@ -144,6 +144,8 @@ export interface RpgCombatResult {
 /** `depth` counts the guardians felled in a row in this region (1 = first descent);
  * `previousId` names the cleared expedition this depth went deeper from. */
 export interface RpgExpedition { id: string; regionId: string; encounterIndex: number; encountersTotal: number; cleared: boolean; startedAt: number; combat?: RpgCombatState; tier?: number; depth?: number; previousId?: string; boon?: RpgBoon;
+  /** Packs beaten this expedition. Packs never run out; enough of them wake the guardian. */
+  packsCleared?: number;
   /** Chests opened this expedition (paying or empty). */
   chestsOpened?: number }
 
@@ -158,6 +160,16 @@ export function rpgDepthSteps(depth?: number): number { return Math.min(RPG_MAX_
 /** Enemy health grows 10% per step; at most +30%. */
 export function rpgDepthHealth(hp: number, depth?: number): number { return Math.ceil(hp * (10 + rpgDepthSteps(depth)) / 10); }
 /** Experience for a cleared pack or guardian at a depth. */
+/** Packs to beat before the guardian wakes in its sanctum. */
+export const RPG_GUARDIAN_PACKS = 4;
+/** The guardian's encounter; packs use 0–4 and, after the first five, cycle 1–4 for as long as the hero explores. */
+export const RPG_GUARDIAN_ENCOUNTER = 5;
+export function rpgPacksCleared(expedition: Pick<RpgExpedition, 'packsCleared' | 'encounterIndex'>): number {
+  // Expeditions from before endless packs counted only by their room.
+  return expedition.packsCleared ?? Math.min(expedition.encounterIndex, RPG_GUARDIAN_ENCOUNTER);
+}
+export function rpgNextPackIndex(index: number): number { return index >= 4 ? 1 + (index % 4) : index + 1; }
+export function rpgGuardianAwake(expedition: Pick<RpgExpedition, 'packsCleared' | 'encounterIndex'>): boolean { return rpgPacksCleared(expedition) >= RPG_GUARDIAN_PACKS; }
 export function rpgDepthXp(boss: boolean, depth?: number): number { return boss ? 90 + 10 * rpgDepthSteps(depth) : 32 + 4 * rpgDepthSteps(depth); }
 export type RpgSpellShape = 'twin-orb' | 'meteor-shower' | 'split-lance'
   | 'aftershock' | 'rift-slash' | 'blazing-wake' | 'volcanic-ground' | 'crystal-bloom'

@@ -26,6 +26,8 @@ import { buildVoyage } from './masteryMapModel';
 import { renderVoyageDetail, renderVoyagePanel } from './masteryMapView';
 import type { MasteryMapScene } from './masteryMap';
 import { renderEquipmentView } from './equipmentView';
+import { GearSheet } from './gearSheet';
+import './gear-sheet.css';
 import './equipment-v3.css';
 import './landscape-v3.css';
 import './desktop-dock-v4.css';
@@ -98,6 +100,11 @@ export class RpgGame {
   private panel = '';
   private panelResolve: (() => void) | null = null;
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
+  private gearSheet = new GearSheet({
+    state: () => this.state, apply: state => { this.state = state; this.renderState(); },
+    rerender: () => { if (this.panel === 'inventory') this.showInventory(); },
+    toast: text => this.toast(text), busy: () => this.busy, root: () => this.root,
+  });
   private demoTopics = new Set<string>();
   private retryAction: (() => Promise<void>) | null = null;
   private abort = new AbortController();
@@ -990,7 +997,8 @@ export class RpgGame {
   }
   private showInventory(): void {
     if (!this.state) return;
-    this.showDialog('inventory', renderEquipmentView(this.state, '', this.playing), true);
+    this.showDialog('inventory', renderEquipmentView(this.state, this.gearSheet.html(this.state), this.playing), true, this.panel === 'inventory');
+    this.gearSheet.mounted();
   }
   private showMap(): void {
     if (!this.state) return; const s = this.state;
@@ -1308,6 +1316,7 @@ export class RpgGame {
   private showDialog(name: string, html: string, wide = false, preserveScroll = false): void {
     const content = this.el('rpg-dialog-content');
     const scrollTop = preserveScroll && this.panel === name ? content.scrollTop : 0;
+    this.gearSheet.disposeViewer();
     this.disposeMasteryMap();
     if (!this.panel) { this.stopClock(); this.saveSession(); }
     this.panel = name; this.root.dataset.panel = name; this.world.setPaused(true);
@@ -1321,6 +1330,7 @@ export class RpgGame {
   private closeDialog(force = false): void {
     if (!force && ['demo','walkthrough','loading'].includes(this.panel)) return;
     if (!force && (!this.playing || this.state?.expedition?.cleared)) { this.showCamp(); return; }
+    this.gearSheet.disposeViewer();
     this.panel = ''; this.root.dataset.panel = ''; this.el('rpg-overlay').hidden = true; this.world.setPaused(false); this.startClock();
     if (this.playing && !this.busy) this.el<HTMLInputElement>('rpg-answer').focus({ preventScroll: true });
   }
@@ -1413,6 +1423,7 @@ export class RpgGame {
     const button = (event.target as Element).closest<HTMLButtonElement>('button');
     if (!button || button.disabled) return;
     dungeonSound.ui(button.dataset.spell ? 'select' : button.closest('nav') ? 'open' : 'click');
+    if (this.panel === 'inventory' && button.closest('.rpg-gear-sheet') && this.gearSheet.handle(button)) return;
     if (button.dataset.digit !== undefined) {
       if (this.busy || this.panel) return;
       const digit = button.dataset.digit;
@@ -1561,7 +1572,7 @@ export class RpgGame {
     if (event.key === 'Enter') { event.preventDefault(); void this.submit(); }
   };
   dispose(): void {
-    this.tutorialNarrator.dispose(); this.tutorialOverlay?.destroy(); this.tutorialHost?.remove(); this.boonHud.dispose();
+    this.gearSheet.disposeViewer(); this.tutorialNarrator.dispose(); this.tutorialOverlay?.destroy(); this.tutorialHost?.remove(); this.boonHud.dispose();
     this.stopClock(); this.saveSession(); this.disposed = true; this.abort.abort(); this.panelResolve?.();
     this.combatLayoutObserver.disconnect();
     if (this.toastTimer) clearTimeout(this.toastTimer);

@@ -54,3 +54,10 @@ export function skillArt(id: string, spellId: string): string {
   if (index < 0) return spellArt(spellId);
   return `<span class="rpg-spell-art rpg-painted-art rpg-skill-art ${id === 'ember_power' ? 'rpg-wildfire-art' : ''}" aria-hidden="true" style="--art-x:${(index % 5)*25}%;--art-y:${Math.floor(index/5)*100/3}%"></span>`;
 }
+
+/** Armour and jewellery icons, rendered in Blender from each base's exact GLB. */
+export const gearIconUrl = (baseId: string) => `/assets/rpg/gear/${encodeURIComponent(baseId)}.webp`;
+export const gearModelUrl = (baseId: string) => `/assets/rpg/gear/${encodeURIComponent(baseId)}.glb`;
+export function gearArt(baseId: string): string {
+  return `<span class="rpg-gear-art" aria-hidden="true" style="background-image:url('${gearIconUrl(baseId)}')"></span>`;
+}

@@ -1,32 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { boundsIntersectCrossingChasm, getRoomLayout, type RoomBounds } from './roomLayout';
-import { roomHasTomb } from './gateComposition';
 
 export type RuinKind = 'fallen-column' | 'column-stump' | 'arch-remnant';
-
-/** The same conservative clearances used by scenery and optional prop swaps. */
-export function isRuinFootprintClear(room: number, bounds: RoomBounds): boolean {
-  if (boundsIntersectCrossingChasm(room, bounds)) return false;
-  const layout = getRoomLayout(room), offset = layout.sideWallX - 12.2;
-  const overlaps = (other: RoomBounds, gap = .12) => bounds.maxX > other.minX - gap && bounds.minX < other.maxX + gap && bounds.maxZ > other.minZ - gap && bounds.minZ < other.maxZ + gap;
-  if (overlaps(layout.walkable) || overlaps(layout.heroPath, .3)) return false;
-  if (layout.landmarks.some(mark => Math.hypot(Math.max(bounds.minX - mark.x, 0, mark.x - bounds.maxX), Math.max(bounds.minZ - mark.z, 0, mark.z - bounds.maxZ)) < mark.radius + .22)) return false;
-  for (const side of [-1, 1]) {
-    for (let tomb = 0; tomb < 3; tomb++) {
-      if (!roomHasTomb(room, side, tomb)) continue;
-      const xs = [side * (8.6 + offset), side * (9.7 + offset)], z = -7 + tomb * 6.3;
-      if (overlaps({ minX: Math.min(...xs) - 1.05, maxX: Math.max(...xs) + 1.05, minZ: z - 1.45, maxZ: z + 1.45 })) return false;
-    }
-    const x = side * (layout.walkable.maxX + 1.1), z = side < 0 ? -3.8 : 3.2;
-    if (overlaps({ minX: x - .8, maxX: x + .8, minZ: z - .8, maxZ: z + .8 })) return false;
-  }
-  if ([0, 2, 5].includes(room)) {
-    const x = layout.walkable.maxX + 1.1;
-    if (overlaps({ minX: x - .95, maxX: x + .95, minZ: -6.05, maxZ: -4.15 })) return false;
-  }
-  return true;
-}
 
 const randomFor = (seed: number) => {
   let state = seed | 0;
@@ -151,9 +126,4 @@ export function ruinGeometry(kind: RuinKind, seed = 1): THREE.BufferGeometry {
   geometry.translate(-(bounds.min.x + bounds.max.x) / 2, -bounds.min.y, -(bounds.min.z + bounds.max.z) / 2);
   geometry.computeBoundingBox(); geometry.computeBoundingSphere(); geometry.userData.ruinKind = kind;
   return geometry;
-}
-
-/** Caller owns geometry; material/maps are borrowed and never cloned/disposed. */
-export function createArchitecturalRemnant(kind: RuinKind, material: THREE.Material, seed = 1): THREE.Mesh {
-  const mesh = new THREE.Mesh(ruinGeometry(kind, seed), material); mesh.castShadow = mesh.receiveShadow = true; return mesh;
 }

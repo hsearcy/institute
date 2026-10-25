@@ -4,19 +4,17 @@ import { playFrostSpellBonus, createDiamondDrill } from './world/frostSpellBonus
 import { playStormSpellBonus, createOrbitLink } from './world/stormSpellBonuses';
 import type { SpellBonusContext } from './world/spellBonusTypes';
 import * as THREE from 'three';
-import { createOutdoorWorld, disposeOutdoorWorld, outdoorKind, outdoorLight } from './world/outdoorWorld';
+import { createOutdoorKit, outdoorKind, outdoorLight, type OutdoorKit } from './world/outdoorWorld';
 import { RPG_SPELL_SHAPES, RPG_SPELLS, type RpgAppearanceId, type RpgCombatEnemy, type RpgCombatResult } from '@institute/shared';
-import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { dungeonCameraHalfHeight, dungeonCameraVerticalOffset, dungeonPortraitOffset, dungeonCombatFrame } from './world/viewport';
-import { crystalClusterGeometry, crystalClusterMaterial } from './world/crystals';
+import { crystalClusterMaterial } from './world/crystals';
 import { iceShardGeometry, iceShardMaterial } from './world/ice';
 import { createDirectedFlight, directionalFlightDuration, sampleGroundBranch, targetHeading } from './world/directional';
 import { createIceLanceWake, arcLanceGeometry, arcLanceMaterial } from './world/directionalVisuals';
@@ -34,20 +32,18 @@ import { FloorLoot, type LootPickup } from './world/floorLoot';
 import { HordeDirector } from './world/hordeDirector';
 import { HeroWard } from './world/heroWard';
 import { DamageNumbers } from './world/damageNumbers';
-import { ENGAGE_RADIUS, heroClickRoute, heroWalkable, roomEntry, slideStep, stagedEnemyPoint } from './world/exploration';
+import { ENGAGE_RADIUS, slideStep } from './world/exploration';
+import { Level, rectCenter, type Area, type Rect } from './world/levelGen';
+import { packPositions } from './world/formation';
+import { buildChunk, disposeChunk, type BuiltChunk, type VaultMaterials } from './world/levelChunks';
+import { updateHeroCutout } from './world/heroCutout';
 import { TRIPO_HERO_MODEL, createTripoHeroInstance, tintTripoHero, measureTripoWalkCycle, HeroAssetLoadError } from './world/tripoHeroRuntime';
 import { createCleaveStrike, cleaveEdgeMaterial, steelBladeWakeMaterial, CLEAVE_RELEASE, CLEAVE_SPEED } from './world/cleave';
 import { createChainSequence, chainLightningGeometry, chainLightningMaterial, createChainCharge, CHAIN_BOLT_LIFETIME } from './world/chain';
-import { RoomCutaway } from './world/RoomCutaway';
 import { ITEM_MODELS } from './itemModels';
 import { createHitReaction, sampleHitReaction, type HitReaction, type CombatHit } from './world/hitReactions';
 import { advanceHeroTravel, setPlanarHeroHeading, type HeroWalkCycle } from './world/heroLocomotion';
 import { cloneErosionProgramMaterial, createElectricDissolve, createSkinnedDissolve } from './world/electricDissolve';
-import { createVaultScenery } from './world/scenery';
-import { brokenGateWallCrown, gateBreach, roomHasTomb } from './world/gateComposition';
-import { createArchitecturalRemnant, ruinGeometry, isRuinFootprintClear, type RuinKind } from './world/ruins';
-import { masonryGeometry, projectStoneUV } from './world/masonry';
-import { getRoomLayout, enemyPositions, isCrossingChasm, roomFloorPatches } from './world/roomLayout';
 import { stoneMaterial, floorRelief, flameMaterial, fireSheetMaterial, firePlumeMaterial, bladeWakeMaterial, ashMaterial, novaMaterial, glowTexture, waveTexture } from './world/materials';
 
 // Shared visual size; weapons inherit the hero scale through their sockets.
@@ -101,22 +97,32 @@ export class DungeonWorld {
   private chainCandidate = true;
   private chainUsesHandOrigin = false;
   private readonly floorGroup = new THREE.Group();
-  private vaultScenery?: THREE.Group;
-  private sceneryMeshes: THREE.Object3D[] = [];
-  private readonly masonryPiers: { room: number; x: number; z: number; height: number; baseY: number }[] = [];
-  private readonly masonryPosts: { room: number; x: number; z: number; height: number; baseY: number }[] = [];
   private readonly enemyGroup = new THREE.Group();
   private readonly effectsGroup = new THREE.Group();
   private readonly propGroup = new THREE.Group();
-  private readonly roomCutaway = new RoomCutaway();
-  private readonly biomeGroup = new THREE.Group();
-  private outdoorWorld?: THREE.Group;
-  private outdoorRegion = "";
-  private biomeBuilt = "";
+  /** The level grows as the hero explores; chunks near the camera are built, far ones released. */
+  private level?: Level;
+  private readonly chunks = new Map<string, BuiltChunk>();
+  private outdoorKit?: OutdoorKit;
+  private outdoorRegion = '';
+  private outdoorGround?: THREE.Mesh;
+  /** The area that holds the current pack, and whether the player has seen it there. */
+  private packArea?: Area;
+  private packSeen = false;
+  private heroArea?: Area;
+  private guideRoute: { x: number; z: number }[] = [];
+  private lastStreamAt = -9;
+  private lastLightsAt = -9;
+  private lastPackCheckAt = -9;
+  /** Combat framing eases toward its target, so engaging never jumps the view. */
+  private framing = { scale: 1, shift: 0, horizontal: false };
+  private frameTarget = { scale: 1, shift: 0, horizontal: false };
+  private lastFrameMeasureAt = -9;
+  /** Floor test for the hero and for drops: false off the level. */
+  private readonly walkable = (x: number, z: number) => this.level?.walkable(x, z) ?? false;
   private stoneSurfaceLoaded = false;
   private readonly floatingRunes: THREE.Object3D[] = [];
   private readonly cameraTarget = new THREE.Vector3();
-  private readonly destination = new THREE.Vector3();
   private readonly heroLight = new THREE.PointLight(0xd6e3f0, 32, 7, 1.8);
   private readonly burstLight = new THREE.PointLight(0xffae40, 0, 20, 1.5);
   private readonly warmLights = [new THREE.PointLight(0xff9c45, 70, 14, 2), new THREE.PointLight(0xff822b, 60, 14, 2)];
@@ -168,7 +174,6 @@ export class DungeonWorld {
   private heroMotion?: (age: number) => THREE.Vector3;
   private heroTravelSpeed = 0;
   private heroWalkCycle?: HeroWalkCycle;
-  private heroTravelWaypoints: THREE.Vector3[] = [];
   private readonly enemyClipSets = new Map<string, THREE.AnimationClip[]>();
   private readonly enemyGaits = new Map<string, { walk?: HeroWalkCycle; run?: HeroWalkCycle }>();
   /** Free movement: the hero explores until a horde is near, then combat begins. */
@@ -182,6 +187,8 @@ export class DungeonWorld {
   private readonly floorLoot: FloorLoot;
   /** Floor chevrons toward the next horde while it is out of reach. */
   private readonly guide = new THREE.Group();
+  /** The hero walked into a new area of the level. */
+  onAreaEnter?: (name: string) => void;
   /** A relic or mote reached the hero (presentation only). */
   onLootPickup?: (pickup: LootPickup) => void;
   onSound?: (sound: CombatSound) => void;
@@ -256,7 +263,7 @@ export class DungeonWorld {
     this.scene.add(moon, moon.target);
     const fill = new THREE.DirectionalLight(0xc6d3cf, .48); fill.position.set(15, 12, 18); this.scene.add(fill);
     moon.name = 'moon';
-    this.scene.add(this.floorGroup, this.enemyGroup, this.effectsGroup, this.propGroup, this.biomeGroup, this.hero);
+    this.scene.add(this.floorGroup, this.enemyGroup, this.effectsGroup, this.propGroup, this.hero);
     for (const fragments of [this.stoneFragments, this.hotFragments]) { fragments.count = 0; fragments.setColorAt(0, new THREE.Color()); fragments.frustumCulled = false; fragments.instanceMatrix.setUsage(THREE.DynamicDrawUsage); this.scene.add(fragments); }
     this.heroVisual.scale.setScalar(ACTOR_SCALE); this.hero.add(this.heroVisual);
     this.heroLight.position.set(1.2, 3.1, 1.5); this.hero.add(this.heroLight);
@@ -294,7 +301,7 @@ export class DungeonWorld {
     }
     this.guide.visible = false; this.scene.add(this.guide);
     this.installExploreInput();
-    this.buildDungeon(); this.installScenery(); this.setEncounter(0); this.resize();
+    this.setEncounter(0); this.resize();
   }
 
   /** True while the hero may move: in combat too, except while a cast roots the hero or a panel is open. */
@@ -338,7 +345,8 @@ export class DungeonWorld {
     const living = this.enemies.filter(enemy => !enemy.dead);
     const nearest = living.reduce<Enemy | undefined>((best, enemy) => !best || enemy.at.distanceToSquared(this.hero.position) < best.at.distanceToSquared(this.hero.position) ? enemy : best, undefined);
     const far = nearest ? nearest.at.distanceTo(this.hero.position) > ENGAGE_RADIUS + 2.4 : false;
-    const target = this.exploring && nearest && far ? heroClickRoute({ x: this.hero.position.x, z: this.hero.position.z }, { x: nearest.at.x, z: nearest.at.z }, this.encounter, this.regionId)[0] : undefined;
+    // The chevrons point along the walking route, round walls and corners.
+    const target = this.exploring && nearest && far ? this.guideRoute.find(point => Math.hypot(point.x - this.hero.position.x, point.z - this.hero.position.z) > 1.2) : undefined;
     const weight = this.guide.userData.weight = THREE.MathUtils.damp(this.guide.userData.weight ?? 0, target ? 1 : 0, 5, delta);
     this.guide.visible = weight > .01;
     if (!this.guide.visible) return;
@@ -421,7 +429,7 @@ export class DungeonWorld {
   /** Free-movement order, as from a click on the floor. Ignored while a cast roots the hero. */
   walkTo(x: number, z: number): void {
     if (!this.exploring) return;
-    this.exploreRoute = heroClickRoute({ x: this.hero.position.x, z: this.hero.position.z }, { x, z }, this.encounter, this.regionId)
+    this.exploreRoute = (this.level?.path({ x: this.hero.position.x, z: this.hero.position.z }, { x, z }) ?? [])
       .map(point => new THREE.Vector3(point.x, 0, point.z));
   }
 
@@ -438,6 +446,8 @@ export class DungeonWorld {
   engage(): void {
     if (this.engaged) return;
     this.engaged = true; this.onSound?.('alert');
+    // Spotted: the hero halts at the edge of the fight, then moves freely again.
+    this.exploreRoute.length = 0; this.pointerSteering = false;
     this.finishEngage();
   }
 
@@ -451,10 +461,10 @@ export class DungeonWorld {
     const far = enemy.brute ? 5.6 : 4.8, near = enemy.brute ? 3.4 : 2.4;
     if (gap <= far && gap >= near) return enemy.origin;
     if (gap < 1e-3) away.set(0, 0, -1);
-    const reach = gap > far ? far : near, walkable = heroWalkable(this.encounter, this.regionId);
+    const reach = gap > far ? far : near;
     for (const scale of [1, .8, .6, .45]) {
       const at = hero.clone().addScaledVector(away.clone().normalize(), reach * scale);
-      if (walkable(at.x, at.z)) return at;
+      if (this.level?.walkable(at.x, at.z, .48) && this.level.clearLine(hero, at, .3)) return at;
     }
     return enemy.origin;
   }
@@ -521,7 +531,6 @@ export class DungeonWorld {
     } catch { /* Missing optional surface maps retain the fallback stone. */ }
     if (this.disposed) return;
     performance.mark('dungeon-textures-ready');
-    this.installScenery();
     replacedStoneTextures.forEach(texture => texture.dispose());
     this.setAppearance(this.desiredAppearance);
     this.enemies.forEach(enemy => {
@@ -530,11 +539,8 @@ export class DungeonWorld {
       if (visual) { enemy.root.remove(enemy.visual); this.releaseProcedural(enemy.visual); enemy.visual = visual; enemy.root.add(visual); enemy.animator = new EnemyAnimator(visual, {kind: enemy.modelId, phase: enemy.phase}); enemy.clips = this.enemyClipAnimator(visual, enemy.modelId, enemy.height, enemy.phase); }
     });
     this.batchEnemies();
-    this.addModelProps();
-    this.installMasonryPiers();
-    this.installMasonryPosts();
-    this.roomCutaway.prepare([...this.floorGroup.children, ...this.propGroup.children]);
-    this.biomeBuilt = ""; this.buildBiome();
+    // Props and authored piers now exist: rebuild the standing chunks with them.
+    this.rebuildChunks();
     this.setEnvironment();
     this.renderer.shadowMap.needsUpdate = true;
     // Compile authored actors and uncommon effect programs during loading,
@@ -635,25 +641,6 @@ export class DungeonWorld {
         renderer.shadowMap.needsUpdate = true;
         renderer.render(this.scene, this.camera);
       }
-      // A real draw prepares both the nearest-surface depth pass and the
-      // transparent stone variant. Visit every doorway during loading so a
-      // first crossing cannot compile these programs in the middle of travel.
-      const cameraPosition = this.camera.position.clone(), cameraRotation = this.camera.quaternion.clone();
-      const moon = this.scene.getObjectByName('moon') as THREE.DirectionalLight;
-      const moonPosition = moon.position.clone(), moonTarget = moon.target.position.clone();
-      try {
-        for (let room = 0; room < 6; room++) {
-          const z = -room * 20 - 10.5;
-          this.camera.position.set(17, 25, z + 20); this.camera.lookAt(0, .2, z - 1.8); this.camera.updateMatrixWorld();
-          moon.position.set(-12, 24, z - 10); moon.target.position.set(0, 0, z);
-          this.roomCutaway.update(z); renderer.shadowMap.needsUpdate = true;
-          renderer.render(this.scene, this.camera);
-        }
-      } finally {
-        this.camera.position.copy(cameraPosition); this.camera.quaternion.copy(cameraRotation); this.camera.updateMatrixWorld();
-        moon.position.copy(moonPosition); moon.target.position.copy(moonTarget);
-        this.roomCutaway.update(this.cameraTarget.z);
-      }
       // Complete first-use driver work before the loading promise resolves.
       renderer.getContext().finish();
       this.drawWarmup = { programs: renderer.info.programs?.length ?? 0, durationMs: performance.now() - started };
@@ -744,363 +731,6 @@ export class DungeonWorld {
     if (object.userData.procedural) object.traverse(child => { if (child instanceof THREE.Mesh) child.geometry.dispose(); });
   }
 
-  private installScenery(): void {
-    if (this.vaultScenery) {
-      this.floorGroup.remove(...this.sceneryMeshes);
-      for (const object of this.sceneryMeshes) object.traverse(child => {
-        if (child instanceof THREE.Mesh) child.geometry.dispose();
-      });
-      for (const material of this.vaultScenery.userData.ownedMaterials ?? []) material.dispose();
-      for (const texture of this.vaultScenery.userData.ownedTextures ?? []) texture.dispose();
-    }
-    // Scenery clones the base stone materials. Recreate it after bundled maps
-    // load so rubble uses those surfaces instead of retaining the fallback.
-    this.vaultScenery = createVaultScenery(this.materials);
-    for (const object of this.floorGroup.children) {
-      if (object instanceof THREE.Mesh && object.userData.room === 0 && object.userData.floorSurface) {
-        object.material = this.vaultScenery.userData.gateFloorMaterial ?? this.materials.floor;
-      }
-    }
-    this.sceneryMeshes = [...this.vaultScenery.children];
-    this.floorGroup.add(...this.sceneryMeshes);
-  }
-
-  private buildDungeon(): void {
-    let state = 932184;
-    const random = () => { state = (state * 1664525 + 1013904223) >>> 0; return state / 4294967296; };
-    let fullPier = false, shortPost = false;
-    const batches = new Map<string, { material: THREE.Material; geometries: THREE.BufferGeometry[]; room: number; occluder: boolean; fullPier: boolean; shortPost: boolean }>();
-    const add = (geometry: THREE.BufferGeometry, material: THREE.Material, x: number, y: number, z: number, turn = 0) => {
-      const roomIndex = Math.round(-z / 20);
-      if (y > -.1 && isCrossingChasm(roomIndex, x, z + roomIndex * 20)) { geometry.dispose(); return; }
-      if (material === this.materials.wall || material === this.materials.trim) {
-        const shade = .76 + random() * .46;
-        const colors = new Float32Array(geometry.getAttribute('position').count * 3);
-        const positions = geometry.getAttribute('position'), authoredColors = geometry.getAttribute('color');
-        for (let i = 0; i < colors.length; i += 3) {
-          // Damp mortar accumulates at the base instead of tinting every stone alike.
-          const height = positions.getY(i / 3) + y;
-          const damp = .67 + .33 * Math.min(1, Math.max(0, height / 1.35));
-          colors[i] = shade * damp * (authoredColors?.getX(i / 3) ?? 1); colors[i + 1] = shade * damp * .99 * (authoredColors?.getY(i / 3) ?? 1); colors[i + 2] = shade * damp * .94 * (authoredColors?.getZ(i / 3) ?? 1);
-        }
-        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-        (material as THREE.MeshStandardMaterial).vertexColors = true;
-      }
-      geometry.rotateY(turn); geometry.translate(x, y, z);
-      const normalized = geometry.index ? geometry.toNonIndexed() : geometry;
-      if (normalized !== geometry) geometry.dispose();
-      normalized.computeBoundingBox();
-      const occluder = normalized.boundingBox!.max.y > .6;
-      const room = Math.round(-z / 20), key = `${material.uuid}:${room}:${occluder}:${fullPier}:${shortPost}`;
-      if (!batches.has(key)) batches.set(key, { material, geometries: [], room, occluder, fullPier, shortPost });
-      batches.get(key)!.geometries.push(normalized);
-    };
-    const block = (w: number, h: number, d: number, material: THREE.Material, x: number, y: number, z: number, turn = 0, bevel = .065) => {
-      const chipped = material === this.materials.wall && w < 3 && d < 3;
-      const geometry = chipped
-        ? masonryGeometry(w, h, d, random)
-        : new RoundedBoxGeometry(w, h, d, 1, Math.min(bevel, Math.min(w, h, d) * .2));
-      if (!chipped && (material === this.materials.wall || material === this.materials.trim)) projectStoneUV(geometry, random() * 3, random() * 3);
-      add(geometry, material, x, y, z, turn);
-    };
-    const pillar = (x: number, z: number, height: number, broken = false, aisleBase = 0) => {
-      if (broken) {
-        const geometry = ruinGeometry('column-stump', Math.round(x * 31 + z * 17));
-        const size = geometry.boundingBox!.getSize(new THREE.Vector3());
-        // Existing pier footprint is retained. A fractured crown replaces the
-        // repeated intact capitals and full-height attached shafts.
-        geometry.scale(1.45 / size.x, height / size.y, 1.45 / size.z);
-        add(geometry, this.materials.trim, x, 0, z); return;
-      }
-      // Short supports use a separate three-course model at their own scale.
-      fullPier = height + .89 >= 3;
-      shortPost = !fullPier;
-      const placement = { room: Math.round(-z / 20), x, z, height: height + .89, baseY: aisleBase };
-      if (fullPier) this.masonryPiers.push(placement);
-      else this.masonryPosts.push(placement);
-      for (let tier = 0; tier < 3; tier++) block(1.8 - tier * .18, .19, 1.8 - tier * .18, this.materials.trim, x, .1 + tier * .18, z);
-      for (let layer = 0; layer < Math.ceil(height / .49); layer++) {
-        const spread = layer % 3 === 0 ? 1.17 : 1.04;
-        block(spread, .47, spread, this.materials.wall, x + (random() - .5) * .055, .72 + layer * .49, z + (random() - .5) * .05, (random() - .5) * .025);
-      }
-      for (const side of [-1, 1]) for (const front of [-1, 1]) {
-        add(new THREE.CylinderGeometry(.14, .19, height - .15, 8), this.materials.trim, x + side * .48, height * .5 + .65, z + front * .48);
-      }
-      block(1.55, .22, 1.55, this.materials.trim, x, height + .62, z);
-      block(1.32, .14, 1.32, this.materials.wall, x, height + .82, z);
-      fullPier = shortPost = false;
-    };
-    for (let room = 0; room < 6; room++) {
-      const center = -room * 20, layout = getRoomLayout(room);
-      const sideOffset = layout.sideWallX - 12.2;
-      // Texture coordinates remain in world space: neighbouring worn floor pieces
-      // share their photographically detailed surface instead of a board-game grid.
-      for (const patch of roomFloorPatches(room)) {
-        const floor = new THREE.PlaneGeometry(patch.width, patch.depth, 8, 4); floor.rotateX(-Math.PI / 2);
-        const uv = floor.getAttribute('uv'), position = floor.getAttribute('position');
-        for (let i = 0; i < uv.count; i++) uv.setXY(i, (position.getX(i) + patch.x) / 4.8, (position.getZ(i) + center + patch.z) / 4.8);
-        add(floor, this.materials.floor, patch.x, -.05, center + patch.z);
-        block(patch.width, .55, patch.depth, this.materials.dark, patch.x, -.38, center + patch.z, 0, .015);
-      }
-      if (room === 3) for (const side of [-1, 1]) {
-        const darkFloor = new THREE.PlaneGeometry(6.2, 8); darkFloor.rotateX(-Math.PI / 2);
-        add(darkFloor, this.materials.dark, side * 7.9, -3.8, center);
-        for (const edge of [4.8, 11]) for (let row = 0; row < 6; row++) for (let n = 0; n < 8; n++)
-          block(.44, .56, .97, this.materials.wall, side * edge, -.5 - row * .56, center - 3.5 + n);
-        for (const z of [-5, 5]) { pillar(side * 5.5, center + z, 1.05); this.addTorch(side * 5.5, 2.12, center + z, false); }
-      }
-      // Thick walls and stepped side aisles replace the old sparse perimeter.
-      for (const side of [-1, 1]) {
-        const wallHeight = side < 0 ? layout.wallHeights.left : layout.wallHeights.right;
-        for (let row = 0; row < Math.ceil(wallHeight / .57); row++) for (let n = 0; n < 17; n++) {
-          const z = center - 9.7 + n * 1.16 + (row % 2) * .5;
-          if (room === 0 && side < 0 && z > gateBreach.minZ && z < gateBreach.maxZ) continue;
-          // The frontmost western vault collapsed: staggered upper courses
-          // expose an irregular silhouette instead of a continuous square box.
-          const brokenHeight = n > 11 ? 1.5 + Math.sin(n * 2.4 + room) * .55 : wallHeight;
-          if (side < 0 && row * .57 > brokenHeight) continue;
-          if (room === 0 && side < 0 && row * .57 > brokenGateWallCrown(z - center, wallHeight)) continue;
-          if (row > 5 && (n * 13 + row * 7 + room) % 17 === 0) continue;
-          block(layout.sideWallWidth, .53, 1.11, this.materials.wall, side * layout.sideWallX + (random() - .5) * .07, .26 + row * .57, z, (random() - .5) * .023);
-        }
-        for (let step = 0; step < 3; step++) {
-          const spans = room === 0 && side < 0 ? [[-9.95, gateBreach.minZ], [gateBreach.maxZ, 9.95]] : [[-9.95, 9.95]];
-          for (const [start, end] of spans) block(2.0 - step * .38, .2, end - start, this.materials.wall, side * (11.25 + sideOffset + step * .19), .05 + step * .19, center + (start + end) / 2, 0, .045);
-        }
-        for (let bay = 0; bay < 4; bay++) {
-          const z = center - 7.4 + bay * 5;
-          const brokenPier = (side < 0 && (bay + room) % 3 === 0) || (side > 0 && bay === 3) || (room === 0 && side < 0 && bay === 1);
-          const pierHeight = side < 0 ? (bay === 3 ? 2.2 : wallHeight - .7 + Math.sin(bay * 2.3 + room) * .35) : (bay === 0 || bay === 3 ? 3.3 : wallHeight);
-          pillar(side * (11.7 + sideOffset), z, brokenPier ? Math.min(pierHeight, 1.7 + bay * .3) : pierHeight, brokenPier, .53);
-          this.addTorch(side * (10.55 + sideOffset), 2.1, z + .7, false);
-          const x = side * (9.7 + sideOffset + random() * .55);
-          add(crystalClusterGeometry(room * 43 + bay * 11 + side), this.materials.crystalStone, x, 0, z + 1.4, random() * Math.PI * 2);
-        }
-        // Ruined tombs lie partly buried along the raised aisles, never centred
-        // like furniture placed on a grid. Trim catches the torchlight.
-        for (let n = 0; n < 3; n++) {
-          if (!roomHasTomb(room, side, n)) continue;
-          const x = side * (8.6 + sideOffset + random() * 1.1), z = center - 7 + n * 6.3;
-          const turn = (random() - .5) * .55;
-          block(1.1, .63, 2.05, this.materials.wall, x, .32, z, turn);
-          block(1.22, .15, 2.22, this.materials.trim, x + .12, .71, z - .04, turn + .09);
-          for (let rib = -1; rib <= 1; rib++) block(.06, .045, 1.7, this.materials.dark, x + rib * .28, .8, z, turn);
-        }
-      }
-      // The far wall is a layered cathedral facade with a central route opening.
-      for (const side of [-1, 1]) {
-        for (let row = 0; row < Math.ceil(layout.wallHeights.back / .57); row++) for (let n = 0; n < 7; n++) {
-          const x = layout.doorX + side * (4.1 + n * 1.13 + (row % 2) * .3);
-          if (side < 0 && row > 3 + Math.floor(1.4 + Math.sin(n * 1.8 + room) * 1.4)) continue;
-          if (row > 6 && (n + room) % 3 === 0) continue;
-          block(1.08, .54, .95, this.materials.wall, x, .27 + row * .57, center - 9.7, (random() - .5) * .02);
-        }
-        pillar(layout.doorX + side * 3.4, center - 9.35, layout.wallHeights.back - .5);
-        // Travel follows the doorway at floor height. Keep raised approach
-        // steps beside a clear central passage, never across the actor's feet.
-        if (side < 0) for (let step = 0; step < 4; step++) {
-          const width = (6.8 - step * .28 - 2.8) / 2;
-          for (const flank of [-1, 1]) block(width, .18, 2.6 - step * .38, this.materials.wall,
-            layout.doorX + flank * (1.4 + width / 2), .05 + step * .17, center - 8.55 - step * .15);
-        }
-        // Foreground remnants frame the action; high pieces sit at the edges.
-        const brokenFront = room === 0 || (room !== 3 && (side > 0 ? room % 2 === 0 : room % 2 === 1));
-        pillar(side * (8.7 + sideOffset), center + 7.1, room === 3 ? 1.1 : brokenFront ? 1.5 + room % 3 * .2 : side < 0 ? 3.7 : 2.7, brokenFront);
-        for (let n = 0; n < 4; n++) block(1.05, .53, .84, this.materials.wall, side * (9.3 + sideOffset + n * .92), .25, center + 7.2, (random() - .5) * .1);
-      }
-      // Dense rubble has multiple scales: fallen voussoirs, hand-sized stones,
-      // chips and grit. Irregular clusters leave a navigable central lane.
-      for (let n = 0; n < 240; n++) {
-        const side = random() < .5 ? -1 : 1;
-        const x = side * (7.4 + random() * 9), z = center + (random() - .5) * 19.7;
-        const radius = n % 11 === 0 ? .36 + random() * .5 : .035 + random() * .2;
-        const geometry = new THREE.DodecahedronGeometry(radius, 0);
-        geometry.scale(1 + random(), .32 + random() * .7, .6 + random());
-        geometry.rotateX(random() * 2); geometry.rotateZ(random() * 2);
-        const turn = random() * 6;
-        // Authored fallen courses supply the gate's large stones. Small chips
-        // collect by the breach and foreground collapse instead of lone cubes.
-        if (room === 0 && (n % 11 === 0 || (side < 0 && Math.abs(z + 2) > 3.2 && Math.abs(z - 4.9) > 2.4))) { geometry.dispose(); continue; }
-        add(geometry, n % 4 === 0 ? this.materials.trim : this.materials.wall, x, radius * .26, z, turn);
-      }
-      // Fallen arch segments form a bank of rubble beneath the broken vault.
-      for (let n = 0; n < 85; n++) {
-        const angle = random() * Math.PI * 2, radius = Math.sqrt(random()) * 2.4;
-        const x = -9.8 + Math.cos(angle) * radius, z = center + 4.9 + Math.sin(angle) * radius;
-        const mound = Math.max(0, 1 - radius / 2.4) * .85;
-        const stone = new THREE.DodecahedronGeometry(.13 + random() * .35, 0);
-        stone.scale(1.4, .6, .9); stone.rotateX(random() * 2);
-        add(stone, n % 3 ? this.materials.wall : this.materials.trim, x, mound + .08, z, random() * 6);
-      }
-      for (let n = 0; n < 30; n++) {
-        const x = (random() - .5) * 14, z = center + (random() - .5) * 17;
-        const shard = new THREE.DodecahedronGeometry(.045 + random() * .1, 0); shard.scale(1.8, .2, 1);
-        add(shard, this.materials.trim, x, .02, z, random() * 6);
-      }
-      // A thin, worn sigil belongs to the floor; it does not define an arena.
-      if (room === 5) {
-        const sigil = new THREE.TorusGeometry(4.1, .018, 3, 64); sigil.rotateX(Math.PI / 2);
-        add(sigil, this.materials.runeGold, 0, -.01, center);
-      }
-      if (room === 0) {
-        for (const side of [-1, 1]) {
-          pillar(side * 6.5, 15.5, side < 0 ? 3.6 : 2.2);
-          for (let blockIndex = 0; blockIndex < 7; blockIndex++) for (let row = 0; row < 2; row++) block(1.1, .52, .8, this.materials.wall, side * (7.2 + blockIndex * 1.05), .26 + row * .55, 15.5, (random() - .5) * .09);
-          for (let chip = 0; chip < 70; chip++) {
-            const geometry = new THREE.DodecahedronGeometry(.04 + random() * .25, 0); geometry.scale(1.4, .55, .8);
-            add(geometry, this.materials.wall, side * (5.2 + random() * 9), .1, 11 + random() * 9, random() * 6);
-          }
-        }
-      }
-    }
-    for (const { material, geometries, room, occluder, fullPier, shortPost } of batches.values()) {
-      const merged = mergeGeometries(geometries, false);
-      if (merged) {
-        const mesh = this.mesh(merged, material); mesh.castShadow = material !== this.materials.floor && material !== this.materials.dark;
-        mesh.userData.floorSurface = material === this.materials.floor;
-        mesh.userData.fullPierFallback = fullPier;
-        mesh.userData.shortPostFallback = shortPost;
-        mesh.userData.room = room; mesh.userData.occluder = occluder; mesh.matrixAutoUpdate = false; mesh.updateMatrix(); this.floorGroup.add(mesh);
-      }
-      geometries.forEach(geometry => geometry.dispose());
-    }
-  }
-
-  private addTorch(x: number, y: number, z: number, withLight: boolean): void {
-    const room = Math.round(-z / 20);
-    if (isCrossingChasm(room, x, z + room * 20)) return;
-    const group = new THREE.Group(); group.position.set(x, y, z);
-    group.userData.room = room; group.userData.occluder = y > .8;
-    group.add(this.mesh(new THREE.CylinderGeometry(.2, .12, .36, 8), this.materials.gold));
-    const flame = this.mesh(new THREE.PlaneGeometry(.55, .95), this.livingFlame, 0, .55); flame.rotation.y = .7; flame.castShadow = false; group.add(flame);
-    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xff942b, map: this.glowMap, transparent: true, opacity: .35, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
-    halo.position.y = .42; halo.scale.set(1.65, 2.1, 1); group.add(halo);
-    let light: THREE.PointLight | undefined;
-    if (withLight && !this.softwareRenderer) { light = new THREE.PointLight(0xffa74c, 22, 15, 2); light.position.set(0, .7, 0); group.add(light); }
-    this.torches.push({ flame, light, position: new THREE.Vector3(x, y + .4, z), phase: x + z }); this.floorGroup.add(group);
-  }
-
-  private addModelProps(): void {
-    for (let room = 0; room < 6; room++) {
-      const center = -room * 20, layout = getRoomLayout(room), sideOffset = layout.sideWallX - 12.2;
-      const nearLandmark = (x: number, z: number, radius = 1) => layout.landmarks.some(landmark => Math.hypot(x - landmark.x, z - center - landmark.z) < radius + landmark.radius);
-      const add = (name: string, height: number, x: number, z: number, turn = 0) => {
-        if (isCrossingChasm(room, x, z - center)) return;
-        const object = this.model(name, height); if (!object) return;
-        object.position.x = x; object.position.z = z; object.rotation.y = turn;
-        if (name === 'wall-bay' || name === 'arch') { object.rotation.z = Math.sin(x * 1.7 + z * .3) * .022; object.scale.x *= .94 + Math.sin(x + room) * .045; }
-        object.userData.room = room; object.userData.occluder = true; this.propGroup.add(object);
-        if (name === 'pillar') object.userData.legacyPierProp = true;
-        return object;
-      };
-      const remnant = (kind: RuinKind, height: number, x: number, z: number, turn = 0) => {
-        const object = createArchitecturalRemnant(kind, this.materials.trim, room * 71 + Math.round(x * 13 + z * 17));
-        object.geometry.computeBoundingBox();
-        object.scale.setScalar(height / Math.max(.01, object.geometry.boundingBox!.max.y));
-        object.position.set(x, 0, z); object.rotation.y = turn; object.updateMatrixWorld(true);
-        const bounds = new THREE.Box3().setFromObject(object);
-        if (!isRuinFootprintClear(room, { minX: bounds.min.x, maxX: bounds.max.x, minZ: bounds.min.z - center, maxZ: bounds.max.z - center })) { object.geometry.dispose(); return false; }
-        object.userData.room = room; object.userData.occluder = true; this.propGroup.add(object); return true;
-      };
-      for (let bay = 0; bay < 4; bay++) {
-        if (bay < 2) {
-          const x = -11.3 - sideOffset, z = center - 4.9 + bay * 5;
-          if (room === 0) {
-            if (bay === 1) add('broken-wall', 2.1, x, z, Math.PI / 2);
-          } else {
-            const fractured = room !== 3 && (room + bay) % 2 === 0 && remnant('arch-remnant', 3.2 + room % 3 * .25, x - .18, z, Math.PI / 2);
-            if (!fractured) add(room === 3 ? 'broken-wall' : 'wall-bay', room === 3 ? 2.2 : layout.wallHeights.left + .2 + Math.sin(bay * 2 + room) * .3, x, z, Math.PI / 2);
-          }
-        }
-        if (bay === 2) {
-          add('broken-wall', 2.4, -11.35 - sideOffset, center + 5, Math.PI / 2);
-          remnant('fallen-column', .7, -11.7 - sideOffset, center + 4.4, .16 + room * .17);
-        }
-        add('broken-wall', 1.5 + bay % 2, 11.5 + sideOffset, center - 7.3 + bay * 5, -Math.PI / 2);
-      }
-      for (const side of [-1, 1]) {
-        add(side < 0 || room === 3 ? 'broken-wall' : 'wall-bay', side < 0 || room === 3 ? Math.min(3.3, layout.wallHeights.back - 1) : layout.wallHeights.back, layout.doorX + side * 7.5, center - 9.4);
-        if (side < 0) add('pillar', 4.1, -10.2 - sideOffset, center - 9.2, .12);
-        const brazierX = side * (layout.walkable.maxX + 1.1), brazierZ = center + (side < 0 ? -3.8 : 3.2);
-        if (!nearLandmark(brazierX, brazierZ)) {
-          add('brazier', 1.45, brazierX, brazierZ); this.addTorch(brazierX, 1.02, brazierZ, false);
-        }
-        add('crystal', 1.25, side * (10.2 + sideOffset), center - 6.2);
-        const brokenFront = room === 0 || (room !== 3 && (side > 0 ? room % 2 === 0 : room % 2 === 1));
-        if (!brokenFront) add(room === 3 ? 'broken-wall' : 'pillar', room === 3 ? 1.0 : room === 2 ? 3.3 : 4.4, side * (8.7 + sideOffset), center + 7.1);
-      }
-      add('arch', layout.wallHeights.back + .8, layout.doorX, center - 9.4);
-      const chestX = layout.walkable.maxX + 1.1;
-      if ([0,2,5].includes(room) && !nearLandmark(chestX, center - 5.1)) add('chest', .82, chestX, center - 5.1, -.9);
-      for (const landmark of layout.landmarks) {
-        const z = center + landmark.z;
-        if (landmark.id === 'furnace') { add('furnace', 3.2, landmark.x, z, .15); this.addTorch(landmark.x, .35, z + .25, false); }
-        else if (landmark.id === 'reliquary') add('reliquary', 3.0, landmark.x, z, .25);
-        else if (landmark.id.includes('crystals')) {
-          add('crystal', 3.1, landmark.x, z, .5);
-          add('crystal', 1.5, landmark.x + .75, z + .5, -1);
-          add('crystal', 1.15, landmark.x - .75, z + .7, .8);
-        }
-        else if (landmark.id === 'altar') add('reliquary', 2.1, landmark.x, z, 0);
-      }
-      if (room === 5) {
-        const portal = new THREE.Mesh(new THREE.CircleGeometry(2, 48), new THREE.MeshBasicMaterial({ color: 0x128bb8, map: this.glowMap, transparent: true, opacity: .5, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
-        portal.position.set(0, 2.8, center - 9.8); portal.userData.room = room; this.propGroup.add(portal);
-      }
-    }
-  }
-
-  private installMasonryPiers(): void {
-    // A missing optional asset retains the complete procedural architecture.
-    // Once available, remove the entire old pier batches rather than layering
-    // a new model over their shafts, plinths and capitals.
-    if (!this.models.has('masonry-pier') || this.propGroup.children.some(o => o.userData.authoredMasonryPier)) return;
-    const placements = [...this.masonryPiers];
-    for (const old of this.propGroup.children.filter(o => o.userData.legacyPierProp)) {
-      const shared = placements.some(p => p.room === old.userData.room && Math.hypot(p.x - old.position.x, p.z - old.position.z) < .05);
-      if (!shared) {
-        const bounds = new THREE.Box3().setFromObject(old);
-        placements.push({ room: old.userData.room, x: old.position.x, z: old.position.z, height: bounds.max.y - bounds.min.y, baseY: 0 });
-      }
-    }
-    const replacements = placements.map(p => {
-      const object = this.model('masonry-pier', p.height)!;
-      object.position.x = p.x; object.position.z = p.z;
-      object.position.y += p.baseY;
-      object.userData = { ...object.userData, room: p.room, occluder: true, authoredMasonryPier: true };
-      return object;
-    });
-    for (const object of [...this.floorGroup.children]) {
-      if (!object.userData.fullPierFallback) continue;
-      this.floorGroup.remove(object);
-      if (object instanceof THREE.Mesh) object.geometry.dispose();
-    }
-    for (const object of [...this.propGroup.children]) {
-      if (object.userData.legacyPierProp) this.propGroup.remove(object);
-    }
-    this.propGroup.add(...replacements);
-    this.renderer.shadowMap.needsUpdate = true;
-  }
-
-  private installMasonryPosts(): void {
-    if (!this.models.has('masonry-post') || this.propGroup.children.some(o => o.userData.authoredMasonryPost)) return;
-    const replacements = this.masonryPosts.map(p => {
-      const object = this.model('masonry-post', p.height)!;
-      object.position.x = p.x; object.position.z = p.z;
-      // Wall supports stand on the top aisle step; bridge supports use ground.
-      object.position.y += p.baseY;
-      object.userData = { ...object.userData, room: p.room, occluder: true, authoredMasonryPost: true };
-      return object;
-    });
-    for (const object of [...this.floorGroup.children]) {
-      if (!object.userData.shortPostFallback) continue;
-      this.floorGroup.remove(object);
-      if (object instanceof THREE.Mesh) object.geometry.dispose();
-    }
-    this.propGroup.add(...replacements);
-    this.renderer.shadowMap.needsUpdate = true;
-  }
-
   setCombatState(health: readonly RpgCombatEnemy[]): void {
     const byId = new Map(health.map(enemy => [enemy.id, enemy]));
     for (const enemy of this.enemies) {
@@ -1117,41 +747,30 @@ export class DungeonWorld {
     const was = this.encounter, previousRegion = this.regionId;
     this.encounter = Math.max(0, Math.min(5, index));
     if (regionId) this.regionId = regionId;
-    this.enemies.forEach(enemy => this.releaseProcedural(enemy.visual));
-    this.releaseEnemyInstances();
-    const skeletons = new Set<THREE.Skeleton>();
-    for (const enemy of this.enemies) enemy.visual.traverse(object => { if (object instanceof THREE.SkinnedMesh) skeletons.add(object.skeleton); });
-    for (const skeleton of skeletons) skeleton.dispose();
-    this.enemies.length = 0; this.enemyGroup.clear();
-    const layout = getRoomLayout(this.encounter, this.regionId);
-    this.destination.set(layout.heroX, 0, -this.encounter * 20 + layout.heroZ);
-    // A new room starts in exploration: the hero walks in on his own.
-    const newRoom = !this.frame || previousRegion !== this.regionId || was !== this.encounter;
-    if (newRoom) {
-      this.engaged = this.engageReady = false; this.exploreRoute.length = 0; this.heroTravelWaypoints.length = 0;
+    this.releaseEnemies();
+    // A new expedition, a new region or a return to an earlier pack starts a fresh level.
+    const fresh = !this.level || previousRegion !== this.regionId || this.encounter < was;
+    if (fresh) this.startLevel();
+    else if (was !== this.encounter) {
+      // The next pack waits somewhere ahead; the hero stays where the last fight ended.
+      // A cleared area counts as explored even if the fight was won from its doorway.
+      if (this.packArea) this.packArea.visited = true;
+      this.engaged = this.engageReady = false; this.packArea = undefined; this.packSeen = false;
       this.floorLoot.forgetFarFrom(this.hero.position, 34);
-    }
-    if (!this.frame || previousRegion !== this.regionId || Math.abs(was - this.encounter) > 1) {
-      this.floorLoot.clear();
-      const entry = roomEntry(this.encounter, this.regionId);
-      this.hero.position.set(entry.x, 0, entry.z); this.cameraTarget.copy(this.hero.position);
     }
     // A hard population limit, independent of spell power and old receipt totals.
     const count = Math.max(1, Math.min(10, Math.trunc(health?.length ?? enemyCount ?? 10)));
-    const formation = enemyPositions(this.encounter, count, this.regionId), roster = enemyRoster(this.encounter, count);
+    const roster = enemyRoster(this.encounter, count);
     for (let i = 0; i < count; i++) {
       const { brute, boss, modelId } = roster[i];
       const height = this.enemyHeight(modelId, roster[i].height) * ACTOR_SCALE;
       const root = new THREE.Group();
-      const origin = new THREE.Vector3(formation[i].x, 0, -this.encounter * 20 + formation[i].z);
-      const staged = stagedEnemyPoint(this.encounter, formation[i], this.regionId);
-      const at = this.engaged ? origin.clone() : new THREE.Vector3(staged.x, 0, -this.encounter * 20 + staged.z);
-      root.position.copy(at); root.rotation.y = Math.atan2(this.destination.x - origin.x, this.destination.z - origin.z);
       const visual = this.makeEnemy(brute, boss, modelId, height); root.add(visual); this.enemyGroup.add(root);
-      const enemy: Enemy = { id: `enemy-${i}`, hp: 100, maxHp: 100, root, visual, origin, at, speed: 0, phase: i * 1.77, brute, dead: false, modelId, height, deathAt: 0, animator: new EnemyAnimator(visual, { kind: modelId, phase: i * 1.77 }) };
+      const enemy: Enemy = { id: `enemy-${i}`, hp: 100, maxHp: 100, root, visual, origin: new THREE.Vector3(), at: new THREE.Vector3(), speed: 0, phase: i * 1.77, brute, dead: false, modelId, height, deathAt: 0, animator: new EnemyAnimator(visual, { kind: modelId, phase: i * 1.77 }) };
       enemy.clips = this.enemyClipAnimator(visual, modelId, height, enemy.phase);
       this.enemies.push(enemy);
     }
+    this.placePack();
     if (health) this.setCombatState(health);
     const ember = this.regionId.includes('ember') || this.regionId.includes('forge');
     const frost = this.regionId.includes('frost');
@@ -1165,44 +784,198 @@ export class DungeonWorld {
     this.updateStoneTint();
     this.scene.fog = new THREE.Fog(frost ? 0x06101a : 0x03090c, 38, 72);
     this.warmLights.forEach(light => light.color.setHex(0xff963f));
-    const roomZ = -this.encounter * 20, sideOffset = layout.sideWallX - 12.2;
-    const west = layout.landmarks.find(landmark => landmark.id === 'furnace' || landmark.id === 'reliquary');
-    const crystal = (side: number) => layout.landmarks.find(landmark => landmark.id === (side < 0 ? 'west-crystals' : 'east-crystals'));
-    this.warmLights[0].intensity = west ? 28 : 70; this.warmLights[1].intensity = 60;
-    this.warmLights[0].color.setHex(west?.id === 'reliquary' ? 0x59bfdd : 0xff963f);
-    this.lightAnchors[0].set(west ? west.x + .4 : -(layout.walkable.maxX + 1.1), west ? 1.8 : 2.3, roomZ + (west ? west.z + 1.2 : -3.8));
-    this.lightAnchors[1].set(layout.walkable.maxX + 1.1, 2.3, roomZ + 3.2);
-    if (this.encounter === 3) {
-      // Place the source above the flame instead of almost inside the cap.
-      // Inverse-square falloff otherwise turns the stone into a white emitter.
-      this.warmLights[0].intensity = 16; this.warmLights[1].intensity = 14;
-      this.lightAnchors[0].set(-5.5, 3.1, roomZ - 5);
-      this.lightAnchors[1].set(5.5, 3.1, roomZ + 5);
-    }
-    for (const [index, side] of [-1, 1].entries()) {
-      const cluster = crystal(side);
-      this.lightAnchors[index + 2].set(cluster?.x ?? side * (10.2 + sideOffset), 1.9, roomZ + (cluster?.z ?? -6.2));
-    }
-    if (!this.frame) [...this.warmLights, ...this.recessLights].forEach((light, index) => light.position.copy(this.lightAnchors[index]));
-    this.buildBiome(); this.biomeGroup.position.z = -this.encounter * 20;
     this.setEnvironment();
     this.batchEnemies();
     this.updateCameraProjection(Math.max(1, this.canvas.clientWidth), Math.max(1, this.canvas.clientHeight));
     this.renderer.shadowMap.needsUpdate = true;
   }
 
+  private releaseEnemies(): void {
+    this.enemies.forEach(enemy => this.releaseProcedural(enemy.visual));
+    this.releaseEnemyInstances();
+    const skeletons = new Set<THREE.Skeleton>();
+    for (const enemy of this.enemies) enemy.visual.traverse(object => { if (object instanceof THREE.SkinnedMesh) skeletons.add(object.skeleton); });
+    for (const skeleton of skeletons) skeleton.dispose();
+    this.enemies.length = 0; this.enemyGroup.clear();
+  }
+
+  /** A fresh level for this region; the hero starts at its entry. */
+  private startLevel(): void {
+    for (const built of this.chunks.values()) disposeChunk(built);
+    this.chunks.clear(); this.torches.length = 0; this.floatingRunes.length = 0;
+    const biome = outdoorKind(this.regionId) ?? 'vault';
+    this.level = new Level(Math.floor(Math.random() * 2 ** 30), biome);
+    const start = this.level.start;
+    this.hero.position.set(start.x, 0, start.z); this.cameraTarget.copy(this.hero.position);
+    this.engaged = this.engageReady = false; this.exploreRoute.length = 0; this.guideRoute = [];
+    this.packArea = undefined; this.packSeen = false; this.heroArea = this.level.areas[0];
+    this.floorLoot.clear();
+    this.setEnvironment();
+    this.streamLevel(Infinity);
+    this.onAreaEnter?.(this.level.areas[0]!.name);
+  }
+
+  /** Streaming, area entry, pack placement, guide route, lights and ground, at their own pace. */
+  private updateLevel(delta: number): void {
+    const level = this.level; if (!level) return;
+    if (this.elapsed - this.lastStreamAt > .25) { this.lastStreamAt = this.elapsed; this.streamLevel(); }
+    const area = level.areaAt(this.hero.position.x, this.hero.position.z);
+    if (area && area !== this.heroArea) {
+      this.heroArea = area;
+      if (!area.visited) { area.visited = true; this.onAreaEnter?.(area.name); }
+    }
+    if (this.elapsed - this.lastPackCheckAt > .5) {
+      this.lastPackCheckAt = this.elapsed;
+      this.updatePack();
+      const living = this.enemies.filter(enemy => !enemy.dead);
+      const goal = this.packArea && !this.engaged && living.length ? living.reduce((sum, enemy) => sum.add(enemy.at), new THREE.Vector3()).divideScalar(living.length) : undefined;
+      this.guideRoute = goal ? level.path({ x: this.hero.position.x, z: this.hero.position.z }, { x: goal.x, z: goal.z }) : [];
+    }
+    if (this.elapsed - this.lastLightsAt > .5) { this.lastLightsAt = this.elapsed; this.updateLights(); }
+    this.easeFraming(delta);
+    // The wide ground moves in whole texture repeats, so its pattern stays put.
+    if (this.outdoorGround) this.outdoorGround.position.set(Math.round(this.cameraTarget.x / 10) * 10, this.outdoorKit ? -.035 : -.09, Math.round(this.cameraTarget.z / 10) * 10);
+  }
+
+  private get chunkContext() {
+    return { level: this.level!, regionId: this.regionId, materials: this.materials as unknown as VaultMaterials, outdoor: this.outdoorKit,
+      model: (name: string, height: number) => this.model(name, height), flame: this.livingFlame, glowMap: this.glowMap };
+  }
+
+  /**
+   * Grows the level ahead of the hero, builds the chunks near the camera and
+   * releases far ones. At most `budget` chunks are built per call, so play
+   * never stalls on a burst of new floor.
+   */
+  private streamLevel(budget = 2): void {
+    const level = this.level; if (!level) return;
+    level.expandAround(this.hero.position.x, this.hero.position.z, 30);
+    let changed = false;
+    for (const key of level.takeChanges()) {
+      const built = this.chunks.get(key);
+      if (built) { disposeChunk(built); this.chunks.delete(key); changed = true; }
+    }
+    const distance = (rect: Rect) => Math.hypot(Math.max(rect.minX - this.cameraTarget.x, 0, this.cameraTarget.x - rect.maxX), Math.max(rect.minZ - this.cameraTarget.z, 0, this.cameraTarget.z - rect.maxZ));
+    const wanted = level.chunks.map(chunk => ({ chunk, distance: distance(chunk.bounds) })).sort((a, b) => a.distance - b.distance);
+    for (const { chunk, distance: far } of wanted) {
+      const built = this.chunks.get(chunk.key);
+      if (built && far > 54) { disposeChunk(built); this.chunks.delete(chunk.key); changed = true; }
+      else if (!built && far < 36 && budget-- > 0) {
+        const piece = buildChunk(this.chunkContext, chunk);
+        this.floorGroup.add(piece.group); this.chunks.set(chunk.key, piece); changed = true;
+      }
+    }
+    if (!changed) return;
+    this.torches.length = 0; this.floatingRunes.length = 0;
+    for (const built of this.chunks.values()) { this.torches.push(...built.torches); this.floatingRunes.push(...built.runes); }
+    this.renderer.shadowMap.needsUpdate = true; this.lastLightsAt = -9;
+  }
+
+  /** Models arrived: rebuild what stands, so props replace their fallbacks. */
+  private rebuildChunks(): void {
+    for (const built of this.chunks.values()) disposeChunk(built);
+    this.chunks.clear();
+    this.streamLevel(Infinity);
+  }
+
+  /** The few real lights move to the torches and crystals nearest the view. */
+  private updateLights(): void {
+    if (outdoorKind(this.regionId)) return;
+    const glows = [...this.chunks.values()].flatMap(built => built.glows);
+    const near = (warm: boolean) => glows.filter(glow => glow.warm === warm)
+      .sort((a, b) => a.position.distanceToSquared(this.cameraTarget) - b.position.distanceToSquared(this.cameraTarget));
+    const lights = [...this.warmLights, ...this.recessLights];
+    [...near(true).slice(0, 2), undefined, undefined].slice(0, 2).concat([...near(false).slice(0, 2), undefined, undefined].slice(0, 2)).forEach((glow, index) => {
+      const light = lights[index]!;
+      if (glow) this.lightAnchors[index]!.copy(glow.position);
+      light.intensity = glow && glow.position.distanceTo(this.cameraTarget) < 26 ? (index < 2 ? 46 : 40) : 0;
+    });
+  }
+
+  /**
+   * The current pack waits in the nearest unexplored area, and the guardian in
+   * a sanctum grown for it. Until the player has seen the pack, it moves to
+   * whichever unexplored area is nearest, so every path leads to a fight.
+   */
+  private placePack(): void {
+    const level = this.level; if (!level || !this.enemies.length) return;
+    const hero = this.hero.position;
+    let area = this.packArea;
+    if (!area) {
+      if (this.encounter === 5) {
+        area = level.areas.find(candidate => candidate.kind === 'sanctum') ?? level.growNearest(hero.x, hero.z, 'sanctum');
+      }
+      area ??= this.nearestOpenArea() ?? level.growNearest(hero.x, hero.z, 'hall')
+        ?? level.areas.filter(candidate => candidate.kind !== 'entry').sort((a, b) => b.rect.maxX - b.rect.minX - (a.rect.maxX - a.rect.minX))[0] ?? level.areas[0]!;
+      this.packArea = area; this.streamLevel(Infinity);
+    }
+    const formation = packPositions(level, area, this.enemies.length), center = rectCenter(area.rect);
+    this.enemies.forEach((enemy, index) => {
+      const point = formation[index] ?? center;
+      enemy.origin.set(point.x, 0, point.z);
+      if (!this.engaged || !enemy.at.lengthSq()) enemy.at.copy(enemy.origin);
+      enemy.root.position.copy(enemy.at);
+      enemy.root.rotation.y = Math.atan2(hero.x - point.x, hero.z - point.z);
+    });
+  }
+
+  /** The nearest unexplored hall that the hero is not already standing in or beside. */
+  private nearestOpenArea(): Area | undefined {
+    const level = this.level; if (!level) return undefined;
+    const hero = this.hero.position;
+    const away = (area: Area) => { const c = rectCenter(area.rect); return Math.hypot(c.x - hero.x, c.z - hero.z) >= 12; };
+    return level.areas.filter(area => area.kind === 'hall' && !area.visited && area !== this.heroArea && away(area))
+      .sort((a, b) => { const p = rectCenter(a.rect), q = rectCenter(b.rect); return Math.hypot(p.x - hero.x, p.z - hero.z) - Math.hypot(q.x - hero.x, q.z - hero.z); })[0];
+  }
+
+  /** Moves an unseen pack to a nearer unexplored area, and marks it seen once on screen. */
+  private updatePack(): void {
+    if (this.engaged || !this.enemies.length || !this.packArea) return;
+    const seen = this.enemies.some(enemy => {
+      const at = enemy.root.position.clone().setY(enemy.height * .5).project(this.camera);
+      return Math.abs(at.x) < 1.1 && Math.abs(at.y) < 1.1;
+    });
+    if (seen) { this.packSeen = true; return; }
+    if (this.packSeen || this.encounter === 5) return;
+    const nearer = this.nearestOpenArea();
+    if (nearer && nearer !== this.packArea) {
+      const hero = this.hero.position, a = rectCenter(nearer.rect), b = rectCenter(this.packArea.rect);
+      if (Math.hypot(a.x - hero.x, a.z - hero.z) + 4 < Math.hypot(b.x - hero.x, b.z - hero.z)) { this.packArea = nearer; this.placePack(); this.batchEnemies(); }
+    }
+  }
+
   private setEnvironment(): void {
     const kind = outdoorKind(this.regionId);
-    this.floorGroup.visible = this.propGroup.visible = this.biomeGroup.visible = !kind;
-    if (this.outdoorWorld && this.outdoorRegion !== this.regionId) {
-      disposeOutdoorWorld(this.outdoorWorld); this.outdoorWorld = undefined; this.outdoorRegion = '';
+    if (this.outdoorRegion !== (kind ? this.regionId : '')) {
+      // Chunks built with the old kit are released before its materials go.
+      for (const built of this.chunks.values()) disposeChunk(built);
+      this.chunks.clear();
+      this.outdoorKit?.dispose(); this.outdoorKit = undefined; this.outdoorRegion = '';
+      this.outdoorGround?.removeFromParent(); this.outdoorGround?.geometry.dispose(); this.outdoorGround = undefined;
     }
     const ambient = this.scene.getObjectByName('ambient') as THREE.HemisphereLight;
     const moon = this.scene.getObjectByName('moon') as THREE.DirectionalLight;
+    if (!kind && !this.outdoorGround) {
+      // Unlit rock beneath the whole level: rubble beyond the walls rests on it.
+      const geometry = new THREE.PlaneGeometry(160, 160); geometry.rotateX(-Math.PI / 2);
+      this.outdoorGround = new THREE.Mesh(geometry, this.materials.dark); this.outdoorGround.receiveShadow = true;
+      this.scene.add(this.outdoorGround);
+    }
     if (kind) {
-      if (!this.outdoorWorld) {
-        this.outdoorWorld = createOutdoorWorld(this.regionId); this.outdoorRegion = this.regionId;
-        this.scene.add(this.outdoorWorld);
+      if (!this.outdoorKit) {
+        this.outdoorKit = createOutdoorKit(this.regionId); this.outdoorRegion = this.regionId;
+        // One wide ground plane follows the camera; its texture stays fixed to the world.
+        const geometry = new THREE.PlaneGeometry(160, 160, 32, 32); geometry.rotateX(-Math.PI / 2);
+        const uv = geometry.getAttribute('uv'), position = geometry.getAttribute('position'), colors = new Float32Array(position.count * 3);
+        for (let i = 0; i < position.count; i++) {
+          uv.setXY(i, position.getX(i) / 5, position.getZ(i) / 5);
+          const shade = .9 + .1 * Math.sin(position.getX(i) * .37 + position.getZ(i) * .23);
+          colors[i * 3] = colors[i * 3 + 1] = colors[i * 3 + 2] = shade;
+        }
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        this.outdoorGround = new THREE.Mesh(geometry, this.outdoorKit.materials.ground);
+        this.outdoorGround.position.y = -.035; this.outdoorGround.receiveShadow = true;
+        this.scene.add(this.outdoorGround);
       }
       const light = outdoorLight[kind];
       this.scene.background = new THREE.Color(light.sky); this.scene.fog = new THREE.Fog(light.fog, 45, 95);
@@ -1223,101 +996,6 @@ export class DungeonWorld {
     this.materials.wall.color.setHex(this.stoneSurfaceLoaded
       ? frost ? 0xa1b7c4 : storm ? 0xb2a7bf : 0xb2b5ad
       : frost ? 0x5b6871 : storm ? 0x625d6b : 0x69665d);
-  }
-
-  private buildBiome(): void {
-    if (outdoorKind(this.regionId)) return;
-    const key = `${this.regionId}:${this.encounter === 3 ? 'crossing' : 'hall'}`;
-    if (this.biomeBuilt === key) return;
-    this.biomeBuilt = key;
-    const oldTextures = new Set<THREE.Texture>();
-    this.biomeGroup.traverse(object => { if (object instanceof THREE.Mesh) {
-      object.geometry.dispose();
-      for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
-        for (const value of Object.values(material)) if (value instanceof THREE.Texture && value !== this.materials.floor.map) oldTextures.add(value);
-        material.dispose();
-      }
-    } });
-    oldTextures.forEach(texture => texture.dispose()); this.biomeGroup.clear(); this.floatingRunes.length = 0;
-    if (this.regionId.includes('frost')) {
-      const clonedTextures = new Map<THREE.Texture, THREE.Texture>();
-      const ice = new THREE.MeshStandardMaterial({ color: 0x426d83, emissive: 0x102f42, emissiveIntensity: .12, metalness: .18, roughness: .4, transparent: true, opacity: .83 });
-      const snow = stoneMaterial(0x87999d, 85); ice.name = "frost-spires"; snow.name = "frost-snow";
-      for (const side of [-1, 1]) {
-        for (let i = 0; i < 10; i++) {
-          if (this.encounter === 3 && Math.abs(-7.6 + i * 1.65) < 4.9) continue;
-          const height = 1.2 + (i * 7 % 9) * .42;
-          const cluster = this.model('ice_cluster', height * .82);
-          if (cluster) {
-            cluster.position.x = side * (8.6 + i % 3 * .6); cluster.position.z = -7.6 + i * 1.65;
-            cluster.rotation.y = side * .7 + i * 2.31;
-            cluster.updateMatrixWorld(true);
-            cluster.traverse(child => { if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
-              // Biome cleanup owns these baked meshes and materials. Copy maps
-              // once per biome so cleanup never disposes the cached GLB maps.
-              const material = child.material.clone(); material.name = `frost-cluster-${material.name}`;
-              material.emissive.setHex(0x123348); material.emissiveIntensity = .2;
-              for (const slot of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap'] as const) {
-                const source = material[slot]; if (!source) continue;
-                if (!clonedTextures.has(source)) { const copy = source.clone(); copy.needsUpdate = true; clonedTextures.set(source, copy); }
-                material[slot] = clonedTextures.get(source)!;
-              }
-              const spire = new THREE.Mesh(child.geometry.clone().applyMatrix4(child.matrixWorld), material);
-              spire.castShadow = spire.receiveShadow = true; this.biomeGroup.add(spire);
-            } });
-          } else {
-            const spire = this.mesh(iceShardGeometry(.28 + i % 3 * .14, height, i), iceShardMaterial(), side * (8.6 + i % 3 * .6), 0, -7.6 + i * 1.65);
-            spire.rotation.z = side * (.13 + i % 3 * .08); this.biomeGroup.add(spire);
-          }
-          const drift = this.mesh(new THREE.SphereGeometry(.9, 10, 5), snow.clone(), side * 9, .02, -7 + i * 1.65); drift.scale.set(1.5, .17, .75); this.biomeGroup.add(drift);
-        }
-        if (this.encounter === 3) continue;
-        const poolGeometry = new THREE.CircleGeometry(2.7, 45), edges = poolGeometry.getAttribute('position');
-        for (let n = 1; n < edges.count; n++) { const shape = .84 + Math.sin(n * 1.7) * .06 + Math.sin(n * .7) * .09; edges.setXY(n, edges.getX(n) * shape, edges.getY(n) * shape); }
-        const frozen = ice.clone(); frozen.name = "frozen-pool"; frozen.opacity = .48; frozen.roughness = .56; frozen.color.setHex(0x385263); frozen.map = this.materials.floor.map;
-        const pool = this.mesh(poolGeometry, frozen, side * 5.8, -.008, side * 4.8); pool.rotation.x = -Math.PI / 2; pool.scale.x = .72; pool.receiveShadow = true; this.biomeGroup.add(pool);
-        for (let crack = 0; crack < 8; crack++) {
-          const a = crack * 2.4, from = new THREE.Vector3(side * 5.8, .012, side * 4.8);
-          const points = [from, from.clone().add(new THREE.Vector3(Math.sin(a) * .8, 0, Math.cos(a) * .8)), from.clone().add(new THREE.Vector3(Math.sin(a + .3) * 2.1, 0, Math.cos(a + .3) * 2.1))];
-          const line = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 8, .017, 3, false), new THREE.MeshBasicMaterial({ color: 0x7cc8e6, transparent: true, opacity: .29 })); line.material.name = "ice-cracks"; this.biomeGroup.add(line);
-        }
-      }
-      ice.dispose(); snow.dispose();
-    } else if (this.regionId.includes('storm')) {
-      const stone = stoneMaterial(0x5a5367, 61); stone.name = "storm-platform";
-      for (const side of [-1, 1]) {
-        if (this.encounter !== 3) { const platform = this.mesh(new RoundedBoxGeometry(2.65, .58, 12.5, 1, .08), stone.clone(), side * 7.9, .25, -.9); this.biomeGroup.add(platform); }
-        for (let i = 0; i < 4; i++) {
-          const z = -6.4 + i * 3.8;
-          if (isCrossingChasm(this.encounter, side * 7.9, z)) continue;
-          const pedestal = this.mesh(new THREE.CylinderGeometry(.62, .86, .65, 6), stone.clone(), side * 7.9, this.encounter === 3 ? .33 : .9, z); this.biomeGroup.add(pedestal);
-          const rune = new THREE.Group(); rune.position.set(side * 7.9, 2.4, z); rune.userData.baseY = 2.4;
-          const core = this.mesh(new THREE.OctahedronGeometry(.7, 0), stone.clone()); core.scale.y = 1.5; rune.add(core);
-          for (let band = 0; band < 3; band++) { const ring = new THREE.Mesh(new THREE.TorusGeometry(.49 + band * .025, .023, 4, 6), new THREE.MeshBasicMaterial({ color: 0x8d99fc })); ring.rotation.x = Math.PI / 2; ring.position.y = (band - 1) * .27; rune.add(ring); }
-          this.biomeGroup.add(rune); this.floatingRunes.push(rune);
-          if (i < 3 && this.encounter !== 3) {
-            const points = Array.from({length:12}, (_, n) => new THREE.Vector3(side * 7.9 + Math.sin(n * 3.1) * .12, 1.2 + Math.sin(n * 2.6) * .16, z + n / 11 * 3.8));
-            const conduit = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 22, .025, 3, false), new THREE.MeshBasicMaterial({color:0x8aaafa,transparent:true,opacity:.62,blending:THREE.AdditiveBlending})); this.biomeGroup.add(conduit);
-          }
-        }
-      }
-      stone.dispose();
-    }
-    // Region dressing is static apart from the floating stones. Merge its
-    // repeated surfaces so additional scenery does not cost a draw per chip.
-    const batches = new Map<string, THREE.Mesh[]>();
-    for (const child of this.biomeGroup.children) if (child instanceof THREE.Mesh && !Array.isArray(child.material) && child.material.name) {
-      const name = child.material.name; if (!batches.has(name)) batches.set(name, []); batches.get(name)!.push(child);
-    }
-    for (const entries of batches.values()) {
-      if (entries.length < 2) continue;
-      const transformed = entries.map(mesh => { mesh.updateMatrix(); const geometry = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone(); return geometry.applyMatrix4(mesh.matrix); });
-      const geometry = mergeGeometries(transformed, false); transformed.forEach(geometry => geometry.dispose());
-      if (!geometry) continue;
-      const material = entries[0].material;
-      for (const mesh of entries) { this.biomeGroup.remove(mesh); mesh.geometry.dispose(); if (mesh.material !== material) (mesh.material as THREE.Material).dispose(); }
-      const mesh = new THREE.Mesh(geometry, material); mesh.castShadow = mesh.receiveShadow = true; this.biomeGroup.add(mesh);
-    }
   }
 
   private batchEnemies(): void {
@@ -1465,7 +1143,7 @@ export class DungeonWorld {
       this.engaged = true; this.enemies.forEach(enemy => enemy.at.copy(enemy.origin)); this.finishEngage();
     }
     // The hero casts where they stand, and may run on once the spell is away.
-    this.heroTravelWaypoints.length = 0; this.heroTravelSpeed = 0; this.heroVisual.position.set(0, 0, 0);
+    this.heroTravelSpeed = 0; this.heroVisual.position.set(0, 0, 0);
     const spell = RPG_SPELLS.find(spell => spell.id === spellId);
     const effect = spell?.effect ?? 'nova', school = spell?.school ?? 'ember';
     const bonus = RPG_SPELL_SHAPES.find(shape => shape.id === options.spellShape && shape.spellId === spellId);
@@ -2353,7 +2031,7 @@ export class DungeonWorld {
     const color = colors[drop.rarity] ?? colors.rare;
     const position = origin.clone().add(new THREE.Vector3(2.1, .1, -.9));
     // The relic stays on the floor until the hero walks over it.
-    const at = slideStep({ x: origin.x, z: origin.z }, position.x - origin.x, position.z - origin.z, heroWalkable(this.encounter, this.regionId));
+    const at = slideStep({ x: origin.x, z: origin.z }, position.x - origin.x, position.z - origin.z, this.walkable);
     position.set(at.x, .1, at.z);
     this.emit(position, color, 35, 1.7, 1.5);
     this.floorLoot.dropRelic(position, color, this.elapsed); this.onSound?.('relic-drop');
@@ -2374,45 +2052,68 @@ export class DungeonWorld {
     this.updateCameraProjection(Math.max(1, this.canvas.clientWidth), Math.max(1, this.canvas.clientHeight));
   }
 
-  private updateCameraProjection(width: number, height: number): void {
-    const ratio = width / height;
+  /**
+   * The base view, widened in a fight so the hero and the whole pack fit
+   * between the panels. The framing eases toward its target in tick().
+   */
+  private updateCameraProjection(width: number, height: number, snap = false): void {
     const separateControls = getComputedStyle(this.canvas).getPropertyValue('--rpg-separate-controls').trim() === '1';
-    const halfHeight = dungeonCameraHalfHeight(width, height, separateControls);
-    this.camera.left = -halfHeight * ratio; this.camera.right = halfHeight * ratio;
+    const halfHeight = dungeonCameraHalfHeight(width, height, separateControls), ratio = width / height;
     const verticalOffset = dungeonCameraVerticalOffset(height, separateControls) + dungeonPortraitOffset(width, height, this.combatSafeTop, this.combatSafeBottom);
-    this.camera.top = halfHeight + verticalOffset; this.camera.bottom = -halfHeight + verticalOffset; this.camera.updateProjectionMatrix();
-    if ((separateControls || (width > 760 && height > 650)) && this.enemies.length) {
-      // Measure at the destination, so travel and surviving HP never reframe a room.
-      const view = this.camera.clone();
-      view.position.copy(this.destination).add(new THREE.Vector3(17, 25, 20));
-      view.lookAt(this.destination.x, .2, this.destination.z - 1.8); view.updateMatrixWorld();
-      const screenY = (point: THREE.Vector3) => (1 - point.project(view).y) * height * .5;
-      const ys = [screenY(this.destination.clone()), screenY(this.destination.clone().add(new THREE.Vector3(0, 2.1 * ACTOR_SCALE, 0)))];
-      for (const enemy of this.enemies) {
-        ys.push(screenY(enemy.origin.clone()), screenY(enemy.origin.clone().add(new THREE.Vector3(0, enemy.height + .55, 0))));
+    const living = this.engaged ? this.enemies.filter(enemy => !enemy.dead) : [];
+    const portrait = width <= 760 && height > width;
+    const target = { scale: 1, shift: 0, horizontal: portrait };
+    if (living.length && (separateControls || (width > 760 && height > 650) || portrait)) {
+      const anchor = this.hero.position, view = new THREE.OrthographicCamera(-halfHeight * ratio, halfHeight * ratio, halfHeight + verticalOffset, -halfHeight + verticalOffset, .1, 180);
+      view.position.copy(anchor).add(new THREE.Vector3(17, 25, 20));
+      view.lookAt(anchor.x, .2, anchor.z - 1.8); view.updateMatrixWorld();
+      if (!portrait) {
+        const screenY = (point: THREE.Vector3) => (1 - point.project(view).y) * height * .5;
+        const ys = [screenY(anchor.clone()), screenY(anchor.clone().add(new THREE.Vector3(0, 2.1 * ACTOR_SCALE, 0)))];
+        for (const enemy of living) ys.push(screenY(enemy.origin.clone()), screenY(enemy.origin.clone().add(new THREE.Vector3(0, enemy.height + .55, 0))));
+        const bottom = separateControls ? height - 22 : (this.combatSafeBottom || height - 22);
+        const fit = dungeonCombatFrame(Math.min(...ys), Math.max(...ys), Math.max(56, this.combatSafeTop), bottom, height);
+        target.scale = fit.scale; target.shift = fit.shift;
+      } else {
+        const pixelScale = height / (2 * halfHeight), centerX = (point: THREE.Vector3) => (point.project(view).x + 1) * width * .5;
+        const heroX = centerX(anchor.clone()), xs = [heroX - .65 * ACTOR_SCALE * pixelScale, heroX + .65 * ACTOR_SCALE * pixelScale];
+        for (const enemy of living) {
+          const x = centerX(enemy.origin.clone()), radius = (enemy.brute ? enemy.height * .4 : .72 * ACTOR_SCALE) * pixelScale;
+          xs.push(x - radius, x + radius);
+        }
+        const fit = dungeonCombatFrame(Math.min(...xs), Math.max(...xs), 18, width - 18, width);
+        target.scale = fit.scale; target.shift = fit.shift;
       }
-      const bottom = separateControls ? height - 22 : (this.combatSafeBottom || height - 22);
-      const fit = dungeonCombatFrame(Math.min(...ys), Math.max(...ys), Math.max(56, this.combatSafeTop), bottom, height);
-      const half = halfHeight * fit.scale, offset = verticalOffset + fit.shift * 2 * half / height;
-      this.camera.left = -half * ratio; this.camera.right = half * ratio;
-      this.camera.top = half + offset; this.camera.bottom = -half + offset; this.camera.updateProjectionMatrix();
-    } else if (width <= 760 && height > width && this.enemies.length) {
-      const view = this.camera.clone();
-      view.position.copy(this.destination).add(new THREE.Vector3(17, 25, 20));
-      view.lookAt(this.destination.x, .2, this.destination.z - 1.8); view.updateMatrixWorld();
-      const pixelScale = height / (2 * halfHeight);
-      const centerX = (point: THREE.Vector3) => (point.project(view).x + 1) * width * .5;
-      const heroX = centerX(this.destination.clone()), xs = [heroX - .65 * ACTOR_SCALE * pixelScale, heroX + .65 * ACTOR_SCALE * pixelScale];
-      for (const enemy of this.enemies) {
-        const x = centerX(enemy.origin.clone()), radius = (enemy.brute ? enemy.height * .4 : .72 * ACTOR_SCALE) * pixelScale;
-        xs.push(x - radius, x + radius);
-      }
-      const fit = dungeonCombatFrame(Math.min(...xs), Math.max(...xs), 18, width - 18, width);
-      const half = halfHeight * fit.scale, offsetX = -fit.shift * 2 * half * ratio / width;
-      this.camera.left = -half * ratio + offsetX; this.camera.right = half * ratio + offsetX;
-      this.camera.top = half + verticalOffset * fit.scale; this.camera.bottom = -half + verticalOffset * fit.scale;
-      this.camera.updateProjectionMatrix();
     }
+    this.frameTarget = target;
+    if (snap || !this.frame || this.framing.horizontal !== portrait) this.framing = { ...target };
+    this.applyFraming(width, height, halfHeight, verticalOffset);
+  }
+
+  private applyFraming(width: number, height: number, halfHeight: number, verticalOffset: number): void {
+    const ratio = width / height, { scale, shift, horizontal } = this.framing, half = halfHeight * scale;
+    if (horizontal) {
+      const offsetX = -shift * 2 * half * ratio / width;
+      this.camera.left = -half * ratio + offsetX; this.camera.right = half * ratio + offsetX;
+      this.camera.top = half + verticalOffset * scale; this.camera.bottom = -half + verticalOffset * scale;
+    } else {
+      const offset = verticalOffset + shift * 2 * half / height;
+      this.camera.left = -half * ratio; this.camera.right = half * ratio;
+      this.camera.top = half + offset; this.camera.bottom = -half + offset;
+    }
+    this.camera.updateProjectionMatrix();
+  }
+
+  /** Eases the framing toward its target; re-measures the fight now and then. */
+  private easeFraming(delta: number): void {
+    const width = Math.max(1, this.canvas.clientWidth), height = Math.max(1, this.canvas.clientHeight);
+    if (this.engaged && this.elapsed - this.lastFrameMeasureAt > .5) { this.lastFrameMeasureAt = this.elapsed; this.updateCameraProjection(width, height); }
+    const t = 1 - Math.exp(-delta * 2.4), f = this.framing, goal = this.frameTarget;
+    if (Math.abs(f.scale - goal.scale) < 1e-4 && Math.abs(f.shift - goal.shift) < .05) return;
+    f.scale += (goal.scale - f.scale) * t; f.shift += (goal.shift - f.shift) * t;
+    const separateControls = getComputedStyle(this.canvas).getPropertyValue('--rpg-separate-controls').trim() === '1';
+    this.applyFraming(width, height, dungeonCameraHalfHeight(width, height, separateControls),
+      dungeonCameraVerticalOffset(height, separateControls) + dungeonPortraitOffset(width, height, this.combatSafeTop, this.combatSafeBottom));
   }
 
   resize(): void {
@@ -2473,11 +2174,10 @@ export class DungeonWorld {
       this.scheduled.sort((a, b) => a.at - b.at);
     }
     this.elapsed = frameTime;
-    while (this.heroTravelWaypoints.length && this.hero.position.distanceToSquared(this.heroTravelWaypoints[0]!) <= .025 ** 2) this.heroTravelWaypoints.shift();
     while (this.exploreRoute.length && this.hero.position.distanceToSquared(this.exploreRoute[0]!) <= .06 ** 2) this.exploreRoute.shift();
     const exploring = this.exploring;
-    let travelTarget = this.heroTravelWaypoints[0] ?? this.destination;
-    if (!this.heroTravelWaypoints.length) {
+    let travelTarget = this.hero.position;
+    {
       // Go where the player points, in combat too; otherwise stay put.
       const keys = this.exploreKeys, steer = new THREE.Vector3(
         (keys.has('ArrowRight') ? 1 : 0) - (keys.has('ArrowLeft') ? 1 : 0), 0, (keys.has('ArrowDown') ? 1 : 0) - (keys.has('ArrowUp') ? 1 : 0));
@@ -2501,13 +2201,10 @@ export class DungeonWorld {
       this.renderer.shadowMap.needsUpdate = true; this.lastShadowUpdate = this.elapsed;
     }
     if (walking) {
-      if (this.heroTravelWaypoints.length) this.hero.position.lerp(travelTarget, travel ? travel.distance / distance : 1 - Math.exp(-delta * 2.1));
-      else {
-        const step = travel ? travel.distance : distance * (1 - Math.exp(-delta * 2.1));
-        const next = slideStep({ x: this.hero.position.x, z: this.hero.position.z }, (travelTarget.x - this.hero.position.x) / distance * step, (travelTarget.z - this.hero.position.z) / distance * step, heroWalkable(this.encounter, this.regionId));
-        if (next.x === this.hero.position.x && next.z === this.hero.position.z) { this.exploreRoute.length = 0; this.heroTravelSpeed = 0; }
-        this.hero.position.set(next.x, 0, next.z);
-      }
+      const step = travel ? travel.distance : distance * (1 - Math.exp(-delta * 2.1));
+      const next = slideStep({ x: this.hero.position.x, z: this.hero.position.z }, (travelTarget.x - this.hero.position.x) / distance * step, (travelTarget.z - this.hero.position.z) / distance * step, this.walkable);
+      if (next.x === this.hero.position.x && next.z === this.hero.position.z) { this.exploreRoute.length = 0; this.heroTravelSpeed = 0; }
+      this.hero.position.set(next.x, 0, next.z);
     }
     // Animate the distance actually covered: a hero pressed against a wall stands.
     const gaitBefore = this.heroAnimator?.gaitPhase ?? 0;
@@ -2542,7 +2239,7 @@ export class DungeonWorld {
       if (this.attackAge >= this.attackDuration || landed) { this.attacking = false; this.heroMotion = undefined; this.heroVisual.position.x = this.heroVisual.position.z = 0; this.attackResolve?.(); this.attackResolve = undefined; }
     }
     this.heldEquipment?.update(this.elapsed);
-    for (const pickup of this.floorLoot.update(delta, this.elapsed, this.hero.position, this.exploring, heroWalkable(this.encounter, this.regionId))) {
+    for (const pickup of this.floorLoot.update(delta, this.elapsed, this.hero.position, this.exploring, this.walkable)) {
       this.emit(pickup.at, pickup.color, pickup.kind === 'relic' ? 46 : 5, pickup.kind === 'relic' ? 1.6 : .5, pickup.kind === 'relic' ? 1.3 : .5);
       if (pickup.kind === 'relic') { this.burstLight.position.copy(pickup.at).setY(2.2); this.burstLight.color.setHex(pickup.color); this.burstLight.intensity = 60; }
       if (pickup.kind === 'mote') this.onSound?.('soul');
@@ -2556,7 +2253,8 @@ export class DungeonWorld {
     this.rune.rotation.z = this.elapsed * .14;
     this.rune.scale.setScalar(ACTOR_SCALE * (1 + Math.sin(this.elapsed * 2) * .04));
     const living = this.enemies.filter(enemy => !enemy.dead);
-    if (!this.engaged && living.length && !this.paused && living.some(enemy => enemy.at.distanceTo(this.hero.position) < ENGAGE_RADIUS)) this.engage();
+    // Combat starts on sight: near, with no wall between.
+    if (!this.engaged && living.length && !this.paused && living.some(enemy => enemy.at.distanceTo(this.hero.position) < ENGAGE_RADIUS && (this.level?.clearLine(this.hero.position, enemy.at, .05) ?? true))) this.engage();
     // Combat stays live while a problem waits: the horde paces, and one enemy
     // at a time strikes the hero's ward. Spells and panels hold every strike.
     const plan = this.engageReady ? this.horde.update(this.elapsed, living.map(enemy => ({
@@ -2721,21 +2419,11 @@ export class DungeonWorld {
     const moon = this.scene.getObjectByName('moon') as THREE.DirectionalLight;
     moon.position.set(this.cameraTarget.x - 12, 24, this.cameraTarget.z - 10); moon.target.position.copy(this.cameraTarget);
     [...this.warmLights, ...this.recessLights].forEach((light, index) => light.position.lerp(this.lightAnchors[index], 1 - Math.exp(-delta * 3)));
-    for (const object of [...this.floorGroup.children, ...this.propGroup.children, ...(this.outdoorWorld?.children ?? [])]) {
-      if (typeof object.userData.room === 'number') {
-        const center = object.userData.room * -20;
-        object.visible = object.userData.continuousGround === true || Math.abs(center - this.cameraTarget.z) < 37;
-      }
-    }
-    // Ground remains continuous; only foreground architecture fades as the
-    // camera passes its doorway. Materials and shadows share the same weight.
-    if (!this.outdoorWorld) this.roomCutaway.update(this.cameraTarget.z);
+    this.updateLevel(delta);
+    updateHeroCutout(this.hero.position, this.camera);
     this.renderer.info.reset();
     if (this.softwareRenderer) this.renderer.render(this.scene, this.camera); else this.composer.render(delta);
   }
-
-  /** Queued doorway waypoints; free movement is not travel. */
-  get traveling(): boolean { return this.heroTravelWaypoints.length > 0; }
 
   get lootScreenPosition(): { x: number; y: number } | null {
     const relic = this.floorLoot.relicPosition; if (!relic) return null;
@@ -2767,7 +2455,8 @@ export class DungeonWorld {
   dispose(): void {
     if (this.disposed) return; this.disposed = true; cancelAnimationFrame(this.frame); this.attackResolve?.(); this.scheduled.length = 0;
     this.inputAbort.abort(); this.finishEngage(); this.floorLoot.dispose(); this.ward.dispose(); this.damageNumbers.dispose(); this.releaseCharge(true);
-    this.roomCutaway.clear();
+    for (const built of this.chunks.values()) disposeChunk(built);
+    this.chunks.clear(); this.outdoorKit?.dispose(); this.outdoorGround?.geometry.dispose();
     for (const effect of this.effects) if (effect.mesh instanceof THREE.InstancedMesh) effect.mesh.dispose();
     this.releaseEnemyInstances();
     const geometries = new Set<THREE.BufferGeometry>(), materials = new Set<THREE.Material>(), textures = new Set<THREE.Texture>();

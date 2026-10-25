@@ -31,7 +31,6 @@ import { renderCampWorkshop, renderPinnedGoal, lootStats, collectionLootChoice, 
 import { nextSpellGoal } from './nextSpell';
 import { skillUpgradePreview } from './skillPreview';
 import { equippedForgeReady } from './forgeReady';
-import { getRoomLayout } from './world/roomLayout';
 import { Celebrations, type CelebrationEvent } from './Celebrations';
 import './hud-rewards.css';
 import './fact-ladder.css';
@@ -91,6 +90,7 @@ export class RpgGame {
   private clockRunning = false;
   /** The hero searches for the horde: menus work, the problem and its clock wait. */
   private seeking = false;
+  private areaName = '';
   private readonly answerClock = new AnswerClock();
   private powerRefresh: ReturnType<typeof setInterval> | null = null;
   private retrying = false;
@@ -128,6 +128,7 @@ export class RpgGame {
     this.world = new DungeonWorld(canvas);
     this.world.onLootPickup = pickup => { if (pickup.kind === 'relic' && !this.muted) dungeonSound.loot(); };
     this.world.onSound = sound => { if (!this.muted) dungeonSound.world(sound); };
+    this.world.onAreaEnter = name => { this.areaName = name; this.renderAreaLabel(); };
     this.root.id = 'rpg-ui';
     this.root.innerHTML = `
       <header class="rpg-top"><div class="rpg-location"><span class="rpg-eyebrow">INSTITUTE <b>◆</b> THE SUNKEN VAULT</span><h1 id="rpg-region">The Embercrypt</h1><p id="rpg-room">A new adventure awaits</p></div>
@@ -282,14 +283,20 @@ export class RpgGame {
     this.world.setEncounter(index, this.state.expedition.regionId, combat.enemies.length, combat.enemies);
     dungeonSound.setAmbience(RPG_REGIONS.find(region => region.id === this.state!.expedition!.regionId)?.environment ?? 'vault');
   }
+  /** The area the hero stands in, and how far the expedition has come. */
+  private renderAreaLabel(): void {
+    const expedition = this.state?.expedition;
+    const region = RPG_REGIONS.find(r => r.id === expedition?.regionId) ?? RPG_REGIONS[0];
+    this.el('rpg-room').textContent = expedition && !expedition.cleared
+      ? `${this.areaName || region.subtitle} · ${expedition.encounterIndex + 1} / ${expedition.encountersTotal}` : region.subtitle;
+  }
   private renderState(): void {
     const s = this.state; if (!s || this.disposed) return;
     const expedition = s.expedition;
     const region = RPG_REGIONS.find(r => r.id === expedition?.regionId) ?? RPG_REGIONS[0];
-    const roomNames = Array.from({length:6}, (_, index) => getRoomLayout(index, region.id).name);
     this.el('rpg-region').textContent = region.name;
-    this.el('rpg-room').textContent = expedition && !expedition.cleared ? `${roomNames[expedition.encounterIndex]} · ${expedition.encounterIndex + 1} / ${expedition.encountersTotal}` : region.subtitle;
-    this.el('rpg-route').innerHTML = Array.from({ length: 6 }, (_, i) => `<span class="${expedition && (expedition.cleared || i < expedition.encounterIndex) ? 'complete' : i === expedition?.encounterIndex ? 'current' : ''}" title="${roomNames[i]}">${i === 5 ? '♜' : '◆'}</span>`).join('');
+    this.renderAreaLabel();
+    this.el('rpg-route').innerHTML = Array.from({ length: 6 }, (_, i) => `<span class="${expedition && (expedition.cleared || i < expedition.encounterIndex) ? 'complete' : i === expedition?.encounterIndex ? 'current' : ''}" title="${i === 5 ? esc(region.bossName) : `Pack ${i + 1}`}">${i === 5 ? '♜' : '◆'}</span>`).join('');
     this.el('rpg-level').textContent = String(s.level);
     const xpFill = this.el('rpg-xp-fill');
     const previousWidth = xpFill.style.width || '0%';

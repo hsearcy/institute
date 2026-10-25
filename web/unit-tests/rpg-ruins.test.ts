@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'bun:test';
 import { Vector3 } from 'three';
-import { isRuinFootprintClear, ruinGeometry, type RuinKind } from '../src/rpg/world/ruins';
+import { ruinGeometry, type RuinKind } from '../src/rpg/world/ruins';
 
 const kinds: RuinKind[] = ['column-stump', 'fallen-column', 'arch-remnant'];
 test('Architectural fractures are closed, consistently wound solids with finite surface UVs', () => {
@@ -33,12 +33,4 @@ test('Architectural fractures are closed, consistently wound solids with finite 
       assert(positions.count / 3 < 3500, 'A remnant must stay within the geometry budget');
     } finally { geometry.dispose(); }
   }
-});
-
-test('Ruin placement rejects full footprint overlap with pits, travel, tombs and braziers', () => {
-  assert.equal(isRuinFootprintClear(3, { minX: 4.6, maxX: 5.2, minZ: 2, maxZ: 3 }), false);
-  assert.equal(isRuinFootprintClear(1, { minX: .9, maxX: 1.6, minZ: 8.5, maxZ: 9.5 }), false);
-  assert.equal(isRuinFootprintClear(1, { minX: 9.1, maxX: 9.8, minZ: -7.2, maxZ: -6.8 }), false);
-  assert.equal(isRuinFootprintClear(1, { minX: 7.8, maxX: 8.5, minZ: 3, maxZ: 3.5 }), false);
-  assert.equal(isRuinFootprintClear(1, { minX: -10.6, maxX: -9.5, minZ: 1.25, maxZ: 3.25 }), true);
 });

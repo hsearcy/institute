@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { getRoomLayout } from './roomLayout';
 
 export type OutdoorKind = 'forest' | 'coast' | 'quarry' | 'garden';
 const outdoorKinds = new Map<string, OutdoorKind>([['mosswood','forest'],['tidebreak','coast'],['old-quarry','quarry'],['kingsgarden','garden']]);
@@ -12,11 +11,34 @@ export const outdoorLight = {
   garden: {sky:0x8a9a96, fog:0x9bac9e, sun:0xffe4b9, ground:0x344d36, intensity:2.4},
 } satisfies Record<OutdoorKind, {sky:number;fog:number;sun:number;ground:number;intensity:number}>;
 
-/** A whole destination, with room batches culled by the main camera. Source
- * textures are shared within this destination and released when it is replaced. */
-export function createOutdoorWorld(regionId: string): THREE.Group {
+export type OutdoorMaterials = Record<'ground' | 'path' | 'rock' | 'stone' | 'bark' | 'leaves' | 'grass' | 'wood' | 'iron' | 'water' | 'foam' | 'flower', THREE.MeshStandardMaterial>;
+export type OutdoorHelpers = {
+  random: () => number;
+  add: (g: THREE.BufferGeometry, m: THREE.Material, x: number, y: number, z: number, sx?: number, sy?: number, sz?: number, turn?: number) => void;
+  block: (m: THREE.Material, x: number, y: number, z: number, w: number, h: number, d: number, turn?: number) => void;
+  boulder: (x: number, z: number, w: number, h: number, d: number, y?: number) => void;
+  branch: (a: THREE.Vector3, b: THREE.Vector3, r1: number, r2: number) => void;
+  tuft: (x: number, z: number, size: number) => void;
+  crown: (x: number, y: number, z: number, size: number) => void;
+  tree: (x: number, z: number, height: number) => void;
+  ruinedColumn: (x: number, z: number, h: number) => void;
+  fence: (x: number, z: number, length: number) => void;
+  arch: (x: number, z: number) => void;
+  fountain: (x: number, z: number) => void;
+  materials: OutdoorMaterials;
+};
+export type OutdoorKit = {
+  readonly kind: OutdoorKind;
+  readonly materials: OutdoorMaterials;
+  /** Draws a piece of scenery with the kit and returns it merged by material. */
+  build(seed: number, draw: (helpers: OutdoorHelpers) => void): THREE.Group;
+  dispose(): void;
+};
+
+/** The materials and handmade scenery shapes of one outdoor region. Every
+ * piece it builds shares the source textures; dispose() releases them. */
+export function createOutdoorKit(regionId: string): OutdoorKit {
   const kind = outdoorKind(regionId)!;
-  const world = new THREE.Group(); world.name = `Outdoor-${kind}`;
   const textures: THREE.Texture[] = [], materials: THREE.Material[] = [];
   const loader = new THREE.TextureLoader();
   const texture = (name: string, srgb: boolean) => {
@@ -41,21 +63,21 @@ export function createOutdoorWorld(regionId: string): THREE.Group {
   const iron = mat('forged-iron',0x48433c,{metalness:.6,roughness:.67,vertexColors:true});
   const water = mat('water',kind === 'garden' ? 0x396c68 : 0x357a88,{roughness:.32,metalness:.28});
   const foam = mat('shore-foam',0xc6d6cc,{roughness:1,transparent:true,opacity:.45});
+  // Worn trails and clearings: the walkable floor reads apart from the wild ground.
+  const path = mat('worn-path',kind === 'forest' ? 0xa8956f : kind === 'garden' ? 0xc2b597 : kind === 'coast' ? 0xe0d3b4 : 0xc9ab86,{map:kind === 'coast' ? groundMap : rockMap,normalMap:groundNormal,normalScale:new THREE.Vector2(.3,.3),vertexColors:true});
   const flower = mat('wildflowers',kind === 'garden' ? 0xb2a1c0 : 0xc2b78e,{vertexColors:true});
-  const batches = new Map<string,{material:THREE.Material;geometries:THREE.BufferGeometry[];room:number}>();
-  let seed = [...regionId].reduce((n,c)=>Math.imul(n,31)+c.charCodeAt(0)|0,1847);
+  const batches = new Map<THREE.Material, THREE.BufferGeometry[]>();
+  let seed = 1;
   const random=()=>{seed=Math.imul(seed,1664525)+1013904223|0;return(seed>>>0)/4294967296;};
-  let room = 0;
   const add=(g:THREE.BufferGeometry,m:THREE.Material,x:number,y:number,z:number,sx=1,sy=1,sz=1,turn=0)=>{
-    g.scale(sx,sy,sz);g.rotateY(turn);g.translate(x,y,z-room*20);
+    g.scale(sx,sy,sz);g.rotateY(turn);g.translate(x,y,z);
     if ((m as THREE.MeshStandardMaterial).vertexColors) {
       const p=g.getAttribute('position'),authoredColors=g.getAttribute('color'),colors=new Float32Array(p.count*3),shade=.82+random()*.32;
       for(let i=0;i<p.count;i++) {const v=shade*(.9+.1*Math.sin(p.getX(i)*3.2+p.getZ(i)*4.7));colors[i*3]=v*(authoredColors?.getX(i)??1);colors[i*3+1]=v*(authoredColors?.getY(i)??1);colors[i*3+2]=v*(authoredColors?.getZ(i)??1);}
       g.setAttribute('color',new THREE.BufferAttribute(colors,3));
     }
-    const key=`${room}:${m.uuid}`;
-    if(!batches.has(key))batches.set(key,{material:m,geometries:[],room});
-    batches.get(key)!.geometries.push(g);
+    if(!batches.has(m))batches.set(m,[]);
+    batches.get(m)!.push(g);
   };
   const block=(m:THREE.Material,x:number,y:number,z:number,w:number,h:number,d:number,turn=0)=>add(new THREE.BoxGeometry(w,h,d),m,x,y,z,1,1,1,turn);
   const boulder=(x:number,z:number,w:number,h:number,d:number,y=0)=>{
@@ -146,103 +168,24 @@ export function createOutdoorWorld(regionId: string): THREE.Group {
       add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),8,.025,3,false),water,0,0,0);
     }
   };
-  for(room=0;room<6;room++){
-    const layout=getRoomLayout(room,regionId);
-    const depth=room===0||room===5?80:20,centerZ=room===0?30:room===5?-30:0;
-    const g=new THREE.PlaneGeometry(80,depth,80,depth);g.rotateX(-Math.PI/2);
-    const p=g.getAttribute('position'),uv=g.getAttribute('uv');
-    for(let i=0;i<p.count;i++){
-      const x=p.getX(i),z=p.getZ(i)+centerZ;
-      const edge=Math.max(0,Math.abs(x)-8.2);
-      const shore = kind === 'coast' ? Math.max(0, x - (10 + Math.sin(z*.42)*.4)) * .8 : 0;
-      p.setY(i,-.035+Math.min(edge,5)*.08*Math.sin(x*.6+z*.36)-shore);
-      uv.setXY(i,x/5,(z-room*20)/5);
-    }g.computeVertexNormals();add(g,ground,0,0,centerZ);
-    // The open route stays empty; irregular scenery lies beyond the combat bounds.
-    for(const side of [-1,1]){
-      for(let n=0;n<8;n++){
-        const z=-9+n*2.65+(random()-.5),x=side*(9.3+random()*3.4);
-        boulder(x,z,.6+random(),.35+random()*.55,.6+random());
-        for(let k=0;k<8;k++)tuft(x+(random()-.5)*2.8,z+(random()-.5)*2.1,.25+random()*.45);
+  const kitMaterials: OutdoorMaterials = {ground,path,rock,stone,bark,leaves,grass,wood,iron,water,foam,flower};
+  const helpers: OutdoorHelpers = {random,add,block,boulder,branch,tuft,crown,tree,ruinedColumn,fence,arch,fountain,materials:kitMaterials};
+  return {
+    kind, materials: kitMaterials,
+    build(pieceSeed, draw) {
+      seed = pieceSeed | 0 || 1; batches.clear();
+      draw(helpers);
+      const group = new THREE.Group();
+      for (const [material, geometries] of batches) {
+        const geometry = mergeGeometries(geometries, false); geometries.forEach(g => g.dispose());
+        if (!geometry) continue;
+        const mesh = new THREE.Mesh(geometry, material); mesh.name = `${kind}-${material.name}`;
+        mesh.castShadow = material !== ground && material !== path && material !== water && material !== foam && material !== grass; mesh.receiveShadow = true;
+        mesh.matrixAutoUpdate = false; group.add(mesh);
       }
-    }
-    if(kind==='forest'){
-      for(const side of [-1,1])for(let n=0;n<5;n++){
-        const x=side*(12.2+random()*3.8),z=-8+n*4.3;
-        tree(x,z,side<0?5.5+random()*2.8:3.3+random()*1.6);
-        if(n%2===0)tree(x+side*5,z+1.6,7+random()*3);
-      }
-      // A different focal ruin at each stop.
-      if(room%3===0)arch(-9,-4);
-      else if(room%3===1){branch(new THREE.Vector3(-12,.6,-5),new THREE.Vector3(-9,.4,2),.7,.5);ruinedColumn(-10,4,2.4);}
-      else{for(let n=0;n<3;n++)ruinedColumn(-10+n*.8,-5+n*2,1.4+n*.6);}
-      for(let n=0;n<6;n++)crown(-9.5,.3,-8+n*3,.9);
-    }else if(kind==='coast'){
-      // The sea is open to the right; the walkable shore has a low broken edge.
-      add(new THREE.PlaneGeometry(42,depth).rotateX(-Math.PI/2),water,31,-.48,centerZ);
-      for(let n=0;n<9;n++){
-        boulder(-12-random()*3,-9+n*2.5,2+random(),1.4+random()*2,1.8+random());
-        boulder(10.5+random(),-9+n*2.5,.7+random(),.25+random()*.5,.9+random());
-        const waveX=12.5+random()*10, waveZ=-8+n*2.4;
-        const points=Array.from({length:9},(_,i)=>new THREE.Vector3(waveX+Math.sin(i*.6)*.25,-.46,waveZ+i*.55));
-        add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),16,.025,3,false),foam,0,0,0);
-      }
-      if(room%2===0){
-        // Weathered pier with slats and broken posts.
-        for(let n=0;n<12;n++)block(wood,11.9+n*.3,.06,-4, .26,.16,2.2,.02*Math.sin(n));
-        fence(11.3,-5.2,2.4);fence(15.6,-5.2,2.4);
-      }else{for(let n=0;n<4;n++)block(wood,-9.3,.24+n*.13,-3+n*.6,2.8,.2,.24,.35+n*.12);}
-      if(room===5){ruinedColumn(-10,-7,5);arch(-10,1);}
-    }else if(kind==='quarry'){
-      for(const side of [-1,1])for(let n=0;n<6;n++){
-        const z=-9+n*3.7;
-        for(let tier=0;tier<3;tier++)boulder(side*(11.8+tier*2.3),z,2.4,1.0+tier*.6,2.0,tier*1.4);
-      }
-      // Old cart rails and supports stop outside the combat lane.
-      for(const x of [-10.7,-9.6])block(iron,x,.08,0,.09,.13,19);
-      for(let n=0;n<14;n++)block(wood,-10.15,.02,-9+n*1.4,1.7,.1,.19);
-      block(wood,-10.15,.8,room%2?-3:3,1.5,.75,2.0);
-      for(const x of [-10.85,-9.45])for(const z of [-.65,.65])add(new THREE.CylinderGeometry(.3,.3,.12,9).rotateZ(Math.PI/2),iron,x,.35,(room%2?-3:3)+z);
-      if(room%2===0){block(wood,-10,2,-6,.45,4,.5);block(wood,-10,3.8,-4,.45,.4,4.4);block(iron,-10,2.9,-2,.07,1.5,.07);}
-    }else{
-      for(const side of [-1,1]){
-        for(let n=0;n<5;n++){
-          const z=-8+n*4;ruinedColumn(side*10.7,z, n%2?1.5:3.3);
-          block(stone,side*10.7,.35,z+1.6,.75,.6,2.2);
-          crown(side*9.8,.8,z+1.4,1.0);
-          for(let k=0;k<5;k++)add(new THREE.IcosahedronGeometry(.11,0),flower,side*(9.2+random()*1.1),.6+random()*.4,z+random()*2);
-        }
-        for(let n=0;n<3;n++)tree(side*(14+random()*2),-7+n*7,4.8+random()*1.5);
-      }
-      if(room%2===0)fountain(-9,-4);else arch(-10,-4);
-      // Worn, missing paving stones threaded with grass, outside hero travel.
-      for(let n=0;n<20;n++){const x=(n%2?-1:1)*(7.8+random()*.6),z=-8+random()*16;block(stone,x,.015,z,.55+random()*.5,.04,.6+random()*.4,random()*.15);}
-    }
-    // Route marker beyond each battle; geometry never crosses the travel lane.
-    for(const side of [-1,1]){
-      const x=layout.doorX+side*2.5;
-      if(kind==='garden'||kind==='forest')ruinedColumn(x,-9.3,1.3);
-      else{boulder(x,-9.3,.55,.7,.5);block(wood,x,1.15,-9.3,.11,.8,.13);}
-    }
-    if(room===5){
-      // Tall, fractured stones frame the guardian, without hiding its body.
-      for(const side of [-1,1]){ruinedColumn(side*6.2,-8.6,3.6);boulder(side*7.2,-8.7,.8,1.1,.65);}
-    }
-  }
-  for(const {material,geometries,room:roomIndex} of batches.values()){
-    const geometry=mergeGeometries(geometries,false);geometries.forEach(g=>g.dispose());
-    if(!geometry)continue;
-    const mesh=new THREE.Mesh(geometry,material);mesh.name=`${kind}-${roomIndex}-${material.name}`;
-    mesh.userData.room=roomIndex;mesh.userData.continuousGround=material===ground||material===water;mesh.castShadow=material!==ground&&material!==water&&material!==foam&&material!==grass;mesh.receiveShadow=true;
-    world.add(mesh);
-  }
-  world.userData.ownedTextures=textures;world.userData.ownedMaterials=materials;
-  return world;
-}
-
-export function disposeOutdoorWorld(world:THREE.Group):void {
-  world.traverse(node=>{if(node instanceof THREE.Mesh)node.geometry.dispose();});
-  for(const m of world.userData.ownedMaterials ?? [])m.dispose();
-  for(const t of world.userData.ownedTextures ?? [])t.dispose();
-  world.removeFromParent();
+      batches.clear();
+      return group;
+    },
+    dispose() { materials.forEach(material => material.dispose()); textures.forEach(map => map.dispose()); },
+  };
 }

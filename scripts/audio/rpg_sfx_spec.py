@@ -40,6 +40,10 @@ SPEC = {
     "swing": ("a skeleton warrior swinging a rusty sword: a quick whoosh with a bony rattle" + FX, .6, 3, .65, "sfx"),
     "ward": ("a magic shield blocking a sword strike: a bright glassy energy clang with a shimmering hum ripple" + FX, .8, 3, .6, "sfx"),
     "collapse": ("a skeleton collapsing onto a stone floor: bones clattering and scattering, pieces of armor falling" + FX, 1.0, 3, .6, "sfx"),
+    # Idle sounds of an unseen pack, heard louder as the hero comes near.
+    "lurk-rattle": ("skeletons waiting in a dark stone hall out of sight: a dry restless rattle of bones and a little armor clink, then quiet, slightly distant" + FX, 1.4, 3, .6, "sfx"),
+    "lurk-growl": ("a monster lurking in a dark dungeon room: one low rumbling growl, a little distant, creepy but not scary for kids" + FX, 1.5, 2, .6, "sfx"),
+    "lurk-scrape": ("a rusty sword tip dragged slowly across a stone floor in a dungeon room nearby, with a faint bony shuffle, slightly distant" + FX, 1.4, 2, .6, "sfx"),
     "alert": ("a horde of skeleton warriors noticing an intruder: a sudden bony rattle, swords scraping, one deep low war drum hit" + FX, 1.5, 1, .55, "sfx"),
 
     # The hero.

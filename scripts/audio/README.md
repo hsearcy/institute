@@ -1,6 +1,6 @@
 # RPG sound design
 
-The RPG uses 68 clips made with ElevenLabs sound generation
+The RPG uses 76 clips made with ElevenLabs sound generation
 (`eleven_text_to_sound_v2`). Every prompt is in `rpg_sfx_spec.py`.
 
 | Group | Clips |
@@ -9,6 +9,7 @@ The RPG uses 68 clips made with ElevenLabs sound generation
 | Contacts | `hit-fire`, `hit-frost`, `hit-storm`, `hit-blade` (3 takes each), `hit-heavy` (2) for brutes |
 | Area blasts | `blast-fire` (meteor), `blast-frost` (frost guardian), `blast-storm` (thunderclap) |
 | Horde | `swing`, `ward`, `collapse` (3 takes each), `alert` when combat starts |
+| Unseen pack | `lurk-rattle` (3), `lurk-growl` (2), `lurk-scrape` (2): idle sounds while the hero searches, louder as he comes near, panned by screen side |
 | Hero | `step` (4 takes, on each footfall of the run), `charge-ember/frost/storm` on a correct answer |
 | Rewards | `soul` (3), `relic-drop`, `relic-pickup`, `reward`, `room-clear`, `level-up`, `boss-defeat` |
 | Interface | `ui-click`, `ui-select`, `ui-open`, `answer-correct`, `answer-wrong` (soft, never a buzzer) |

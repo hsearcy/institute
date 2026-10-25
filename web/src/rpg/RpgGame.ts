@@ -32,6 +32,7 @@ import { nextSpellGoal } from './nextSpell';
 import { skillUpgradePreview } from './skillPreview';
 import { equippedForgeReady } from './forgeReady';
 import { Celebrations, type CelebrationEvent } from './Celebrations';
+import { Minimap } from './minimapView';
 import './hud-rewards.css';
 import './fact-ladder.css';
 import { AnswerClock } from './AnswerClock';
@@ -57,6 +58,7 @@ const sessionKey = `institute:rpg:problem:v1:${API}:${PROFILE}`;
 /** The adventure is a client of the existing tutor; it never chooses math topics. */
 export class RpgGame {
   readonly world: DungeonWorld;
+  private readonly minimap: Minimap;
   private root = document.createElement('div');
   private state: RpgState | null = null;
   private session: Session | null = null;
@@ -151,6 +153,10 @@ export class RpgGame {
       <div class="rpg-connection" id="rpg-connection" hidden role="alert"><span>Reconnecting to your adventure…</span><button data-action="retry">Try again</button></div>
       <div id="rpg-overlay" class="rpg-overlay" hidden><section class="rpg-dialog" role="dialog" aria-modal="true" aria-labelledby="rpg-dialog-title" tabindex="-1"><button class="rpg-dialog-close" data-action="close" aria-label="Close">×</button><div id="rpg-dialog-content"></div></section></div>
       <button class="rpg-parent" data-action="parent">Parent journal</button><span id="rpg-save-status" class="rpg-save-status">◆ Adventure saved on your server</span>`;
+    this.minimap = new Minimap(this.root, () => this.world.scout, {
+      visible: () => this.playing && !this.panel && !this.tutorialState,
+      onLurk: (gain, pan) => { if (!this.muted) dungeonSound.lurk(gain, pan); },
+    });
     this.celebrations = new Celebrations(this.root, {
       soundEnabled: () => !this.muted,
       onStart: event => { if (event.kind === 'level') this.root.classList.add('rpg-level-celebrating'); },
@@ -1352,6 +1358,6 @@ export class RpgGame {
     if (this.healthFrame !== null) cancelAnimationFrame(this.healthFrame);
     if (this.xpGainTimer) clearTimeout(this.xpGainTimer);
     if (this.powerRefresh) clearInterval(this.powerRefresh);
-    this.celebrations.dispose(); dungeonSound.dispose(); this.world.dispose(); this.root.remove(); document.body.classList.remove('rpg-mode');
+    this.minimap.dispose(); this.celebrations.dispose(); dungeonSound.dispose(); this.world.dispose(); this.root.remove(); document.body.classList.remove('rpg-mode');
   }
 }

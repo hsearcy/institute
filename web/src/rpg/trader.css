@@ -1,0 +1,61 @@
+/* Tobble's stall: the same dark stone, brass and ember gold as the camp workshop. */
+#rpg-ui .rpg-trader { display:grid; gap:18px; }
+#rpg-ui .rpg-trader-intro { display:grid; grid-template-columns:112px minmax(0,1fr); gap:18px; align-items:center; padding:14px 18px; border:1px solid #9d7b4566; border-radius:10px; background:radial-gradient(ellipse at 0% 50%,#ff9d3a26,transparent 60%),linear-gradient(#1b1712,#11161b); }
+#rpg-ui .rpg-trader-portrait { width:112px; height:112px; border-radius:50%; background:url('/assets/rpg/trader/trader.webp') center/cover; box-shadow:0 0 0 2px #d7ad67,0 0 0 6px #2a2116,0 0 24px #ff9d3a55; }
+#rpg-ui .rpg-trader-intro small { color:#d7ad67; font-size:10px; letter-spacing:2px; }
+#rpg-ui .rpg-trader-intro h3 { margin:3px 0 6px; font:20px 'Cinzel',Georgia,serif; color:#f3dcb0; }
+#rpg-ui .rpg-trader-says { margin:0; color:#e6d6bb; font:italic 15px/1.5 Georgia,serif; }
+#rpg-ui .rpg-trader-wares { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+#rpg-ui .rpg-trader-ware { display:flex; flex-direction:column; gap:10px; padding:16px; border:1px solid #9d7b4555; border-radius:9px; background:radial-gradient(at top,#5a432244,transparent 65%),#141b23; }
+#rpg-ui .rpg-trader-ware.locked { opacity:.78; }
+#rpg-ui .rpg-trader-ware h3 { margin:0 0 4px; font-size:18px; }
+#rpg-ui .rpg-trader-ware p { margin:0; font-size:13px; line-height:1.5; color:#d2c4ad; }
+#rpg-ui .rpg-trader-ware footer { margin-top:auto; display:grid; grid-template-columns:auto 1fr; gap:8px 12px; align-items:center; }
+#rpg-ui .rpg-trader-ware footer small { grid-column:1/-1; color:#bfb3a2; font-size:12px; }
+#rpg-ui .rpg-trader-owned { display:block; margin-top:6px; color:#f1cd84; font-size:12px; }
+#rpg-ui .rpg-trader-price { font:22px 'Cinzel',Georgia,serif; color:#f4cf86; text-shadow:0 0 12px #ffb54c55; }
+#rpg-ui .rpg-trader-ware-art { display:block; width:96px; height:96px; margin:0 auto; border-radius:50%; background:#0b0b0b center/cover; box-shadow:inset 0 0 18px #000,0 0 0 1px #a17a3a88,0 0 18px #ffae4a22; }
+#rpg-ui .rpg-trader-ware-art.relic { display:grid; place-items:center; background:radial-gradient(#3b2f1f,#0d0f12); }
+#rpg-ui .rpg-trader-ware-art.relic .rpg-relic-art { width:70px; height:84px; display:block; }
+#rpg-ui .rpg-trader-dice { font-size:44px; color:#f0c97e; text-shadow:0 0 14px #ffae4a88; }
+#rpg-ui .rpg-trader-relics { padding:14px 16px; border:1px dashed #a17a3a88; border-radius:9px; background:#10151b; }
+#rpg-ui .rpg-trader-relics h3 { margin:0 0 10px; font-size:16px; }
+#rpg-ui .rpg-trader-relics div { display:flex; flex-wrap:wrap; gap:10px; }
+#rpg-ui .rpg-trader-relics button { display:grid; justify-items:center; gap:4px; width:112px; padding:8px; }
+#rpg-ui .rpg-trader-relics .rpg-relic-art { width:56px; height:64px; display:block; }
+#rpg-ui .rpg-trader-relics span:not(.rpg-relic-art) { font-size:12px; }
+#rpg-ui .rpg-trader-count,#rpg-ui .rpg-trader-done { display:grid; grid-template-columns:150px minmax(0,1fr); gap:22px; align-items:start; padding:18px; border:1px solid #cfaa6588; border-radius:10px; background:radial-gradient(ellipse at 15% 20%,#ffa64a1f,transparent 55%),linear-gradient(#1a1610,#11161b); }
+#rpg-ui .rpg-trader-count>.rpg-trader-ware-art,#rpg-ui .rpg-trader-done>.rpg-trader-ware-art { width:150px; height:150px; }
+#rpg-ui .rpg-trader-question { margin:0 0 12px; font:500 20px/1.45 Georgia,serif; color:#fff0d6; }
+#rpg-ui .rpg-trader-ledger { display:inline-grid; gap:2px; padding:10px 18px 12px; border-radius:6px; background:repeating-linear-gradient(0deg,#e9d8b4,#e9d8b4 27px,#d8c39a 28px); color:#3a2a14; box-shadow:0 6px 18px #0008,inset 0 0 22px #a07a3a55; font-family:'Cinzel',Georgia,serif; }
+#rpg-ui .rpg-trader-ledger span { display:grid; grid-template-columns:22px 70px auto; align-items:baseline; gap:8px; }
+#rpg-ui .rpg-trader-ledger i { font-style:normal; font-size:22px; text-align:center; }
+#rpg-ui .rpg-trader-ledger b { font-size:28px; text-align:right; font-variant-numeric:tabular-nums; }
+#rpg-ui .rpg-trader-ledger small { font:12px Georgia,serif; color:#6a5230; }
+#rpg-ui .rpg-trader-ledger .total { border-top:2px solid #3a2a14; padding-top:2px; }
+#rpg-ui .rpg-trader-ledger .total b { color:#8a4d06; }
+#rpg-ui .rpg-trader-ledger .total b.empty { color:#a4864f; }
+#rpg-ui .rpg-trader-work { display:grid; grid-template-columns:auto minmax(0,1fr); gap:22px; align-items:start; }
+#rpg-ui .rpg-trader-form { display:flex; gap:10px; margin:0 0 8px; }
+/* While counting, Tobble's greeting folds away so the sum stays in view. */
+#rpg-ui .rpg-trader.counting .rpg-trader-says { display:none; }
+#rpg-ui .rpg-trader.counting .rpg-trader-intro { grid-template-columns:56px minmax(0,1fr); padding:8px 14px; }
+#rpg-ui .rpg-trader.counting .rpg-trader-portrait { width:56px; height:56px; }
+#rpg-ui .rpg-trader-form input { width:120px; font:26px 'Cinzel',Georgia,serif; text-align:center; color:#fff0d6; background:#0d1214; border:1px solid #cfaa65; border-radius:6px; }
+#rpg-ui .rpg-trader-hint { margin:4px 0 10px; padding:9px 12px; border-left:3px solid #f0c97e; background:#2a2116aa; color:#f6e3bf; font-size:15px; line-height:1.5; }
+#rpg-ui .rpg-trader-keys { display:grid; grid-template-columns:repeat(6,48px); gap:6px; margin:8px 0 12px; }
+#rpg-ui .rpg-trader-keys button { min-height:44px; padding:0; font-size:18px; }
+#rpg-ui .rpg-trader-actions { display:flex; gap:10px; flex-wrap:wrap; }
+#rpg-ui .rpg-trader-done h3 { margin:4px 0 6px; font:30px 'Cinzel',Georgia,serif; color:#f4cf86; }
+#rpg-ui .rpg-trader-done p { margin:0 0 10px; color:#e6d6bb; font-size:15px; }
+#rpg-ui .rpg-trader-left { color:#f1cd84 !important; font-size:17px !important; }
+@media(max-width:760px) {
+  #rpg-ui .rpg-trader-wares { grid-template-columns:minmax(0,1fr); }
+  #rpg-ui .rpg-trader-intro { grid-template-columns:72px minmax(0,1fr); gap:12px; padding:12px; }
+  #rpg-ui .rpg-trader-portrait { width:72px; height:72px; }
+  #rpg-ui .rpg-trader-count,#rpg-ui .rpg-trader-done { grid-template-columns:minmax(0,1fr); padding:14px; }
+  #rpg-ui .rpg-trader-count>.rpg-trader-ware-art,#rpg-ui .rpg-trader-done>.rpg-trader-ware-art { width:96px; height:96px; }
+  #rpg-ui .rpg-trader-keys { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  #rpg-ui .rpg-trader-work { grid-template-columns:minmax(0,1fr); gap:12px; }
+  #rpg-ui .rpg-trader-question { font-size:17px; }
+}

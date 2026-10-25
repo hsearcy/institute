@@ -138,7 +138,9 @@ export interface RpgCombatResult {
   defeatedIds: string[]; encounterCleared: boolean; remainingEnemies: number;
   damage: number; coverage: number; powerPercent?: number;
 }
-export interface RpgExpedition { id: string; regionId: string; encounterIndex: number; encountersTotal: number; cleared: boolean; startedAt: number; combat?: RpgCombatState; tier?: number }
+export interface RpgExpedition { id: string; regionId: string; encounterIndex: number; encountersTotal: number; cleared: boolean; startedAt: number; combat?: RpgCombatState; tier?: number;
+  /** Chests opened this expedition (paying or empty). */
+  chestsOpened?: number }
 export type RpgSpellShape = 'twin-orb' | 'meteor-shower' | 'split-lance'
   | 'aftershock' | 'rift-slash' | 'blazing-wake' | 'volcanic-ground' | 'crystal-bloom'
   | 'frozen-fault' | 'whiteout' | 'glacial-hammer' | 'thunder-web' | 'overcharge' | 'resonance' | 'storm-pillars';
@@ -156,11 +158,17 @@ export interface RpgState {
   totalKills: number; expeditionsCompleted: number; expedition: RpgExpedition | null;
   loot?: RpgLootInstance[]; equippedLootId?: string | null; forgeDust?: number;
   dungeonTier?: number; bestTier?: number; goal?: RpgGoal | null;
+  /** Lucky charms from the wandering trader: each makes the next paying chest hold a relic. */
+  chestCharms?: number;
 }
 export interface RpgReward { xp: number; kills: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; bossDefeated: boolean; spellId: RpgSpellId; combat?: RpgCombatResult; loot?: RpgLootInstance; forgeDust?: number; tier?: number; bossCrazyCoins?: number; bossDimes?: number; spellShape?: RpgSpellShape }
 export interface RpgResolveResult { state: RpgState; reward: RpgReward; duplicate: boolean }
 /** A chest opened with a solved problem: smaller than a fight's reward, sometimes a relic. */
-export interface RpgChestReward { chestId: string; xp: number; forgeDust: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; loot?: RpgLootInstance; tier: number }
+export interface RpgChestReward { chestId: string; xp: number; forgeDust: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; loot?: RpgLootInstance; tier: number;
+  /** The treasure a chest word problem counted (its answer), when it was the chest's contents. */
+  counted?: { treasure: 'dust' | 'gold'; amount: number };
+  /** A lucky charm was used up on this chest. */
+  charm?: boolean }
 export interface RpgChestResult { state: RpgState; reward: RpgChestReward; duplicate: boolean }
 /** Chests one expedition can pay out; more may stand in a big level, but they are empty. */
 export const RPG_CHESTS_PER_EXPEDITION = 8;

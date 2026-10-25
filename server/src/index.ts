@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { Hono, type Context } from "hono";
 import { ensureRpgSchema, createRpgRoutes } from "./rpg.ts";
 import { createRpgEconomyRoutes } from "./rpgEconomy.ts";
+import { createRpgTraderRoutes } from "./rpgTrader.ts";
 import { cors } from "hono/cors";
 import { Database } from "bun:sqlite";
 import Anthropic from "@anthropic-ai/sdk";
@@ -20,6 +21,7 @@ import {
 import { localProblem, type ProblemDraft, type SkillStat } from "./generate.ts";
 import { unlockedTopics, frontierTopics } from "./graph.ts";
 import { problemForTopic, serveProblem, maybeCostume } from "./topicgen.ts";
+import { rememberServed } from "./servedProblems.ts";
 import { topicState } from "./mastery.ts";
 import { TABLE_STEP_UP, UNAIDED_FROM } from "./visuals.ts";
 import { SHOP_PRICES } from "./costume.ts";
@@ -888,6 +890,7 @@ app.route("/rpg", createRpgRoutes(db, applyMiss, (profileId, reward) => {
   saveProfileState(profileId, state);
 }));
 app.route("/rpg", createRpgEconomyRoutes(db));
+app.route("/rpg", createRpgTraderRoutes(db));
 
 app.get("/health", (c) => c.json({ ok: true, model: TUTOR_MODEL, voice: ELEVEN_VOICE }));
 
@@ -898,6 +901,7 @@ app.post("/tutor/first", async (c) => {
   const { topic, difficulty } = selectFor(profileId, null);
   const problem = stampId(serveProblem(topic, difficulty));
   notePrompt(profileId, problem.prompt);
+  rememberServed(db, profileId, [problem]);
   return c.json({ ...problem, newTopic: needsDemo(profileId, topic.id) || undefined });
 });
 
@@ -905,12 +909,15 @@ app.post("/tutor/first", async (c) => {
 // current problem. Spec names this /next-problems; /tutor/branches is kept as an alias.
 async function nextProblems(c: Context) {
   const { profileId, current } = BranchesRequestSchema.parse(await c.req.json());
+  let branches: { right: Problem; wrong: Problem };
   try {
-    return c.json(await llmBranches(profileId, current));
+    branches = await llmBranches(profileId, current);
   } catch (e) {
     console.warn("[tutor] LLM branches failed; local fallback:", (e as Error)?.message);
-    return c.json(localBranches(profileId, current));
+    branches = localBranches(profileId, current);
   }
+  rememberServed(db, profileId, [branches.right, branches.wrong]);
+  return c.json(branches);
 }
 app.post("/next-problems", nextProblems);
 app.post("/tutor/branches", nextProblems);

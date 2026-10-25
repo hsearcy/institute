@@ -302,3 +302,5 @@ export * from "./topics.ts";
 export * from "./rpg";
 export * from "./rpgLoot";
 export * from "./rpgEconomy";
+export * from "./chestStory";
+export * from "./rpgTrader";

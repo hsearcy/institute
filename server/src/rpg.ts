@@ -2,9 +2,10 @@ import type { Database } from 'bun:sqlite';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
-  rpgRollBossBonus, rpgLootSpellShape, RPG_CHESTS_PER_EXPEDITION, RPG_CHEST_XP, rpgEquippedLoot, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellAvailable, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER,
+  rpgRollBossBonus, rpgLootSpellShape, RPG_CHESTS_PER_EXPEDITION, RPG_CHEST_XP, rpgEquippedLoot, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellAvailable, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER, rpgChestStory,
   type RpgState, type RpgReward, type RpgResolveResult, type RpgChestResult, type RpgChestReward,
 } from '@institute/shared';
+import { servedProblem } from './servedProblems';
 
 /** Additive tables only: never migrate, reset, or award learning state. */
 export function ensureRpgSchema(db: Database): void {
@@ -226,18 +227,27 @@ export function openRpgChest(db: Database, input: z.infer<typeof ChestSchema>): 
     const full = opened.count < RPG_CHESTS_PER_EXPEDITION;
     // One chest in four holds a relic from the hero's current collection pool.
     const pool = RPG_ITEMS.filter(item => item.id !== 'apprentice' && item.requiredClears <= state.expeditionsCompleted);
-    const item = full && pool.length && Math.random() < .25 ? pool[Math.floor(Math.random() * pool.length)]! : null;
+    // A trader's lucky charm makes the next paying chest hold a relic.
+    const charm = full && pool.length > 0 && (state.chestCharms ?? 0) > 0;
+    if (charm) state.chestCharms = (state.chestCharms ?? 0) - 1;
+    const item = full && pool.length && (charm || Math.random() < .25) ? pool[Math.floor(Math.random() * pool.length)]! : null;
     const duplicateItem = !!item && state.inventory.includes(item.id);
     const loot = item ? rpgCreateLoot(item.id, tier, Math.random) : undefined;
     if (loot) state.loot!.push(loot);
     if (item && !duplicateItem) state.inventory.push(item.id);
-    const xp = full ? RPG_CHEST_XP : 0, forgeDust = full ? rpgRoomForgeDust(tier) : 0;
+    // A chest word problem pays the forge dust its story counted, recomputed
+    // here from the problem the tutor served (never from the client).
+    const served = servedProblem(db, body.profileId, body.problemId);
+    const story = served ? rpgChestStory({ id: body.problemId, ...served }, tier, full) : null;
+    const xp = full ? RPG_CHEST_XP : 0, forgeDust = full ? story?.forgeDust ?? rpgRoomForgeDust(tier) : 0;
+    expedition.chestsOpened = opened.count + 1;
     const oldLevel = state.level;
     state.xp += xp; state.forgeDust = (state.forgeDust ?? 0) + forgeDust;
     Object.assign(state, rpgLevel(state.xp));
     const levelsGained = state.level - oldLevel;
     state.skillPoints += levelsGained;
-    const reward: RpgChestReward = { chestId: body.chestId, xp, forgeDust, levelUp: levelsGained > 0, levelsGained, item, newItems: item && !duplicateItem ? [item] : [], duplicateItem, loot, tier };
+    const reward: RpgChestReward = { chestId: body.chestId, xp, forgeDust, levelUp: levelsGained > 0, levelsGained, item, newItems: item && !duplicateItem ? [item] : [], duplicateItem, loot, tier,
+      ...(story?.counted != null ? { counted: { treasure: story.treasure, amount: story.counted } } : {}), ...(charm ? { charm: true } : {}) };
     db.query(`INSERT INTO rpg_chest_claims (profile_id, problem_id, expedition_id, chest_id, reward_json, created_at) VALUES (?, ?, ?, ?, ?, ?)`)
       .run(body.profileId, body.problemId, expedition.id, body.chestId, JSON.stringify(reward), Date.now());
     saveRpgState(db, state);

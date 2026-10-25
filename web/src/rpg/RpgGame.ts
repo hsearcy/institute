@@ -1,6 +1,6 @@
 import {chooseNextAdventure, renderNextAdventure, tierSelect, tierRewards, type NextAdventure} from './nextAdventureView';
 import { HeroAssetLoadError } from './world/tripoHeroRuntime';
-import type { Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgReward, RpgChestResult, RpgItem, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
+import type { RpgTraderWareId, RpgTraderResult, Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgReward, RpgChestResult, RpgItem, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
 import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, rpgEncounterCombat, rpgNextRelicHunt, rpgSalvageValue, rpgAnswerPower, ProblemSchema } from '@institute/shared';
 import { fetchState, fetchMastery, redeemCrazyCoin, redeemDime, type Demo } from './tutor';
 import { speak } from './voice';
@@ -39,6 +39,9 @@ import { newRequestId } from './requestId';
 import { RPG_TUTORIAL_PAGES, RPG_TUTORIAL_VERSION, startTutorial as newTutorialState, advanceTutorial, type TutorialState } from './tutorial';
 import { TutorialOverlay } from './TutorialOverlay';
 import { TutorialNarrator } from './TutorialNarrator';
+import { TraderDesk } from './traderView';
+import { chestLockStory, chestRewardText, chestRewardShort } from './chestLock';
+import './chest-story.css';
 
 type Session = {
   expeditionId: string; encounterIndex: number; problem: Problem; firstAttempt: boolean | null;
@@ -50,6 +53,8 @@ type Session = {
   celebrations?: CelebrationEvent[];
   /** The problem is a chest's lock: a correct answer opens this chest instead of casting. */
   chest?: string;
+  /** The same problem told as the chest's story (fixed when the chest is reached). */
+  chestStory?: { text: string; spoken: string } | null;
   pending?: { correct: boolean; assisted: boolean; aided?: boolean; solveMs: number; answerMs?: number; wrongCount?: number; spellId?: RpgSpellId };
 };
 const sessionKey = `institute:rpg:problem:v1:${API}:${PROFILE}`;
@@ -123,6 +128,7 @@ export class RpgGame {
     panel: string; html: string; wide: boolean; scroll: number; controlsHidden: boolean;
     problem: string; topic: string; school: RpgSchoolId; focusedSkill: string | null; detail: boolean;
   } | null = null;
+  private readonly trader = new TraderDesk();
   private favoriteSpells: Record<RpgSchoolId, RpgSpellId> = { ember: 'cleave', frost: 'frost', storm: 'storm' };
 
   constructor(canvas: HTMLCanvasElement) {
@@ -392,7 +398,7 @@ export class RpgGame {
     this.stopClock(); this.saveSession(); this.playing = false; this.el('rpg-controls').hidden = true; this.root.classList.remove('rpg-combat');
     const resume = s.expedition && !s.expedition.cleared;
     if (resume) this.setEncounter();
-    this.showDialog('camp', `<div class="rpg-seal">${icon('sword')}</div><p class="rpg-eyebrow">INSTITUTE PRESENTS</p><h2 id="rpg-dialog-title" class="rpg-title">The Sunken<br><em>Vault</em></h2><p class="rpg-camp-story">Ancient halls. Hidden relics.<br>A little magic goes a long way.</p><div class="rpg-camp-stats"><span>LEVEL <b>${s.level}</b></span><span>RELICS <b>${s.inventory.length}</b></span><span>GUARDIANS <b>${s.expeditionsCompleted}</b></span></div>${s.totalKills === 0 ? `<div class="rpg-starter-spells" aria-label="Your starting sword attack">${(['cleave'] as RpgSpellId[]).map(id => `<button data-spell="${id}" aria-pressed="${s.selectedSpellId === id}" class="${s.selectedSpellId === id ? 'selected' : ''}">${spellArt(id)}<span>${RPG_SPELLS.find(spell => spell.id === id)!.name}</span></button>`).join('')}</div>` : ''}${s.goal ? renderPinnedGoal(s, this.campState) : this.spellGoalCard() ? `<button class="rpg-goal-card" data-action="spell-goal">${this.spellGoalCard()}</button>` : ''}<button class="rpg-primary rpg-large" data-action="begin">${resume ? 'Continue adventure' : 'Enter the dungeon'} <span>→</span></button><button class="rpg-text-button" data-action="map">Choose an expedition</button><button class="rpg-text-button" data-action="tutorial">${icon('help')} How to play · Story & tour</button><div class="rpg-camp-menu"><button data-action="quests">${icon('ring')} Quest board</button><button data-action="merchant">◆ Merchant${this.campState ? ` · ${this.campState.gems} gems` : ''}</button><button data-action="forge">${icon('forge')} Blacksmith</button><button data-action="spellbook">${icon('storm')} Spellbook</button><button data-action="skills">${icon('tree')} Skill trees${s.skillPoints ? ` · ${s.skillPoints} new` : ''}</button><button data-action="inventory">${icon('bag')} Equipment</button><button data-action="parent">Parent journal</button></div><p class="rpg-camp-note">Solve to unleash your spells. Take all the time you need.</p>`);
+    this.showDialog('camp', `<div class="rpg-seal">${icon('sword')}</div><p class="rpg-eyebrow">INSTITUTE PRESENTS</p><h2 id="rpg-dialog-title" class="rpg-title">The Sunken<br><em>Vault</em></h2><p class="rpg-camp-story">Ancient halls. Hidden relics.<br>A little magic goes a long way.</p><div class="rpg-camp-stats"><span>LEVEL <b>${s.level}</b></span><span>RELICS <b>${s.inventory.length}</b></span><span>GUARDIANS <b>${s.expeditionsCompleted}</b></span></div>${s.totalKills === 0 ? `<div class="rpg-starter-spells" aria-label="Your starting sword attack">${(['cleave'] as RpgSpellId[]).map(id => `<button data-spell="${id}" aria-pressed="${s.selectedSpellId === id}" class="${s.selectedSpellId === id ? 'selected' : ''}">${spellArt(id)}<span>${RPG_SPELLS.find(spell => spell.id === id)!.name}</span></button>`).join('')}</div>` : ''}${s.goal ? renderPinnedGoal(s, this.campState) : this.spellGoalCard() ? `<button class="rpg-goal-card" data-action="spell-goal">${this.spellGoalCard()}</button>` : ''}<button class="rpg-primary rpg-large" data-action="begin">${resume ? 'Continue adventure' : 'Enter the dungeon'} <span>→</span></button><button class="rpg-text-button" data-action="map">Choose an expedition</button><button class="rpg-text-button" data-action="tutorial">${icon('help')} How to play · Story & tour</button><div class="rpg-camp-menu"><button data-action="quests">${icon('ring')} Quest board</button><button data-action="merchant">◆ Merchant${this.campState ? ` · ${this.campState.gems} gems` : ''}</button><button data-action="trader">✦ Wandering trader</button><button data-action="forge">${icon('forge')} Blacksmith</button><button data-action="spellbook">${icon('storm')} Spellbook</button><button data-action="skills">${icon('tree')} Skill trees${s.skillPoints ? ` · ${s.skillPoints} new` : ''}</button><button data-action="inventory">${icon('bag')} Equipment</button><button data-action="parent">Parent journal</button></div><p class="rpg-camp-note">Solve to unleash your spells. Take all the time you need.</p>`);
   }
   private async begin(regionId?: string, tier?: number): Promise<void> {
     if (!this.state || this.busy) return;
@@ -426,7 +432,7 @@ export class RpgGame {
       this.seeking = true; this.busy = false;
       const reached = await this.world.waitForEngage();
       this.seeking = false;
-      if (reached.chest && this.session === session) { session.chest = reached.chest; this.saveSession(); }
+      if (reached.chest && this.session === session) { session.chest = reached.chest; session.chestStory = chestLockStory(p, this.state!); this.saveSession(); }
       this.el('rpg-explore').hidden = true; this.root.classList.remove('rpg-exploring');
       if (this.disposed || this.session !== session) return;
       this.busy = true;
@@ -445,7 +451,12 @@ export class RpgGame {
     }
     if (this.disposed) return;
     this.closeDialog(true); this.entered = ''; this.updateAnswer();
-    this.el('rpg-problem').textContent = p.prompt;
+    const story = session.chest ? session.chestStory : null;
+    if (story) {
+      const label = this.el('rpg-problem');
+      label.replaceChildren(Object.assign(document.createElement('span'), { className: 'rpg-chest-story', textContent: story.text }),
+        Object.assign(document.createElement('span'), { className: 'rpg-chest-equation', textContent: p.prompt }));
+    } else this.el('rpg-problem').textContent = p.prompt;
     this.renderVisual(session.helped && p.helpVisual ? p.helpVisual : p.visual);
     this.el('rpg-answer-form').dataset.problemId = p.id;
     this.el('rpg-topic').textContent = session.chest ? `Unlock the chest · ${p.topicLabel ?? 'Solve to open'}` : p.topicLabel ?? 'POWER YOUR SPELL';
@@ -461,7 +472,7 @@ export class RpgGame {
     if (session.walkthrough || session.wrongCount >= 3) { await this.walkthrough(); return; }
     this.busy = false;
     const previousElapsed = session.elapsedMs ?? 0;
-    const narration = this.say(p.spoken);
+    const narration = this.say(story?.spoken ?? p.spoken);
     this.startClock(); this.updatePower();
     void narration.then(() => {
       if (this.session === session && session.firstAttempt === null && !this.entered) {
@@ -607,7 +618,7 @@ export class RpgGame {
     }
     if (reward.item && (reward.loot || !reward.duplicateItem)) this.showItemDrop(reward.item);
     if (reward.xp) this.showXpGain(reward.xp);
-    this.toast(reward.xp ? `Chest unlocked! +${reward.xp} XP · +${reward.forgeDust} forge dust` : 'Chest unlocked! It was empty.', 2800, 'Chest unlocked');
+    this.toast(chestRewardText(reward), 3600, chestRewardShort(reward));
     this.el('rpg-save-status').textContent = '◆ Adventure saved on your server';
     await this.nextProblem();
   }
@@ -890,7 +901,8 @@ export class RpgGame {
       const [camp, legacy] = await Promise.all([getRpgCamp(), request<State>(`/state?profileId=${encodeURIComponent(PROFILE)}`)]);
       this.campState = camp; this.legacyState = legacy; this.renderState();
       if (this.panel === tab) {
-        this.showDialog(tab, renderCampWorkshop(this.state!, camp, legacy, tab), true);
+        this.showDialog(tab, renderCampWorkshop(this.state!, camp, legacy, tab, this.trader), true);
+        if (tab === 'trader') this.bindTrader(true);
         if (focusEquipped) {
           const card = this.root.querySelector<HTMLElement>('.rpg-forge-list .rpg-loot-card.equipped');
           card?.scrollIntoView({ block: 'center' });
@@ -917,6 +929,74 @@ export class RpgGame {
       const tab = pending.action === 'shop/buy' ? 'merchant' : 'forge';
       this.showDialog(tab, renderCampWorkshop(this.state!, camp, legacy, tab), true, pending.action === 'forge/upgrade');
       this.toast(pending.action === 'shop/buy' ? 'Your new relic is ready in Equipment!' : pending.action === 'forge/upgrade' ? 'Forged! +2 power. Your favorite relic grows stronger.' : `Reclaimed +${result.dustGained ?? 0} forge dust.`);
+    });
+  }
+  /** Redraw Tobble's stall in place and hook up its answer box. */
+  private renderTrader(focusAnswer = false): void {
+    if (!this.state || !this.campState || !this.legacyState) return;
+    this.campState.forgeDust = this.state.forgeDust ?? 0;
+    this.showDialog('trader', renderCampWorkshop(this.state, this.campState, this.legacyState, 'trader', this.trader), true, true);
+    this.bindTrader(focusAnswer);
+  }
+  private bindTrader(focusAnswer = false): void {
+    const form = this.root.querySelector<HTMLFormElement>('[data-trader-form]');
+    const input = this.root.querySelector<HTMLInputElement>('#rpg-trader-answer');
+    if (!form || !input) return;
+    form.addEventListener('submit', event => { event.preventDefault(); void this.payTrader(); });
+    input.addEventListener('input', () => {
+      this.trader.entered = input.value.replace(/\D/g, '').slice(0, 4); input.value = this.trader.entered;
+      const slot = this.root.querySelector<HTMLElement>('.rpg-trader-ledger .total b');
+      if (slot) { slot.textContent = this.trader.entered || '?'; slot.classList.toggle('empty', !this.trader.entered); }
+    });
+    if (!focusAnswer) return;
+    this.root.querySelector('.rpg-trader-count')?.scrollIntoView({ block: 'nearest' });
+    if (!matchMedia('(pointer: coarse)').matches) input.focus({ preventScroll: true });
+  }
+  private async traderClick(button: HTMLButtonElement): Promise<void> {
+    if (this.busy || !this.state) return;
+    const desk = this.trader;
+    switch (button.dataset.trader) {
+      case 'ware': {
+        const wareId = button.dataset.ware as RpgTraderWareId;
+        if (wareId === 'fresh-roll') { desk.choosingRelic = true; this.renderTrader(); this.root.querySelector('.rpg-trader-relics')?.scrollIntoView({ block: 'nearest' }); return; }
+        this.startTrade(wareId); return;
+      }
+      case 'relic': this.startTrade('fresh-roll', button.dataset.item); return;
+      case 'digit': {
+        if (button.dataset.key === '✓') { void this.payTrader(); return; }
+        desk.type(button.dataset.key!); this.renderTrader(); return;
+      }
+      case 'hear': { const q = desk.question(this.state); if (q) void this.say(desk.hint || q.spoken); return; }
+      case 'back': case 'again': desk.reset(); desk.done = null; this.renderTrader(); return;
+      case 'pay': return; // The form's submit event pays.
+    }
+  }
+  private startTrade(wareId: RpgTraderWareId, itemId?: string): void {
+    if (!this.state || !this.trader.begin(this.state, wareId, itemId)) return;
+    this.renderTrader(true);
+    const question = this.trader.question(this.state);
+    if (question) void this.say(question.spoken);
+  }
+  /** The trade completes only when the change is right; the server checks it again. */
+  private async payTrader(): Promise<void> {
+    if (this.busy || !this.state || !this.trader.wareId) return;
+    const desk = this.trader, ware = desk.ware(this.state)!;
+    const check = desk.check(this.state);
+    if (!check.correct) {
+      if (desk.hint) { dungeonSound.answer(false); this.renderTrader(true); void this.say(desk.hint); }
+      return;
+    }
+    dungeonSound.answer(true);
+    const purchase = check.purchase!;
+    this.busy = true;
+    await this.runSafely(async () => {
+      const result = await request<RpgTraderResult>('/rpg/trader/buy', { ...purchase });
+      this.state = result.state;
+      desk.done = { wareId: purchase.wareId, dustBefore: purchase.seenDust, price: ware.price, itemId: purchase.itemId };
+      desk.reset(); this.renderState(); this.renderTrader();
+      if (result.levelsGained) this.celebrations.celebrate({ id: `trader:${purchase.requestId}:level`, kind: 'level', title: 'LEVEL UP!', level: result.state.level, subtitle: 'Your magic is growing!', reward: `+${result.levelsGained} skill point${result.levelsGained === 1 ? '' : 's'}` });
+      else if (!this.muted) dungeonSound.levelUp();
+      this.toast(`Trade complete! ${purchase.seenDust} − ${ware.price} = ${purchase.answer} forge dust left.`);
     });
   }
   private confirmSalvage(lootId: string): void {
@@ -1248,6 +1328,7 @@ export class RpgGame {
       this.root.querySelector<HTMLButtonElement>(`[data-next-region="${this.nextAdventure.regionId}"]`)?.focus(); return;
     }
     if (button.dataset.selectTier) { this.selectedTier = Number(button.dataset.selectTier); this.showMap(); return; }
+    if (button.dataset.trader) { void this.traderClick(button); return; }
     if (button.dataset.buyItem) { void this.economyAction('shop/buy', { itemId: button.dataset.buyItem }); return; }
     if (button.dataset.forgeLoot) { void this.economyAction('forge/upgrade', { lootId: button.dataset.forgeLoot }); return; }
     if (button.dataset.salvageLoot) { if (!this.busy) this.confirmSalvage(button.dataset.salvageLoot); return; }
@@ -1291,6 +1372,7 @@ export class RpgGame {
       case 'inventory': this.showInventory(); break;
       case 'blacksmith': void this.showWorkshop('forge', true); break;
       case 'quests': case 'merchant': case 'forge': case 'records': void this.showWorkshop(action); break;
+      case 'trader': this.trader.reset(); this.trader.done = null; void this.showWorkshop('trader'); break;
       case 'pause': this.showPause(); break;
       case 'retreat': this.confirmRetreat(); break;
       case 'confirm-retreat': void this.retreat(); break;
@@ -1298,7 +1380,7 @@ export class RpgGame {
       case 'parent': void this.showParent(); break;
       case 'mastery-map': void this.showMasteryMap(); break;
       case 'help': void this.help(); break;
-      case 'hear': if (this.session) void this.say(this.session.problem.spoken); break;
+      case 'hear': if (this.session) void this.say((this.session.chest && this.session.chestStory?.spoken) || this.session.problem.spoken); break;
       case 'explain': void this.explain(); break;
       case 'walkthrough': if (!this.busy) void this.runSafely(() => this.walkthrough()); break;
       case 'keypad': this.el('rpg-keypad').hidden = !this.el('rpg-keypad').hidden; break;

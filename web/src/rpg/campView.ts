@@ -1,8 +1,9 @@
 import { rpgLootSpellShape, rpgLootCombatAffix, RPG_ITEMS, rpgSpellAvailable, rpgLootSkillBonus, RPG_SCHOOLS, RPG_SPELLS, RPG_SKILLS, rpgLootAffixes, RPG_REGIONS, RPG_MAX_ITEM_UPGRADE, rpgForgeCost, rpgLootPower, rpgEquippedLoot, rpgSalvageValue, rpgUnlockedTier, rpgDungeonForgeDust, rpgNextRelicHunt, rpgSpellCombatStats, type RpgItem, type RpgState, type RpgLootInstance, type RpgCampState, type State, type Quest } from '@institute/shared';
 import { renderMathRecords } from './recordsView';
 import { escapeHtml as esc, relicArt, icon } from './icons';
+import { renderTrader, type TraderDesk } from './traderView';
 
-export type CampTab = 'quests' | 'merchant' | 'forge' | 'records';
+export type CampTab = 'quests' | 'merchant' | 'trader' | 'forge' | 'records';
 export function itemAffinity(item: RpgItem): string {
   return item.scope === 'all' ? 'Every spell' : item.scope === 'school'
     ? `All ${RPG_SCHOOLS.find(school => school.id === item.school)!.name} spells`
@@ -72,8 +73,9 @@ function questCard(quest: Quest): string {
   const progress = Math.min(quest.target, quest.progress);
   return `<article class="rpg-quest-card ${quest.done ? 'complete' : ''}" data-quest="${esc(quest.key)}"><div><h3>${esc(quest.label)}</h3><span>${quest.done ? '✓ Complete' : `${progress} / ${quest.target}`}</span></div><progress max="${quest.target}" value="${progress}" aria-label="${esc(quest.label)}"></progress><small>${quest.done ? 'Earned' : 'Reward'} · ${quest.reward} gems</small></article>`;
 }
-export function renderCampWorkshop(state: RpgState, camp: RpgCampState, legacy: State, tab: CampTab): string {
+export function renderCampWorkshop(state: RpgState, camp: RpgCampState, legacy: State, tab: CampTab, trader?: TraderDesk): string {
   let body = '';
+  if (tab === 'trader' && trader) body = renderTrader(state, trader);
   if (tab === 'quests') body = `<section aria-label="Daily quests"><div class="rpg-workshop-heading"><h3>Today’s adventures</h3><span>${legacy.quests.filter(quest => quest.done).length} / ${legacy.quests.length} complete</span></div><div class="rpg-quest-grid">${legacy.quests.map(questCard).join('')}</div><p class="rpg-workshop-note">Complete every daily quest to earn a Crazy Coin. Your gems keep growing through ordinary play after the board is done.</p></section><section aria-label="Weekly quest"><h3>This week</h3>${questCard(legacy.weeklyQuest)}</section><button class="rpg-primary" data-action="map">Choose an adventure →</button>`;
   if (tab === 'merchant') body = `<p>Save your gems for a relic you choose. Dungeon finds can also carry extra power and skill ranks.</p><div class="rpg-merchant-grid">${camp.offers.map(offer => {
     const item = RPG_ITEMS.find(item => item.id === offer.itemId)!;
@@ -82,7 +84,7 @@ export function renderCampWorkshop(state: RpgState, camp: RpgCampState, legacy: 
   }).join('')}</div><p class="rpg-workshop-note">Legendary relics await in guardian treasure. See every discovery in Equipment.</p>`;
   if (tab === 'records') body = renderMathRecords(legacy.daily);
   if (tab === 'forge') body = `<p>Keep the rolls you love. Every forge rank adds +2 power. Reclaim extra copies for dust; your equipped relic and last copy are protected.</p><div class="rpg-forge-list">${renderLootCards(state, camp.gems, true)}</div>`;
-  return `<div class="rpg-workshop"><p class="rpg-eyebrow">A FIRE TO RETURN TO</p><h2 id="rpg-dialog-title">Camp</h2><div class="rpg-wallet" aria-label="Your currencies"><span>◆ <b>${camp.gems}</b> gems</span><span>✦ <b>${state.forgeDust ?? 0}</b> forge dust</span></div><nav class="rpg-workshop-tabs" aria-label="Camp activities">${(['quests', 'merchant', 'forge', 'records'] as CampTab[]).map(key => `<button data-action="${key}" aria-pressed="${tab === key}">${key === 'quests' ? 'Quest board' : key === 'merchant' ? 'Merchant' : key === 'forge' ? 'Blacksmith' : 'Records'}</button>`).join('')}</nav>${renderPinnedGoal(state, camp)}${body}<footer class="rpg-button-row"><button data-action="inventory">Equipment</button><button data-action="close">Back to adventure</button></footer></div>`;
+  return `<div class="rpg-workshop"><p class="rpg-eyebrow">A FIRE TO RETURN TO</p><h2 id="rpg-dialog-title">Camp</h2><div class="rpg-wallet" aria-label="Your currencies"><span>◆ <b>${camp.gems}</b> gems</span><span>✦ <b>${state.forgeDust ?? 0}</b> forge dust</span></div><nav class="rpg-workshop-tabs" aria-label="Camp activities">${(['quests', 'merchant', 'trader', 'forge', 'records'] as CampTab[]).map(key => `<button data-action="${key}" aria-pressed="${tab === key}">${key === 'quests' ? 'Quest board' : key === 'merchant' ? 'Merchant' : key === 'trader' ? 'Trader' : key === 'forge' ? 'Blacksmith' : 'Records'}</button>`).join('')}</nav>${renderPinnedGoal(state, camp)}${body}<footer class="rpg-button-row"><button data-action="inventory">Equipment</button><button data-action="close">Back to adventure</button></footer></div>`;
 }
 /** Collection switches preserve the chosen copy, then prefer actual spell damage.
  * This avoids replacing a child's forged roll with the legacy base instance. */

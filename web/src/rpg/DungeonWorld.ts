@@ -38,7 +38,8 @@ import { BreakableKit, BreakableDebris, breakableHeight } from './world/breakabl
 import { EliteAura, ELITE_COLOR, ELITE_SCALE, eliteName } from './world/elite';
 import type { ScoutView } from './minimapModel';
 import { createDescentPortal, DESCENT_ENTER_RADIUS, type DescentPortal } from './world/descentPortal';
-import { packPositions } from './world/formation';
+import { MIN_ENEMY_SPACING, packPositions } from './world/formation';
+import { shrineAmbush } from './locks';
 import { buildChunk, disposeChunk, CHEST_OPEN_ANGLE, type BuiltChunk, type VaultMaterials } from './world/levelChunks';
 import { animateDoor, animateShrine, boonColor, DOOR_FLARE_SECONDS } from './world/lockVisuals';
 import { BoonAura } from './world/boonAura';
@@ -88,6 +89,8 @@ const CAST_ROOT = .7, CLEAVE_ROOT = .85;
 const PACK_FORGET_SECONDS = 4;
 /** A pack that follows the hero only grows a new area from exits this near him. */
 const PACK_REGROW_REACH = 24;
+/** From a sealed door back toward the hall it is opened from (its side points into the treasury). */
+const DOOR_FRONT: Record<'north' | 'south' | 'east' | 'west', { x: number; z: number }> = { north: { x: 0, z: 1 }, south: { x: 0, z: -1 }, east: { x: -1, z: 0 }, west: { x: 1, z: 0 } };
 const ELEMENT_FLASH = { fire: new THREE.Color(1, .45, .12), electric: new THREE.Color(.55, .75, 1.3), frost: new THREE.Color(.55, 1, 1.3), other: new THREE.Color(1, .95, .85) };
 type Fragment = { position: THREE.Vector3; velocity: THREE.Vector3; rotation: THREE.Vector3; spin: THREE.Vector3; scale: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; hot: boolean; bounced: boolean };
 type Particle = { position: THREE.Vector3; velocity: THREE.Vector3; color: THREE.Color; life: number; maxLife: number; size: number };
@@ -366,16 +369,20 @@ export class DungeonWorld {
       return best;
     };
     /** A closed chest, a sleeping shrine, a sealed door or the way down under the pointer. */
-    const interactAt = (event: PointerEvent): { x: number; z: number } | undefined => {
+    const interactAt = (event: PointerEvent): { x: number; z: number; walk?: { x: number; z: number } } | undefined => {
       if (!floorPoint(event) || !this.level) return undefined;
       const hero = this.hero.position, center = new THREE.Vector3();
       const spots = [
         ...this.level.chests.filter(chest => !chest.opened).map(chest => ({ x: chest.x, z: chest.z, radius: chest.radius + .2, height: .9 })),
         ...this.level.shrines.filter(shrine => !shrine.opened).map(shrine => ({ x: shrine.x, z: shrine.z, radius: shrine.radius + .2, height: 2.2 })),
-        ...this.level.doors.filter(door => !door.opened).map(door => ({ x: door.x, z: door.z, radius: door.width / 2, height: 2.6 })),
+        ...this.level.doors.filter(door => !door.opened).map(door => {
+          // The walk ends on the hall side of the slab, where the door asks its problem.
+          const back = DOOR_FRONT[door.side];
+          return { x: door.x, z: door.z, radius: door.width / 2, height: 2.6, walk: { x: door.x + back.x * 1.4, z: door.z + back.z * 1.4 } };
+        }),
         ...(this.descent ? [{ x: this.descent.at.x, z: this.descent.at.z, radius: DESCENT_ENTER_RADIUS + .4, height: 1.2 }] : []),
       ];
-      let best: { x: number; z: number } | undefined, nearest = Infinity;
+      let best: { x: number; z: number; walk?: { x: number; z: number } } | undefined, nearest = Infinity;
       for (const spot of spots) {
         if (Math.hypot(spot.x - hero.x, spot.z - hero.z) > 30) continue;
         for (const y of [spot.height * .2, spot.height * .6, spot.height]) {
@@ -393,7 +400,8 @@ export class DungeonWorld {
       const spot = interactAt(event);
       if (spot) {
         // Walk up to it; the lock asks for its problem (or the way down opens) on arrival.
-        this.breakTarget = undefined; this.pointerSteering = false; this.walkTo(spot.x, spot.z);
+        const goal = spot.walk ?? spot;
+        this.breakTarget = undefined; this.pointerSteering = false; this.walkTo(goal.x, goal.z);
         this.moveMarker.position.set(spot.x, .05, spot.z); this.moveMarker.userData.shownAt = this.elapsed;
         return;
       }
@@ -613,6 +621,41 @@ export class DungeonWorld {
     this.emit(at, color, 30, 1.1, 1.2);
     this.burstLight.position.copy(at); this.burstLight.color.setHex(color); this.burstLight.intensity = 30;
     this.schedule(.45, () => { this.emit(this.hero.position.clone().setY(1), color, 18, .8, .9); this.setBoon(boon); });
+    if (shrineAmbush(id)) this.schedule(1.3, () => this.ambush(feature.x, feature.z));
+  }
+
+  /**
+   * The pack bursts up out of the floor in a ring round a point and the fight
+   * starts there. The server's encounter is unchanged; only where it is met.
+   */
+  private ambush(x: number, z: number): void {
+    const level = this.level, living = this.enemies.filter(enemy => !enemy.dead);
+    if (!level || this.engaged || !living.length || this.encounter === 5) return;
+    const spots: { x: number; z: number }[] = [];
+    for (let ring = 0; ring < 4 && spots.length < living.length; ring++) {
+      const radius = 3.4 + ring * 1.1, count = Math.ceil(radius * 2.2);
+      for (let n = 0; n < count && spots.length < living.length; n++) {
+        const angle = (n + ring * .5) / count * Math.PI * 2, at = { x: x + Math.cos(angle) * radius, z: z + Math.sin(angle) * radius };
+        if (level.walkable(at.x, at.z, .58) && level.clearLine({ x, z }, at, .3)
+          && spots.every(other => Math.hypot(other.x - at.x, other.z - at.z) >= MIN_ENEMY_SPACING + .3)) spots.push(at);
+      }
+    }
+    // Too little room here: the pack keeps waiting where it was.
+    if (spots.length < living.length) return;
+    this.packArea = level.areaAt(x, z) ?? this.packArea; this.packSeenAt = this.elapsed;
+    const hero = this.hero.position;
+    living.forEach((enemy, index) => {
+      const at = spots[index]!;
+      enemy.origin.set(at.x, 0, at.z); enemy.at.copy(enemy.origin); enemy.root.position.copy(enemy.at);
+      enemy.root.rotation.y = Math.atan2(hero.x - at.x, hero.z - at.z);
+      this.emit(enemy.at.clone().setY(.3), 0x6b4a8f, 16, 1.1, .8);
+      this.emit(enemy.at.clone().setY(.1), 0x8f8676, 10, .7, 1);
+    });
+    this.batchEnemies();
+    this.burstLight.position.set(x, 2, z); this.burstLight.color.setHex(0x9d6bd8); this.burstLight.intensity = 40;
+    this.shake = Math.max(this.shake, .22);
+    this.onSound?.('alert');
+    this.renderer.shadowMap.needsUpdate = true;
   }
 
   /** A boon's calm glow on the hero, and Swiftness's quicker run; null ends it. */
@@ -743,7 +786,7 @@ export class DungeonWorld {
       // A door asks from its hall side, where the hero stops against the slab.
       ...level.doors.filter(door => !door.opened).map(door => {
         const r = door.rect, gap = Math.hypot(Math.max(r.minX - hero.x, 0, hero.x - r.maxX), Math.max(r.minZ - hero.z, 0, hero.z - r.maxZ));
-        return { key: `door:${door.id}`, target: { kind: 'door' as const, id: door.id }, within: gap < 1.1 * scale };
+        return { key: `door:${door.id}`, target: { kind: 'door' as const, id: door.id }, within: gap < LOCK_REACH * scale };
       }),
     ];
     return candidates.find(candidate => candidate.within && (!only || candidate.key === only));
@@ -759,7 +802,7 @@ export class DungeonWorld {
     const pack = living.length ? { x: living.reduce((sum, enemy) => sum + enemy.at.x, 0) / living.length, z: living.reduce((sum, enemy) => sum + enemy.at.z, 0) / living.length } : undefined;
     return { level, areas: level.areas, corridors: level.corridors, openExits: level.openExits, chests: level.chests,
       hero: { x: this.hero.position.x, z: this.hero.position.z }, heading: this.heroVisual.rotation.y, pack, packArea: pack ? this.packArea?.id : undefined,
-      packOnScreen: this.elapsed - this.packSeenAt < 1, engaged: this.engaged, searching: this.engageWaiters.length > 0 && !this.paused };
+      packOnScreen: this.elapsed - this.packSeenAt < 1, guardian: this.encounter === 5, engaged: this.engaged, searching: this.engageWaiters.length > 0 && !this.paused };
   }
 
   /** Starts combat with the current horde now, as when the hero comes in sight of it. The hero keeps moving. */
@@ -1290,7 +1333,9 @@ export class DungeonWorld {
     if (this.encounter === 5) {
       // The guardian takes the nearest sanctum already grown, or a new one close by.
       if (lost) next = level.areas.filter(area => area.kind === 'sanctum').sort((a, b) => from(a) - from(b))[0];
-      if (lost && (!next || from(next) > 44)) next = level.growNearest(hero.x, hero.z, 'sanctum', PACK_REGROW_REACH);
+      // A sanctum is large; when none fits near the hero, the guardian waits in a hall ahead.
+      if (lost && (!next || from(next) > 44)) next = level.growNearest(hero.x, hero.z, 'sanctum', PACK_REGROW_REACH)
+        ?? this.nearestOpenArea() ?? level.growNearest(hero.x, hero.z, 'hall', PACK_REGROW_REACH);
     } else {
       next = this.nearestOpenArea();
       if (next && from(next) + 4 >= from(this.packArea)) next = undefined;

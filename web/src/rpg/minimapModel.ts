@@ -22,6 +22,8 @@ export type ScoutView = Readonly<{
   packArea?: number;
   /** The pack was on screen within the last second. */
   packOnScreen: boolean;
+  /** The pack is the guardian's: the map always marks it, at the rim when far. */
+  guardian?: boolean;
   engaged: boolean;
   /** The hero is looking for the fight: a problem waits for the pack or a chest. */
   searching: boolean;
@@ -94,10 +96,10 @@ export class ScoutMemory {
   clear(): void { this.seenAreas.clear(); this.seenCorridors.clear(); this.walkedCorridors.clear(); }
 }
 
-/** The pack is marked when it is in sight, in the fight, or near enough to hear. */
+/** The pack is marked when it is in sight, in the fight, near enough to hear, or is the guardian. */
 export function packShown(view: ScoutView): boolean {
   if (!view.pack) return false;
-  return view.engaged || view.packOnScreen || Math.hypot(view.pack.x - view.hero.x, view.pack.z - view.hero.z) <= HEAR_RADIUS;
+  return view.engaged || view.packOnScreen || !!view.guardian || Math.hypot(view.pack.x - view.hero.x, view.pack.z - view.hero.z) <= HEAR_RADIUS;
 }
 
 /**

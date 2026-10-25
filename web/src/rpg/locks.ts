@@ -17,3 +17,10 @@ export function finishLockText(lock: LockTarget, boon?: RpgBoonId): string {
   if (lock.kind === 'door') return 'The door opens! Something waits inside.';
   return 'Unlocked!';
 }
+
+/** Four shrines in ten are a trap: waking one calls the waiting pack up around it. Fixed by id, so a reload agrees. */
+export function shrineAmbush(id: string): boolean {
+  let hash = 2166136261;
+  for (let i = 0; i < id.length; i++) hash = Math.imul(hash ^ id.charCodeAt(i), 16777619);
+  return (hash >>> 0) % 10 < 4;
+}

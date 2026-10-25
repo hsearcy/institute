@@ -124,3 +124,11 @@ test('a walk to a treasury chest ends close enough for it to ask its problem', (
   }
   assert.ok(checked > 10);
 }, 30_000);
+
+test('some shrines, fixed by id, call the pack up around them', async () => {
+  const { shrineAmbush } = await import('../src/rpg/locks');
+  const ids = Array.from({ length: 400 }, (_, n) => `shrine-${n * 7919}-${n % 13}-2`);
+  const traps = ids.filter(shrineAmbush).length;
+  assert.ok(traps > 120 && traps < 200, `${traps} of 400 shrines are traps`);
+  assert.deepEqual(ids.map(shrineAmbush), ids.map(shrineAmbush));
+});

@@ -54,6 +54,7 @@ import type { RewardToken } from './world/floorLoot';
 import { HELP_GUARD_MS, HelpGuard } from './helpGuard';
 import './loot-pickups.css';
 import { WardHud, WARD_HTML, showGearLabel } from './wardHud';
+import { closeLeadsToCamp } from './dialogClose';
 import { rpgGearRunSpeed, rpgEquippedGear } from '@institute/shared';
 
 type Session = {
@@ -889,6 +890,8 @@ export class RpgGame {
     if (bonus) setTimeout(() => { if (!this.disposed) this.toast(`Bonus treasure! ${bonus}. Saved in the parent journal.`, 4200, 'Bonus treasure!'); }, 2800);
     void this.goDeeper();
   }
+  /** True while the way down is open and waits for the hero to walk in. */
+  private awaitingDescent = false;
   /** Walk into the way down: the next depth of this region starts at once. */
   private async goDeeper(): Promise<void> {
     const cleared = this.state?.expedition;
@@ -897,7 +900,8 @@ export class RpgGame {
     this.el('rpg-room').textContent = 'Step into the way down';
     this.root.classList.add('rpg-exploring');
     this.showExploreBanner('A way down!', 'Walk into the glowing well to go deeper.', true);
-    const entered = await this.world.waitForDescent();
+    this.awaitingDescent = true;
+    const entered = await this.world.waitForDescent().finally(() => { this.awaitingDescent = false; });
     this.el('rpg-explore').hidden = true; this.root.classList.remove('rpg-exploring');
     if (!entered || this.disposed || this.state?.expedition?.id !== cleared.id) return;
     await this.descend(cleared.id);
@@ -1403,7 +1407,7 @@ export class RpgGame {
   }
   private closeDialog(force = false): void {
     if (!force && ['demo','walkthrough','loading'].includes(this.panel)) return;
-    if (!force && (!this.playing || this.state?.expedition?.cleared)) { this.showCamp(); return; }
+    if (!force && closeLeadsToCamp({ playing: this.playing, cleared: !!this.state?.expedition?.cleared, awaitingDescent: this.awaitingDescent })) { this.showCamp(); return; }
     this.gearSheet.disposeViewer();
     this.panel = ''; this.root.dataset.panel = ''; this.el('rpg-overlay').hidden = true; this.world.setPaused(false); this.startClock();
     if (this.playing && !this.busy) this.el<HTMLInputElement>('rpg-answer').focus({ preventScroll: true });

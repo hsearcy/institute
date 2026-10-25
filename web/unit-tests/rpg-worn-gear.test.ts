@@ -124,3 +124,14 @@ test('a fitted piece binds to the hero skeleton by bone name and replaces its bo
   assert.equal(body.parent!.children.includes(fitted), false);
   assert.equal(body.visible, true);
 });
+
+test('shared body regions show the right piece', async () => {
+  const { regionPriority } = await import('../src/rpg/world/wornGear');
+  // Boots cover the feet; only tall boots cover the trouser shins.
+  assert.ok(regionPriority('feet', 'boots', 'soft_boots') > regionPriority('feet', 'pants', 'leather_trousers'));
+  assert.ok(regionPriority('shins', 'pants', 'leather_trousers') > regionPriority('shins', 'boots', 'soft_boots'));
+  assert.ok(regionPriority('shins', 'boots', 'traveler_boots') > regionPriority('shins', 'pants', 'leather_trousers'));
+  // A tunic's skirt hangs over pants; a cuirass sits under them.
+  assert.ok(regionPriority('hips', 'chest', 'padded_tunic') > regionPriority('hips', 'pants', 'leather_trousers'));
+  assert.ok(regionPriority('hips', 'pants', 'leather_trousers') > regionPriority('hips', 'chest', 'warden_plate'));
+});

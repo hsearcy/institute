@@ -18,12 +18,12 @@ export interface GearSheetUi {
 export const emptyGearUi = (): GearSheetUi => ({ filter: 'all', selectedId: null, confirmSalvage: false, seen: new Set() });
 
 export const GEAR_SLOT_NAMES: Readonly<Record<RpgGearSlot, string>> = {
-  helm: 'Helm', chest: 'Armor', gloves: 'Gloves', boots: 'Boots', amulet: 'Amulet', ring1: 'Left ring', ring2: 'Right ring',
+  helm: 'Helm', chest: 'Armor', gloves: 'Gloves', pants: 'Pants', boots: 'Boots', amulet: 'Amulet', ring1: 'Left ring', ring2: 'Right ring',
 };
 const KIND_NAMES: Readonly<Record<RpgGearKind, [string, string]>> = {
-  helm: ['Helm', 'Helms'], chest: ['Armor', 'Armor'], gloves: ['Gloves', 'Gloves'], boots: ['Boots', 'Boots'], amulet: ['Amulet', 'Amulets'], ring: ['Ring', 'Rings'],
+  helm: ['Helm', 'Helms'], chest: ['Armor', 'Armor'], gloves: ['Gloves', 'Gloves'], pants: ['Pants', 'Pants'], boots: ['Boots', 'Boots'], amulet: ['Amulet', 'Amulets'], ring: ['Ring', 'Rings'],
 };
-const KINDS: readonly RpgGearKind[] = ['helm', 'chest', 'gloves', 'boots', 'amulet', 'ring'];
+const KINDS: readonly RpgGearKind[] = ['helm', 'chest', 'gloves', 'pants', 'boots', 'amulet', 'ring'];
 const RARITY_NAMES = { common: 'Common', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' } as const;
 
 /** "+12 ward", "+5% run speed". */

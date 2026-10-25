@@ -1,15 +1,18 @@
 """Body regions shared by the base-hero build and the worn-set build.
 
-The hero body is split into five regions that gear slots replace whole:
-head (helm), chest (chest armour, includes the upper arms, forearms to their
-middle and the hips to mid-thigh), gloves (lower forearms and hands), legs
-(pants: mid-thigh to the knee) and boots (just under the knee down). Both builds classify
+The hero body is split into seven regions that gear pieces replace whole:
+head (helm), chest (waist up, with the upper arms and forearms to their
+middle), gloves (lower forearms and hands), hips (waist to mid-thigh), legs
+(mid-thigh to just under the knee), shins (down to above the ankle) and feet.
+A chest piece also carries hips (a tunic's skirt); pants carry hips, legs,
+shins and feet; boots carry shins and feet. The game picks which piece shows
+in a shared region. Both builds classify
 points in the rig's bind space with this one rule, so the cut lines of the
 plain body and of every dressed model meet.
 """
 import numpy as np
 
-REGIONS = ('head', 'chest', 'gloves', 'legs', 'boots')
+REGIONS = ('head', 'chest', 'gloves', 'hips', 'legs', 'shins', 'feet')
 
 
 def _segment_distance(points, a, b):
@@ -50,10 +53,14 @@ def classify(points, joint):
     hip = float(j['Hip'] @ up)
     chest_floor = hip - .09   # tunics and cuirasses reach mid-thigh
     calf_mid = float(j['L_Calf'] @ up) * .85 + float(j['L_Foot'] @ up) * .15  # just under the knee: tall boots fit
+    waist = hip + .025       # the belt line: chest armour above, pants below
     region = np.full(len(points), REGIONS.index('chest'))
     region[kind == 'head'] = REGIONS.index('head')
     region[(kind == 'hand') | ((kind == 'forearm') & (along > .5))] = REGIONS.index('gloves')
-    leg = np.isin(kind, ('thigh', 'calf', 'foot')) | ((kind == 'torso') & (height < chest_floor))
+    leg = np.isin(kind, ('thigh', 'calf', 'foot')) | ((kind == 'torso') & (height < waist))
+    region[leg & (height < waist)] = REGIONS.index('hips')
     region[leg & (height < chest_floor)] = REGIONS.index('legs')
-    region[leg & (height < calf_mid)] = REGIONS.index('boots')
+    feet_top = float(j['L_Foot'] @ up) + .055  # ankle boots reach about here
+    region[leg & (height < calf_mid)] = REGIONS.index('shins')
+    region[leg & (height < feet_top)] = REGIONS.index('feet')
     return region

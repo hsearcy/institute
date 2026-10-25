@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { rpgNormalizeLoot, rpgGearSalvageValue, RPG_GEAR_BASES, type RpgGearInstance, type RpgState } from '@institute/shared';
 import { renderGearSheet, gearComparison, gearStatLines, gearBag, emptyGearUi, gearSlotsFor } from '../src/rpg/gearView';
-import { gearArt } from '../src/rpg/icons';
+import { gearArt, WORN_ONLY, wornGearUrl } from '../src/rpg/icons';
 import { renderEquipmentView } from '../src/rpg/equipmentView';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -23,14 +23,17 @@ function fixture(): RpgState {
 
 test('Every gear base has its exact model and icon installed', () => {
   for (const base of RPG_GEAR_BASES) {
-    for (const ext of ['glb', 'webp']) expect(existsSync(join(import.meta.dir, '../public/assets/rpg/gear', `${base.id}.${ext}`))).toBe(true);
+    expect(existsSync(join(import.meta.dir, '../public/assets/rpg/gear', `${base.id}.webp`))).toBe(true);
+    // Pants exist only as worn pieces; everything else also has a free-standing model.
+    if (WORN_ONLY.has(base.id)) expect(existsSync(join(import.meta.dir, '../public', wornGearUrl(base.id)!))).toBe(true);
+    else expect(existsSync(join(import.meta.dir, '../public/assets/rpg/gear', `${base.id}.glb`))).toBe(true);
     expect(gearArt(base.id)).toContain(`/assets/rpg/gear/${base.id}.webp`);
   }
 });
 
 test('Paper doll shows every slot, the relic, worn gear and ward totals', () => {
   const html = renderGearSheet(fixture(), emptyGearUi());
-  for (const slot of ['helm', 'chest', 'gloves', 'boots', 'amulet', 'ring1', 'ring2']) expect(html).toContain(`data-gear-slot="${slot}"`);
+  for (const slot of ['helm', 'chest', 'gloves', 'pants', 'boots', 'amulet', 'ring1', 'ring2']) expect(html).toContain(`data-gear-slot="${slot}"`);
   expect(html).toContain('href="#rpg-relic-collection"');
   expect(html).toContain('/assets/rpg/appearances/wayfarer.png');
   expect(html).toContain('rpg-doll-slot rare');

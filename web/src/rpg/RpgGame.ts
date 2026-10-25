@@ -404,7 +404,7 @@ export class RpgGame {
     this.world.setEquipment(s.equippedItemId);
     this.world.setAppearance(s.appearanceId);
     const worn = rpgEquippedGear(s);
-    this.world.setWornGear({ helm: worn.helm?.baseId, chest: worn.chest?.baseId, gloves: worn.gloves?.baseId, boots: worn.boots?.baseId, amulet: worn.amulet?.baseId });
+    this.world.setWornGear({ helm: worn.helm?.baseId, chest: worn.chest?.baseId, gloves: worn.gloves?.baseId, pants: worn.pants?.baseId, boots: worn.boots?.baseId, amulet: worn.amulet?.baseId });
     this.renderSpellGoal();
     const boss = !!expedition && !expedition.cleared && expedition.encounterIndex === 5;
     this.el('rpg-boss').hidden = !boss || !this.playing;

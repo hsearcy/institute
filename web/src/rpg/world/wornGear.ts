@@ -1,8 +1,22 @@
 import { Box3, Group, Matrix4, Mesh, Object3D, Quaternion, SkinnedMesh, Vector3 } from 'three';
 
 /** Gear kinds the hero shows on the body. Rings are too small to read. */
-export type WornKind = 'helm' | 'chest' | 'gloves' | 'boots' | 'amulet';
-export const WORN_KINDS: readonly WornKind[] = ['helm', 'chest', 'gloves', 'boots', 'amulet'];
+export type WornKind = 'helm' | 'chest' | 'gloves' | 'pants' | 'boots' | 'amulet';
+export const WORN_KINDS: readonly WornKind[] = ['helm', 'chest', 'gloves', 'pants', 'boots', 'amulet'];
+
+/** Chest pieces whose skirt hangs over the hips, on top of any pants. */
+const SKIRTED = new Set(['padded_tunic', 'scale_mail']);
+/** Boots whose shafts reach the knee. */
+const TALL_BOOTS = new Set(['traveler_boots']);
+
+/** Which worn piece shows in a body region more than one piece covers. */
+export function regionPriority(region: string, kind: WornKind, id: string): number {
+  if (region === 'feet') return kind === 'boots' ? 3 : 1;
+  // Tall boots cover the shins over trousers; ankle boots leave the trouser legs showing.
+  if (region === 'shins') return kind === 'boots' ? (TALL_BOOTS.has(id) ? 3 : 1) : 2;
+  if (region === 'hips') return kind === 'chest' ? (SKIRTED.has(id) ? 3 : 1) : 2;
+  return 1;
+}
 
 interface Piece { mesh: Mesh; box: Box3; origin: Vector3 }
 type Fit = (body: Box3, item: Box3, origin: Vector3) => Matrix4;
@@ -26,7 +40,7 @@ interface Measured { box: Box3; anchor: Object3D; bind: Matrix4; elbow?: Vector3
  */
 export class WornGear {
   private readonly parts = new Map<Part, Measured>();
-  private readonly mounted = new Map<WornKind, { id: string; nodes: Object3D[]; fitted?: boolean; hides?: SkinnedMesh[] }>();
+  private readonly mounted = new Map<WornKind, { id: string; nodes: Object3D[]; fitted?: boolean }>();
   private body?: SkinnedMesh;
   /** The plain body as one mesh per region (head, chest, gloves, legs, boots). */
   private readonly bodyRegions = new Map<string, SkinnedMesh>();
@@ -113,17 +127,15 @@ export class WornGear {
       index.needsUpdate = true;
       const worn = new SkinnedMesh(geometry, mesh.material);
       worn.name = `Worn_${kind}`; worn.castShadow = true; worn.frustumCulled = false;
-      worn.userData.wornOwnsGeometry = true;
+      worn.userData.wornOwnsGeometry = true; worn.userData.bodyRegion = mesh.userData.bodyRegion;
       worn.position.copy(body.position); worn.quaternion.copy(body.quaternion); worn.scale.copy(body.scale);
       body.parent?.add(worn);
       worn.bind(body.skeleton, body.bindMatrix);
       nodes.push(worn);
     }
     this.remove(kind);
-    // A worn piece is a whole body region of a dressed hero: hide the plain region it replaces.
-    const hides = meshes.map(mesh => this.bodyRegions.get(mesh.userData.bodyRegion)).filter((mesh): mesh is SkinnedMesh => !!mesh);
-    for (const mesh of hides) mesh.visible = false;
-    this.mounted.set(kind, { id, nodes, fitted: true, hides });
+    this.mounted.set(kind, { id, nodes, fitted: true });
+    this.resolveRegions();
     if (kind === 'chest') this.refitAmulet();
     return true;
   }
@@ -160,6 +172,28 @@ export class WornGear {
     if (kind === 'chest') this.refitAmulet();
   }
 
+  /**
+   * A worn piece is whole body regions of a dressed hero. Each region shows the
+   * highest-priority piece that covers it, or the plain body when none does.
+   */
+  private resolveRegions(): void {
+    const best = new Map<string, { node: Object3D; rank: number }>();
+    for (const [kind, worn] of this.mounted) {
+      if (!worn.fitted) continue;
+      for (const node of worn.nodes) {
+        const region = node.userData.bodyRegion as string | undefined;
+        if (!region) continue;
+        const rank = regionPriority(region, kind, worn.id), current = best.get(region);
+        if (!current || rank > current.rank) best.set(region, { node, rank });
+      }
+    }
+    for (const worn of this.mounted.values()) for (const node of worn.nodes) {
+      const region = node.userData.bodyRegion as string | undefined;
+      if (region) node.visible = best.get(region)?.node === node;
+    }
+    for (const [region, mesh] of this.bodyRegions) mesh.visible = !best.has(region);
+  }
+
   /** An amulet hangs over the chest piece when one is worn. */
   private refitAmulet(): void {
     const amulet = this.mounted.get('amulet');
@@ -173,8 +207,8 @@ export class WornGear {
       node.removeFromParent();
       if (node instanceof Mesh && node.userData.wornOwnsGeometry) node.geometry.dispose();
     }
-    for (const mesh of worn.hides ?? []) mesh.visible = true;
     this.mounted.delete(kind);
+    this.resolveRegions();
     if (kind === 'chest') this.refitAmulet();
   }
 
@@ -183,7 +217,7 @@ export class WornGear {
 }
 
 /** Kinds with a body-fitted model (gear/worn/<id>.glb); amulets stay rigid. */
-export const FITTED_KINDS: readonly WornKind[] = ['helm', 'chest', 'gloves', 'boots'];
+export const FITTED_KINDS: readonly WornKind[] = ['helm', 'chest', 'gloves', 'pants', 'boots'];
 
 /** Wear the fitted model when there is one, else the free-standing gear model. */
 export async function wearGear(target: WornGear, kind: WornKind, baseId: string,

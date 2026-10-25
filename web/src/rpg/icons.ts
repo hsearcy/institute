@@ -63,7 +63,10 @@ const WORN_SETS: Record<string, string> = {
   leather_cap: 'cloth', padded_tunic: 'cloth', cloth_wraps: 'cloth', soft_boots: 'cloth',
   iron_helm: 'iron', warden_plate: 'iron', iron_gauntlets: 'iron', traveler_boots: 'iron',
   rune_circlet: 'mage', scale_mail: 'mage', spellweave_gloves: 'mage', windstep_boots: 'mage',
+  leather_trousers: 'pants-leather', mail_chausses: 'pants-mail', starweave_trousers: 'pants-silk',
 };
+/** Gear shown only as worn (no free-standing model): the turntable shows the worn piece. */
+export const WORN_ONLY = new Set(['leather_trousers', 'mail_chausses', 'starweave_trousers']);
 export const wornGearUrl = (baseId: string) => WORN_SETS[baseId] ? `/assets/rpg/gear/worn/${WORN_SETS[baseId]}.glb` : undefined;
 export function gearArt(baseId: string): string {
   return `<span class="rpg-gear-art" aria-hidden="true" style="background-image:url('${gearIconUrl(baseId)}')"></span>`;

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-import { gearModelUrl } from './icons';
+import { gearModelUrl, WORN_ONLY, wornGearUrl } from './icons';
 
 /**
  * A small turntable for one gear model inside the details card. The painted
@@ -37,8 +37,10 @@ export class GearViewer {
     const rim = new THREE.DirectionalLight(0xb8d4ff, 1.6); rim.position.set(2, 1.5, -2);
     this.scene.add(key, rim, new THREE.HemisphereLight(0xd9e2ff, 0x2a2018, .55), this.pivot);
     try {
-      const gltf = await new GLTFLoader().loadAsync(gearModelUrl(this.baseId));
+      const wornOnly = WORN_ONLY.has(this.baseId);
+      const gltf = await new GLTFLoader().loadAsync(wornOnly ? wornGearUrl(this.baseId)! : gearModelUrl(this.baseId));
       if (this.disposed) { disposeObject(gltf.scene); return; }
+      if (wornOnly) gltf.scene.traverse(node => { if ((node as THREE.Mesh).isMesh) node.frustumCulled = false; });
       const box = new THREE.Box3().setFromObject(gltf.scene), size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
       gltf.scene.position.sub(center);
       this.pivot.add(gltf.scene);

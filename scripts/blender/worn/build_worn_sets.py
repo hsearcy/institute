@@ -46,8 +46,11 @@ SETS = {
     'cloth': {'helm': 'leather_cap', 'chest': 'padded_tunic', 'gloves': 'cloth_wraps', 'boots': 'soft_boots'},
     'iron': {'helm': 'iron_helm', 'chest': 'warden_plate', 'gloves': 'iron_gauntlets', 'boots': 'traveler_boots'},
     'mage': {'helm': 'rune_circlet', 'chest': 'scale_mail', 'gloves': 'spellweave_gloves', 'boots': 'windstep_boots'},
+    'pants-leather': {'pants': 'leather_trousers'},
+    'pants-mail': {'pants': 'mail_chausses'},
+    'pants-silk': {'pants': 'starweave_trousers'},
 }
-REGION_OF = {'helm': 'head', 'chest': 'chest', 'gloves': 'gloves', 'boots': 'boots', 'pants': 'legs'}
+REGION_OF = {'helm': ['head'], 'chest': ['chest', 'hips'], 'gloves': ['gloves'], 'boots': ['shins', 'feet'], 'pants': ['hips', 'legs', 'shins', 'feet']}
 
 
 def import_set(name):
@@ -83,12 +86,13 @@ def umeyama(src, dst):
     return np.trace(np.diag(d) @ e) / (a ** 2).sum(1).mean(), r, mu_d - (np.trace(np.diag(d) @ e) / (a ** 2).sum(1).mean()) * r @ mu_s
 
 
-def align(hero, obj):
-    """Bounds first, then ICP on the bare knees and shins, which every set keeps plain."""
+def align(hero, obj, plain='legs'):
+    """Bounds first, then ICP on a band the set leaves plain: the bare knees and
+    shins for armour sets, the shirt for pants sets."""
     body = np.array([tuple(p) for p in hero.points])
     pts = np.array([tuple(v.co) for v in obj.data.vertices])
-    knee, hip = hero.joint('L_Calf').z, hero.joint('Hip').z
-    lo, hi = knee - .06, hip - .07
+    knee, hip, neck = hero.joint('L_Calf').z, hero.joint('Hip').z, hero.joint('NeckTwist01').z
+    lo, hi = (knee - .06, hip - .07) if plain == 'legs' else (hip + .06, neck - .02)
     band_body = body[(body[:, 2] > lo) & (body[:, 2] < hi)]
     s0 = (body[:, 2].max() - body[:, 2].min()) / (pts[:, 2].max() - pts[:, 2].min())
     current = pts * s0
@@ -120,40 +124,80 @@ def cut_regions(hero, obj, pieces):
         for k in p.edge_keys: edge_faces.setdefault(k, []).append(p.index)
     for faces in edge_faces.values():
         for a in faces: neighbours[a].extend(f for f in faces if f != a)
-    out = {}
+    out = []
     for kind, base in pieces.items():
-        keep = set(np.nonzero(face_region == regions.REGIONS.index(REGION_OF[kind]))[0].tolist())
-        ring = set(keep)
-        for _ in range(OVERLAP_RINGS):
-            ring = {n for f in ring for n in neighbours[f]} - keep
-            keep |= ring
-        piece = obj.copy(); piece.data = obj.data.copy(); piece.name = base
-        bpy.context.scene.collection.objects.link(piece)
-        bm = bmesh.new(); bm.from_mesh(piece.data); bm.faces.ensure_lookup_table()
-        bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.index not in keep], context='FACES')
-        bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
-        for v in bm.verts: v.co += v.normal * LIFT
-        bm.to_mesh(piece.data); bm.free()
-        for p in piece.data.polygons: p.use_smooth = True
-        worn.transfer_weights(piece, worn.body_part(hero, set(hero.owner)))
-        piece['wornGear'] = base; piece['bodyRegion'] = REGION_OF[kind]
-        out[kind] = piece
+        for region_name in REGION_OF[kind]:
+            keep = set(np.nonzero(face_region == regions.REGIONS.index(region_name))[0].tolist())
+            ring = set(keep)
+            for _ in range(OVERLAP_RINGS):
+                ring = {n for f in ring for n in neighbours[f]} - keep
+                keep |= ring
+            piece = obj.copy(); piece.data = obj.data.copy(); piece.name = f'{base}_{region_name}'
+            bpy.context.scene.collection.objects.link(piece)
+            bm = bmesh.new(); bm.from_mesh(piece.data); bm.faces.ensure_lookup_table()
+            bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.index not in keep], context='FACES')
+            bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
+            for v in bm.verts: v.co += v.normal * LIFT
+            bm.to_mesh(piece.data); bm.free()
+            if not piece.data.polygons: bpy.data.objects.remove(piece); continue
+            for p in piece.data.polygons: p.use_smooth = True
+            worn.transfer_weights(piece, worn.body_part(hero, set(hero.owner)))
+            piece['wornGear'] = base; piece['bodyRegion'] = region_name; piece['wornKind'] = kind
+            out.append(piece)
     return out
+
+
+# Pants have no free-standing model: their inventory icon is the worn piece.
+ICON_FROM_WORN = {'leather_trousers', 'mail_chausses', 'starweave_trousers'}
+ICONS = ROOT / 'web' / 'public' / 'assets' / 'rpg' / 'gear'
+
+
+def icon(pieces, path):
+    """Inventory icon from the worn piece, lit like build_gear.py's studio icons."""
+    scene = bpy.context.scene
+    shown = set(pieces)
+    hidden = [o for o in scene.objects if o.type == 'MESH' and o not in shown and not o.hide_render]
+    for o in hidden: o.hide_render = True
+    points = [p.matrix_world @ v.co for p in pieces for v in p.data.vertices]
+    lo = Vector([min(p[i] for p in points) for i in range(3)]); hi = Vector([max(p[i] for p in points) for i in range(3)])
+    target = (lo + hi) / 2
+    direction = Vector((.35, -1, .25)).normalized()
+    cam = bpy.data.objects.new('icon_cam', bpy.data.cameras.new('icon_cam')); scene.collection.objects.link(cam); scene.camera = cam
+    cam.data.type = 'ORTHO'
+    cam.location = target + direction * 3; cam.rotation_euler = (-direction).to_track_quat('-Z', 'Y').to_euler()
+    inverse = cam.rotation_euler.to_matrix().transposed()
+    projected = [inverse @ (p - target) for p in points]
+    cam.data.ortho_scale = max(max(p[i] for p in projected) - min(p[i] for p in projected) for i in (0, 1)) * 1.1
+    lights = []
+    for loc, power, color in (((-1.6, -3, -.3), 140, (1, .94, .83)), ((2.2, -2.6, 1.1), 63, (.73, .86, 1)), ((1.2, 1.1, 2.1), 186, (.77, .88, 1))):
+        light = bpy.data.objects.new('softbox', bpy.data.lights.new('softbox', 'AREA')); scene.collection.objects.link(light)
+        light.location = target + Vector(loc) * .5; light.data.energy = power * .25; light.data.color = color; light.data.size = 1
+        light.rotation_euler = (target - light.location).to_track_quat('-Z', 'Y').to_euler(); lights.append(light)
+    scene.view_settings.view_transform = 'AgX'
+    scene.render.engine = 'CYCLES'; scene.cycles.device = 'CPU'; scene.cycles.samples = 48; scene.cycles.use_denoising = True
+    scene.render.resolution_x = scene.render.resolution_y = 384; scene.render.resolution_percentage = 100
+    scene.render.film_transparent = True
+    scene.render.image_settings.file_format = 'WEBP'; scene.render.image_settings.color_mode = 'RGBA'; scene.render.image_settings.quality = 88
+    scene.render.filepath = str(path); bpy.ops.render.render(write_still=True)
+    scene.render.film_transparent = False; scene.render.image_settings.file_format = 'PNG'; scene.render.image_settings.color_mode = 'RGB'
+    for o in hidden: o.hide_render = False
+    for light in lights: bpy.data.objects.remove(light)
+    bpy.data.objects.remove(cam)
 
 
 def build(name, install):
     directory = OUT / name; directory.mkdir(parents=True, exist_ok=True)
     hero = worn.Hero()
     obj = import_set(name)
-    error = align(hero, obj)
+    error = align(hero, obj, 'shirt' if name.startswith('pants') else 'legs')
     for slot in obj.material_slots:
         for node in slot.material.node_tree.nodes:
             if node.type == 'TEX_IMAGE' and node.image and max(node.image.size) > TEXTURE: node.image.scale(TEXTURE, TEXTURE)
     pieces = cut_regions(hero, obj, SETS[name])
     bpy.data.objects.remove(obj)
     receipt = {'set': name, 'alignError': round(error, 5),
-               'pieces': {k: {'base': p.name, 'triangles': sum(len(f.vertices) - 2 for f in p.data.polygons)} for k, p in pieces.items()}}
-    all_pieces = list(pieces.values())
+               'pieces': {p.name: sum(len(f.vertices) - 2 for f in p.data.polygons) for p in pieces}}
+    all_pieces = pieces
     for piece in all_pieces:
         piece.data.transform(hero.body.matrix_world.inverted())
         piece.parent = hero.arm; piece.matrix_parent_inverse = Matrix.Identity(4)
@@ -162,14 +206,19 @@ def build(name, install):
     # Review: the body with this set's regions in place of the plain ones, as in the game.
     rest = hero.body.copy(); rest.data = hero.body.data.copy(); bpy.context.scene.collection.objects.link(rest)
     centres = np.array([tuple(hero.body.matrix_world @ p.center) for p in rest.data.polygons])
-    replaced = {regions.REGIONS.index(REGION_OF[k]) for k in pieces}
+    replaced = {regions.REGIONS.index(p['bodyRegion']) for p in pieces}
     bm = bmesh.new(); bm.from_mesh(rest.data); bm.faces.ensure_lookup_table()
     gone = set(np.nonzero(np.isin(regions.classify(centres, hero.joint), list(replaced)))[0].tolist())
     bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.index in gone], context='FACES')
     bm.to_mesh(rest.data); bm.free()
     hero.body.hide_render = True
-    worn.render_preview(hero, all_pieces[1], directory / f'{name}-preview.png')
+    worn.render_preview(hero, all_pieces[min(1, len(all_pieces) - 1)], directory / f'{name}-preview.png')
     hero.body.hide_render = False; bpy.data.objects.remove(rest)
+    for base in {p['wornGear'] for p in all_pieces} & ICON_FROM_WORN:
+        hero.body.hide_render = True
+        icon([p for p in all_pieces if p['wornGear'] == base], directory / f'{base}.webp')
+        hero.body.hide_render = False
+        if install: (ICONS / f'{base}.webp').write_bytes((directory / f'{base}.webp').read_bytes())
     glb = directory / f'{name}.glb'
     for o in bpy.context.view_layer.objects: o.select_set(False)
     for piece in all_pieces: piece.select_set(True)

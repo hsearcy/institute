@@ -46,7 +46,7 @@ export class GearSheet {
     if (!portrait || !state) return;
     if (!this.doll) { const source = this.host.doll(); if (source) this.doll = new HeroDoll(source); }
     const worn = rpgEquippedGear(state);
-    this.doll?.attach(portrait, { helm: worn.helm?.baseId, chest: worn.chest?.baseId, gloves: worn.gloves?.baseId, boots: worn.boots?.baseId, amulet: worn.amulet?.baseId }, state.equippedItemId);
+    this.doll?.attach(portrait, { helm: worn.helm?.baseId, chest: worn.chest?.baseId, gloves: worn.gloves?.baseId, pants: worn.pants?.baseId, boots: worn.boots?.baseId, amulet: worn.amulet?.baseId }, state.equippedItemId);
   }
 
   /** Redraws keep the live portrait (its canvas moves to the new markup); leaving the sheet frees it. */

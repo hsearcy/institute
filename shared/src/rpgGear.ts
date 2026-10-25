@@ -3,13 +3,13 @@ import { rpgTier } from './rpgLoot';
 
 /**
  * Armour and jewellery: the hero's Diablo-style paper doll. The weapon stays a
- * relic (rpg.ts / rpgLoot.ts); gear fills seven more slots. Gear never makes a
+ * relic (rpg.ts / rpgLoot.ts); gear fills eight more slots. Gear never makes a
  * problem harder or timed: it changes how much the hero's ward holds, how fast
  * the hero runs, how hard spells hit and how much forge dust falls.
  */
-export type RpgGearKind = 'helm' | 'chest' | 'gloves' | 'boots' | 'amulet' | 'ring';
-export type RpgGearSlot = 'helm' | 'chest' | 'gloves' | 'boots' | 'amulet' | 'ring1' | 'ring2';
-export const RPG_GEAR_SLOTS: readonly RpgGearSlot[] = ['helm', 'chest', 'gloves', 'boots', 'amulet', 'ring1', 'ring2'];
+export type RpgGearKind = 'helm' | 'chest' | 'gloves' | 'pants' | 'boots' | 'amulet' | 'ring';
+export type RpgGearSlot = 'helm' | 'chest' | 'gloves' | 'pants' | 'boots' | 'amulet' | 'ring1' | 'ring2';
+export const RPG_GEAR_SLOTS: readonly RpgGearSlot[] = ['helm', 'chest', 'gloves', 'pants', 'boots', 'amulet', 'ring1', 'ring2'];
 export const rpgGearSlotKind = (slot: RpgGearSlot): RpgGearKind => slot === 'ring1' || slot === 'ring2' ? 'ring' : slot;
 
 /**
@@ -61,6 +61,9 @@ export const RPG_GEAR_BASES: readonly RpgGearBase[] = [
   { id: 'cloth_wraps', kind: 'gloves', name: 'Cloth Wraps', minTier: 1, implicit: { power: 1 } },
   { id: 'iron_gauntlets', kind: 'gloves', name: 'Iron Gauntlets', minTier: 3, implicit: { ward: 6, power: 1 } },
   { id: 'spellweave_gloves', kind: 'gloves', name: 'Spellweave Gloves', minTier: 5, implicit: { power: 2 } },
+  { id: 'leather_trousers', kind: 'pants', name: 'Leather Trousers', minTier: 1, implicit: { ward: 10 } },
+  { id: 'mail_chausses', kind: 'pants', name: 'Mail Chausses', minTier: 3, implicit: { ward: 16, warding: 2 } },
+  { id: 'starweave_trousers', kind: 'pants', name: 'Starweave Trousers', minTier: 5, implicit: { ward: 10, speed: 3 } },
   { id: 'soft_boots', kind: 'boots', name: 'Soft Boots', minTier: 1, implicit: { speed: 4 } },
   { id: 'traveler_boots', kind: 'boots', name: "Traveler's Boots", minTier: 3, implicit: { speed: 6, ward: 4 } },
   { id: 'windstep_boots', kind: 'boots', name: 'Windstep Boots', minTier: 5, implicit: { speed: 9 } },
@@ -75,10 +78,10 @@ export const RPG_GEAR_BASES: readonly RpgGearBase[] = [
 /** Extra stats a magic, rare or legendary copy rolls; `max` is at tier 1 and grows by `perTier`. */
 export interface RpgGearAffix { stat: RpgGearStat; kinds: readonly RpgGearKind[]; min: number; max: number; perTier: number; prefix: string; suffix: string }
 export const RPG_GEAR_AFFIXES: readonly RpgGearAffix[] = [
-  { stat: 'ward', kinds: ['helm', 'chest', 'gloves', 'boots', 'amulet', 'ring'], min: 4, max: 10, perTier: 2, prefix: 'Sturdy', suffix: 'of the Bulwark' },
-  { stat: 'warding', kinds: ['helm', 'chest', 'amulet'], min: 2, max: 5, perTier: .5, prefix: 'Warded', suffix: 'of Shelter' },
+  { stat: 'ward', kinds: ['helm', 'chest', 'gloves', 'pants', 'boots', 'amulet', 'ring'], min: 4, max: 10, perTier: 2, prefix: 'Sturdy', suffix: 'of the Bulwark' },
+  { stat: 'warding', kinds: ['helm', 'chest', 'pants', 'amulet'], min: 2, max: 5, perTier: .5, prefix: 'Warded', suffix: 'of Shelter' },
   { stat: 'wardMend', kinds: ['chest', 'amulet', 'ring'], min: 1, max: 3, perTier: .5, prefix: 'Mending', suffix: 'of Renewal' },
-  { stat: 'speed', kinds: ['boots'], min: 3, max: 6, perTier: .5, prefix: 'Swift', suffix: 'of the Wind' },
+  { stat: 'speed', kinds: ['boots', 'pants'], min: 3, max: 6, perTier: .5, prefix: 'Swift', suffix: 'of the Wind' },
   { stat: 'power', kinds: ['gloves', 'amulet', 'ring', 'helm'], min: 1, max: 2, perTier: .3, prefix: 'Mighty', suffix: 'of Might' },
   { stat: 'ember', kinds: ['gloves', 'amulet', 'ring', 'helm'], min: 1, max: 3, perTier: .4, prefix: 'Burning', suffix: 'of Embers' },
   { stat: 'frost', kinds: ['gloves', 'amulet', 'ring', 'helm'], min: 1, max: 3, perTier: .4, prefix: 'Frozen', suffix: 'of Winter' },

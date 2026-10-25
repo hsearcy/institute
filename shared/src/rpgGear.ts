@@ -160,3 +160,13 @@ export function rpgGearStats(state: RpgGearLoadout): Record<RpgGearStat, number>
 }
 
 export function rpgMaxWard(state: RpgGearLoadout): number { return RPG_WARD_BASE + rpgGearStats(state).ward; }
+
+/**
+ * Server routes (all POST under /rpg, body includes profileId; each returns RpgState):
+ * - /gear/equip   { gearId, slot }  puts an owned copy in a matching slot (a ring may go in ring1 or ring2).
+ * - /gear/unequip { slot }          empties a slot.
+ * - /gear/salvage { gearId }        breaks an unequipped copy into forge dust (rpgGearSalvageValue).
+ */
+export function rpgGearSalvageValue(item: Pick<RpgGearInstance, 'rarity' | 'tier'>): number {
+  return ({ common: 1, rare: 3, epic: 6, legendary: 12 } as const)[item.rarity] + Math.floor(rpgTier(item.tier) / 2);
+}

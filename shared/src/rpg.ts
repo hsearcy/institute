@@ -194,10 +194,16 @@ export interface RpgState {
   /** Armour and jewellery owned, and the copy in each slot (see rpgGear.ts). */
   gear?: RpgGearInstance[]; equippedGear?: Partial<Record<RpgGearSlot, string>>;
 }
-export interface RpgReward { xp: number; kills: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; bossDefeated: boolean; spellId: RpgSpellId; combat?: RpgCombatResult; loot?: RpgLootInstance; forgeDust?: number; tier?: number; bossCrazyCoins?: number; bossDimes?: number; spellShape?: RpgSpellShape; elite?: boolean; boon?: RpgBoonId; bountyDust?: number }
+export interface RpgReward { xp: number; kills: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; bossDefeated: boolean; spellId: RpgSpellId; combat?: RpgCombatResult; loot?: RpgLootInstance; forgeDust?: number; tier?: number; bossCrazyCoins?: number; bossDimes?: number; spellShape?: RpgSpellShape; elite?: boolean; boon?: RpgBoonId; bountyDust?: number;
+  /** Armour or jewellery that fell, already saved in the hero's gear. */
+  gear?: RpgGearInstance;
+  /** The ward after the survivors struck back, and its most; `knelt` when it ran out and refilled (nothing is lost). */
+  ward?: { value: number; max: number; lost: number; knelt: boolean };
+  /** Forge dust for ending the fight with more than half the ward. */
+  steadyDust?: number }
 export interface RpgResolveResult { state: RpgState; reward: RpgReward; duplicate: boolean }
 /** A chest opened with a solved problem: smaller than a fight's reward, sometimes a relic. */
-export interface RpgChestReward { chestId: string; xp: number; forgeDust: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; loot?: RpgLootInstance; tier: number;
+export interface RpgChestReward { gear?: RpgGearInstance; chestId: string; xp: number; forgeDust: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; loot?: RpgLootInstance; tier: number;
   /** The treasure a chest word problem counted (its answer), when it was the chest's contents. */
   counted?: { treasure: 'dust' | 'gold'; amount: number };
   /** A lucky charm was used up on this chest. */

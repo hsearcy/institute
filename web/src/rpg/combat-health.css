@@ -33,3 +33,16 @@
   20% { box-shadow: 0 0 8px #85c4ce, inset 0 0 3px #a8e3e8; }
   100% { box-shadow: none; }
 }
+
+/* An elite: a gold-framed bar with its name above, shown even at full health. */
+.rpg-enemy-health > b { display: none; }
+.rpg-enemy-health.elite {
+  width: 76px; height: 11px; border-color: #e8bd5c; box-shadow: 0 0 6px #ffc14d88, 0 1px 3px #000c;
+  background: #1a1108ee;
+}
+.rpg-enemy-health.elite > i { background: linear-gradient(#ffd77a, #c98a2c); }
+.rpg-enemy-health.elite > b {
+  display: block; position: absolute; left: 50%; bottom: calc(100% + 3px); transform: translateX(-50%);
+  white-space: nowrap; font: 700 12px/1 Cinzel, Georgia, serif; letter-spacing: .04em; color: #ffd77a;
+  text-shadow: 0 0 6px #ff9d2e99, 0 1px 2px #000, 0 0 2px #000;
+}

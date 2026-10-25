@@ -15,11 +15,12 @@ const VOLUME: Record<string, number> = {
   'lurk-rattle': .5, 'lurk-growl': .42, 'lurk-scrape': .4,
   'charge-ember': .45, 'charge-frost': .5, 'charge-storm': .5,
   'relic-drop': .7, 'chest-open': .75, 'relic-pickup': .6, reward: .5, 'room-clear': .6, 'level-up': .75, 'boss-defeat': .85,
+  'break-wood': .62, 'break-pottery': .6, 'dust-pickup': .5, 'elite-alert': .7, 'elite-defeat': .75,
   'ui-click': .45, 'ui-select': .5, 'ui-open': .35, 'answer-correct': .55, 'answer-wrong': .5,
 };
 const CAST_VOLUME = .72, AMBIENCE_VOLUME = .38;
 /** Frequent events: never stack the same clip closer than this. */
-const MIN_GAP: Record<string, number> = { step: .16, 'hit-fire': .05, 'hit-frost': .05, 'hit-storm': .05, 'hit-blade': .05, soul: .05, 'ui-click': .06 };
+const MIN_GAP: Record<string, number> = { 'break-wood': .05, 'break-pottery': .05, step: .16, 'hit-fire': .05, 'hit-frost': .05, 'hit-storm': .05, 'hit-blade': .05, soul: .05, 'ui-click': .06 };
 const SPELL_CAST: Record<RpgSpellId, string> = {
   ember: 'cast-ember', cleave: 'cast-cleave', meteor: 'cast-meteor', phoenix_dive: 'cast-phoenix', firestorm: 'cast-firestorm',
   frost: 'cast-frost', ice_lance: 'cast-ice-lance', glacial_surge: 'cast-glacial-surge', blizzard: 'cast-blizzard', frost_guardian: 'cast-frost-guardian',
@@ -201,7 +202,8 @@ export type WorldSound =
   | 'impact-fire' | 'impact-frost' | 'impact-storm' | 'impact-blade' | 'impact-heavy'
   | 'blast-fire' | 'blast-frost' | 'blast-storm'
   | 'charge-ember' | 'charge-frost' | 'charge-storm'
-  | 'ward' | 'swing' | 'soul' | 'collapse' | 'step' | 'alert' | 'room-clear' | 'relic-drop' | 'chest-open';
+  | 'ward' | 'swing' | 'soul' | 'collapse' | 'step' | 'alert' | 'room-clear' | 'relic-drop' | 'chest-open'
+  | 'break-wood' | 'break-pottery' | 'dust-pickup' | 'elite-alert' | 'elite-defeat';
 export function world(kind: WorldSound): void {
   if (kind.startsWith('impact-')) { play(kind.replace('impact-', 'hit-'), { pitch: .12 }); return; }
   if (kind === 'step') { footstep(); return; }

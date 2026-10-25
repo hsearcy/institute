@@ -1,6 +1,6 @@
 # RPG sound design
 
-The RPG uses 76 clips made with ElevenLabs sound generation
+The RPG uses 85 clips made with ElevenLabs sound generation
 (`eleven_text_to_sound_v2`). Every prompt is in `rpg_sfx_spec.py`.
 
 | Group | Clips |
@@ -12,6 +12,7 @@ The RPG uses 76 clips made with ElevenLabs sound generation
 | Unseen pack | `lurk-rattle` (3), `lurk-growl` (2), `lurk-scrape` (2): idle sounds while the hero searches, louder as he comes near, panned by screen side |
 | Hero | `step` (4 takes, on each footfall of the run), `charge-ember/frost/storm` on a correct answer |
 | Rewards | `soul` (3), `relic-drop`, `relic-pickup`, `reward`, `room-clear`, `level-up`, `boss-defeat` |
+| Breakables and elites | `break-wood`, `break-pottery` (3 takes each), `dust-pickup`, `elite-alert` when an elite pack starts a fight, `elite-defeat` |
 | Interface | `ui-click`, `ui-select`, `ui-open`, `answer-correct`, `answer-wrong` (soft, never a buzzer) |
 | Ambience | `amb-vault`, `amb-forest`, `amb-coast`, `amb-quarry`, `amb-garden`: 22 s seamless loops |
 

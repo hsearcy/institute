@@ -5,7 +5,8 @@ import { masonryGeometry, projectStoneUV } from './masonry';
 import { crystalClusterGeometry } from './crystals';
 import { ruinGeometry } from './ruins';
 import { applyHeroCutoutTo } from './heroCutout';
-import { random, rectCenter, type Area, type Chunk, type Feature, type Level, type Side } from './levelGen';
+import { isBreakable, random, rectCenter, type Area, type Chunk, type Feature, type Level, type Side } from './levelGen';
+import type { BreakableKit } from './breakables';
 import type { OutdoorHelpers, OutdoorKit } from './outdoorWorld';
 
 export type ChunkTorch = { flame: THREE.Mesh; position: THREE.Vector3; phase: number };
@@ -13,7 +14,9 @@ export type ChunkTorch = { flame: THREE.Mesh; position: THREE.Vector3; phase: nu
 export type ChunkGlow = { position: THREE.Vector3; warm: boolean };
 /** A chest's lid turns on its hinge; the glow marks a chest still closed. */
 export type ChunkChest = { readonly feature: Feature; readonly hinge?: THREE.Object3D; readonly glow: THREE.Sprite };
-export type BuiltChunk = { readonly key: string; readonly group: THREE.Group; readonly torches: ChunkTorch[]; readonly glows: ChunkGlow[]; readonly runes: THREE.Object3D[]; readonly chests: ChunkChest[] };
+/** A barrel, urn or crate still whole; it is removed from the chunk when broken. */
+export type ChunkBreakable = { readonly feature: Feature; readonly object: THREE.Group };
+export type BuiltChunk = { readonly key: string; readonly group: THREE.Group; readonly torches: ChunkTorch[]; readonly glows: ChunkGlow[]; readonly runes: THREE.Object3D[]; readonly chests: ChunkChest[]; readonly breakables?: ChunkBreakable[] };
 /** Lid angle of an open chest, about its back hinge. */
 export const CHEST_OPEN_ANGLE = -1.95;
 
@@ -47,6 +50,8 @@ export type ChunkContext = {
   model(name: string, height: number): THREE.Group | undefined;
   readonly flame: THREE.Material;
   readonly glowMap: THREE.Texture;
+  /** Shared barrel, urn and crate models; without it no breakables are built. */
+  readonly breakables?: BreakableKit;
 };
 
 /** One straight stretch of wall on a rect's side, in metres along that side. */
@@ -83,7 +88,14 @@ export function wallRuns(level: Level, chunk: Chunk): WallRun[] {
 }
 
 export function buildChunk(context: ChunkContext, chunk: Chunk): BuiltChunk {
-  return context.outdoor ? buildOutdoorChunk(context, context.outdoor, chunk) : buildVaultChunk(context, chunk);
+  const built = context.outdoor ? buildOutdoorChunk(context, context.outdoor, chunk) : buildVaultChunk(context, chunk);
+  const breakables: ChunkBreakable[] = [];
+  // Broken ones stay broken when a chunk is rebuilt.
+  if (context.breakables) for (const feature of chunk.area?.features ?? chunk.corridor?.features ?? []) {
+    if (!isBreakable(feature) || feature.opened) continue;
+    const object = context.breakables.build(feature); built.group.add(object); breakables.push({ feature, object });
+  }
+  return { ...built, breakables };
 }
 
 function chunkSeed(chunk: Chunk): number {

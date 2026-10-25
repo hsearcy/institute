@@ -691,6 +691,81 @@
           "bytes": 13837
         }
       ]
+    },
+    "break-wood": {
+      "kind": "sfx",
+      "prompt": "a wooden barrel or crate smashed open by a sword: a sharp crunchy wood splinter crack, planks clattering on stone, a few small pebbles rolling, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "break-wood-1.mp3",
+          "seconds": 0.52,
+          "bytes": 6627
+        },
+        {
+          "file": "break-wood-2.mp3",
+          "seconds": 0.91,
+          "bytes": 11329
+        },
+        {
+          "file": "break-wood-3.mp3",
+          "seconds": 0.68,
+          "bytes": 8508
+        }
+      ]
+    },
+    "break-pottery": {
+      "kind": "sfx",
+      "prompt": "a clay urn shattered by a sword: a bright crisp ceramic smash, shards tinkling and skittering across a stone floor, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "break-pottery-1.mp3",
+          "seconds": 0.47,
+          "bytes": 6000
+        },
+        {
+          "file": "break-pottery-2.mp3",
+          "seconds": 0.57,
+          "bytes": 7254
+        },
+        {
+          "file": "break-pottery-3.mp3",
+          "seconds": 0.57,
+          "bytes": 7254
+        }
+      ]
+    },
+    "dust-pickup": {
+      "kind": "sfx",
+      "prompt": "a pinch of glittering magic dust collected: a tiny soft sparkling twinkle, very short and gentle, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "dust-pickup.mp3",
+          "seconds": 0.44,
+          "bytes": 5687
+        }
+      ]
+    },
+    "elite-alert": {
+      "kind": "sfx",
+      "prompt": "a champion monster revealed: a deep menacing growl over a heavy metallic war horn swell with a dark magical shimmer, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "elite-alert.mp3",
+          "seconds": 1.36,
+          "bytes": 16658
+        }
+      ]
+    },
+    "elite-defeat": {
+      "kind": "sfx",
+      "prompt": "a champion monster defeated: a heavy armored body crashing down, then a bright golden magical chime swell, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "elite-defeat.mp3",
+          "seconds": 1.36,
+          "bytes": 16658
+        }
+      ]
     }
   },
   "source": "scripts/audio/generate_rpg_sfx.py (ElevenLabs sound generation, eleven_text_to_sound_v2)",

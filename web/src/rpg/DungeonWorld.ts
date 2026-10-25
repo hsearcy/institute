@@ -1614,7 +1614,7 @@ export class DungeonWorld {
   /** The loaded hero and gear cache, lent to the character sheet's live portrait. */
   dollSource(): HeroDollSource | undefined {
     const hero = this.models.get(TRIPO_HERO_MODEL);
-    return hero && !this.disposed ? { hero, clips: this.heroClipSets.get(TRIPO_HERO_MODEL) ?? [], gearModel: baseId => this.gearModel(baseId) } : undefined;
+    return hero && !this.disposed ? { hero, clips: this.heroClipSets.get(TRIPO_HERO_MODEL) ?? [], gearModel: baseId => this.gearModel(baseId), itemModel: itemId => ITEM_MODELS[itemId] ? this.models.get(ITEM_MODELS[itemId].model) : undefined } : undefined;
   }
 
   gearModel(baseId: string): Promise<THREE.Group | undefined> {

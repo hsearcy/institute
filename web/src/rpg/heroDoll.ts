@@ -2,12 +2,15 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { createTripoHeroInstance } from './world/tripoHeroRuntime';
 import { WornGear, WORN_KINDS, type WornKind } from './world/wornGear';
+import { tripoHeroEquipment, type HeldEquipment } from './world/HeldEquipment';
 
 /** What the dungeon world lends the doll: its loaded hero and the gear model cache. */
 export interface HeroDollSource {
   hero: THREE.Object3D;
   clips: readonly THREE.AnimationClip[];
   gearModel(baseId: string): Promise<THREE.Object3D | undefined>;
+  /** The loaded model of a relic (weapon or held item), when it has one. */
+  itemModel(itemId: string): THREE.Object3D | undefined;
 }
 
 /**
@@ -23,6 +26,7 @@ export class HeroDoll {
   private readonly pivot = new THREE.Group();
   private hero?: THREE.Group;
   private worn?: WornGear;
+  private held?: HeldEquipment;
   private mixer?: THREE.AnimationMixer;
   private wanted: Partial<Record<WornKind, string>> = {};
   private readonly owned: THREE.Material[] = [];
@@ -35,7 +39,7 @@ export class HeroDoll {
 
   constructor(private readonly source: HeroDollSource) {}
 
-  attach(host: HTMLElement, worn: Partial<Record<WornKind, string>>): void {
+  attach(host: HTMLElement, worn: Partial<Record<WornKind, string>>, itemId: string): void {
     if (this.disposed) return;
     this.host = host;
     if (!this.renderer && !this.start()) return;
@@ -46,6 +50,7 @@ export class HeroDoll {
     this.observer = new ResizeObserver(() => this.resize()); this.observer.observe(host);
     this.resize();
     this.wear(worn);
+    this.hold(itemId);
   }
 
   private start(): boolean {
@@ -71,13 +76,14 @@ export class HeroDoll {
       if (!(node instanceof THREE.Mesh)) return;
       node.frustumCulled = false; // Skinned bounds lag the idle pose.
       for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
-        this.owned.push(material);
+        this.owned.push(material); node.userData.dollMaterial = true;
         // The world's environment map belongs to its own WebGL context.
         if (material instanceof THREE.MeshStandardMaterial) { material.envMap = null; material.envMapIntensity = 1; }
       }
     });
     this.pivot.add(hero); this.hero = hero;
     this.worn = new WornGear(hero);
+    this.held = tripoHeroEquipment(hero);
     this.mixer = new THREE.AnimationMixer(hero);
     const idle = this.source.clips.find(clip => clip.name.toLowerCase() === 'idle');
     if (idle) this.mixer.clipAction(idle).play();
@@ -93,6 +99,7 @@ export class HeroDoll {
       if (this.disposed || !this.renderer) return;
       const delta = Math.min(.05, (now - last) / 1000); last = now;
       this.mixer?.update(delta);
+      this.held?.update(now / 1000);
       this.pivot.rotation.y = this.turn;
       this.renderer.render(this.scene, this.camera);
       this.frame = requestAnimationFrame(tick);
@@ -110,15 +117,30 @@ export class HeroDoll {
       void this.source.gearModel(baseId).then(model => {
         if (this.disposed || this.wanted[kind] !== baseId || !model || !this.hero) return;
         this.worn?.wear(kind, baseId, model);
-        // Worn meshes share the world's materials; give the doll its own copies without the world's envMap.
-        this.hero.traverse(node => {
-          if (!(node instanceof THREE.Mesh) || node.userData.dollMaterial || !node.parent?.name.startsWith('Worn_')) return;
-          const material = (node.material as THREE.Material).clone();
-          if (material instanceof THREE.MeshStandardMaterial) { material.envMap = null; material.envMapIntensity = 1; }
-          node.material = material; node.userData.dollMaterial = true; this.owned.push(material);
-        });
+        this.ownMaterials();
       });
     }
+  }
+
+  /** The equipped relic in the hand, exactly as the dungeon shows it. */
+  private hold(itemId: string): void {
+    if (!this.held || this.held.itemId === itemId) return;
+    const model = this.source.itemModel(itemId);
+    if (model && this.held.replace(model)) this.ownMaterials();
+  }
+
+  /** Mounted gear shares the world's materials; give the doll its own copies without the world's envMap. */
+  private ownMaterials(): void {
+    this.hero?.traverse(node => {
+      if (!(node instanceof THREE.Mesh) || node.userData.dollMaterial) return;
+      const clone = (material: THREE.Material) => {
+        const copy = material.clone();
+        if (copy instanceof THREE.MeshStandardMaterial) { copy.envMap = null; copy.envMapIntensity = 1; }
+        this.owned.push(copy); return copy;
+      };
+      node.material = Array.isArray(node.material) ? node.material.map(clone) : clone(node.material);
+      node.userData.dollMaterial = true;
+    });
   }
 
   private resize(): void {
@@ -137,7 +159,7 @@ export class HeroDoll {
     cancelAnimationFrame(this.frame);
     this.observer?.disconnect();
     this.mixer?.stopAllAction();
-    this.worn?.clear();
+    this.worn?.clear(); this.held?.clear();
     this.hero?.traverse(node => { if (node instanceof THREE.SkinnedMesh) node.skeleton.dispose(); });
     for (const material of this.owned) material.dispose();
     this.scene.environment?.dispose();

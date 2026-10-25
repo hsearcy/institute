@@ -12,7 +12,7 @@ plain body and of every dressed model meet.
 """
 import numpy as np
 
-REGIONS = ('head', 'chest', 'gloves', 'hips', 'legs', 'shins', 'feet')
+REGIONS = ('head', 'chest', 'gloves', 'hips', 'legs', 'shins', 'feet', 'neck')
 
 
 def _segment_distance(points, a, b):
@@ -55,7 +55,11 @@ def classify(points, joint):
     calf_mid = float(j['L_Calf'] @ up) * .85 + float(j['L_Foot'] @ up) * .15  # just under the knee: tall boots fit
     waist = hip + .025       # the belt line: chest armour above, pants below
     region = np.full(len(points), REGIONS.index('chest'))
-    region[kind == 'head'] = REGIONS.index('head')
+    # The neck goes with the head: a chest piece stops at the collar, so a dressed
+    # model's chin and jaw never ride up over the hero's own face.
+    region[(kind == 'head') | ((kind == 'neck') & (height > float(j['NeckTwist01'] @ up) + .01))] = REGIONS.index('head')
+    # The rest of the neck always stays the hero's own: no piece replaces it.
+    region[(kind == 'neck') & (height <= float(j['NeckTwist01'] @ up) + .01)] = REGIONS.index('neck')
     region[(kind == 'hand') | ((kind == 'forearm') & (along > .5))] = REGIONS.index('gloves')
     leg = np.isin(kind, ('thigh', 'calf', 'foot')) | ((kind == 'torso') & (height < waist))
     region[leg & (height < waist)] = REGIONS.index('hips')

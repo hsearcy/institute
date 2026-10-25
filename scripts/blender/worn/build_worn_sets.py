@@ -129,8 +129,10 @@ def cut_regions(hero, obj, pieces):
         for region_name in REGION_OF[kind]:
             keep = set(np.nonzero(face_region == regions.REGIONS.index(region_name))[0].tolist())
             ring = set(keep)
+            # Overlap into neighbours hides seams, but never into the head: only a helm owns the face.
+            blocked = set(np.nonzero(face_region == regions.REGIONS.index('neck'))[0].tolist()) | (set() if region_name == 'head' else set(np.nonzero(face_region == regions.REGIONS.index('head'))[0].tolist()))
             for _ in range(OVERLAP_RINGS):
-                ring = {n for f in ring for n in neighbours[f]} - keep
+                ring = {n for f in ring for n in neighbours[f]} - keep - blocked
                 keep |= ring
             piece = obj.copy(); piece.data = obj.data.copy(); piece.name = f'{base}_{region_name}'
             bpy.context.scene.collection.objects.link(piece)

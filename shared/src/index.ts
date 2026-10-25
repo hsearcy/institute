@@ -306,3 +306,4 @@ export * from "./chestStory";
 export * from "./rpgTrader";
 export * from "./rpgElite";
 export * from "./rpgLocks";
+export * from "./rpgGear";

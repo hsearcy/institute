@@ -1,3 +1,4 @@
+import type { RpgGearInstance, RpgGearSlot } from './rpgGear';
 import { rpgEliteRoom, rpgEliteMaxHp } from './rpgElite';
 import { rpgLootSpellShape, rpgLootCombatAffix, rpgEffectiveSkills, rpgEquippedLoot, rpgLootAffixes, rpgLootSkillBonus, rpgLootPower, rpgTier } from './rpgLoot';
 import type { RpgBoon, RpgBoonId } from './rpgLocks';
@@ -190,6 +191,8 @@ export interface RpgState {
   dungeonTier?: number; bestTier?: number; goal?: RpgGoal | null;
   /** Lucky charms from the wandering trader: each makes the next paying chest hold a relic. */
   chestCharms?: number;
+  /** Armour and jewellery owned, and the copy in each slot (see rpgGear.ts). */
+  gear?: RpgGearInstance[]; equippedGear?: Partial<Record<RpgGearSlot, string>>;
 }
 export interface RpgReward { xp: number; kills: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; bossDefeated: boolean; spellId: RpgSpellId; combat?: RpgCombatResult; loot?: RpgLootInstance; forgeDust?: number; tier?: number; bossCrazyCoins?: number; bossDimes?: number; spellShape?: RpgSpellShape; elite?: boolean; boon?: RpgBoonId; bountyDust?: number }
 export interface RpgResolveResult { state: RpgState; reward: RpgReward; duplicate: boolean }

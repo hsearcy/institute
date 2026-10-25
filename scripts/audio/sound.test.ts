@@ -10,22 +10,21 @@ let closedContexts = 0;
 let started = 0;
 let stopped = 0;
 let fetches = 0;
+const played: unknown[] = [];
 class Param {
   value = 0;
   cancelScheduledValues() {}
   setTargetAtTime(value: number) { this.value = value; }
   setValueAtTime(value: number) { this.value = value; }
-  linearRampToValueAtTime(value: number) { this.value = value; }
-  exponentialRampToValueAtTime(value: number) { this.value = value; }
 }
 class Node {
-  gain = new Param(); frequency = new Param(); playbackRate = new Param();
+  gain = new Param(); playbackRate = new Param();
   threshold = new Param(); knee = new Param(); ratio = new Param(); attack = new Param(); release = new Param();
   loop = false; buffer: unknown; onended?: () => void;
   connect(node: Node) { return node; }
   disconnect() {}
-  start() { started++; }
-  stop(when?: number) { if (when !== undefined && when > clock) return; stopped++; this.onended?.(); }
+  start() { started++; played.push(this.buffer); }
+  stop() { stopped++; this.onended?.(); }
 }
 class Context {
   state = 'suspended'; destination = new Node();
@@ -34,12 +33,35 @@ class Context {
   createGain() { return new Node(); }
   createDynamicsCompressor() { return new Node(); }
   createBufferSource() { return new Node(); }
-  createOscillator() { return new Node(); }
   resume() { this.state = 'running'; return Promise.resolve(); }
   close() { this.state = 'closed'; closedContexts++; return Promise.resolve(); }
-  decodeAudioData() { return Promise.resolve({ duration: 1 }); }
+  // The decoded buffer remembers its file, so a test can see which take played.
+  decodeAudioData(data: ArrayBuffer) { return Promise.resolve({ file: new TextDecoder().decode(data) }); }
 }
 class Document extends EventTarget { hidden = false; }
+
+const files = (id: string, count = 1) => Array.from({ length: count }, (_, n) => ({ file: count === 1 ? `${id}.mp3` : `${id}-${n + 1}.mp3` }));
+const MANIFEST = { clips: {
+  'cast-ember': { kind: 'sfx', files: files('cast-ember') }, 'cast-frost': { kind: 'sfx', files: files('cast-frost') },
+  'cast-storm': { kind: 'sfx', files: files('cast-storm') }, 'relic-pickup': { kind: 'sfx', files: files('relic-pickup') },
+  'level-up': { kind: 'sfx', files: files('level-up') }, 'boss-defeat': { kind: 'sfx', files: files('boss-defeat') },
+  'hit-fire': { kind: 'sfx', files: files('hit-fire', 3) },
+  'amb-vault': { kind: 'loop', files: files('amb-vault') }, 'amb-forest': { kind: 'loop', files: files('amb-forest') },
+} };
+const EFFECT_FILES = 9;
+function install(fetchGate?: Promise<void>): Document {
+  const document = new Document();
+  globalThis.window = { AudioContext: Context } as unknown as Window & typeof globalThis;
+  globalThis.document = document as unknown as globalThis.Document;
+  globalThis.fetch = (async (url: string) => {
+    fetches++;
+    await fetchGate;
+    if (url.endsWith('manifest.json')) return { ok: true, json: async () => MANIFEST } as Response;
+    return { ok: true, arrayBuffer: async () => new TextEncoder().encode(url.split('/').pop()).buffer } as Response;
+  }) as typeof fetch;
+  return document;
+}
+const settle = async () => { for (let i = 0; i < 6; i++) await Promise.resolve(); };
 
 afterEach(() => {
   sound.dispose();
@@ -49,27 +71,21 @@ afterEach(() => {
 });
 
 test('gesture gating, preload deduplication, mute, tab visibility, and teardown', async () => {
-  const document = new Document();
-  globalThis.window = { AudioContext: Context } as unknown as Window & typeof globalThis;
-  globalThis.document = document as unknown as globalThis.Document;
-  globalThis.fetch = (async () => {
-    fetches++;
-    return { ok: true, arrayBuffer: async () => new ArrayBuffer(4) } as Response;
-  }) as typeof fetch;
+  const document = install();
   sound.setMuted(false);
   sound.cast('ember'); sound.loot(); sound.startAmbience();
   expect(madeContexts).toBe(0);
   expect(fetches).toBe(0);
 
   await sound.unlock();
-  await Promise.resolve();
+  await settle();
   expect(madeContexts).toBe(1);
-  expect(fetches).toBe(8);
+  expect(fetches).toBe(1 + EFFECT_FILES + 1); // Manifest, every effect, the vault room tone.
   expect(started).toBe(1); // Only the requested ambience, no queued pre-gesture hit.
   await sound.unlock();
   sound.startAmbience();
-  await Promise.resolve();
-  expect(fetches).toBe(8);
+  await settle();
+  expect(fetches).toBe(1 + EFFECT_FILES + 1);
   expect(started).toBe(1);
 
   sound.cast('ember'); expect(started).toBe(2);
@@ -94,6 +110,7 @@ test('gesture gating, preload deduplication, mute, tab visibility, and teardown'
   sound.loot(); sound.cast('ember'); expect(started).toBe(4);
 
   await sound.unlock(); // Returning to the game gets a fresh, usable context.
+  await settle();
   expect(madeContexts).toBe(2);
   expect(started).toBe(4); // Old ambience request was disposed too.
   sound.loot(); expect(started).toBe(5);
@@ -102,41 +119,36 @@ test('gesture gating, preload deduplication, mute, tab visibility, and teardown'
 test('leaving while clips load cannot restart ambience or play a delayed effect', async () => {
   const before = started;
   let finishFetch!: () => void;
-  const gate = new Promise<void>(resolve => { finishFetch = resolve; });
-  globalThis.window = { AudioContext: Context } as unknown as Window & typeof globalThis;
-  globalThis.document = new Document() as unknown as globalThis.Document;
-  globalThis.fetch = (async () => {
-    await gate;
-    return { ok: true, arrayBuffer: async () => new ArrayBuffer(4) } as Response;
-  }) as typeof fetch;
+  install(new Promise<void>(resolve => { finishFetch = resolve; }));
   sound.startAmbience();
   const loading = sound.unlock();
   sound.dispose();
   finishFetch();
   await loading;
-  await Promise.resolve();
+  await settle();
   expect(started).toBe(before);
 });
 
-test('expanded ability signatures are gesture-gated, deduplicated, and cancelled by mute', async () => {
-  const document = new Document();
-  globalThis.window = { AudioContext: Context } as unknown as Window & typeof globalThis;
-  globalThis.document = document as unknown as globalThis.Document;
-  globalThis.fetch = (async () => ({ok:true,arrayBuffer:async()=>new ArrayBuffer(4)} as Response)) as typeof fetch;
-  sound.setMuted(false);
-  const before = started;
-  sound.cast('meteor');
-  expect(started).toBe(before);
+test('a contact never plays the same take twice in a row', async () => {
+  install();
   await sound.unlock();
-  clock += 1;
-  sound.cast('meteor');
-  expect(started - before).toBe(3); // Recorded impact plus two authored bass pulses.
-  sound.cast('meteor');
-  expect(started - before).toBe(3);
-  const beforeMute = stopped;
-  sound.setMuted(true);
-  expect(stopped - beforeMute).toBe(3);
-  clock += 1;
-  sound.cast('frost_guardian'); sound.cast('tempest');
-  expect(started - before).toBe(3);
+  played.length = 0;
+  for (let i = 0; i < 12; i++) { clock += 1; sound.world('impact-fire'); }
+  const takes = played.map(buffer => (buffer as { file: string }).file);
+  expect(takes.length).toBe(12);
+  expect(new Set(takes).size).toBeGreaterThan(1);
+  for (let i = 1; i < takes.length; i++) expect(takes[i]).not.toBe(takes[i - 1]);
+});
+
+test('a new environment crossfades to its own room tone, once', async () => {
+  install();
+  sound.setAmbience('vault');
+  await sound.unlock();
+  await settle();
+  played.length = 0;
+  sound.setAmbience('forest');
+  await settle();
+  sound.setAmbience('forest');
+  await settle();
+  expect(played.map(buffer => (buffer as { file: string }).file)).toEqual(['amb-forest.mp3']);
 });

@@ -1,36 +1,34 @@
-# Sunken Vault sound design
+# RPG sound design
 
-Eight original synthesized WAV clips, authored with Python, NumPy, and the standard
-`wave` module. No external samples, model services, music downloads, or licenses are
-required. The deterministic generator uses seed 214.
+The RPG uses 68 clips made with ElevenLabs sound generation
+(`eleven_text_to_sound_v2`). Every prompt is in `rpg_sfx_spec.py`.
 
-| Cue | Sound |
+| Group | Clips |
 | --- | --- |
-| Fire Nova | Air drawn inward, a warm low impact, fire body and fading ember ticks |
-| Frostfall | Crystal crack followed by scattered, softly ringing ice fragments |
-| Chain Lightning | Four branching electrical snaps over a restrained thunder tail |
-| Loot | Three brief, tuned enchanted-metal chimes |
-| Level up | Warm rising D-major bell notes over a soft lower harmony |
-| Boss defeated | Crumbling stone resolving into a victorious open interval |
-| Footstep | Dry boot impact and stone scuff, with a tiny room reflection |
-| Ambience | Seamless twelve-second filtered air, distant low resonance, no ticking |
+| Spell casts | One per spell (15). Plays as the cast clip starts. |
+| Contacts | `hit-fire`, `hit-frost`, `hit-storm`, `hit-blade` (3 takes each), `hit-heavy` (2) for brutes |
+| Area blasts | `blast-fire` (meteor), `blast-frost` (frost guardian), `blast-storm` (thunderclap) |
+| Horde | `swing`, `ward`, `collapse` (3 takes each), `alert` when combat starts |
+| Hero | `step` (4 takes, on each footfall of the run), `charge-ember/frost/storm` on a correct answer |
+| Rewards | `soul` (3), `relic-drop`, `relic-pickup`, `reward`, `room-clear`, `level-up`, `boss-defeat` |
+| Interface | `ui-click`, `ui-select`, `ui-open`, `answer-correct`, `answer-wrong` (soft, never a buzzer) |
+| Ambience | `amb-vault`, `amb-forest`, `amb-coast`, `amb-quarry`, `amb-garden`: 22 s seamless loops |
 
-The spell clips contain a 220 ms anticipation sound before impact, matching
-`DungeonWorld.attack()`. Noise is band-limited; transients are softened, reverb is
-baked into the effects, and runtime gain leaves room for the tutor's voice. The
-ambience is deliberately quiet. Clips are mono 22,050 Hz / 16-bit PCM, about 1.1 MB
-combined. The generated manifest records durations, RMS levels, and peak levels.
+Rebuild: `python3 scripts/audio/generate_rpg_sfx.py [id ...]` (needs
+`ELEVENLABS_API_KEY` in `.env`, and ffmpeg). Raw takes are kept in
+`assets/rpg-sfx-raw/` (not committed) and reused, so a rerun only re-levels them.
+To buy a new take, delete its raw file and run the script for that id.
 
-Rebuild: `python scripts/audio/generate_rpg_audio.py` (requires NumPy).
+Processing: leading and trailing silence is cut, then each clip is leveled by
+loudness (effects -13 dB RMS, interface -18, ambience -21) with a limiter on the
+sharpest transients. Effects are mono 96 kbps MP3; ambience is stereo 128 kbps.
+`web/public/assets/rpg/audio/sfx/manifest.json` lists the takes of each clip.
 
-`web/src/rpg/sound.ts` exposes `unlock`, `setMuted`, `cast`, `loot`, `levelUp`,
-`boss`, `startAmbience`, `dispose`, and optional `footstep` / `setDucked` functions.
-Call `unlock()` directly from a user gesture. Loading is deduplicated and best
-effort; no late sound is queued if an asset is unavailable. Call `dispose()` on
-leaving the game. Muting and background-tab visibility silence all game audio.
-Use `setDucked(true)` during spoken instruction to reduce the background further.
-The module owns its WebAudio context and does not alter the legacy tutor audio.
+`web/src/rpg/sound.ts` loads the manifest and every effect after the first
+gesture (`unlock()`), picks a random take and never repeats the last one, and
+skips a clip that is still loading instead of playing it late. Mix levels per
+clip are in `VOLUME`. `setAmbience(environment)` crossfades the room tone.
+Muting and a hidden tab silence everything; `setDucked(true)` lowers the mix while
+the tutor speaks; `dispose()` closes the audio context.
 
 Lifecycle verification: `bun test scripts/audio/sound.test.ts`.
-The test covers autoplay gating, deduplicated preload, mute, hidden-tab behavior,
-duplicate event suppression, teardown, and returning to the game.

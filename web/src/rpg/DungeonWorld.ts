@@ -1,3 +1,4 @@
+import type { WorldSound } from './sound';
 import { playFireSpellBonus } from './world/fireSpellBonuses';
 import { playFrostSpellBonus, createDiamondDrill } from './world/frostSpellBonuses';
 import { playStormSpellBonus, createOrbitLink } from './world/stormSpellBonuses';
@@ -67,7 +68,7 @@ const HERO_CAST: Record<string, string> = {
   'ice-lance': 'cast-thrust', 'arc-lance': 'cast-thrust', 'glacial-surge': 'cast-thrust',
 };
 /** Sounds the world asks for; the game decides whether they play. */
-export type CombatSound = 'impact' | 'impact-heavy' | 'ward' | 'swing' | 'soul' | 'collapse';
+export type CombatSound = WorldSound;
 /** Top running speed, faster than the run clip's measured pace: an action-RPG hero covers a room in a few seconds. */
 const HERO_RUN_SPEED = 4.4;
 /** Seconds a cast holds the hero still before the player may move on. */
@@ -374,6 +375,7 @@ export class DungeonWorld {
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.glowMap, color, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
     sprite.renderOrder = 5; sprite.scale.setScalar(.01); this.scene.add(sprite);
     this.charge = { sprite, startedAt: this.elapsed, color };
+    if (spell && spell.effect !== 'cleave') this.onSound?.(`charge-${spell.school}`);
   }
 
   private handPosition(target = new THREE.Vector3()): THREE.Vector3 {
@@ -435,7 +437,7 @@ export class DungeonWorld {
   /** Starts combat with the current horde now, as when the hero comes in sight of it. The hero keeps moving. */
   engage(): void {
     if (this.engaged) return;
-    this.engaged = true;
+    this.engaged = true; this.onSound?.('alert');
     this.finishEngage();
   }
 
@@ -1811,7 +1813,7 @@ export class DungeonWorld {
             if (bonus?.id !== 'glacial-hammer') targets.forEach((enemy, index) => {
               this.glacialShard(enemy.root.position.clone(), index * 2.4, .6 + index % 3 * .12, index + 71, enemy.id);
             });
-            this.impact(target, 0xd2faff, 1.5); this.shake = .32;
+            this.impact(target, 0xd2faff, 1.5); this.shake = .32; this.onSound?.('blast-frost');
           });
           resolveHorde(.83); break;
         }
@@ -1841,7 +1843,7 @@ export class DungeonWorld {
           break;
         }
         case 'thunderclap': {
-          this.bolt(target.clone().setY(13), target.clone().setY(.1), 0xe0efff, .2, .45);
+          this.bolt(target.clone().setY(13), target.clone().setY(.1), 0xe0efff, .2, .45); this.onSound?.('blast-storm');
           this.schedule(.18, () => { this.impact(target, 0xadcaff, 4.5); this.ring(target, 0xa9bfff, 11.5, .7, 'ring'); this.debris(target, 14); this.shake = .48; });
           if (options.echo) this.schedule(.7, () => { this.bolt(origin.clone().setY(12), origin, 0xd4e7ff, .18, .45); this.ring(origin, 0xc0d9ff, 11.5, .65, 'ring'); });
           resolveHorde(.27); break;
@@ -2041,6 +2043,7 @@ export class DungeonWorld {
   }
 
   private meteorImpact(at: THREE.Vector3, incoming: THREE.Vector3, scale: number): void {
+    this.onSound?.('blast-fire');
     const direction = incoming.clone().setY(0).normalize();
     this.fireNova(at, 10 * scale);
     this.debris(at, Math.round(44 * scale), false, 1.4, { direction, spread: Math.PI * 1.6, lift: .3, grounded: true });
@@ -2297,7 +2300,9 @@ export class DungeonWorld {
     // for heavy blows, a short hit-stop and a camera punch.
     enemy.root.userData.hitFlash = { at: this.elapsed, color: ELEMENT_FLASH[school === 'frost' && !physicalCleave ? 'frost' : element === 'fire' ? 'fire' : element === 'electric' ? 'electric' : 'other'] };
     this.damageNumbers.spawn(enemy.root.position.clone().add(new THREE.Vector3((Math.random() - .5) * .5, enemy.height + .15, 0)), damage, reaction.lethal ? 'kill' : damage >= enemy.maxHp * .45 ? 'big' : 'hit');
-    this.onSound?.(reaction.lethal || enemy.brute ? 'impact-heavy' : 'impact');
+    this.onSound?.(physicalCleave ? 'impact-blade' : school === 'frost' ? 'impact-frost' : school === 'storm' ? 'impact-storm' : 'impact-fire');
+    if (enemy.brute) this.onSound?.('impact-heavy');
+    if (reaction.lethal && this.enemies.every(other => other.dead)) this.schedule(.9, () => this.onSound?.('room-clear'));
     if ((reaction.lethal || enemy.brute || physicalCleave) && this.elapsed - this.lastHitStopAt > .3) {
       this.hitStop = reaction.lethal && enemy.brute ? .12 : reaction.lethal ? .07 : .05; this.lastHitStopAt = this.elapsed;
     }
@@ -2351,7 +2356,7 @@ export class DungeonWorld {
     const at = slideStep({ x: origin.x, z: origin.z }, position.x - origin.x, position.z - origin.z, heroWalkable(this.encounter, this.regionId));
     position.set(at.x, .1, at.z);
     this.emit(position, color, 35, 1.7, 1.5);
-    this.floorLoot.dropRelic(position, color, this.elapsed);
+    this.floorLoot.dropRelic(position, color, this.elapsed); this.onSound?.('relic-drop');
   }
 
   private emit(origin: THREE.Vector3, color: number, count: number, speed: number, life: number): void {
@@ -2505,7 +2510,11 @@ export class DungeonWorld {
       }
     }
     // Animate the distance actually covered: a hero pressed against a wall stands.
+    const gaitBefore = this.heroAnimator?.gaitPhase ?? 0;
     this.heroAnimator?.update(delta, travel && delta > 0 ? Math.min(travel.distance, this.hero.position.distanceTo(heroFrom)) / delta : 0);
+    // A footfall each time a foot lands in the gait cycle.
+    const gaitAfter = this.heroAnimator?.gaitPhase ?? 0;
+    if (this.heroTravelSpeed > .6 && gaitAfter !== gaitBefore && (gaitAfter < gaitBefore || (gaitBefore < .5 && gaitAfter >= .5))) this.onSound?.('step');
     if (walking) {
       this.heroVisual.position.y = this.heroUsesAuthoredMotion ? 0 : Math.abs(Math.sin(this.elapsed * 11)) * .09;
       setPlanarHeroHeading(this.heroVisual.rotation, turnToward(this.heroVisual.rotation.y, Math.atan2(travelTarget.x - heroFrom.x, travelTarget.z - heroFrom.z), delta, 16));

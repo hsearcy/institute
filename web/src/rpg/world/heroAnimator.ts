@@ -134,6 +134,8 @@ export class HeroAnimator {
   }
 
   get time(): number { return this.shot?.action.time ?? this.phase; }
+  /** Gait cycle position, 0 to 1; the feet land near 0 and .5. */
+  get gaitPhase(): number { return this.phase; }
 
   update(delta: number, speed: number): void {
     this.speed = speed;

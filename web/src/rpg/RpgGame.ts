@@ -127,7 +127,7 @@ export class RpgGame {
     document.body.classList.add('rpg-mode');
     this.world = new DungeonWorld(canvas);
     this.world.onLootPickup = pickup => { if (pickup.kind === 'relic' && !this.muted) dungeonSound.loot(); };
-    this.world.onSound = sound => { if (!this.muted) dungeonSound.combat(sound); };
+    this.world.onSound = sound => { if (!this.muted) dungeonSound.world(sound); };
     this.root.id = 'rpg-ui';
     this.root.innerHTML = `
       <header class="rpg-top"><div class="rpg-location"><span class="rpg-eyebrow">INSTITUTE <b>◆</b> THE SUNKEN VAULT</span><h1 id="rpg-region">The Embercrypt</h1><p id="rpg-room">A new adventure awaits</p></div>
@@ -280,6 +280,7 @@ export class RpgGame {
     if (index === undefined || !this.state?.expedition) return;
     const combat = rpgEncounterCombat(this.state, index);
     this.world.setEncounter(index, this.state.expedition.regionId, combat.enemies.length, combat.enemies);
+    dungeonSound.setAmbience(RPG_REGIONS.find(region => region.id === this.state!.expedition!.regionId)?.environment ?? 'vault');
   }
   private renderState(): void {
     const s = this.state; if (!s || this.disposed) return;
@@ -475,6 +476,7 @@ export class RpgGame {
     this.stopClock(); this.busy = true;
     this.session.pending = { correct: Number(this.entered) === this.session.problem.answer, assisted: false, aided: !!this.session.helped, solveMs: Math.round(this.session.elapsedMs ?? 0), answerMs: Math.floor(this.session.answerMs ?? 0), wrongCount: this.session.wrongCount, spellId: this.state!.selectedSpellId };
     this.saveSession();
+    dungeonSound.answer(this.session.pending.correct);
     if (this.session.pending.correct) this.world.anticipate(this.state!.selectedSpellId);
     await this.runSafely(() => this.finishPending());
   }
@@ -609,7 +611,7 @@ export class RpgGame {
     if (!this.muted) {
       if (reward.bossDefeated) dungeonSound.boss();
       else if (reward.levelUp) { /* The queued celebration plays its fanfare. */ }
-      else dungeonSound.loot();
+      else dungeonSound.reward();
     }
   }
   private updateLootLabel = (): void => {
@@ -1153,6 +1155,7 @@ export class RpgGame {
     void dungeonSound.unlock();
     const button = (event.target as Element).closest<HTMLButtonElement>('button');
     if (!button || button.disabled) return;
+    dungeonSound.ui(button.dataset.spell ? 'select' : button.closest('nav') ? 'open' : 'click');
     if (button.dataset.digit !== undefined) {
       if (this.busy || this.panel) return;
       const digit = button.dataset.digit;

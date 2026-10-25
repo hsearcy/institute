@@ -1,0 +1,634 @@
+{
+  "clips": {
+    "cast-ember": {
+      "kind": "sfx",
+      "prompt": "fire nova spell: a short crackling gather of flame in a hand, then a powerful outward whoosh of a ring of fire bursting in every direction, roaring flame tail, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "cast-ember.mp3",
+          "seconds": 1.72,
+          "bytes": 21047
+        }
+      ]
+    },
+    "hit-blade": {
+      "kind": "sfx",
+      "prompt": "a heavy sword slicing into a skeleton warrior: meaty blade impact, bones cracking, armor clang, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "hit-blade-1.mp3",
+          "seconds": 0.47,
+          "bytes": 6000
+        },
+        {
+          "file": "hit-blade-2.mp3",
+          "seconds": 0.47,
+          "bytes": 6000
+        },
+        {
+          "file": "hit-blade-3.mp3",
+          "seconds": 0.47,
+          "bytes": 6000
+        }
+      ]
+    },
+    "amb-vault": {
+      "kind": "loop",
+      "prompt": "seamless underground dungeon ambience: deep cavern room tone, distant water drips, faint wind through stone corridors, occasional far torch crackle, no music, no voice",
+      "files": [
+        {
+          "file": "amb-vault.mp3",
+          "seconds": 22.05,
+          "bytes": 353219
+        }
+      ]
+    },
+    "cast-cleave": {
+      "kind": "sfx",
+      "prompt": "heavy two-handed sword swing: leather creak, then a deep powerful blade whoosh through the air with a metallic ring, no impact, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "cast-cleave.mp3",
+          "seconds": 0.68,
+          "bytes": 8508
+        }
+      ]
+    },
+    "cast-meteor": {
+      "kind": "sfx",
+      "prompt": "summon meteor spell: a rising magical fire roar, then a burning boulder screaming down from the sky with a descending whistle and flame rush, ending just before it lands, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "cast-meteor.mp3",
+          "seconds": 1.78,
+          "bytes": 21674
+        }
+      ]
+    },
+    "cast-phoenix": {
+      "kind": "sfx",
+      "prompt": "phoenix dive spell: a fiery bird screech blended into a roaring rush of flaming wings swooping fast past the listener, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "cast-phoenix.mp3",
+          "seconds": 1.36,
+          "bytes": 16658
+        }
+      ]
+    },
+    "cast-firestorm": {
+      "kind": "sfx",
+      "prompt": "firestorm spell: a rumbling sky of fire, then several fireballs whooshing down in a rapid barrage, crackling roaring flames, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "cast-firestorm.mp3",
+          "seconds": 2.12,
+          "bytes": 25749
+        }
+      ]
+    },
+    "cast-frost": {
+      "kind": "sfx",
+      "prompt": "frostfall spell: a crystalline shimmer of ice forming in the air, then several icicles whistling down from above, cold wind, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "cast-frost.mp3",
+          "seconds": 1.57,
+          "bytes": 19166
+        }
+      ]
+    },
+    "cast-ice-lance": {
+      "kind": "sfx",
+      "prompt": "ice lance spell: a sharp crystalline crackle of ice forming, then a fast piercing whoosh of a spear of ice flying forward, glassy tail, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "cast-ice-lance.mp3",
+          "seconds": 0.76,
+          "bytes": 9449
+        }
+      ]
+    },
+    "cast-glacial-surge": {
+      "kind": "sfx",
+      "prompt": "glacial surge spell: deep grinding of ice, then a wave of jagged ice erupting along a stone floor in a rushing line, cracking and crunching, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "cast-glacial-surge.mp3",
+          "seconds": 1.72,
+          "bytes": 21047
+        }
+      ]
+    },
+    "cast-blizzard": {
+      "kind": "sfx",
+      "prompt": "blizzard spell: howling icy wind rising into a swirling snowstorm, crackling frost and tinkling ice shards, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "cast-blizzard.mp3",
+          "seconds": 2.22,
+          "bytes": 27003
+        }
+      ]
+    },
+    "cast-frost-guardian": {
+      "kind": "sfx",
+      "prompt": "summon ice golem spell: a deep magical frost hum, massive blocks of ice grinding and stacking, a heavy crystalline thud, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "cast-frost-guardian.mp3",
+          "seconds": 1.72,
+          "bytes": 21047
+        }
+      ]
+    },
+    "cast-storm": {
+      "kind": "sfx",
+      "prompt": "chain lightning spell: a quick electric charge crackle in a hand, then a sharp bolt of lightning zapping and snapping between several targets, buzzing arcs, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "cast-storm.mp3",
+          "seconds": 1.12,
+          "bytes": 13837
+        }
+      ]
+    },
+    "cast-arc-lance": {
+      "kind": "sfx",
+      "prompt": "arc lance spell: a rising electric whine, then a fast piercing beam of lightning zapping forward, crackling sizzle tail, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "cast-arc-lance.mp3",
+          "seconds": 1.28,
+          "bytes": 15718
+        }
+      ]
+    },
+    "cast-thunderclap": {
+      "kind": "sfx",
+      "prompt": "thunderclap spell: electric crackles building up fast with a rising hum, then a bright lightning strike from the sky, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "cast-thunderclap.mp3",
+          "seconds": 1.46,
+          "bytes": 17912
+        }
+      ]
+    },
+    "cast-ball-lightning": {
+      "kind": "sfx",
+      "prompt": "ball lightning spell: a humming crackling sphere of electricity launched forward, warbling buzzing plasma orb flying with sizzling zaps, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "cast-ball-lightning.mp3",
+          "seconds": 1.65,
+          "bytes": 20107
+        }
+      ]
+    },
+    "cast-tempest": {
+      "kind": "sfx",
+      "prompt": "tempest spell: storm wind rising into a whirling cyclone, crackles of lightning inside the gusts, rolling thunder, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "cast-tempest.mp3",
+          "seconds": 2.69,
+          "bytes": 32645
+        }
+      ]
+    },
+    "hit-fire": {
+      "kind": "sfx",
+      "prompt": "a fireball hitting a skeleton warrior: a punchy fiery burst with a bone crack and a short flame crackle tail, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "hit-fire-1.mp3",
+          "seconds": 0.5,
+          "bytes": 6314
+        },
+        {
+          "file": "hit-fire-2.mp3",
+          "seconds": 0.84,
+          "bytes": 10389
+        },
+        {
+          "file": "hit-fire-3.mp3",
+          "seconds": 0.57,
+          "bytes": 7254
+        }
+      ]
+    },
+    "hit-frost": {
+      "kind": "sfx",
+      "prompt": "an ice shard hitting an armored skeleton: crisp shattering ice impact with a bone crack and a glassy tinkle tail, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "hit-frost-1.mp3",
+          "seconds": 0.44,
+          "bytes": 5687
+        },
+        {
+          "file": "hit-frost-2.mp3",
+          "seconds": 0.18,
+          "bytes": 2552
+        },
+        {
+          "file": "hit-frost-3.mp3",
+          "seconds": 0.37,
+          "bytes": 4747
+        }
+      ]
+    },
+    "hit-storm": {
+      "kind": "sfx",
+      "prompt": "a lightning bolt striking a skeleton: a sharp electric zap and snap, sizzle, bones rattling, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "hit-storm-1.mp3",
+          "seconds": 0.84,
+          "bytes": 10389
+        },
+        {
+          "file": "hit-storm-2.mp3",
+          "seconds": 0.52,
+          "bytes": 6627
+        },
+        {
+          "file": "hit-storm-3.mp3",
+          "seconds": 0.63,
+          "bytes": 7881
+        }
+      ]
+    },
+    "hit-heavy": {
+      "kind": "sfx",
+      "prompt": "a massive killing blow on a stone golem: deep punchy impact, cracking stone and rock debris, low thump, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "hit-heavy-1.mp3",
+          "seconds": 0.81,
+          "bytes": 10076
+        },
+        {
+          "file": "hit-heavy-2.mp3",
+          "seconds": 0.73,
+          "bytes": 9135
+        }
+      ]
+    },
+    "blast-fire": {
+      "kind": "sfx",
+      "prompt": "a meteor slamming into the ground: huge fiery explosion, deep boom, rocks and embers scattering, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "blast-fire.mp3",
+          "seconds": 1.33,
+          "bytes": 16345
+        }
+      ]
+    },
+    "blast-frost": {
+      "kind": "sfx",
+      "prompt": "a giant block of ice smashing onto a stone floor: huge crystalline shatter, deep thud, ice shards scattering, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "blast-frost.mp3",
+          "seconds": 1.07,
+          "bytes": 13210
+        }
+      ]
+    },
+    "blast-storm": {
+      "kind": "sfx",
+      "prompt": "a lightning bolt striking the ground right next to the listener: huge close thunder crack with a rolling boom, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "blast-storm.mp3",
+          "seconds": 1.65,
+          "bytes": 20107
+        }
+      ]
+    },
+    "swing": {
+      "kind": "sfx",
+      "prompt": "a skeleton warrior swinging a rusty sword: a quick whoosh with a bony rattle, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "swing-1.mp3",
+          "seconds": 0.44,
+          "bytes": 5687
+        },
+        {
+          "file": "swing-2.mp3",
+          "seconds": 0.42,
+          "bytes": 5374
+        },
+        {
+          "file": "swing-3.mp3",
+          "seconds": 0.42,
+          "bytes": 5374
+        }
+      ]
+    },
+    "ward": {
+      "kind": "sfx",
+      "prompt": "a magic shield blocking a sword strike: a bright glassy energy clang with a shimmering hum ripple, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "ward-1.mp3",
+          "seconds": 0.5,
+          "bytes": 6314
+        },
+        {
+          "file": "ward-2.mp3",
+          "seconds": 0.39,
+          "bytes": 5060
+        },
+        {
+          "file": "ward-3.mp3",
+          "seconds": 0.29,
+          "bytes": 3806
+        }
+      ]
+    },
+    "collapse": {
+      "kind": "sfx",
+      "prompt": "a skeleton collapsing onto a stone floor: bones clattering and scattering, pieces of armor falling, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "collapse-1.mp3",
+          "seconds": 1.04,
+          "bytes": 12897
+        },
+        {
+          "file": "collapse-2.mp3",
+          "seconds": 0.81,
+          "bytes": 10076
+        },
+        {
+          "file": "collapse-3.mp3",
+          "seconds": 0.71,
+          "bytes": 8822
+        }
+      ]
+    },
+    "alert": {
+      "kind": "sfx",
+      "prompt": "a horde of skeleton warriors noticing an intruder: a sudden bony rattle, swords scraping, one deep low war drum hit, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "alert.mp3",
+          "seconds": 0.81,
+          "bytes": 10076
+        }
+      ]
+    },
+    "step": {
+      "kind": "sfx",
+      "prompt": "a single footstep of a leather boot on a gritty stone floor, close and dry, one step only, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "step-1.mp3",
+          "seconds": 0.18,
+          "bytes": 2552
+        },
+        {
+          "file": "step-2.mp3",
+          "seconds": 0.37,
+          "bytes": 4747
+        },
+        {
+          "file": "step-3.mp3",
+          "seconds": 0.18,
+          "bytes": 2552
+        },
+        {
+          "file": "step-4.mp3",
+          "seconds": 0.21,
+          "bytes": 2866
+        }
+      ]
+    },
+    "charge-ember": {
+      "kind": "sfx",
+      "prompt": "magical fire gathering in a hand: a crackling flame swelling quickly with a rising whoosh, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "charge-ember.mp3",
+          "seconds": 0.81,
+          "bytes": 10076
+        }
+      ]
+    },
+    "charge-frost": {
+      "kind": "sfx",
+      "prompt": "magical frost gathering in a hand: crystals forming with a rising shimmering chime and icy hiss, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "charge-frost.mp3",
+          "seconds": 0.89,
+          "bytes": 11016
+        }
+      ]
+    },
+    "charge-storm": {
+      "kind": "sfx",
+      "prompt": "electric energy gathering in a hand: rising buzzing hum with small crackling sparks, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "charge-storm.mp3",
+          "seconds": 0.91,
+          "bytes": 11329
+        }
+      ]
+    },
+    "soul": {
+      "kind": "sfx",
+      "prompt": "a small glowing soul orb absorbed into a hero: a soft ethereal whoosh with a gentle sparkling chime, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "soul-1.mp3",
+          "seconds": 0.57,
+          "bytes": 7254
+        },
+        {
+          "file": "soul-2.mp3",
+          "seconds": 0.63,
+          "bytes": 7881
+        },
+        {
+          "file": "soul-3.mp3",
+          "seconds": 0.5,
+          "bytes": 6314
+        }
+      ]
+    },
+    "relic-drop": {
+      "kind": "sfx",
+      "prompt": "a legendary item drops in an action RPG: a heavy gem thud on a stone floor, then a bright magical shimmering beam, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "relic-drop.mp3",
+          "seconds": 0.73,
+          "bytes": 9135
+        }
+      ]
+    },
+    "relic-pickup": {
+      "kind": "sfx",
+      "prompt": "picking up a magical relic: a bright sparkling chime swell with a warm magical shimmer, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "relic-pickup.mp3",
+          "seconds": 0.78,
+          "bytes": 9762
+        }
+      ]
+    },
+    "reward": {
+      "kind": "sfx",
+      "prompt": "a reward: gold coins and gems jingling into a leather pouch with a soft sparkle, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "reward.mp3",
+          "seconds": 0.76,
+          "bytes": 9449
+        }
+      ]
+    },
+    "room-clear": {
+      "kind": "sfx",
+      "prompt": "a room of monsters is cleared: a short triumphant magical whoosh rising into a bright bell shimmer, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "room-clear.mp3",
+          "seconds": 1.36,
+          "bytes": 16658
+        }
+      ]
+    },
+    "level-up": {
+      "kind": "sfx",
+      "prompt": "level up: a rising magical swell into a radiant bright shimmer with ringing bell chimes, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "level-up.mp3",
+          "seconds": 2.17,
+          "bytes": 26376
+        }
+      ]
+    },
+    "boss-defeat": {
+      "kind": "sfx",
+      "prompt": "a giant stone guardian crumbles: a massive rock collapse and deep rumble, then a bright triumphant magical shimmer, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "boss-defeat.mp3",
+          "seconds": 1.7,
+          "bytes": 20734
+        }
+      ]
+    },
+    "ui-click": {
+      "kind": "ui",
+      "prompt": "a small soft click of a stone and brass game menu button, subtle and short, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "ui-click.mp3",
+          "seconds": 0.52,
+          "bytes": 6627
+        }
+      ]
+    },
+    "ui-select": {
+      "kind": "ui",
+      "prompt": "selecting a spell in a game menu: a soft magical tick with a short sparkle, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "ui-select.mp3",
+          "seconds": 0.31,
+          "bytes": 4120
+        }
+      ]
+    },
+    "ui-open": {
+      "kind": "ui",
+      "prompt": "opening a leather bound book menu: a soft page flap with a gentle whoosh, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "ui-open.mp3",
+          "seconds": 0.47,
+          "bytes": 6000
+        }
+      ]
+    },
+    "answer-correct": {
+      "kind": "ui",
+      "prompt": "a correct answer in a children's fantasy game: two bright rising magical bell tones with sparkle, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "answer-correct.mp3",
+          "seconds": 0.63,
+          "bytes": 7881
+        }
+      ]
+    },
+    "answer-wrong": {
+      "kind": "ui",
+      "prompt": "a gentle soft low wooden tock with a tiny airy whoosh, friendly and calm, not harsh, not a buzzer, fantasy action RPG sound effect, no music, no voice",
+      "files": [
+        {
+          "file": "answer-wrong.mp3",
+          "seconds": 0.55,
+          "bytes": 6941
+        }
+      ]
+    },
+    "amb-forest": {
+      "kind": "loop",
+      "prompt": "seamless ancient forest ruins ambience: gentle wind in leaves, distant birds, insects, soft creaks of old trees, no music, no voice",
+      "files": [
+        {
+          "file": "amb-forest.mp3",
+          "seconds": 22.05,
+          "bytes": 353219
+        }
+      ]
+    },
+    "amb-coast": {
+      "kind": "loop",
+      "prompt": "seamless rocky coast ambience: waves breaking on rocks, distant gulls, sea wind, no music, no voice",
+      "files": [
+        {
+          "file": "amb-coast.mp3",
+          "seconds": 22.05,
+          "bytes": 353219
+        }
+      ]
+    },
+    "amb-quarry": {
+      "kind": "loop",
+      "prompt": "seamless desert canyon quarry ambience: dry wind across rocks, faint sand hiss, distant pebbles falling, no music, no voice",
+      "files": [
+        {
+          "file": "amb-quarry.mp3",
+          "seconds": 22.05,
+          "bytes": 353219
+        }
+      ]
+    },
+    "amb-garden": {
+      "kind": "loop",
+      "prompt": "seamless overgrown royal garden ambience: soft breeze, songbirds, a small fountain trickling, bees, no music, no voice",
+      "files": [
+        {
+          "file": "amb-garden.mp3",
+          "seconds": 22.05,
+          "bytes": 353219
+        }
+      ]
+    }
+  },
+  "source": "scripts/audio/generate_rpg_sfx.py (ElevenLabs sound generation, eleven_text_to_sound_v2)",
+  "format": "mp3 44.1 kHz; effects mono 96k, ambience stereo 128k"
+}

@@ -1,30 +1,46 @@
-/** Original dungeon audio. Nothing plays until unlock() is called by a gesture.
+/** Dungeon audio: ElevenLabs-generated clips (scripts/audio/generate_rpg_sfx.py).
+ * Nothing plays until unlock() is called by a gesture.
  * Presentation only: audio completion and elapsed time never advance learning.
  */
-import { rpgSpellSchool, type RpgSpellId } from '@institute/shared';
+import type { RpgEnvironment, RpgSchoolId, RpgSpellId } from '@institute/shared';
 
-type Clip = 'fire-nova' | 'frost-shatter' | 'chain-lightning' | 'loot' | 'level-up' | 'boss-defeat' | 'footstep' | 'dungeon-ambience'
-  | 'impact' | 'impact-heavy' | 'ward' | 'swing' | 'soul' | 'collapse';
-const clips: Clip[] = ['fire-nova', 'frost-shatter', 'chain-lightning', 'loot', 'level-up', 'boss-defeat', 'footstep', 'dungeon-ambience', 'impact', 'impact-heavy', 'ward', 'swing', 'soul', 'collapse'];
-const volume: Record<Clip, number> = {
-  'fire-nova': .72, 'frost-shatter': .68, 'chain-lightning': .52,
-  loot: .31, 'level-up': .44, 'boss-defeat': .50, footstep: .13, 'dungeon-ambience': .19,
-  impact: .46, 'impact-heavy': .55, ward: .3, swing: .24, soul: .16, collapse: .34,
+const BASE = '/assets/rpg/audio/sfx/';
+type Manifest = { clips: Record<string, { kind: 'sfx' | 'ui' | 'loop'; files: { file: string }[] }> };
+
+/** Clip level in the mix; the files are already leveled by loudness per group. */
+const VOLUME: Record<string, number> = {
+  'hit-frost': 1.5, 'hit-heavy': .85, 'hit-blade': .75, 'hit-fire': .7, 'hit-storm': .7,
+  'blast-fire': .8, 'blast-frost': .9, 'blast-storm': .8,
+  swing: .32, ward: .5, collapse: .5, alert: .55, step: .32, soul: .32,
+  'charge-ember': .45, 'charge-frost': .5, 'charge-storm': .5,
+  'relic-drop': .7, 'relic-pickup': .6, reward: .5, 'room-clear': .6, 'level-up': .75, 'boss-defeat': .85,
+  'ui-click': .45, 'ui-select': .5, 'ui-open': .35, 'answer-correct': .55, 'answer-wrong': .5,
 };
+const CAST_VOLUME = .72, AMBIENCE_VOLUME = .38;
+/** Frequent events: never stack the same clip closer than this. */
+const MIN_GAP: Record<string, number> = { step: .16, 'hit-fire': .05, 'hit-frost': .05, 'hit-storm': .05, 'hit-blade': .05, soul: .05, 'ui-click': .06 };
+const SPELL_CAST: Record<RpgSpellId, string> = {
+  ember: 'cast-ember', cleave: 'cast-cleave', meteor: 'cast-meteor', phoenix_dive: 'cast-phoenix', firestorm: 'cast-firestorm',
+  frost: 'cast-frost', ice_lance: 'cast-ice-lance', glacial_surge: 'cast-glacial-surge', blizzard: 'cast-blizzard', frost_guardian: 'cast-frost-guardian',
+  storm: 'cast-storm', arc_lance: 'cast-arc-lance', thunderclap: 'cast-thunderclap', ball_lightning: 'cast-ball-lightning', tempest: 'cast-tempest',
+};
+
 let context: AudioContext | null = null;
 let master: GainNode | null = null;
-let ambienceGain: GainNode | null = null;
-let ambienceSource: AudioBufferSourceNode | null = null;
 let compressor: DynamicsCompressorNode | null = null;
 let muted = false;
 let ducked = false;
-let ambienceWanted = false;
 let generation = 0;
 let controller: AbortController | null = null;
-const buffers = new Map<Clip, AudioBuffer>();
-const loading = new Map<Clip, Promise<AudioBuffer | null>>();
-const voices = new Set<AudioBufferSourceNode | OscillatorNode>();
-const lastPlayed = new Map<Clip, number>();
+let manifest: Promise<Manifest | null> | null = null;
+let clips: Manifest['clips'] | null = null;
+let ambienceWanted: RpgEnvironment | null = null;
+let ambience: { environment: RpgEnvironment; source: AudioBufferSourceNode; gain: GainNode } | null = null;
+const buffers = new Map<string, AudioBuffer>();
+const loading = new Map<string, Promise<AudioBuffer | null>>();
+const voices = new Set<AudioBufferSourceNode>();
+const lastPlayed = new Map<string, number>();
+const lastVariant = new Map<string, number>();
 
 function hidden(): boolean { return typeof document !== 'undefined' && document.hidden; }
 
@@ -36,8 +52,8 @@ function ramp(node: GainNode | null, value: number, seconds = .08): void {
 }
 
 function refreshVolume(): void {
-  ramp(master, muted || hidden() ? 0 : ducked ? .23 : .74);
-  ramp(ambienceGain, ducked ? .055 : volume['dungeon-ambience'], .3);
+  ramp(master, muted || hidden() ? 0 : ducked ? .3 : .8);
+  if (ambience) ramp(ambience.gain, ducked ? AMBIENCE_VOLUME * .35 : AMBIENCE_VOLUME, .3);
 }
 
 function stopVoices(): void {
@@ -53,24 +69,33 @@ function onVisibility(): void {
   refreshVolume();
 }
 
-async function load(clip: Clip): Promise<AudioBuffer | null> {
-  if (buffers.has(clip)) return buffers.get(clip)!;
-  if (loading.has(clip)) return loading.get(clip)!;
+function loadManifest(): Promise<Manifest | null> {
+  const epoch = generation;
+  manifest ??= fetch(`${BASE}manifest.json`, { signal: controller?.signal })
+    .then(response => response.ok ? response.json() as Promise<Manifest> : null)
+    .then(data => { if (data && epoch === generation) clips = data.clips; return data; })
+    .catch(() => null);
+  return manifest;
+}
+
+async function load(file: string): Promise<AudioBuffer | null> {
+  if (buffers.has(file)) return buffers.get(file)!;
+  if (loading.has(file)) return loading.get(file)!;
   const c = context;
   if (!c) return null;
   const epoch = generation;
   const task = (async () => {
     try {
-      const response = await fetch(`/assets/rpg/audio/${clip}.wav`, { signal: controller?.signal });
+      const response = await fetch(BASE + file, { signal: controller?.signal });
       if (!response.ok) return null;
       const buffer = await c.decodeAudioData(await response.arrayBuffer());
       if (epoch !== generation) return null;
-      buffers.set(clip, buffer);
+      buffers.set(file, buffer);
       return buffer;
     } catch { return null; } // Sound must never block a spell or the tutor.
   })();
-  loading.set(clip, task);
-  void task.finally(() => { if (loading.get(clip) === task) loading.delete(clip); });
+  loading.set(file, task);
+  void task.finally(() => { if (loading.get(file) === task) loading.delete(file); });
   return task;
 }
 
@@ -85,22 +110,25 @@ export async function unlock(): Promise<void> {
       context = new Audio();
       controller = new AbortController();
       master = context.createGain();
-      master.gain.value = muted || hidden() ? 0 : .74;
-      // Smooth simultaneous spell/reward peaks without aggressive pumping.
+      master.gain.value = muted || hidden() ? 0 : .8;
+      // Smooth simultaneous spell and reward peaks without audible pumping.
       compressor = context.createDynamicsCompressor();
-      compressor.threshold.value = -14;
-      compressor.knee.value = 18;
-      compressor.ratio.value = 3;
-      compressor.attack.value = .006;
-      compressor.release.value = .22;
+      compressor.threshold.value = -12;
+      compressor.knee.value = 14;
+      compressor.ratio.value = 4;
+      compressor.attack.value = .004;
+      compressor.release.value = .2;
       master.connect(compressor).connect(context.destination);
       document.addEventListener('visibilitychange', onVisibility);
       refreshVolume();
     }
     // Invoke resume synchronously within the gesture before any asynchronous work.
     if (context.state === 'suspended') void context.resume().catch(() => {});
-    await Promise.all(clips.map(load));
-    if (ambienceWanted) startAmbience();
+    const all = (await loadManifest())?.clips ?? {};
+    // Effects first, so the first spell has its sound; ambience streams in after.
+    const files = Object.values(all).filter(clip => clip.kind !== 'loop').flatMap(clip => clip.files.map(entry => entry.file));
+    await Promise.all(files.map(load));
+    if (ambienceWanted) setAmbience(ambienceWanted);
   } catch { /* WebAudio may be disabled or unavailable. */ }
 }
 
@@ -111,148 +139,99 @@ export function setMuted(value: boolean): void {
   refreshVolume();
 }
 
-/** Optional: lower effects and ambience while the existing tutor speaks. */
+/** Lower effects and ambience while the tutor speaks. */
 export function setDucked(value: boolean): void { ducked = value; refreshVolume(); }
 
 function canPlay(): boolean {
   return !!context && !!master && context.state === 'running' && !muted && !hidden();
 }
 
-function track(source: AudioBufferSourceNode | OscillatorNode, gain: GainNode): void {
-  voices.add(source);
-  source.onended = () => { voices.delete(source); source.disconnect(); gain.disconnect(); };
-}
-
-/** Tiny soft fallback while a first-use clip downloads. Never queues late sounds. */
-function fallback(clip: Clip): void {
+/** Plays a random variant of a clip, never the same take twice in a row. */
+function play(id: string, options: { volume?: number; pitch?: number; delay?: number } = {}): void {
   if (!canPlay() || !context || !master) return;
-  const c = context;
-  const frequency = clip === 'frost-shatter' ? 740 : clip === 'chain-lightning' ? 330 : clip === 'fire-nova' ? 145 : 587;
-  const note = c.createOscillator();
-  const gain = c.createGain();
-  const t = c.currentTime;
-  note.type = 'sine';
-  note.frequency.setValueAtTime(frequency, t);
-  note.frequency.exponentialRampToValueAtTime(frequency * .65, t + .18);
-  gain.gain.setValueAtTime(0, t);
-  gain.gain.linearRampToValueAtTime(.055, t + .012);
-  gain.gain.exponentialRampToValueAtTime(.0001, t + .26);
-  note.connect(gain).connect(master);
-  track(note, gain);
-  note.start(t); note.stop(t + .28);
-}
-
-function play(clip: Clip, pitchVariation = 0): void {
-  if (!canPlay() || !context || !master) return;
-  const c = context;
-  const now = c.currentTime;
-  const minInterval = clip === 'footstep' ? .23 : clip === 'impact' || clip === 'soul' ? .045 : .08;
-  if (now - (lastPlayed.get(clip) ?? -Infinity) < minInterval) return;
-  lastPlayed.set(clip, now);
-  const buffer = buffers.get(clip);
-  // Combat contacts repeat often: skip them rather than beep while loading.
-  if (!buffer) { void load(clip); if (!['impact', 'impact-heavy', 'ward', 'swing', 'soul', 'collapse'].includes(clip)) fallback(clip); return; }
-  // Keep accidental repeated UI events from building a loud stack.
-  if (voices.size >= 12) return;
+  const c = context, now = c.currentTime;
+  if (now - (lastPlayed.get(id) ?? -Infinity) < (MIN_GAP[id] ?? .08)) return;
+  // Before the manifest arrives there is nothing to play; never queue a late sound.
+  if (!clips) { void loadManifest(); return; }
+  const files = clips[id]?.files;
+  if (!files?.length) return;
+  lastPlayed.set(id, now);
+  let index = Math.floor(Math.random() * files.length);
+  if (files.length > 1 && index === lastVariant.get(id)) index = (index + 1) % files.length;
+  const buffer = buffers.get(files[index]!.file);
+  // A clip still downloading is skipped, never played late.
+  if (!buffer) { void load(files[index]!.file); return; }
+  // Keep a burst of contacts from building a loud stack.
+  if (voices.size >= 18) return;
+  lastVariant.set(id, index);
   const source = c.createBufferSource();
   source.buffer = buffer;
-  source.playbackRate.value = 1 + (Math.random() - .5) * pitchVariation;
-  const gain = c.createGain(); gain.gain.value = volume[clip];
-  source.connect(gain).connect(master);
-  track(source, gain);
-  source.start(now);
+  source.playbackRate.value = 1 + (Math.random() - .5) * (options.pitch ?? .08);
+  const gain = c.createGain(); gain.gain.value = (options.volume ?? 1) * (VOLUME[id] ?? (id.startsWith('cast-') ? CAST_VOLUME : .6));
+  source.connect(gain).connect(master!);
+  voices.add(source);
+  source.onended = () => { voices.delete(source); source.disconnect(); gain.disconnect(); };
+  source.start(now + (options.delay ?? 0));
 }
 
-/** Short original tonal signatures give the expanded abilities their own
- * cadence above the recorded impact beds. Voices share mute/duck/teardown. */
-const signatures: Partial<Record<RpgSpellId, {notes:number[]; end:number; gap:number; duration:number; gain:number; wave:OscillatorType}>> = {
-  cleave:{notes:[330,185],end:.28,gap:.13,duration:.2,gain:.055,wave:'triangle'},
-  meteor:{notes:[95,54],end:.22,gap:.38,duration:.55,gain:.09,wave:'sine'},
-  phoenix_dive:{notes:[196,294,440,588],end:1.6,gap:.15,duration:.4,gain:.033,wave:'triangle'},
-  firestorm:{notes:[85,110,76,135,95,150],end:.35,gap:.18,duration:.3,gain:.038,wave:'triangle'},
-  ice_lance:{notes:[1175,1760],end:.78,gap:.09,duration:.42,gain:.035,wave:'sine'},
-  glacial_surge:{notes:[110,165,220],end:.5,gap:.18,duration:.5,gain:.045,wave:'triangle'},
-  blizzard:{notes:[880,1318,987,1480,1109,1661],end:.86,gap:.13,duration:.33,gain:.022,wave:'sine'},
-  frost_guardian:{notes:[73,110,146],end:.6,gap:.16,duration:.65,gain:.07,wave:'triangle'},
-  arc_lance:{notes:[740,1480],end:.3,gap:.055,duration:.22,gain:.035,wave:'sawtooth'},
-  thunderclap:{notes:[65,49,38],end:.22,gap:.24,duration:.5,gain:.085,wave:'sine'},
-  ball_lightning:{notes:[330,494,659,494,330],end:1.12,gap:.21,duration:.21,gain:.03,wave:'triangle'},
-  tempest:{notes:[98,440,73,588,65,740],end:.35,gap:.16,duration:.4,gain:.035,wave:'triangle'},
-};
-const lastSignature = new Map<RpgSpellId,number>();
-function playSignature(spellId:RpgSpellId):void {
-  const spec=signatures[spellId];
-  if (!spec || !canPlay() || !context || !master) return;
-  const now=context.currentTime;
-  if(now-(lastSignature.get(spellId)??-Infinity)<.12)return;
-  lastSignature.set(spellId,now);
-  spec.notes.forEach((frequency,index)=>{
-    if(voices.size>=12)return;
-    const source=context!.createOscillator(),gain=context!.createGain(),at=now+.16+index*spec.gap;
-    source.type=spec.wave;
-    source.frequency.setValueAtTime(frequency,at);
-    source.frequency.exponentialRampToValueAtTime(Math.max(20,frequency*spec.end),at+spec.duration);
-    gain.gain.setValueAtTime(0,at);
-    gain.gain.linearRampToValueAtTime(spec.gain,at+.013);
-    gain.gain.exponentialRampToValueAtTime(.0001,at+spec.duration);
-    source.connect(gain).connect(master!);track(source,gain);
-    source.start(at);source.stop(at+spec.duration+.02);
-  });
-}
-
-/** Clips contain a 220 ms charge, aligned with DungeonWorld.attack's impact. */
-export function cast(spellId: RpgSpellId): void {
-  const school = rpgSpellSchool(spellId);
-  play(school === 'frost' ? 'frost-shatter' : school === 'storm' ? 'chain-lightning' : 'fire-nova');
-  playSignature(spellId);
-}
-export function loot(): void { play('loot', .035); }
-export function levelUp(): void { play('level-up'); }
-/** A bright ascending reward chord; shares gesture unlock, mute, and teardown. */
+/** Called as the cast clip starts; each spell has its own sound. */
+export function cast(spellId: RpgSpellId): void { play(SPELL_CAST[spellId] ?? 'cast-ember', { pitch: .04 }); }
+/** A relic picked up from the floor. */
+export function loot(): void { play('relic-pickup'); }
+export function levelUp(): void { play('level-up', { pitch: 0 }); }
+/** Quest, level and daily-board rewards. */
 export function rewardFanfare(kind: 'quest' | 'level' | 'daily-board'): void {
-  if (!canPlay() || !context || !master) return;
-  if (kind === 'level') play('level-up');
-  else play('loot');
-  const c = context;
-  const notes = kind === 'level' ? [392, 494, 587, 784] : kind === 'daily-board' ? [523, 659, 784, 1047] : [523, 659, 784];
-  notes.forEach((frequency, index) => {
-    if (voices.size >= 12) return;
-    const source = c.createOscillator(), gain = c.createGain();
-    const at = c.currentTime + index * .115;
-    source.type = 'triangle';
-    source.frequency.setValueAtTime(frequency, at);
-    gain.gain.setValueAtTime(0, at);
-    gain.gain.linearRampToValueAtTime(.036, at + .012);
-    gain.gain.exponentialRampToValueAtTime(.0001, at + .66);
-    source.connect(gain).connect(master!);
-    track(source, gain);
-    source.start(at); source.stop(at + .7);
-  });
+  play(kind === 'level' ? 'level-up' : 'room-clear', { pitch: 0 });
+  if (kind !== 'level') play('reward', { delay: .25 });
 }
-/** Stone collapse followed by a warm victory interval; call on boss defeat. */
-export function boss(): void { play('boss-defeat'); }
-export function footstep(): void { play('footstep', .16); }
-/** Combat contact. Never signals harm to the hero: wards and enemy hits only. */
-export function combat(kind: 'impact' | 'impact-heavy' | 'ward' | 'swing' | 'soul' | 'collapse'): void {
-  play(kind, kind === 'soul' ? .3 : kind === 'ward' ? .06 : .14);
-}
+/** The guardian falls. */
+export function boss(): void { play('boss-defeat', { pitch: 0 }); }
+/** Gold, gems and XP from a spell. */
+export function reward(): void { play('reward'); }
+export function footstep(): void { play('step', { pitch: .14 }); }
+export function ui(kind: 'click' | 'select' | 'open'): void { play(`ui-${kind}`, { pitch: .04 }); }
+/** A right answer chimes; a wrong one is a soft, friendly tock. */
+export function answer(correct: boolean): void { play(correct ? 'answer-correct' : 'answer-wrong', { pitch: 0 }); }
 
-/** Safe before unlock(); starts after the first gesture/preload, only once. */
-export function startAmbience(): void {
-  ambienceWanted = true;
-  if (ambienceSource || !context || !master) return;
-  const epoch = generation;
-  const c = context;
-  void load('dungeon-ambience').then(buffer => {
-    if (!buffer || epoch !== generation || ambienceSource || !ambienceWanted || !master || context !== c) return;
+/** World events. Combat sounds never signal harm to the hero: wards and enemy hits only. */
+export type WorldSound =
+  | 'impact-fire' | 'impact-frost' | 'impact-storm' | 'impact-blade' | 'impact-heavy'
+  | 'blast-fire' | 'blast-frost' | 'blast-storm'
+  | 'charge-ember' | 'charge-frost' | 'charge-storm'
+  | 'ward' | 'swing' | 'soul' | 'collapse' | 'step' | 'alert' | 'room-clear' | 'relic-drop';
+export function world(kind: WorldSound): void {
+  if (kind.startsWith('impact-')) { play(kind.replace('impact-', 'hit-'), { pitch: .12 }); return; }
+  if (kind === 'step') { footstep(); return; }
+  play(kind, { pitch: kind === 'soul' ? .3 : kind === 'room-clear' ? 0 : .08 });
+}
+export const chargeSound = (school: RpgSchoolId): WorldSound => `charge-${school}`;
+
+/** The room tone for an environment; crossfades when the environment changes. Safe before unlock(). */
+export function setAmbience(environment: RpgEnvironment): void {
+  ambienceWanted = environment;
+  if (!context || !master || ambience?.environment === environment) return;
+  const c = context, epoch = generation;
+  void loadManifest().then(data => {
+    const file = data?.clips[`amb-${environment}`]?.files[0]?.file;
+    return file ? load(file) : null;
+  }).then(buffer => {
+    if (!buffer || epoch !== generation || ambienceWanted !== environment || ambience?.environment === environment || !master || context !== c) return;
+    const old = ambience;
+    if (old) {
+      ramp(old.gain, 0, .5);
+      setTimeout(() => { try { old.source.stop(); } catch { /* Already stopped. */ } old.source.disconnect(); old.gain.disconnect(); }, 2500);
+    }
     const source = c.createBufferSource(); source.buffer = buffer; source.loop = true;
     const gain = c.createGain(); gain.gain.value = 0;
     source.connect(gain).connect(master);
-    ambienceSource = source; ambienceGain = gain;
+    ambience = { environment, source, gain };
     source.start();
-    ramp(gain, ducked ? .055 : volume['dungeon-ambience'], .8);
+    ramp(gain, ducked ? AMBIENCE_VOLUME * .35 : AMBIENCE_VOLUME, .8);
   });
 }
+
+/** Starts the room tone of the last environment set, or the vault. */
+export function startAmbience(): void { setAmbience(ambienceWanted ?? 'vault'); }
 
 /** Call when leaving the RPG. Invalidates pending loads and closes its context. */
 export function dispose(): void {
@@ -260,15 +239,14 @@ export function dispose(): void {
   controller?.abort(); controller = null;
   document.removeEventListener('visibilitychange', onVisibility);
   stopVoices();
-  if (ambienceSource) {
-    try { ambienceSource.stop(); } catch { /* Already stopped. */ }
-    ambienceSource.disconnect(); ambienceSource = null;
+  if (ambience) {
+    try { ambience.source.stop(); } catch { /* Already stopped. */ }
+    ambience.source.disconnect(); ambience.gain.disconnect(); ambience = null;
   }
-  ambienceGain?.disconnect(); ambienceGain = null;
   master?.disconnect(); master = null;
   compressor?.disconnect(); compressor = null;
   const c = context; context = null;
   if (c && c.state !== 'closed') void c.close().catch(() => {});
-  loading.clear(); buffers.clear(); lastPlayed.clear(); lastSignature.clear();
-  ambienceWanted = false; ducked = false;
+  loading.clear(); buffers.clear(); lastPlayed.clear(); lastVariant.clear();
+  manifest = null; clips = null; ambienceWanted = null; ducked = false;
 }

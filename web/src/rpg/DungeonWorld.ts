@@ -232,6 +232,8 @@ export class DungeonWorld {
   private readonly boonAura: BoonAura;
   private boon: RpgBoonId | null = null;
   private exploreRoute: THREE.Vector3[] = [];
+  /** The hero is on the way to something else: crossing the open way down does not take him through. */
+  private passDescent = false;
   private readonly exploreKeys = new Set<string>();
   private pointerSteering = false;
   private readonly moveMarker: THREE.Mesh;
@@ -382,10 +384,10 @@ export class DungeonWorld {
       return best;
     };
     /** A closed chest, a sleeping shrine, a sealed door or the way down under the pointer. */
-    const interactAt = (event: PointerEvent): { x: number; z: number; walk?: { x: number; z: number } } | undefined => {
+    const interactAt = (event: PointerEvent): { x: number; z: number; walk?: { x: number; z: number }; descent?: boolean } | undefined => {
       if (!floorPoint(event) || !this.level) return undefined;
       const hero = this.hero.position, center = new THREE.Vector3();
-      const spots = [
+      const spots: { x: number; z: number; radius: number; height: number; walk?: { x: number; z: number }; descent?: boolean }[] = [
         ...this.level.chests.filter(chest => !chest.opened).map(chest => ({ x: chest.x, z: chest.z, radius: chest.radius + .2, height: .9 })),
         ...this.level.shrines.filter(shrine => !shrine.opened).map(shrine => ({ x: shrine.x, z: shrine.z, radius: shrine.radius + .2, height: 2.2 })),
         ...this.level.doors.filter(door => !door.opened).map(door => {
@@ -393,15 +395,17 @@ export class DungeonWorld {
           const back = DOOR_FRONT[door.side];
           return { x: door.x, z: door.z, radius: door.width / 2, height: 2.6, walk: { x: door.x + back.x * 1.4, z: door.z + back.z * 1.4 } };
         }),
-        ...(this.descent ? [{ x: this.descent.at.x, z: this.descent.at.z, radius: DESCENT_ENTER_RADIUS + .4, height: 1.2 }] : []),
+        ...(this.descent ? [{ x: this.descent.at.x, z: this.descent.at.z, radius: DESCENT_ENTER_RADIUS + .4, height: 1.2, descent: true }] : []),
       ];
-      let best: { x: number; z: number; walk?: { x: number; z: number } } | undefined, nearest = Infinity;
+      let best: (typeof spots)[number] | undefined, nearest = Infinity;
       for (const spot of spots) {
         if (Math.hypot(spot.x - hero.x, spot.z - hero.z) > 30) continue;
         for (const y of [spot.height * .2, spot.height * .6, spot.height]) {
           center.set(spot.x, y, spot.z);
           const along = ray.ray.origin.distanceTo(center);
-          if (ray.ray.distanceToPoint(center) < spot.radius && along < nearest) { nearest = along; best = spot; }
+          // The way down is wide and glows over what stands behind it: a chest, shrine or door under the pointer wins.
+          const better = !best || (best.descent && !spot.descent) || (!!best.descent === !!spot.descent && along < nearest);
+          if (ray.ray.distanceToPoint(center) < spot.radius && better) { nearest = along; best = spot; }
         }
       }
       return best;
@@ -415,6 +419,8 @@ export class DungeonWorld {
         // Walk up to it; the lock asks for its problem (or the way down opens) on arrival.
         const goal = spot.walk ?? spot;
         this.breakTarget = undefined; this.pointerSteering = false; this.walkTo(goal.x, goal.z);
+        // A walk to a chest behind the way down passes over it without falling in.
+        this.passDescent = !spot.descent;
         this.moveMarker.position.set(spot.x, .05, spot.z); this.moveMarker.userData.shownAt = this.elapsed;
         return;
       }
@@ -433,7 +439,7 @@ export class DungeonWorld {
       const typing = (event.target instanceof HTMLInputElement && !event.target.dataset.steer) || event.target instanceof HTMLTextAreaElement;
       if (!ARROWS.includes(event.key) || typing) return;
       if (!this.exploring) return;
-      event.preventDefault(); this.exploreKeys.add(event.key); this.exploreRoute.length = 0; this.breakTarget = undefined;
+      event.preventDefault(); this.exploreKeys.add(event.key); this.exploreRoute.length = 0; this.breakTarget = undefined; this.passDescent = false;
     }, { signal });
     window.addEventListener('keyup', event => { this.exploreKeys.delete(event.key); }, { signal });
     window.addEventListener('blur', () => { this.exploreKeys.clear(); this.pointerSteering = false; }, { signal });
@@ -581,6 +587,7 @@ export class DungeonWorld {
   /** Free-movement order, as from a click on the floor. Ignored while a cast roots the hero. */
   walkTo(x: number, z: number): void {
     if (!this.exploring) return;
+    this.passDescent = false;
     this.exploreRoute = (this.level?.path({ x: this.hero.position.x, z: this.hero.position.z }, { x, z }) ?? [])
       .map(point => new THREE.Vector3(point.x, 0, point.z));
   }
@@ -646,7 +653,10 @@ export class DungeonWorld {
     const descent = this.descent; if (!descent) return;
     descent.portal.update(this.elapsed - descent.openedAt, delta);
     const hero = this.hero.position;
-    if (descent.entered || this.paused || !descent.waiters.length || Math.hypot(hero.x - descent.at.x, hero.z - descent.at.z) > DESCENT_ENTER_RADIUS) return;
+    const inside = Math.hypot(hero.x - descent.at.x, hero.z - descent.at.z) <= DESCENT_ENTER_RADIUS;
+    // A chest that asks its problem stops the walk, perhaps on the way down: he stays up until he steps off.
+    if (this.passDescent && !this.exploreRoute.length && !inside) this.passDescent = false;
+    if (descent.entered || this.paused || !descent.waiters.length || this.passDescent || !inside) return;
     descent.entered = true; this.exploreRoute.length = 0;
     this.emit(descent.at.clone().setY(1), descent.portal.light.color.getHex(), 60, 3, 1.1);
     this.burstLight.position.copy(descent.at).setY(2.4); this.burstLight.color.copy(descent.portal.light.color); this.burstLight.intensity = 80;

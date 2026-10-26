@@ -474,7 +474,7 @@ export class RpgGame {
   }
   private async showProblem(p: Problem, restoring = false): Promise<void> {
     if (this.disposed) return;
-    this.stopClock();
+    this.stopClock(); this.clearProblemAids();
     const expedition = this.state!.expedition!;
     if (!restoring) this.session = { expeditionId: expedition.id, encounterIndex: expedition.encounterIndex, problem: p, firstAttempt: null, wrongCount: 0, demoSeen: false, elapsedMs: 0, answerMs: 0 };
     this.answerClock.restore(this.session!.answerMs ?? 0);
@@ -566,6 +566,8 @@ export class RpgGame {
     this.session.pending = { correct: Number(this.entered) === this.session.problem.answer, assisted: false, aided: !!this.session.helped, solveMs: Math.round(this.session.elapsedMs ?? 0), answerMs: Math.floor(this.session.answerMs ?? 0), wrongCount: this.session.wrongCount, spellId: this.state!.selectedSpellId };
     this.saveSession();
     dungeonSound.answer(this.session.pending.correct);
+    // A solved problem takes its hint and times table with it: the walk to the next fight stays clear.
+    if (this.session.pending.correct) this.clearProblemAids();
     if (this.session.pending.correct && !this.session.lock) this.world.anticipate(this.state!.selectedSpellId);
     await this.runSafely(() => this.finishPending());
   }
@@ -923,6 +925,7 @@ export class RpgGame {
     return true;
   }
 
+  private clearProblemAids(): void { this.el('rpg-hint').hidden = true; this.renderVisual(undefined); }
   private hint(text: string): void { this.el('rpg-hint').textContent = text; this.el('rpg-hint').hidden = false; }
   private async help(): Promise<void> {
     if (!this.session || this.busy) return;

@@ -83,6 +83,7 @@ export class HeroDoll {
     });
     this.pivot.add(hero); this.hero = hero;
     this.worn = new WornGear(hero);
+    this.worn.onChange = () => this.ownMaterials();
     this.held = tripoHeroEquipment(hero);
     this.mixer = new THREE.AnimationMixer(hero);
     const idle = this.source.clips.find(clip => clip.name.toLowerCase() === 'idle');

@@ -25,6 +25,7 @@ from pathlib import Path
 
 import numpy as np
 from mathutils import Matrix, Vector
+from mathutils.bvhtree import BVHTree
 from mathutils.kdtree import KDTree
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -50,7 +51,7 @@ SETS = {
     'pants-mail': {'pants': 'mail_chausses'},
     'pants-silk': {'pants': 'starweave_trousers'},
 }
-REGION_OF = {'helm': ['head'], 'chest': ['chest', 'hips'], 'gloves': ['gloves'], 'boots': ['shins', 'feet'], 'pants': ['hips', 'legs', 'shins', 'feet']}
+REGION_OF = {'helm': ['head'], 'chest': ['chest', 'hips', 'neck'], 'gloves': ['gloves'], 'boots': ['shins', 'feet'], 'pants': ['hips', 'legs', 'shins', 'feet']}
 
 
 def import_set(name):
@@ -113,6 +114,139 @@ def align(hero, obj, plain='legs'):
     return float(np.mean([tree.find(p)[2] for p in sel]))
 
 
+def _lab(rgb):
+    """sRGB [0, 1] -> CIE Lab (D65), rows of 3."""
+    lin = np.where(rgb <= .04045, rgb / 12.92, ((rgb + .055) / 1.055) ** 2.4)
+    xyz = lin @ np.array([[.4124, .3576, .1805], [.2126, .7152, .0722], [.0193, .1192, .9505]]).T / np.array([.9505, 1, 1.089])
+    f = np.where(xyz > .008856, np.cbrt(xyz), 7.787 * xyz + 16 / 116)
+    return np.stack([116 * f[:, 1] - 16, 500 * (f[:, 0] - f[:, 1]), 200 * (f[:, 1] - f[:, 2])], 1)
+
+
+def _srgb(lab):
+    fy = (lab[:, 0] + 16) / 116; f = np.stack([fy + lab[:, 1] / 500, fy, fy - lab[:, 2] / 200], 1)
+    xyz = np.where(f > .2069, f ** 3, (f - 16 / 116) / 7.787) * np.array([.9505, 1, 1.089])
+    lin = np.clip(xyz @ np.array([[3.2406, -1.5372, -.4986], [-.9689, 1.8758, .0415], [.0557, -.2040, 1.0570]]).T, 0, 1)
+    return np.where(lin <= .0031308, lin * 12.92, 1.055 * lin ** (1 / 2.4) - .055)
+
+
+def _base_image(obj):
+    for slot in obj.material_slots:
+        for node in slot.material.node_tree.nodes:
+            if node.type == 'BSDF_PRINCIPLED' and node.inputs['Base Color'].links:
+                image = node.inputs['Base Color'].links[0].from_node
+                if image.type == 'TEX_IMAGE' and image.image: return image.image
+    return None
+
+
+def _face_colours(obj, image, faces):
+    """Texture colour at the UV centre of each face."""
+    w, h = image.size
+    px = np.empty(w * h * 4, dtype=np.float32); image.pixels.foreach_get(px); px = px.reshape(h, w, 4)
+    uv = obj.data.uv_layers.active.data
+    out = []
+    for f in faces:
+        p = obj.data.polygons[f]
+        u = np.mean([uv[i].uv for i in p.loop_indices], 0)
+        out.append(px[min(h - 1, max(0, int(u[1] * h))), min(w - 1, max(0, int(u[0] * w))), :3])
+    return np.array(out)
+
+
+def _skin_stats(lab):
+    """Mean and spread of the main colour cluster (skin), robust to a stray collar or eye."""
+    centre = np.median(lab, 0)
+    for _ in range(3):
+        near = lab[np.linalg.norm(lab - centre, axis=1) < 14]
+        if len(near) < 20: break
+        centre = near.mean(0)
+    return centre, np.maximum(near.std(0), 1.5)
+
+
+def skin_match(hero, obj):
+    """The dressed model's skin (face under a helm, neck, hands) recoloured to the
+    hero's own skin: Gemini and Tripo paint each set a little paler or pinker, and
+    the worn face must look like the same boy as the bare-headed hero."""
+    image = _base_image(obj)
+    if not image: return None
+    neck, gloves, head = (regions.REGIONS.index(r) for r in ('neck', 'gloves', 'head'))
+    # Faces, not hands or collars, are compared: the front of the head below the brow.
+    brow, skull = hero.joint('Head'), hero.joint('Head').z + .05
+    front_of = lambda centres, region: np.nonzero((region == head) & (centres[:, 1] < brow.y - .04) & (centres[:, 2] < skull))[0]
+    hero_centres = np.array([tuple(hero.body.matrix_world @ p.center) for p in hero.body.data.polygons])
+    want, want_std = _skin_stats(_lab(_face_colours(hero.body, _base_image(hero.body), front_of(hero_centres, regions.classify(hero_centres, hero.joint)))))
+    # The dressed skin: faces of the head, neck and hands lying on the hero's own surface
+    # (a helm shell or a gauntlet stands off it), whose colour is near the neck's.
+    centres = np.array([tuple(p.center) for p in obj.data.polygons])
+    region = regions.classify(centres, hero.joint)
+    tree = KDTree(len(hero.points))
+    for i, p in enumerate(hero.points): tree.insert(p, i)
+    tree.balance()
+    candidates = np.nonzero(np.isin(region, [neck, gloves, head]))[0]
+    near = np.array([tree.find(Vector(centres[f]))[2] < .04 for f in candidates], dtype=bool)
+    candidates = candidates[near]
+    if len(candidates) < 40: return None
+    lab = _lab(_face_colours(obj, image, candidates))
+    seed = np.intersect1d(front_of(centres, region), candidates)
+    if len(seed) < 20: return None
+    have, have_std = _skin_stats(_lab(_face_colours(obj, image, seed)))
+    skin = candidates[np.linalg.norm(lab - have, axis=1) < 22]
+    # Paint a texture mask of those faces, grown over UV seams and softened.
+    w, h = image.size
+    mask = np.zeros((h, w), dtype=np.float32)
+    uv = obj.data.uv_layers.active.data
+    for f in skin:
+        pts = np.array([uv[i].uv for i in obj.data.polygons[f].loop_indices]) * (w, h)
+        for k in range(1, len(pts) - 1):
+            tri = pts[[0, k, k + 1]]
+            x0, y0 = np.floor(tri.min(0)).astype(int) - 1; x1, y1 = np.ceil(tri.max(0)).astype(int) + 1
+            x0, y0, x1, y1 = max(x0, 0), max(y0, 0), min(x1, w - 1), min(y1, h - 1)
+            if x1 < x0 or y1 < y0: continue
+            ys, xs = np.mgrid[y0:y1 + 1, x0:x1 + 1] + .5
+            (ax, ay), (bx, by), (cx, cy) = tri
+            d = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy)
+            if abs(d) < 1e-9: continue
+            l1 = ((by - cy) * (xs - cx) + (cx - bx) * (ys - cy)) / d
+            l2 = ((cy - ay) * (xs - cx) + (ax - cx) * (ys - cy)) / d
+            inside = (l1 >= -.02) & (l2 >= -.02) & (1 - l1 - l2 >= -.02)
+            mask[y0:y1 + 1, x0:x1 + 1][inside] = 1
+    for _ in range(3):  # grow 3 px, then soften 4 px
+        grown = mask.copy()
+        grown[1:] = np.maximum(grown[1:], mask[:-1]); grown[:-1] = np.maximum(grown[:-1], mask[1:])
+        grown[:, 1:] = np.maximum(grown[:, 1:], mask[:, :-1]); grown[:, :-1] = np.maximum(grown[:, :-1], mask[:, 1:])
+        mask = grown
+    for axis in (0, 1):
+        c = np.cumsum(np.pad(mask, [(5, 4) if a == axis else (0, 0) for a in (0, 1)]), axis=axis)
+        mask = (np.take(c, range(9, c.shape[axis]), axis=axis) - np.take(c, range(0, c.shape[axis] - 9), axis=axis)) / 9
+    px = np.empty(w * h * 4, dtype=np.float32); image.pixels.foreach_get(px); px = px.reshape(-1, 4)
+    flat = mask.reshape(-1); idx = np.nonzero(flat > .01)[0]
+    lab = _lab(px[idx, :3].astype(np.float64))
+    # Each texel moves by how much it is skin: brows, lips and hair edges keep their own shade.
+    weight = flat[idx] * np.exp(-(np.linalg.norm(lab - have, axis=1) / 18) ** 2)
+    moved = (lab - have) * np.clip(want_std / have_std, .7, 1.3) + want
+    px[idx, :3] = (px[idx, :3] * (1 - weight[:, None]) + _srgb(moved) * weight[:, None]).astype(np.float32)
+    image.pixels.foreach_set(px.reshape(-1)); image.update()
+    return {'faces': int(len(skin)), 'from': [round(float(v), 1) for v in have], 'to': [round(float(v), 1) for v in want]}
+
+
+def neck_snap(hero):
+    """Moves a dressed model's skin near the neck onto the hero's own neck surface.
+    Every dressed model's neck is a little thinner or thicker than the hero's, so where
+    a collar or helm rim meets the bare neck the two surfaces part and the cut shows.
+    Armour standing off the body (gorgets, collar trims) is left where it is."""
+    bm = bmesh.new(); bm.from_mesh(hero.body.data); bm.transform(hero.body.matrix_world)
+    bvh = BVHTree.FromBMesh(bm); bm.free()
+    base, head = hero.joint('NeckTwist01'), hero.joint('Head')
+    length = (head - base).length
+    def snap(co):
+        h = (co.z - base.z) / length
+        if not -.5 < h < 1.1: return co
+        hit = bvh.find_nearest(co)
+        if not hit[0]: return co
+        # Full on the skin itself, fading out by a third of a neck length off the body.
+        weight = min(1, max(0, (.34 * length - hit[3]) / (.14 * length))) * min(1, (1.1 - h) / .3, (h + .5) / .3)
+        return co.lerp(hit[0], weight)
+    return snap
+
+
 def cut_regions(hero, obj, pieces):
     """One mesh per worn piece: the dressed model's faces in that piece's region,
     grown a few rings into the neighbours, lifted a hair and skinned from the body."""
@@ -124,14 +258,18 @@ def cut_regions(hero, obj, pieces):
         for k in p.edge_keys: edge_faces.setdefault(k, []).append(p.index)
     for faces in edge_faces.values():
         for a in faces: neighbours[a].extend(f for f in faces if f != a)
+    snap = neck_snap(hero)
     out = []
     for kind, base in pieces.items():
         for region_name in REGION_OF[kind]:
             keep = set(np.nonzero(face_region == regions.REGIONS.index(region_name))[0].tolist())
             ring = set(keep)
-            # Overlap into neighbours hides seams, but never into the head: only a helm owns the face.
-            blocked = set(np.nonzero(face_region == regions.REGIONS.index('neck'))[0].tolist()) | (set() if region_name == 'head' else set(np.nonzero(face_region == regions.REGIONS.index('head'))[0].tolist()))
-            for _ in range(OVERLAP_RINGS):
+            # Overlap into neighbours hides seams. Only a helm owns the face; a helm's rim and
+            # a collar's top each reach one ring over the seam between them.
+            head = set(np.nonzero(face_region == regions.REGIONS.index('head'))[0].tolist())
+            below_head = set(np.nonzero(face_region != regions.REGIONS.index('head'))[0].tolist())
+            for step in range(OVERLAP_RINGS):
+                blocked = (below_head if step else set()) if region_name == 'head' else set() if region_name == 'neck' and step < 1 else head
                 ring = {n for f in ring for n in neighbours[f]} - keep - blocked
                 keep |= ring
             piece = obj.copy(); piece.data = obj.data.copy(); piece.name = f'{base}_{region_name}'
@@ -139,7 +277,9 @@ def cut_regions(hero, obj, pieces):
             bm = bmesh.new(); bm.from_mesh(piece.data); bm.faces.ensure_lookup_table()
             bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.index not in keep], context='FACES')
             bmesh.ops.delete(bm, geom=[v for v in bm.verts if not v.link_faces], context='VERTS')
-            for v in bm.verts: v.co += v.normal * LIFT
+            for v in bm.verts:
+                v.co = snap(v.co)
+                v.co += v.normal * LIFT
             bm.to_mesh(piece.data); bm.free()
             if not piece.data.polygons: bpy.data.objects.remove(piece); continue
             for p in piece.data.polygons: p.use_smooth = True
@@ -195,9 +335,10 @@ def build(name, install):
     for slot in obj.material_slots:
         for node in slot.material.node_tree.nodes:
             if node.type == 'TEX_IMAGE' and node.image and max(node.image.size) > TEXTURE: node.image.scale(TEXTURE, TEXTURE)
+    skin = skin_match(hero, obj)
     pieces = cut_regions(hero, obj, SETS[name])
     bpy.data.objects.remove(obj)
-    receipt = {'set': name, 'alignError': round(error, 5),
+    receipt = {'set': name, 'alignError': round(error, 5), 'skin': skin,
                'pieces': {p.name: sum(len(f.vertices) - 2 for f in p.data.polygons) for p in pieces}}
     all_pieces = pieces
     for piece in all_pieces:

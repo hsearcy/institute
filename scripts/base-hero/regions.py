@@ -13,6 +13,11 @@ plain body and of every dressed model meet.
 import numpy as np
 
 REGIONS = ('head', 'chest', 'gloves', 'hips', 'legs', 'shins', 'feet', 'neck')
+# Neck sizes in neck lengths (NeckTwist01 to Head), so they follow the rig's scale.
+NECK_RADIUS = 1.4     # the neck column round its bone; the shoulders' tops lie further out
+COLLAR_TOP = .66      # above the neck's base: a gorget or high collar ends below this
+JAW_ABOVE_NECK = .85  # above the neck's base, over the tops of the shoulders: the jaw
+JAW_RADIUS = 1.8      # round the neck at jaw height: cheek guards and ear flaps, not pauldrons
 
 
 def _segment_distance(points, a, b):
@@ -55,11 +60,20 @@ def classify(points, joint):
     calf_mid = float(j['L_Calf'] @ up) * .85 + float(j['L_Foot'] @ up) * .15  # just under the knee: tall boots fit
     waist = hip + .025       # the belt line: chest armour above, pants below
     region = np.full(len(points), REGIONS.index('chest'))
-    # The neck goes with the head: a chest piece stops at the collar, so a dressed
-    # model's chin and jaw never ride up over the hero's own face.
-    region[(kind == 'head') | ((kind == 'neck') & (height > float(j['NeckTwist01'] @ up) + .01))] = REGIONS.index('head')
-    # The rest of the neck always stays the hero's own: no piece replaces it.
-    region[(kind == 'neck') & (height <= float(j['NeckTwist01'] @ up) + .01)] = REGIONS.index('neck')
+    # The neck is a column round its own axis: the tops of the shoulders and the upper
+    # back lie nearer that bone than the spine's, but they are shirt, not neck.
+    axis = j['Head'] - j['NeckTwist01']; length = float(np.linalg.norm(axis)); axis /= length
+    offset = points - j['NeckTwist01']
+    radial = np.linalg.norm(offset - (offset @ axis)[:, None] * axis, axis=1) / length
+    base = float(j['NeckTwist01'] @ up)
+    neck = (kind == 'neck') & (radial < NECK_RADIUS)
+    # The upper neck goes with the head: a chest piece stops at the collar, so a
+    # dressed model's chin and jaw never ride up over the hero's own face.
+    # Off the column but up at the jaw is the helm's too (cheek guards, ear flaps).
+    jaw = np.isin(kind, ('neck', 'torso')) & (radial < JAW_RADIUS) & (height > base + JAW_ABOVE_NECK * length)
+    region[(kind == 'head') | jaw | (neck & (height > base + COLLAR_TOP * length))] = REGIONS.index('head')
+    # The lower neck is always the hero's own; collars and helm rims overlap onto it.
+    region[neck & (height <= base + COLLAR_TOP * length)] = REGIONS.index('neck')
     region[(kind == 'hand') | ((kind == 'forearm') & (along > .5))] = REGIONS.index('gloves')
     leg = np.isin(kind, ('thigh', 'calf', 'foot')) | ((kind == 'torso') & (height < waist))
     region[leg & (height < waist)] = REGIONS.index('hips')

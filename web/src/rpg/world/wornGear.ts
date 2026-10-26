@@ -45,6 +45,8 @@ export class WornGear {
   /** The plain body as one mesh per region (head, chest, gloves, legs, boots). */
   private readonly bodyRegions = new Map<string, SkinnedMesh>();
   private amuletSource?: Object3D;
+  /** Called after the shown pieces change (the character sheet copies new materials). */
+  onChange?: () => void;
   /** Bind-pose body points near the chest front, hero space (for seating pendants). */
   private readonly chestFront: Vector3[] = [];
   private readonly bodyToHero = new Matrix4();
@@ -107,20 +109,31 @@ export class WornGear {
    */
   wearFitted(kind: WornKind, id: string, source: Object3D): boolean {
     if (this.mounted.get(kind)?.id === id && this.mounted.get(kind)?.fitted) return true;
+    const nodes = this.bindFitted(kind, id, source);
+    if (!nodes) return false;
+    this.remove(kind);
+    this.mounted.set(kind, { id, nodes, fitted: true });
+    this.resolveRegions();
+    if (kind === 'chest') this.refitAmulet();
+    return true;
+  }
+
+  /** A set file's meshes for `id`, bound to this hero's skeleton; undefined when they cannot bind. */
+  private bindFitted(kind: string, id: string, source: Object3D): SkinnedMesh[] | undefined {
     const body = this.body;
-    if (!body) return false;
+    if (!body) return undefined;
     const meshes: SkinnedMesh[] = [];
     // A set file holds several pieces; each mesh names its gear base.
     source.traverse(node => { if (node instanceof SkinnedMesh && (node.userData.wornGear ?? id) === id) meshes.push(node); });
-    if (!meshes.length) return false;
+    if (!meshes.length) return undefined;
     source.updateMatrixWorld(true);
     const heroSlot = new Map(body.skeleton.bones.map((bone, i) => [bone.name, i]));
-    const nodes: Object3D[] = [];
+    const nodes: SkinnedMesh[] = [];
     for (const mesh of meshes) {
       const bones = mesh.skeleton.bones;
       const remap = bones.map(bone => heroSlot.get(bone.name));
       const anchor = bones.findIndex(bone => bone.name === 'Hip' || bone.name === 'Root');
-      if (remap.some(slot => slot === undefined) || anchor < 0) return false;
+      if (remap.some(slot => slot === undefined) || anchor < 0) { for (const node of nodes) { node.removeFromParent(); node.geometry.dispose(); } return undefined; }
       // Same rest skeleton in both files: carry the source's bind space over through one bone.
       const toHero = body.bindMatrix.clone().invert()
         .multiply(body.skeleton.boneInverses[remap[anchor]!].clone().invert())
@@ -138,11 +151,7 @@ export class WornGear {
       worn.bind(body.skeleton, body.bindMatrix);
       nodes.push(worn);
     }
-    this.remove(kind);
-    this.mounted.set(kind, { id, nodes, fitted: true });
-    this.resolveRegions();
-    if (kind === 'chest') this.refitAmulet();
-    return true;
+    return nodes;
   }
 
   wear(kind: WornKind, id: string | undefined, source?: Object3D): void {
@@ -196,6 +205,7 @@ export class WornGear {
       if (region) node.visible = best.get(region)?.node === node;
     }
     for (const [region, mesh] of this.bodyRegions) mesh.visible = !best.has(region);
+    this.onChange?.();
   }
 
   /**

@@ -28,7 +28,8 @@ import { enemyRoster } from './world/enemyRoster';
 import { EnemyAnimator } from './world/EnemyAnimator';
 import { HeldEquipment, tripoHeroEquipment } from './world/HeldEquipment';
 import { WornGear, WORN_KINDS, wearGear, type WornKind } from './world/wornGear';
-import { gearModelUrl, wornGearUrl } from './icons';
+import { gearModelUrl, WORN_ONLY, wornGearUrl } from './icons';
+import { GearDropVisual, GEAR_DROP_COLORS, GEAR_DROP_SHOW } from './world/gearDrop';
 import type { HeroDollSource } from './heroDoll';
 import { HeroAnimator, type ActorClipRoles } from './world/heroAnimator';
 import { FloorLoot, type LootPickup, type RewardToken } from './world/floorLoot';
@@ -159,6 +160,8 @@ export class DungeonWorld {
   private readonly cameraTarget = new THREE.Vector3();
   private readonly heroLight = new THREE.PointLight(0xd6e3f0, 32, 7, 1.8);
   private readonly burstLight = new THREE.PointLight(0xffae40, 0, 20, 1.5);
+  /** Always in the scene (dark until gear drops) so a drop never recompiles every shader. */
+  private readonly lootLight = new THREE.PointLight(0xffffff, 0, 5, 1.6);
   private readonly warmLights = [new THREE.PointLight(0xff9c45, 70, 14, 2), new THREE.PointLight(0xff822b, 60, 14, 2)];
   private readonly recessLights = [new THREE.PointLight(0x0c7bb1, 56, 12, 2), new THREE.PointLight(0x0b749f, 50, 12, 2)];
   private readonly lightAnchors = Array.from({ length: 4 }, () => new THREE.Vector3());
@@ -318,7 +321,7 @@ export class DungeonWorld {
     for (const fragments of [this.stoneFragments, this.hotFragments]) { fragments.count = 0; fragments.setColorAt(0, new THREE.Color()); fragments.frustumCulled = false; fragments.instanceMatrix.setUsage(THREE.DynamicDrawUsage); this.scene.add(fragments); }
     this.heroVisual.scale.setScalar(ACTOR_SCALE); this.hero.add(this.heroVisual);
     this.heroLight.position.set(1.2, 3.1, 1.5); this.hero.add(this.heroLight);
-    this.scene.add(this.burstLight);
+    this.scene.add(this.burstLight, this.lootLight);
     this.scene.add(...this.warmLights);
     this.scene.add(...this.recessLights);
     this.rune = new THREE.Mesh(new THREE.RingGeometry(.65, .70, 64), new THREE.MeshBasicMaterial({ color: 0x6ef6dd, transparent: true, opacity: .48, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
@@ -462,7 +465,8 @@ export class DungeonWorld {
   /** Run speed from boots and other gear (1 = no gear). */
   gearRunSpeed = 1;
   private kneelAt = -99; private kneelFor = 0; private kneelGlow?: THREE.Sprite;
-  private gearDrops: { mesh: THREE.Mesh; color: number; born: number; from: THREE.Vector3 }[] = [];
+  private gearDrops: { visual: GearDropVisual; born: number }[] = [];
+  private gearDropTurn = 0;
 
   /**
    * After a cast, the monsters still standing strike the ward, one after
@@ -501,33 +505,47 @@ export class DungeonWorld {
     }
   }
 
-  /** Armour or jewellery falls beside the hero, glows in its rarity's colour, then flies to the hero's pack. */
-  dropGear(rarity: string): void {
-    const colors: Record<string, number> = { common: 0xc9d1d3, rare: 0x6aa9ff, epic: 0xc38aff, legendary: 0xffba57 };
-    const color = colors[rarity] ?? colors.common!;
-    const angle = Math.random() * Math.PI * 2;
+  /** Armour or jewellery falls beside the hero in a beam of its rarity's colour, then flies to the hero's pack. */
+  dropGear(gear: { rarity: string; baseId?: string; kind?: string }): void {
+    const color = GEAR_DROP_COLORS[gear.rarity] ?? GEAR_DROP_COLORS.common!;
+    // Toward the camera side of the hero, so his body never hides it.
+    const towardView = Math.atan2(this.camera.position.x - this.hero.position.x, this.camera.position.z - this.hero.position.z);
+    // Several at once take turns left and right of the hero instead of stacking in one beam.
+    const side = this.gearDropTurn++ % 2 ? 1 : -1, angle = towardView + side * (.6 + Math.random() * .4 + Math.floor(this.gearDrops.length / 2) * .8);
     const at = slideStep({ x: this.hero.position.x, z: this.hero.position.z }, Math.sin(angle) * 1.7, Math.cos(angle) * 1.7, this.walkable);
-    const mesh = new THREE.Mesh(new THREE.OctahedronGeometry(.34, 0), new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 1.4, roughness: .3, metalness: .2 }));
-    mesh.position.set(at.x, .5, at.z); mesh.scale.set(1, 1.4, 1); this.scene.add(mesh);
-    this.emit(mesh.position.clone(), color, 26, 1.3, 1.2); this.onSound?.('relic-drop');
-    this.gearDrops.push({ mesh, color, born: this.elapsed, from: mesh.position.clone() });
+    const visual = new GearDropVisual(color, gear.rarity, gear.kind ?? '', this.glowMap, towardView);
+    visual.group.position.set(at.x, 0, at.z); this.scene.add(visual.group);
+    this.emit(new THREE.Vector3(at.x, 1.4, at.z), color, 26, 1.3, 1.2); this.onSound?.('relic-drop');
+    const drop = { visual, born: this.elapsed };
+    this.gearDrops.push(drop);
+    const baseId = gear.baseId, wornOnly = !!baseId && WORN_ONLY.has(baseId);
+    if (baseId) void this.gearModel(baseId, wornOnly).then(model => {
+      if (!model || this.disposed || !this.gearDrops.includes(drop) || this.elapsed - drop.born > GEAR_DROP_SHOW) return;
+      visual.setModel(model, wornOnly ? baseId : undefined);
+    });
   }
 
-  private updateGearDrops(): void {
+  private updateGearDrops(delta: number): void {
+    const pack = this.hero.position.clone().setY(1.1);
+    let light = 0, lit = false;
     for (const drop of [...this.gearDrops]) {
       const age = this.elapsed - drop.born;
-      drop.mesh.rotation.y = age * 2.4;
-      if (age < 1.8) { drop.mesh.position.y = .5 + Math.abs(Math.sin(age * 5)) * .45 * Math.max(0, 1 - age / 1.1); continue; }
-      // Then it flies into the hero's pack, as a relic does when walked over.
-      const t = Math.min(1, (age - 1.8) / .45), target = this.hero.position.clone().setY(1.1);
-      drop.mesh.position.lerpVectors(drop.from.clone().setY(.5), target, t * t);
-      drop.mesh.scale.setScalar(1 - t * .7);
-      if (t >= 1) {
-        this.emit(target, drop.color, 16, .8, .7); this.onLootPickup?.({ kind: 'relic', at: target, color: drop.color });
-        this.scene.remove(drop.mesh); drop.mesh.geometry.dispose(); (drop.mesh.material as THREE.Material).dispose();
-        this.gearDrops.splice(this.gearDrops.indexOf(drop), 1);
+      // Rising sparks while it rests; a legendary piece sheds more.
+      if (age < GEAR_DROP_SHOW && Math.random() < delta * 9 * drop.visual.strength) {
+        const spark = drop.visual.group.position.clone().add(new THREE.Vector3((Math.random() - .5) * .6, .1, (Math.random() - .5) * .6));
+        this.emit(spark, drop.visual.color, 1, .25, 1.3);
       }
+      if (age < GEAR_DROP_SHOW + .3 && !lit) {
+        lit = true;
+        // The newest piece lights the floor around it, so the beam seems to shine.
+        light = 3.2 * drop.visual.strength * THREE.MathUtils.smoothstep(age, 0, .3) * (1 - THREE.MathUtils.smoothstep(age, GEAR_DROP_SHOW, GEAR_DROP_SHOW + .3));
+        this.lootLight.color.setHex(drop.visual.color); this.lootLight.position.copy(drop.visual.group.position).add(new THREE.Vector3(0, 1.9, 0));
+      }
+      if (drop.visual.update(age, pack)) continue;
+      this.emit(pack, drop.visual.color, 16, .8, .7); this.onLootPickup?.({ kind: 'relic', at: pack, color: drop.visual.color });
+      drop.visual.dispose(); this.gearDrops.splice(this.gearDrops.indexOf(drop), 1);
     }
+    this.lootLight.intensity = light;
   }
 
   /**
@@ -2811,7 +2829,7 @@ export class DungeonWorld {
       if (pickup.reward?.kind === 'dust') this.onSound?.('dust-pickup');
       this.onLootPickup?.(pickup);
     }
-    this.ward.update(this.elapsed); this.damageNumbers.update(delta); this.updateCharge(delta); this.updateKneel(); this.updateGearDrops();
+    this.ward.update(this.elapsed); this.damageNumbers.update(delta); this.updateCharge(delta); this.updateKneel(); this.updateGearDrops(delta);
     const markerAge = this.elapsed - (this.moveMarker.userData.shownAt ?? -9);
     (this.moveMarker.material as THREE.MeshBasicMaterial).opacity = Math.max(0, 1 - markerAge / .55) * .85;
     this.moveMarker.scale.setScalar(1 + markerAge * 1.2);
@@ -3015,6 +3033,7 @@ export class DungeonWorld {
   dispose(): void {
     if (this.disposed) return; this.disposed = true; cancelAnimationFrame(this.frame); this.attackResolve?.(); this.scheduled.length = 0;
     this.boonAura.dispose();
+    this.gearDrops.forEach(drop => drop.visual.dispose()); this.gearDrops.length = 0;
     this.inputAbort.abort(); this.finishEngage(); this.floorLoot.dispose(); this.ward.dispose(); this.damageNumbers.dispose(); this.releaseCharge(true);
     for (const built of this.chunks.values()) disposeChunk(built);
     this.discardNextLevel(); this.closeDescent();

@@ -646,7 +646,7 @@ export class RpgGame {
         // The survivors strike the ward; armour or jewellery falls beside the hero.
         this.wardHud.play(result.reward, count => this.world.wardVolley(count), seconds => this.world.kneel(seconds));
         const gear = result.reward.gear;
-        if (gear) { this.world.dropGear(gear.rarity); showGearLabel(this.root, gear, this.world.heroScreenPosition); }
+        if (gear) { this.world.dropGear(gear); showGearLabel(this.root, gear, this.world.heroScreenPosition); }
       }
       this.el('rpg-save-status').textContent = '◆ Adventure saved on your server';
       if (this.state.expedition!.cleared) {

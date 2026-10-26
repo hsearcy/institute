@@ -541,6 +541,8 @@ describe("topic-graph tutor flow", () => {
     expect(changesCourse("six, then twelve more... let's just count by sixes two times")).toBe(true);
     expect(changesCourse("Hmm, maybe not. Instead, count back.")).toBe(true);
     expect(changesCourse("Now bring back the 3 ones that were waiting.")).toBe(false);
+    expect(changesCourse("The three ones just wait on the side.")).toBe(false);
+    expect(changesCourse("Five, ten... wait, let's count by twos.")).toBe(true);
     expect(changesCourse("Since 2 is small, we go down to the ten below it instead of up.")).toBe(false);
     expect(changesCourse("Let's skip count by fives. Five, ten, fifteen, twenty.")).toBe(false);
   });

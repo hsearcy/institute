@@ -37,7 +37,7 @@ import {
 } from "./dailyRecord.ts";
 
 const PORT = Number(process.env.PORT ?? 8787);
-const TUTOR_MODEL = process.env.TUTOR_MODEL ?? "claude-sonnet-5";
+const TUTOR_MODEL = process.env.TUTOR_MODEL ?? "claude-sonnet-5-5";
 const ELEVEN_VOICE = process.env.ELEVENLABS_VOICE_ID ?? "0T1vZaJAzLvhFnhCwAAh";
 
 // ---- DB --------------------------------------------------------------------
@@ -594,15 +594,13 @@ const PROBLEM_DRAFT_SCHEMA = {
   additionalProperties: false,
 } as const;
 
-const BRANCHES_TOOL = {
-  name: "next_problems",
-  description: "The next math problem for BOTH outcomes of the current one.",
-  input_schema: {
-    type: "object",
-    properties: { right: PROBLEM_DRAFT_SCHEMA, wrong: PROBLEM_DRAFT_SCHEMA },
-    required: ["right", "wrong"],
-    additionalProperties: false,
-  },
+/** The next math problem for BOTH outcomes of the current one, as structured output
+ *  (a forced tool call is refused by the newer models). */
+const BRANCHES_SCHEMA = {
+  type: "object",
+  properties: { right: PROBLEM_DRAFT_SCHEMA, wrong: PROBLEM_DRAFT_SCHEMA },
+  required: ["right", "wrong"],
+  additionalProperties: false,
 } as const;
 
 const SYSTEM = `You are the adaptive tutor inside "Institute", a fantasy dungeon RPG math game for one 6-year-old. Every right answer powers a spell against a horde of monsters. Each turn you produce the next problem for BOTH outcomes of the problem he is solving right now — "right" (he answers correctly) and "wrong" (he misses it) — so the game can instantly load whichever happens.
@@ -620,7 +618,7 @@ Rules:
 - He is American: money is ALWAYS dollars and cents (penny/nickel/dime/quarter) — never pounds or pence.
 - About 1 in 3 problems, when it fits naturally, tell the "spoken" story in HIS game's adventure world instead of plain arithmetic: heroes, dungeons, treasure chests, potions, and gems as money. Real Merchant prices you may reference, in gems: ${SHOP_PRICES.map((p) => `${p.name} ${p.price}`).join(", ")}. Use third-person characters (a knight saving up, the camp Merchant) — NEVER "you have N gems" (he compares it against his live gem counter). The numbers you were told to target stay EXACTLY the same; never invent a different price for a named item.
 - "hint" teaches a concrete strategy he can act on if he's stuck (make-a-ten, count-on, count-back) — a real method, never just restating the answer. For a missing addend that crosses ten, the strategy is "add a ten first, then adjust the ones" — never "count up to ten then add the two jumps". For division, the strategy is "skip-count by the divisor" (count by 3s up to 12 → four jumps → 4) — not dealing items out to friends one at a time.
-Return via the next_problems tool only.`;
+Reply with the JSON object only.`;
 
 type SkillSummary = { skill: string; label: string; attempts: number; accuracy: number; state: string; avgDifficulty: number };
 
@@ -799,13 +797,12 @@ async function llmBranches(profileId: string, current: Problem): Promise<{ right
     model: TUTOR_MODEL,
     max_tokens: 1024,
     system: SYSTEM,
-    tools: [BRANCHES_TOOL as unknown as Anthropic.Tool],
-    tool_choice: { type: "tool", name: "next_problems" },
+    output_config: { format: { type: "json_schema", schema: BRANCHES_SCHEMA } },
     messages: [{ role: "user", content: userContent }],
   });
-  const tool = resp.content.find((c) => c.type === "tool_use");
-  if (!tool || tool.type !== "tool_use") throw new Error("no tool_use in response");
-  const raw = tool.input as { right: unknown; wrong: unknown };
+  const block = resp.content.find((c) => c.type === "text");
+  if (!block || block.type !== "text") throw new Error("no problems in response");
+  const raw = JSON.parse(block.text) as { right: unknown; wrong: unknown };
   // The model narrates; the code decides identity: stamp topic + skill authoritatively.
   const stampTopic = (p: Problem, t: Topic | undefined): Problem =>
     t ? { ...p, topicId: t.id, topicLabel: t.kidLabel, skill: t.legacySkill as Problem["skill"] } : p;
@@ -1136,12 +1133,12 @@ export function leaksAnswer(text: string, answer: number): boolean {
 /** Words a hint uses when it turns around mid-explanation ("well actually",
  *  "just kidding", "let's just..."). Heard aloud, a change of course leaves a
  *  six-year-old with two half-methods, so such a hint is never spoken. */
-const COURSE_CHANGE = /\b(actually|wait|hmm+|oops|just kidding|kidding|let me|let's just|lets just|or you could|another way|on second thought|never ?mind|hold on|scratch that|start over|i mean|correction|no,? no|well,)\b|(^|[.!?]\s+)instead\b/i;
+const COURSE_CHANGE = /\bwait[,.!]|\b(actually|hmm+|oops|just kidding|kidding|let me|let's just|lets just|or you could|another way|on second thought|never ?mind|hold on|scratch that|start over|i mean|correction|no,? no|well,)\b|(^|[.!?]\s+)instead\b/i;
 export function changesCourse(text: string): boolean { return COURSE_CHANGE.test(text); }
 
 const EXPLAIN_SYSTEM = `You are the warm tutor voice inside a fantasy dungeon RPG math game, explaining ONE problem to a 6-year-old American boy who tapped "explain".
-Reply with two fields. In "work", privately pick the strategy and work the whole problem with these exact numbers, every step and the answer, and check each step. He never sees or hears "work". Then write "say": only the finished explanation, spoken to him, which follows your worked plan exactly. Rules for "say":
-- It must read like you knew the plan all along. Never search out loud, never change course (no "hmm", no "actually", no "wait", no "well", no "let's just", no "or you could", no "just kidding"). If a plan in "work" did not fit, fix it in "work" before writing "say".
+Reply with two fields. "solution" is the answer key for his grown-up: the one strategy you chose, worked through with these exact numbers, every step and the final answer. "say" is what the tutor says aloud to him, walking that same strategy. Rules for "say":
+- It must read like you knew the plan all along. Never search out loud, never change course (no "hmm", no "actually", no "wait", no "well", no "let's just", no "or you could", no "just kidding").
 - Pick ONE strategy — the single most natural one for these exact numbers — and teach only that one. Never mention another way, a strategy you are NOT using, or why some other approach doesn't apply. Just teach the one that works.
 - For adding several numbers: if two of them make exactly ten, start with that pair; otherwise just add the two biggest first and then the last one. Don't hunt for tens that aren't there.
 - For a missing addend that crosses ten (like 6 + ? = 17): add a whole ten first, then adjust — six plus ten is sixteen, and it just needs one more to reach seventeen. NEVER count up to ten and then add the two jumps together (4 then 7): that ends in a second hard sum and hurts more than it helps. (Only state the final number if these rules say you may.)
@@ -1157,8 +1154,8 @@ Reply with two fields. In "work", privately pick the strategy and work the whole
 
 const EXPLAIN_SCHEMA = {
   type: "object",
-  properties: { work: { type: "string" }, say: { type: "string" } },
-  required: ["work", "say"],
+  properties: { solution: { type: "string" }, say: { type: "string" } },
+  required: ["solution", "say"],
   additionalProperties: false,
 };
 
@@ -1180,10 +1177,12 @@ app.post("/tutor/explain", async (c) => {
     let text = "";
     for (let attempt = 0; attempt < 3; attempt++) {
       const resp = await anthropic.messages.create({
-        model: TUTOR_MODEL, max_tokens: 2000, // no temperature — rejected by claude-sonnet-5
+        model: TUTOR_MODEL, max_tokens: 2000, // no temperature — rejected by the Claude 5 models
         thinking: { type: "adaptive" },
         // Adaptive thinking at low effort often skips planning on short prompts, so
-        // the plan is a required field ("work") written before the spoken one.
+        // the worked answer key ("solution") is written before the spoken hint.
+        // Never call that field private working: Sonnet 5.5 refuses such a request
+        // as reasoning extraction.
         output_config: { effort: "low", format: { type: "json_schema", schema: EXPLAIN_SCHEMA } },
         system: EXPLAIN_SYSTEM,
         messages: [{ role: "user", content: userContent }],
@@ -1271,7 +1270,7 @@ app.post("/tutor/demo", async (c) => {
   if (cached) return reply(cached);
   try {
     const resp = await anthropic.messages.create({
-      model: TUTOR_MODEL, max_tokens: 1400, // no temperature — rejected by claude-sonnet-5
+      model: TUTOR_MODEL, max_tokens: 1400, // no temperature — rejected by the Claude 5 models
       thinking: { type: "adaptive" },
       output_config: { effort: "low" },
       system: DEMO_SYSTEM,
@@ -1350,7 +1349,7 @@ app.post("/tutor/walkthrough", async (c) => {
   ].filter(Boolean).join("\n");
   try {
     const resp = await anthropic.messages.create({
-      model: TUTOR_MODEL, max_tokens: 1400, // no temperature — rejected by claude-sonnet-5
+      model: TUTOR_MODEL, max_tokens: 1400, // no temperature — rejected by the Claude 5 models
       thinking: { type: "adaptive" },
       output_config: { effort: "low" },
       system: WALKTHROUGH_SYSTEM,

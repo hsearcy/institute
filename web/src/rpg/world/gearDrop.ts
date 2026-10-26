@@ -7,7 +7,7 @@ export const GEAR_DROP_COLORS: Record<string, number> = { common: 0xc9d1d3, rare
 /** Beam strength: a common piece gets a faint pillar, a legendary one a bright one. */
 const STRENGTH: Record<string, number> = { common: .55, rare: .85, epic: 1, legendary: 1.25 };
 /** Largest side at the game camera. Jewellery stays a little smaller so a ring never looks like a hoop. */
-const ITEM_SIZE: Partial<Record<string, number>> = { ring: .74, amulet: .92 };
+const ITEM_SIZE: Partial<Record<string, number>> = { ring: .74, amulet: .92, weapon: 1.6 };
 const HOVER = .78;
 
 /**

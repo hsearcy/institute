@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'bun:test';
 import { rpgShrineBoon, RPG_BOON_IDS } from '@institute/shared';
 import { Level, LOCK_REACH, rectCenter, type Biome } from '../src/rpg/world/levelGen';
+import { ambushPositions } from '../src/rpg/world/formation';
+import { shrineAmbush } from '../src/rpg/locks';
 
 const BIOMES: Biome[] = ['vault', 'forest', 'coast', 'quarry', 'garden'];
 
@@ -131,4 +133,11 @@ test('some shrines, fixed by id, call the pack up around them', async () => {
   const traps = ids.filter(shrineAmbush).length;
   assert.ok(traps > 120 && traps < 200, `${traps} of 400 shrines are traps`);
   assert.deepEqual(ids.map(shrineAmbush), ids.map(shrineAmbush));
+});
+
+test('a trap shrine has room to call its pack up round it', () => {
+  const traps = levels().flatMap(({ level }) => level.shrines.filter(shrine => shrineAmbush(shrine.id)).map(shrine => ({ level, shrine })));
+  assert.ok(traps.length >= 5, `only ${traps.length} trap shrines grew`);
+  const fit = traps.filter(({ level, shrine }) => ambushPositions(level, shrine.x, shrine.z, shrine.radius, 5).length === 5);
+  assert.ok(fit.length >= traps.length * .9, `${fit.length} of ${traps.length} trap shrines fit a pack of five`);
 });

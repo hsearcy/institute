@@ -10,7 +10,7 @@ export function chestRewardTokens(reward: RpgChestReward): RewardToken[] {
   const item = reward.item;
   if (item && (reward.loot || !reward.duplicateItem)) tokens.push(relicToken(item));
   // Armour and jewellery fall out the same way as a relic.
-  if (reward.gear) tokens.push({ kind: 'relic', label: reward.gear.name, color: RARITY_COLORS[reward.gear.rarity] ?? RARITY_COLORS.rare!, rarity: reward.gear.rarity });
+  if (reward.gear) tokens.push({ kind: 'relic', label: reward.gear.name, color: RARITY_COLORS[reward.gear.rarity] ?? RARITY_COLORS.rare!, rarity: reward.gear.rarity, baseId: reward.gear.baseId, gearKind: reward.gear.kind });
   return tokens;
 }
 

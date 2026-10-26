@@ -21,7 +21,7 @@ export const RARITY_COLORS: Record<string, number> = { common: 0xb8c2c5, uncommo
 type Mote = { kind: 'mote'; sprite: THREE.Sprite; at: THREE.Vector3; velocity: THREE.Vector3; born: number; flight?: number };
 type Relic = { kind: 'relic'; group: THREE.Group; at: THREE.Vector3; color: number; born: number };
 /** One reward the server granted (from a chest or a fallen enemy), shown as a thing on the floor. */
-export type RewardToken = { kind: 'xp' | 'dust' | 'relic'; label: string; color: number; amount?: number; rarity?: string; itemId?: string };
+export type RewardToken = { kind: 'xp' | 'dust' | 'relic'; label: string; color: number; amount?: number; rarity?: string; itemId?: string; baseId?: string; gearKind?: string };
 type Treasure = { kind: 'reward'; token: RewardToken; group: THREE.Group; at: THREE.Vector3; velocity: THREE.Vector3; born: number; restAt: number; flight?: number };
 export type LootPickup = { kind: 'mote' | 'relic' | 'reward'; at: THREE.Vector3; color: number; reward?: RewardToken };
 

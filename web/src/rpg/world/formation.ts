@@ -99,3 +99,23 @@ export function packPositions(level: Level, area: Area, count: number): Formatio
   }
   return result;
 }
+
+/**
+ * Where a pack bursts up round a feature of radius `clear` at (x, z): rings
+ * outward, each spot on open floor in plain sight of the feature. Empty when
+ * there is too little room for all `count`.
+ */
+export function ambushPositions(level: Level, x: number, z: number, clear: number, count: number): FormationPoint[] {
+  const spots: FormationPoint[] = [];
+  for (let ring = 0; ring < 4 && spots.length < count; ring++) {
+    const radius = 3.4 + ring * 1.1, around = Math.ceil(radius * 2.2);
+    for (let n = 0; n < around && spots.length < count; n++) {
+      const angle = (n + ring * .5) / around * Math.PI * 2, at = { x: x + Math.cos(angle) * radius, z: z + Math.sin(angle) * radius };
+      // The line starts at the feature's rim: its own stone would block every line from its centre.
+      const rim = { x: x + Math.cos(angle) * (clear + .4), z: z + Math.sin(angle) * (clear + .4) };
+      if (level.walkable(at.x, at.z, .58) && level.clearLine(rim, at, .3)
+        && spots.every(other => Math.hypot(other.x - at.x, other.z - at.z) >= MIN_ENEMY_SPACING + .3)) spots.push(at);
+    }
+  }
+  return spots.length < count ? [] : spots;
+}

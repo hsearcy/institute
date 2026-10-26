@@ -42,7 +42,7 @@ import { BreakableKit, BreakableDebris, breakableHeight } from './world/breakabl
 import { EliteAura, ELITE_COLOR, ELITE_SCALE, eliteName } from './world/elite';
 import type { ScoutView } from './minimapModel';
 import { createDescentPortal, DESCENT_ENTER_RADIUS, type DescentPortal } from './world/descentPortal';
-import { MIN_ENEMY_SPACING, packPositions } from './world/formation';
+import { ambushPositions, packPositions } from './world/formation';
 import { shrineAmbush } from './locks';
 import { buildChunk, disposeChunk, CHEST_OPEN_ANGLE, type BuiltChunk, type VaultMaterials } from './world/levelChunks';
 import { animateDoor, animateShrine, boonColor, DOOR_FLARE_SECONDS } from './world/lockVisuals';
@@ -465,7 +465,7 @@ export class DungeonWorld {
   /** Run speed from boots and other gear (1 = no gear). */
   gearRunSpeed = 1;
   private kneelAt = -99; private kneelFor = 0; private kneelGlow?: THREE.Sprite;
-  private gearDrops: { visual: GearDropVisual; born: number }[] = [];
+  private gearDrops: { visual: GearDropVisual; born: number; reward?: RewardToken }[] = [];
   private gearDropTurn = 0;
 
   /**
@@ -507,18 +507,29 @@ export class DungeonWorld {
 
   /** Armour or jewellery falls beside the hero in a beam of its rarity's colour, then flies to the hero's pack. */
   dropGear(gear: { rarity: string; baseId?: string; kind?: string }): void {
-    const color = GEAR_DROP_COLORS[gear.rarity] ?? GEAR_DROP_COLORS.common!;
     // Toward the camera side of the hero, so his body never hides it.
     const towardView = Math.atan2(this.camera.position.x - this.hero.position.x, this.camera.position.z - this.hero.position.z);
     // Several at once take turns left and right of the hero instead of stacking in one beam.
     const side = this.gearDropTurn++ % 2 ? 1 : -1, angle = towardView + side * (.6 + Math.random() * .4 + Math.floor(this.gearDrops.length / 2) * .8);
     const at = slideStep({ x: this.hero.position.x, z: this.hero.position.z }, Math.sin(angle) * 1.7, Math.cos(angle) * 1.7, this.walkable);
-    const visual = new GearDropVisual(color, gear.rarity, gear.kind ?? '', this.glowMap, towardView);
+    this.showpiece(new THREE.Vector3(at.x, 0, at.z), gear.rarity, gear.kind ?? '', gear.baseId);
+  }
+
+  /**
+   * A dropped piece in its rarity beam: armour by `baseId`, a relic weapon by
+   * `itemId`. `reward` is collected (its label shown) when it reaches the pack.
+   */
+  private showpiece(at: THREE.Vector3, rarity: string, kind: string, baseId?: string, itemId?: string, reward?: RewardToken): void {
+    const color = GEAR_DROP_COLORS[rarity] ?? GEAR_DROP_COLORS.common!;
+    const towardView = Math.atan2(this.camera.position.x - at.x, this.camera.position.z - at.z);
+    const visual = new GearDropVisual(color, rarity, itemId ? 'weapon' : kind, this.glowMap, towardView);
     visual.group.position.set(at.x, 0, at.z); this.scene.add(visual.group);
     this.emit(new THREE.Vector3(at.x, 1.4, at.z), color, 26, 1.3, 1.2); this.onSound?.('relic-drop');
-    const drop = { visual, born: this.elapsed };
+    const drop = { visual, born: this.elapsed, reward };
     this.gearDrops.push(drop);
-    const baseId = gear.baseId, wornOnly = !!baseId && WORN_ONLY.has(baseId);
+    const relic = itemId && ITEM_MODELS[itemId] ? this.models.get(ITEM_MODELS[itemId].model) : undefined;
+    if (relic) { visual.setModel(relic); return; }
+    const wornOnly = !!baseId && WORN_ONLY.has(baseId);
     if (baseId) void this.gearModel(baseId, wornOnly).then(model => {
       if (!model || this.disposed || !this.gearDrops.includes(drop) || this.elapsed - drop.born > GEAR_DROP_SHOW) return;
       visual.setModel(model, wornOnly ? baseId : undefined);
@@ -542,7 +553,7 @@ export class DungeonWorld {
         this.lootLight.color.setHex(drop.visual.color); this.lootLight.position.copy(drop.visual.group.position).add(new THREE.Vector3(0, 1.9, 0));
       }
       if (drop.visual.update(age, pack)) continue;
-      this.emit(pack, drop.visual.color, 16, .8, .7); this.onLootPickup?.({ kind: 'relic', at: pack, color: drop.visual.color });
+      this.emit(pack, drop.visual.color, 16, .8, .7); this.onLootPickup?.({ kind: 'relic', at: pack, color: drop.visual.color, reward: drop.reward });
       drop.visual.dispose(); this.gearDrops.splice(this.gearDrops.indexOf(drop), 1);
     }
     this.lootLight.intensity = light;
@@ -631,8 +642,11 @@ export class DungeonWorld {
       this.emit(at.clone().setY(1), 0xffc860, 46, 2.2, 1.1);
       this.emit(at.clone().setY(.9), 0xfff0b8, 18, 1.2, .7);
       this.burstLight.position.copy(at).setY(1.6); this.burstLight.color.setHex(0xffc460); this.burstLight.intensity = 46;
-      if (rewards.length) this.floorLoot.dropRewards(at, rewards, this.elapsed, this.camera.position);
-      else this.floorLoot.dropMotes(at.clone().setY(.1), 7, this.elapsed);
+      // Relics and armour rise in their own beam beside the chest; the rest spills out and flies.
+      const pieces = rewards.filter(token => token.kind === 'relic' && (token.itemId || token.baseId)), loose = rewards.filter(token => !pieces.includes(token));
+      pieces.forEach((token, i) => this.schedule(.35 + i * .5, () => this.showpiece(this.besideChest(at, i), token.rarity ?? 'rare', token.gearKind ?? '', token.baseId, token.itemId, token)));
+      if (loose.length) this.floorLoot.dropRewards(at, loose, this.elapsed, this.camera.position);
+      if (!rewards.length) this.floorLoot.dropMotes(at.clone().setY(.1), 7, this.elapsed);
     });
     return true;
   }
@@ -737,27 +751,20 @@ export class DungeonWorld {
     this.emit(at, color, 30, 1.1, 1.2);
     this.burstLight.position.copy(at); this.burstLight.color.setHex(color); this.burstLight.intensity = 30;
     this.schedule(.45, () => { this.emit(this.hero.position.clone().setY(1), color, 18, .8, .9); this.setBoon(boon); });
-    if (shrineAmbush(id)) this.schedule(1.3, () => this.ambush(feature.x, feature.z));
+    if (shrineAmbush(id)) this.schedule(1.3, () => this.ambush(feature.x, feature.z, feature.radius));
   }
 
   /**
-   * The pack bursts up out of the floor in a ring round a point and the fight
-   * starts there. The server's encounter is unchanged; only where it is met.
+   * The pack bursts up out of the floor in a ring round a point (a feature of
+   * radius `clear`) and the fight starts there. The server's encounter is
+   * unchanged; only where it is met.
    */
-  private ambush(x: number, z: number): void {
+  private ambush(x: number, z: number, clear = 0): void {
     const level = this.level, living = this.enemies.filter(enemy => !enemy.dead);
     if (!level || this.engaged || !living.length || this.encounter === 5) return;
-    const spots: { x: number; z: number }[] = [];
-    for (let ring = 0; ring < 4 && spots.length < living.length; ring++) {
-      const radius = 3.4 + ring * 1.1, count = Math.ceil(radius * 2.2);
-      for (let n = 0; n < count && spots.length < living.length; n++) {
-        const angle = (n + ring * .5) / count * Math.PI * 2, at = { x: x + Math.cos(angle) * radius, z: z + Math.sin(angle) * radius };
-        if (level.walkable(at.x, at.z, .58) && level.clearLine({ x, z }, at, .3)
-          && spots.every(other => Math.hypot(other.x - at.x, other.z - at.z) >= MIN_ENEMY_SPACING + .3)) spots.push(at);
-      }
-    }
+    const spots = ambushPositions(level, x, z, clear, living.length);
     // Too little room here: the pack keeps waiting where it was.
-    if (spots.length < living.length) return;
+    if (!spots.length) return;
     this.packArea = level.areaAt(x, z) ?? this.packArea; this.packSeenAt = this.elapsed;
     const hero = this.hero.position;
     living.forEach((enemy, index) => {
@@ -2611,11 +2618,23 @@ export class DungeonWorld {
     }
   }
 
-  /** A fallen enemy's relic lands on the floor, rests a moment, then flies to the hero like chest treasure. */
+  /** A fallen enemy's relic falls where it stood, rests in its beam, then flies to the hero. */
   private spawnLoot(origin: THREE.Vector3, drop: RewardToken): void {
+    if (drop.kind === 'relic' && (drop.itemId || drop.baseId)) {
+      const at = slideStep({ x: this.hero.position.x, z: this.hero.position.z }, origin.x - this.hero.position.x, origin.z - this.hero.position.z, this.walkable);
+      this.showpiece(new THREE.Vector3(at.x, 0, at.z), drop.rarity ?? 'rare', drop.gearKind ?? '', drop.baseId, drop.itemId, drop);
+      return;
+    }
     const at = origin.clone().setY(.7);
     this.emit(at.clone().setY(.4), drop.color, 35, 1.7, 1.5);
     this.floorLoot.dropRewards(at, [drop], this.elapsed, this.camera.position); this.onSound?.('relic-drop');
+  }
+
+  /** On the camera side of a chest, so the lid never hides the piece; several fan out. */
+  private besideChest(at: THREE.Vector3, index: number): THREE.Vector3 {
+    const towardView = Math.atan2(this.camera.position.x - at.x, this.camera.position.z - at.z) + (index % 2 ? 1 : -1) * (.5 + Math.floor(index / 2) * .6);
+    const spot = slideStep({ x: at.x, z: at.z }, Math.sin(towardView) * 1.5, Math.cos(towardView) * 1.5, this.walkable);
+    return new THREE.Vector3(spot.x, 0, spot.z);
   }
 
   private emit(origin: THREE.Vector3, color: number, count: number, speed: number, life: number): void {

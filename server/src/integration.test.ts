@@ -532,6 +532,18 @@ describe("topic-graph tutor flow", () => {
     expect(leaksAnswer("count 14 gems", 4)).toBe(false); // 4 inside 14 is fine
     expect(leaksAnswer("what do 6 and how many make 10?", 4)).toBe(false);
   });
+
+  test("changesCourse catches a hint that turns around mid-explanation, not ordinary words", async () => {
+    const { changesCourse } = await import("./index.ts");
+    // Real hints the tutor once spoke aloud.
+    expect(changesCourse("10 and 10 make a ten pair... well actually, let's add our two long sides together")).toBe(true);
+    expect(changesCourse('count one more: "four"... just kidding, you count that last step yourself!')).toBe(true);
+    expect(changesCourse("six, then twelve more... let's just count by sixes two times")).toBe(true);
+    expect(changesCourse("Hmm, maybe not. Instead, count back.")).toBe(true);
+    expect(changesCourse("Now bring back the 3 ones that were waiting.")).toBe(false);
+    expect(changesCourse("Since 2 is small, we go down to the ten below it instead of up.")).toBe(false);
+    expect(changesCourse("Let's skip count by fives. Five, ten, fifteen, twenty.")).toBe(false);
+  });
 });
 
 describe("the 'not sure yet' escape hatch", () => {

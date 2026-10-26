@@ -1133,8 +1133,15 @@ export function leaksAnswer(text: string, answer: number): boolean {
   return new RegExp(`(?<!\\d)${answer}(?!\\d)`).test(text);
 }
 
-const EXPLAIN_SYSTEM = `You are the warm tutor voice inside a fantasy dungeon RPG math game, explaining ONE problem to a 6-year-old American boy who tapped "explain". Rules:
-- Think through the numbers PRIVATELY first, then speak only the finished explanation. The spoken text must read like you knew the plan all along — never search out loud, never change course (no "hmm", no "actually", no "wait", no "or you could").
+/** Words a hint uses when it turns around mid-explanation ("well actually",
+ *  "just kidding", "let's just..."). Heard aloud, a change of course leaves a
+ *  six-year-old with two half-methods, so such a hint is never spoken. */
+const COURSE_CHANGE = /\b(actually|wait|hmm+|oops|just kidding|kidding|let me|let's just|lets just|or you could|another way|on second thought|never ?mind|hold on|scratch that|start over|i mean|correction|no,? no|well,)\b|(^|[.!?]\s+)instead\b/i;
+export function changesCourse(text: string): boolean { return COURSE_CHANGE.test(text); }
+
+const EXPLAIN_SYSTEM = `You are the warm tutor voice inside a fantasy dungeon RPG math game, explaining ONE problem to a 6-year-old American boy who tapped "explain".
+Reply with two fields. In "work", privately pick the strategy and work the whole problem with these exact numbers, every step and the answer, and check each step. He never sees or hears "work". Then write "say": only the finished explanation, spoken to him, which follows your worked plan exactly. Rules for "say":
+- It must read like you knew the plan all along. Never search out loud, never change course (no "hmm", no "actually", no "wait", no "well", no "let's just", no "or you could", no "just kidding"). If a plan in "work" did not fit, fix it in "work" before writing "say".
 - Pick ONE strategy — the single most natural one for these exact numbers — and teach only that one. Never mention another way, a strategy you are NOT using, or why some other approach doesn't apply. Just teach the one that works.
 - For adding several numbers: if two of them make exactly ten, start with that pair; otherwise just add the two biggest first and then the last one. Don't hunt for tens that aren't there.
 - For a missing addend that crosses ten (like 6 + ? = 17): add a whole ten first, then adjust — six plus ten is sixteen, and it just needs one more to reach seventeen. NEVER count up to ten and then add the two jumps together (4 then 7): that ends in a second hard sum and hurts more than it helps. (Only state the final number if these rules say you may.)
@@ -1147,6 +1154,13 @@ const EXPLAIN_SYSTEM = `You are the warm tutor voice inside a fantasy dungeon RP
 - Money is ALWAYS American: dollars and cents, penny/nickel/dime/quarter. Never pounds, pence, or notes.
 - NEVER say the final answer, and never spell it out in words either. Stop one step short.
 - End with one small, encouraging leading question that points at the last step.`;
+
+const EXPLAIN_SCHEMA = {
+  type: "object",
+  properties: { work: { type: "string" }, say: { type: "string" } },
+  required: ["work", "say"],
+  additionalProperties: false,
+};
 
 const explainCache = new Map<string, string>();
 
@@ -1164,20 +1178,21 @@ app.post("/tutor/explain", async (c) => {
   ].filter(Boolean).join("\n");
   try {
     let text = "";
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < 3; attempt++) {
       const resp = await anthropic.messages.create({
-        model: TUTOR_MODEL, max_tokens: 1400, // no temperature — rejected by claude-sonnet-5
-        // Private planning space (Claude 5 adaptive thinking): the model works out
-        // the strategy off-mic, so the spoken text never rambles or self-corrects.
+        model: TUTOR_MODEL, max_tokens: 2000, // no temperature — rejected by claude-sonnet-5
         thinking: { type: "adaptive" },
-        output_config: { effort: "low" },
+        // Adaptive thinking at low effort often skips planning on short prompts, so
+        // the plan is a required field ("work") written before the spoken one.
+        output_config: { effort: "low", format: { type: "json_schema", schema: EXPLAIN_SCHEMA } },
         system: EXPLAIN_SYSTEM,
         messages: [{ role: "user", content: userContent }],
       });
       const block = resp.content.find((b) => b.type === "text");
-      text = (block && block.type === "text" ? block.text : "").trim();
-      if (text && !leaksAnswer(text, problem.answer)) break;
-      text = ""; // leaked or empty → retry once, then fall back
+      try { text = String(JSON.parse(block && block.type === "text" ? block.text : "{}").say ?? "").trim(); } catch { text = ""; }
+      if (text && !leaksAnswer(text, problem.answer) && !changesCourse(text)) break;
+      if (text) console.warn(`[tutor] explain rejected (${changesCourse(text) ? "changes course" : "says the answer"}): ${text}`);
+      text = ""; // leaked, turned around or empty → retry, then fall back
     }
     // Keep it speakable: TTS accepts ≤600 chars — trim overruns at a sentence end.
     if (text.length > 550) {

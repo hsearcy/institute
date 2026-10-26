@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { RPG_GEAR_BASES, RPG_GEAR_CAPS, RPG_WARD_BASE, rpgCreateGear, rpgEquippedGear, rpgGearStats, rpgMaxWard, rpgPickGearBase, rpgRollGearRarity } from './rpgGear';
+import { RPG_GEAR_BASES, RPG_GEAR_CAPS, RPG_WARD_BASE, rpgCreateGear, rpgEquippedGear, rpgGearStats, rpgMaxWard, rpgGearReinforceCost, rpgGearSalvageValue, rpgPickGearBase, rpgReinforceGear, rpgRollGearRarity, RPG_MAX_GEAR_REINFORCE } from './rpgGear';
 
 const seeded = (seed: number) => () => { seed = Math.imul(seed, 1664525) + 1013904223 | 0; return (seed >>> 0) / 4294967296; };
 
@@ -41,4 +41,22 @@ test('only equipped copies in matching slots count, and totals are capped', () =
   expect(rpgGearStats(state).speed).toBe(RPG_GEAR_CAPS.speed);
   expect(rpgMaxWard({})).toBe(RPG_WARD_BASE);
   expect(rpgMaxWard({ gear: [helm], equippedGear: { helm: helm.id } })).toBe(RPG_WARD_BASE + helm.stats.ward!);
+});
+
+test('reinforcing costs more each level and for finer pieces, and part of the dust comes back on salvage', () => {
+  const common = rpgGearReinforceCost({ rarity: 'common' }), legendary = rpgGearReinforceCost({ rarity: 'legendary' });
+  expect(legendary.gems).toBeGreaterThan(common.gems); expect(legendary.dust).toBeGreaterThan(common.dust);
+  expect(rpgGearReinforceCost({ rarity: 'rare', reinforce: 3 }).gems).toBeGreaterThan(rpgGearReinforceCost({ rarity: 'rare', reinforce: 2 }).gems);
+  const ring = rpgCreateGear('copper_ring', 1, seeded(4), 'rare'), plain = rpgGearSalvageValue(ring);
+  for (let level = 0; level < RPG_MAX_GEAR_REINFORCE; level++) rpgReinforceGear(ring);
+  expect(ring.reinforce).toBe(RPG_MAX_GEAR_REINFORCE);
+  expect(() => rpgReinforceGear(ring)).toThrow();
+  expect(rpgGearSalvageValue(ring)).toBeGreaterThan(plain);
+});
+
+test('each level grows every stat by at least one, so a +1 ring still gains', () => {
+  const ring = { ...rpgCreateGear('copper_ring', 1, seeded(9), 'common') };
+  const before = { ...ring.stats };
+  rpgReinforceGear(ring);
+  for (const [stat, value] of Object.entries(before)) expect(ring.stats[stat as keyof typeof ring.stats]).toBeGreaterThanOrEqual(value + 1);
 });

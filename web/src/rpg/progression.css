@@ -140,3 +140,18 @@
   .rpg-records-col { font-size:10px; }
   .rpg-records-col small { font-size:8px; }
 }
+/* Armour and jewellery on the anvil: the gear's own icon, five brass pips for its levels, and each stat with what the next level makes it. */
+.rpg-gear-forge { margin-top:26px; padding-top:6px; border-top:1px solid #a17a3a50; }
+.rpg-gear-forge .rpg-workshop-heading span { font-size:12px; color:#c3b29a; }
+#rpg-ui .rpg-gear-forge-card>.rpg-gear-art { width:110px; height:110px; align-self:center; filter:drop-shadow(0 4px 6px #000c); }
+.rpg-gear-forge-card.rare h3 { color:#9cc4ff; } .rpg-gear-forge-card.epic h3 { color:#d6b0ff; } .rpg-gear-forge-card.legendary h3 { color:#ffcf7d; }
+.rpg-reinforce-pips { display:flex; gap:5px; margin:2px 0 8px; }
+.rpg-reinforce-pips i { width:16px; height:6px; border-radius:2px; background:#2b3440; box-shadow:inset 0 0 0 1px #8c745366; }
+.rpg-reinforce-pips i.on { background:linear-gradient(#ffe2a3,#c8933f); box-shadow:0 0 6px #e8b45c88; }
+.rpg-reinforce-stats { list-style:none; margin:0 0 6px; padding:0; color:#9ed6df; font-size:13px; line-height:1.6; }
+.rpg-reinforce-next { color:#c3df9b; font-weight:normal; margin-left:4px; }
+.rpg-gear-forge-card.just-forged { animation:rpg-just-forged 1.6s ease-out; }
+.rpg-gear-forge-card.just-forged .rpg-reinforce-pips i.on:last-of-type, .rpg-gear-forge-card.just-forged .rpg-reinforce-pips i.on:has(+ i:not(.on)) { animation:rpg-pip-lit 1.2s ease-out; }
+@keyframes rpg-just-forged { 0% { box-shadow:0 0 0 2px #ffd68a, 0 0 34px #f0a94a99; background-color:#3a2c18f2; } 100% {} }
+@keyframes rpg-pip-lit { 0% { transform:scaleY(2.4); background:#fff6dc; box-shadow:0 0 14px #ffd27a; } 100% { transform:none; } }
+@media(max-width:680px) { #rpg-ui .rpg-gear-forge-card>.rpg-gear-art { width:65px; height:65px; } }

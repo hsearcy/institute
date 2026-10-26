@@ -18,6 +18,7 @@ export interface RpgEconomyResult {
   forgeDust: number;
   duplicate: boolean;
   lootId?: string;
+  gearId?: string;
   dustGained?: number;
 }
 

@@ -1,6 +1,6 @@
 import {
   RPG_GEAR_BASES, RPG_GEAR_SLOTS, RPG_GEAR_STAT_IDS, RPG_GEAR_STAT_LABELS, RPG_GEAR_CAPS, RPG_WARD_BASE, RPG_ITEMS,
-  rpgEquippedGear, rpgGearStats, rpgMaxWard, rpgGearSalvageValue, rpgGearSlotKind,
+  rpgEquippedGear, rpgGearStats, rpgMaxWard, rpgGearSalvageValue, rpgGearSlotKind, rpgGearReinforceCost, rpgGearReinforceLevel, rpgGearReinforcedStats, RPG_MAX_GEAR_REINFORCE,
   type RpgGearInstance, type RpgGearKind, type RpgGearSlot, type RpgGearStat, type RpgGearStats, type RpgState,
 } from '@institute/shared';
 import { escapeHtml as esc, gearArt, relicArt } from './icons';
@@ -61,7 +61,7 @@ const baseName = (item: RpgGearInstance) => RPG_GEAR_BASES.find(base => base.id 
 function slotButton(slot: RpgGearSlot, item: RpgGearInstance | undefined, selected: boolean): string {
   const name = GEAR_SLOT_NAMES[slot];
   if (!item) return `<button class="rpg-doll-slot empty" style="grid-area:${slot}" data-gear-slot="${slot}" aria-label="${name}: empty. Show ${esc(KIND_NAMES[rpgGearSlotKind(slot)][1].toLowerCase())} in your bag"><span class="rpg-doll-ghost rpg-doll-ghost-${rpgGearSlotKind(slot)}" aria-hidden="true"></span><small>${name}</small></button>`;
-  return `<button class="rpg-doll-slot ${item.rarity}${selected ? ' selected' : ''}" style="grid-area:${slot}" data-gear-slot="${slot}" aria-pressed="${selected}" aria-label="${name}: ${esc(item.name)}, ${RARITY_NAMES[item.rarity]}. ${esc(gearStatLines(item.stats).map(line => line.text).join(', '))}">${gearArt(item.baseId)}<small>${name}</small></button>`;
+  return `<button class="rpg-doll-slot ${item.rarity}${selected ? ' selected' : ''}" style="grid-area:${slot}" data-gear-slot="${slot}" aria-pressed="${selected}" aria-label="${name}: ${esc(gearName(item))}, ${RARITY_NAMES[item.rarity]}. ${esc(gearStatLines(item.stats).map(line => line.text).join(', '))}">${gearArt(item.baseId)}<small>${name}</small></button>`;
 }
 
 function renderTotals(state: RpgState): string {
@@ -91,14 +91,14 @@ function renderDetails(state: RpgState, ui: GearSheetUi): string {
   const actions = wornIn
     ? `<button class="rpg-primary" data-gear-unequip="${wornIn}">Take it off</button>`
     : ui.confirmSalvage
-      ? `<div class="rpg-gear-confirm" role="group" aria-label="Turn into forge dust?"><p>Turn ${esc(item.name)} into <b>${dust} forge dust</b>? It will be gone.</p><button class="rpg-primary" data-gear-salvage-confirm="${esc(item.id)}">Yes, turn it into dust</button><button data-gear-salvage-cancel>Keep it</button></div>`
+      ? `<div class="rpg-gear-confirm" role="group" aria-label="Turn into forge dust?"><p>Turn ${esc(gearName(item))} into <b>${dust} forge dust</b>? It will be gone.</p><button class="rpg-primary" data-gear-salvage-confirm="${esc(item.id)}">Yes, turn it into dust</button><button data-gear-salvage-cancel>Keep it</button></div>`
       : `${slots.map(slot => `<button class="rpg-primary" data-gear-equip="${esc(item.id)}" data-slot="${slot}">${slots.length > 1 ? `Wear on ${slot === 'ring1' ? 'left' : 'right'} hand` : 'Put it on'}</button>`).join('')}<button class="rpg-gear-salvage" data-gear-salvage="${esc(item.id)}">Turn into ${dust} forge dust</button>`;
-  return `<article class="rpg-gear-card ${item.rarity}" aria-label="${esc(item.name)}" data-gear-card="${esc(item.id)}">
+  return `<article class="rpg-gear-card ${item.rarity}" aria-label="${esc(gearName(item))}" data-gear-card="${esc(item.id)}">
     <button class="rpg-gear-card-close" data-gear-close aria-label="Close details">×</button>
     <div class="rpg-gear-stage" data-gear-viewer="${esc(item.baseId)}">${gearArt(item.baseId)}</div>
     <div class="rpg-gear-card-body">
       <small class="rpg-gear-card-kind">${RARITY_NAMES[item.rarity]} ${esc(KIND_NAMES[item.kind][0].toLowerCase())} · ${esc(baseName(item))} · Tier ${item.tier}</small>
-      <h3>${esc(item.name)}</h3>
+      <h3>${esc(gearName(item))}</h3>
       <ul class="rpg-gear-lines">${gearStatLines(item.stats).map(line => `<li>${esc(line.text)}</li>`).join('')}</ul>
       ${wornIn ? `<p class="rpg-gear-worn">✓ Wearing it · ${GEAR_SLOT_NAMES[wornIn]}</p>` : compares}
       <div class="rpg-gear-actions">${actions}</div>
@@ -114,7 +114,7 @@ function renderBag(state: RpgState, ui: GearSheetUi): string {
     <div class="rpg-gear-chips" role="group" aria-label="Show gear">${chip('all', 'All', all.length)}${KINDS.map(kind => chip(kind, KIND_NAMES[kind][1], all.filter(item => item.kind === kind).length)).join('')}</div>
     ${shown.length ? `<div class="rpg-gear-grid">${shown.map(item => {
       const fresh = !ui.seen.has(item.id), selected = ui.selectedId === item.id;
-      return `<button class="rpg-gear-item ${item.rarity}${selected ? ' selected' : ''}" data-gear-select="${esc(item.id)}" aria-pressed="${selected}" aria-label="${esc(item.name)}, ${RARITY_NAMES[item.rarity]} ${KIND_NAMES[item.kind][0].toLowerCase()}${fresh ? ', new' : ''}. ${esc(gearStatLines(item.stats).map(line => line.text).join(', '))}">${gearArt(item.baseId)}${fresh ? '<span class="rpg-gear-new" aria-hidden="true">NEW</span>' : ''}<span class="rpg-gear-item-name">${esc(item.name)}</span></button>`;
+      return `<button class="rpg-gear-item ${item.rarity}${selected ? ' selected' : ''}" data-gear-select="${esc(item.id)}" aria-pressed="${selected}" aria-label="${esc(gearName(item))}, ${RARITY_NAMES[item.rarity]} ${KIND_NAMES[item.kind][0].toLowerCase()}${fresh ? ', new' : ''}. ${esc(gearStatLines(item.stats).map(line => line.text).join(', '))}">${gearArt(item.baseId)}${fresh ? '<span class="rpg-gear-new" aria-hidden="true">NEW</span>' : ''}<span class="rpg-gear-item-name">${esc(gearName(item))}</span></button>`;
     }).join('')}</div>` : `<p class="rpg-gear-empty">${all.length ? 'Nothing of this kind in your bag yet.' : 'Your bag is empty. Open chests and beat monsters to find gear.'}</p>`}
   </section>`;
 }
@@ -136,4 +136,24 @@ export function renderGearSheet(state: RpgState, ui: GearSheetUi): string {
     ${renderDetails(state, ui)}
     ${renderBag(state, ui)}
   </section>`;
+}
+
+/** "Iron Helm of the Bear +2": the blacksmith's levels show on the name. */
+export const gearName = (item: RpgGearInstance): string => `${item.name}${rpgGearReinforceLevel(item) ? ` +${rpgGearReinforceLevel(item)}` : ''}`;
+
+/** The blacksmith's anvil for armour and jewellery: worn pieces first, each with what the next level adds. */
+export function renderGearForge(state: RpgState, gems?: number, fresh?: string): string {
+  const worn = Object.entries(rpgEquippedGear(state)) as [RpgGearSlot, RpgGearInstance][];
+  const wornIds = new Set(worn.map(([, item]) => item.id));
+  const pieces = [...worn.map(([slot, item]) => ({ item, slot })), ...gearBag(state).map(item => ({ item, slot: undefined }))];
+  if (!pieces.length) return '<p class="rpg-workshop-note">Armour and jewellery from chests and monsters can be made stronger here.</p>';
+  const dust = state.forgeDust ?? 0;
+  return pieces.map(({ item, slot }) => {
+    const level = rpgGearReinforceLevel(item), maxed = level >= RPG_MAX_GEAR_REINFORCE, cost = rpgGearReinforceCost(item);
+    const next = rpgGearReinforcedStats(item.stats), short = gems === undefined ? cost.gems : Math.max(0, cost.gems - gems), dustShort = Math.max(0, cost.dust - dust);
+    const lines = gearStatLines(item.stats).map(line => `<li>${esc(line.text)}${maxed ? '' : ` <b class="rpg-reinforce-next">→ +${next[line.stat]}${RPG_GEAR_STAT_LABELS[line.stat].percent ? '%' : ''}</b>`}</li>`).join('');
+    const pips = Array.from({ length: RPG_MAX_GEAR_REINFORCE }, (_, i) => `<i class="${i < level ? 'on' : ''}"></i>`).join('');
+    const why = maxed ? 'Fully reinforced' : short ? `${short} more gems${dustShort ? ` and ${dustShort} more dust` : ''} to save` : dustShort ? `${dustShort} more forge dust to find` : 'Ready to reinforce';
+    return `<article class="rpg-loot-card rpg-gear-forge-card ${item.rarity}${wornIds.has(item.id) ? ' equipped' : ''}${fresh === item.id ? ' just-forged' : ''}" data-gear-forge="${esc(item.id)}">${gearArt(item.baseId)}<div><small>${slot ? `✓ WORN · ${GEAR_SLOT_NAMES[slot].toUpperCase()}` : `${RARITY_NAMES[item.rarity].toUpperCase()} ${KIND_NAMES[item.kind][0].toUpperCase()}`}</small><h3>${esc(gearName(item))}</h3><div class="rpg-reinforce-pips" role="img" aria-label="Reinforced ${level} of ${RPG_MAX_GEAR_REINFORCE}">${pips}</div><ul class="rpg-reinforce-stats">${lines}</ul><small>${why}</small></div><div class="rpg-loot-actions"><button class="rpg-primary" data-reinforce-gear="${esc(item.id)}" ${maxed || short || dustShort ? 'disabled' : ''}>${maxed ? 'Fully reinforced' : `Reinforce to +${level + 1}<small>${cost.gems} gems · ${cost.dust} dust</small>`}</button></div></article>`;
+  }).join('');
 }

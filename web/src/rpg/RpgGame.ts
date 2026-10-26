@@ -36,7 +36,7 @@ import './progression.css';
 import { renderCampWorkshop, renderPinnedGoal, lootStats, collectionLootChoice, type CampTab } from './campView';
 import { nextSpellGoal } from './nextSpell';
 import { skillUpgradePreview } from './skillPreview';
-import { equippedForgeReady } from './forgeReady';
+import { equippedForgeReady, equippedGearReinforceReady } from './forgeReady';
 import { Celebrations, type CelebrationEvent } from './Celebrations';
 import { Minimap } from './minimapView';
 import './hud-rewards.css';
@@ -49,6 +49,7 @@ import { TutorialNarrator } from './TutorialNarrator';
 import { TraderDesk } from './traderView';
 import { chestLockStory, chestRewardText, chestRewardShort } from './chestLock';
 import './chest-story.css';
+import { gearName } from './gearView';
 import { chestRewardTokens, cssColor, freeLabelSlot, monsterRelicToken } from './rewardPickups';
 import type { RewardToken } from './world/floorLoot';
 import { HELP_GUARD_MS, HelpGuard } from './helpGuard';
@@ -392,11 +393,11 @@ export class RpgGame {
     }).join('') + `<button class="rpg-spell rpg-tree-button" data-action="skills" aria-label="Skill trees">${icon('tree')}<span>Skill trees</span>${s.skillPoints ? `<i>${s.skillPoints} new</i>` : '<kbd>K</kbd>'}</button>`;
     const item = RPG_ITEMS.find(i => i.id === s.equippedItemId)!;
     this.el('rpg-equipped').textContent = item.name;
-    const forgeReady = equippedForgeReady(s, this.campState?.gems ?? this.legacyState?.gems);
+    const wallet = this.campState?.gems ?? this.legacyState?.gems, forgeReady = equippedForgeReady(s, wallet), gearReady = equippedGearReinforceReady(s, wallet);
     const blacksmith = this.el('rpg-blacksmith');
-    this.el('rpg-forge-ready').hidden = !forgeReady;
-    blacksmith.classList.toggle('upgrade-ready', forgeReady);
-    blacksmith.title = forgeReady ? `Blacksmith: Upgrade available for ${item.name}` : 'Blacksmith';
+    this.el('rpg-forge-ready').hidden = !forgeReady && !gearReady;
+    blacksmith.classList.toggle('upgrade-ready', forgeReady || !!gearReady);
+    blacksmith.title = forgeReady ? `Blacksmith: Upgrade available for ${item.name}` : gearReady ? `Blacksmith: ${gearName(gearReady)} can be reinforced` : 'Blacksmith';
     blacksmith.setAttribute('aria-label', blacksmith.title);
     const gear = this.root.querySelector('.rpg-gear-button')!;
     gear.querySelector('.rpg-icon,.rpg-relic-art')?.remove();
@@ -1113,12 +1114,16 @@ export class RpgGame {
         if (error instanceof ApiError && error.status >= 400 && error.status < 500) { this.economyPending = null; sessionStorage.removeItem(`${sessionKey}:economy`); }
         throw error;
       }
+      const gemsBefore = this.campState?.gems;
       this.state = result.state; this.economyPending = null; sessionStorage.removeItem(`${sessionKey}:economy`);
       const [camp, legacy] = await Promise.all([getRpgCamp(), request<State>(`/state?profileId=${encodeURIComponent(PROFILE)}`)]);
       this.campState = camp; this.legacyState = legacy; this.renderState();
-      const tab = pending.action === 'shop/buy' ? 'merchant' : 'forge';
-      this.showDialog(tab, renderCampWorkshop(this.state!, camp, legacy, tab), true, pending.action === 'forge/upgrade');
-      this.toast(pending.action === 'shop/buy' ? 'Your new relic is ready in Equipment!' : pending.action === 'forge/upgrade' ? 'Forged! +2 power. Your favorite relic grows stronger.' : `Reclaimed +${result.dustGained ?? 0} forge dust.`);
+      const tab = pending.action === 'shop/buy' ? 'merchant' : 'forge', reinforced = pending.action === 'forge/reinforce' ? result.gearId : undefined;
+      this.showDialog(tab, renderCampWorkshop(this.state!, camp, legacy, tab, undefined, reinforced), true, pending.action === 'forge/upgrade' || !!reinforced);
+      const piece = reinforced ? this.state!.gear?.find(item => item.id === reinforced) : undefined;
+      // The price as the subtraction it is, with his real gems.
+      const spent = gemsBefore !== undefined && gemsBefore > result.gems ? ` ${gemsBefore} − ${gemsBefore - result.gems} = ${result.gems} gems left.` : '';
+      this.toast(pending.action === 'shop/buy' ? 'Your new relic is ready in Equipment!' : pending.action === 'forge/upgrade' ? 'Forged! +2 power. Your favorite relic grows stronger.' : piece ? `${gearName(piece)} is stronger!${spent}` : `Reclaimed +${result.dustGained ?? 0} forge dust.`);
     });
   }
   /** Redraw Tobble's stall in place and hook up its answer box. */
@@ -1521,6 +1526,7 @@ export class RpgGame {
     if (button.dataset.trader) { void this.traderClick(button); return; }
     if (button.dataset.buyItem) { void this.economyAction('shop/buy', { itemId: button.dataset.buyItem }); return; }
     if (button.dataset.forgeLoot) { void this.economyAction('forge/upgrade', { lootId: button.dataset.forgeLoot }); return; }
+    if (button.dataset.reinforceGear) { void this.economyAction('forge/reinforce', { gearId: button.dataset.reinforceGear }); return; }
     if (button.dataset.salvageLoot) { if (!this.busy) this.confirmSalvage(button.dataset.salvageLoot); return; }
     if (button.dataset.confirmSalvage) { void this.economyAction('forge/salvage', { lootId: button.dataset.confirmSalvage }); return; }
     if (button.dataset.pinKind) {

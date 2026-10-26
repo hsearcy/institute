@@ -1,6 +1,6 @@
 import { Database } from 'bun:sqlite';
 import { describe, expect, test } from 'bun:test';
-import { rpgForgeCost, rpgMerchantPrice, RPG_ITEMS, type RpgLootInstance } from '@institute/shared';
+import { rpgCreateGear, rpgForgeCost, rpgGearReinforceCost, rpgMerchantPrice, RPG_ITEMS, type RpgLootInstance } from '@institute/shared';
 import { getRpgState, saveRpgState } from './rpg';
 import { createRpgEconomyRoutes, ensureRpgEconomySchema, getRpgCamp, mutateRpgEconomy } from './rpgEconomy';
 
@@ -170,6 +170,42 @@ describe('RPG merchant and forge preserve legacy progress', () => {
       }
       expect((await routes.request('/camp?profileId=sam')).status).toBe(200);
       expect(readWallet(db).gems).toBe(2000);
+    } finally { db.close(); }
+  });
+  test('reinforcing gear charges gems and dust once, grows every stat, and stops at five', () => {
+    const db = fixture();
+    try {
+      const state = getRpgState(db, 'sam');
+      const plate = { ...rpgCreateGear('scale_mail', 3, () => .5, 'epic'), id: 'plate' };
+      state.gear = [plate]; state.forgeDust = 200;
+      saveRpgState(db, state);
+      const cost = rpgGearReinforceCost(plate);
+      const first = mutateRpgEconomy(db, 'sam', 'r1', 'reinforce', 'plate');
+      const grown = first.state.gear!.find(piece => piece.id === 'plate')!;
+      expect(grown.reinforce).toBe(1);
+      for (const [stat, value] of Object.entries(plate.stats)) expect(grown.stats[stat as keyof typeof grown.stats]!).toBeGreaterThan(value);
+      expect(first.gems).toBe(2000 - cost.gems); expect(first.forgeDust).toBe(200 - cost.dust);
+      const again = mutateRpgEconomy(db, 'sam', 'r1', 'reinforce', 'plate');
+      expect(again.duplicate).toBe(true); expect(again.gems).toBe(2000 - cost.gems);
+      for (let n = 2; n <= 5; n++) mutateRpgEconomy(db, 'sam', `r${n}`, 'reinforce', 'plate');
+      expect(getRpgState(db, 'sam').gear![0]!.reinforce).toBe(5);
+      expect(() => mutateRpgEconomy(db, 'sam', 'r6', 'reinforce', 'plate')).toThrow('fully reinforced');
+      expect(() => mutateRpgEconomy(db, 'sam', 'r7', 'reinforce', 'gone')).toThrow('no longer in your bag');
+    } finally { db.close(); }
+  });
+
+  test('reinforcing without enough dust or gems changes nothing', () => {
+    const db = fixture();
+    try {
+      const state = getRpgState(db, 'sam');
+      state.gear = [{ ...rpgCreateGear('leather_cap', 1, () => .5, 'common'), id: 'cap' }]; state.forgeDust = 1;
+      saveRpgState(db, state);
+      expect(() => mutateRpgEconomy(db, 'sam', 'd1', 'reinforce', 'cap')).toThrow('forge dust');
+      db.query('UPDATE profile_state SET gems = 3').run();
+      const rich = getRpgState(db, 'sam'); rich.forgeDust = 500; saveRpgState(db, rich);
+      expect(() => mutateRpgEconomy(db, 'sam', 'd2', 'reinforce', 'cap')).toThrow('gems');
+      expect(getRpgState(db, 'sam').gear![0]!.reinforce ?? 0).toBe(0);
+      expect(getRpgState(db, 'sam').forgeDust).toBe(500); expect(readWallet(db).gems).toBe(3);
     } finally { db.close(); }
   });
 });

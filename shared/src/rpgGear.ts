@@ -92,8 +92,10 @@ export const RPG_GEAR_AFFIXES: readonly RpgGearAffix[] = [
 /** A dropped copy of a base. Saved as rolled; never rerolled by reading it. */
 export interface RpgGearInstance {
   id: string; baseId: string; kind: RpgGearKind; rarity: RpgRarity; tier: number; name: string;
-  /** Implicit and rolled stats together. */
+  /** Implicit and rolled stats together, with any reinforcing already added. */
   stats: RpgGearStats;
+  /** Blacksmith reinforcing, 0 to RPG_MAX_GEAR_REINFORCE; missing on older saves. */
+  reinforce?: number;
 }
 
 /** Saved on RpgState: owned gear and which copy fills each slot. */
@@ -169,6 +171,33 @@ export function rpgMaxWard(state: RpgGearLoadout): number { return RPG_WARD_BASE
  * - /gear/unequip { slot }          empties a slot.
  * - /gear/salvage { gearId }        breaks an unequipped copy into forge dust (rpgGearSalvageValue).
  */
-export function rpgGearSalvageValue(item: Pick<RpgGearInstance, 'rarity' | 'tier'>): number {
-  return ({ common: 1, rare: 3, epic: 6, legendary: 12 } as const)[item.rarity] + Math.floor(rpgTier(item.tier) / 2);
+export function rpgGearSalvageValue(item: Pick<RpgGearInstance, 'rarity' | 'tier' | 'reinforce'>): number {
+  // Half the dust put into reinforcing comes back; gems never do.
+  let invested = 0;
+  for (let level = 0; level < rpgGearReinforceLevel(item); level++) invested += rpgGearReinforceCost({ rarity: item.rarity, reinforce: level }).dust;
+  return ({ common: 1, rare: 3, epic: 6, legendary: 12 } as const)[item.rarity] + Math.floor(rpgTier(item.tier) / 2) + Math.floor(invested / 2);
+}
+
+export const RPG_MAX_GEAR_REINFORCE = 5;
+const REINFORCE_BUMP: Readonly<Record<RpgRarity, number>> = { common: 0, rare: 1, epic: 2, legendary: 4 };
+
+export const rpgGearReinforceLevel = (item: Pick<RpgGearInstance, 'reinforce'>): number =>
+  Math.max(0, Math.min(RPG_MAX_GEAR_REINFORCE, Math.trunc(Number(item.reinforce) || 0)));
+
+/** The next level's price. Finer pieces cost more, so a legendary +5 is a long goal. */
+export function rpgGearReinforceCost(item: Pick<RpgGearInstance, 'rarity' | 'reinforce'>): { gems: number; dust: number } {
+  const next = rpgGearReinforceLevel(item) + 1, bump = REINFORCE_BUMP[item.rarity] ?? 0;
+  return { gems: 20 * next + 10 * bump, dust: 4 * next + 2 * bump };
+}
+
+/** Each level adds a tenth of every stat the piece has, and always at least one. */
+export function rpgGearReinforcedStats(stats: RpgGearStats): RpgGearStats {
+  return Object.fromEntries(Object.entries(stats).map(([stat, value]) => [stat, value + Math.max(1, Math.round(value * .1))])) as RpgGearStats;
+}
+
+/** One level on a copy, stats included. The caller checks and pays the price. */
+export function rpgReinforceGear(item: RpgGearInstance): void {
+  if (rpgGearReinforceLevel(item) >= RPG_MAX_GEAR_REINFORCE) throw new Error('This piece is fully reinforced.');
+  item.stats = rpgGearReinforcedStats(item.stats);
+  item.reinforce = rpgGearReinforceLevel(item) + 1;
 }

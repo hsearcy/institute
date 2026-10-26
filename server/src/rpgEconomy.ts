@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import {
   RPG_ITEMS, RPG_MAX_ITEM_UPGRADE, rpgCampOffers, rpgMerchantPrice, rpgSalvageValue,
-  rpgForgeCost, rpgNormalizeLoot, type RpgCampState, type RpgEconomyResult, type RpgState,
+  rpgForgeCost, rpgGearReinforceCost, rpgGearReinforceLevel, rpgNormalizeLoot, rpgReinforceGear, RPG_MAX_GEAR_REINFORCE, type RpgCampState, type RpgEconomyResult, type RpgState,
 } from '@institute/shared';
 import { ensureRpgSchema, getRpgState, saveRpgState } from './rpg';
 
@@ -42,8 +42,8 @@ export function getRpgCamp(db: Database, profileId: string): RpgCampState {
   return { gems: gems(db, profileId), forgeDust: state.forgeDust ?? 0, offers: rpgCampOffers(state) };
 }
 
-type ReceiptDetails = Pick<RpgEconomyResult, 'lootId' | 'dustGained'>;
-type EconomyAction = 'buy' | 'upgrade' | 'salvage';
+type ReceiptDetails = Pick<RpgEconomyResult, 'lootId' | 'gearId' | 'dustGained'>;
+type EconomyAction = 'buy' | 'upgrade' | 'salvage' | 'reinforce';
 
 /** Receipt, wallet debit and adventure save commit together. A retry returns
  * today's state with the original operation details; a reused ID for a different
@@ -78,6 +78,17 @@ function applyOperation(db: Database, state: RpgState, action: EconomyAction, ta
     state.loot!.push(loot);
     state.inventory.push(item.id);
     return { lootId: loot.id };
+  }
+  if (action === 'reinforce') {
+    const piece = state.gear?.find(entry => entry.id === targetId);
+    if (!piece) throw new EconomyError('That gear is no longer in your bag.');
+    if (rpgGearReinforceLevel(piece) >= RPG_MAX_GEAR_REINFORCE) throw new EconomyError('This piece is fully reinforced.');
+    const cost = rpgGearReinforceCost(piece);
+    if ((state.forgeDust ?? 0) < cost.dust) throw new EconomyError(`You need ${cost.dust} forge dust for this.`);
+    debit(db, state.profileId, cost.gems);
+    state.forgeDust = (state.forgeDust ?? 0) - cost.dust;
+    rpgReinforceGear(piece);
+    return { gearId: piece.id };
   }
   const loot = state.loot!.find(entry => entry.id === targetId);
   if (!loot) throw new EconomyError('That item is no longer in your backpack.');
@@ -117,6 +128,10 @@ export function createRpgEconomyRoutes(db: Database): Hono {
   app.post('/shop/buy', async c => {
     const body = Mutation.extend({ itemId: z.string().min(1).max(100) }).parse(await c.req.json());
     return c.json(mutateRpgEconomy(db, body.profileId, body.requestId, 'buy', body.itemId));
+  });
+  app.post('/forge/reinforce', async c => {
+    const body = Mutation.extend({ gearId: z.string().min(1).max(100) }).parse(await c.req.json());
+    return c.json(mutateRpgEconomy(db, body.profileId, body.requestId, 'reinforce', body.gearId));
   });
   for (const action of ['upgrade', 'salvage'] as const) app.post(`/forge/${action}`, async c => {
     const body = Mutation.extend({ lootId: z.string().min(1).max(200) }).parse(await c.req.json());

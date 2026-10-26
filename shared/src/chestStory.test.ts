@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { TOPICS } from './topics.ts';
-import { rpgChestStory, rpgChestDustCap } from './chestStory';
+import { rpgChestStory, rpgChestDustCap, rpgShrineStory } from './chestStory';
 import { rpgRoomForgeDust } from './rpgLoot';
 import { RPG_TRADER_WARE_IDS, rpgTraderHint, rpgTraderQuestion, rpgTraderWares, rpgTraderBlocked } from './rpgTrader';
 import type { RpgState } from './rpg';
@@ -84,5 +84,22 @@ describe('the wandering trader', () => {
     expect(rpgTraderBlocked(state(100), 'fresh-roll', 'cinderwand')).toBeNull();
     expect(rpgTraderBlocked({ ...state(100), chestCharms: 3 }, 'lucky-charm')).toContain('charms already');
     expect(RPG_TRADER_WARE_IDS.every(id => rpgTraderWares(state(0)).some(ware => ware.id === id))).toBe(true);
+  });
+});
+
+describe('shrine word problems', () => {
+  test('a shrine tells the same problem with its own numbers, in candles, runes and sparks', () => {
+    for (const [prompt, answer, numbers] of [['3 × 4', 12, ['3', '4']], ['12 ÷ 3', 4, ['12', '3']], ['7 + 5', 12, ['7', '5']], ['9 - 4', 5, ['9', '4']], ['2 + 3 + 4', 9, ['2', '3', '4']], ['3 + ? = 8', 5, ['8', '3']], ['Double 6', 12, ['6']], ['Half of 10', 5, ['10']]] as const) {
+      const story = rpgShrineStory(p(prompt, answer))!;
+      expect(story.spoken).toBe(story.text);
+      expect(story.text).toMatch(/candle|rune|spark/);
+      expect(story.text).not.toMatch(/chest|coin|forge dust/);
+      for (const number of numbers) expect(story.text).toContain(number);
+    }
+  });
+
+  test('a prompt whose math disagrees with its answer, or a kind that reads badly as a story, stays plain', () => {
+    expect(rpgShrineStory(p('3 × 4', 13))).toBeNull();
+    expect(rpgShrineStory(p('What time is it?', 3))).toBeNull();
   });
 });

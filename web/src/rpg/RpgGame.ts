@@ -47,7 +47,7 @@ import { RPG_TUTORIAL_PAGES, RPG_TUTORIAL_VERSION, startTutorial as newTutorialS
 import { TutorialOverlay } from './TutorialOverlay';
 import { TutorialNarrator } from './TutorialNarrator';
 import { TraderDesk } from './traderView';
-import { chestLockStory, chestRewardText, chestRewardShort } from './chestLock';
+import { chestLockStory, chestRewardText, chestRewardShort, shrineLockStory } from './chestLock';
 import './chest-story.css';
 import { gearName } from './gearView';
 import { chestRewardTokens, cssColor, freeLabelSlot, monsterRelicToken } from './rewardPickups';
@@ -71,6 +71,7 @@ type Session = {
   /** Sessions saved before shrines and doors named only a chest. */
   chest?: string;
   /** The same problem told as the chest's story (fixed when the chest is reached). */
+  /** A chest's or shrine's word-problem telling of the waiting problem. */
   chestStory?: { text: string; spoken: string } | null;
   pending?: { correct: boolean; assisted: boolean; aided?: boolean; solveMs: number; answerMs?: number; wrongCount?: number; spellId?: RpgSpellId };
 };
@@ -493,7 +494,7 @@ export class RpgGame {
       if (this.world.inSanctum) void this.enterSanctum();
       const reached = await this.world.waitForEngage();
       this.seeking = false;
-      if (reached.lock && this.session === session) { session.lock = reached.lock; if (reached.lock.kind === 'chest') session.chestStory = chestLockStory(p, this.state!); this.saveSession(); }
+      if (reached.lock && this.session === session) { session.lock = reached.lock; session.chestStory = reached.lock.kind === 'chest' ? chestLockStory(p, this.state!) : reached.lock.kind === 'shrine' ? shrineLockStory(p) : null; this.saveSession(); }
       this.el('rpg-explore').hidden = true; this.root.classList.remove('rpg-exploring');
       if (this.disposed || this.session !== session) return;
       this.busy = true;
@@ -512,7 +513,7 @@ export class RpgGame {
     }
     if (this.disposed) return;
     this.closeDialog(true); this.entered = ''; this.updateAnswer();
-    const story = session.lock?.kind === 'chest' ? session.chestStory : null;
+    const story = session.lock?.kind === 'chest' || session.lock?.kind === 'shrine' ? session.chestStory : null;
     if (story) {
       const label = this.el('rpg-problem');
       // Only the story: working out the sum from the words is the point.
@@ -1588,7 +1589,7 @@ export class RpgGame {
       case 'parent': void this.showParent(); break;
       case 'mastery-map': void this.showMasteryMap(); break;
       case 'help': void this.help(); break;
-      case 'hear': if (this.session) void this.say((this.session.lock?.kind === 'chest' && this.session.chestStory?.spoken) || this.session.problem.spoken); break;
+      case 'hear': if (this.session) void this.say(((this.session.lock?.kind === 'chest' || this.session.lock?.kind === 'shrine') && this.session.chestStory?.spoken) || this.session.problem.spoken); break;
       case 'explain': void this.explain(); break;
       case 'walkthrough': if (!this.busy) void this.runSafely(() => this.walkthrough()); break;
       case 'keypad': this.el('rpg-keypad').hidden = !this.el('rpg-keypad').hidden; break;

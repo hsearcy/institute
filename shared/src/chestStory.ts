@@ -138,3 +138,53 @@ export function rpgChestStory(problem: ChestStoryProblem, tier: number, paying =
     forgeDust: dust ? answer : null,
   };
 }
+
+/**
+ * The shrine-lock story for this problem, or null to keep the plain form. A
+ * shrine pays a boon, not treasure, so its stories count candles, runes and
+ * crystal sparks, and nothing the answer counts is paid.
+ */
+export function rpgShrineStory(problem: ChestStoryProblem): { text: string; spoken: string } | null {
+  const kind = problem.topicId ? TOPICS.find(t => t.id === problem.topicId)?.gen.kind : undefined;
+  if (kind && !STORY_KINDS.has(kind)) return null;
+  const shape = shapeOf(problem.prompt, problem.answer);
+  if (!shape) return null;
+  const seed = problem.id;
+  let text: string;
+  switch (shape.op) {
+    case "mul":
+      text = pick(seed, [
+        `The shrine has ${shape.a} rows of candles with ${shape.b} candles in each row. How many candles are there in all?`,
+        `${shape.a} crystals ring the shrine. Each crystal holds ${shape.b} sparks of light. How many sparks are there altogether?`,
+      ]);
+      break;
+    case "div":
+      text = `The shrine has ${shape.a} candles standing in rows of ${shape.b}. How many rows are there?`;
+      break;
+    case "add":
+      text = pick(seed, [
+        `${shape.a} candles burn on the shrine, and you light ${shape.b} more. How many candles are burning now?`,
+        `The shrine has ${shape.a} runes on the left and ${shape.b} runes on the right. How many runes are there in all?`,
+      ]);
+      break;
+    case "sub":
+      text = pick(seed, [
+        `${shape.a} candles burned on the shrine. A cold wind blew out ${shape.b}. How many are still burning?`,
+        `The shrine had ${shape.a} glowing runes. ${shape.b} faded away. How many runes still glow?`,
+      ]);
+      break;
+    case "add3":
+      text = `Three crystals glow on the shrine, with ${shape.a}, ${shape.b} and ${shape.c} sparks. How many sparks are there in all?`;
+      break;
+    case "gap":
+      text = `The shrine has ${shape.total} candle cups. ${shape.have} candles are lit. How many more candles would light every cup?`;
+      break;
+    case "double":
+      text = `Two crystals on the shrine each hold ${shape.n} sparks. How many sparks are there in all?`;
+      break;
+    case "half":
+      text = `${shape.n} candles stand in two equal rows before the shrine. How many candles are in one row?`;
+      break;
+  }
+  return { text, spoken: text };
+}

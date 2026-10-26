@@ -278,3 +278,22 @@ export function waveTexture(): THREE.CanvasTexture {
   }
   return new THREE.CanvasTexture(canvas);
 }
+
+/** Bone that reads at the game camera on dark stone, without an outline or a
+ * ghost glow: pale bone lifts most, the dark straps a little, and edges catch a
+ * dim rim in the bone's own color. Chains any earlier hook; dissolve copies keep it. */
+export function readableBone(material: THREE.MeshStandardMaterial, lift = 1.3, rim = .45): void {
+  if (material.userData.readableBone) return; material.userData.readableBone = true;
+  const previous = material.onBeforeCompile, key = material.customProgramCacheKey.bind(material);
+  material.onBeforeCompile = (shader, renderer) => {
+    previous.call(material, shader, renderer);
+    shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+      diffuseColor.rgb = diffuseColor.rgb * ${lift.toFixed(3)} + vec3(.04, .034, .026);`)
+      // After lights_physical_fragment: emissivemap_fragment belongs to the hit-flash patch.
+      .replace('#include <lights_physical_fragment>', `#include <lights_physical_fragment>
+      float boneRim = pow(1. - clamp(dot(normal, normalize(vViewPosition)), 0., 1.), 2.8);
+      totalEmissiveRadiance += diffuseColor.rgb * vec3(1., .9, .76) * boneRim * ${rim.toFixed(3)};`);
+  };
+  material.customProgramCacheKey = () => `${key()}|readable-bone-v1`;
+  material.needsUpdate = true;
+}

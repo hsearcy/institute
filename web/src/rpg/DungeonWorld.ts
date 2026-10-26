@@ -55,7 +55,7 @@ import { ITEM_MODELS } from './itemModels';
 import { createHitReaction, sampleHitReaction, type HitReaction, type CombatHit } from './world/hitReactions';
 import { advanceHeroTravel, setPlanarHeroHeading, type HeroWalkCycle } from './world/heroLocomotion';
 import { cloneErosionProgramMaterial, createElectricDissolve, createSkinnedDissolve } from './world/electricDissolve';
-import { stoneMaterial, floorRelief, flameMaterial, fireSheetMaterial, firePlumeMaterial, bladeWakeMaterial, ashMaterial, novaMaterial, glowTexture, waveTexture } from './world/materials';
+import { stoneMaterial, floorRelief, flameMaterial, fireSheetMaterial, firePlumeMaterial, bladeWakeMaterial, ashMaterial, novaMaterial, glowTexture, waveTexture, readableBone } from './world/materials';
 
 // Shared visual size; weapons inherit the hero scale through their sockets.
 const ACTOR_SCALE = 1.25;
@@ -956,6 +956,8 @@ export class DungeonWorld {
             if (name === TRIPO_HERO_MODEL || name.startsWith('items/') || ['skeleton', 'revenant', 'guardian', 'vault-guardian-boss', 'imp', 'wraith'].includes(name)) {
               for (const material of Array.isArray(object.material) ? object.material : [object.material]) {
                 if (material instanceof THREE.MeshStandardMaterial) { material.envMap = this.environment.texture; material.envMapIntensity = name === TRIPO_HERO_MODEL ? .35 : name.startsWith('items/') ? .55 : .225; }
+                // Thin dark-strapped bones vanish on the stone floor at the game camera.
+                if (name === 'skeleton' && material instanceof THREE.MeshStandardMaterial) readableBone(material);
               }
             }
             if (object.material instanceof THREE.MeshStandardMaterial && /glow_flame|glow_amber/.test(object.material.name)) {

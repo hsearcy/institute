@@ -1,6 +1,6 @@
 import { Database } from 'bun:sqlite';
 import { describe, expect, test } from 'bun:test';
-import { rpgCreateGear, rpgForgeCost, rpgGearReinforceCost, rpgMerchantPrice, RPG_ITEMS, type RpgLootInstance } from '@institute/shared';
+import { RPG_WEAPON_GLOWS, rpgCreateGear, rpgForgeCost, rpgGearReinforceCost, rpgMerchantPrice, RPG_ITEMS, type RpgLootInstance } from '@institute/shared';
 import { getRpgState, saveRpgState } from './rpg';
 import { createRpgEconomyRoutes, ensureRpgEconomySchema, getRpgCamp, mutateRpgEconomy } from './rpgEconomy';
 
@@ -206,6 +206,27 @@ describe('RPG merchant and forge preserve legacy progress', () => {
       expect(() => mutateRpgEconomy(db, 'sam', 'd2', 'reinforce', 'cap')).toThrow('gems');
       expect(getRpgState(db, 'sam').gear![0]!.reinforce ?? 0).toBe(0);
       expect(getRpgState(db, 'sam').forgeDust).toBe(500); expect(readWallet(db).gems).toBe(3);
+    } finally { db.close(); }
+  });
+  test('glows climb in price, buy once, go straight on the weapon, and can be swapped or taken off', async () => {
+    const db = fixture();
+    try {
+      const prices = RPG_WEAPON_GLOWS.map(glow => glow.price);
+      expect(prices).toEqual([...prices].sort((a, b) => a - b));
+      const bought = mutateRpgEconomy(db, 'sam', 'g1', 'glow', 'ember');
+      expect(bought.state.glows).toEqual(['ember']); expect(bought.state.glow).toBe('ember'); expect(bought.gems).toBe(2000 - 60);
+      expect(mutateRpgEconomy(db, 'sam', 'g1', 'glow', 'ember').duplicate).toBe(true);
+      expect(readWallet(db).gems).toBe(2000 - 60);
+      expect(() => mutateRpgEconomy(db, 'sam', 'g2', 'glow', 'ember')).toThrow('own this glow');
+      expect(() => mutateRpgEconomy(db, 'sam', 'g3', 'glow', 'prism')).toThrow('expeditions');
+      expect(() => mutateRpgEconomy(db, 'sam', 'g4', 'glow', 'nope')).toThrow('does not sell');
+      db.query('UPDATE profile_state SET gems = 10').run();
+      expect(() => mutateRpgEconomy(db, 'sam', 'g5', 'glow', 'frost')).toThrow('80 more gems');
+      const routes = createRpgEconomyRoutes(db);
+      const wear = (glowId: string | null) => routes.request('/glow/wear', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ profileId: 'sam', glowId }) });
+      expect((await wear('frost')).status).toBe(400);
+      expect(((await (await wear(null)).json()) as { glow: string | null }).glow).toBeNull();
+      expect(((await (await wear('ember')).json()) as { glow: string | null }).glow).toBe('ember');
     } finally { db.close(); }
   });
 });

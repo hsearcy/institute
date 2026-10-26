@@ -47,7 +47,8 @@ import { shrineAmbush } from './locks';
 import { buildChunk, disposeChunk, CHEST_OPEN_ANGLE, type BuiltChunk, type VaultMaterials } from './world/levelChunks';
 import { animateDoor, animateShrine, boonColor, DOOR_FLARE_SECONDS } from './world/lockVisuals';
 import { BoonAura } from './world/boonAura';
-import type { RpgBoonId, RpgLockKind } from '@institute/shared';
+import { WeaponGlow } from './world/weaponGlow';
+import type { RpgBoonId, RpgLockKind, RpgWeaponGlow } from '@institute/shared';
 import { updateHeroCutout } from './world/heroCutout';
 import { TRIPO_HERO_MODEL, createTripoHeroInstance, tintTripoHero, measureTripoWalkCycle, HeroAssetLoadError } from './world/tripoHeroRuntime';
 import { createCleaveStrike, cleaveEdgeMaterial, steelBladeWakeMaterial, CLEAVE_RELEASE, CLEAVE_SPEED } from './world/cleave';
@@ -233,6 +234,9 @@ export class DungeonWorld {
   /** When each door opened or shrine woke, for their animations. */
   private readonly lockOpenings = new Map<string, number>();
   private readonly boonAura: BoonAura;
+  /** The merchant's glow on the held weapon. */
+  private readonly weaponGlow = new WeaponGlow();
+  private readonly glowGrip = new THREE.Vector3(); private readonly glowTip = new THREE.Vector3();
   private boon: RpgBoonId | null = null;
   private exploreRoute: THREE.Vector3[] = [];
   /** The hero is on the way to something else: crossing the open way down does not take him through. */
@@ -345,7 +349,7 @@ export class DungeonWorld {
     this.moveMarker = new THREE.Mesh(new THREE.RingGeometry(.28, .36, 40), new THREE.MeshBasicMaterial({ color: 0xe9c983, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
     this.moveMarker.rotation.x = -Math.PI / 2; this.moveMarker.position.y = .05; this.scene.add(this.moveMarker);
     this.floorLoot = new FloorLoot(this.glowMap); this.scene.add(this.floorLoot.group); this.scene.add(this.breakableDebris.group);
-    this.boonAura = new BoonAura(this.glowMap); this.scene.add(this.boonAura.group);
+    this.boonAura = new BoonAura(this.glowMap); this.scene.add(this.boonAura.group, this.weaponGlow.group, this.weaponGlow.light);
     this.hero.add(this.ward.mesh); this.scene.add(this.damageNumbers.group);
     this.installExploreInput();
     this.setEncounter(0); this.resize();
@@ -1679,6 +1683,9 @@ export class DungeonWorld {
     return pending;
   }
 
+  /** The merchant glow the held weapon shows, or none. */
+  setWeaponGlow(glow?: RpgWeaponGlow): void { this.weaponGlow.set(glow); }
+
   setEquipment(itemId: string): void {
     this.equipment = itemId;
     const glow = /cinder|ember|phoenix/.test(itemId) ? 0xff8c22 : /storm|thunder|tempest/.test(itemId) ? 0x8d9eff : /frost|glacier|winter/.test(itemId) ? 0x87edff : 0xffb64b;
@@ -2839,6 +2846,10 @@ export class DungeonWorld {
       if (this.attackAge >= this.attackDuration || landed) { this.attacking = false; this.heroMotion = undefined; this.heroVisual.position.x = this.heroVisual.position.z = 0; this.attackResolve?.(); this.attackResolve = undefined; }
     }
     this.heldEquipment?.update(this.elapsed);
+    if (this.weaponGlow.group.visible && this.heldEquipment) {
+      if (!this.heldEquipment.sampleWorldBlade(this.glowGrip, this.glowTip)) this.glowTip.copy(this.heldEquipment.sampleWorldHand(this.glowGrip));
+      this.weaponGlow.update(delta, this.elapsed, this.glowGrip, this.glowTip, this.camera.position, this.renderer.domElement.height);
+    }
     this.boonAura.update(delta, this.elapsed, this.hero.position);
     for (const pickup of this.floorLoot.update(delta, this.elapsed, this.hero.position, this.exploring, this.walkable)) {
       const relic = pickup.kind === 'relic' || pickup.reward?.kind === 'relic';
@@ -3051,7 +3062,7 @@ export class DungeonWorld {
 
   dispose(): void {
     if (this.disposed) return; this.disposed = true; cancelAnimationFrame(this.frame); this.attackResolve?.(); this.scheduled.length = 0;
-    this.boonAura.dispose();
+    this.boonAura.dispose(); this.weaponGlow.dispose();
     this.gearDrops.forEach(drop => drop.visual.dispose()); this.gearDrops.length = 0;
     this.inputAbort.abort(); this.finishEngage(); this.floorLoot.dispose(); this.ward.dispose(); this.damageNumbers.dispose(); this.releaseCharge(true);
     for (const built of this.chunks.values()) disposeChunk(built);

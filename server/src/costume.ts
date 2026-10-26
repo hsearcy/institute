@@ -9,14 +9,14 @@
 //   the kid compares any "you have" against his live gem counter.
 // - Real item names only with their REAL prices; otherwise generic props.
 // - Stable quantities only — no live balance (problems are pre-generated).
-import { RPG_ITEMS, rpgMerchantPrice, type GenSpec } from "@institute/shared";
+import { RPG_ITEMS, RPG_WEAPON_GLOWS, rpgMerchantPrice, type GenSpec } from "@institute/shared";
 import type { ProblemDraft } from "./generate.ts";
 
 /** Everything the camp Merchant sells, for honest price references + the LLM catalog line. */
-export const SHOP_PRICES = RPG_ITEMS.flatMap((item) => {
+export const SHOP_PRICES = [...RPG_ITEMS.flatMap((item) => {
   const price = rpgMerchantPrice(item);
   return price === null ? [] : [{ name: item.name, price }];
-});
+}), ...RPG_WEAPON_GLOWS.map((glow) => ({ name: glow.name, price: glow.price }))];
 
 const pick = <T>(a: readonly T[]): T => a[Math.floor(Math.random() * a.length)];
 const priceItem = (n: number) => {

@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import {
   RPG_ITEMS, RPG_MAX_ITEM_UPGRADE, rpgCampOffers, rpgMerchantPrice, rpgSalvageValue,
-  rpgForgeCost, rpgGearReinforceCost, rpgGearReinforceLevel, rpgNormalizeLoot, rpgReinforceGear, RPG_MAX_GEAR_REINFORCE, type RpgCampState, type RpgEconomyResult, type RpgState,
+  rpgForgeCost, rpgGlowBlocked, rpgWeaponGlow, rpgGearReinforceCost, rpgGearReinforceLevel, rpgNormalizeLoot, rpgReinforceGear, RPG_MAX_GEAR_REINFORCE, type RpgCampState, type RpgEconomyResult, type RpgState,
 } from '@institute/shared';
 import { ensureRpgSchema, getRpgState, saveRpgState } from './rpg';
 
@@ -42,8 +42,8 @@ export function getRpgCamp(db: Database, profileId: string): RpgCampState {
   return { gems: gems(db, profileId), forgeDust: state.forgeDust ?? 0, offers: rpgCampOffers(state) };
 }
 
-type ReceiptDetails = Pick<RpgEconomyResult, 'lootId' | 'gearId' | 'dustGained'>;
-type EconomyAction = 'buy' | 'upgrade' | 'salvage' | 'reinforce';
+type ReceiptDetails = Pick<RpgEconomyResult, 'lootId' | 'gearId' | 'glowId' | 'dustGained'>;
+type EconomyAction = 'buy' | 'upgrade' | 'salvage' | 'reinforce' | 'glow';
 
 /** Receipt, wallet debit and adventure save commit together. A retry returns
  * today's state with the original operation details; a reused ID for a different
@@ -78,6 +78,14 @@ function applyOperation(db: Database, state: RpgState, action: EconomyAction, ta
     state.loot!.push(loot);
     state.inventory.push(item.id);
     return { lootId: loot.id };
+  }
+  if (action === 'glow') {
+    const blocked = rpgGlowBlocked(state, gems(db, state.profileId), targetId);
+    if (blocked) throw new EconomyError(blocked);
+    debit(db, state.profileId, rpgWeaponGlow(targetId)!.price);
+    // A new glow goes straight onto the weapon: that is the moment he saved for.
+    state.glows = [...(state.glows ?? []), targetId]; state.glow = targetId;
+    return { glowId: targetId };
   }
   if (action === 'reinforce') {
     const piece = state.gear?.find(entry => entry.id === targetId);
@@ -128,6 +136,20 @@ export function createRpgEconomyRoutes(db: Database): Hono {
   app.post('/shop/buy', async c => {
     const body = Mutation.extend({ itemId: z.string().min(1).max(100) }).parse(await c.req.json());
     return c.json(mutateRpgEconomy(db, body.profileId, body.requestId, 'buy', body.itemId));
+  });
+  app.post('/shop/glow', async c => {
+    const body = Mutation.extend({ glowId: z.string().min(1).max(40) }).parse(await c.req.json());
+    return c.json(mutateRpgEconomy(db, body.profileId, body.requestId, 'glow', body.glowId));
+  });
+  /** Wear an owned glow, or none. Free, so it needs no receipt. */
+  app.post('/glow/wear', async c => {
+    const body = Profile.extend({ glowId: z.string().min(1).max(40).nullable() }).parse(await c.req.json());
+    return c.json(db.transaction(() => {
+      const state = rpgNormalizeLoot(getRpgState(db, body.profileId));
+      if (body.glowId && !state.glows?.includes(body.glowId)) throw new EconomyError('Buy this glow from the merchant first.');
+      state.glow = body.glowId; saveRpgState(db, state);
+      return state;
+    })());
   });
   app.post('/forge/reinforce', async c => {
     const body = Mutation.extend({ gearId: z.string().min(1).max(100) }).parse(await c.req.json());

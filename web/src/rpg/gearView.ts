@@ -146,7 +146,7 @@ export function renderGearForge(state: RpgState, gems?: number, fresh?: string):
   const worn = Object.entries(rpgEquippedGear(state)) as [RpgGearSlot, RpgGearInstance][];
   const wornIds = new Set(worn.map(([, item]) => item.id));
   const pieces = [...worn.map(([slot, item]) => ({ item, slot })), ...gearBag(state).map(item => ({ item, slot: undefined }))];
-  if (!pieces.length) return '<p class="rpg-workshop-note">Armour and jewellery from chests and monsters can be made stronger here.</p>';
+  if (!pieces.length) return '<p class="rpg-workshop-note">Armor and jewelry from chests and monsters can be made stronger here.</p>';
   const dust = state.forgeDust ?? 0;
   return pieces.map(({ item, slot }) => {
     const level = rpgGearReinforceLevel(item), maxed = level >= RPG_MAX_GEAR_REINFORCE, cost = rpgGearReinforceCost(item);

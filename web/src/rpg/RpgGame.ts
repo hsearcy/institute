@@ -1,6 +1,6 @@
 import {chooseNextAdventure, renderNextAdventure, tierSelect, tierRewards, type NextAdventure} from './nextAdventureView';
 import { HeroAssetLoadError } from './world/tripoHeroRuntime';
-import { RPG_BOONS, type RpgShrineResult, type RpgDoorResult } from '@institute/shared';
+import { RPG_BOONS, rpgWeaponGlow, type RpgShrineResult, type RpgDoorResult } from '@institute/shared';
 import type { RpgTraderWareId, RpgTraderResult, Problem, Branches, RpgState, RpgSchoolId, RpgSpellId, RpgReward, RpgChestResult, RpgBreakResult, Reward, State, RpgCampState, RpgEconomyResult, RpgGoal } from '@institute/shared';
 import { RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELLS, RPG_SCHOOLS, rpgSpellSchool, rpgItemApplies, rpgSpellModifiers, rpgSpellUnlocked, rpgSpellAvailable, rpgEncounterCombat, rpgNextRelicHunt, rpgSalvageValue, rpgAnswerPower, rpgDepth, rpgGuardianAwake, rpgPacksCleared, RPG_GUARDIAN_PACKS, RPG_GUARDIAN_ENCOUNTER, ProblemSchema } from '@institute/shared';
 import { renderGuardianTrack } from './guardianTrack';
@@ -403,6 +403,7 @@ export class RpgGame {
     gear.querySelector('.rpg-icon,.rpg-relic-art')?.remove();
     gear.insertAdjacentHTML('afterbegin',relicArt(item.id));
     this.world.setEquipment(s.equippedItemId);
+    this.world.setWeaponGlow(rpgWeaponGlow(s.glow));
     this.world.setAppearance(s.appearanceId);
     const worn = rpgEquippedGear(s);
     this.world.setWornGear({ helm: worn.helm?.baseId, chest: worn.chest?.baseId, gloves: worn.gloves?.baseId, pants: worn.pants?.baseId, boots: worn.boots?.baseId, amulet: worn.amulet?.baseId });
@@ -1118,12 +1119,21 @@ export class RpgGame {
       this.state = result.state; this.economyPending = null; sessionStorage.removeItem(`${sessionKey}:economy`);
       const [camp, legacy] = await Promise.all([getRpgCamp(), request<State>(`/state?profileId=${encodeURIComponent(PROFILE)}`)]);
       this.campState = camp; this.legacyState = legacy; this.renderState();
-      const tab = pending.action === 'shop/buy' ? 'merchant' : 'forge', reinforced = pending.action === 'forge/reinforce' ? result.gearId : undefined;
-      this.showDialog(tab, renderCampWorkshop(this.state!, camp, legacy, tab, undefined, reinforced), true, pending.action === 'forge/upgrade' || !!reinforced);
+      const tab = pending.action.startsWith('shop/') ? 'merchant' : 'forge', reinforced = pending.action === 'forge/reinforce' ? result.gearId : undefined;
+      this.showDialog(tab, renderCampWorkshop(this.state!, camp, legacy, tab, undefined, reinforced), true, pending.action === 'forge/upgrade' || pending.action === 'shop/glow' || !!reinforced);
       const piece = reinforced ? this.state!.gear?.find(item => item.id === reinforced) : undefined;
       // The price as the subtraction it is, with his real gems.
       const spent = gemsBefore !== undefined && gemsBefore > result.gems ? ` ${gemsBefore} − ${gemsBefore - result.gems} = ${result.gems} gems left.` : '';
-      this.toast(pending.action === 'shop/buy' ? 'Your new relic is ready in Equipment!' : pending.action === 'forge/upgrade' ? 'Forged! +2 power. Your favorite relic grows stronger.' : piece ? `${gearName(piece)} is stronger!${spent}` : `Reclaimed +${result.dustGained ?? 0} forge dust.`);
+      const glow = pending.action === 'shop/glow' ? rpgWeaponGlow(result.glowId) : undefined;
+      this.toast(glow ? `${glow.name} is on your weapon!${spent}` : pending.action === 'shop/buy' ? 'Your new relic is ready in Equipment!' : pending.action === 'forge/upgrade' ? 'Forged! +2 power. Your favorite relic grows stronger.' : piece ? `${gearName(piece)} is stronger!${spent}` : `Reclaimed +${result.dustGained ?? 0} forge dust.`);
+    });
+  }
+  /** Wear an owned glow, or none; free, so no receipt or pending purchase. */
+  private async wearGlow(glowId: string | null): Promise<void> {
+    if (this.busy || !this.state || !this.campState || !this.legacyState) return;
+    await this.runSafely(async () => {
+      this.state = await mutateRpg('glow/wear', { glowId }); this.renderState();
+      this.showDialog('merchant', renderCampWorkshop(this.state, this.campState!, this.legacyState!, 'merchant'), true, true);
     });
   }
   /** Redraw Tobble's stall in place and hook up its answer box. */
@@ -1525,6 +1535,8 @@ export class RpgGame {
     if (button.dataset.selectTier) { this.selectedTier = Number(button.dataset.selectTier); this.showMap(); return; }
     if (button.dataset.trader) { void this.traderClick(button); return; }
     if (button.dataset.buyItem) { void this.economyAction('shop/buy', { itemId: button.dataset.buyItem }); return; }
+    if (button.dataset.buyGlow) { void this.economyAction('shop/glow', { glowId: button.dataset.buyGlow }); return; }
+    if (button.dataset.wearGlow !== undefined) { void this.wearGlow(button.dataset.wearGlow || null); return; }
     if (button.dataset.forgeLoot) { void this.economyAction('forge/upgrade', { lootId: button.dataset.forgeLoot }); return; }
     if (button.dataset.reinforceGear) { void this.economyAction('forge/reinforce', { gearId: button.dataset.reinforceGear }); return; }
     if (button.dataset.salvageLoot) { if (!this.busy) this.confirmSalvage(button.dataset.salvageLoot); return; }

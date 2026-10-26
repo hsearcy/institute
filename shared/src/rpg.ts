@@ -199,6 +199,8 @@ export interface RpgState {
   gear?: RpgGearInstance[]; equippedGear?: Partial<Record<RpgGearSlot, string>>;
   /** Fights left that start with a trader's ward tonic. */
   wardTonics?: number;
+  /** Weapon glows bought from the merchant, and the one the held weapon shows (rpgEconomy.ts). */
+  glows?: string[]; glow?: string | null;
 }
 export interface RpgReward { xp: number; kills: number; levelUp: boolean; levelsGained: number; item: RpgItem | null; newItems: RpgItem[]; duplicateItem: boolean; bossDefeated: boolean; spellId: RpgSpellId; combat?: RpgCombatResult; loot?: RpgLootInstance; forgeDust?: number; tier?: number; bossCrazyCoins?: number; bossDimes?: number; spellShape?: RpgSpellShape; elite?: boolean; boon?: RpgBoonId; bountyDust?: number;
   /** Armour or jewellery that fell, already saved in the hero's gear. */

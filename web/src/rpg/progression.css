@@ -155,3 +155,26 @@
 @keyframes rpg-just-forged { 0% { box-shadow:0 0 0 2px #ffd68a, 0 0 34px #f0a94a99; background-color:#3a2c18f2; } 100% {} }
 @keyframes rpg-pip-lit { 0% { transform:scaleY(2.4); background:#fff6dc; box-shadow:0 0 14px #ffd27a; } 100% { transform:none; } }
 @media(max-width:680px) { #rpg-ui .rpg-gear-forge-card>.rpg-gear-art { width:65px; height:65px; } }
+/* The glow ladder: each card lit in its own glow, the next one to save for marked in brass. */
+.rpg-glow-shop { margin-top:26px; padding-top:6px; border-top:1px solid #a17a3a50; }
+.rpg-glow-shop .rpg-workshop-heading span { font-size:12px; color:#c3b29a; }
+.rpg-glow-shop>p { font-size:13px; color:#c3b29a; margin:0 0 12px; }
+.rpg-glow-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.rpg-glow-card { display:grid; grid-template-columns:76px minmax(0,1fr) auto; gap:14px; align-items:center; padding:14px 16px; border:1px solid #9d7b4540; border-radius:8px; background:radial-gradient(circle at 38px 50%,color-mix(in srgb,var(--glow) 16%,transparent),transparent 120px),#141b23; }
+.rpg-glow-card h3 { margin:2px 0 4px; font-size:17px; color:color-mix(in srgb,var(--glow) 55%,#f2e2c4)!important; }
+.rpg-glow-card p { font-size:12px; line-height:1.5; margin:0 0 4px; color:#cfc4b2; }
+.rpg-glow-card small { display:block; font-size:11px; color:#bfb3a2; }
+.rpg-glow-card button { font-size:12px; padding:9px 12px; white-space:nowrap; }
+.rpg-glow-card.worn { border-color:color-mix(in srgb,var(--glow) 70%,#d1ab65); box-shadow:inset 3px 0 var(--glow),0 0 18px color-mix(in srgb,var(--glow) 22%,transparent); }
+.rpg-glow-card.next { border-color:#d1ab65; box-shadow:inset 0 0 0 1px #d1ab6555; }
+.rpg-glow-card.locked .rpg-glow-art { filter:grayscale(.75) brightness(.6); }
+.rpg-glow-next { color:#e7c27c!important; letter-spacing:1.5px; font-size:9px!important; }
+.rpg-glow-art { width:76px; height:76px; display:grid; place-items:center; border-radius:50%; background:radial-gradient(circle,color-mix(in srgb,var(--glow) 45%,transparent) 0,color-mix(in srgb,var(--glow) 12%,transparent) 45%,transparent 70%); }
+.rpg-glow-art .rpg-icon { width:46px; height:46px; color:#f4f1ea; filter:drop-shadow(0 0 3px var(--glow)) drop-shadow(0 0 9px var(--glow)); animation:rpg-glow-breathe 2.6s ease-in-out infinite; }
+.rpg-glow-art.rainbow { background:radial-gradient(circle,#fff6 0,transparent 62%),conic-gradient(from 0deg,#ff6b6b55,#ffd36b55,#7dea8a55,#6bd5ff55,#b07dff55,#ff6bd055,#ff6b6b55); }
+.rpg-glow-art.rainbow .rpg-icon { animation:rpg-glow-breathe 2.6s ease-in-out infinite,rpg-glow-hue 4s linear infinite; }
+@keyframes rpg-glow-breathe { 50% { filter:drop-shadow(0 0 5px var(--glow)) drop-shadow(0 0 16px var(--glow)); } }
+@keyframes rpg-glow-hue { to { filter:hue-rotate(360deg) drop-shadow(0 0 5px var(--glow)) drop-shadow(0 0 14px var(--glow)); } }
+@media(prefers-reduced-motion:reduce) { .rpg-glow-art .rpg-icon { animation:none!important; } }
+@media(max-width:860px) { .rpg-glow-grid { grid-template-columns:minmax(0,1fr); } }
+@media(max-width:480px) { .rpg-glow-card { grid-template-columns:58px minmax(0,1fr); } .rpg-glow-art { width:58px; height:58px; } .rpg-glow-card button { grid-column:1/-1; } }

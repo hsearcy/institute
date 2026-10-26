@@ -228,6 +228,9 @@ export class HeldEquipment {
     if (this.mounted) this.mounted.visible = !(helm && this.mounted.userData.attachment === 'head');
   }
 
+  /** The holding hand, for a glow round a relic with no blade. */
+  sampleWorldHand(out: Vector3): Vector3 { return this.hand.getWorldPosition(out); }
+
   /** Actual mounted endpoints, including the current hand pose and actor scale.
    * Caller-owned vectors avoid allocations in a live weapon trail.
    */

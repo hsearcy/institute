@@ -1,3 +1,6 @@
 /* A chest word problem: only the story shows, never its equation. */
 #rpg-ui .rpg-chest-story { display:block; font:500 clamp(15px,1.25vw,19px)/1.4 Georgia,serif; color:#f6e3bf; }
 @media(max-width:760px) { #rpg-ui .rpg-chest-story { font-size:14px; } }
+/* A long story takes the panel's whole width on a wide screen, with the answer box below it,
+ * so it reads in three lines instead of a tall column over the hero. */
+@media(min-width:761px) { #rpg-ui .rpg-answer-panel:has(.rpg-chest-story) { flex-wrap:wrap; } #rpg-ui .rpg-question:has(.rpg-chest-story) { flex:1 1 100%; } }

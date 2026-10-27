@@ -2,7 +2,7 @@ import type { Database } from 'bun:sqlite';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import {
-  rpgRollBossBonus, rpgLootSpellShape, RPG_CHESTS_PER_EXPEDITION, RPG_CHEST_XP, rpgEquippedLoot, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellAvailable, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER, rpgDepth, rpgDepthSteps, rpgDepthXp, rpgChestStory, RPG_FURY_DAMAGE, RPG_GUARDIAN_ENCOUNTER, rpgGuardianAwake, rpgNextPackIndex, rpgPacksCleared,
+  rpgRollBossBonus, rpgLootSpellShape, rpgPayingChests, RPG_CHEST_XP, rpgEquippedLoot, RPG_ITEMS, RPG_REGIONS, RPG_SKILLS, RPG_SPELL_IDS, RPG_DUPLICATE_ITEM_XP, RPG_APPEARANCES, RPG_APPEARANCE_IDS, rpgAppearanceUnlocked, rpgLevel, rpgSpellAvailable, rpgEncounterCombat, rpgApplyCombat, rpgAnswerPower, rpgRelicDrop, rpgNormalizeLoot, rpgCreateLoot, rpgRoomForgeDust, rpgTier, rpgUnlockedTier, RPG_MAX_DUNGEON_TIER, rpgDepth, rpgDepthSteps, rpgDepthXp, rpgChestStory, RPG_FURY_DAMAGE, RPG_GUARDIAN_ENCOUNTER, rpgGuardianAwake, rpgNextPackIndex, rpgPacksCleared,
   rpgCreateGear, rpgPickGearBase, rpgRollGearRarity, rpgGearStats, rpgWardMax, rpgWardCounterstrike, rpgSteadyDust, rpgDustFindBonus, rpgStoreGear, rpgNormalizeGear, RPG_WARD_TONIC, RPG_GEAR_PACK_CHANCE, RPG_GEAR_CHEST_CHANCE,
   rpgCreateEliteLoot, RPG_BREAKABLE_DUST, RPG_BREAKABLE_DUST_CHANCE, RPG_BREAKABLE_DUST_PER_EXPEDITION, RPG_BREAKABLE_DUST_PER_DAY, RPG_BREAKABLES_PER_EXPEDITION,
   type RpgBreakResult, type RpgBreakReward, type RpgState, type RpgReward, type RpgResolveResult, type RpgChestResult, type RpgChestReward,
@@ -312,10 +312,11 @@ export function openRpgChest(db: Database, input: z.infer<typeof ChestSchema>): 
       .get(body.profileId, body.problemId) as { solved_at: number } | null;
     const skipped = db.query('SELECT 1 FROM attempts WHERE profile_id = ? AND problem_id = ? AND skipped = 1 LIMIT 1').get(body.profileId, body.problemId);
     if (skipped || !solve || solve.solved_at < expedition.startedAt) throw new RpgError('Finish this problem with your tutor to open the chest.');
-    const opened = db.query('SELECT COUNT(*) AS count FROM rpg_chest_claims WHERE profile_id = ? AND expedition_id = ?')
-      .get(body.profileId, expedition.id) as { count: number };
+    const opened = db.query("SELECT COUNT(*) AS count, COALESCE(SUM(json_extract(reward_json, '$.xp') > 0), 0) AS paid FROM rpg_chest_claims WHERE profile_id = ? AND expedition_id = ?")
+      .get(body.profileId, expedition.id) as { count: number; paid: number };
     const tier = rpgTier(expedition.tier);
-    const full = opened.count < RPG_CHESTS_PER_EXPEDITION;
+    // Only chests that paid use up the budget; a spent chest opened before the next fight does not.
+    const full = opened.paid < rpgPayingChests(expedition);
     // One chest in four holds a relic from the hero's current collection pool.
     const pool = RPG_ITEMS.filter(item => item.id !== 'apprentice' && item.requiredClears <= state.expeditionsCompleted);
     // A trader's lucky charm makes the next paying chest hold a relic.
@@ -336,7 +337,7 @@ export function openRpgChest(db: Database, input: z.infer<typeof ChestSchema>): 
     const xp = full ? RPG_CHEST_XP : 0, forgeDust = counted + dustFound;
     const found = full && Math.random() < RPG_GEAR_CHEST_CHANCE ? rpgCreateGear(rpgPickGearBase(Math.random, tier).id, tier, Math.random) : undefined;
     const stored = found ? rpgStoreGear(state, found) : undefined;
-    expedition.chestsOpened = opened.count + 1;
+    expedition.chestsOpened = opened.count + 1; expedition.chestsPaid = opened.paid + (full ? 1 : 0);
     const oldLevel = state.level;
     rpgPauseBoon(expedition);
     state.xp += xp; state.forgeDust = (state.forgeDust ?? 0) + forgeDust;

@@ -152,7 +152,9 @@ export interface RpgExpedition { id: string; regionId: string; encounterIndex: n
   /** Packs beaten this expedition. Packs never run out; enough of them wake the guardian. */
   packsCleared?: number;
   /** Chests opened this expedition (paying or empty). */
-  chestsOpened?: number }
+  chestsOpened?: number;
+  /** Of those, the chests that paid; missing on expeditions from before the budget grew with fights. */
+  chestsPaid?: number }
 
 /** Deeper levels grow gently: a few steps, then the same challenge again. */
 export const RPG_MAX_DEPTH_STEPS = 3;
@@ -225,6 +227,12 @@ export interface RpgChestReward { gear?: RpgGearInstance; gearSalvaged?: RpgGear
 export interface RpgChestResult { state: RpgState; reward: RpgChestReward; duplicate: boolean }
 /** Chests one expedition can pay out; more may stand in a big level, but they are empty. */
 export const RPG_CHESTS_PER_EXPEDITION = 8;
+/** Paying chests an expedition has so far: the first eight, then one more for
+ * every pack beaten, so a hero who keeps exploring one dungeon keeps finding
+ * treasure, and every chest still costs a fight's worth of math. */
+export function rpgPayingChests(expedition: Pick<RpgExpedition, 'packsCleared' | 'encounterIndex'>): number {
+  return RPG_CHESTS_PER_EXPEDITION + rpgPacksCleared(expedition);
+}
 export const RPG_CHEST_XP = 16;
 
 type RelicProgress = Pick<RpgState, 'inventory' | 'expeditionsCompleted' | 'totalKills'>;

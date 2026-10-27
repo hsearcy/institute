@@ -41,14 +41,51 @@ describe('chest word problems', () => {
     expect(rpgChestStory(p('Double 6', 12), 1)).toMatchObject({ counted: 12, forgeDust: 12 });
   });
 
-  test('a prompt whose arithmetic disagrees with the answer, or an unfit shape or topic, stays plain', () => {
+  test('a prompt whose arithmetic disagrees with the answer, or that cannot be read, stays plain', () => {
     expect(rpgChestStory(p('3 × 4', 13), 1)).toBeNull();
-    expect(rpgChestStory(p('Round 47 to nearest 10', 50), 1)).toBeNull();
-    expect(rpgChestStory(p('3 + 4', 7, kindTopic('compare_pick')), 1)).toBeNull();
+    expect(rpgChestStory(p('What time is it?', 3), 1)).toBeNull();
   });
 
-  test('an empty chest tells no treasure story', () => {
-    expect(rpgChestStory(p('3 × 4', 12), 1, false)).toBeNull();
+  test('a spent chest still tells a story, of old copper coins it does not pay', () => {
+    const story = rpgChestStory(p('3 × 4', 12), 1, false)!;
+    expect(story.text).toContain('old copper coins');
+    expect(story).toMatchObject({ treasure: 'gold', counted: 12, forgeDust: null });
+  });
+
+  test('every topic\'s problems are told as a chest story, with the numbers the problem uses', () => {
+    const forms: [string, number, string[]][] = [
+      ['34, then?', 35, ['34']], ['15, 12, 9, ?', 6, ['15', '12', '9', 'shrink']], ['4 tens 6 ones', 46, ['4 bags', '6 loose']],
+      ['2 hundreds 4 tens 9 ones', 249, ['2 big sacks', '4 bags', '9 loose']], ['? − 10 = 1', 11, ['10', '1']], ['38 − ? = 37', 1, ['38', '37']],
+      ['3 × ? = 18', 6, ['3 pouches', '18']], ['40 ÷ ? = 8', 5, ['40', '8']], ['Smaller: 17 or 42?', 17, ['17', '42', 'fewer']],
+      ['Even one: 3, 16, 1', 16, ['3, 16 and 1', 'none left over']], ['3 pennys + 1 dime = ?¢', 13, ['3 pennies and 1 dime']],
+      ['1 quarter = ?¢', 25, ['1 quarter']], ['How many dimes make 40¢?', 4, ['40 cents', 'dimes']], ['10¢ + ?¢ = 60¢', 50, ['10 cents', '60 cents']],
+      ['Round 59 to nearest 10', 60, ['59', 'nearest ten']], ['About 40 + 31?', 70, ['40', '31']], ['13 ÷ 4, leftover?', 1, ['13', 'piles of 4']],
+      ['2/5 of 30', 12, ['30', '5 equal piles', 'take 2']], ['Pay 50¢ for 15¢, change?', 35, ['15 cents', '50 cents']],
+      ['5:20 to 5:40, minutes?', 20, ['5:40', '5:20']], ['Minutes in 2 hours?', 120, ['2 hours']], ['Square, side 2, all around?', 8, ['square', '2 long']],
+      ['Rectangle 5 by 8, all around?', 26, ['8 long and 5 wide']], ['3 rows of 7 tiles, total?', 21, ['3 rows', '7 coins in each']], ['8 + 7 = ?', 15, ['8', '7']],
+    ];
+    for (const [prompt, answer, words] of forms) {
+      const story = rpgChestStory(p(prompt, answer), 2);
+      expect(story, prompt).not.toBeNull();
+      for (const word of words) expect(story!.text, prompt).toContain(word);
+      expect(story!.text).not.toMatch(/\b(hard|tricky|tough|confusing)\b/i);
+    }
+  });
+
+  test('one coin, sack or bag reads as one, not as many', () => {
+    for (const id of ['a', 'b', 'c', 'd']) {
+      const text = rpgChestStory({ id, prompt: '1 + 1', answer: 2 }, 1)!.text;
+      expect(text).toContain('1 gold coin');
+      expect(text).not.toMatch(/1 gold coins|1 more are/);
+    }
+    expect(rpgChestStory(p('1 hundreds 1 tens 1 ones', 111), 1)!.text).toContain('1 big sack of one hundred gold coins, 1 bag of ten, and 1 loose coin');
+  });
+
+  test('a story is told only when its numbers give the problem\'s answer', () => {
+    expect(rpgChestStory(p('15, 12, 9, ?', 7), 1)).toBeNull();
+    expect(rpgChestStory(p('Even one: 2, 16, 1', 2), 1)).toBeNull();
+    expect(rpgChestStory(p('Round 59 to nearest 10', 50), 1)).toBeNull();
+    expect(rpgChestStory(p('2 dragons = ?¢', 2), 1)).toBeNull();
   });
 
   test('the same problem always gets the same words (client and server agree)', () => {

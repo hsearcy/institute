@@ -641,13 +641,19 @@ describe('treasure chests open with a solved problem', () => {
     expect(() => chest(db, 'skipped', 'c2')).toThrow('Finish this problem');
   });
 
-  test('chests past the limit for one expedition open empty', () => {
+  test('chests past the limit open empty until another pack is beaten', () => {
     const db = legacyDb(); ensureRpgSchema(db);
     startRpgExpedition(db, 'sam');
     for (let n = 0; n < RPG_CHESTS_PER_EXPEDITION; n++) { solved(db, 'sam', `p${n}`); expect(chest(db, `p${n}`, `c${n}`).reward.xp).toBe(RPG_CHEST_XP); }
     solved(db, 'sam', 'extra');
     const empty = chest(db, 'extra', 'c-extra').reward;
     expect(empty).toMatchObject({ xp: 0, forgeDust: 0, item: null });
+    // Every pack beaten puts treasure in one more chest.
+    clearRoom(db, 'sam', 'fight');
+    solved(db, 'sam', 'after-fight');
+    expect(chest(db, 'after-fight', 'c-after').reward.xp).toBe(RPG_CHEST_XP);
+    solved(db, 'sam', 'spent-again');
+    expect(chest(db, 'spent-again', 'c-spent').reward.xp).toBe(0);
   });
 });
 

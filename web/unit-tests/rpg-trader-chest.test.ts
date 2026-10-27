@@ -11,19 +11,23 @@ const state = (dust = 44, extra: Partial<RpgState> = {}) => ({
 const problem = (prompt: string, answer: number) => ({ id: 'p1', prompt, answer, skill: 'multiplication', spoken: 'x', difficulty: .5 } as Problem);
 
 describe('chest lock', () => {
-  test('tells a fitting problem as the chest’s story, and leaves others plain', () => {
+  test('tells every problem as the chest’s story, unless its numbers disagree with its answer', () => {
     expect(chestLockStory(problem('3 × 4', 12), state())!.text).toContain('pouches');
-    expect(chestLockStory(problem('Round 47 to nearest 10', 50), state())).toBeNull();
+    expect(chestLockStory(problem('Round 47 to nearest 10', 50), state())!.text).toContain('nearest ten');
+    expect(chestLockStory(problem('Round 47 to nearest 10', 40), state())).toBeNull();
   });
-  test('the expedition’s spent chests tell no treasure story', () => {
+  test('the expedition’s spent chests tell of old copper coins, never treasure', () => {
     const spent = state(44, { expedition: { ...state().expedition!, chestsOpened: 8 } });
-    expect(chestLockStory(problem('3 × 4', 12), spent)).toBeNull();
+    const story = chestLockStory(problem('3 × 4', 12), spent)!;
+    expect(story.text).toContain('old copper coins');
+    expect(story.text).not.toMatch(/forge dust|gold/);
   });
   test('the reward line repeats what he counted', () => {
     const base = { chestId: 'c', xp: 16, forgeDust: 12, levelUp: false, levelsGained: 0, item: null, newItems: [], duplicateItem: false, tier: 1 } as RpgChestReward;
     expect(chestRewardText({ ...base, counted: { treasure: 'dust', amount: 12 } })).toContain('You counted 12 forge dust');
     expect(chestRewardText({ ...base, forgeDust: 3, counted: { treasure: 'gold', amount: 59 } })).toContain('59 gold coins');
     expect(chestRewardText({ ...base, xp: 0, forgeDust: 0 })).toContain('empty');
+    expect(chestRewardText({ ...base, xp: 0, forgeDust: 0, counted: { treasure: 'gold', amount: 12 } })).toContain('12 old copper coins');
   });
 });
 

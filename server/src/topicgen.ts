@@ -250,12 +250,13 @@ export function problemForTopic(topic: Topic, difficulty: number): TopicProblemD
       const b = useTwo ? kinds.filter((k) => k.name !== a.name)[ri(0, kinds.length - 2)] : null;
       const na = ri(1, Math.min(3, Math.floor(60 / a.v)) || 1);
       const nb = b ? ri(1, Math.min(4, Math.floor((99 - na * a.v) / b.v)) || 1) : 0;
-      const part = (n: number, c: { name: string }) => `${n} ${c.name}${n > 1 ? "s" : ""}`;
+      const plural = (c: { name: string }) => (c.name === "penny" ? "pennies" : `${c.name}s`);
+      const part = (n: number, c: { name: string }) => `${n} ${n > 1 ? plural(c) : c.name}`;
       const prompt = b && nb > 0 ? `${part(na, a)} + ${part(nb, b)} = ?¢` : `${part(na, a)} = ?¢`;
       const answer = na * a.v + (b ? nb * b.v : 0);
       return { ...base, prompt, answer,
         spoken: `How many cents is ${part(na, a)}${b && nb > 0 ? ` and ${part(nb, b)}` : ""}?`,
-        hint: `Count the ${a.name}s by ${a.v}s${b && nb > 0 ? `, then add the ${b.name}s by ${b.v}s` : ""}.` };
+        hint: `Count the ${plural(a)} by ${a.v}s${b && nb > 0 ? `, then add the ${plural(b)} by ${b.v}s` : ""}.` };
     }
     case "money_sum": {
       if (Math.random() < 0.5) {

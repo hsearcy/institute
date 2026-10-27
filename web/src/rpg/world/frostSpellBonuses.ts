@@ -1,32 +1,40 @@
 import * as THREE from 'three';
 import { frostfallCrystalGeometry, frostfallCrystalMaterial, frostfallContactMaterial } from './frostfall';
 import type { SpellBonusContext } from './spellBonusTypes';
+import { spikeTravel } from './frostGuardian';
 
-interface Crystal {
+export interface Crystal {
   at: THREE.Vector3;
   height: number;
   radius: number;
   delay: number;
   lean?: number;
+  /** Yaw of the lean; a positive lean then tips the crystal toward -X turned by this. */
+  heading?: number;
+  /** Shatter direction, else a golden-angle spread. */
+  fling?: THREE.Vector3;
+  /** Seconds to full height; a slam's spikes punch up faster than a bloom. */
+  growth?: number;
 }
+export type CrystalFieldHost = Pick<SpellBonusContext, 'time' | 'effect'> & { shape: string };
 const UP = new THREE.Vector3(0, 1, 0);
 
 /** A single draw call for the whole field. Each mineral has its own growth and fracture timing. */
-function crystalField(ctx: SpellBonusContext, crystals: Crystal[], duration: number, shatter = true): void {
+export function crystalField(ctx: CrystalFieldHost, crystals: Crystal[], duration: number, shatter = true): void {
   const positions: number[] = [], normals: number[] = [], uv: number[] = [];
   const spans: { start: number; end: number; crystal: Crystal; direction: THREE.Vector3 }[] = [];
   crystals.forEach((crystal, index) => {
     const source = frostfallCrystalGeometry(index + 71, crystal.radius, crystal.height);
     source.translate(0, crystal.height, 0);
     source.rotateZ(crystal.lean ?? Math.sin(index * 2.3) * .24);
-    source.rotateY(index * 2.399);
+    source.rotateY(crystal.heading ?? index * 2.399);
     const p = source.getAttribute('position'), n = source.getAttribute('normal'), tex = source.getAttribute('uv');
     const start = positions.length / 3;
     for (let v = 0; v < p.count; v++) {
       positions.push(p.getX(v), p.getY(v), p.getZ(v));
       normals.push(n.getX(v), n.getY(v), n.getZ(v)); uv.push(tex.getX(v), tex.getY(v));
     }
-    spans.push({ start, end: positions.length / 3, crystal, direction: new THREE.Vector3(Math.cos(index * 2.399), .8, Math.sin(index * 2.399)) });
+    spans.push({ start, end: positions.length / 3, crystal, direction: crystal.fling ?? new THREE.Vector3(Math.cos(index * 2.399), .8, Math.sin(index * 2.399)) });
     source.dispose();
   });
   const geometry = new THREE.BufferGeometry();
@@ -41,7 +49,7 @@ function crystalField(ctx: SpellBonusContext, crystals: Crystal[], duration: num
     const age = t * duration;
     for (const { start, end, crystal, direction } of spans) {
       const life = age - crystal.delay;
-      const grow = THREE.MathUtils.smoothstep(life, 0, .18);
+      const grow = THREE.MathUtils.smoothstep(life, 0, crystal.growth ?? .18);
       const breakAge = Math.max(0, life - .48);
       const shrink = 1 - THREE.MathUtils.smoothstep(life, .48, .91);
       const scale = grow * shrink;
@@ -96,23 +104,26 @@ export function createDiamondDrill(seed = 1) {
 }
 
 /** Match summonGuardian's ground position at its .8-second slam, then use one shared fault. */
-export function glacialHammerLayout(origin: THREE.Vector3, targets: THREE.Vector3[]): Crystal[] {
-  if (!targets.length) return [];
-  const from = origin.clone().setY(.035).add(new THREE.Vector3(-2.7, 0, -1 - Math.sin(.8 / 2.3 * Math.PI) * 2.7));
-  const to = targets.reduce((furthest, target) => target.distanceToSquared(from) > furthest.distanceToSquared(from) ? target : furthest, targets[0]).clone().setY(.035);
-  const length = from.distanceTo(to), steps = Math.min(9, Math.max(3, Math.ceil(length / 1.3)));
+/** Spikes run from each guardian's slam to its furthest victim, arriving as its hits do. */
+export function glacialHammerLayout(origin: THREE.Vector3, slams: readonly { at: THREE.Vector3; delay: number; targets: readonly THREE.Vector3[] }[]): Crystal[] {
   const crystals: Crystal[] = [];
-  for (let step = 0; step <= steps; step++) {
-    const p = step / steps, at = from.clone().lerp(to, p);
-    const nearBody = targets.some(target => Math.hypot(at.x - target.x, at.z - target.z) < .8);
-    const nearHero = Math.hypot(at.x - origin.x, at.z - origin.z) < 2;
-    crystals.push({ at, height: nearHero ? .32 : nearBody ? .6 : .3 + Math.sin(p * Math.PI) * .85,
-      radius: .22, delay: .8 + p * Math.min(.7, length / 14), lean: -.12 });
-  }
-  // Isolated victims get a low terminal fracture, without another full path through the caster.
-  for (const target of targets) {
-    if (crystals.some(crystal => Math.hypot(crystal.at.x - target.x, crystal.at.z - target.z) < .85)) continue;
-    crystals.push({ at: target.clone().setY(.035), height: .6, radius: .2, delay: 1.05, lean: .18 });
+  for (const slam of slams) {
+    if (!slam.targets.length) continue;
+    const from = slam.at.clone().setY(.035);
+    const to = slam.targets.reduce((furthest, target) => target.distanceToSquared(from) > furthest.distanceToSquared(from) ? target : furthest, slam.targets[0]).clone().setY(.035);
+    const length = from.distanceTo(to), steps = Math.min(9, Math.max(3, Math.ceil(length / 1.3)));
+    for (let step = 0; step <= steps; step++) {
+      const p = step / steps, at = from.clone().lerp(to, p);
+      const nearBody = slam.targets.some(target => Math.hypot(at.x - target.x, at.z - target.z) < .8);
+      const nearHero = Math.hypot(at.x - origin.x, at.z - origin.z) < 2;
+      crystals.push({ at, height: nearHero ? .32 : nearBody ? .6 : .3 + Math.sin(p * Math.PI) * .85,
+        radius: .22, delay: slam.delay + spikeTravel(length * p) * (step ? 1 : 0), lean: -.12 });
+    }
+    // Isolated victims get a low terminal fracture, without another full path through the caster.
+    for (const target of slam.targets) {
+      if (crystals.some(crystal => Math.hypot(crystal.at.x - target.x, crystal.at.z - target.z) < .85)) continue;
+      crystals.push({ at: target.clone().setY(.035), height: .6, radius: .2, delay: slam.delay + spikeTravel(from.distanceTo(target)), lean: .18 });
+    }
   }
   return crystals;
 }
@@ -133,9 +144,9 @@ export function playFrostSpellBonus(ctx: SpellBonusContext): void {
     crystalField(ctx, crystals, 1.9); return;
   }
   if (ctx.shape === 'glacial-hammer') {
-    const layout = glacialHammerLayout(ctx.origin, ctx.targets.map(target => target.position));
-    crystalField(ctx, layout, 2.5, false);
-    for (const target of ctx.targets) frostMark(ctx, target.position, 2.2, .98);
+    const slams = ctx.slams ?? [];
+    crystalField(ctx, glacialHammerLayout(ctx.origin, slams), 2.5, false);
+    for (const slam of slams) for (const target of slam.targets) frostMark(ctx, target, 2.2, slam.delay + spikeTravel(slam.at.distanceTo(target)));
     return;
   }
   if (ctx.shape === 'frozen-fault') {

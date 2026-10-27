@@ -1,6 +1,7 @@
 import type { WorldSound } from './sound';
 import { playFireSpellBonus } from './world/fireSpellBonuses';
-import { playFrostSpellBonus, createDiamondDrill } from './world/frostSpellBonuses';
+import { playFrostSpellBonus, createDiamondDrill, crystalField, type Crystal } from './world/frostSpellBonuses';
+import { createIceShatter, FROST_GUARDIAN, frostSigilMaterial, guardianFocus, guardianReach, guardianStrike, guardianYaw, planFrostGuardians, spikeTravel, type GuardianPlan } from './world/frostGuardian';
 import { playStormSpellBonus, createOrbitLink } from './world/stormSpellBonuses';
 import type { SpellBonusContext } from './world/spellBonusTypes';
 import * as THREE from 'three';
@@ -261,7 +262,7 @@ export class DungeonWorld {
   /** Energy gathering in the hero's hand between a correct answer and its cast. */
   private charge?: { sprite: THREE.Sprite; startedAt: number; color: number };
   private readonly inputAbort = new AbortController();
-  private readonly summoned: { root: THREE.Group; age: number; duration: number; update: (t: number) => void }[] = [];
+  private readonly summoned: { root: THREE.Group; age: number; duration: number; update: (t: number, delta: number) => void; dispose?: () => void }[] = [];
   private shake = 0;
   private attackResolve?: () => void;
   private readonly scheduled: { at: number; callback: () => void }[] = [];
@@ -1759,6 +1760,9 @@ export class DungeonWorld {
     // Area spells land on the struck enemies, wherever the hero cast from.
     const center = targets.reduce((sum, enemy) => sum.add(enemy.root.position), new THREE.Vector3()).divideScalar(targets.length);
     const target = center.clone().setY(origin.y);
+    // Guardians are planned before the cast so a Glacial Hammer runs its ice from their real slams.
+    const guardianPlans = effect === 'frost-guardian' ? planFrostGuardians(origin, targets.map(enemy => ({ position: enemy.root.position, brute: enemy.brute })), Boolean(options.summon),
+      (from, to) => this.level?.clearLine(from, to, 1.1) ?? true) : [];
     const directional = ['ice-lance', 'arc-lance', 'glacial-surge', 'phoenix-dive'].includes(effect);
     this.attackHeading = targetHeading(origin, directional ? targets[0].root.position : center);
     if (this.attackHeading !== undefined) setPlanarHeroHeading(this.heroVisual.rotation, this.attackHeading);
@@ -1881,6 +1885,7 @@ export class DungeonWorld {
           debris: this.debris.bind(this), bolt: this.bolt.bind(this),
           ring: (at, color, radius, duration) => this.ring(at, color, radius, duration, 'ring'),
           firePillar: this.firePillar.bind(this), fireContact: this.fireContact.bind(this), meteorImpact: this.meteorImpact.bind(this),
+          slams: guardianPlans.map(plan => ({ at: plan.slam, delay: plan.delay, targets: plan.struck.filter(i => i !== plan.primary).map(i => targets[i].root.position.clone()) })),
         };
         if (school === 'ember') playFireSpellBonus(ctx);
         else if (school === 'frost') playFrostSpellBonus(ctx);
@@ -2077,15 +2082,10 @@ export class DungeonWorld {
           break;
         }
         case 'frost-guardian': {
-          this.summonGuardian(origin.clone().add(new THREE.Vector3(-2.7, 0, -1)), 2.3);
-          if (options.summon) this.summonGuardian(origin.clone().add(new THREE.Vector3(2.7, 0, -1)), 2.3);
-          this.schedule(.8, () => {
-            if (bonus?.id !== 'glacial-hammer') targets.forEach((enemy, index) => {
-              this.glacialShard(enemy.root.position.clone(), index * 2.4, .6 + index % 3 * .12, index + 71, enemy.id);
-            });
-            this.impact(target, 0xd2faff, 1.5); this.shake = .32; this.onSound?.('blast-frost');
-          });
-          resolveHorde(.83); break;
+          // Every hit lands on a guardian's slam, or where its ice reaches a further victim.
+          guardianPlans.forEach((plan, index) => this.summonFrostGuardian(plan, index, targets, bonus?.id === 'glacial-hammer',
+            (enemy, n, from) => frostContact(enemy, n, enemy.root.position.clone().add(new THREE.Vector3(0, enemy.height * .45, 0)), from, enemy.brute ? 1.15 : .9)));
+          break;
         }
         case 'chain-lightning': {
           if (anchoredChain) break;
@@ -2512,20 +2512,156 @@ export class DungeonWorld {
     if (this.particles.length < 890) this.particles.push({ position: at.clone(), velocity, color: new THREE.Color(color), life, maxLife: life, size });
   }
 
-  private summonGuardian(at: THREE.Vector3, duration: number): void {
-    const root = this.model('guardian', 4.5) ?? this.makeEnemy(true, true);
+  /**
+   * A frost sigil inks the floor, a cocoon of ice erupts, and the guardian
+   * rises through it; the cocoon shatters to reveal it. It turns on its victim,
+   * lunges, winds up and slams: the hit lands on the slam, and its ice runs on
+   * to any further victim it owns. Then it slumps and breaks back into the floor.
+   */
+  private summonFrostGuardian(plan: GuardianPlan, index: number, targets: Enemy[], hammer: boolean, contact: (enemy: Enemy, index: number, from: THREE.Vector3) => void): void {
+    const G = FROST_GUARDIAN, shift = plan.delay - G.slam, started = this.elapsed + shift, seed = index * 7 + this.encounter * 13;
+    const primary = targets[plan.primary], reach = guardianReach(primary.brute), spawn = plan.spawn;
+    const root = this.model('guardian', G.height) ?? this.makeEnemy(true, true);
+    const parts: { material: THREE.MeshStandardMaterial; crystal: boolean }[] = [];
     root.traverse(object => { if (object instanceof THREE.Mesh) {
       const source = Array.isArray(object.material) ? object.material[0] : object.material;
       const material = source instanceof THREE.MeshStandardMaterial ? source.clone() : new THREE.MeshStandardMaterial();
       const crystal = /glow|crystal/i.test(object.name + source.name);
-      material.color.setHex(crystal ? 0x77cae5 : 0x91a9b5); material.emissive.setHex(crystal ? 0x257794 : 0x000000); material.emissiveIntensity = crystal ? .75 : 0;
-      material.roughness = crystal ? .35 : .74; material.metalness = .08; material.transparent = true; material.opacity = .96;
-      object.material = material; object.receiveShadow = false;
+      // Pale glacial blue, lit from within: never the grey stone of the golems it fights.
+      material.color.setHex(crystal ? 0x8fdcf2 : 0xa8d6ea); material.emissive.setHex(crystal ? 0x2a8fb4 : 0x2a86b0);
+      material.roughness = crystal ? .3 : .5; material.metalness = .08; material.transparent = false; material.opacity = 1;
+      // The shadow map is static; a moving summon would leave a stale silhouette.
+      object.material = material; object.receiveShadow = false; object.castShadow = false;
+      parts.push({ material, crystal });
     } });
+    root.visible = false; root.position.copy(spawn).setY(-G.height);
+    root.rotation.y = guardianYaw(spawn, primary.root.position, 0);
     this.effectsGroup.add(root);
-    const animator = new EnemyAnimator(root, { kind: 'guardian', phase: 0 });
-    this.summoned.push({ root, age: 0, duration, update: t => { animator.update(3.35 + t * duration, { moving: .65, threat: 1 }); root.position.copy(at).add(new THREE.Vector3(0, 0, -Math.sin(t * Math.PI) * 2.7)); this.burstLight.position.copy(root.position).add(new THREE.Vector3(1, 4.4, 2)); this.burstLight.color.setHex(0xa3d9ef); this.burstLight.intensity = Math.sin(t * Math.PI) * 160; root.rotation.y = Math.PI; root.rotation.x = Math.sin(Math.min(1, t * 2) * Math.PI) * -.35; root.traverse(object => { if (object instanceof THREE.Mesh && object.material instanceof THREE.MeshStandardMaterial) object.material.opacity = Math.min(.96, t * 6) * (1 - Math.max(0, t - .7) * 3); }); } });
-    this.impact(at, 0xa2e5ff, 2.8);
+    const clips = this.enemyClipAnimator(root, 'guardian', G.height, index * .37);
+    const procedural = clips ? undefined : new EnemyAnimator(root, { kind: 'guardian', phase: index });
+    const bodies = this.enemies.map(enemy => ({ enemy, get position() { return enemy.root.position; }, get dead() { return enemy.dead; } }));
+    const own = bodies.find(body => body.enemy === primary)!;
+    const strike = plan.strike.clone(), last = new THREE.Vector3(), facing = new THREE.Vector3();
+    let swung = false, planted = false;
+    root.userData.focus = new THREE.Vector3().copy(primary.root.position);
+    const host = { shape: 'frost-guardian', time: () => this.elapsed, effect: this.effect.bind(this) };
+
+    // The summoning circle and its frost, under the rising body.
+    const sigilMaterial = frostSigilMaterial(), sigil = new THREE.Mesh(new THREE.PlaneGeometry(3.7, 3.7), sigilMaterial);
+    sigil.rotation.x = -Math.PI / 2; sigil.position.copy(spawn).setY(.05);
+    const frostMaterial = frostfallContactMaterial(), frost = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 3.6), frostMaterial);
+    frost.rotation.set(-Math.PI / 2, 0, seed); frost.position.copy(spawn).setY(.04);
+    this.schedule(shift, () => {
+      this.effect(sigil, G.crumble + .25, (_t, _d) => {
+        const age = this.elapsed - started;
+        sigilMaterial.uniforms.progress.value = THREE.MathUtils.smoothstep(age, 0, .38);
+        sigilMaterial.uniforms.time.value = this.elapsed;
+        sigilMaterial.uniforms.opacity.value = THREE.MathUtils.smoothstep(age, 0, .08) * (1 - .55 * THREE.MathUtils.smoothstep(age, G.reveal, G.reveal + .5)) * (1 - THREE.MathUtils.smoothstep(age, G.planted, G.crumble + .2));
+      });
+      this.effect(frost, G.gone, () => {
+        const age = this.elapsed - started;
+        frostMaterial.uniforms.age.value = Math.min(.5, age * .8);
+        frostMaterial.uniforms.opacity.value = THREE.MathUtils.smoothstep(age, .1, .5) * (1 - THREE.MathUtils.smoothstep(age, G.crumble + .1, G.gone));
+      });
+      // A cocoon of crystals leans in over the circle; the body rises inside it.
+      const cocoon: Crystal[] = [];
+      for (let i = 0; i < 8; i++) {
+        const angle = i / 8 * Math.PI * 2 + seed, r = 1.05 + (i % 3) * .14;
+        cocoon.push({ at: spawn.clone().add(new THREE.Vector3(Math.cos(angle) * r, .035, Math.sin(angle) * r)), height: 2 + (i * 5 % 3) * .45, radius: .34,
+          delay: (i * 3 % 8) * .012, lean: .2, heading: -angle, fling: new THREE.Vector3(Math.cos(angle) * 1.6, .55, Math.sin(angle) * 1.6), growth: .22 });
+      }
+      crystalField(host, cocoon, 1.15);
+      for (const delay of [0, .14, .3]) this.schedule(delay, () => this.emit(spawn.clone().setY(.35), 0xbfe8f6, 10, 1.2, .75));
+      this.onSound?.('impact-frost');
+    });
+    this.schedule(shift + G.reveal, () => {
+      // The cocoon breaks outward and the guardian stands revealed.
+      const shatter = createIceShatter(seed + 3, 16, { radius: 1.15, height: 3.3, size: .34, speed: 3.4, lift: 2.4 }), from = spawn.clone();
+      shatter.update(from, 0, 1);
+      this.effect(shatter.mesh, .95, t => shatter.update(from, t * .95, 1 - THREE.MathUtils.smoothstep(t, .55, 1)));
+      this.emit(spawn.clone().setY(.4), 0xd2f3ff, 26, 1.8, .9); this.emit(spawn.clone().setY(2.4), 0xeaf9ff, 14, 2.4, .5);
+      this.ring(spawn, 0x5fa9c8, 2.6, .5, 'ground');
+      this.burstLight.position.copy(spawn).setY(3); this.burstLight.color.setHex(0xa3d9ef); this.burstLight.intensity = Math.max(this.burstLight.intensity, 70);
+      this.shake = Math.max(this.shake, .12);
+    });
+    this.schedule(plan.delay, () => {
+      // The slam: ice where the fists meet the floor, the victim struck now.
+      const slam = root.position.clone().setY(.04);
+      facing.set(Math.sin(root.rotation.y), 0, Math.cos(root.rotation.y));
+      slam.addScaledVector(facing, Math.max(.6, Math.min(reach, Math.hypot(primary.root.position.x - root.position.x, primary.root.position.z - root.position.z)) - .55));
+      if (plan.struck.includes(plan.primary)) contact(primary, plan.primary, root.position.clone().setY(1.2));
+      const spikes: Crystal[] = [];
+      for (let i = 0; i < 7; i++) {
+        const angle = i / 7 * Math.PI * 2 + seed * .7, r = .5 + (i % 3) * .28;
+        spikes.push({ at: slam.clone().add(new THREE.Vector3(Math.cos(angle) * r, 0, Math.sin(angle) * r)), height: .8 + (i * 3 % 4) * .2, radius: .26,
+          delay: (i % 3) * .02, lean: .45, heading: Math.PI - angle, fling: new THREE.Vector3(Math.cos(angle) * 1.3, .9, Math.sin(angle) * 1.3), growth: .07 });
+      }
+      crystalField(host, spikes, 1);
+      const crackMaterial = frostfallContactMaterial(), cracks = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 3.4), crackMaterial);
+      cracks.rotation.set(-Math.PI / 2, 0, seed + 1.3); cracks.position.copy(slam).setY(.046);
+      this.effect(cracks, 1.1, t => { crackMaterial.uniforms.age.value = t * .9; crackMaterial.uniforms.opacity.value = 1 - THREE.MathUtils.smoothstep(t, .55, 1); });
+      this.impact(slam, 0xd2faff, 2.2);
+      this.ring(slam, 0x6fb6d2, 2.5, .4, 'ground');
+      this.emit(slam.clone().setY(.3), 0xd8f4ff, 22, 2.2, .7);
+      this.debris(slam, 7, false, .8, { direction: facing, spread: Math.PI * 1.4, lift: .45, grounded: true });
+      this.burstLight.position.copy(slam).setY(2.2); this.burstLight.color.setHex(0xb4e6ff); this.burstLight.intensity = Math.max(this.burstLight.intensity, 110);
+      this.shake = Math.max(this.shake, .34); this.onSound?.('blast-frost');
+      if (this.elapsed - this.lastHitStopAt > .3) { this.hitStop = Math.max(this.hitStop, .07); this.lastHitStopAt = this.elapsed; }
+      // Further victims: the ice runs along the floor and strikes as it arrives.
+      for (const n of plan.struck) {
+        if (n === plan.primary) continue;
+        const enemy = targets[n], to = enemy.root.position.clone().setY(.04), travel = spikeTravel(slam.distanceTo(to));
+        if (!hammer) {
+          const steps = Math.max(2, Math.ceil(slam.distanceTo(to) / 1.15));
+          for (let step = 1; step <= steps; step++) this.schedule(travel * step / steps, () => {
+            if (step === steps) to.copy(enemy.root.position).setY(.04);
+            const at = sampleGroundBranch(slam, to, step / steps, n + index);
+            this.glacialShard(at, targetHeading(slam, to), (.42 + Math.abs(Math.sin(step * 2.9 + n)) * .4) * (step === steps ? 1.25 : 1), seed + n * 13 + step, enemy.id);
+          });
+        }
+        this.schedule(travel, () => contact(enemy, n, slam));
+      }
+    });
+    this.schedule(shift + G.crumble, () => {
+      // The guardian breaks: chunks fall from its body as it slumps into the floor.
+      const shatter = createIceShatter(seed + 11, 20, { radius: .95, height: 3.4, size: .3, speed: 1.4, lift: 1.1 }), from = root.position.clone().setY(0);
+      shatter.update(from, 0, 1);
+      this.effect(shatter.mesh, 1.05, t => shatter.update(from, t * 1.05, 1 - THREE.MathUtils.smoothstep(t, .6, 1)));
+      this.emit(from.clone().setY(.6), 0xd5efff, 28, 1.1, 1.1); this.emit(from.clone().setY(2.6), 0xeaf9ff, 12, 1.4, .6);
+      this.debris(from, 6, false, .5, { direction: facing, spread: Math.PI * 2, lift: .3, grounded: true });
+      for (const { material } of parts) material.transparent = true;
+    });
+    this.summoned.push({ root, age: 0, duration: G.gone + shift, dispose: () => clips?.dispose(root), update: (_t, delta) => {
+      const age = this.elapsed - started;
+      if (age < 0) return;
+      root.visible = true;
+      // Look at the victim while it stands; once it falls, at the nearest standing enemy.
+      const focus = guardianFocus(root.position, own, bodies).position;
+      (root.userData.focus as THREE.Vector3).copy(focus);
+      const yaw = guardianYaw(root.position, focus, root.rotation.y);
+      root.rotation.y = age < G.reveal ? yaw : turnToward(root.rotation.y, yaw, delta, 14);
+      last.copy(root.position);
+      // Rise through the cocoon, lunge to striking range, hold through the slam, then sink.
+      const rise = THREE.MathUtils.clamp((age - G.rise) / (G.risen - G.rise), 0, 1);
+      if (!planted && !primary.dead) guardianStrike(spawn, primary.root.position, reach, strike);
+      if (age >= G.planted) planted = true;
+      const lunge = THREE.MathUtils.clamp((age - G.lunge) / (G.planted - G.lunge), 0, 1);
+      root.position.lerpVectors(spawn, strike, lunge * lunge * (3 - 2 * lunge));
+      const sink = THREE.MathUtils.clamp((age - G.crumble) / (G.gone - G.crumble - .05), 0, 1);
+      root.position.y = -G.height * (Math.pow(1 - rise, 3) + .85 * sink * sink);
+      root.scale.set(1 + sink * .1, 1 - sink * .22, 1 + sink * .1);
+      const speed = delta > 0 && age > G.lunge && age < G.planted ? Math.hypot(root.position.x - last.x, root.position.z - last.z) / delta : 0;
+      if (!swung && age >= G.swing) { swung = true; clips?.play('attack'); }
+      if (clips) clips.update(delta, speed);
+      else procedural?.update(3.35 + age, { moving: speed > .2 ? 1 : 0, threat: 1 });
+      // Fresh ice glows as it forms, the crystals flare on the slam, and the body glows again as it breaks.
+      const form = 1 - THREE.MathUtils.smoothstep(age, G.reveal - .1, G.reveal + .45);
+      const flare = age > G.slam ? Math.exp(-(age - G.slam) * 7) : 0, breakGlow = THREE.MathUtils.smoothstep(age, G.crumble, G.gone);
+      for (const { material, crystal } of parts) {
+        material.emissiveIntensity = crystal ? .9 + .9 * form + 1.4 * flare + .6 * breakGlow : .3 + .75 * form + .3 * flare + .35 * breakGlow;
+        material.opacity = 1 - THREE.MathUtils.smoothstep(sink, .5, 1);
+      }
+    } });
   }
 
   private schedule(delay: number, callback: () => void): void { this.scheduled.push({ at: this.elapsed + delay, callback }); }
@@ -2988,10 +3124,10 @@ export class DungeonWorld {
     for (let i = this.summoned.length - 1; i >= 0; i--) {
       const summon = this.summoned[i]; summon.age += delta;
       if (summon.age >= summon.duration) {
-        this.effectsGroup.remove(summon.root);
+        this.effectsGroup.remove(summon.root); summon.dispose?.();
         summon.root.traverse(object => { if (object instanceof THREE.Mesh) for (const material of Array.isArray(object.material) ? object.material : [object.material]) material.dispose(); });
         this.summoned.splice(i, 1);
-      } else summon.update(summon.age / summon.duration);
+      } else summon.update(summon.age / summon.duration, delta);
     }
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i]; p.life -= delta;

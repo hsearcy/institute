@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import * as THREE from 'three';
 import { createDiamondDrill, glacialHammerLayout, playFrostSpellBonus } from '../src/rpg/world/frostSpellBonuses';
 import type { SpellBonusContext } from '../src/rpg/world/spellBonusTypes';
+import { spikeTravel } from '../src/rpg/world/frostGuardian';
 
 describe('frost bonus presentation', () => {
   for (const shape of ['crystal-bloom', 'frozen-fault', 'glacial-hammer', 'whiteout'] as const) {
@@ -12,6 +13,7 @@ describe('frost bonus presentation', () => {
         shape, spellId: 'frost', origin: new THREE.Vector3(), target: new THREE.Vector3(0, 0, -4), view: new THREE.Vector3(0, 0, 1),
         targets: Array.from({ length: 10 }, (_, i) => ({ id: String(i), position: new THREE.Vector3(i % 4 - 2, 0, -3 - Math.floor(i / 4)), height: 2.2 })),
         time: () => 1, castOrigin: () => new THREE.Vector3(),
+        slams: [{ at: new THREE.Vector3(-1, .04, -2), delay: 1.38, targets: Array.from({ length: 9 }, (_, i) => new THREE.Vector3(i % 4 - 2, 0, -3 - Math.floor(i / 4))) }],
         effect: (mesh, duration, update) => { effects.push({ mesh, duration, update }); return mesh; },
         schedule: (_delay, action) => { scheduled.push(action); }, emit: () => {},
       } as SpellBonusContext;
@@ -44,17 +46,20 @@ describe('frost bonus presentation', () => {
   });
 });
 
-it('guardian fault starts at the moving summon and shares its path across victims', () => {
-  const origin = new THREE.Vector3(0, 0, 0);
+it('guardian fault starts at the real slam, runs to its furthest victim, and arrives with the hits', () => {
+  const origin = new THREE.Vector3(0, 0, 0), slam = new THREE.Vector3(-1.5, .04, -3);
   const targets = Array.from({ length: 10 }, (_, i) => new THREE.Vector3(i % 3 - 1, 0, -5 - i * .4));
-  const layout = glacialHammerLayout(origin, targets);
-  expect(layout[0].at.x).toBe(-2.7);
-  expect(layout[0].at.z).toBeCloseTo(-1 - Math.sin(.8 / 2.3 * Math.PI) * 2.7);
-  expect(layout[0].delay).toBe(.8);
+  const layout = glacialHammerLayout(origin, [{ at: slam, delay: 1.38, targets }]);
+  expect(layout[0].at.x).toBe(-1.5);
+  expect(layout[0].at.z).toBe(-3);
+  expect(layout[0].delay).toBe(1.38);
   expect(layout.length).toBeLessThanOrEqual(20);
   expect(layout.every(c => c.height <= 1.15)).toBe(true);
   for (const crystal of layout) {
+    expect(crystal.delay).toBeGreaterThanOrEqual(1.38);
+    expect(crystal.delay).toBeLessThanOrEqual(1.38 + spikeTravel(slam.distanceTo(crystal.at)) + 1e-3);
     if (Math.hypot(crystal.at.x, crystal.at.z) < 2) expect(crystal.height).toBeLessThanOrEqual(.32);
     if (targets.some(t => Math.hypot(crystal.at.x - t.x, crystal.at.z - t.z) < .8)) expect(crystal.height).toBeLessThanOrEqual(.6);
   }
+  expect(glacialHammerLayout(origin, [{ at: slam, delay: 1.38, targets: [] }])).toEqual([]);
 });

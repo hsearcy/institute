@@ -19,5 +19,7 @@ export interface SpellBonusContext {
   ring: (at: THREE.Vector3, color: number, radius: number, duration: number) => void;
   firePillar: (at: THREE.Vector3, height: number, duration: number) => void;
   fireContact: (at: THREE.Vector3, scale: number) => void;
+  /** Frost Guardian: where each guardian's fists meet the floor, when, and the victims its ice runs to. */
+  slams?: { at: THREE.Vector3; delay: number; targets: THREE.Vector3[] }[];
   meteorImpact: (at: THREE.Vector3, incoming: THREE.Vector3, scale: number) => void;
 }

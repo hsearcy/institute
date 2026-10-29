@@ -43,7 +43,7 @@ export class TraderDesk {
   }
   ware(state: RpgState): RpgTraderWare | undefined { return rpgTraderWares(state).find(entry => entry.id === this.wareId); }
   question(state: RpgState) { const ware = this.ware(state); return ware ? rpgTraderQuestion(this.seenDust, ware) : null; }
-  type(digit: string): void { this.entered = digit === '⌫' ? this.entered.slice(0, -1) : (this.entered + digit).slice(0, 4); }
+  type(digit: string): void { this.entered = digit === '⌫' ? this.entered.slice(0, -1) : this.entered + digit; }
   /** Local first check, so a wrong try gets a hint at once. The server checks again. */
   check(state: RpgState): { correct: boolean; purchase?: TraderPurchase } {
     const question = this.question(state);
@@ -85,7 +85,7 @@ function renderCounting(state: RpgState, desk: TraderDesk): string {
   return `<section class="rpg-trader-count" aria-label="Work out your change">${wareArt(ware, desk.itemId)}<div class="rpg-trader-sum"><p class="rpg-trader-question">${esc(question.text)}</p>
     ${desk.hint ? `<p class="rpg-trader-hint" role="status">${esc(desk.hint)}</p>` : ''}
     <div class="rpg-trader-work"><div class="rpg-trader-ledger" aria-hidden="true"><span><i></i><b>${desk.seenDust}</b><small>✦ you have</small></span><span><i>−</i><b>${ware.price}</b><small>${esc(wareLabel(ware, desk.itemId))}</small></span><span class="total"><i>=</i><b class="${desk.entered ? '' : 'empty'}">${desk.entered || '?'}</b><small>left</small></span></div>
-    <div><form class="rpg-trader-form" data-trader-form autocomplete="off"><input id="rpg-trader-answer" aria-label="Forge dust left" inputmode="none" maxlength="4" pattern="[0-9]*" value="${esc(desk.entered)}"><button class="rpg-primary" type="submit" data-trader="pay">Pay ✦ ${ware.price}</button></form>
+    <div><form class="rpg-trader-form" data-trader-form autocomplete="off"><input id="rpg-trader-answer" aria-label="Forge dust left" inputmode="none" pattern="[0-9]*" value="${esc(desk.entered)}"><button class="rpg-primary" type="submit" data-trader="pay">Pay ✦ ${ware.price}</button></form>
     <div class="rpg-trader-keys">${keys.map(key => `<button type="button" data-trader="digit" data-key="${key}" aria-label="${key === '⌫' ? 'Delete digit' : key === '✓' ? 'Pay' : key}">${key}</button>`).join('')}</div>
     <div class="rpg-trader-actions"><button data-trader="hear">Hear it again</button><button data-trader="back">Not today</button></div></div></div></div></section>`;
 }

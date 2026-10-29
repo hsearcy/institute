@@ -1150,7 +1150,7 @@ export class RpgGame {
     if (!form || !input) return;
     form.addEventListener('submit', event => { event.preventDefault(); void this.payTrader(); });
     input.addEventListener('input', () => {
-      this.trader.entered = input.value.replace(/\D/g, '').slice(0, 4); input.value = this.trader.entered;
+      this.trader.entered = input.value.replace(/\D/g, ''); input.value = this.trader.entered;
       const slot = this.root.querySelector<HTMLElement>('.rpg-trader-ledger .total b');
       if (slot) { slot.textContent = this.trader.entered || '?'; slot.classList.toggle('empty', !this.trader.entered); }
     });

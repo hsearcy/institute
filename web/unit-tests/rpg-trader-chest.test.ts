@@ -45,6 +45,14 @@ describe('trader desk', () => {
     expect(ok.purchase).toMatchObject({ wareId: 'wisdom-potion', seenDust: 44, answer: 44 - ware.price });
     expect(ok.purchase!.requestId).toBeTruthy();
   });
+  test('five-digit trader change can be entered and accepted', () => {
+    const desk = new TraderDesk(), s = state(12363);
+    desk.begin(s, 'wisdom-potion');
+    for (const digit of '12345') desk.type(digit);
+    expect(desk.entered).toBe('12345');
+    expect(desk.check(s)).toMatchObject({ correct: true, purchase: { answer: 12345 } });
+    expect(renderTrader(s, desk)).not.toContain('maxlength="4"');
+  });
   test('a blocked ware cannot be started', () => {
     expect(new TraderDesk().begin(state(3), 'lucky-charm')).toBeNull();
   });

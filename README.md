@@ -67,6 +67,4 @@ ODbL 1.0, Marble-authored content under CC BY-SA 4.0. See `data/taxonomy/NOTICE`
 
 ## License
 
-[PolyForm Noncommercial 1.0.0](LICENSE.md). You may use, change and share this code for any noncommercial purpose: personal use, study, teaching, research, charities and schools. Commercial use needs separate permission. Third-party parts keep their own licenses: the Marble taxonomy data (above), the CC0 lich source in `scripts/blender/sources/cc0-lich`, and the OFL fonts.
-
-Required Notice: Copyright 2026 Houston Searcy (https://github.com/hsearcy)
+Institute's code is licensed under the [MIT License](LICENSE.md). Third-party parts retain their own licenses, including the Marble taxonomy data (above), CC0 sources in `scripts/blender/sources`, and OFL fonts.

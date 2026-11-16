@@ -1,266 +1,205 @@
-# Institute parent review bridge
+# Institute parent review in Hermes / Herald
 
-Source only. Nothing here is installed or enabled by default. No service restart,
-real Discord message, live API write, or real model build is part of the test suite.
-Only Houston deploys the live Institute site at `ares:5002`.
+Source only, disabled by default. This **replaces** the former messaging adapter.
+No additional messaging account, bot token, callback listener, webhook, or model
+approval tool is used. This task does not install the plugin, enable it, restart
+anything, notify a real parent, write the live API, or launch a real model worker.
+**Houston alone deploys Institute.**
 
-## What it does
+## Parent experience
 
-* Registers the supported native `ctx.register_platform_handler("discord", factory)`
-  callback and `post_gateway_admission` hook. Uses `ctx.spawn_task` / `ctx.on_unload`
-  for polling and cleanup. No adapter monkeypatch, webhook infrastructure,
-  `current_turn_origin`, model-facing approval tool, or `register_webhook_admission`.
-* Polls one bounded Institute `status=sent` page every 30 seconds, following
-  `nextCursor` on later ticks, then starts a new scan. Scanning is read-only.
-  Notification acknowledgement and authenticated decisions are explicit separate writes.
-* Sends a single review card with an attached `review.txt` containing the complete
-  original wording, exact proposed scope, immutable revision and UTF-8 SHA-256.
-  The initial proposed scope is the original request, not an invented implementation.
-  Card previews escape Markdown and mentions; sends disable all mentions and embeds.
-  Original text in the attachment and persisted snapshot is not normalized or altered.
-* Accepts parent decisions only from the native SDK message: exact author
-  `117470549298380806`, guild `1503780426064597022`, channel `1503780569056809141`,
-  with bot/webhook authors rejected. The callback reads the exact native message
-  back before recording a decision, since core Discord handling can strip the bot
-  mention on the shared SDK object. Whitespace and optional self mentions are
-  normalized only for yes/no parsing, never for audit. Gateway consumption binds
-  the captured native message ID and exact author/guild/channel, not transformed
-  gateway text: core may prepend the replied-to review.txt and its child content.
-  Neither the envelope nor attachment content can authorize a decision.
-  The outgoing bot must be
-  `1503782665847967908`. Thread channels and DMs do not qualify.
-* Direct replies bind to the persisted review message. A plain affirmative or
-  negative is allowed only when exactly one active review exists, its card has a
-  verified send receipt, and no review delivery of any revision is new, in flight
-  or unknown. Unsent reviews count too; a lost send response may hide a visible
-  second card. Ambiguity requires a direct reply or delivery reconciliation, not
-  a guess. Stale explicit replies never fall back to the latest card. Ordinary
-  unrelated channel traffic is unchanged.
-* Recognizes limited natural affirmatives (`yes`, `yes please`, `go ahead`,
-  `sounds good`, `looks good`, `yep`, `sure`, etc.) and negatives. Other text on a
-  review reply, including `yes but ...`, creates a new scope consisting of the
-  previous reviewed scope plus the parent's exact modification. That new card
-  needs a fresh yes. No LLM interprets approval. Long combined scopes require
-  a shorter modification or manual review.
-* Stores raw native parent message ID, author, guild, channel and exact text in a
-  private SQLite ledger before sending any decision. Every backend transition
-  includes the original `parentMessageId` and unchanged `parentMessageText`.
-  Child-visible notes are short generated sentences without dashes of any kind.
-* Launches only after an exact backend approval has been read back in audit and
-  committed locally, and after a matching `building` claim is read back. Stable
-  suggestion/revision/hash job keys deduplicate builds. One job may build at a time.
-* Makes a separate `git clone --no-hardlinks` under plugin data, rather than
-  `git worktree add` against the live checkout. Even source Git metadata stays
-  untouched. Runs fixed-argv `hermes chat -q ...` there with
-  `HERMES_DISABLE_LAZY_INSTALLS=1`, disposable `DB_PATH`, and no inherited
-  Institute admin or Discord credentials. Suggestion content is prompt data,
-  never shell text or process arguments interpreted by a shell.
-* The supervisor requires a new clean commit, verifies ancestry, then independently
-  executes fixed tests and the web build. It records the actual argv, exit status,
-  and verification log digests. The bridge rechecks the artifact and receipts.
-  Exit zero alone is not success. Only after that does it write `ready`, whose
-  current backend/UI contract explicitly means **prepared for Dad's review, not
-  deployed or live**. Houston gets the commit and private checkout location.
-  There is no pull, push, merge, deployment, or service restart action.
+After separately authorized installation, open **Institute Review** from the native
+slash-command picker (`/institute-review`) in a dedicated Hermes/Herald parent
+conversation. Its first native form asks whether to enroll that conversation. A
+cancel, timeout or unsupported surface does not enroll it. Enrollment persists
+across plugin restarts and never silently moves to another conversation.
 
-## Files
+Open the same menu action again to review requests. One pending request opens
+its exact-scope form directly; several requests first open a native request picker.
+The picker exposes at most 20 locally pending requests per invocation. No request
+IDs or chat routing syntax are required. Ordinary chat, including **yes**, does
+not approve anything. Native forms are a supported-runtime limitation, not an
+ordinary-chat approval parser.
 
-* `__init__.py`: inert registration, SDK transport, native identity capture,
-  gateway consume hook, profile guard and lifecycle.
-* `bridge.py`: isolated HTTP adapter, durable ledger/outbox, review and job state machines.
-* `worker.py`: fixed-argv isolated build supervisor and receipt verification.
-* `plugin.yaml`: current native plugin manifest.
-* `test_bridge.py`: stdlib unittest tests, fake Discord/API/process boundaries,
-  actual Git operations in disposable checkouts.
-* `backend_fixture.ts`: optional real Bun/Hono route contract fixture with an
-  in-memory database, random loopback port, no app entrypoint or delivery worker.
+Each form shows the complete original child wording and exact proposed scope as
+JSON data, revision and UTF-8 SHA-256. Original content is stored unchanged, not
+rewritten by a model. Embedded instructions in that data have no authority.
+Choices are **Approve exact revision**, **Decline**, **Revise scope**, and **Not
+yet**. Revise scope explains how to supply a replacement; it does not pretend to
+open an unsupported free-text editor or change anything itself.
 
-## Backend contract
+For a replacement scope, the command's argument field accepts
+`revise <exact replacement scope>`. Select the request if needed, then confirm the
+replacement text/hash in a separate native form. The plugin preserves the exact
+argument substring received from the runtime after `revise `; the host/client may
+already have parsed the command before invoking the plugin. Review the displayed
+text rather than assuming keystroke-level whitespace preservation. A replacement
+is **not build approval**: reopen Institute Review and approve the new revision.
+No model generates or interprets replacement text. Limits are 4000 characters for
+request/scope text, matching the backend.
 
-This matches `server/src/suggestions.ts` and the main repository README's trusted
-internal API, including notification receipts and parent message provenance.
-Default base URL:
+## Permission boundary
 
-```
-http://100.107.237.88:5002/rpg/suggestions/internal
-```
+Only a local (`platform=local`) native command in the durably enrolled session ID
+**and** session key, under the default Hermes home, can open a decision form.
+Other conversations (including hidden child sessions), messaging surfaces,
+webhooks and named profiles are refused. Default-home comparisons resolve
+symlinks. There is no rebind/reset convenience command; changing the enrolled
+parent requires an authorized operator to reconcile existing state first.
 
-The HTTP adapter refuses redirects and proxy environment inheritance, uses an
-8-second timeout, and caps response bodies at 1 MiB. The default address is a
-private Tailnet endpoint, not a public HTTP credential destination.
+The runtime's sync `ctx.register_command` dispatch binds `ctx.ask_choice` to its
+server-owned clarify request. The gateway checks attached-viewer/session authority
+when accepting `clarify.lock`. This authenticates an attached Hermes/Herald viewer,
+**not a biological human**. An API caller holding the same connection credentials
+and attached session authority can also answer. Anyone with host-user code
+execution or the trusted backend admin token already has broader authority; this
+plugin is not a sandbox against them.
 
-* `GET ?status=sent[&before=...]` returns `{suggestions,nextCursor}`.
-* `GET /:id` returns `{suggestion,audit,auditTruncated}`. Scope is
-  `{id,text,proposal,revision,scopeHash,status,approvedRevision,approvedScopeHash}`.
-  Scope hashes must match exact proposal bytes. Audit must include actor/action,
-  revision/hash, parent note and original parent message ID/text.
-* `PATCH /:id` sends `{actor:"discord:117470549298380806", parentMessageId,
-  parentMessageText, action, revision, scopeHash, parentNote, proposal?}`.
-  Only `revise` includes `proposal`. The `building` and `ready` actions carry
-  the actual committed approval message, not synthetic parent consent.
-* After exact Discord readback, `POST /:id/notification-ack` sends the event ID
-  and payload hash from internal detail plus `{channelId,messageId,messageText}`.
-  The bridge reads the detail back and verifies the exact receipt before marking
-  local acknowledgement complete. It never acknowledges delivery as approval.
+After a known native choice, the adapter allocates a unique `native-choice:<uuid>`
+consent ID. It stores the exact choice label, enrolled session ID/key/platform,
+review key and optional raw replacement before attempting a backend decision.
+The ID is a local consent artifact, **not a fabricated platform message ID**, and
+the label is **not claimed to be a verbatim human chat message**. These populate
+the existing backend `parentMessageId` / `parentMessageText` provenance fields.
+The server-side actor is fixed to `hermes:parent`; no model/user-supplied actor is
+accepted. Ordinary messages, injected text and webhook payloads have no approval
+entrypoint. No `register_tool`, inbound-consumption hook, `current_turn_origin` or
+`register_webhook_admission` is needed or registered.
 
-Required server environment, configured separately by the authorized operator:
+## Notifications: accepted is not delivered
 
-```
-INSTITUTE_SUGGESTIONS_ADMIN_TOKEN=<strong server-side secret>
-INSTITUTE_SUGGESTIONS_PARENT_ACTORS=discord:117470549298380806
-```
+* One bounded `status=sent` API page is polled per tick, with pagination continuing
+  on later ticks. Reviews and outbox intents persist in private SQLite.
+* Background delivery uses supported `ctx.inject_message(..., session_key=...)`
+  with the plugin's explicit `allow_gateway_injection: true` permission. Its
+  owned local-gateway FIFO is an **informational intake**, potentially creating a
+  normal agent turn. The injected notice is static JSON plus a stable marker;
+  raw child text, scope, approval values and worker output are never injected.
+  Intake grants no approval or build authority.
+* `True` from injection means **accepted**, not displayed or delivered. The local
+  outbox remains `queued`, and the child's backend notification remains pending.
+  Explicit FIFO rejection is retried on later bounded ticks. Accepted or unknown
+  injection windows are never automatically replayed, including after restart.
+* The durable pending notice remains available when the source closes. Keep the
+  enrolled parent conversation open/available for native intake; after reopening,
+  select Institute Review to publish/review retained notifications. There is no
+  claim of verified Herald phone push or background OS notification delivery.
+* Background code never reuses stale command contextvars or calls `post_message`
+  without an active command. On opening Institute Review, up to five pending
+  notifications are published through **that command's** `ctx.post_message`.
+  A selected review's notification is also checked before opening its form.
+* Only the native handle's exact `{ok:true, delivered:true, message_id}` publication
+  result counts as delivery to an attached viewer. Its content/session/result and
+  the outbox transition are persisted atomically and read back. This is the
+  runtime's authoritative native publication receipt, not a UI read/human-seen
+  acknowledgement. `delivered:false` records no delivery and can be retried when
+  the command is opened again. Unknown publication outcomes are held, not resent.
+* Only after that receipt does the bridge acknowledge the exact backend event ID
+  and payload hash with `{channelId: enrolled_session_key, messageId, messageText}`.
+  It reads the backend receipt back before marking local acknowledgement complete.
+  FIFO acceptance, a model reply, or a form decision alone cannot clear notification
+  pending. Notification delivery and approval are independent transitions.
 
-The gateway needs the **same** admin token in its private environment. Never put
-it in the browser, a `VITE_` variable, a prompt, command-line argument, source
-file, or Discord message. The bridge reads it from the environment only.
-No new Discord bot token is needed; it uses the existing bot connection.
-Webhook variables are unnecessary and should be left unchanged, not repurposed.
+## Durability and isolated builds
 
-## Installation, only after separate authorization
+Captured choices whose read-only scope lookup failed are retried in rotating
+batches of ten. Their enrolled identity, original review reference, complete
+original wording, revision/hash and current remote status are revalidated. A stale
+form never targets a newer review. Only a `captured` row with no write payload can
+enter the first write window. The exact decision payload and `pending` state are
+committed **before** PATCH; unknown writes are reconciled against exact audit and
+never replayed. Audit must preserve actor, action, scope, note and native consent.
 
-1. Finish and review the Institute backend/frontend work first. Verify internal
-   API availability using the approved operator procedure, without touching live
-   learning/progress/money state. The source repo used for builds must contain a
-   committed, reviewed baseline; uncommitted development files are not cloned.
-2. Verify the active default profile is `/home/ares/.hermes` (which may be a
-   symlink). Do not copy this into other profiles or change HS Code/VCLab config.
-3. Copy the plugin source to the default profile's discovered plugin directory.
-   These are **future installation commands**, not commands executed by this task:
+Only an exact committed approval creates a stable suggestion/revision/hash job.
+A preclaim GET failure remains `approved` and retryable; the `claiming` state is
+persisted immediately before the claim PATCH. That claim must be read back before
+launch. A launch reservation is persisted before subprocess creation. Unknown
+claim/launch windows, missing or corrupt receipts, PID reuse/reboot, and disappeared
+workers block later launches without automatic duplicate attempts.
 
-   ```sh
-   install -d -m 700 /home/ares/.hermes/plugins/institute-bridge
-   install -m 600 /home/ares/git/institute-suggestions/scripts/institute_bridge/{__init__.py,bridge.py,worker.py,plugin.yaml,README.md} /home/ares/.hermes/plugins/institute-bridge/
-   ```
+`worker.py` is retained: one fixed-argv supervisor, separate
+`git clone --no-hardlinks`, disposable DB/scratch, no live source metadata writes,
+`HERMES_DISABLE_LAZY_INSTALLS=1`, and removal of inherited Institute admin,
+legacy messaging and webhook credentials from the agent environment. It requires
+a new clean commit with valid ancestry and independently runs fixed tests and the
+web build, verifies log digests, and rechecks the committed artifact. Exit zero
+alone is insufficient. `ready` means **prepared for Houston's review, not live**.
+No pull, push, merge, deploy, service restart or data reset is performed.
 
-4. Add only this entry to existing default-profile `config.yaml`, merging rather
-   than replacing the existing `plugins` section:
+The controller owns one thread/async loop and a nonblocking process singleton
+lock. SQLite stays on that thread; synchronous native forms stay on the gateway's
+command executor with fresh authenticated context. Unload stops the controller;
+it does not kill an already-launched worker. Worker identity/receipts are checked
+after restart. Private ledger/logs/child content remain under
+`get_hermes_home()/plugin_data/institute-bridge/` (directory 0700, ledger 0600).
+A nonempty old adapter ledger is refused, **not automatically migrated or cleared**.
+Operator reconciliation is required for legacy or unknown state.
 
-   ```yaml
-   plugins:
-     entries:
-       institute-bridge:
-         enabled: true
-         settings:
-           enabled: true
-           api_url: http://100.107.237.88:5002/rpg/suggestions/internal
-           source_repo: /home/ares/apps/institute
-           poll_seconds: 30
-   ```
+Operational isolation is not OS/credential isolation: the coding agent runs as
+the host user and can load its regular Hermes config. Review approved code and
+repository test scripts before activation; disposable `DB_PATH` alone cannot make
+arbitrary application test code safe.
 
-   The inner `settings.enabled` must be the boolean `true`; absence is inert.
-   The source is read only, clones are written only under plugin data. A separate
-   reviewed local repository can be selected instead. Keep its path operator-owned.
-   The runtime refuses other profiles and a second controller using the same ledger.
-5. Supply the admin token privately in the default gateway's existing environment
-   mechanism. Keep all existing gateway platforms, routing, allowlists, ports,
-   Funnel configuration and unrelated environment/config entries unchanged.
-6. Inspect active gateway work before any restart. Only after explicit maintenance
-   authorization activate/restart the owning default gateway with
-   `HERMES_DISABLE_LAZY_INSTALLS=1`; this document does not authorize that action.
-   Settings are read by the factory at wiring time, so an already-wired disabled
-   factory requires a new supported wiring/startup boundary.
-7. Exercise one deliberately created test suggestion with Houston. Read the complete
-   attached scope, reply no first, then test a separately authorized yes flow.
-   Confirm the child's notification clears only after a verified Discord receipt.
-   Confirm revised scopes demand a fresh yes, and completed builds say review only.
-   Delete no live records as a test. Houston decides if/when any artifact is deployed.
+## Operator activation (not performed)
 
-The worker host needs Python, Git, Bun and the configured `hermes` executable.
-Dependencies are installed in the isolated clone with `bun install --frozen-lockfile`.
-It independently runs:
+Only after separate installation/maintenance authorization, copy
+`__init__.py`, `bridge.py`, `worker.py`, `plugin.yaml` and this README into the
+**default profile's discovered** `plugins/institute-bridge/` directory. Preserve
+all unrelated configuration, connections, profiles and active work. Backend and
+gateway private environments need the same `INSTITUTE_SUGGESTIONS_ADMIN_TOKEN`;
+the backend parent actor allowlist must include `hermes:parent`. Never put this
+secret in source, browser settings, prompts or process arguments.
 
-```
-bun --no-env-file test --timeout=30000 --path-ignore-patterns='**/web/tests/**' server shared scripts web/unit-tests
-bun --no-env-file run --cwd web build
+Merge the plugin entry into existing configuration, do not replace the section:
+
+```yaml
+plugins:
+  entries:
+    institute-bridge:
+      enabled: true
+      allow_gateway_injection: true
+      settings:
+        enabled: true
+        api_url: http://100.107.237.88:5002/rpg/suggestions/internal
+        source_repo: /home/ares/apps/institute
+        poll_seconds: 30
 ```
 
-Before production activation, audit these repository scripts for disposable-data
-safety. The supervisor sets a private disposable `DB_PATH` and scratch directory,
-but it cannot make arbitrary application test code safe by itself.
+The inner `settings.enabled` must be boolean true; otherwise registration is
+inert. Polling is bounded to 15–300 seconds. The HTTP adapter rejects redirects,
+proxy inheritance and oversized responses, with an eight-second timeout. The
+source repository is read only, and must contain a reviewed committed baseline;
+uncommitted development files are not cloned. Python, Git, Bun and Hermes are
+required for workers. A separately reviewed source repository can be selected.
+Any runtime restart needs its own authorization. First exercise a deliberately
+created disposable request with Houston, using Decline before separately testing
+Approve. Do not delete or repurpose live learning/progress/money records.
 
-## Durability and honest failure
+## Verification without installation
 
-All state is under the default home's `plugin_data/institute-bridge/`, mode 0700,
-with `ledger.sqlite3` mode 0600, singleton lock and `jobs/<stable-hash>/` manifests,
-logs, disposable DB and isolated checkout. Keep this private; it includes child
-and parent content. No automatic purge is performed; review retention/disk use.
-
-A notification is persisted as `sending` before transport use. After a lost
-response, at most 100 recent channel messages are inspected for its stable marker,
-and the exact content and attachment are verified. If not found, it stays unknown
-and is not resent blindly. New notifications are not starved by unknown old ones.
-
-A native reply captured before a failed read-only scope lookup is recoverable:
-up to ten captures are revisited per tick, rotating so unavailable reads do not
-starve later captures. Recovery uses only the persisted exact native identity,
-message text and original review reference, rechecks bare-reply ambiguity and the
-current revision/status, and never retargets a new scope. Only `captured` rows
-with a NULL payload can enter this path. Before the first decision write, the
-payload and `pending` phase are committed together. A crash in or after that write
-window therefore cannot replay the write. Invalid provenance requires a new reply;
-stale or newly ambiguous captures also require a fresh decision on a known card.
-
-A read-only preclaim GET leaves a job `approved`; a timeout or restart before any
-claim PATCH can therefore retry that GET and revalidate the current approval.
-Only immediately before the actual PATCH, under the controller lock, does the
-bridge persist `claiming`. From that write boundary onward it checks receipts
-without replaying the claim, even if no matching receipt is found.
-
-Decision, build-claim and ready write failures are reconciled by exact backend
-history, not replayed with fabricated consent. An unresolved decision never creates
-a job. A launch reservation is committed before subprocess creation. Unknown spawn
-windows, missing receipts, PID reuse, reboot identity mismatches, vanished workers
-and corrupted artifacts hold the queue for operator reconciliation. Never reset
-those states to retry without proving what happened and obtaining fresh approval
-where needed. Actual worker failures notify Houston and stay out of `ready`.
-
-Workers record Linux boot ID plus PID/start identity. They may survive a gateway
-process restart, but a systemd cgroup teardown can terminate them; the next controller
-then records uncertainty and never duplicates the launch. No extra daemon is installed.
-Disabling the plugin does not terminate an already-launched worker; review its exact
-PID/start identity before an authorized operator stop. No automatic cancellation or
-hidden recovery/deploy action is performed.
-
-This is **not a security sandbox**. Native plugins and the Hermes coding subprocess
-run as the host user. The hard approval gate is deterministic before launching, but
-approved code execution and agent scope adherence still need code review. Removing
-credentials from the exec environment is hygiene, not secret isolation: Hermes
-may reload its normal home configuration, and host-user code can read home files.
-A stronger OS boundary would require separately authorized container/credential isolation.
-The gateway consume hook is intentionally supported/fail-open, not a global command
-firewall. It suppresses only captured native review replies and does not claim to
-revoke authority from independent operator conversations or unrelated plugins.
-
-## Verification, no installation required
-
-From `/home/ares/git/institute-suggestions`:
+From the repository root, developer checks are:
 
 ```sh
-python -W error::ResourceWarning -m unittest discover -s scripts/institute_bridge -p 'test_*.py' -v
-HERMES_DISABLE_LAZY_INSTALLS=1 hermes plugins doctor /home/ares/git/institute-suggestions/scripts/institute_bridge --ci
+HERMES_DISABLE_LAZY_INSTALLS=1 python -W error::ResourceWarning -m unittest discover -s scripts/institute_bridge -p 'test_*.py' -v
+HERMES_DISABLE_LAZY_INSTALLS=1 hermes plugins doctor "$PWD/scripts/institute_bridge" --ci
 ```
 
-The backend contract test starts only an in-memory fixture bound to a random
-loopback port and is skipped if Bun is unavailable. Existing server dependencies
-must already be installed. Worker tests use real Git clones/commits but fake only
-the external Bun/Hermes executables. They do not pretend to be a real model build.
-No tests connect to the configured private live API or Discord, and plugin doctor
-uses its own temporary Hermes home. Test scratch uses the runtime `TMPDIR`.
+The stdlib suite uses a synthetic native chooser, actual private controller
+thread/SQLite state and actual Git clones/commits; it fakes external agent/Bun
+worker commands, never human identity. The backend contract uses the real Hono
+routes with `bun:sqlite :memory:` and a random loopback port (requires installed
+Bun/repository dependencies). No suite contacts the private live API or requires
+a Discord SDK. Plugin doctor validates registration only, not live delivery.
 
-When Hermes Discord core is available, the integration regressions execute its
-actual `_handle_message` and `_collect_attachment_media` on a resolved review-card
-reply, with only attachment download/cache IO mocked. They verify the real
-review.txt envelope is consumed while the original native yes/no remains the sole
-decision authority. To require that coverage against an exact read-only core tree:
-
-```sh
-HERMES_DISABLE_LAZY_INSTALLS=1 \
-INSTITUTE_BRIDGE_REQUIRE_DISCORD_CORE=1 \
-INSTITUTE_BRIDGE_HERMES_SOURCE=/home/ares/migration/vps-ares/hermes-runtime \
-PYTHONPATH=/home/ares/migration/vps-ares/hermes-runtime \
-python -W error::ResourceWarning -m unittest discover -s scripts/institute_bridge -p 'test_*.py' -v
-```
-
-Without installed Hermes, these two core-specific tests skip; the independent
-native SDK and controller/worker tests still run. The required-core flag makes
-missing imports a failure rather than silently losing integration coverage.
+`native_gateway_proof.py --hermes-source <runtime checkout>` is the opt-in thin
+vertical proof against the **actual** installed gateway: copied source plugin,
+disposable home, native WebSocket viewer, real clarify/post-message/FIFO APIs,
+real in-memory backend, and an explicitly fake worker boundary only in the copied
+test plugin. It needs the runtime's test dependencies (including pytest), writes
+only runtime `TMPDIR`, and reports synthetic viewer/no actual worker/no live
+changes. Do not run it against an installed profile. Proven against
+`/home/ares/migration/vps-ares/hermes-runtime`: separate hidden conversation and
+unattached viewer refused, intake observed without approval/ack, stale form
+refused, exact native consent and delivery receipts recorded, expired replay
+refused, and exactly one fixture launch after verified approval. This proves
+native mechanics, **not a real human approval or production rollout**.

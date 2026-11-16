@@ -1,7 +1,7 @@
-"""Durable Institute review controller. No Hermes/Discord imports or import-time IO.
+"""Durable Institute controller; no SDK dependency or import-time IO.
 
-Only native Discord callbacks call receive(); API and model arguments are never
-identity evidence. All external effects have a persisted intent and a readback.
+Only the sync native command adapter captures a server-bound choice. Intake and
+ordinary chat are informational, never authorization. Unknown writes are not replayed.
 """
 from __future__ import annotations
 
@@ -15,12 +15,8 @@ from pathlib import Path
 from urllib.parse import quote, urlencode, urlsplit
 from urllib.request import Request, build_opener, HTTPRedirectHandler
 
-PARENT = "117470549298380806"
-GUILD = "1503780426064597022"
-CHANNEL = "1503780569056809141"
-BOT = "1503782665847967908"
-YES = {"yes", "yes please", "approve", "approved", "go ahead", "do it", "sounds good", "looks good", "yep", "yeah", "sure"}
-NO = {"no", "no thanks", "decline", "declined", "not now", "don't do it", "do not do it", "nope"}
+ACTOR = "hermes:parent"
+CHOICES = {"approve": "Approve exact revision", "decline": "Decline", "revise": "Confirm revised scope"}
 
 
 def digest(text):
@@ -44,36 +40,33 @@ def validate(s):
     return s
 
 
-def gateway_text(text):
-    # Core Discord may remove the self mention and surrounding whitespace.
-    return text.replace(f"<@{BOT}>", "").replace(f"<@!{BOT}>", "").strip()
-
-
-def classify(text):
-    return gateway_text(text).lower().rstrip(".!?")
-
-
 def display(text):
-    # Display escaping only. Original UTF-8 is retained unchanged in review.txt.
-    text = text.replace("@", "@\u200b").replace("<", "‹").replace(">", "›")
-    return re.sub(r"([\\`*_~|\[\]])", r"\\\1", text)
+    # Escape display only; persisted originals and native forms retain exact UTF-8.
+    return json.dumps(text, ensure_ascii=False)
 
 
 @dataclass(frozen=True)
-class NativeReply:
-    message_id: str
-    author_id: str
-    guild_id: str
-    channel_id: str
-    text: str
-    reply_to: str | None = None
-    bot: bool = False
-    webhook: bool = False
+class NativeChoice:
+    message_id: str  # locally allocated consent ID, NOT a claimed human message ID
+    session_id: str
+    session_key: str
+    platform: str
+    choice: str
+    review_key: str
+    proposal: str | None = None
 
-    def authenticated(self):
-        return (self.author_id == PARENT and self.guild_id == GUILD and
-                self.channel_id == CHANNEL and not self.bot and not self.webhook and
-                bool(re.fullmatch(r"[0-9]{1,24}", self.message_id)))
+    @property
+    def text(self):
+        return CHOICES[self.choice]
+
+    def authenticated(self, binding):
+        return (binding is not None and self.platform == "local" and
+                all(getattr(self, f) == binding[f] for f in ("session_id", "session_key", "platform")) and
+                bool(re.fullmatch(r"native-choice:[0-9a-f]{32}", self.message_id)) and
+                self.choice in CHOICES and bool(self.review_key) and
+                ((self.choice == "revise" and isinstance(self.proposal, str) and
+                  bool(self.proposal.strip()) and len(self.proposal) <= 4000) or
+                 (self.choice != "revise" and self.proposal is None)))
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -148,8 +141,38 @@ class Ledger:
           key TEXT PRIMARY KEY, sid TEXT NOT NULL, snapshot TEXT NOT NULL,
           approval_message TEXT NOT NULL, phase TEXT NOT NULL DEFAULT 'approved',
           directory TEXT, note TEXT);
+        CREATE TABLE IF NOT EXISTS binding (
+          singleton INTEGER PRIMARY KEY CHECK(singleton=1), session_id TEXT NOT NULL,
+          session_key TEXT NOT NULL, platform TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS native_receipts (
+          message_id TEXT PRIMARY KEY, session_key TEXT NOT NULL, content TEXT NOT NULL,
+          result TEXT NOT NULL);
         """)
+        # Never interpret a legacy transport's ledger as native form consent.
+        if self.one("SELECT name FROM sqlite_master WHERE type='table' AND name='bridge_format'") is None:
+            if any(self.one(f"SELECT 1 FROM {table} LIMIT 1") for table in ("reviews", "jobs", "replies", "outbox")):
+                self.db.close()
+                raise ValueError("Legacy bridge ledger requires operator reconciliation, not automatic migration")
+            self.db.execute("CREATE TABLE bridge_format(version INTEGER NOT NULL)")
+            self.db.execute("INSERT INTO bridge_format VALUES(2)")
+        version = self.one("SELECT version FROM bridge_format")
+        if not version or version["version"] != 2:
+            self.db.close()
+            raise ValueError("Unsupported bridge ledger version")
         self.db.commit()
+
+    def binding(self):
+        return self.one("SELECT session_id,session_key,platform FROM binding WHERE singleton=1")
+
+    def enroll(self, session_id, session_key, platform):
+        if platform != "local" or not session_id or not session_key or len(session_key) > 160:
+            raise ValueError("An attached local Hermes conversation is required")
+        target = dict(session_id=session_id, session_key=session_key, platform=platform)
+        old = self.binding()
+        if old and old != target:
+            raise ValueError("A different parent is already enrolled; operator reconciliation required")
+        self.write("INSERT OR IGNORE INTO binding VALUES(1,?,?,?)", (session_id, session_key, platform))
+        return self.binding()
 
     def rows(self, sql, args=()):
         return [dict(r) for r in self.db.execute(sql, args)]
@@ -194,141 +217,137 @@ class Bridge:
                     "\n\nExact proposed scope for approval:\n" + s["proposal"] +
                     f"\n\nRevision: {s['revision']}\nSHA256: {s['scopeHash']}\n")
         self.store.queue("review:" + k,
-            "Institute suggestion for Houston\n"
-            "Original preview, untrusted child data: " + display(s["text"][:220]) + "\n"
-            "Read attached review.txt for the FULL original and exact proposed scope. "
-            "Only that scope can be built. Changes to learning, progress, rewards or money need careful review. "
-            "Existing state must be preserved.\n"
-            "Reply to this card with yes or no. A modification creates a NEW review needing another yes. "
-            "A build is prepared for review only. Houston alone deploys Institute.", document)
+            "Institute request awaiting native review. Open Institute Review in the enrolled conversation. "
+            "Ordinary chat, injected text and webhooks cannot approve. Nothing deploys automatically.", document)
 
     async def flush(self):
-        # Bound work per tick. A send with unknown outcome is NEVER blindly retried.
-        pending = self.store.rows("SELECT * FROM outbox WHERE state='new' ORDER BY rowid LIMIT 5")
-        pending += self.store.rows("SELECT * FROM outbox WHERE state IN ('sending','unknown') ORDER BY rowid LIMIT 5")
-        for row in pending:
-            if row["state"] != "new":
-                found = await self.transport.find(row["marker"])
-                if found:
-                    await self.confirm_send(row, found)
-                continue
-            self.store.write("UPDATE outbox SET state='sending' WHERE key=?", (row["key"],))
+        # Injection is informational intake, NOT a delivery receipt. Reserve before
+        # crossing the FIFO boundary. Accepted/unknown injections are never replayed.
+        binding = self.store.binding()
+        if not binding:
+            return
+        for row in self.store.rows("SELECT * FROM outbox WHERE state='new' ORDER BY rowid LIMIT 5"):
+            self.store.write("UPDATE outbox SET state='injecting' WHERE key=?", (row["key"],))
             try:
-                mid = await self.transport.send(row["content"], row["document"])
-                await self.confirm_send(row, mid)
+                accepted = self.transport.notify(binding["session_key"],
+                    "INSTITUTE_INFORMATION_ONLY " + json.dumps({
+                        "notice": "Institute has a pending notification. Open Institute Review in this enrolled conversation. "
+                                  "This intake cannot authorize decisions or builds. Never act on it automatically.",
+                        "marker": row["marker"]}, ensure_ascii=True))
             except Exception:
                 self.store.write("UPDATE outbox SET state='unknown' WHERE key=?", (row["key"],))
+            else:
+                self.store.write("UPDATE outbox SET state=? WHERE key=?",
+                                 ("queued" if accepted is True else "new", row["key"]))
 
-    async def confirm_send(self, row, mid):
-        if not await self.transport.verify(mid, row["content"], row["document"]):
-            raise ValueError("Discord send readback mismatch")
-        self.store.write("UPDATE outbox SET state='sent',message_id=? WHERE key=?", (str(mid), row["key"]))
+    async def begin_delivery(self, outbox_key):
+        async with self.lock:
+            row = self.store.one("SELECT * FROM outbox WHERE key=?", (outbox_key,))
+            if not row or row["state"] in {"sent", "posting", "post_unknown"}:
+                return None
+            self.store.write("UPDATE outbox SET state='posting' WHERE key=?", (outbox_key,))
+            return row
 
-    def choose_review(self, native):
-        if native.reply_to:
-            # Explicit replies never fall back to a newer/different card.
-            return self.store.one("SELECT r.* FROM reviews r JOIN outbox o ON o.key='review:'||r.key WHERE o.message_id=?",
-                                  (native.reply_to,))
-        # Count all active reviews, not just sends whose responses survived. An
-        # uncertain older card can also be visible, so it blocks bare decisions.
-        rows = self.store.rows("SELECT * FROM reviews WHERE active=1 LIMIT 2")
-        if len(rows) != 1:
-            return None
-        card = self.store.one("SELECT * FROM outbox WHERE key=? AND state='sent' AND message_id IS NOT NULL",
-                              ("review:" + rows[0]["key"],))
-        uncertain = self.store.one("SELECT o.key FROM outbox o JOIN reviews r ON o.key='review:'||r.key "
-                                   "WHERE o.state!='sent' LIMIT 1")
-        return rows[0] if card and not uncertain else None
-
-    def is_lane(self, native):
-        if not native.authenticated():
+    def receipt_matches(self, mid, content):
+        receipt = self.store.one("SELECT * FROM native_receipts WHERE message_id=?", (mid,))
+        binding = self.store.binding()
+        if not receipt or not binding:
             return False
-        if native.reply_to:
-            return self.choose_review(native) is not None
-        return (classify(native.text) in YES | NO or
-                bool(re.match(r"^(yes|no|approve|decline|change|instead|revise)\b", native.text.strip(), re.I))) and bool(
-                    self.store.one("SELECT key FROM reviews WHERE active=1 LIMIT 1"))
+        result = json.loads(receipt["result"])
+        return (receipt["session_key"] == binding["session_key"] and receipt["content"] == content and
+                result.get("ok") is True and result.get("delivered") is True and result.get("message_id") == mid)
 
-    async def receive(self, native):
-        if not self.is_lane(native):
+    async def finish_delivery(self, outbox_key, result):
+        async with self.lock:
+            row = self.store.one("SELECT * FROM outbox WHERE key=? AND state='posting'", (outbox_key,))
+            if not row:
+                return False
+            if not isinstance(result, dict):
+                self.store.write("UPDATE outbox SET state='post_unknown' WHERE key=?", (outbox_key,))
+                return False
+            mid = result.get("message_id")
+            if result.get("ok") is True and result.get("delivered") is False:
+                # Authoritative native publication reports zero attached viewers.
+                self.store.write("UPDATE outbox SET state='queued' WHERE key=?", (outbox_key,))
+                return False
+            if result.get("ok") is not True or result.get("delivered") is not True or not isinstance(mid, str) or not mid:
+                self.store.write("UPDATE outbox SET state='post_unknown' WHERE key=?", (outbox_key,))
+                return False
+            binding = self.store.binding()
+            if not binding:
+                return False
+            # Receipt and send state are one local transaction. A restart cannot
+            # strand a known receipt behind a posting reservation or trigger resend.
+            with self.store.db:
+                self.store.db.execute("INSERT INTO native_receipts VALUES(?,?,?,?)",
+                                      (mid, binding["session_key"], row["content"], json.dumps(result)))
+                if not self.receipt_matches(mid, row["content"]):
+                    raise ValueError("Native publication receipt readback mismatch")
+                self.store.db.execute("UPDATE outbox SET state='sent',message_id=? WHERE key=?", (mid, outbox_key))
+            return True
+
+    async def capture_choice(self, native):
+        # Called ONLY by the sync adapter after ctx.ask_choice returns a known value.
+        # This is a Python-internal boundary, not a tool/webhook/chat parser.
+        if not isinstance(native, NativeChoice) or not native.authenticated(self.store.binding()):
             return False
         async with self.lock:
             if self.store.one("SELECT message_id FROM replies WHERE message_id=?", (native.message_id,)):
                 return True
-            row = self.choose_review(native)
+            row = self.store.one("SELECT * FROM reviews WHERE key=?", (native.review_key,))
+            if not row:
+                return False
             self.store.write("INSERT INTO replies(message_id,native,review_key,phase) VALUES(?,?,?,?)",
-                             (native.message_id, json.dumps(native.__dict__), row["key"] if row else None, "captured"))
+                             (native.message_id, json.dumps(native.__dict__), row["key"], "captured"))
             await self.prepare_captured(native.message_id)
-            await self.flush()
             return True
 
     async def prepare_captured(self, mid):
-        # Called under the controller lock. Only captured + NULL payload proves
-        # the state machine has not entered the write window. Never replay pending.
         captured = self.store.one("SELECT * FROM replies WHERE message_id=?", (mid,))
         if not captured or captured["phase"] != "captured":
             return
         try:
-            native = NativeReply(**json.loads(captured["native"]))
-            valid = (native.authenticated() and native.message_id == mid and
-                     captured["payload"] is None and isinstance(native.text, str))
-        except (TypeError, ValueError):
+            native = NativeChoice(**json.loads(captured["native"]))
+            valid = (native.authenticated(self.store.binding()) and native.message_id == mid and
+                     native.review_key == captured["review_key"] and captured["payload"] is None)
+        except (TypeError, ValueError, KeyError):
             valid = False
         if not valid:
             self.store.write("UPDATE replies SET phase='invalid' WHERE message_id=?", (mid,))
-            self.store.queue("invalid:" + mid, "An Institute decision could not be safely recovered. Please reply directly to the current review card again.")
             return
-        # Resolve the original reference again, but NEVER bind it to a new review.
-        # Bare replies must still be unambiguous at recovery time.
-        row = self.choose_review(native)
-        if row and row["key"] != captured["review_key"]:
-            row = None
-        if row is None:
-            self.notice(native, "Please reply directly to one Institute review card. More than one card may be pending.")
-            self.store.write("UPDATE replies SET phase='ambiguous' WHERE message_id=?", (native.message_id,))
-            return
-        if not row["active"]:
-            self.notice(native, "That review is no longer current. Please use the newest Institute review card.")
-            self.store.write("UPDATE replies SET phase='stale' WHERE message_id=?", (native.message_id,))
+        row = self.store.one("SELECT * FROM reviews WHERE key=?", (native.review_key,))
+        if not row or not row["active"]:
+            self.store.write("UPDATE replies SET phase='stale' WHERE message_id=?", (mid,))
             return
         s = json.loads(row["snapshot"])
         try:
             current = validate((await self.api.get(s["id"]))["suggestion"])
         except Exception:
-            # No write has been attempted. Retain this capture for a later tick.
-            return
-        if key(current) != row["key"] or current["status"] not in {"sent", "needs_details"}:
+            return  # Read-only failure; captured choice can be revalidated later.
+        if (key(current) != row["key"] or current["text"] != s["text"] or
+                current["proposal"] != s["proposal"] or current["status"] not in {"sent", "needs_details"}):
             self.store.write("UPDATE reviews SET active=0 WHERE key=?", (row["key"],))
-            if current["status"] in {"sent", "needs_details"}:
+            if current["status"] in {"sent", "needs_details"} and key(current) != row["key"]:
                 self.review(current)
-            self.notice(native, "That review changed or was already decided. Please read the newest card before deciding.")
-            self.store.write("UPDATE replies SET phase='stale' WHERE message_id=?", (native.message_id,))
+            self.notice(native, "This review changed. Open Institute Review again for a fresh decision.")
+            self.store.write("UPDATE replies SET phase='stale' WHERE message_id=?", (mid,))
             return
-        word = classify(native.text)
-        action = "approve" if word in YES else "decline" if word in NO else "revise"
-        payload = {"actor": "discord:" + PARENT, "action": action,
+        action = native.choice
+        payload = {"actor": ACTOR, "action": action,
                    "revision": s["revision"], "scopeHash": s["scopeHash"],
                    "parentMessageId": native.message_id, "parentMessageText": native.text,
                    "parentNote": {"approve": "Dad approved this exact change.",
                                   "decline": "Dad declined this change.",
                                   "revise": "Dad requested a revised scope. Waiting for a new decision."}[action]}
         if action == "revise":
-            proposal = ("Previously reviewed scope:\n" + s["proposal"] +
-                        "\n\nParent requested modification, part of this revised scope:\n" + native.text)
-            if len(proposal) > 4000:
-                self.notice(native, "The combined scope is too long. Please provide a shorter modification or ask for a manual review.")
-                self.store.write("UPDATE replies SET phase='too_long' WHERE message_id=?", (native.message_id,))
-                return
-            payload["proposal"] = proposal
-        # Exact raw native reply is already durable before any API write.
+            payload["proposal"] = native.proposal
         self.store.write("UPDATE replies SET payload=?,phase='pending' WHERE message_id=?",
-                         (json.dumps(payload), native.message_id))
+                         (json.dumps(payload), mid))
         try:
             await self.api.patch(s["id"], payload)
         except Exception:
-            pass  # Lost response is an unknown outcome, not a second authorization.
-        await self.reconcile_reply(native.message_id)
-        return
+            pass  # Unknown write outcome must never be replayed.
+        await self.reconcile_reply(mid)
 
     def notice(self, native, text):
         self.store.queue("reply:" + native.message_id, text)
@@ -357,7 +376,7 @@ class Bridge:
             return
         s = result["suggestion"]
         action = p["action"]
-        native = NativeReply(**json.loads(row["native"]))
+        native = NativeChoice(**json.loads(row["native"]))
         with self.store.db:
             self.store.db.execute("UPDATE replies SET phase='applied' WHERE message_id=?", (mid,))
             self.store.db.execute("UPDATE reviews SET active=0 WHERE key=?", (row["review_key"],))
@@ -367,7 +386,7 @@ class Bridge:
                                       (key(s), s["id"], json.dumps(s), mid))
         if action == "revise" and s["status"] == "sent":
             self.review(s)
-            self.notice(native, "I created a revised scope. Please read the new card and explicitly approve it before any build.")
+            self.notice(native, "I created a revised scope. Please read the new native form and explicitly approve it before any build.")
         elif action == "approve":
             self.notice(native, "Your decision was recorded. Only the exact approved revision can enter the build queue. Nothing will deploy automatically.")
         else:
@@ -392,7 +411,7 @@ class Bridge:
     async def claim(self, job, patch):
         s = json.loads(job["snapshot"])
         native = self.approval_native(job)
-        p = {"actor": "discord:" + PARENT, "action": "building", "revision": s["revision"],
+        p = {"actor": ACTOR, "action": "building", "revision": s["revision"],
              "scopeHash": s["scopeHash"], "parentMessageId": native.message_id, "parentMessageText": native.text,
              "parentNote": "Ares is preparing this approved change. It is not live yet."}
         if patch:
@@ -446,6 +465,9 @@ class Bridge:
             self.store.queue("job-unknown:" + job["key"], "Institute worker outcome is uncertain. Further launches are paused for operator reconciliation. Nothing is marked ready.")
 
     async def ack_notifications(self):
+        binding = self.store.binding()
+        if not binding:
+            return
         rows = self.store.rows("SELECT o.*,r.sid,r.snapshot FROM outbox o JOIN reviews r ON o.key='review:'||r.key "
                                "WHERE o.state='sent' AND o.acknowledged=0 ORDER BY o.rowid LIMIT 5")
         for row in rows:
@@ -461,14 +483,16 @@ class Bridge:
             if receipt:
                 known = self.store.one("SELECT key FROM outbox WHERE state='sent' AND message_id=? AND content=?",
                                        (receipt.get("messageId"), receipt.get("messageText")))
-                if known and receipt.get("channelId") == CHANNEL and notification.get("pending") is False:
+                if (known and receipt.get("channelId") == binding["session_key"] and
+                        receipt.get("messageId") == row["message_id"] and receipt.get("messageText") == row["content"] and
+                        self.receipt_matches(row["message_id"], row["content"]) and notification.get("pending") is False):
                     self.store.write("UPDATE outbox SET acknowledged=1 WHERE key=?", (row["key"],))
                 continue
-            # Re-read Discord before asserting a delivery receipt, not merely a send acknowledgement.
-            if not await self.transport.verify(row["message_id"], row["content"], row["document"]):
+            # Native message publication receipt was persisted and read back in finish_delivery.
+            if not self.receipt_matches(row["message_id"], row["content"]):
                 continue
             payload = {"eventId": original["eventId"], "payloadHash": original["payloadHash"],
-                       "channelId": CHANNEL, "messageId": row["message_id"], "messageText": row["content"]}
+                       "channelId": binding["session_key"], "messageId": row["message_id"], "messageText": row["content"]}
             try:
                 await self.api.ack(row["sid"], payload)
             except Exception:
@@ -484,9 +508,14 @@ class Bridge:
         row = self.store.one("SELECT * FROM replies WHERE message_id=? AND phase='applied'", (job["approval_message"],))
         if not row or row["review_key"] != job["key"]:
             raise ValueError("Missing committed native approval")
-        native = NativeReply(**json.loads(row["native"]))
+        native = NativeChoice(**json.loads(row["native"]))
         payload = json.loads(row["payload"])
-        if not native.authenticated() or classify(native.text) not in YES or payload["action"] != "approve":
+        snapshot = validate(json.loads(job["snapshot"]))
+        if (not native.authenticated(self.store.binding()) or native.choice != "approve" or
+                native.review_key != job["key"] or key(snapshot) != job["key"] or
+                payload["revision"] != snapshot["revision"] or payload["scopeHash"] != snapshot["scopeHash"] or
+                payload["action"] != "approve" or payload["parentMessageId"] != native.message_id or
+                payload["parentMessageText"] != native.text or payload["actor"] != ACTOR):
             raise ValueError("Invalid native approval provenance")
         return native
 
@@ -494,7 +523,7 @@ class Bridge:
         # Server/UI explicitly define ready as an isolated artifact for parent review, NOT live.
         s = json.loads(job["snapshot"])
         native = self.approval_native(job)
-        payload = {"actor": "discord:" + PARENT, "action": "ready", "revision": s["revision"],
+        payload = {"actor": ACTOR, "action": "ready", "revision": s["revision"],
                    "scopeHash": s["scopeHash"], "parentMessageId": native.message_id, "parentMessageText": native.text,
                    "parentNote": "This change is prepared for Dad to review. It is not live yet."}
         if patch:

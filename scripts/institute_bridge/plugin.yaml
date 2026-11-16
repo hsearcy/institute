@@ -1,5 +1,3 @@
 name: institute-bridge
-version: 0.1.0
-description: Native Discord parent review and isolated Institute build preparation
-provides_hooks:
-  - post_gateway_admission
+version: 0.2.0
+description: Hermes Herald native parent review forms and isolated Institute build preparation

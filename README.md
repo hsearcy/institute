@@ -63,7 +63,7 @@ Browser tests start an offline tutor with a fresh temporary SQLite database. Ins
 
 From camp or the pause menu, choose **Suggest a change**. Record up to 60 seconds, stop and preview the recording, then explicitly transcribe it. Check or edit the words before choosing **Send to Ares**. Typing always works, even when microphone permissions or transcription are unavailable. The panel keeps an unsent text draft and shows saved requests with a manual status refresh.
 
-The optional native [Institute parent bridge](scripts/institute_bridge/README.md) sends review cards to Houston's existing Discord channel. Reply to the specific card with yes or no. Changes to the proposed scope require a new approval. Approved work is prepared and tested in an isolated checkout, never automatically deployed. The bridge source is **not installed or enabled by adding this app feature**; its README documents the separately activated server secret, plugin settings and gateway lifecycle.
+The optional native [Institute parent bridge](scripts/institute_bridge/README.md) delivers requests in an enrolled Hermes/Herald conversation. Approve, decline or revise through a native review form displaying the exact scope and revision. Ordinary chat text, injected messages and model-supplied decisions do not grant approval. Changes to the proposed scope require a new approval. Approved work is prepared and tested in an isolated checkout, never automatically deployed. The bridge source is **not installed or enabled by adding this app feature**; its README documents the separately activated server secret, plugin settings and gateway lifecycle.
 
 Browser microphone recording requires HTTPS or localhost. The existing plain HTTP Tailnet app URL supports typing but not recording. When Houston activates HTTPS on a separate **Tailnet-only** Serve port, set `INSTITUTE_SUGGESTIONS_PUBLIC_ORIGIN` to that exact HTTPS origin. Preserve existing Serve/Funnel roots and never expose the internal review API or its bearer token publicly. Do not put any suggestion secret in `VITE_` settings.
 
@@ -85,11 +85,11 @@ Public POSTs accept only the request origin, or the exact configured `INSTITUTE_
 
 Every `/rpg/suggestions/internal...` request requires `Authorization: Bearer <INSTITUTE_SUGGESTIONS_ADMIN_TOKEN>`. This is a separate server-side secret, compared in constant time. Missing configuration fails closed (`503`), bad credentials return `401`. Never place it in web assets or a `VITE_` variable. Internal requests share a bounded 120/minute per-process budget.
 
-The trusted integration must authenticate the actual parent author before calling PATCH, then pass that exact allowlisted actor in `actor`. Set `INSTITUTE_SUGGESTIONS_PARENT_ACTORS` to comma-separated exact parent actor strings, including the bridge's `discord:` prefix. Notification payloads, child suggestions, webhook events, model-generated text and an MCP acknowledgement are **not** approval. The Institute Discord bridge independently verifies the configured author, guild and channel before sending a parent decision.
+The trusted integration must authenticate the actual parent author before calling PATCH, then pass that exact allowlisted actor in `actor`. Set `INSTITUTE_SUGGESTIONS_PARENT_ACTORS` to comma-separated exact trusted parent actor strings. The native Hermes bridge uses `hermes:parent`; the bridge separately restricts the enrolled local conversation and obtains consent from its native choice form. Notification payloads, child suggestions, webhook events, model-generated text and an MCP acknowledgement are **not** approval. The Institute Hermes bridge checks the enrolled session and current scope before committing a native-form decision. The native response is protected by Hermes's attached-viewer capability boundary, not an attestation of a physical human click; an attached caller holding equivalent credentials can also answer.
 
 * `GET /rpg/suggestions/internal?notificationPending=true` returns `{suggestions, nextCursor}`. Optional filters: `profileId`, `status`, `notificationPending=true|false`, `before=<nextCursor>`. Newest first, at most 50 per page; follow `nextCursor` until null. Unknown query fields return `400`.
-* `GET /rpg/suggestions/internal/:id` returns `{suggestion, audit, auditTruncated}` or `404`. Audit contains the last 100 entries in chronological order; all entries remain stored in SQLite. Each transition includes actor, action, old/new status, exact reviewed proposal, revision/hash, parent note, original `parentMessageId` and raw `parentMessageText`, and timestamp.
-* Internal `suggestion` adds `{requestId, proposal, revision, scopeHash, approvedRevision, approvedScopeHash, notification}` to the public fields. `notification` is `{eventId, payloadHash, attempts, pending, deliveredAt, receipt}`. `receipt` is null until Discord acknowledgement, then `{channelId,messageId,messageText,createdAt}`. Pending events are available even if webhook transport is not configured.
+* `GET /rpg/suggestions/internal/:id` returns `{suggestion, audit, auditTruncated}` or `404`. Audit contains the last 100 entries in chronological order; all entries remain stored in SQLite. Each transition includes actor, action, old/new status, exact reviewed proposal, revision/hash, parent note, original `parentMessageId` and `parentMessageText` (the selected label for native-form consent, not an invented typed reply), and timestamp.
+* Internal `suggestion` adds `{requestId, proposal, revision, scopeHash, approvedRevision, approvedScopeHash, notification}` to the public fields. `notification` is `{eventId, payloadHash, attempts, pending, deliveredAt, receipt}`. `receipt` is null until native notification acknowledgement, then `{channelId,messageId,messageText,createdAt}`. Pending events are available even if webhook transport is not configured.
 
 All decisions and status transitions use **one** endpoint, `PATCH /rpg/suggestions/internal/:id`, with strict JSON:
 
@@ -109,7 +109,7 @@ All decisions and status transitions use **one** endpoint, `PATCH /rpg/suggestio
 
 | action | allowed current status | effect |
 | --- | --- | --- |
-| `revise` | sent, needs_details, declined, approved | Require additional `proposal` string (trimmed 1..4000); increment revision; replace reviewed scope/hash; clear approval; return to sent. Original `text` stays unchanged. Note is cleared unless supplied. |
+| `revise` | sent, needs_details, declined, approved | Require additional nonblank `proposal` string (1..4000 characters, exact whitespace retained); increment revision; replace reviewed scope/hash; clear approval; return to sent. Original `text` stays unchanged. Note is cleared unless supplied. |
 | `approve` | sent, needs_details | Bind approval to this exact revision/hash; status approved. |
 | `decline` | sent, needs_details, approved | Clear approval; status declined. |
 | `needs_details` | sent, approved | Clear approval; status needs_details. |
@@ -120,7 +120,7 @@ All decisions and status transitions use **one** endpoint, `PATCH /rpg/suggestio
 
 ### Poll bridge delivery acknowledgement
 
-Polling is sufficient; webhook configuration is optional. After sending the suggestion notification to the intended Discord channel **and reading back that exact message**, the trusted bridge calls:
+Polling is sufficient; webhook configuration is optional. After presenting the exact notification in the enrolled parent conversation **and verifying its native receipt**, the trusted bridge calls:
 
 `POST /rpg/suggestions/internal/:id/notification-ack`
 
@@ -130,11 +130,11 @@ Polling is sufficient; webhook configuration is optional. After sending the sugg
   "payloadHash": "64-lowercase-hex-characters-from-notification",
   "channelId": "actual-notification-channel-id",
   "messageId": "verified-notification-message-id",
-  "messageText": "The exact notification read back from Discord"
+  "messageText": "The exact notification represented by the verified native receipt"
 }
 ```
 
-The bearer authenticates this assertion from the bridge, not from the child or Discord webhook input. The backend cannot independently query Discord; the bridge must verify readback before calling. Event ID must belong to the exact suggestion and payload hash must match the queued event (`409` otherwise). First acknowledgement atomically stores the receipt and marks delivery complete, without changing suggestion status or granting approval. Success is `200 {suggestion, duplicate:false}`; an exact repeated receipt returns `duplicate:true`; a different receipt for the same event returns `409`. Read the exact detail back and verify the receipt before claiming success. The route does not require a parent actor because notification delivery is not a parent decision.
+The bearer authenticates this assertion from the bridge, not from the child, an injected message or a webhook payload. The backend cannot independently inspect Hermes's delivery surface; the bridge must verify the exact native receipt before calling. Injection acceptance alone is not a delivery receipt. Event ID must belong to the exact suggestion and payload hash must match the queued event (`409` otherwise). First acknowledgement atomically stores the receipt and marks delivery complete, without changing suggestion status or granting approval. Success is `200 {suggestion, duplicate:false}`; an exact repeated receipt returns `duplicate:true`; a different receipt for the same event returns `409`. Read the exact detail back and verify the receipt before claiming success. The route does not require a parent actor because notification delivery is not a parent decision.
 
 ### Optional webhook outbox worker
 

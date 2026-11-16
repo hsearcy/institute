@@ -43,7 +43,7 @@ const decisionSchema = z.object({
   action: z.enum(['revise', 'approve', 'decline', 'needs_details', 'building', 'ready']),
   revision: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   scopeHash: z.string().regex(/^[a-f0-9]{64}$/),
-  proposal: z.string().trim().min(1).max(4000).optional(),
+  proposal: z.string().min(1).max(4000).refine(s => !!s.trim()).optional(),
   parentNote: z.string().trim().max(1000).optional(),
 }).strict();
 const hash = (text: string) => createHash('sha256').update(text).digest('hex');

@@ -122,6 +122,18 @@ describe('authenticated parent scope and state machine', () => {
     expect(count(db, 'institute_suggestion_audit')).toBe(7);
     expect(result.audit.slice(1).every((a: any) => a.actor === parent && a.parentMessageId.startsWith('parent-message-') && a.parentMessageText === '  Please use this exact reviewed scope.  ')).toBe(true);
   });
+  test('reviewed replacement scope retains exact whitespace and UTF-8 hash', async () => {
+    const { app } = fixture(adminConfig); const s = await add(app);
+    const proposal = '  Add a small dragon.\nKeep its blue wings.  ';
+    const response = await edit(app, s.id, 'revise', { proposal });
+    expect(response.status).toBe(200);
+    const changed = (await response.json()).suggestion;
+    expect(changed.proposal).toBe(proposal);
+    expect(changed.scopeHash).toBe(new Bun.CryptoHasher('sha256').update(proposal).digest('hex'));
+    const audit = await (await detail(app, s.id)).json();
+    expect(audit.audit.at(-1).proposal).toBe(proposal);
+    expect((await edit(app, s.id, 'revise', { proposal: '   ' })).status).toBe(400);
+  });
   test('a parent message cannot be replayed to approve a later scope or rewritten in audit', async () => {
     const { app } = fixture(adminConfig); const s = await add(app);
     expect((await edit(app, s.id, 'approve', { parentMessageId: 'first-parent-approval', parentMessageText: 'Yes' })).status).toBe(200);

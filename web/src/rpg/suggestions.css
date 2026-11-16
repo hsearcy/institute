@@ -1,0 +1,24 @@
+.rpg-suggestions { text-align: left; }
+.rpg-suggestions > h2, .rpg-suggestions > .rpg-eyebrow { text-align: center; }
+.rpg-suggestions textarea { display: block; box-sizing: border-box; width: 100%; resize: vertical; min-height: 6rem; margin: .6rem 0; padding: .85rem; border: 1px solid #817052; border-radius: .65rem; background: #10171b; color: #f4ebd8; font: inherit; line-height: 1.5; }
+.rpg-suggestions textarea:focus-visible, .rpg-suggestions button:focus-visible { outline: 3px solid #e7bd68; outline-offset: 3px; }
+.rpg-suggestions label { display: block; color: #f1dfb5; font-weight: 700; }
+.rpg-suggestions p { line-height: 1.55; }
+.rpg-suggestion-voice { margin: 1.2rem 0; padding: 1rem; border: 1px solid #64563c; border-radius: .8rem; background: #cbaa6010; }
+.rpg-suggestion-voice > p:first-child { margin-top: 0; }
+.rpg-suggestion-voice .rpg-button-row { flex-wrap: wrap; }
+.rpg-suggestions .rpg-suggestion-privacy, .rpg-suggestion-draft-meta, .rpg-suggestion-history small { font-size: .8rem; color: #b9b3a5; }
+.rpg-suggestion-draft-meta, .rpg-suggestion-history-heading { display: flex; justify-content: space-between; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.rpg-suggestion-draft-meta { align-items: start; }
+.rpg-suggestions [data-suggestion-notice] { min-height: 1.5em; color: #f0d795; overflow-wrap: anywhere; }
+.rpg-suggestions audio { width: 100%; margin-top: .8rem; }
+.rpg-suggestion-history { margin-top: 1.7rem; border-top: 1px solid #5c503b; padding-top: 1rem; }
+.rpg-suggestion-history h3 { margin: .4rem 0; }
+.rpg-suggestion-history ol { list-style: none; padding: 0; margin: .8rem 0 0; }
+.rpg-suggestion-history li { padding: 1rem 0; border-top: 1px solid #cbaa6029; }
+.rpg-suggestion-history time { color: #b9b3a5; font-size: .8rem; }
+.rpg-suggestion-words, .rpg-suggestion-parent-note { white-space: pre-wrap; overflow-wrap: anywhere; }
+.rpg-suggestion-history strong { color: #e7ca8d; }
+.rpg-suggestion-parent-note { border-left: 2px solid #9e8150; padding-left: .7rem; }
+.rpg-suggestions [hidden] { display: none !important; }
+@media (max-width: 520px) { .rpg-suggestion-voice { padding: .75rem; } .rpg-suggestions .rpg-button-row > button { flex: 1 1 10rem; } }

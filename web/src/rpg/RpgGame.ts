@@ -56,6 +56,7 @@ import { HELP_GUARD_MS, HelpGuard } from './helpGuard';
 import './loot-pickups.css';
 import { WardHud, WARD_HTML, showGearLabel } from './wardHud';
 import { closeLeadsToCamp } from './dialogClose';
+import { SuggestionPanel } from './SuggestionPanel';
 import { rpgGearRunSpeed, rpgEquippedGear } from '@institute/shared';
 
 type Session = {
@@ -110,6 +111,9 @@ export class RpgGame {
   private playing = false;
   private muted = false;
   private panel = '';
+  private suggestions: SuggestionPanel | null = null;
+  private suggestionOrigin: 'camp' | 'pause' = 'camp';
+  private suggestionInert = new Map<HTMLElement, boolean>();
   private panelResolve: (() => void) | null = null;
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
   private gearSheet = new GearSheet({
@@ -456,7 +460,7 @@ export class RpgGame {
     this.stopClock(); this.saveSession(); this.playing = false; this.el('rpg-controls').hidden = true; this.root.classList.remove('rpg-combat');
     const resume = s.expedition && !s.expedition.cleared;
     if (resume) this.setEncounter();
-    this.showDialog('camp', `<div class="rpg-seal">${icon('sword')}</div><p class="rpg-eyebrow">INSTITUTE PRESENTS</p><h2 id="rpg-dialog-title" class="rpg-title">The Sunken<br><em>Vault</em></h2><p class="rpg-camp-story">Ancient halls. Hidden relics.<br>A little magic goes a long way.</p><div class="rpg-camp-stats"><span>LEVEL <b>${s.level}</b></span><span>RELICS <b>${s.inventory.length}</b></span><span>GUARDIANS <b>${s.expeditionsCompleted}</b></span></div>${s.totalKills === 0 ? `<div class="rpg-starter-spells" aria-label="Your starting sword attack">${(['cleave'] as RpgSpellId[]).map(id => `<button data-spell="${id}" aria-pressed="${s.selectedSpellId === id}" class="${s.selectedSpellId === id ? 'selected' : ''}">${spellArt(id)}<span>${RPG_SPELLS.find(spell => spell.id === id)!.name}</span></button>`).join('')}</div>` : ''}${s.goal ? renderPinnedGoal(s, this.campState) : this.spellGoalCard() ? `<button class="rpg-goal-card" data-action="spell-goal">${this.spellGoalCard()}</button>` : ''}<button class="rpg-primary rpg-large" data-action="begin">${resume ? 'Continue adventure' : 'Enter the dungeon'} <span>→</span></button><button class="rpg-text-button" data-action="map">Choose an expedition</button><button class="rpg-text-button" data-action="tutorial">${icon('help')} How to play · Story & tour</button><div class="rpg-camp-menu"><button data-action="quests">${icon('ring')} Quest board</button><button data-action="merchant">◆ Merchant${this.campState ? ` · ${this.campState.gems} gems` : ''}</button><button data-action="trader">✦ Wandering trader</button><button data-action="forge">${icon('forge')} Blacksmith</button><button data-action="spellbook">${icon('storm')} Spellbook</button><button data-action="skills">${icon('tree')} Skill trees${s.skillPoints ? ` · ${s.skillPoints} new` : ''}</button><button data-action="inventory">${icon('bag')} Equipment</button><button data-action="parent">Parent journal</button></div><p class="rpg-camp-note">Solve to unleash your spells. Take all the time you need.</p>`);
+    this.showDialog('camp', `<div class="rpg-seal">${icon('sword')}</div><p class="rpg-eyebrow">INSTITUTE PRESENTS</p><h2 id="rpg-dialog-title" class="rpg-title">The Sunken<br><em>Vault</em></h2><p class="rpg-camp-story">Ancient halls. Hidden relics.<br>A little magic goes a long way.</p><div class="rpg-camp-stats"><span>LEVEL <b>${s.level}</b></span><span>RELICS <b>${s.inventory.length}</b></span><span>GUARDIANS <b>${s.expeditionsCompleted}</b></span></div>${s.totalKills === 0 ? `<div class="rpg-starter-spells" aria-label="Your starting sword attack">${(['cleave'] as RpgSpellId[]).map(id => `<button data-spell="${id}" aria-pressed="${s.selectedSpellId === id}" class="${s.selectedSpellId === id ? 'selected' : ''}">${spellArt(id)}<span>${RPG_SPELLS.find(spell => spell.id === id)!.name}</span></button>`).join('')}</div>` : ''}${s.goal ? renderPinnedGoal(s, this.campState) : this.spellGoalCard() ? `<button class="rpg-goal-card" data-action="spell-goal">${this.spellGoalCard()}</button>` : ''}<button class="rpg-primary rpg-large" data-action="begin">${resume ? 'Continue adventure' : 'Enter the dungeon'} <span>→</span></button><button class="rpg-text-button" data-action="map">Choose an expedition</button><button class="rpg-text-button" data-action="tutorial">${icon('help')} How to play · Story & tour</button><div class="rpg-camp-menu"><button data-action="quests">${icon('ring')} Quest board</button><button data-action="merchant">◆ Merchant${this.campState ? ` · ${this.campState.gems} gems` : ''}</button><button data-action="trader">✦ Wandering trader</button><button data-action="forge">${icon('forge')} Blacksmith</button><button data-action="spellbook">${icon('storm')} Spellbook</button><button data-action="skills">${icon('tree')} Skill trees${s.skillPoints ? ` · ${s.skillPoints} new` : ''}</button><button data-action="inventory">${icon('bag')} Equipment</button><button data-action="parent">Parent journal</button><button data-action="suggestions">Suggest a change</button></div><p class="rpg-camp-note">Solve to unleash your spells. Take all the time you need.</p>`);
   }
   private async begin(regionId?: string, tier?: number): Promise<void> {
     if (!this.state || this.busy) return;
@@ -1227,7 +1231,24 @@ export class RpgGame {
   private showPause(): void {
     if (!this.state || this.busy) return;
     this.saveSession();
-    this.showDialog('pause', `<div class="rpg-seal">${icon('shield')}</div><p class="rpg-eyebrow">A MOMENT BY THE FIRE</p><h2 id="rpg-dialog-title">Adventure saved</h2><p>Your spells, treasures, and progress will be here.</p><div class="rpg-button-row"><button class="rpg-primary" data-action="close">Keep exploring</button><button data-action="camp">Save & leave</button></div><button class="rpg-text-button" data-action="tutorial">${icon('help')} How to play · Story & tour</button><button class="rpg-text-button" data-action="retreat">Leave dungeon & choose area or tier</button><button class="rpg-text-button" data-action="parent">Open parent journal</button>`);
+    this.showDialog('pause', `<div class="rpg-seal">${icon('shield')}</div><p class="rpg-eyebrow">A MOMENT BY THE FIRE</p><h2 id="rpg-dialog-title">Adventure saved</h2><p>Your spells, treasures, and progress will be here.</p><div class="rpg-button-row"><button class="rpg-primary" data-action="close">Keep exploring</button><button data-action="camp">Save & leave</button></div><button class="rpg-text-button" data-action="tutorial">${icon('help')} How to play · Story & tour</button><button class="rpg-text-button" data-action="retreat">Leave dungeon & choose area or tier</button><button class="rpg-text-button" data-action="suggestions">Suggest a change</button><button class="rpg-text-button" data-action="parent">Open parent journal</button>`);
+  }
+  private showSuggestions(): void {
+    this.suggestionOrigin = this.panel === 'pause' ? 'pause' : 'camp';
+    this.showDialog('suggestions', '<h2 id="rpg-dialog-title">Suggest a change</h2>', true);
+    // Preserve prior inert values so closing never enables an already-disabled UI.
+    for (const element of this.root.children) {
+      if (!(element instanceof HTMLElement) || element.id === 'rpg-overlay') continue;
+      this.suggestionInert.set(element, element.inert); element.inert = true;
+    }
+    this.suggestions = new SuggestionPanel(this.el('rpg-dialog-content'), API, PROFILE);
+    this.root.querySelector('.rpg-dialog')!.setAttribute('aria-describedby', 'rpg-suggestion-intro');
+  }
+  private disposeSuggestions(): void {
+    this.suggestions?.dispose(); this.suggestions = null;
+    for (const [element, inert] of this.suggestionInert) element.inert = inert;
+    this.suggestionInert.clear();
+    this.root.querySelector('.rpg-dialog')?.removeAttribute('aria-describedby');
   }
   private async showParent(): Promise<void> {
     this.showDialog('parent', '<h2 id="rpg-dialog-title">Learning journal</h2><p>Loading your existing learning progress…</p>', true);
@@ -1378,6 +1399,7 @@ export class RpgGame {
   }
 
   private showDialog(name: string, html: string, wide = false, preserveScroll = false): void {
+    this.disposeSuggestions();
     const content = this.el('rpg-dialog-content');
     const scrollTop = preserveScroll && this.panel === name ? content.scrollTop : 0;
     this.gearSheet.disposeViewer(name === 'inventory' && this.panel === 'inventory');
@@ -1392,6 +1414,12 @@ export class RpgGame {
     this.root.querySelector<HTMLElement>('.rpg-dialog')!.focus({ preventScroll: true });
   }
   private closeDialog(force = false): void {
+    if (this.panel === 'suggestions' && !force) {
+      this.suggestionOrigin === 'pause' ? this.showPause() : this.showCamp();
+      this.root.querySelector<HTMLButtonElement>('[data-action="suggestions"]')?.focus({ preventScroll: true });
+      return;
+    }
+    if (this.suggestions) this.disposeSuggestions();
     if (!force && ['demo','walkthrough','loading'].includes(this.panel)) return;
     if (!force && closeLeadsToCamp({ playing: this.playing, cleared: !!this.state?.expedition?.cleared, awaitingDescent: this.awaitingDescent })) { this.showCamp(); return; }
     this.gearSheet.disposeViewer();
@@ -1484,6 +1512,7 @@ export class RpgGame {
   private onClick = (event: MouseEvent): void => {
     if (this.tutorialState) return;
     void dungeonSound.unlock();
+    if (this.panel === 'suggestions' && event.target === this.el('rpg-overlay')) { this.closeDialog(); return; }
     const button = (event.target as Element).closest<HTMLButtonElement>('button');
     if (!button || button.disabled) return;
     dungeonSound.ui(button.dataset.spell ? 'select' : button.closest('nav') ? 'open' : 'click');
@@ -1583,6 +1612,7 @@ export class RpgGame {
       case 'quests': case 'merchant': case 'forge': case 'records': void this.showWorkshop(action); break;
       case 'trader': this.trader.reset(); this.trader.done = null; void this.showWorkshop('trader'); break;
       case 'pause': this.showPause(); break;
+      case 'suggestions': this.showSuggestions(); break;
       case 'retreat': this.confirmRetreat(); break;
       case 'confirm-retreat': void this.retreat(); break;
       case 'camp': this.showCamp(); break;
@@ -1614,7 +1644,7 @@ export class RpgGame {
     if (this.panel) {
       if (event.key === 'Escape') { event.preventDefault(); this.closeDialog(); }
       if (event.key === 'Tab') {
-        const focusable = [...this.el('rpg-overlay').querySelectorAll<HTMLElement>('button:not([disabled]):not([hidden]), a[href], input')].filter(el => el.getClientRects().length);
+        const focusable = [...this.el('rpg-overlay').querySelectorAll<HTMLElement>('button:not([disabled]):not([hidden]), a[href], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), audio[controls], [tabindex="0"]')].filter(el => el.getClientRects().length);
         const first = focusable[0], last = focusable.at(-1);
         if (event.shiftKey && (document.activeElement === first || !focusable.includes(document.activeElement as HTMLElement))) { event.preventDefault(); last?.focus(); }
         else if (!event.shiftKey && (document.activeElement === last || !focusable.includes(document.activeElement as HTMLElement))) { event.preventDefault(); first?.focus(); }
@@ -1635,6 +1665,7 @@ export class RpgGame {
     if (event.key === 'Enter') { event.preventDefault(); void this.submit(); }
   };
   dispose(): void {
+    this.disposeSuggestions();
     if (this.helpGuardTimer) clearTimeout(this.helpGuardTimer);
     this.gearSheet.disposeViewer(); this.tutorialNarrator.dispose(); this.tutorialOverlay?.destroy(); this.tutorialHost?.remove(); this.boonHud.dispose();
     this.stopClock(); this.saveSession(); this.disposed = true; this.abort.abort(); this.panelResolve?.();

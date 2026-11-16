@@ -1,0 +1,5 @@
+name: institute-bridge
+version: 0.1.0
+description: Native Discord parent review and isolated Institute build preparation
+provides_hooks:
+  - post_gateway_admission

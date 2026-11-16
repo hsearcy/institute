@@ -9,6 +9,7 @@ import { Hono, type Context } from "hono";
 import { ensureRpgSchema, createRpgRoutes } from "./rpg.ts";
 import { createRpgEconomyRoutes } from "./rpgEconomy.ts";
 import { createRpgTraderRoutes } from "./rpgTrader.ts";
+import { createSuggestionRoutes, startSuggestionDelivery } from "./suggestions.ts";
 import { cors } from "hono/cors";
 import { Database } from "bun:sqlite";
 import Anthropic from "@anthropic-ai/sdk";
@@ -878,7 +879,10 @@ function localBranches(profileId: string, current: Problem): { right: Problem; w
 
 // ---- App -------------------------------------------------------------------
 const app = new Hono();
-app.use("*", cors());
+const legacyCors = cors();
+// Suggestions deliberately have no broad CORS: browser writes are same-origin only.
+// Do not trust forwarded host/proto headers; the public HTTPS origin is configured explicitly.
+app.use("*", (c, next) => /^\/rpg\/suggestions(?:\/|$)/.test(c.req.path) ? next() : legacyCors(c, next));
 app.route("/rpg", createRpgRoutes(db, applyMiss, (profileId, reward) => {
   const state = getProfileState(profileId);
   state.crazy_coins += reward.bossCrazyCoins ?? 0;
@@ -888,6 +892,11 @@ app.route("/rpg", createRpgRoutes(db, applyMiss, (profileId, reward) => {
 }));
 app.route("/rpg", createRpgEconomyRoutes(db));
 app.route("/rpg", createRpgTraderRoutes(db));
+app.route("/rpg", createSuggestionRoutes(db));
+// No delivery during tests; an absent URL/secret leaves every event durably queued.
+if (process.env.NODE_ENV !== "test" && process.env.INSTITUTE_SUGGESTIONS_WEBHOOK_URL && process.env.INSTITUTE_SUGGESTIONS_WEBHOOK_SECRET) {
+  startSuggestionDelivery(db);
+}
 
 app.get("/health", (c) => c.json({ ok: true, model: TUTOR_MODEL, voice: ELEVEN_VOICE }));
 

@@ -223,4 +223,3 @@ test('an older in-flight history response cannot hide a newly confirmed saved id
   await expect(page.locator('[data-voice-help]')).toContainText('Voice transcription is resting');
   await expect(page.locator('[data-suggestion-history]')).toContainText(text);
 });
-

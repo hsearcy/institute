@@ -387,7 +387,6 @@ class Bridge:
             return
         job = self.store.one("SELECT * FROM jobs WHERE phase='approved' ORDER BY rowid LIMIT 1")
         if job:
-            self.store.write("UPDATE jobs SET phase='claiming' WHERE key=?", (job["key"],))
             await self.claim(job, patch=True)
 
     async def claim(self, job, patch):
@@ -402,6 +401,10 @@ class Bridge:
                     current.get("approvedRevision") != s["revision"] or current.get("approvedScopeHash") != s["scopeHash"]):
                 self.fail_job(job, "Approval changed before the build claim.")
                 return
+            # Under the controller lock: a read-only preclaim failure remains
+            # approved/retryable. Commit claiming only at the write boundary,
+            # with no intervening await; every unknown PATCH stays readback-only.
+            self.store.write("UPDATE jobs SET phase='claiming' WHERE key=?", (job["key"],))
             try:
                 await self.api.patch(s["id"], p)
             except Exception:

@@ -7,7 +7,7 @@ import logging
 import os
 from pathlib import Path
 
-from .bridge import BOT, CHANNEL, GUILD, PARENT, Bridge, InstituteAPI, Ledger, NativeReply, gateway_text
+from .bridge import BOT, CHANNEL, GUILD, PARENT, Bridge, InstituteAPI, Ledger, NativeReply
 from .worker import JobRunner
 
 LOG = logging.getLogger("institute_bridge")
@@ -154,9 +154,15 @@ def register(ctx):
         await asyncio.sleep(0)
         native = captured.get(str(message_id))
         source = source or {}
-        if (native and native.authenticated() and gateway_text(native.text) == gateway_text(text) and
-                str(source.get("user_id", "")) == PARENT and str(source.get("chat_id", "")) == CHANNEL and
-                str(source.get("scope_id", source.get("guild_id", ""))) == GUILD):
+        # Only the native listener can populate this lane capture. Core may prepend
+        # a replied-to review.txt (including untrusted child content) to event.text.
+        # Bind consumption by exact message/source identity, NEVER by that envelope.
+        if (native and native.authenticated() and native.message_id == str(message_id) and
+                str(source.get("user_id", "")) == native.author_id and
+                str(source.get("chat_id", "")) == native.channel_id and
+                str(source.get("scope_id", source.get("guild_id", ""))) == native.guild_id and
+                ("guild_id" not in source or str(source["guild_id"]) == native.guild_id) and
+                ("message_id" not in source or str(source["message_id"]) == native.message_id)):
             return {"action": "handled"}
         return None
 

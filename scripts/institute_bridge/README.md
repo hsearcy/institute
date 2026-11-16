@@ -23,7 +23,10 @@ Only Houston deploys the live Institute site at `ares:5002`.
   with bot/webhook authors rejected. The callback reads the exact native message
   back before recording a decision, since core Discord handling can strip the bot
   mention on the shared SDK object. Whitespace and optional self mentions are
-  normalized only for yes/no parsing and gateway consumption, never for audit.
+  normalized only for yes/no parsing, never for audit. Gateway consumption binds
+  the captured native message ID and exact author/guild/channel, not transformed
+  gateway text: core may prepend the replied-to review.txt and its child content.
+  Neither the envelope nor attachment content can authorize a decision.
   The outgoing bot must be
   `1503782665847967908`. Thread channels and DMs do not qualify.
 * Direct replies bind to the persisted review message. A plain affirmative or
@@ -197,6 +200,12 @@ payload and `pending` phase are committed together. A crash in or after that wri
 window therefore cannot replay the write. Invalid provenance requires a new reply;
 stale or newly ambiguous captures also require a fresh decision on a known card.
 
+A read-only preclaim GET leaves a job `approved`; a timeout or restart before any
+claim PATCH can therefore retry that GET and revalidate the current approval.
+Only immediately before the actual PATCH, under the controller lock, does the
+bridge persist `claiming`. From that write boundary onward it checks receipts
+without replaying the claim, even if no matching receipt is found.
+
 Decision, build-claim and ready write failures are reconciled by exact backend
 history, not replayed with fabricated consent. An unresolved decision never creates
 a job. A launch reservation is committed before subprocess creation. Unknown spawn
@@ -237,3 +246,21 @@ must already be installed. Worker tests use real Git clones/commits but fake onl
 the external Bun/Hermes executables. They do not pretend to be a real model build.
 No tests connect to the configured private live API or Discord, and plugin doctor
 uses its own temporary Hermes home. Test scratch uses the runtime `TMPDIR`.
+
+When Hermes Discord core is available, the integration regressions execute its
+actual `_handle_message` and `_collect_attachment_media` on a resolved review-card
+reply, with only attachment download/cache IO mocked. They verify the real
+review.txt envelope is consumed while the original native yes/no remains the sole
+decision authority. To require that coverage against an exact read-only core tree:
+
+```sh
+HERMES_DISABLE_LAZY_INSTALLS=1 \
+INSTITUTE_BRIDGE_REQUIRE_DISCORD_CORE=1 \
+INSTITUTE_BRIDGE_HERMES_SOURCE=/home/ares/migration/vps-ares/hermes-runtime \
+PYTHONPATH=/home/ares/migration/vps-ares/hermes-runtime \
+python -W error::ResourceWarning -m unittest discover -s scripts/institute_bridge -p 'test_*.py' -v
+```
+
+Without installed Hermes, these two core-specific tests skip; the independent
+native SDK and controller/worker tests still run. The required-core flag makes
+missing imports a failure rather than silently losing integration coverage.

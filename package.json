@@ -1,5 +1,6 @@
 {
   "name": "institute",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "workspaces": ["shared", "server", "web"],

@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { getBunServer, upgradeWebSocket, websocket } from 'hono/bun';
-import { sameOrigin, suggestionConfigFromEnv, type SuggestionConfig } from './suggestions';
+import { sameOrigin, suggestionConfigFromEnv, speechProvider, voiceAvailable, type SuggestionConfig } from './suggestions';
 
 // This handler must be supplied to Bun.serve alongside the Hono fetch function.
 export const suggestionWebsocket = { ...websocket, maxPayloadLength: 64 * 1024, backpressureLimit: 256 * 1024, closeOnBackpressureLimit: true, idleTimeout: 75 };
@@ -9,16 +9,24 @@ const MAX_AUDIO = 5 * 1024 * 1024;
 const MAX_FRAME = 64 * 1024;
 const UNAVAILABLE = 'Voice is unavailable right now. You can type your idea instead.';
 
+function localBarkUrl(value: string): string {
+  const url = new URL(value);
+  if (url.protocol !== 'ws:' || !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname) || url.username || url.password || url.hash) throw Error('Invalid local Bark URL');
+  return value;
+}
+
 type Options = {
   config?: SuggestionConfig;
-  // Injection is for isolated tests only; production always connects to the fixed endpoint.
-  connect?: (url: string, key: string) => WebSocket;
+  // Injection is for isolated tests; key is present only for explicit Deepgram.
+  connect?: (url: string, key?: string) => WebSocket;
   durationMs?: number; startupMs?: number; idleMs?: number; drainMs?: number;
   maxAudio?: number; maxFrame?: number;
 };
 export function createSuggestionLiveRoutes(options: Options = {}) {
   const config = options.config ?? suggestionConfigFromEnv();
-  const connect = options.connect ?? ((url, key) => new WebSocket(url, { headers: { Authorization: `Token ${key}` } } as any));
+  const connect = options.connect ?? ((url, key) => key
+    ? new WebSocket(url, { headers: { Authorization: `Token ${key}` } } as any)
+    : new WebSocket(url));
   const app = new Hono();
   let active = 0, windowStart = Date.now(), attempts = 0;
   const ips = new Map<string, number>();
@@ -28,7 +36,7 @@ export function createSuggestionLiveRoutes(options: Options = {}) {
       if (!c.req.header('origin')) return c.json({error:'Send suggestions from Institute.'}, 403);
       sameOrigin(c.req.raw, config);
     } catch { return c.json({error:'Send suggestions from Institute.'}, 403); }
-    if (!config.deepgramKey?.trim()) return c.json({error:UNAVAILABLE}, 503);
+    if (!voiceAvailable(config)) return c.json({error:UNAVAILABLE}, 503);
     if (Date.now() - windowStart >= 60_000) { windowStart = Date.now(); attempts = 0; }
     if (++attempts > 60) return c.json({error:'Please wait a minute and try again.'}, 429);
     const ip = (getBunServer(c) as any)?.requestIP(c.req.raw)?.address ?? 'unknown';
@@ -58,7 +66,8 @@ export function createSuggestionLiveRoutes(options: Options = {}) {
       if (phase !== 'streaming') { fail(); return; }
       phase = 'draining'; clearTimeout(idle); clearTimeout(duration);
       try { up!.send(JSON.stringify({type:'CloseStream'})); } catch { fail(); return; }
-      drain = setTimeout(() => fail('I could not finish listening. Please try again.'), options.drainMs ?? 5000);
+      // Bark budgets 7s including any in-flight interim; browser waits 10s.
+      drain = setTimeout(() => fail('I could not finish listening. Please try again.'), options.drainMs ?? 8000);
     };
     return {
       onOpen(_evt, ws) {
@@ -74,7 +83,8 @@ export function createSuggestionLiveRoutes(options: Options = {}) {
           if (phase === 'waiting' && message?.type === 'start' && message.sampleRate === 16000 && Object.keys(message).length === 2) {
             phase = 'connecting';
             try {
-              up = connect(ENDPOINT, config.deepgramKey!.trim());
+              const isDeepgram = speechProvider(config) === 'deepgram';
+              up = connect(isDeepgram ? ENDPOINT : localBarkUrl(config.barkUrl ?? 'ws://127.0.0.1:15003/listen'), isDeepgram ? config.deepgramKey!.trim() : undefined);
               up.binaryType = 'arraybuffer';
               up.onopen = () => {
                 if (phase !== 'connecting') { up?.close(); return; }

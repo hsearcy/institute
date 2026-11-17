@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { createSuggestionLiveRoutes, suggestionWebsocket } from './suggestions-live';
 
 test('per-IP simultaneous cap, startup timeout and released capacity', async () => {
-  const app=new Hono(); app.route('/rpg',createSuggestionLiveRoutes({config:{deepgramKey:'secret'},startupMs:100}));
+  const app=new Hono(); app.route('/rpg',createSuggestionLiveRoutes({config:{speechProvider:'deepgram',deepgramKey:'secret'},startupMs:100}));
   const server=Bun.serve({port:0,fetch:app.fetch,websocket:suggestionWebsocket});
   const origin=`http://127.0.0.1:${server.port}`; const url=`ws://127.0.0.1:${server.port}/rpg/suggestions/live`;
   const clients:WebSocket[]=[];

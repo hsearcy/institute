@@ -5,6 +5,8 @@ import { z } from 'zod';
 
 /** Server-side only. Never serialize this configuration to the browser. */
 export type SuggestionConfig = {
+  speechProvider?: string;
+  barkUrl?: string;
   deepgramKey?: string;
   adminToken?: string;
   parentActors?: string[];
@@ -19,6 +21,8 @@ export type SuggestionConfig = {
 type Options = { config?: SuggestionConfig; fetch?: typeof fetch; now?: () => number };
 export function suggestionConfigFromEnv(): SuggestionConfig {
   return {
+    speechProvider: process.env.INSTITUTE_SPEECH_PROVIDER,
+    barkUrl: process.env.INSTITUTE_BARK_URL,
     deepgramKey: process.env.DEEPGRAM_API_KEY,
     adminToken: process.env.INSTITUTE_SUGGESTIONS_ADMIN_TOKEN,
     parentActors: process.env.INSTITUTE_SUGGESTIONS_PARENT_ACTORS?.split(',').map(s => s.trim()).filter(Boolean),
@@ -26,6 +30,14 @@ export function suggestionConfigFromEnv(): SuggestionConfig {
     webhookUrl: process.env.INSTITUTE_SUGGESTIONS_WEBHOOK_URL,
     webhookSecret: process.env.INSTITUTE_SUGGESTIONS_WEBHOOK_SECRET,
   };
+}
+export function speechProvider(config: SuggestionConfig): 'bark' | 'deepgram' | 'disabled' {
+  const provider = config.speechProvider ?? 'bark';
+  return provider === 'bark' || provider === 'deepgram' ? provider : 'disabled';
+}
+export function voiceAvailable(config: SuggestionConfig): boolean {
+  const provider = speechProvider(config);
+  return provider === 'bark' || (provider === 'deepgram' && !!config.deepgramKey?.trim());
 }
 const statuses = ['sent', 'approved', 'building', 'ready', 'declined', 'needs_details'] as const;
 type Status = typeof statuses[number];
@@ -207,7 +219,7 @@ export function createSuggestionRoutes(db: Database, options: Options = {}) {
     await next();
   });
   app.post('/suggestions/transcribe', async c => {
-    if (!config.deepgramKey?.trim()) throw new Refusal(503, 'Voice is unavailable right now. You can type your idea instead.');
+    if (speechProvider(config) !== 'deepgram' || !config.deepgramKey?.trim()) throw new Refusal(503, 'Voice is unavailable right now. You can type your idea instead.');
     const contentType = c.req.header('content-type') ?? '';
     const mime = contentType.split(';')[0]!.trim().toLowerCase();
     if (!['audio/webm', 'audio/ogg', 'audio/mp4', 'audio/mpeg', 'audio/wav', 'audio/x-wav'].includes(mime)) throw new Refusal(415, 'Please record WebM, Ogg, MP4, MP3 or WAV audio.');
@@ -257,7 +269,7 @@ export function createSuggestionRoutes(db: Database, options: Options = {}) {
   app.get('/suggestions', c => {
     const profileId = parse(profileSchema, c.req.query('profileId'));
     const rows = db.query('SELECT * FROM institute_suggestions WHERE profile_id = ? ORDER BY created_at DESC, rowid DESC LIMIT 20').all(profileId) as Suggestion[];
-    return c.json({ suggestions: rows.map(s => publicSuggestion(db, s)), voiceAvailable: !!config.deepgramKey?.trim() });
+    return c.json({ suggestions: rows.map(s => publicSuggestion(db, s)), voiceAvailable: voiceAvailable(config) });
   });
   // Internal management never accepts a webhook as approval. The bearer holder is a
   // trusted bridge that must authenticate the parent independently before asserting actor.

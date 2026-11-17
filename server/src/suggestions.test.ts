@@ -44,7 +44,7 @@ describe('suggestion public contract', () => {
     expect(count(db, 'institute_suggestion_outbox')).toBe(1);
     expect(count(db, 'institute_suggestion_audit')).toBe(1);
     const list = await (await app.request('/rpg/suggestions?profileId=sam')).json();
-    expect(list).toMatchObject({ voiceAvailable: false, suggestions: [{ id: s.id }] });
+    expect(list).toMatchObject({ voiceAvailable: true, suggestions: [{ id: s.id }] });
     expect((await (await app.request('/rpg/suggestions?profileId=other')).json()).suggestions).toEqual([]);
     ensureSuggestionSchema(db); expect(count(db, 'institute_suggestions')).toBe(1);
   });
@@ -181,7 +181,7 @@ describe('voice transcription', () => {
   test('actual MIME reaches fixed Deepgram endpoint; all supported formats; voice availability', async () => {
     const calls: { url: string, init: RequestInit }[] = [];
     const fake = (async (url: any, init: any) => { calls.push({ url: String(url), init }); return Response.json({ results: { channels: [{ alternatives: [{ transcript: '  A pet dragon please  ' }] }] } }); }) as unknown as typeof fetch;
-    const { app } = fixture({ deepgramKey: 'fake' }, fake);
+    const { app } = fixture({ speechProvider: 'deepgram', deepgramKey: 'fake' }, fake);
     for (const mime of ['audio/webm;codecs=opus', 'audio/ogg', 'audio/mp4', 'audio/mpeg', 'audio/wav']) {
       const response = await audio(app, mime); expect(response.status).toBe(200); expect(await response.json()).toEqual({ text: 'A pet dragon please' });
       expect(new Headers(calls.at(-1)!.init.headers).get('Content-Type')).toBe(mime);
@@ -191,7 +191,7 @@ describe('voice transcription', () => {
   });
   test('unavailable, unintelligible, invalid MIME/empty/oversized and streamed audio', async () => {
     expect((await audio(fixture().app)).status).toBe(503);
-    const { app } = fixture({ deepgramKey: 'fake', rateLimit: 100 }, (async () => Response.json({ results: { channels: [] } })) as unknown as typeof fetch);
+    const { app } = fixture({ speechProvider: 'deepgram', deepgramKey: 'fake', rateLimit: 100 }, (async () => Response.json({ results: { channels: [] } })) as unknown as typeof fetch);
     expect((await audio(app)).status).toBe(422);
     expect((await audio(app, 'application/octet-stream')).status).toBe(415);
     expect((await audio(app, 'audio/wav', new Uint8Array())).status).toBe(422);
@@ -201,9 +201,9 @@ describe('voice transcription', () => {
     expect((await audio(app, 'audio/ogg', stream)).status).toBe(413); expect(cancelled).toBe(true);
   });
   test('provider failure and timeout are friendly 503 (including ignored AbortSignal)', async () => {
-    const failed = fixture({ deepgramKey: 'fake' }, (async () => new Response('no', { status: 500 })) as unknown as typeof fetch);
+    const failed = fixture({ speechProvider: 'deepgram', deepgramKey: 'fake' }, (async () => new Response('no', { status: 500 })) as unknown as typeof fetch);
     expect((await audio(failed.app)).status).toBe(503);
-    const hung = fixture({ deepgramKey: 'fake', providerTimeoutMs: 10 }, (() => new Promise(() => {})) as unknown as typeof fetch);
+    const hung = fixture({ speechProvider: 'deepgram', deepgramKey: 'fake', providerTimeoutMs: 10 }, (() => new Promise(() => {})) as unknown as typeof fetch);
     expect((await audio(hung.app)).status).toBe(503);
   });
 });

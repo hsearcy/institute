@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { createSuggestionLiveRoutes, suggestionWebsocket } from './suggestions-live';
 
 test('origin is mandatory, configured public origin authoritative, and attempts rate limited', async () => {
-  const app = new Hono(); app.route('/rpg', createSuggestionLiveRoutes({config:{deepgramKey:'secret',publicOrigin:'https://institute.example'}}));
+  const app = new Hono(); app.route('/rpg', createSuggestionLiveRoutes({config:{speechProvider:'deepgram',deepgramKey:'secret',publicOrigin:'https://institute.example'}}));
   const server = Bun.serve({port:0,fetch:app.fetch,websocket:suggestionWebsocket});
   try {
     const url = `http://127.0.0.1:${server.port}/rpg/suggestions/live`;
@@ -18,7 +18,7 @@ test('origin is mandatory, configured public origin authoritative, and attempts 
 test('byte budget rejects audio and closes upstream; cancellation never finalizes', async () => {
   let closes = 0; const controls: string[] = [];
   const fake = Bun.serve({port:0,fetch(req,s) {if(s.upgrade(req)) return; return new Response('',{status:400});},websocket:{message(_ws,d){if(typeof d==='string') controls.push(d);},close(){closes++;}}});
-  const app = new Hono(); app.route('/rpg',createSuggestionLiveRoutes({config:{deepgramKey:'secret'},maxAudio:4,connect: () => new WebSocket(`ws://127.0.0.1:${fake.port}`)}));
+  const app = new Hono(); app.route('/rpg',createSuggestionLiveRoutes({config:{speechProvider:'deepgram',deepgramKey:'secret'},maxAudio:4,connect: () => new WebSocket(`ws://127.0.0.1:${fake.port}`)}));
   const server = Bun.serve({port:0,fetch:app.fetch,websocket:suggestionWebsocket});
   const open = () => new WebSocket(`ws://127.0.0.1:${server.port}/rpg/suggestions/live`,{headers:{Origin:`http://127.0.0.1:${server.port}`}} as any);
   try {
@@ -34,7 +34,7 @@ test('byte budget rejects audio and closes upstream; cancellation never finalize
 test('duration closes stream; drain timeout reports error rather than false done', async () => {
   const controls:string[]=[];
   const fake=Bun.serve({port:0,fetch(req,s){if(s.upgrade(req)) return;return new Response('',{status:400});},websocket:{message(_ws,d){if(typeof d==='string') controls.push(d);}}});
-  const app=new Hono();app.route('/rpg',createSuggestionLiveRoutes({config:{deepgramKey:'secret'},durationMs:30,drainMs:30,connect:()=>new WebSocket(`ws://127.0.0.1:${fake.port}`)}));
+  const app=new Hono();app.route('/rpg',createSuggestionLiveRoutes({config:{speechProvider:'deepgram',deepgramKey:'secret'},durationMs:30,drainMs:30,connect:()=>new WebSocket(`ws://127.0.0.1:${fake.port}`)}));
   const server=Bun.serve({port:0,fetch:app.fetch,websocket:suggestionWebsocket});
   try {
     const client=new WebSocket(`ws://127.0.0.1:${server.port}/rpg/suggestions/live`,{headers:{Origin:`http://127.0.0.1:${server.port}`}} as any);

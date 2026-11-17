@@ -8,7 +8,7 @@ test('live proxy forwards audio and drains final transcript without exposing the
     message(ws, data) { if (typeof data !== 'string') { audio.push(...new Uint8Array(data)); ws.send(JSON.stringify({type:'Results',is_final:false,channel:{alternatives:[{transcript:'hello'}]}})); } else if (JSON.parse(data).type === 'CloseStream') { ws.send(JSON.stringify({type:'Results',is_final:true,channel:{alternatives:[{transcript:'hello world'}]}})); ws.close(); } },
   }});
   const app = new Hono();
-  app.route('/rpg', createSuggestionLiveRoutes({config:{deepgramKey:'private-test-key'}, connect: (url, key) => { expect(url).toBe('wss://api.deepgram.com/v1/listen?model=nova-3&encoding=linear16&channels=1&sample_rate=16000&interim_results=true&punctuate=true&endpointing=300'); return new WebSocket(`ws://127.0.0.1:${fake.port}`, {headers:{Authorization:`Token ${key}`}} as any); }}));
+  app.route('/rpg', createSuggestionLiveRoutes({config:{speechProvider:'deepgram',deepgramKey:'private-test-key'}, connect: (url, key) => { expect(url).toBe('wss://api.deepgram.com/v1/listen?model=nova-3&encoding=linear16&channels=1&sample_rate=16000&interim_results=true&punctuate=true&endpointing=300'); return new WebSocket(`ws://127.0.0.1:${fake.port}`, {headers:{Authorization:`Token ${key}`}} as any); }}));
   const server = Bun.serve({port:0, fetch:app.fetch, websocket:suggestionWebsocket});
   try {
     const messages: any[] = [];

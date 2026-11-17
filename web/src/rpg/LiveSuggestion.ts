@@ -108,7 +108,8 @@ export class LiveSuggestion {
   private sendStop(): void {
     this.releaseAudio();
     try { this.socket?.send(JSON.stringify({ type: 'stop' })); } catch { this.fail('Voice stopped. Please check your words.'); return; }
-    this.timer = setTimeout(() => this.fail('Voice took too long. Please check your words.'), 8000);
+    // Allow the server's 8s drain deadline to report before the browser gives up.
+    this.timer = setTimeout(() => this.fail('Voice took too long. Please check your words.'), 10000);
   }
   cancel(): void { ++this.generation; this.releaseAudio(); this.socket?.close(); this.socket = null; this.set('idle'); }
   private finish(): void { this.cancel(); }

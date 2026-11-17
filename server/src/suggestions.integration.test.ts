@@ -45,6 +45,26 @@ test('real index mount excludes legacy wildcard CORS and fails closed without pa
   });
 });
 
+test('real index websocket export upgrades with the Bun server context', () => {
+  const script = `
+    const { default: app } = await import('./server/src/index.ts');
+    const server = Bun.serve({ port: 0, fetch: (req, bun) => app.fetch(req, bun), websocket: app.websocket });
+    const client = new WebSocket('ws://127.0.0.1:' + server.port + '/rpg/suggestions/live', {headers:{Origin:'http://127.0.0.1:' + server.port}});
+    const result = await new Promise((resolve, reject) => {
+      client.onerror = () => reject(Error('upgrade failed'));
+      client.onopen = () => client.send('bad json');
+      client.onmessage = e => resolve(JSON.parse(e.data));
+      setTimeout(() => reject(Error('timeout')), 3000).unref();
+    });
+    console.log('WS:' + JSON.stringify(result)); client.close(); server.stop(true);
+  `;
+  const child = Bun.spawnSync([process.execPath, '--no-env-file', '-e', script], {
+    cwd: join(import.meta.dir, '../..'), env: { NODE_ENV:'test', DB_PATH:':memory:', DEEPGRAM_API_KEY:'test-only', PATH:process.env.PATH ?? '' }, timeout: 10_000,
+  });
+  expect(child.exitCode).toBe(0);
+  expect(child.stdout.toString()).toContain('WS:{"type":"error"');
+});
+
 test('disk-backed queue survives DB close/reopen and failed worker, with original event preserved', async () => {
   const dir = mkdtempSync(join(process.env.TMPDIR ?? '/home/ares/.hermes/cache/scratch', 'institute-suggestions-'));
   let db: Database | undefined;

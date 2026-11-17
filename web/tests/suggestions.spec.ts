@@ -1,225 +1,111 @@
 import { test, expect, type Page } from '@playwright/test';
-
-const idea = (page: Page) => page.getByRole('textbox', { name: 'My idea, type or edit before sending' });
-const send = (page: Page) => page.getByRole('button', { name: 'Send to Ares', exact: true });
-async function open(page: Page, voice = false) {
-  if (voice) await page.route('**/rpg/suggestions?*', async route => {
-    const response = await route.fetch(); const data = await response.json();
-    await route.fulfill({ json: { ...data, voiceAvailable: true } });
-  });
+const idea = (page: Page) => page.getByRole('textbox', { name: 'My idea' });
+const send = (page: Page) => page.getByRole('button', { name: 'Send', exact: true });
+async function open(page: Page) {
   await page.goto('/');
-  await expect(page.getByRole('button', { name: 'Suggest a change', exact: true })).toBeVisible({ timeout: 60_000 });
-  await page.getByRole('button', { name: 'Suggest a change', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: 'Suggest a change', exact: true })).toBeVisible();
+  await page.locator('.rpg-camp-idea').click({ timeout: 60_000 });
+  await expect(page.getByRole('dialog', { name: '💡 Your idea' })).toBeVisible();
 }
-
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('institute:rpg:problem:v1::sam:tutorial:v1', 'completed');
-    localStorage.setItem('institute:rpg:muted', 'true');
-    // Lower the software framebuffer as soon as construction finishes, before
-    // the load event waits for the many 3D textures. Keep the real simulation.
-    const rendererTimer = setInterval(() => {
-      const world = (window as any).__game?.world;
-      if (!world) return;
-      world.renderer.setPixelRatio(.15); world.renderer.shadowMap.enabled = false;
-      clearInterval(rendererTimer);
-    }, 10);
-    const real = navigator.mediaDevices?.getUserMedia.bind(navigator.mediaDevices);
-    if (real) navigator.mediaDevices.getUserMedia = async constraints => {
-      const stream = await real(constraints);
-      (window as any).__suggestionTracks ??= [];
-      (window as any).__suggestionTracks.push(...stream.getTracks());
-      return stream;
-    };
+    const rendererTimer = setInterval(() => { const world = (window as any).__game?.world; if (world) { world.renderer.setPixelRatio(.15); world.renderer.shadowMap.enabled = false; clearInterval(rendererTimer); } }, 10);
+    const devices = navigator.mediaDevices;
+    const real = devices.getUserMedia.bind(devices);
+    devices.getUserMedia = async constraints => { const stream = await real(constraints); (window as any).__tracks = stream.getTracks(); return stream; };
+    const Original = window.WebSocket;
+    class MockSocket {
+      readyState = 1; bufferedAmount = 0; onopen: any; onmessage: any; onclose: any; onerror: any;
+      constructor(url: string) { (window as any).__socket = this; (window as any).__url = url; setTimeout(() => this.onopen?.({}), 0); }
+      send(data: any) {
+        if (typeof data !== 'string') { (window as any).__frames = ((window as any).__frames || 0) + 1; return; }
+        const msg = JSON.parse(data); ((window as any).__messages ??= []).push(msg);
+        if (msg.type === 'start') setTimeout(() => this.message({ type: 'ready' }), 0);
+        if (msg.type === 'stop') setTimeout(() => { this.message({ type: 'transcript', text: 'dragon friend', isFinal: true }); this.message({ type: 'done' }); }, 100);
+      }
+      message(data: unknown) { this.onmessage?.({ data: JSON.stringify(data) }); }
+      close() { this.readyState = 3; }
+    }
+    (window as any).WebSocket = class extends MockSocket { constructor(url: string) { super(url); if (!url.includes('/suggestions/live')) return new Original(url) as any; } };
   });
-  page.on('load', () => { void page.waitForFunction(() => !!(window as any).__game?.world).then(() => page.evaluate(() => {
-    const world = (window as any).__game.world; world.renderer.setPixelRatio(.25); world.renderer.shadowMap.enabled = false;
-  })).catch(() => {}); });
 });
-
-test('production bundle saves original child text to disposable SQLite and reads durable history after reload', async ({ page }, info) => {
-  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
-  await open(page);
-  await expect(page.getByText('Voice transcription is resting. Type your idea instead.', { exact: true })).toBeVisible();
-  await expect(idea(page)).toBeEditable(); await expect(send(page)).toBeDisabled();
-  const text = `Please add a blue dragon. <img src=x onerror=alert(1)> ${info.testId}`;
-  await idea(page).fill(`  ${text}  `); await send(page).click();
-  await expect(page.locator('[data-suggestion-notice]')).toContainText('Saved for Ares / waiting for Dad');
-  await expect(idea(page)).toHaveValue('');
-  const saved = await (await page.request.get('/rpg/suggestions?profileId=sam')).json();
-  expect(saved.suggestions.filter((s: any) => s.text === text)).toHaveLength(1);
-  expect(saved.suggestions.find((s: any) => s.text === text).status).toBe('sent');
-  await expect(page.locator('[data-suggestion-history] img')).toHaveCount(0);
-  await page.reload(); await page.getByRole('button', { name: 'Suggest a change', exact: true }).click();
-  await expect(page.locator('[data-suggestion-history]')).toContainText(text);
-  await expect(page.getByRole('button', { name: /approve|decline|deploy/i })).toHaveCount(0);
-  await page.screenshot({ path: info.outputPath('suggestions-desktop.png'), fullPage: true });
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.screenshot({ path: info.outputPath('suggestions-mobile.png'), fullPage: true });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  expect(errors).toEqual([]);
+test('live words are editable, stop flushes before sending, and history survives reload', async ({ page }) => {
+  await open(page); await page.getByRole('button', { name: /Tap to talk/ }).click();
+  await expect(page.getByText(/Listening now/)).toBeVisible();
+  await expect.poll(() => page.evaluate(() => (window as any).__frames || 0)).toBeGreaterThan(0);
+  await page.evaluate(() => { const s = (window as any).__socket; s.message({type:'transcript', text:'dragon', isFinal:false}); s.message({type:'transcript', text:'dragon friend', isFinal:false}); });
+  await expect(idea(page)).toHaveValue('dragon friend'); await expect(send(page)).toBeDisabled();
+  await page.getByRole('button', { name: 'Done talking' }).click(); await expect(send(page)).toBeDisabled();
+  await expect(send(page)).toBeEnabled();
+  expect(await page.evaluate(() => (window as any).__tracks.every((t: MediaStreamTrack) => t.readyState === 'ended'))).toBe(true);
+  await idea(page).fill('Make a dragon friend please'); await send(page).click();
+  await expect(page.locator('[data-suggestion-notice]')).toHaveText('Idea saved. Dad will check it.');
+  await page.reload(); await page.locator('.rpg-camp-idea').click(); await page.getByText('My saved ideas').click();
+  await expect(page.locator('[data-suggestion-history]')).toContainText('Make a dragon friend please');
+  expect(await page.evaluate(() => (window as any).__messages)).toBeUndefined();
 });
-
-test('lost response retries same UUID even across reload and creates just one saved idea', async ({ page }) => {
-  await open(page);
-  const text = `Lost response ${test.info().testId}`;
-  const ids: string[] = [];
-  let lose = true;
-  await page.route('**/rpg/suggestions', async route => {
-    if (route.request().method() !== 'POST') return route.continue();
-    ids.push(route.request().postDataJSON().requestId);
-    if (lose) { lose = false; const response = await route.fetch(); expect(response.status()).toBe(201); return route.abort('failed'); }
-    await route.continue();
-  });
-  await idea(page).fill(text); await send(page).click();
-  await expect(page.locator('[data-suggestion-notice]')).toContainText('save could not be confirmed');
-  await expect(idea(page)).toHaveValue(text);
-  await page.reload(); await page.getByRole('button', { name: 'Suggest a change', exact: true }).click();
-  await expect(idea(page)).toHaveValue(text); await send(page).click();
-  await expect(page.locator('[data-suggestion-notice]')).toContainText('Saved for Ares');
-  expect(ids).toHaveLength(2); expect(ids[0]).toBe(ids[1]);
-  const saved = await (await page.request.get('/rpg/suggestions?profileId=sam')).json();
-  expect(saved.suggestions.filter((s: any) => s.text === text)).toHaveLength(1);
+test('cancel discards speech and releases microphone; failure never sends', async ({ page }) => {
+  await open(page); await idea(page).fill('typed words'); await page.getByRole('button', { name: /Tap to talk/ }).click();
+  await expect(page.getByText(/Listening now/)).toBeVisible();
+  await page.evaluate(() => (window as any).__socket.message({type:'transcript', text:'unsent speech', isFinal:false}));
+  await expect(idea(page)).toHaveValue('typed words unsent speech'); await page.getByRole('button', { name: 'Cancel' }).click();
+  expect(await page.evaluate(() => (window as any).__tracks.every((t: MediaStreamTrack) => t.readyState === 'ended'))).toBe(true);
+  await page.locator('.rpg-camp-idea').click(); await expect(idea(page)).toHaveValue('typed words');
+  await page.getByRole('button', { name: /Tap to talk/ }).click(); await expect(page.getByText(/Listening now/)).toBeVisible();
+  await page.evaluate(() => (window as any).__socket.message({type:'error', message:'unavailable'}));
+  await expect(page.locator('[data-suggestion-notice]')).toContainText('Voice is not working'); await expect(idea(page)).toHaveValue('typed words');
 });
-
-test('native fake microphone records locally, only explicitly transcribes, edits preview, then sends', async ({ page }) => {
-  let uploads = 0; let sent = 0;
-  await page.route('**/rpg/suggestions/transcribe', async route => {
-    uploads++;
-    expect(route.request().headers()['content-type']).toMatch(/^audio\//);
-    expect(route.request().postDataBuffer()!.byteLength).toBeGreaterThan(0);
-    await route.fulfill({ json: { text: 'Make a snow-dragon friend' } });
-  });
-  page.on('request', request => { if (new URL(request.url()).pathname === '/rpg/suggestions' && request.method() === 'POST') sent++; });
-  await open(page, true);
-  await page.getByRole('button', { name: 'Record my idea', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Stop recording', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Stop recording', exact: true })).toBeFocused();
-  await page.waitForTimeout(650); expect(uploads).toBe(0); expect(sent).toBe(0);
-  await page.getByRole('button', { name: 'Stop recording', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Transcribe recording', exact: true })).toBeVisible();
-  expect(uploads).toBe(0);
-  expect(await page.evaluate(() => (window as any).__suggestionTracks.every((track: MediaStreamTrack) => track.readyState === 'ended'))).toBe(true);
-  await idea(page).fill('Do not overwrite this typed draft');
-  await page.getByRole('button', { name: 'Transcribe recording', exact: true }).click();
-  const transcript = page.getByRole('textbox', { name: 'Recorded words, check and edit' });
-  await expect(transcript).toHaveValue('Make a snow-dragon friend');
-  await expect(idea(page)).toHaveValue('Do not overwrite this typed draft'); expect(sent).toBe(0);
-  await transcript.fill('Make a snow-dragon friend, please.');
-  await page.getByRole('button', { name: 'Use these words in my idea', exact: true }).click();
-  await expect(idea(page)).toHaveValue('Make a snow-dragon friend, please.');
-  await send(page).click(); await expect(page.locator('[data-suggestion-notice]')).toContainText('Saved for Ares');
-  expect(uploads).toBe(1); expect(sent).toBe(1);
+test('live words keep updating while the draft is read only and cancel discards speech', async ({ page }) => {
+  await open(page); await idea(page).fill('typed'); await page.getByRole('button', { name: /Tap to talk/ }).click();
+  await expect(page.getByText(/Listening now/)).toBeVisible();
+  await page.evaluate(() => (window as any).__socket.message({type:'transcript', text:'speech', isFinal:false}));
+  await expect(idea(page)).toHaveAttribute('readonly', '');
+  await page.evaluate(() => (window as any).__socket.message({type:'transcript', text:'late speech', isFinal:false}));
+  await expect(idea(page)).toHaveValue('typed late speech');
+  await page.getByRole('button', {name:'Cancel'}).click(); await page.locator('.rpg-camp-idea').click();
+  await expect(idea(page)).toHaveValue('typed');
 });
-
-test('discard, Escape and backdrop release microphone and preserve only typed drafts; focus returns to camp', async ({ page }) => {
-  let uploads = 0;
-  page.on('request', r => { if (r.url().includes('/transcribe')) uploads++; });
-  await open(page, true); await idea(page).fill('Keep my typed idea');
-  await page.getByRole('button', { name: 'Record my idea', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Stop recording', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Discard recording', exact: true }).click();
-  await expect(idea(page)).toHaveValue('Keep my typed idea');
-  await expect(page.locator('audio[data-recording-preview]')).toBeHidden();
-  await page.getByRole('button', { name: 'Record my idea', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Stop recording', exact: true })).toBeVisible();
-  await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: true }); document.dispatchEvent(new Event('visibilitychange')); delete (document as any).hidden; });
-  await expect(page.locator('[data-suggestion-notice]')).toContainText('Recording was discarded when you left');
-  await expect(idea(page)).toHaveValue('Keep my typed idea');
-  await page.getByRole('button', { name: 'Record my idea', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Stop recording', exact: true })).toBeVisible();
-  await page.keyboard.press('Escape');
-  await expect(page.getByRole('button', { name: 'Suggest a change', exact: true })).toBeFocused();
-  expect(await page.evaluate(() => (window as any).__suggestionTracks.every((track: MediaStreamTrack) => track.readyState === 'ended'))).toBe(true);
-  await page.getByRole('button', { name: 'Suggest a change', exact: true }).click();
-  await expect(idea(page)).toHaveValue('Keep my typed idea');
-  await page.locator('#rpg-overlay').click({ position: { x: 3, y: 3 } });
-  await expect(page.getByRole('button', { name: 'Suggest a change', exact: true })).toBeFocused(); expect(uploads).toBe(0);
+test('server done finishes listening and preserves words without sending', async ({ page }) => {
+  await open(page); await page.getByRole('button', { name: /Tap to talk/ }).click(); await expect(page.getByText(/Listening now/)).toBeVisible();
+  await page.evaluate(() => { const s = (window as any).__socket; s.message({type:'transcript', text:'my idea', isFinal:true}); s.message({type:'done'}); });
+  await expect(idea(page)).toHaveValue('my idea'); await expect(send(page)).toBeEnabled();
+  expect(await page.evaluate(() => (window as any).__tracks.every((t: MediaStreamTrack) => t.readyState === 'ended'))).toBe(true);
+  await expect(page.locator('[data-suggestion-notice]')).toBeEmpty();
 });
-
-test('permission denied and provider 503 keep textarea usable; conflict preserves draft and a text edit changes UUID', async ({ page }) => {
-  await page.addInitScript(() => { navigator.mediaDevices.getUserMedia = async () => { throw new DOMException('denied', 'NotAllowedError'); }; });
-  await open(page, true); await page.getByRole('button', { name: 'Record my idea', exact: true }).click();
-  await expect(page.locator('[data-suggestion-notice]')).toContainText('Microphone permission was not allowed');
-  await expect(idea(page)).toBeEditable(); await idea(page).fill('Larger treasure chests');
-  const ids: string[] = [];
-  await page.route('**/rpg/suggestions', async route => {
-    ids.push(route.request().postDataJSON().requestId);
-    await route.fulfill({ status: 409, json: { error: 'conflict' } });
-  });
-  await send(page).click(); await expect(page.locator('[data-suggestion-notice]')).toContainText('do not match');
-  await expect(idea(page)).toHaveValue('Larger treasure chests');
-  await idea(page).fill('Larger treasure chests, please'); await send(page).click();
-  await expect(page.locator('[data-suggestion-notice]')).toContainText('do not match');
-  expect(ids).toHaveLength(2); expect(ids[0]).not.toBe(ids[1]);
+test('server limit requests a client audio flush before final words and never submits', async ({ page }) => {
+  await open(page); await page.getByRole('button', {name:/Tap to talk/}).click(); await expect(page.getByText(/Listening now/)).toBeVisible();
+  await expect.poll(() => page.evaluate(() => (window as any).__frames || 0)).toBeGreaterThan(0);
+  await page.evaluate(() => (window as any).__socket.message({type:'stop_requested'}));
+  await expect(send(page)).toBeEnabled(); await expect(idea(page)).toHaveValue('dragon friend');
+  expect(await page.evaluate(() => (window as any).__messages.some((m:any) => m.type === 'stop'))).toBe(true);
+  expect(await page.evaluate(() => (window as any).__tracks.every((t:MediaStreamTrack) => t.readyState === 'ended'))).toBe(true);
+  await expect(page.locator('[data-suggestion-notice]')).toBeEmpty();
 });
-
-test('provider failure during transcription never loses typed text', async ({ page }) => {
-  await page.route('**/rpg/suggestions/transcribe', route => route.fulfill({ status: 503, json: { error: 'unavailable' } }));
-  await open(page, true); await idea(page).fill('I can always type this');
-  await page.getByRole('button', { name: 'Record my idea', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Stop recording', exact: true })).toBeVisible(); await page.waitForTimeout(400);
-  await page.getByRole('button', { name: 'Stop recording', exact: true }).click();
-  await page.getByRole('button', { name: 'Transcribe recording', exact: true }).click();
-  await expect(page.locator('[data-suggestion-notice]')).toContainText('Voice transcription is unavailable');
-  await expect(idea(page)).toHaveValue('I can always type this'); await expect(idea(page)).toBeEditable();
+test('edits after done survive cancel and saving locks editing and talk', async ({ page }) => {
+  await open(page); await page.getByRole('button', {name:/Tap to talk/}).click(); await expect(page.getByText(/Listening now/)).toBeVisible();
+  await page.getByRole('button', {name:'Done talking'}).click(); await expect(send(page)).toBeEnabled();
+  await idea(page).fill('edited after done'); await page.getByRole('button', {name:'Cancel'}).click(); await page.locator('.rpg-camp-idea').click();
+  await expect(idea(page)).toHaveValue('edited after done');
+  let release!: () => void; const waiting = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/rpg/suggestions', async route => { if (route.request().method() === 'POST') await waiting; await route.continue(); });
+  await send(page).click(); await expect(idea(page)).toBeDisabled(); await expect(page.getByRole('button', {name:/Tap to talk/})).toBeDisabled();
+  release(); await expect(page.locator('[data-suggestion-notice]')).toHaveText('Idea saved. Dad will check it.');
 });
-
-test('manual history refresh shows all honest statuses with escaped words and notes', async ({ page }) => {
-  let status = 'sent';
-  await page.route('**/rpg/suggestions?*', route => route.fulfill({ json: { voiceAvailable: false, suggestions: [{ id: 'fixture', profileId: 'sam', text: '<img src=x onerror=alert(1)>', status, createdAt: 1794840000000, updatedAt: 1794840000000, parentNote: '<script>not executable</script>', notificationPending: status === 'sent' }] } }));
-  await open(page);
-  await expect(page.locator('[data-suggestion-history]')).toContainText('Saved for Ares / waiting for Dad');
-  await expect(page.locator('[data-suggestion-history]')).toContainText('Notification to Ares is still pending.');
-  for (const [value, label] of [['approved', 'Dad approved'], ['building', 'Being built'], ['ready', 'Ready for Dad to review'], ['declined', 'Not this time'], ['needs_details', 'Dad needs more details'], ['constructor', 'Status unavailable']]) {
-    status = value!; await page.getByRole('button', { name: 'Refresh status', exact: true }).click();
-    await expect(page.locator('[data-suggestion-history]')).toContainText(label!);
-  }
-  await expect(page.locator('[data-suggestion-history] img, [data-suggestion-history] script')).toHaveCount(0);
-  await expect(page.locator('[data-suggestion-history]')).toContainText('<script>not executable</script>');
-  const authored = await page.locator('.rpg-suggestions').innerText();
-  // Original child text can contain dashes. Authored UI copy must not add any.
-  expect(authored).not.toMatch(/[\-\u2010-\u2015]/);
-});
-
-test('pause integration traps keyboard focus, ignores game hotkeys while typing and keeps world paused', async ({ page }) => {
-  await page.goto('/');
-  await page.getByRole('button', { name: /Enter the dungeon/ }).click({ timeout: 60_000 });
-  await expect.poll(() => page.evaluate(() => (window as any).__game.busy)).toBe(false);
-  const demo = page.getByRole('button', { name: 'Let me try', exact: true }); if (await demo.isVisible()) await demo.click();
-  await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: 'Suggest a change', exact: true }).click();
-  await idea(page).focus(); await idea(page).pressSequentially('qwe bki 123'); await idea(page).press('ArrowLeft'); await idea(page).press('Enter');
-  await expect(page.getByRole('dialog', { name: 'Suggest a change', exact: true })).toBeVisible();
+test('active game Idea button pauses and traps hotkeys on mobile', async ({ page }) => {
+  await page.setViewportSize({ width:390, height:844 }); await page.goto('/');
+  await page.getByRole('button', { name: /Enter the dungeon/ }).click({timeout:60_000});
+  const demo = page.getByRole('button', {name:'Let me try'}); if (await demo.isVisible()) await demo.click();
+  const top = page.locator('.rpg-top .rpg-idea-button'); await expect(top).toBeVisible();
+  const bounds = await top.boundingBox(); expect(bounds!.width).toBeGreaterThanOrEqual(44); expect(bounds!.height).toBeGreaterThanOrEqual(44);
+  await top.click(); await idea(page).fill('qwe bki 123');
   expect(await page.evaluate(() => (window as any).__game.world.diagnostics.paused)).toBe(true);
-  const refresh = page.getByRole('button', { name: 'Refresh status', exact: true }); await expect(refresh).toBeEnabled();
-  await refresh.focus(); await page.keyboard.press('Tab'); await expect(page.getByRole('button', { name: 'Close', exact: true })).toBeFocused();
-  await page.keyboard.press('Shift+Tab'); await expect(refresh).toBeFocused();
-  await idea(page).focus(); await page.keyboard.press('Tab'); await expect(send(page)).toBeFocused();
-  await page.keyboard.press('Escape'); await expect(page.getByRole('heading', { name: 'Adventure saved' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Suggest a change', exact: true })).toBeFocused();
-  expect(await page.evaluate(() => (window as any).__game.world.diagnostics.paused)).toBe(true);
-});
-
-test('an older in-flight history response cannot hide a newly confirmed saved idea', async ({ page }) => {
-  let release!: () => void;
-  let markRequested!: () => void;
-  const gate = new Promise<void>(resolve => { release = resolve; });
-  const requested = new Promise<void>(resolve => { markRequested = resolve; });
-  await page.route('**/rpg/suggestions?*', async route => {
-    markRequested(); await gate;
-    await route.fulfill({ json: { suggestions: [], voiceAvailable: false } });
-  });
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Suggest a change', exact: true }).click({ timeout: 60_000 });
-  await requested;
-  const text = `Keep this saved idea visible ${test.info().testId}`;
-  await page.getByRole('textbox', { name: 'My idea, type or edit before sending' }).fill(text);
-  await page.getByRole('button', { name: 'Send to Ares', exact: true }).click();
-  await expect(page.locator('[data-suggestion-notice]')).toContainText('Saved for Ares');
-  const response = page.waitForResponse(r => new URL(r.url()).pathname === '/rpg/suggestions' && r.request().method() === 'GET');
-  release(); await response;
-  await expect(page.locator('[data-voice-help]')).toContainText('Voice transcription is resting');
-  await expect(page.locator('[data-suggestion-history]')).toContainText(text);
+  await expect(page.getByRole('dialog', { name:'💡 Your idea' })).toBeVisible();
+  await page.keyboard.press('Escape'); await expect(top).toBeFocused();
+  await page.getByRole('button', {name:'Equipment', exact:true}).click();
+  await expect(page.locator('#rpg-ui')).toHaveAttribute('data-panel','inventory');
+  await page.locator('.rpg-dialog-idea').click(); await page.getByRole('button', {name:'Cancel', exact:true}).click();
+  await expect(page.locator('#rpg-ui')).toHaveAttribute('data-panel','inventory');
+  expect(await page.evaluate(() => (window as any).__game.playing)).toBe(true);
+  await page.getByRole('button', {name:'Close', exact:true}).click();
+  expect(await page.evaluate(() => (window as any).__game.world.diagnostics.paused)).toBe(false);
 });

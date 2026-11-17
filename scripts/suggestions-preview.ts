@@ -21,9 +21,10 @@ if (!(await file(`${dist}/index.html`).exists())) throw new Error('Build web/dis
 
 serve({
   port: Number(process.env.RPG_TEST_PORT), hostname: '127.0.0.1',
-  async fetch(request: Request) {
+  websocket: server.websocket,
+  async fetch(request: Request, bunServer) {
     const url = new URL(request.url);
-    if (['/rpg', '/tutor', '/state', '/mastery', '/tts', '/shop', '/reward', '/health', '/daily-record'].some(prefix => url.pathname === prefix || url.pathname.startsWith(prefix + '/'))) return server.fetch(request);
+    if (['/rpg', '/tutor', '/state', '/mastery', '/tts', '/shop', '/reward', '/health', '/daily-record'].some(prefix => url.pathname === prefix || url.pathname.startsWith(prefix + '/'))) return server.fetch(request, bunServer);
     let pathname: string;
     try { pathname = decodeURIComponent(url.pathname); } catch { return new Response('Invalid path', { status: 400 }); }
     const target = resolve(dist, '.' + pathname);

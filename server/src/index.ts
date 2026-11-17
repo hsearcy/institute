@@ -10,6 +10,7 @@ import { ensureRpgSchema, createRpgRoutes } from "./rpg.ts";
 import { createRpgEconomyRoutes } from "./rpgEconomy.ts";
 import { createRpgTraderRoutes } from "./rpgTrader.ts";
 import { createSuggestionRoutes, startSuggestionDelivery } from "./suggestions.ts";
+import { createSuggestionLiveRoutes, suggestionWebsocket } from "./suggestions-live.ts";
 import { cors } from "hono/cors";
 import { Database } from "bun:sqlite";
 import Anthropic from "@anthropic-ai/sdk";
@@ -892,6 +893,7 @@ app.route("/rpg", createRpgRoutes(db, applyMiss, (profileId, reward) => {
 }));
 app.route("/rpg", createRpgEconomyRoutes(db));
 app.route("/rpg", createRpgTraderRoutes(db));
+app.route("/rpg", createSuggestionLiveRoutes());
 app.route("/rpg", createSuggestionRoutes(db));
 // No delivery during tests; an absent URL/secret leaves every event durably queued.
 if (process.env.NODE_ENV !== "test" && process.env.INSTITUTE_SUGGESTIONS_WEBHOOK_URL && process.env.INSTITUTE_SUGGESTIONS_WEBHOOK_SECRET) {
@@ -1417,4 +1419,5 @@ app.post("/tts", async (c) => {
 });
 
 console.log(`[institute] tutor server on :${PORT} (model ${TUTOR_MODEL})`);
-export default { port: PORT, fetch: app.fetch };
+export { suggestionWebsocket };
+export default { port: PORT, fetch: app.fetch, websocket: suggestionWebsocket };

@@ -160,7 +160,7 @@ function parse<T>(schema: z.ZodType<T>, body: unknown): T {
   if (!result.success) throw new Refusal(400, 'Please check the message fields.');
   return result.data;
 }
-function sameOrigin(request: Request, config: SuggestionConfig) {
+export function sameOrigin(request: Request, config: SuggestionConfig) {
   let expected = new URL(request.url).origin;
   if (config.publicOrigin) {
     try {

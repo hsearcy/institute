@@ -112,7 +112,7 @@ export class RpgGame {
   private muted = false;
   private panel = '';
   private suggestions: SuggestionPanel | null = null;
-  private suggestionOrigin: 'camp' | 'pause' = 'camp';
+  private suggestionOrigin: 'camp' | 'pause' | 'game' | 'inventory' = 'camp';
   private suggestionInert = new Map<HTMLElement, boolean>();
   private panelResolve: (() => void) | null = null;
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
@@ -175,7 +175,7 @@ export class RpgGame {
     this.root.id = 'rpg-ui';
     this.root.innerHTML = `
       <header class="rpg-top"><div class="rpg-location"><span class="rpg-eyebrow">INSTITUTE <b>◆</b> THE SUNKEN VAULT</span><h1 id="rpg-region">The Embercrypt</h1><p id="rpg-room">A new adventure awaits</p></div>
-      <nav aria-label="Adventure menu"><button data-action="map" title="Expeditions" aria-label="Expeditions">${icon('map')}</button><button data-action="skills" title="Skill trees" aria-label="Skill trees">${icon('tree')}<i id="rpg-points" hidden></i></button><button data-action="inventory" title="Equipment" aria-label="Equipment">${icon('bag')}</button><button id="rpg-blacksmith" data-action="blacksmith" title="Blacksmith" aria-label="Blacksmith">${icon('forge')}<i id="rpg-forge-ready" aria-hidden="true" hidden>↑</i></button><button data-action="quests" title="Quest board and camp" aria-label="Quest board and camp">${icon('ring')}</button><button data-action="sound" title="Toggle tutor voice" aria-label="Mute tutor voice">${icon('sound')}</button><button data-action="pause" title="Pause and save" aria-label="Pause and save">Ⅱ</button></nav></header>
+      <nav aria-label="Adventure menu"><button class="rpg-idea-button" data-action="suggestions" aria-label="Idea">💡 Idea</button><button data-action="map" title="Expeditions" aria-label="Expeditions">${icon('map')}</button><button data-action="skills" title="Skill trees" aria-label="Skill trees">${icon('tree')}<i id="rpg-points" hidden></i></button><button data-action="inventory" title="Equipment" aria-label="Equipment">${icon('bag')}</button><button id="rpg-blacksmith" data-action="blacksmith" title="Blacksmith" aria-label="Blacksmith">${icon('forge')}<i id="rpg-forge-ready" aria-hidden="true" hidden>↑</i></button><button data-action="quests" title="Quest board and camp" aria-label="Quest board and camp">${icon('ring')}</button><button data-action="sound" title="Toggle tutor voice" aria-label="Mute tutor voice">${icon('sound')}</button><button data-action="pause" title="Pause and save" aria-label="Pause and save">Ⅱ</button></nav></header>
       <div class="rpg-route" aria-label="Expedition progress" id="rpg-route"></div><button id="rpg-next-spell" class="rpg-next-spell" data-action="spell-goal" hidden></button>
       <div id="rpg-boss" class="rpg-boss" hidden><span>GUARDIAN</span><strong></strong><div role="progressbar" aria-label="Guardian health" aria-valuemin="0" aria-valuemax="36" aria-valuenow="36"><i></i></div></div>
       <div id="rpg-toast" class="rpg-toast" role="status" aria-live="polite" hidden></div><div id="rpg-floating-xp" class="rpg-floating-xp" aria-hidden="true"></div><div id="rpg-pickups" class="rpg-pickups" role="status" aria-live="polite"></div>
@@ -190,7 +190,7 @@ export class RpgGame {
       </section>
       <div class="rpg-ladder rpg-ladder-side" id="rpg-ladder-side" hidden></div>
       <div class="rpg-connection" id="rpg-connection" hidden role="alert"><span>Reconnecting to your adventure…</span><button data-action="retry">Try again</button></div>
-      <div id="rpg-overlay" class="rpg-overlay" hidden><section class="rpg-dialog" role="dialog" aria-modal="true" aria-labelledby="rpg-dialog-title" tabindex="-1"><button class="rpg-dialog-close" data-action="close" aria-label="Close">×</button><div id="rpg-dialog-content"></div></section></div>
+      <div id="rpg-overlay" class="rpg-overlay" hidden><section class="rpg-dialog" role="dialog" aria-modal="true" aria-labelledby="rpg-dialog-title" tabindex="-1"><button class="rpg-dialog-idea rpg-camp-idea" data-action="suggestions" aria-label="Idea">💡 Idea</button><button class="rpg-dialog-close" data-action="close" aria-label="Close">×</button><div id="rpg-dialog-content"></div></section></div>
       <button class="rpg-parent" data-action="parent">Parent journal</button><span id="rpg-save-status" class="rpg-save-status">◆ Adventure saved on your server</span>`;
     this.minimap = new Minimap(this.root, () => this.world.scout, {
       visible: () => this.playing && !this.panel && !this.tutorialState,
@@ -460,7 +460,7 @@ export class RpgGame {
     this.stopClock(); this.saveSession(); this.playing = false; this.el('rpg-controls').hidden = true; this.root.classList.remove('rpg-combat');
     const resume = s.expedition && !s.expedition.cleared;
     if (resume) this.setEncounter();
-    this.showDialog('camp', `<div class="rpg-seal">${icon('sword')}</div><p class="rpg-eyebrow">INSTITUTE PRESENTS</p><h2 id="rpg-dialog-title" class="rpg-title">The Sunken<br><em>Vault</em></h2><p class="rpg-camp-story">Ancient halls. Hidden relics.<br>A little magic goes a long way.</p><div class="rpg-camp-stats"><span>LEVEL <b>${s.level}</b></span><span>RELICS <b>${s.inventory.length}</b></span><span>GUARDIANS <b>${s.expeditionsCompleted}</b></span></div>${s.totalKills === 0 ? `<div class="rpg-starter-spells" aria-label="Your starting sword attack">${(['cleave'] as RpgSpellId[]).map(id => `<button data-spell="${id}" aria-pressed="${s.selectedSpellId === id}" class="${s.selectedSpellId === id ? 'selected' : ''}">${spellArt(id)}<span>${RPG_SPELLS.find(spell => spell.id === id)!.name}</span></button>`).join('')}</div>` : ''}${s.goal ? renderPinnedGoal(s, this.campState) : this.spellGoalCard() ? `<button class="rpg-goal-card" data-action="spell-goal">${this.spellGoalCard()}</button>` : ''}<button class="rpg-primary rpg-large" data-action="begin">${resume ? 'Continue adventure' : 'Enter the dungeon'} <span>→</span></button><button class="rpg-text-button" data-action="map">Choose an expedition</button><button class="rpg-text-button" data-action="tutorial">${icon('help')} How to play · Story & tour</button><div class="rpg-camp-menu"><button data-action="quests">${icon('ring')} Quest board</button><button data-action="merchant">◆ Merchant${this.campState ? ` · ${this.campState.gems} gems` : ''}</button><button data-action="trader">✦ Wandering trader</button><button data-action="forge">${icon('forge')} Blacksmith</button><button data-action="spellbook">${icon('storm')} Spellbook</button><button data-action="skills">${icon('tree')} Skill trees${s.skillPoints ? ` · ${s.skillPoints} new` : ''}</button><button data-action="inventory">${icon('bag')} Equipment</button><button data-action="parent">Parent journal</button><button data-action="suggestions">Suggest a change</button></div><p class="rpg-camp-note">Solve to unleash your spells. Take all the time you need.</p>`);
+    this.showDialog('camp', `<div class="rpg-seal">${icon('sword')}</div><p class="rpg-eyebrow">INSTITUTE PRESENTS</p><h2 id="rpg-dialog-title" class="rpg-title">The Sunken<br><em>Vault</em></h2><p class="rpg-camp-story">Ancient halls. Hidden relics.<br>A little magic goes a long way.</p><div class="rpg-camp-stats"><span>LEVEL <b>${s.level}</b></span><span>RELICS <b>${s.inventory.length}</b></span><span>GUARDIANS <b>${s.expeditionsCompleted}</b></span></div>${s.totalKills === 0 ? `<div class="rpg-starter-spells" aria-label="Your starting sword attack">${(['cleave'] as RpgSpellId[]).map(id => `<button data-spell="${id}" aria-pressed="${s.selectedSpellId === id}" class="${s.selectedSpellId === id ? 'selected' : ''}">${spellArt(id)}<span>${RPG_SPELLS.find(spell => spell.id === id)!.name}</span></button>`).join('')}</div>` : ''}${s.goal ? renderPinnedGoal(s, this.campState) : this.spellGoalCard() ? `<button class="rpg-goal-card" data-action="spell-goal">${this.spellGoalCard()}</button>` : ''}<button class="rpg-primary rpg-large" data-action="begin">${resume ? 'Continue adventure' : 'Enter the dungeon'} <span>→</span></button><button class="rpg-text-button" data-action="map">Choose an expedition</button><button class="rpg-text-button" data-action="tutorial">${icon('help')} How to play · Story & tour</button><div class="rpg-camp-menu"><button data-action="quests">${icon('ring')} Quest board</button><button data-action="merchant">◆ Merchant${this.campState ? ` · ${this.campState.gems} gems` : ''}</button><button data-action="trader">✦ Wandering trader</button><button data-action="forge">${icon('forge')} Blacksmith</button><button data-action="spellbook">${icon('storm')} Spellbook</button><button data-action="skills">${icon('tree')} Skill trees${s.skillPoints ? ` · ${s.skillPoints} new` : ''}</button><button data-action="inventory">${icon('bag')} Equipment</button><button data-action="parent">Parent journal</button></div><p class="rpg-camp-note">Solve to unleash your spells. Take all the time you need.</p>`);
   }
   private async begin(regionId?: string, tier?: number): Promise<void> {
     if (!this.state || this.busy) return;
@@ -1231,10 +1231,10 @@ export class RpgGame {
   private showPause(): void {
     if (!this.state || this.busy) return;
     this.saveSession();
-    this.showDialog('pause', `<div class="rpg-seal">${icon('shield')}</div><p class="rpg-eyebrow">A MOMENT BY THE FIRE</p><h2 id="rpg-dialog-title">Adventure saved</h2><p>Your spells, treasures, and progress will be here.</p><div class="rpg-button-row"><button class="rpg-primary" data-action="close">Keep exploring</button><button data-action="camp">Save & leave</button></div><button class="rpg-text-button" data-action="tutorial">${icon('help')} How to play · Story & tour</button><button class="rpg-text-button" data-action="retreat">Leave dungeon & choose area or tier</button><button class="rpg-text-button" data-action="suggestions">Suggest a change</button><button class="rpg-text-button" data-action="parent">Open parent journal</button>`);
+    this.showDialog('pause', `<div class="rpg-seal">${icon('shield')}</div><p class="rpg-eyebrow">A MOMENT BY THE FIRE</p><h2 id="rpg-dialog-title">Adventure saved</h2><p>Your spells, treasures, and progress will be here.</p><div class="rpg-button-row"><button class="rpg-primary" data-action="close">Keep exploring</button><button data-action="camp">Save & leave</button></div><button class="rpg-text-button" data-action="tutorial">${icon('help')} How to play · Story & tour</button><button class="rpg-text-button" data-action="retreat">Leave dungeon & choose area or tier</button><button class="rpg-text-button" data-action="parent">Open parent journal</button>`);
   }
   private showSuggestions(): void {
-    this.suggestionOrigin = this.panel === 'pause' ? 'pause' : 'camp';
+    this.suggestionOrigin = this.panel === 'inventory' ? 'inventory' : this.panel === 'pause' ? 'pause' : this.playing ? 'game' : 'camp';
     this.showDialog('suggestions', '<h2 id="rpg-dialog-title">Suggest a change</h2>', true);
     // Preserve prior inert values so closing never enables an already-disabled UI.
     for (const element of this.root.children) {
@@ -1415,8 +1415,8 @@ export class RpgGame {
   }
   private closeDialog(force = false): void {
     if (this.panel === 'suggestions' && !force) {
-      this.suggestionOrigin === 'pause' ? this.showPause() : this.showCamp();
-      this.root.querySelector<HTMLButtonElement>('[data-action="suggestions"]')?.focus({ preventScroll: true });
+      if (this.suggestionOrigin === 'game') { this.closeDialog(true); } else if (this.suggestionOrigin === 'inventory') this.showInventory(); else if (this.suggestionOrigin === 'pause') this.showPause(); else this.showCamp();
+      this.root.querySelector<HTMLButtonElement>(this.suggestionOrigin === 'game' ? '.rpg-idea-button' : '.rpg-camp-idea')?.focus({ preventScroll: true });
       return;
     }
     if (this.suggestions) this.disposeSuggestions();

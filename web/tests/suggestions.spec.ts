@@ -96,7 +96,15 @@ test('active game Idea button pauses and traps hotkeys on mobile', async ({ page
   await page.getByRole('button', { name: /Enter the dungeon/ }).click({timeout:60_000});
   const demo = page.getByRole('button', {name:'Let me try'}); if (await demo.isVisible()) await demo.click();
   const top = page.locator('.rpg-top .rpg-idea-button'); await expect(top).toBeVisible();
-  const bounds = await top.boundingBox(); expect(bounds!.width).toBeGreaterThanOrEqual(44); expect(bounds!.height).toBeGreaterThanOrEqual(44);
+  for (const viewport of [{width:1280,height:960}, {width:390,height:844}]) {
+    await page.setViewportSize(viewport);
+    const bounds = await top.boundingBox();
+    const neighbor = await page.getByRole('button', {name:'Pause and save',exact:true}).boundingBox();
+    expect(bounds!.width).toBe(neighbor!.width); expect(bounds!.height).toBe(neighbor!.height);
+    await expect(top.locator('svg.rpg-icon')).toBeVisible();
+    await expect(top).toHaveAttribute('title','Suggest an idea');
+    await page.screenshot({path:`test-results/idea-toolbar-${viewport.width}.png`});
+  }
   await top.click(); await idea(page).fill('qwe bki 123');
   expect(await page.evaluate(() => (window as any).__game.world.diagnostics.paused)).toBe(true);
   await expect(page.getByRole('dialog', { name:'💡 Your idea' })).toBeVisible();

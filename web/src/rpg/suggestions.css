@@ -22,7 +22,7 @@
 .rpg-suggestion-parent-note { border-left: 2px solid #9e8150; padding-left: .7rem; }
 .rpg-suggestions [hidden] { display: none !important; }
 @media (max-width: 520px) { .rpg-suggestion-voice { padding: .75rem; } .rpg-suggestions .rpg-button-row > button { flex: 1 1 10rem; } }
-#rpg-ui .rpg-top nav .rpg-idea-button { width:auto; min-width:80px; height:44px; padding:6px 10px; display:inline-flex; align-items:center; justify-content:center; white-space:nowrap; line-height:1; grid-column:1 / -1; justify-self:stretch; font-family:inherit; font-size:16px; font-weight:700; color:#fff0b8; background:#70521d; border:2px solid #e6c775; border-radius:8px; }
+
 #rpg-ui .rpg-suggestions .idea-talk { width:100%; min-height:64px; font-size:1.2rem; }
 #rpg-ui .rpg-suggestions .rpg-button-row button { min-height:52px; flex:1; font-size:1.1rem; }
 .rpg-suggestions [data-voice-help] { font-size:1.05rem; font-weight:700; color:#ffe29c; }

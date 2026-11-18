@@ -79,9 +79,9 @@ SPEC = {
     "answer-wrong": ("a gentle soft low wooden tock with a tiny airy whoosh, friendly and calm, not harsh, not a buzzer" + FX, .6, 1, .65, "ui"),
 
     # Seamless ambience per environment.
-    "amb-vault": ("seamless underground dungeon ambience: deep cavern room tone, distant water drips, faint wind through stone corridors, occasional far torch crackle, no music, no voice", 22, 1, .45, "loop"),
+    "amb-vault": ("seamless underground dungeon ambience: deep cavern room tone, faint wind through stone corridors, no water, no drips, occasional far torch crackle, no music, no voice", 22, 1, .45, "loop"),
     "amb-forest": ("seamless ancient forest ruins ambience: gentle wind in leaves, distant birds, insects, soft creaks of old trees, no music, no voice", 22, 1, .45, "loop"),
     "amb-coast": ("seamless rocky coast ambience: waves breaking on rocks, distant gulls, sea wind, no music, no voice", 22, 1, .45, "loop"),
     "amb-quarry": ("seamless desert canyon quarry ambience: dry wind across rocks, faint sand hiss, distant pebbles falling, no music, no voice", 22, 1, .45, "loop"),
-    "amb-garden": ("seamless overgrown royal garden ambience: soft breeze, songbirds, a small fountain trickling, bees, no music, no voice", 22, 1, .45, "loop"),
+    "amb-garden": ("seamless calm sunny garden ambience: gentle sparse songbirds chirping, a few soft distant birds, quiet still air, no wind, no hiss, no static, no water, no fountain, no music, no voice", 22, 1, .45, "loop"),
 }

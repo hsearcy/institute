@@ -49,6 +49,40 @@ describe('live suggestion audio', () => {
       recorder.cancel(); node.port.onmessage({data: new Float32Array(500)}); expect(sent).toHaveLength(3);
     } finally { for (const [name, descriptor] of saved) { if (descriptor) Object.defineProperty(globalThis, name, descriptor); else Reflect.deleteProperty(globalThis, name); } }
   });
+  test('cold startup waits 95s without audio, Cancel ignores late ready; duration and final wait stay unchanged', async () => {
+    const saved = new Map<string, PropertyDescriptor | undefined>();
+    const replace = (name: string, value: unknown) => { saved.set(name, Object.getOwnPropertyDescriptor(globalThis, name)); Object.defineProperty(globalThis, name, {configurable:true,writable:true,value}); };
+    const timers: {callback: () => void; ms: number}[] = [], sent: any[] = [], errors: string[] = [];
+    let socket: any, node: any, stopped = 0;
+    class Socket { bufferedAmount = 0; onopen: any; onmessage: any; onclose: any; onerror: any; constructor() { socket = this; } send(data: any) { sent.push(data); } close() {} }
+    class Context {
+      sampleRate = 48000; destination = {};
+      createMediaStreamSource() { return {connect() {}}; }
+      createScriptProcessor() { node = {connect() {},disconnect() {},onaudioprocess:null}; return node; }
+      async resume() {} async close() {}
+    }
+    const recorder = new LiveSuggestion(() => {}, () => {}, text => errors.push(text));
+    try {
+      replace('navigator', {mediaDevices:{getUserMedia:async () => ({getTracks:() => [{stop() { stopped++; }}]})}});
+      replace('window', {AudioContext:Context}); replace('WebSocket',Socket); replace('location',{protocol:'https:',host:'example.test'});
+      replace('setTimeout', (callback: () => void, ms: number) => { timers.push({callback,ms}); return timers.length; });
+      replace('clearTimeout', () => {});
+      await recorder.start(); socket.onopen();
+      expect(timers.at(-1)!.ms).toBe(95_000);
+      node.onaudioprocess({inputBuffer:{getChannelData:() => new Float32Array(500)}});
+      expect(sent).toHaveLength(1); expect(JSON.parse(sent[0]).type).toBe('start');
+      recorder.cancel(); expect(stopped).toBe(1);
+      socket.onmessage({data:JSON.stringify({type:'ready'})});
+      expect(recorder.state).toBe('idle'); expect(errors).toEqual([]);
+      await recorder.start(); socket.onopen(); socket.onmessage({data:JSON.stringify({type:'ready'})});
+      expect(recorder.state).toBe('listening'); expect(timers.at(-1)!.ms).toBe(60_000);
+      recorder.stop(); expect(stopped).toBe(2); expect(timers.at(-1)!.ms).toBe(10000);
+      recorder.cancel();
+    } finally {
+      recorder.cancel();
+      for (const [name, descriptor] of saved) { if (descriptor) Object.defineProperty(globalThis,name,descriptor); else Reflect.deleteProperty(globalThis,name); }
+    }
+  });
   test('resamples across frame boundaries into little endian signed mono PCM', () => {
     const r = new PcmResampler(48000);
     const a = new DataView(r.process(new Float32Array([0, 0, 0, 1])));

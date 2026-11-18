@@ -3,7 +3,8 @@ import { getBunServer, upgradeWebSocket, websocket } from 'hono/bun';
 import { sameOrigin, suggestionConfigFromEnv, speechProvider, voiceAvailable, type SuggestionConfig } from './suggestions';
 
 // This handler must be supplied to Bun.serve alongside the Hono fetch function.
-export const suggestionWebsocket = { ...websocket, maxPayloadLength: 64 * 1024, backpressureLimit: 256 * 1024, closeOnBackpressureLimit: true, idleTimeout: 75 };
+// Leave room for a cold model's 90s readiness wait without an idle disconnect.
+export const suggestionWebsocket = { ...websocket, maxPayloadLength: 64 * 1024, backpressureLimit: 256 * 1024, closeOnBackpressureLimit: true, idleTimeout: 120 };
 const ENDPOINT = 'wss://api.deepgram.com/v1/listen?model=nova-3&encoding=linear16&channels=1&sample_rate=16000&interim_results=true&punctuate=true&endpointing=300';
 const MAX_AUDIO = 5 * 1024 * 1024;
 const MAX_FRAME = 64 * 1024;
@@ -17,6 +18,7 @@ function localBarkUrl(value: string): string {
 
 type Options = {
   config?: SuggestionConfig;
+  fetch?: typeof fetch;
   // Injection is for isolated tests; key is present only for explicit Deepgram.
   connect?: (url: string, key?: string) => WebSocket;
   durationMs?: number; startupMs?: number; idleMs?: number; drainMs?: number;
@@ -28,6 +30,60 @@ export function createSuggestionLiveRoutes(options: Options = {}) {
     ? new WebSocket(url, { headers: { Authorization: `Token ${key}` } } as any)
     : new WebSocket(url));
   const app = new Hono();
+  app.post('/suggestions/voice-presence', async c => {
+    c.header('Cache-Control', 'no-store');
+    try {
+      if (!c.req.header('origin')) throw Error('origin');
+      sameOrigin(c.req.raw, config);
+    } catch { return c.json({error:'Send suggestions from Institute.'}, 403); }
+    if (c.req.header('content-type')?.split(';')[0]?.trim().toLowerCase() !== 'application/json') return c.json({error:'Send application/json.'}, 415);
+    const max = 1024, length = c.req.header('content-length');
+    if (length && (!/^\d+$/.test(length) || Number(length) > max)) return c.json({error:'That message is too large.'}, 413);
+    const reader = c.req.raw.body?.getReader();
+    const bytes = new Uint8Array(max); let size = 0;
+    let body: any;
+    let bodyTimer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      if (reader) await Promise.race([
+        (async () => {
+          while (true) {
+            const chunk = await reader.read();
+            if (chunk.done) break;
+            if (size + chunk.value.byteLength > max) throw Error('oversize');
+            bytes.set(chunk.value, size); size += chunk.value.byteLength;
+          }
+        })(),
+        new Promise<never>((_, reject) => { bodyTimer = setTimeout(() => reject(Error('timeout')), 2000); }),
+      ]);
+      body = JSON.parse(new TextDecoder('utf-8', {fatal:true}).decode(bytes.subarray(0, size)));
+    } catch (error) {
+      void reader?.cancel().catch(() => {});
+      if (error instanceof Error && error.message === 'oversize') return c.json({error:'That message is too large.'}, 413);
+      return c.json({error:'Send a valid presence message.'}, 400);
+    } finally { clearTimeout(bodyTimer); reader?.releaseLock(); }
+    if (!body || Array.isArray(body) || Object.keys(body).length !== 2 ||
+      typeof body.active !== 'boolean' || typeof body.clientId !== 'string' ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.clientId)) return c.json({error:'Send a valid presence message.'}, 400);
+    // Presence never selects a provider, creates a player record or forwards browser headers.
+    if (speechProvider(config) !== 'bark') return c.json({ok:true}, 202);
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const target = new URL('/presence', localBarkUrl(config.barkUrl ?? 'ws://127.0.0.1:15003/listen'));
+      target.protocol = 'http:';
+      const response = await Promise.race([
+        (options.fetch ?? fetch)(target.toString(), {
+          method:'POST', headers:{'Content-Type':'application/json'}, redirect:'error', signal:controller.signal,
+          body:JSON.stringify({clientId:body.clientId,active:body.active}),
+        }),
+        new Promise<never>((_, reject) => { timer = setTimeout(() => { controller.abort(); reject(Error('timeout')); }, 2000); }),
+      ]);
+      void response.body?.cancel().catch(() => {});
+      if (!response.ok) throw Error('unavailable');
+      return c.json({ok:true}, 202);
+    } catch { return c.json({error:UNAVAILABLE}, 503); }
+    finally { clearTimeout(timer); }
+  });
   let active = 0, windowStart = Date.now(), attempts = 0;
   const ips = new Map<string, number>();
   app.get('/suggestions/live', async (c, next) => {
@@ -82,6 +138,11 @@ export function createSuggestionLiveRoutes(options: Options = {}) {
           let message: any; try { message = JSON.parse(data); } catch { fail(); return; }
           if (phase === 'waiting' && message?.type === 'start' && message.sampleRate === 16000 && Object.keys(message).length === 2) {
             phase = 'connecting';
+            // The initial start gate stays short; only a valid Bark start gets cold-worker time.
+            if (speechProvider(config) === 'bark') {
+              clearTimeout(startup);
+              startup = setTimeout(() => fail(), options.startupMs ?? 90_000);
+            }
             try {
               const isDeepgram = speechProvider(config) === 'deepgram';
               up = connect(isDeepgram ? ENDPOINT : localBarkUrl(config.barkUrl ?? 'ws://127.0.0.1:15003/listen'), isDeepgram ? config.deepgramKey!.trim() : undefined);

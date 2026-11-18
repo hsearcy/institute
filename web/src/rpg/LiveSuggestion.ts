@@ -92,7 +92,7 @@ export class LiveSuggestion {
       };
       socket.onerror = () => { if (generation === this.generation) this.fail('Voice is not working. You can type your idea.'); };
       socket.onclose = () => { if (generation === this.generation && this.state !== 'idle') this.fail('Voice stopped. You can type your idea.'); };
-      this.timer = setTimeout(() => this.fail('Voice took too long. You can type your idea.'), 10000);
+      this.timer = setTimeout(() => this.fail('Voice took too long. You can type your idea.'), 95_000);
       await context.resume();
     } catch { if (generation === this.generation) this.fail('Could not use the microphone. You can type your idea.'); }
   }
